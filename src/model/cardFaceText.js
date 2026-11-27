@@ -47,6 +47,8 @@ const MECHANIC_STATUSES = ['concealed', 'bulwarkEcho', 'stoneskin', 'entombed'];
 // The rider is applied by combatMatchups rather than appearing in `effects`, so
 // a generated face cannot describe the whole card without silently dropping it.
 const AUTHORED_DAMAGE_RIDER_CARDS = ['aspDart', 'mindSpike', 'stoneSling', 'rockfall'];
+// The word a face uses for each field a modifyCards effect may change (a maneuver reads as the card's stance).
+const CARD_CHANGE_WORDS = Object.freeze({ maneuver: 'stance', range: 'range' });
 
 
 const canonical = value => JSON.stringify(value, (key, item) => item && typeof item === 'object' && !Array.isArray(item)
@@ -326,6 +328,14 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
       case 'addCard': if (effect.card === def.id && effect.pile === 'discard') return frag('bonus', 'Add a copy to your discard pile'); return fail();
       case 'exhaust': return frag('bonus', `Exhaust ${num(n, base)}${effect.random ? ' at random' : ''}`);
       case 'shuffleDiscardIntoDraw': return frag('bonus', 'Shuffle your discard pile into your draw pile');
+      // A chosen hand card that takes another stance or range for the fight: "Change 1 card's stance to Smash this combat".
+      case 'modifyCards': {
+        const changes = Object.entries(effect.changes || {});
+        if (effect.from !== 'hand' || effect.selection !== 'choose' || effect.if || changes.length !== 1 || !CARD_CHANGE_WORDS[changes[0][0]]) fail();
+        const [field, to] = changes[0], count = value(effect, index);
+        const whose = count === 1 ? "card's" : "cards'";
+        return frag('bonus', `Change ${num(count, base)} ${whose} ${CARD_CHANGE_WORDS[field]} to ${esc(title(to))} this combat`);
+      }
       case 'grantCardCharge': {
         const bonuses = Object.entries({ damage: 'damage', block: 'Block', heal: 'healing', break: 'Poise', buildup: `${effect.buildupStatus || ''} buildup`, manaDiscount: 'Mana discount' })
           .filter(([key]) => effect[key] !== undefined).map(([key, label]) => key === 'manaDiscount'

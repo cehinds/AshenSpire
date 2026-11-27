@@ -153,12 +153,15 @@ test('the Ward tooltip reads its numbers from config and describes the health bu
   assert.match(text, /Lose 1 stack \(5 Ward HP\) at the start of your turn/);
 });
 
-test('every card that grants Ward carries the Reaction tag (Mote Shield)', () => {
+test('Ward cards retain their authored Reaction policy, including Mote Shield and the non-Reaction starter Ward', () => {
   const { combat } = fight({ enemies: 1 });
   const grants = effect => effect.op === 'gainWard' || (effect.op === 'applyStatus' && effect.status === 'ward');
   const cards = combat.registries.cards.all().filter(card => [...(card.effects || []), ...(card.upgrade?.effects || [])].some(grants));
   assert.ok(cards.some(card => card.id === 'core.moteShield'), 'Mote Shield grants Ward');
   // Owner ruling 2026-11-21 (Unranked starters): the two starter Ward cantrips are not Reactions (Reaction weighs 3, which would rank them).
-  const notReactions = new Set(['core.arcaneWard', 'core.glimmerVeil']);
+  const notReactions = new Set(['core.arcaneWard', 'core.glimmerVeil', 'custom.card_mwx2mb6p']);
+  assert.ok(cards.find(card => card.id === 'core.moteShield').tags.includes('trait:reaction'), 'Mote Shield remains a Reaction');
+  const authoredWard = cards.find(card => card.id === 'custom.card_mwx2mb6p');
+  assert.ok(authoredWard && !authoredWard.tags.includes('trait:reaction'), 'the owner-authored Ward has no Reaction tag');
   for (const card of cards) assert.ok(notReactions.has(card.id) ? !card.tags.includes('trait:reaction') : card.tags.includes('trait:reaction'), card.id);
 });

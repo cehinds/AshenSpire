@@ -3,7 +3,7 @@
 
 import { gameModule } from '../gameProfile.js';
 import { effectiveAshenBlightAttributes } from '../ashenBlight.js';
-import { stampSkillBonuses } from '../skills.js';
+import * as SkillModel from '../skills.js';
 import { applyAbilityGrade } from '../abilityGrades.js';
 import { profileById } from './shape.js';
 import { roleAmountReceipt, equipmentKitReceipt } from './kit.js';
@@ -177,6 +177,6 @@ export function stampDeck(registries, run, cards, {
   // A full restamp also refreshes the derived skill bonus (SPEC §13.4o): a
   // swapped hand changes which schools a track's levels reach. A fight's own
   // pile restamps (cards != null) keep the bonus its cards started with.
-  if (cards == null) stampSkillBonuses(registries, run);
+  if (cards == null) SkillModel.stampSkillBonuses(registries, run);
   return n;
 }

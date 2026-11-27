@@ -10,12 +10,34 @@ import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { gameProfileShopStock, purchaseGameProfileShopOffer, gameProfileShopPurchasePlan } from '../src/model/gameProfileRewards.js';
-import { CardCopyShelf, CardCopyPrice } from '../src/model/cardCopyService.js';
+import { CardCopyPrice, CardCopyRule } from '../src/model/cardCopyService.js';
 import '../src/engine/runCombat.js';
 
 const profile = resolveGameProfile(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url))));
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
-const fresh = (seed) => createRunState({ seed, classId: 'reaver', registries: reg, runId: `copy-price-${seed}` });
+const fresh = (seed) => {
+  const run = createRunState({ seed, classId: 'reaver', registries: reg, runId: `copy-price-${seed}` });
+  // Explicit arithmetic/transaction operands; membership comes from current JSON.
+  const cardId = reg.cards.all().find(row => profile.content.shops.priceTable.card[row.rarity]).id;
+  run.deck = [
+    { instanceId: 'copy:plain', cardId, upgraded: false },
+    { instanceId: 'copy:ranked', cardId, upgraded: false },
+  ];
+  run.sideboard = [];
+  run.gameProfile.modules.shops = { ...run.gameProfile.modules.shops, rankPricePct: 25 };
+  return run;
+};
+
+test('current copy shelves use the price and uses authored in JSON', () => {
+  const source = JSON.parse(readFileSync(new URL('../games/ashenspire/packs/core/shops.json', import.meta.url), 'utf8'));
+  const run = createRunState({ seed: 3, classId: 'reaver', registries: reg });
+  for (const [door, row] of [['trader', source.cardCopy], ['blacksmith', source.blacksmith?.cardCopy]]) {
+    const rule = CardCopyRule(run, door);
+    if (!row) { assert.equal(rule, null, door); continue; }
+    assert.equal(rule.price, row.price ?? 0, door + ' price');
+    assert.equal(rule.uses, row.uses ?? 1, door + ' uses');
+  }
+});
 
 test('the copy price: the shelf price for an unranked card, +25% per visible rank', () => {
   const run = fresh(3);
@@ -46,7 +68,7 @@ test('trader: the shelf quotes its from price; the chosen card is charged its ow
   const run = fresh(9);
   run.cinders = 100000;
   const stock = gameProfileShopStock(reg, run, createRng(9), { shopId: 'copy' });
-  stock.options.push({ ...CardCopyShelf(run, 'trader'), usesLeft: 2 }); stock.takeCount += 1;
+  stock.options.push({ kind: 'cardCopies', id: 'cardCopy', price: 320, usesLeft: 2 }); stock.takeCount += 1;
   const index = stock.options.length - 1;
   const shelf = gameProfileShopPurchasePlan(reg, run, 'copy', index);
   assert.equal(shelf.price, 320, 'the from price');

@@ -1,5 +1,7 @@
-// Owner 2026-11-18: a won elite may drop an armament choice (35%), a won boss always does; the door offers 1-3 / 2-4 unowned pieces.
+// Current JSON integration plus controlled offer rules and a six-item pool.
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
+import { armamentRewardFixture } from './helpers/reward-contract.mjs';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -9,13 +11,26 @@ import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistrie
 import { GameProfileArmamentOffer, ArmamentRewardRule, claimGameProfileReward } from '../src/model/gameProfileRewards.js';
 import { carriedIds } from '../src/model/loadout/ownership.js';
 
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
-const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
-const fresh = (seed, classId = 'reaver') => createRunState({ seed, classId, registries: reg, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+const { reg, fresh } = armamentRewardFixture();
+const readJson = path => JSON.parse(readFileSync(new URL(path, import.meta.url), 'utf8'));
+
+test('authored armament reward rules and eligibility groups reach a fresh run', () => {
+  const profile = resolveGameProfile(readJson('../games/ashenspire/game.json'));
+  const currentReg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const run = createRunState({ seed: 3, classId: 'reaver', registries: currentReg });
+  const source = readJson('../games/ashenspire/packs/core/rewards.json');
+  for (const pool of Object.keys(source.armamentReward).filter(key => !key.startsWith('$'))) {
+    assert.deepEqual(ArmamentRewardRule(run, pool), source.armamentReward[pool], pool);
+  }
+  assert.deepEqual(run.gameProfile.content.rewards.equipmentGroups, source.equipmentGroups);
+  assert.deepEqual(run.gameProfile.content.rewards.eligibility.weapons, source.eligibility.weapons);
+  assert.deepEqual(run.gameProfile.content.rewards.eligibility.armor, source.eligibility.armor);
+});
+
 const make = (seed, pool, run = fresh(seed), offerId = `1:n:combat:${pool}:armament`) => GameProfileArmamentOffer(reg, run, createRng(seed), { offerId, pool });
 const SEEDS = Array.from({ length: 300 }, (_, i) => i + 1);
 
-test('the shipped rule: elites 35% for 1-3, bosses 100% for 2-4; normal fights have none', () => {
+test('fixture rule: elites 35% for 1-3, bosses 100% for 2-4; normal fights have none', () => {
   const run = fresh(1);
   assert.deepEqual([35, 1, 3], ['chancePct', 'min', 'max'].map(key => ArmamentRewardRule(run, 'elite')[key]));
   assert.deepEqual([100, 2, 4], ['chancePct', 'min', 'max'].map(key => ArmamentRewardRule(run, 'boss')[key]));
@@ -53,9 +68,9 @@ test('every choice is a distinct, eligible weapon or armour the run does not alr
   const weaponGroups = new Set(rules.eligibility.weapons.groups.flatMap(id => rules.equipmentGroups[id].members));
   const armourGroups = new Set(rules.eligibility.armor.groups.flatMap(id => rules.equipmentGroups[id].members));
   for (const seed of SEEDS) {
-    const run = fresh(seed, seed % 2 ? 'reaver' : 'starseer');
+    const run = fresh(seed);
     // Own a few pieces: a bought armour and a stored weapon must never come back.
-    run.loadout.storage.push('dagger', 'katana');
+    run.loadout.storage.push('fixture.bladeB');
     const boughtId = [...armourGroups].map(key => key.split(':')).find(([classId]) => classId === run.class)[1];
     run.loadout.boughtArmour = [{ classId: run.class, id: boughtId }];
     const owned = new Set([...carriedIds(run.loadout), boughtId]);
@@ -63,6 +78,10 @@ test('every choice is a distinct, eligible weapon or armour the run does not alr
     const ids = offer.options.map(option => option.id);
     assert.equal(new Set(ids).size, ids.length, 'no duplicates');
     for (const option of offer.options) {
+      if (option.kind === 'armor') {
+        assert.notEqual(option.id, 'fixture.foreign', 'an eligible group may contain armour for another class');
+        assert.ok(reg.equipment.armour.some(row => row.id === option.id && row.classId === run.class), 'armour belongs to the receiving class');
+      }
       assert.ok(!owned.has(option.id), `seed ${seed}: ${option.id} is already owned`);
       assert.ok(option.kind === 'weapons' ? weaponGroups.has(option.id) : armourGroups.has(`${run.class}:${option.id}`), `${option.kind} ${option.id} is outside the authored groups`);
     }

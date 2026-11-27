@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
-import { UI_ICON_IDS, UI_VECTOR_ICON_IDS, HISTORICAL_UI_GLYPHS, UI_ICON_LABELS, LEGACY_UI_ICON_IDS, uiIconId, uiIconText } from '../src/content/uiIcons.js';
+import { UI_ICON_IDS, UI_VECTOR_ICON_IDS, HISTORICAL_UI_GLYPHS, UI_ICON_LABELS, LEGACY_UI_ICON_IDS, UI_ICON_ALIASES, uiIconId, uiIconText } from '../src/content/uiIcons.js';
 import { engravedGlyphId, engravedIconUrl } from '../src/ui/components/engravedIcon.js';
 
 const files = dir => readdirSync(new URL(dir, import.meta.url), { withFileTypes: true }).flatMap(entry =>
@@ -32,9 +32,15 @@ test('authored icon fields stay readable and named', () => {
   for (const dir of ['../content/source', '../src/content']) {
     for (const file of files(dir).filter(file => /\.(js|json)$/.test(file) && !file.includes('/generated/'))) {
       const source = readFileSync(new URL(file, import.meta.url), 'utf8');
+      // Preserve the owner's raw Studio export, including readable saved aliases.
+      // Installed game packs still require canonical IDs in the guard below.
+      const savedStudioBundle = file.endsWith('/studioDecks.json')
+        && JSON.parse(source).schema === 'ashenspire.studio.bundle.v1';
       for (const match of source.matchAll(/(?:\b(?:icon|glyph)\s*:|"(?:icon|glyph)"\s*:)\s*['"]([^'"\n]+)['"]/g)) {
         assert.match(match[1], /^[\x20-\x7e]+$/, `${file}: ${match[1]}`);
-        assert.ok(UI_ICON_IDS.includes(match[1]), `${file}: unknown icon ${match[1]}`);
+        const readableSavedAlias = savedStudioBundle && /^[a-z]+(?:-[a-z]+)*$/.test(match[1])
+          && Object.hasOwn(UI_ICON_ALIASES, match[1]) && UI_ICON_IDS.includes(uiIconId(match[1]));
+        assert.ok(UI_ICON_IDS.includes(match[1]) || readableSavedAlias, `${file}: unknown icon ${match[1]}`);
       }
     }
   }

@@ -15,6 +15,7 @@
 // property rules its `props` name are passed as `rules` ({tag: {triggers, passives}}).
 import { GetActiveScoring } from './activeScoring.js';
 import { scoring as shippedScoring } from '../content/generated/scoring.js';
+import { EffectiveCostGrowth, EffectiveWitherLimit, MechanicRule } from './combatMechanics.js';
 
 /** Round half away from zero (the simulator's `rnd`). */
 export const Rnd = (x) => (x >= 0 ? Math.floor(x + 0.5) : -Math.floor(-x + 0.5) + 0); // + 0 keeps -0 out
@@ -58,9 +59,13 @@ function slimOf(full) {
     costs: Object.fromEntries(Object.entries(full.costs).map(([k, v]) => [k, v.weight])),
     effects: Object.fromEntries(Object.entries(full.effects).map(([k, v]) => [k, [v.weight, v.per]])),
     statuses: Object.fromEntries(Object.entries(full.statuses).map(([k, v]) => [k, [v.weight, v.target]])),
+    // Owner 2026-11-27: a cost, effect or status with `multiplier: true` scores P x weight x units instead of weight x units.
+    multiplied: { costs: multipliedKeys(full.costs), effects: multipliedKeys(full.effects), statuses: multipliedKeys(full.statuses) },
     decayOne: new Set(full.cardModel.decayOneStatuses),
   };
 }
+
+const multipliedKeys = (section) => new Set(Object.entries(section || {}).filter(([, v]) => v && v.multiplier === true).map(([k]) => k));
 
 const triOf = (S, n) => { let s = 0; for (let t = 0; t < S.model.R; t++) s += Math.max(n - t, 0); return s; };
 const ew = (S, k, amt) => S.effects[k][0] * amt / S.effects[k][1];
@@ -125,30 +130,59 @@ export function UpgradeTagSurcharge(rule, stacks, positiveScore = 0) {
 }
 
 /** Score a card face: {raw, parts, positive}. `positive` is P, the sum of the positive non-cost parts. */
-export function ScoreCard(c, scoring = GetActiveScoring()) {
-  const S = slimOf(scoring), M = S.model, CM = scoring.cardModel;
+export function ScoreCard(c, scoring = GetActiveScoring(), context = null) {
+  return scorePrepared(c, scoring, slimOf(scoring), context);
+}
+
+/** Compile only for one read-only operation; create a new scorer after edits. */
+export function PrepareCardScorer(scoring = GetActiveScoring()) {
+  const S = slimOf(scoring);
+  return (card, context = null) => scorePrepared(card, scoring, S, context);
+}
+
+function scorePrepared(c, scoring, S, context) {
+  const M = S.model, CM = scoring.cardModel;
   const parts = {};
   const add = (k, v) => { if (v) parts[k] = (parts[k] || 0) + v; };
   // `fx` mirrors only the effect parts (damage, block, statuses ...), so the effect count never mistakes a tag or keyword that
   // happens to share a part key with a status (a `venom` tag and the Venom status) for, or hides it from, an effect.
   const fx = {};
   const addFx = (k, v) => { add(k, v); if (v) fx[k] = (fx[k] || 0) + v; };
+  // Multiplier-form costs, effects and statuses wait for P: [part key, weight, units, is an effect part].
+  const deferred = [];
+  const cost = (part, k, units) => {
+    if (S.multiplied.costs.has(k)) deferred.push([part, S.costs[k], units, false]);
+    else add(part, S.costs[k] * units);
+  };
+  const effect = (part, k, amt, scale = 1) => {
+    if (S.multiplied.effects.has(k)) deferred.push([part, S.effects[k][0], amt / S.effects[k][1] * scale, true]);
+    else addFx(part, ew(S, k, amt) * scale);
+  };
   const area = c.tags.includes(CM.areaTag) ? M.ENEMIES : 1;
-  add('SP', S.costs.sp * c.sp); add('MP', S.costs.mp * c.mp);
-  addFx('damage', ew(S, 'damage', c.dmg) * area);
-  addFx('block', ew(S, 'block', c.blk));
-  addFx('poise', ew(S, 'poiseDamage', c.poise) * area);
+  cost('SP', 'sp', c.sp); cost('MP', 'mp', c.mp);
+  effect('damage', 'damage', c.dmg, area);
+  const blockBreakRule = MechanicRule('blockBreak', context);
+  if (c.blockBreak && (!blockBreakRule || blockBreakRule.enabled !== false) && S.effects.blockBreak) {
+    effect('blockBreak', 'blockBreak', c.blockBreak, area);
+  }
+  effect('block', 'block', c.blk);
+  effect('poise', 'poiseDamage', c.poise, area);
   for (const [s, n, tgt] of c.statuses) {
     const st = S.statuses[s]; if (!st) continue;
     const self = tgt === 'self', good = (st[1] === 'self') === self;
     const exact = exactStatus(S, s, n);
-    const v = exact !== null ? exact : st[0] * (S.decayOne.has(s) ? Math.min(n, M.R) : n);
-    addFx(s, v * (good ? 1 : -1) * (self ? 1 : area));
+    const scale = (good ? 1 : -1) * (self ? 1 : area);
+    // Units: the formula value for a formula status (its flat form ignores the weight), else the stacks counted.
+    if (S.multiplied.statuses.has(s)) deferred.push([s, st[0], (exact !== null ? exact : (S.decayOne.has(s) ? Math.min(n, M.R) : n)) * scale, true]);
+    else {
+      const v = exact !== null ? exact : st[0] * (S.decayOne.has(s) ? Math.min(n, M.R) : n);
+      addFx(s, v * scale);
+    }
   }
-  addFx('draw', ew(S, 'draw', c.draw)); addFx('heal', ew(S, 'heal', c.heal)); addFx('HP cost', ew(S, 'loseHp', c.loseHp));
-  addFx('discard', ew(S, 'discard', c.discard)); addFx('SP restore', ew(S, 'restoreStamina', c.restoreSp)); addFx('MP restore', ew(S, 'restoreMana', c.restoreMp));
-  addFx('cleanse', ew(S, 'removeStatus', c.cleanse)); addFx('counter', ew(S, 'counterStack', c.counter)); addFx('reflect', ew(S, 'applyReflect', c.reflect));
-  addFx('pull', ew(S, 'pullEnemy', c.pull)); addFx('move', ew(S, 'moveEngagement', c.move));
+  effect('draw', 'draw', c.draw); effect('heal', 'heal', c.heal); effect('HP cost', 'loseHp', c.loseHp);
+  effect('discard', 'discard', c.discard); effect('SP restore', 'restoreStamina', c.restoreSp); effect('MP restore', 'restoreMana', c.restoreMp);
+  effect('cleanse', 'removeStatus', c.cleanse); effect('counter', 'counterStack', c.counter); effect('reflect', 'applyReflect', c.reflect);
+  effect('pull', 'pullEnemy', c.pull); effect('move', 'moveEngagement', c.move);
   const U = CM.utility;
   addFx('utility', c.holdOne * U.holdOne + c.boost * U.boost + c.cull * U.cull + c.shuffle * U.shuffle + c.attr * U.attr);
   for (const t of c.tags) {
@@ -157,7 +191,10 @@ export function ScoreCard(c, scoring = GetActiveScoring()) {
   }
   if (c.tags.includes(CM.honedTag) && S.tags[CM.honedTag]?.surchargeEnabled !== false) add(CM.honedTag, S.tags[CM.honedTag].perN);
   const P = Object.entries(parts).filter(([k, v]) => k !== 'SP' && k !== 'MP' && v > 0).reduce((s, [, v]) => s + v, 0);
-  for (const t of c.tags) { const w = S.tags[t]; if (w && w.surchargeEnabled !== false && w.pMultiplier) add(t, P * w.pMultiplier); }
+  // Multiplier-form entries scale with P and never feed it (as categories do): a -0.1 SP weight takes 10% of P per SP.
+  for (const [part, weight, units, isEffect] of deferred) (isEffect ? addFx : add)(part, P * weight * units);
+  // A pMultiplier tag adds P x pMultiplier, once per hit (and per enemy) when its flat form counts hits (owner, 2026-11-27).
+  for (const t of c.tags) { const w = S.tags[t]; if (w && w.surchargeEnabled !== false && w.pMultiplier) add(t, P * w.pMultiplier * (w.per === 'hit' ? Math.max(1, c.hits) * area : 1)); }
   // Counterstrike as a multiplier scales P; set flat (weight, no multiplier) it scored in the tag loop above.
   const cs = S.tags[CM.counterstrikeTag];
   if (c.tags.includes(CM.counterstrikeTag) && cs && cs.surchargeEnabled !== false && Number.isFinite(cs.multiplier)) add('counterstrike', P * (cs.multiplier - 1));
@@ -167,6 +204,21 @@ export function ScoreCard(c, scoring = GetActiveScoring()) {
     let v = d.flat ?? P * d.multiplier;
     if (d.min !== undefined) v = d.min < 0 ? Math.min(v, d.min) : Math.max(v, d.min);
     add(k, v);
+  }
+  const witherLimit = !c.kw.includes('exhaust') ? EffectiveWitherLimit(c, context) : null;
+  if (witherLimit && S.keywords.wither && S.keywords.wither.surchargeEnabled !== false) {
+    const d = S.keywords.wither;
+    let v = (d.flat ?? P * d.multiplier) / witherLimit;
+    if (d.min !== undefined) v = d.min < 0 ? Math.min(v, d.min) : Math.max(v, d.min);
+    add('wither', v);
+  }
+  const growth = EffectiveCostGrowth(c, context);
+  if (growth && S.keywords.costGrowth && S.keywords.costGrowth.surchargeEnabled !== false) {
+    const d = S.keywords.costGrowth;
+    const stepSize = (growth.stamina || 0) + (growth.mana || 0);
+    let v = d.flat !== undefined ? d.flat * stepSize : P * d.multiplier;
+    if (d.min !== undefined) v = d.min < 0 ? Math.min(v, d.min) : Math.max(v, d.min);
+    add('costGrowth', v);
   }
   // Stacking upgrade tags (Efficient, Improved, ExtraEffect, DrawbackEase, IdentityShift)
   const UT = scoring.upgradeTags;
@@ -185,7 +237,9 @@ export function ScoreCard(c, scoring = GetActiveScoring()) {
     const notEffect = new Set(['SP', 'MP', 'HP cost', 'discard']);
     const riders = new Set(EC.riders || []);
     const n = Object.entries(fx).filter(([k, v]) => v > 0 && !notEffect.has(k) && !(riders.has(k) && fx.damage > 0)).length;
-    add('effect count', EC.weight * Math.max(0, n - (EC.skipFirst ? 1 : 0)));
+    const extra = Math.max(0, n - (EC.skipFirst ? 1 : 0));
+    // With `multiplier: true` each extra effect adds P x weight (owner, 2026-11-27).
+    add('effect count', EC.multiplier === true ? P * EC.weight * extra : EC.weight * extra);
   }
   // Owner 2026-11-23 (scoring.categories): each category the card belongs to adds its weight, or with `multiplier` on
   // scales the positive score by it (1 = no change).

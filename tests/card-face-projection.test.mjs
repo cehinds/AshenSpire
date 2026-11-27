@@ -240,6 +240,19 @@ test('no registry card face contains Inspect replacement text', () => {
   }
 });
 
+test('an authored face joins a selection prompt to its effect and keeps a plain later sentence', () => {
+  // Owner, 2026-11-17: "Choose a hand card." alone is a stub; the effect after it belongs to the prompt.
+  const probe = text => cardFaceProjection({ id: 'probe', type: 'skill', keywords: [], effects: [] }, { lines: null, authoredHtml: text, registries: null, effects: [] })
+    .clauses.map(line => plain(line.html));
+  assert.deepEqual(probe('Choose a hand card. Change its maneuver to Smash this combat.'), ['Choose a hand card. Change its maneuver to Smash this combat']);
+  assert.deepEqual(probe('Gain 2 Conceal. Hide X hand cards for X turns.'), ['Gain 2 Conceal', 'Hide X hand cards for X turns']);
+  // A clause never loses the verb it needs: "damage equal to your Block" alone is a fragment (Shield Crash).
+  assert.deepEqual(probe('Gain 14 Block. Deal damage equal to your Block.'), ['Gain 14 Block', 'Deal damage equal to your Block']);
+  // A conditional rider still waits in Information (owner 2026-10-31).
+  assert.deepEqual(probe('Deal 6 damage. In Smash stance, deal 6 more.'), ['Deal 6 damage']);
+  assert.deepEqual(probe('Break 1 Sleep. If asleep when played, gain 10 Poise.'), ['Break 1 Sleep']);
+});
+
 test('an unfamiliar rule of many long sentences still fills at most the face clause budget', async () => {
   // Review on #2501: the real-text fallback once pushed every overlong sentence onto the face.
   const { cardFaceProjection, FACE_EFFECT_CLAUSES } = await import('../src/model/cardFaceProjection.js');
@@ -257,9 +270,9 @@ const projectRoomy = (def) => {
   return cardFaceProjection(def, { lines: cardFaceLines(def, null, reg), authoredHtml, registries: reg, effects: def.effects, roomy: FACE_BUDGET });
 };
 
-test('the roomy budget is data: five lines, seven words a line, a 70% floor, never under 13 px (Wave 2 sizes: was 10)', () => {
-  assert.deepEqual([FACE_BUDGET.lines, FACE_BUDGET.wordsPerLine, FACE_BUDGET.minScale, FACE_BUDGET.minPx], [5, 7, 0.7, 13]);
-  assert.equal(FACE_BUDGET.clauses, 5);
+test('the roomy budget is data: four lines (owner 2026-11-17: was five), seven words a line, a 70% floor, never under 13 px', () => {
+  assert.deepEqual([FACE_BUDGET.lines, FACE_BUDGET.wordsPerLine, FACE_BUDGET.minScale, FACE_BUDGET.minPx], [4, 7, 0.7, 13]);
+  assert.equal(FACE_BUDGET.clauses, 4);
 });
 
 test('the roomy fitting floor allows the same 2pt reduction as other phone rules text', () => {

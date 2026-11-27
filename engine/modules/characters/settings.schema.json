@@ -137,6 +137,56 @@
       ],
       "additionalProperties": false
     },
+    "enemyLevelScaling": {
+      "type": "object",
+      "description": "Optional (owner, 2026-11-20). An enemy's fight level from act, tier and floor step: step = floor((floor - 1) / floorsPerStep), at most the last table entry; a boss uses bossSteps. Each step adds hpPerStep HP (not bosses) and gearPerStep AR/DR; spCap caps a tier's SP after gear and relics; attributeCaps caps a tier's own attributes. Absent: the level stays levelFrom's bound.",
+      "properties": {
+        "floorsPerStep": { "type": "integer", "minimum": 1, "maximum": 99 },
+        "levels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "minion": { "type": "array", "minItems": 1, "maxItems": 10, "items": { "type": "integer", "minimum": 1, "maximum": 99 } },
+              "elite": { "type": "array", "minItems": 1, "maxItems": 10, "items": { "type": "integer", "minimum": 1, "maximum": 99 } },
+              "boss": { "type": "integer", "minimum": 1, "maximum": 99 }
+            },
+            "required": ["minion", "elite", "boss"],
+            "additionalProperties": false
+          }
+        },
+        "hpPerStep": { "type": "number", "minimum": 0, "maximum": 10 },
+        "gearPerStep": {
+          "type": "object",
+          "properties": {
+            "ar": { "type": "integer", "minimum": 0, "maximum": 99 },
+            "dr": { "type": "integer", "minimum": 0, "maximum": 99 }
+          },
+          "additionalProperties": false
+        },
+        "bossSteps": { "type": "integer", "minimum": 0, "maximum": 10 },
+        "spCap": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 1, "maximum": 99 }
+        },
+        "attributeCaps": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "strength": { "type": "integer", "minimum": 0, "maximum": 99 },
+              "dexterity": { "type": "integer", "minimum": 0, "maximum": 99 },
+              "constitution": { "type": "integer", "minimum": 0, "maximum": 99 },
+              "wisdom": { "type": "integer", "minimum": 0, "maximum": 99 },
+              "intelligence": { "type": "integer", "minimum": 0, "maximum": 99 }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": ["floorsPerStep", "levels", "hpPerStep", "gearPerStep", "bossSteps", "spCap", "attributeCaps"],
+      "additionalProperties": false
+    },
     "attributeOffset": {
       "type": "object",
       "description": "Optional (no default since 2026-11-07). Added to each enemy attribute after gear and relic bonuses, floored at 0. The budget check ignores it.",

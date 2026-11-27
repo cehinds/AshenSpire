@@ -282,6 +282,68 @@ test('weights tab: the multiply-instead switch stores flat or multiplier, and th
   assert.deepEqual(ValidateScoringConfig(scoring), []);
 });
 
+test('weights tab: cost, effect and status rows switch to the multiplier form and back without a stray change', async () => {
+  const { weightSentence, weightExample, SetWeightForm } = await import('../tools/score-studio/weightExamples.js');
+  const { ScoringDiffPaths, MergePendingScoring } = await import('../tools/score-studio/weightsStaging.js');
+  const applied = structuredClone(shippedScoring);
+  const repo = shippedScoring;
+  // Stage the switch as applyWeightEdit does: a pending copy next to the base it came from.
+  const pending = structuredClone(applied);
+  SetWeightForm(pending.costs.sp, repo.costs.sp, true);
+  assert.deepEqual([pending.costs.sp.multiplier, pending.costs.sp.weight], [true, 0], 'on starts at the no-change weight 0');
+  pending.costs.sp.weight = -0.1;
+  SetWeightForm(pending.effects.block, repo.effects.block, true);
+  SetWeightForm(pending.statuses.vulnerable, repo.statuses.vulnerable, true);
+  assert.deepEqual(ScoringDiffPaths(applied, pending).sort(), ['costs.sp.multiplier', 'costs.sp.weight', 'effects.block.multiplier', 'effects.block.weight', 'statuses.vulnerable.multiplier', 'statuses.vulnerable.weight']);
+  assert.deepEqual(ValidateScoringConfig(pending), []);
+  // Apply: the merged config scores SP as P x -0.1 per SP, so the stronger card pays more.
+  const merged = MergePendingScoring(applied, applied, pending);
+  const low = ScoreCard({ ...BaseFace(), sp: 1, dmg: 5 }, merged), high = ScoreCard({ ...BaseFace(), sp: 1, dmg: 40 }, merged);
+  assert.equal(low.parts.SP, low.positive * -0.1);
+  assert.equal(high.parts.SP, high.positive * -0.1);
+  assert.ok(high.parts.SP < low.parts.SP);
+  // The words and the worked example name the multiplier form, with the selected card's positive score when given.
+  assert.deepEqual(weightSentence('costs', 'sp', merged), { before: '', mid: '× P per SP', after: '' });
+  assert.deepEqual(weightSentence('effects', 'block', merged, 'block'), { before: '', mid: '× P per', after: 'Block' });
+  assert.deepEqual(weightSentence('statuses', 'vulnerable', merged), { before: '', mid: '× P per stack', after: '' });
+  assert.equal(weightExample('costs', 'sp', merged, 'SP'), 'Positive score 20: 2 SP = -4 pts');
+  assert.equal(weightExample('costs', 'sp', merged, 'SP', { name: 'Strike', positive: 14 }), 'Strike (positive score 14): 2 SP = -2.8 pts');
+  assert.equal(weightSentence('costs', 'mp', merged).mid, 'pts per MP', 'a flat row keeps its words');
+  // The multi-effect bonus switches the same way.
+  const counted = structuredClone(applied);
+  SetWeightForm(counted.effectCount, repo.effectCount, true);
+  counted.effectCount.weight = 0.1;
+  assert.equal(weightSentence('rank', 'effectCount', counted).mid, '× P per extra effect');
+  assert.equal(weightExample('rank', 'effectCount', counted, 'Multi-Effect Bonus', { name: 'Strike', positive: 10 }), 'Strike (positive score 10): 3 effects = 2 pts');
+  SetWeightForm(counted.effectCount, repo.effectCount, false);
+  assert.deepEqual(counted, applied);
+  // Every weighted tag multiplies: a flat tag with no multiplier key switches to pMultiplier (P x n, per hit when it counts hits).
+  const { SetTagForm, TagMultiplierKey } = await import('../tools/score-studio/weightExamples.js');
+  const tagged = structuredClone(applied);
+  const blunt = tagged.tags['damage:blunt'];
+  const key = TagMultiplierKey(blunt, repo.tags['damage:blunt']) || 'pMultiplier';
+  assert.equal(key, 'pMultiplier');
+  SetTagForm(blunt, key, true);
+  assert.deepEqual([blunt.weight, blunt.pMultiplier, blunt.per], [0, 0, 'hit']);
+  blunt.pMultiplier = 0.1;
+  assert.deepEqual(ValidateScoringConfig(tagged), []);
+  assert.deepEqual(weightSentence('tags', 'damage:blunt', tagged), { before: 'adds', mid: '× positive score per', after: '' });
+  assert.equal(weightExample('tags', 'damage:blunt', tagged, 'Blunt', { name: 'Strike', positive: 10 }), 'Strike (positive score 10): 3 hits = +3 pts');
+  const hit = ScoreCard({ ...BaseFace(), dmg: 10, hits: 2, tags: ['damage:blunt'] }, tagged);
+  assert.equal(hit.parts['damage:blunt'], hit.positive * 0.1 * 2);
+  SetTagForm(blunt, key, false, repo.tags['damage:blunt']);
+  assert.deepEqual([blunt.weight, 'pMultiplier' in blunt], [repo.tags['damage:blunt'].weight, false], 'off restores the repo flat weight, so on then off stages nothing');
+  SetTagForm(blunt, key, false);
+  assert.equal(blunt.weight, 0, 'without a repo tag to restore, off is flat 0');
+  SetTagForm(blunt, key, false, repo.tags['damage:blunt']);
+  // Switching back restores the repo's flat weight and drops the flag, so nothing is left staged.
+  SetWeightForm(pending.costs.sp, repo.costs.sp, false);
+  SetWeightForm(pending.effects.block, repo.effects.block, false);
+  SetWeightForm(pending.statuses.vulnerable, repo.statuses.vulnerable, false);
+  assert.deepEqual(ScoringDiffPaths(applied, pending), []);
+  assert.deepEqual(pending, applied);
+});
+
 test('studio restore: a draft with the old naming tables takes the repo naming and drops prefix / suffix', async () => {
   const { RefreshRestoredNaming, NamingIsStale } = await import('../tools/score-studio/weightsStaging.js');
   const { CardName } = await import('../src/model/combatPower.js');
@@ -439,23 +501,25 @@ test('score-studio loading state: initial HTML shows card loading UI and loading
   assert.match(html, /<div id="items-loading" class="studio-loading-state studio-loading-compact" role="status" aria-live="polite" aria-busy="true">/, 'items loading state renders initially');
 
   const studioSrc = readFileSync(new URL('../tools/score-studio/studio.js', import.meta.url), 'utf8');
-  assert.match(studioSrc, /deriveFaceFromDef:\s*\(?def\)?\s*=>\s*cardDefToFace\(def,\s*state\.scoring\)/, 'initStudioToolsModals receives a defined deriveFaceFromDef callback backed by cardDefToFace');
+  assert.match(studioSrc, /deriveFaceFromDef:\s*def\s*=>\s*withRebalancePreviewRegistry\(\(\)\s*=>\s*cardDefToFace\(clone\(def\),\s*state\.scoring\)\)/, 'rebalance derives faces from detached cards without leaking preview cache changes');
 });
 
-test('score-studio app menubar: File/Edit/View/Tools/Window and Export dropdown contain expected actions', () => {
+test('score-studio app menubar preserves approved commands, context selectors and export actions', () => {
   const html = readFileSync(new URL('../tools/score-studio/index.html', import.meta.url), 'utf8');
-  for (const id of ['btn-menu-file', 'btn-menu-edit', 'btn-menu-view', 'btn-menu-tools', 'btn-menu-window', 'btn-export-menu']) {
+  for (const id of ['menu-file', 'menu-edit', 'menu-view', 'menu-tools', 'menu-git', 'menu-test']) {
     assert.match(html, new RegExp(`id="${id}"`), `menu bar exposes #${id}`);
   }
   for (const id of [
-    'menu-file', 'menu-edit', 'menu-view', 'menu-tools', 'menu-window', 'export-menu',
+    'studio-file-menu', 'studio-edit-menu', 'studio-view-menu', 'studio-tools-menu', 'studio-git-menu', 'studio-test-menu',
+    'gallery-type-cards', 'gallery-type-items',
     'btn-auto-balance-cards', 'btn-auto-balance-items', 'btn-generate-cards',
     'btn-batch-generate-cards', 'btn-batch-generate-items', 'btn-custom-decks',
-    'btn-export-repo', 'btn-download-json', 'btn-export-bundle-json',
-    'btn-export-names-json', 'btn-export-art-json', 'btn-export-item-art-json',
-    'restore-names-modal', 'btn-restore-names', 'btn-restore-names-apply',
+    'btn-export-repo', 'btn-download-json', 'btn-decks-export-json',
+    'btn-save-names', 'btn-download-art',
+    'restore-names-menu', 'btn-restore-names', 'btn-restore-names-apply',
   ]) {
     assert.match(html, new RegExp(`id="${id}"`), `moved menu action or panel #${id} is present`);
   }
-  assert.doesNotMatch(html, /id="btn-more"/, 'old More overflow button is replaced by the standard app menu bar');
+  assert.match(html, /id="studio-menubar"[^>]*role="menubar"/, 'the approved command row remains the application menubar');
+  assert.doesNotMatch(html, /id="restore-names-modal"/, 'Restore names retains one live set of controls');
 });

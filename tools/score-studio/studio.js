@@ -16,19 +16,20 @@ import { itemArtLayers as shippedItemArtLayers } from '../../src/content/generat
 import { cardShapeCssProperties } from '../../src/ui/models/CardSizeModel.js';
 import { reviewedCardArtCatalog } from '../../src/content/reviewedCardArt.generated.js';
 import { scoring as shippedScoring } from '../../src/content/generated/scoring.js';
-import { BaseFace, CardKind, CardCategories, ScoreCard, CombatPower, RankOf, RankName, CardName, CardNameParts, ApplyScoringOverride } from '../../src/model/combatPower.js';
+import { CardKind, CardCategories, ScoreCard, CombatPower, RankOf, RankName, CardName, CardNameParts, ApplyScoringOverride, ParseUpgradeTag, UpgradeTagLabel } from '../../src/model/combatPower.js';
 import { ValidateScoringConfig, NAME_LIMIT_PARTS } from '../../src/model/activeScoring.js';
 import { EffectiveWardHp } from '../../src/model/fixCoreMechanics.js';
 import { staticCardTokens } from '../../src/model/playingCard.js';
 import { tokenRe, computeTokenBindings } from '../../src/model/validate.js';
 import { ScoringDiffPaths, MergePendingScoring, HasRankPin, WithoutRankPin, STUDIO_SAVE_PATH, RefreshRestoredNaming } from './weightsStaging.js';
 import { DEFAULT_NAME_SET_ID, DefaultNameSet, CaptureNameSet, TurnOnAutoNames, ApplyNameSet, SortedNameSets, ValidNameSets, MergeNameSets, SplitSavedConfig, JoinSavedConfig, DefaultNameSetLabel, NameSetFile, NameSetFileName, ParseNameSetFile } from './nameSets.js';
-import { weightSentence, weightExample, TagMultiplierKey, SetKeywordForm, SetTagForm } from './weightExamples.js';
+import { weightSentence, weightExample, TagMultiplierKey, SetKeywordForm, SetTagForm, SetWeightForm } from './weightExamples.js';
 import { PlanCardPool, MeasurePoolShape } from '../../src/model/cardPoolPlan.js';
 import { GenerateCard } from '../../src/model/cardGenerator.js';
+import { ScoreGeneratedItem } from '../../src/model/itemGenerator.js';
 import { RenderPoolForm, ReadPoolForm, NormaliseSettings, UpdatePoolSums } from './cardPoolForm.js';
 import { buildItemRoster, typeModsForEntry, scoreItemEntry, livePieceFromEntry, describeItemMod, formatModString, ITEM_TRAIT_SELECTORS, ITEM_QUICK_TRAITS, ITEM_MOTIF_OPTIONS } from './itemStudio.js';
-import { initStudioToolsModals } from './studioToolsModal.js';
+import { initStudioToolsModals, downloadJsonFile } from './studioToolsModal.js';
 import {
   DEFAULT_ART_LOAD_TIMEOUT_MS,
   parseLoadingShotMode,
@@ -36,6 +37,17 @@ import {
   formatArtLoadingStatus,
   summarizeTileArtLoad,
 } from './loadingState.js';
+import { initSubclassCatalogUi, upgradeNames } from './subclassCatalog.js';
+import { CardDefinitionToScoreFace } from '../../src/model/cardUpgradeCp.js';
+import { ProjectCardMechanicalValues } from '../../src/model/cardMechanicalProjection.js';
+import { RefreshSubclassCard, SubclassCardText } from '../../src/model/subclassCardGenerator.js';
+import { initCardSelectionUi, isAddedCard, removeAddedCardsFromState, addSelectedCardsToDeck, removeSelectedCardsFromDeck } from './cardSelection.js';
+import { initCardEditorDock } from './cardEditorDock.js';
+import { initDeckListPanel } from './deckListPanel.js';
+import { filterMembership, deckCatalogOptions, resolveStudioDeck } from './deckCatalog.js';
+import { initGalleryZoom } from './galleryZoom.js';
+import { focusedEffectOptions } from './focusedRebalance.js';
+import { createAddCardTile, CaptureCardTilePositions, animateCardInsertion } from './addCardTile.js';
 
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
 const AB_STORAGE_KEY = 'ashenspire:scoreStudioAB:v1';
@@ -53,6 +65,8 @@ const isLocalServer = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
 
 // Bootstrap real game registries
 const profile = Profile.resolveGameProfile('default');
+const configuredCustomCardIds = new Set(Profile.gameModule(profile, 'cards')?.mode === 'configured'
+  ? (Profile.gameContent(profile, 'cards') || []).filter(card => card.id.startsWith('custom.')).map(card => card.id) : []);
 const registries = Profile.bindGameProfileRegistries(
   createRegistries(Profile.applyGameProfileToContent(contentBundle, profile)),
   profile
@@ -98,10 +112,6 @@ const clone = (v) => structuredClone(v);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const safeNum = (v, fb = 0) => { const n = Number(v); return Number.isFinite(n) ? n : fb; };
 const ALLOWED_BLEND_MODES = new Set(['normal', 'screen', 'multiply', 'overlay', 'color']);
-const offenseAmount = (hit) => {
-  const rows = (hit?.sources || []).filter((s) => s.stage === 'offense' && typeof s.effective === 'number' && Number.isFinite(s.effective));
-  return rows.length ? rows[rows.length - 1].effective : (hit?.incoming ?? 0);
-};
 function safeCardName(face, scoringRef) {
   return CardName(face, 0, namingScoring(scoringRef));
 }
@@ -129,6 +139,7 @@ const state = {
   selectedItemKey: null,
   customClasses: [],
   customDecks: [],
+  subclassCatalog: null,
   selectedLayerIdx: 0,
   artTarget: 'cards',   // 'cards' | 'items'
   selectedItemLayerIdx: 0,
@@ -174,7 +185,8 @@ function normalizeStudioCard(def) {
   def.kindIds = [kind];
   def.icon = def.icon || (def.type === 'attack' || def.type === 'strike' ? 'attack' : 'skill');
   const isSpell = def.tags.includes('camp:spell');
-  def.damageSchool = isSpell ? 'magic' : 'physical';
+  if (isSpell && (!def.damageSchool || def.damageSchool === 'physical')) def.damageSchool = 'magic';
+  else if (!isSpell && !(def.magicShare > 0)) def.damageSchool = 'physical';
   def.staminaCost = Math.max(0, Number(def.staminaCost ?? def.cost ?? 0) || 0);
   def.cost = def.staminaCost;
   def.manaCost = Math.max(0, Number(def.manaCost ?? 0) || 0);
@@ -203,121 +215,8 @@ function liveCardIdFor(def) {
   return liveId;
 }
 
-// The card's final in-play numbers (cost, damage, block, poise...) measured by previewCard in its class's
-// reference combat, so the score matches what the card does in a fight.
-function measureFinalValues(def) {
-  const liveId = liveCardIdFor(def);
-  const isSpell = (def.tags || []).includes('camp:spell') || (def.damageSchool && def.damageSchool !== 'physical');
-  const { combat, enemy } = refContextFor(def);
-  const probeId = '__studio_probe';
-  combat.piles.hand.push({ instanceId: probeId, cardId: liveId, upgraded: false });
-  const measured = {
-    sp: def.staminaCost ?? def.cost ?? 0,
-    mp: def.manaCost ?? 0,
-    dmg: 0,
-    hits: 1,
-    blk: 0,
-    poise: 0,
-    counter: (def.tags || []).includes('maneuver:counter') ? 1 : 0,
-    reflect: 0,
-    evade: 0,
-    authoredDmg: 0,
-    authoredBlk: 0,
-    usedPreview: false,
-  };
-  for (const e of def.effects || []) {
-    const amt = typeof e.amount === 'number' ? e.amount : 0;
-    if (e.op === 'damage') measured.authoredDmg += amt * (e.hits || 1);
-    else if (e.op === 'block' || e.op === 'ward') measured.authoredBlk += amt;
-  }
-  try {
-    // SP and MP stay the costs typed in Card Basics. The reference fight reprices an edited card (the multi-hit
-    // SP floor turned Feint's 0 SP into 3; a stance cut kept Brace at 0 SP whatever was typed), so the score
-    // charged for a cost the chip did not show. Every shipped Core card measures its authored cost anyway.
-    const prev = previewCard(combat, probeId, enemy.id);
-    if (prev && Array.isArray(prev.values) && prev.values.length) {
-      measured.usedPreview = true;
-      for (const v of prev.values) {
-        if (v.op === 'damage') {
-          const r = v.damageReceipt?.hits || [];
-          const perHit = r.length ? r.map(offenseAmount) : (v.hitDamages || []);
-          const hits = Math.max(1, perHit.length || v.hits || 1);
-          measured.hits = Math.max(measured.hits, hits);
-          measured.dmg += perHit.length
-            ? perHit.reduce((n, x) => n + x, 0)
-            : (Number.isFinite(v.totalDamage) ? v.totalDamage : ((v.faceValue ?? v.value ?? 0) * hits));
-          measured.poise += Object.values(v.perTargetPoise || {}).reduce((n, x) => n + (Number.isFinite(x?.removed) ? x.removed : 0), 0);
-        } else if (v.op === 'block' || v.op === 'ward') {
-          measured.blk += safeNum(v.value, 0);
-        } else if (v.op === 'poiseDamage') {
-          const pRemoved = Object.values(v.perTargetPoise || {}).reduce((n, x) => n + (Number.isFinite(x?.removed) ? x.removed : 0), 0);
-          measured.poise += (isSpell && pRemoved > 0) ? pRemoved : safeNum(v.value, 0);
-        } else if (v.op === 'applyStatus' && v.status === 'evade') {
-          measured.evade += safeNum(v.value, 0);
-        } else if (v.op === 'applyReflect') {
-          measured.reflect += safeNum(v.value, 0);
-        }
-      }
-    }
-  } catch { /* fallback below */ } finally {
-    const i = combat.piles.hand.findIndex((c) => c.instanceId === probeId);
-    if (i >= 0) combat.piles.hand.splice(i, 1);
-  }
-  if (!measured.usedPreview) {
-    for (const e of def.effects || []) {
-      const amt = typeof e.amount === 'number' ? e.amount : 1;
-      if (e.op === 'damage') { measured.dmg += amt * (e.hits || 1); measured.hits = Math.max(measured.hits, e.hits || 1); }
-      else if (e.op === 'block' || e.op === 'ward') measured.blk += amt;
-      else if (e.op === 'poiseDamage') measured.poise += amt;
-      else if (e.op === 'applyReflect') measured.reflect += amt;
-    }
-  }
-  return measured;
-}
-
 function cardDefToFace(def, scoringRef) {
-  const f = BaseFace();
-  const tags = Array.isArray(def.tags) ? [...def.tags] : [];
-  const m = measureFinalValues(def);
-  f.name = def.name || def.id;
-  f.cls = def.class || 'colorless';
-  f.rarity = def.rarity || 'common';
-  f.type = def.type || 'attack';
-  f.camp = tags.includes('camp:spell') || (def.damageSchool && def.damageSchool !== 'physical') ? 'spell' : 'physical';
-  f.sp = m.sp;
-  f.mp = m.mp;
-  f.dmg = m.dmg;
-  f.hits = m.hits;
-  f.blk = m.blk;
-  f.poise = m.poise;
-  f.counter = m.counter;
-  f.reflect = m.reflect;
-  f.kw = Array.isArray(def.keywords) ? [...def.keywords] : [];
-  f.tags = tags;
-  f._meta = m;
-  f.magicShare = safeNum(def.magicShare, 0);
-  if (m.evade > 0) f.statuses.push(['evade', m.evade, 'self']);
-  const statusIds = new Set(Object.keys(scoringRef.statuses || {}));
-  for (const e of def.effects || []) {
-    const amt = typeof e.amount === 'number' ? e.amount : 1;
-    if (e.op === 'applyStatus' && statusIds.has(e.status) && typeof e.stacks === 'number' && Number.isFinite(e.stacks)) {
-      if (e.status === 'evade' && m.evade > 0) continue;
-      f.statuses.push([e.status, e.stacks, e.target === 'self' ? 'self' : 'enemy']);
-    } else if (e.op === 'gainBarrier') f.statuses.push(['barrier', amt, 'self']);
-    else if (e.op === 'restorePoise') f.blk += amt;
-    else if (e.op === 'draw') f.draw += amt;
-    else if (e.op === 'heal') f.heal += amt;
-    else if (e.op === 'loseHp') f.loseHp += amt;
-    else if (e.op === 'discard') f.discard += amt;
-    else if (e.op === 'restoreStamina' || e.op === 'gainEnergy') f.restoreSp += amt;
-    else if (e.op === 'restoreMana') f.restoreMp += amt;
-    else if (e.op === 'removeStatus' && e.target === 'self') f.cleanse += 1;
-    else if (e.op === 'applyReflect' && !m.usedPreview && m.reflect === 0) f.reflect += amt;
-    else if (e.op === 'moveEngagement') f.move += 1;
-    else if (e.op === 'pullEnemy' || e.op === 'swapRows') f.pull += 1;
-  }
-  if (def.ramp && !f.tags.includes('ramp.honed')) f.tags.push('ramp.honed');
-  return f;
+  return CardDefinitionToScoreFace(def, { scoring: scoringRef, registries: studioRegistries, rules: refContextFor(def).run });
 }
 
 // ---------------------------------------------------------------------------
@@ -439,24 +338,20 @@ function toast(msg) {
 function snapshotState() {
   return JSON.stringify({
     scoring: state.scoring,
+    baselineRanks: state.baselineRanks,
     cards: state.cards,
     items: state.items,
     artLayers: state.artLayers,
     itemArtLayers: state.itemArtLayers,
     customClasses: state.customClasses,
     customDecks: state.customDecks,
+    subclassCatalog: state.subclassCatalog,
   });
 }
 
 function updateUndoButtons() {
-  const noUndo = state.undoStack.length === 0;
-  const noRedo = state.redoStack.length === 0;
-  document.getElementById('btn-undo').disabled = noUndo;
-  document.getElementById('btn-redo').disabled = noRedo;
-  const menuUndo = document.getElementById('btn-menu-undo');
-  const menuRedo = document.getElementById('btn-menu-redo');
-  if (menuUndo) menuUndo.disabled = noUndo;
-  if (menuRedo) menuRedo.disabled = noRedo;
+  document.getElementById('btn-undo').disabled = state.undoStack.length === 0;
+  document.getElementById('btn-redo').disabled = state.redoStack.length === 0;
 }
 
 // Records an undo point for the state as it is now. Call before mutating; call saveDraft() after.
@@ -643,6 +538,7 @@ function writeDraftNow() {
           generatorSettings: state.generatorSettings,
           customClasses: state.customClasses,
           customDecks: state.customDecks,
+          subclassCatalog: state.subclassCatalog,
         }));
       } else {
         localStorage.removeItem(DRAFT_STORAGE_KEY);
@@ -674,12 +570,14 @@ function flushDraft() {
 function restoreSnapshot(snapStr) {
   const snap = JSON.parse(snapStr);
   state.scoring = snap.scoring;
+  state.baselineRanks = clone(snap.baselineRanks || {});
   state.cards = snap.cards;
   if (Array.isArray(snap.items)) state.items = snap.items;
   state.artLayers = snap.artLayers;
   if (snap.itemArtLayers?.layers) state.itemArtLayers = snap.itemArtLayers;
   if (Array.isArray(snap.customClasses)) state.customClasses = snap.customClasses;
   if (Array.isArray(snap.customDecks)) state.customDecks = snap.customDecks;
+  state.subclassCatalog = snap.subclassCatalog || null;
   studioCardOverrides.clear();
   if (!state.cards.some((c) => c.id === state.selectedCardId)) state.selectedCardId = state.cards[0]?.id || null;
   if (!state.items.some((x) => x.key === state.selectedItemKey)) state.selectedItemKey = state.items[0]?.key || null;
@@ -690,11 +588,13 @@ function restoreSnapshot(snapStr) {
 // ---------------------------------------------------------------------------
 // Procedural Art Layer Overlay
 // ---------------------------------------------------------------------------
-function matchingCustomLayers(def) {
+// The card art layers that apply to a card, in z-order. `includeDisabled` keeps the ones switched off, so they
+// can be switched back on from beside the card.
+function matchingCustomLayers(def, { includeDisabled = false } = {}) {
   const tags = def.tags || [];
   const statuses = (def.effects || []).filter((e) => e.op === 'applyStatus').map((e) => e.status);
   return (state.artLayers.layers || [])
-    .filter((l) => l.enabled !== false && l.assetId)
+    .filter((l) => (includeDisabled || l.enabled !== false) && l.assetId)
     .filter((l) => {
       if (l.matchKind === 'default') return true;
       if (l.matchKind === 'type') return def.type === l.matchValue;
@@ -882,6 +782,7 @@ function syncAutoNames({ render = true } = {}) {
     const name = autoNameFor(def);
     if (name === def.name) continue;
     def.name = name;
+    clearNewDraft(def);
     renamed.push(def);
   }
   if (!render || !renamed.length) return renamed;
@@ -895,6 +796,23 @@ function syncAutoNames({ render = true } = {}) {
     renderNameHint(selected);
   }
   return renamed;
+}
+
+function autoNameSelectedCards(ids) {
+  const selected = new Set(ids);
+  const cards = state.cards.filter(card => selected.has(card.id));
+  if (!cards.length) return;
+  pushHistory();
+  for (const card of cards) {
+    clearNewDraft(card);
+    card._autoName = true;
+    card.name = autoNameFor(card);
+    card._edited = true;
+    refreshSubclassEdit(card);
+  }
+  syncAllViews();
+  saveDraft({ autoName: false });
+  toast(`Auto-named ${cards.length} selected cards`);
 }
 
 // The muted line under Name: what the name is built from.
@@ -1163,8 +1081,6 @@ function restoreSelectedNameSet() {
   renderInspector();
   saveDraft({ autoName: false });
   closeMenus();
-  const restoreModal = document.getElementById('restore-names-modal');
-  if (restoreModal?.open) restoreModal.close();
   toast(count ? `Restored ${set.label} on ${count} card(s); Auto-name is off for them` : `Every card already has ${set.label}`);
 }
 
@@ -1211,7 +1127,6 @@ function openSaveNamesAsDialog() {
 }
 
 async function loadNamesFile(e) {
-  closeMenus();
   const file = e.target.files?.[0];
   e.target.value = '';
   if (!file) return;
@@ -1265,10 +1180,6 @@ function wireNameSets() {
     if (!remove) return;
     e.preventDefault();
     deleteNameSet(remove.dataset.nameSetDelete);
-  });
-  document.getElementById('btn-restore-names')?.addEventListener('click', () => {
-    renderNameSetsList();
-    document.getElementById('restore-names-modal')?.showModal();
   });
   document.getElementById('btn-restore-names-apply').addEventListener('click', restoreSelectedNameSet);
   renderNameSetsList();
@@ -1531,6 +1442,9 @@ function updateCardTileInPlace(cardId) {
     : '';
   renderCardWithLayers(def, tile.querySelector('.studio-card-stage'), sc);
   tile.querySelector('.studio-card-meta').innerHTML = tileMetaHtml(def, sc, shiftHtml);
+  tile.classList.toggle('is-new-draft', Boolean(def._newDraft));
+  cardSelectionUi?.decorateTile(tile, def);
+  cardEditorDockUi?.decorateTile(tile, def);
 }
 
 // Tile caption: the name on its own line, then CP, rank and act, the rank shift, and the stale-text marker.
@@ -1551,9 +1465,7 @@ function getFilteredCards() {
   const rankF = document.getElementById('filter-rank').value;
   const shiftF = document.getElementById('filter-shift').value;
   const deckF = document.getElementById('filter-deck')?.value || 'all';
-  const deckSet = deckF !== 'all'
-    ? new Set((state.customDecks || []).find((d) => d.id === deckF)?.cardIds || [])
-    : null;
+  const deckSet = filterMembership(state, deckF, 'cards');
 
   return state.cards.filter((c) => {
     const sc = scoreCardEntry(c);
@@ -1576,6 +1488,7 @@ function renderCardsGrid() {
   const filtered = getFilteredCards();
 
   grid.innerHTML = '';
+  grid.appendChild(createAddCardTile({ onAdd: () => document.getElementById('btn-new-card').click() }));
   for (const def of filtered) {
     const sc = scoreCardEntry(def);
     const baseRank = state.baselineRanks[def.id];
@@ -1583,27 +1496,38 @@ function renderCardsGrid() {
       ? `<span class="${sc.rank > baseRank ? 'shift-up' : 'shift-down'}">${sc.rank > baseRank ? '↑' : '↓'} R${baseRank}→R${sc.rank}</span>`
       : '';
     const tile = document.createElement('div');
-    tile.className = 'studio-card-tile' + (def.id === state.selectedCardId ? ' is-selected' : '');
+    tile.className = 'studio-card-tile' + (def.id === state.selectedCardId ? ' is-selected' : '') + (def._newDraft ? ' is-new-draft' : '');
     tile.dataset.cardId = def.id;
     tile.innerHTML = `<div class="studio-card-stage"></div><div class="studio-card-meta">${tileMetaHtml(def, sc, shiftHtml)}</div>`;
     renderCardWithLayers(def, tile.querySelector('.studio-card-stage'), sc);
     tile.tabIndex = 0;
     const selectTile = () => {
-      state.selectedCardId = def.id;
-      document.querySelectorAll('.studio-card-tile.is-selected').forEach((n) => n.classList.remove('is-selected'));
-      tile.classList.add('is-selected');
-      renderInspector();
-      if (isNarrowLayout()) openInspectorSheet();
+      selectStudioCard(def.id);
     };
     tile.addEventListener('click', selectTile);
-    tile.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectTile(); } });
+    tile.addEventListener('keydown', (e) => { if (e.target === tile && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); selectTile(); } });
+    cardSelectionUi?.decorateTile(tile, def);
+    cardEditorDockUi?.decorateTile(tile, def);
     grid.appendChild(tile);
   }
+  cardSelectionUi?.refresh();
+  cardEditorDockUi?.refresh();
   if (LOADING_SHOT_MODE !== 'loading') {
     setCardsLoading(false);
     trackCardsArtLoading(grid);
   }
   computeShiftCount();
+}
+
+function selectStudioCard(id) {
+  if (!state.cards.some(card => card.id === id)) return;
+  state.selectedCardId = id;
+  for (const tile of document.querySelectorAll('.studio-card-tile')) tile.classList.toggle('is-selected', tile.dataset.cardId === id);
+  renderInspector();
+  renderArtTab();
+  deckListPanelUi?.refresh();
+  cardEditorDockUi?.refresh();
+  if (isNarrowLayout() && !cardEditorDockUi) openInspectorSheet();
 }
 
 // ---------------------------------------------------------------------------
@@ -1698,18 +1622,29 @@ function renderAddFeatureOptions({ pickBest = false } = {}) {
 
 function renderInspector() {
   const def = state.cards.find((c) => c.id === state.selectedCardId) || state.cards[0];
-  if (!def) return;
+  if (!def) {
+    // No card left to show: clear the stale preview and let the pane show its empty state.
+    document.getElementById('inspector-card-preview').replaceChildren();
+    document.getElementById('inspector-sheet-title').textContent = '';
+    state.selectedCardId = null;
+    cardEditorDockUi?.refresh();
+    return;
+  }
   state.selectedCardId = def.id;
+  cardEditorDockUi?.refreshEntity?.();
 
   renderCardWithLayers(def, document.getElementById('inspector-card-preview'));
   document.getElementById('inspector-sheet-title').textContent = def.name || '';
   const sc = scoreCardEntry(def);
   renderScoreSummary(def, sc);
+  const upgradeSummary = document.getElementById('inspector-upgrade-summary');
+  upgradeSummary.textContent = def.upgradeMenu?.length ? `${def.id.startsWith('subclass.') ? 'CP projects conditional and next-card effects. ' : ''}Upgrade choices (unlocked by tier): ${upgradeNames(def).join(', ')}` : '';
+  upgradeSummary.hidden = !def.upgradeMenu?.length;
 
   document.getElementById('edit-name').value = def.name || '';
   document.getElementById('toggle-auto-name').checked = Boolean(def._autoName);
   renderNameHint(def, sc);
-  document.getElementById('btn-delete-card').classList.toggle('hidden', !def._custom);
+  document.getElementById('btn-delete-card').classList.toggle('hidden', !isAddedCard(def));
   document.getElementById('btn-reset-card').classList.toggle('hidden', !def._edited || Boolean(def._custom));
   const textInput = document.getElementById('edit-text');
   if (textInput.value !== (def.textTemplate || '')) textInput.value = def.textTemplate || '';
@@ -1764,6 +1699,11 @@ function renderInspector() {
           <button class="s-btn s-btn-sm" data-rm-eff="${idx}">×</button>
         </div>
         ${infoLineHtml(describeFeature('status', eff.status))}`;
+    } else if (eff.op === 'grantCardCharge') {
+      const labels = { damage: 'Damage', block: 'Block', heal: 'Healing', break: 'Poise damage', manaDiscount: 'Mana discount', buildup: `${eff.buildupStatus || 'Status'} buildup` };
+      const fields = Object.keys(labels).filter(field => Number.isFinite(eff[field]));
+      row.innerHTML = `<span class="feature-label">Next ${eff.abilityKind === 'spell' ? 'spell' : 'attack'} charge</span>
+        <div class="feature-controls">${chipFor()}${fields.map(field => `<label>${esc(labels[field])}<input type="number" min="0" max="99" value="${esc(eff[field])}" data-eff-charge="${idx}" data-charge-field="${field}" /></label>`).join('')}<button class="s-btn s-btn-sm" data-rm-eff="${idx}">×</button></div>`;
     } else {
       const amtIsNum = eff.amount == null || (typeof eff.amount === 'number' && Number.isFinite(eff.amount));
       const isDirectStacks = eff.op === 'gainBarrier';
@@ -1974,11 +1914,156 @@ function renderCostChips(def, sc) {
 function renderScoreSummary(def, sc) {
   const baseRank = state.baselineRanks[def.id];
   const shiftTxt = (baseRank !== undefined && baseRank !== sc.rank) ? ` (was ${RankName(baseRank)})` : '';
-  document.getElementById('inspector-score-summary').innerHTML = `
-    <div class="inspector-score-big">CP ${sc.cp}</div>
-    <div><strong>${esc(RankName(sc.rank))}</strong> · ${esc(actForRank(sc.rank))}${esc(shiftTxt)}</div>
-    <div class="studio-muted">Raw: ${sc.raw} · Rarity: ${esc(sc.rarity)}${sc.overridden ? ' · Overridden' : ''}</div>
-  `;
+  // Shown in the card banner, right of the name: rank, rarity, then CP. Spans only: it sits inside a button.
+  // Each value is compared with the in-game card: higher reads red, lower reads green.
+  const before = inGameScore(def);
+  const rarity = String(sc.rarity || '').replace(/^./, (ch) => ch.toUpperCase());
+  const rarityNow = RARITY_ORDER.indexOf(String(sc.rarity || '').toLowerCase());
+  const rarityThen = before ? RARITY_ORDER.indexOf(String(before.rarity || '').toLowerCase()) : -1;
+  document.getElementById('inspector-score-summary').innerHTML =
+    `<span class="inspector-score-rank${trendClass(sc.rank, before?.rank)}"${trendTitle(before ? RankName(before.rank) : "", sc.rank, before?.rank) || (shiftTxt ? ` title="${esc(shiftTxt.trim().replace(/^\(|\)$/g, ''))} before weight changes"` : '')}>${esc(RankName(sc.rank))}</span>`
+    + `<span class="inspector-score-rarity${rarityNow >= 0 && rarityThen >= 0 ? trendClass(rarityNow, rarityThen) : ''}"${rarityNow >= 0 && rarityThen >= 0 ? trendTitle(before.rarity, rarityNow, rarityThen) : ''}>${esc(rarity)}${sc.overridden ? ' · Overridden' : ''}</span>`
+    + `<span class="inspector-score-big">CP: ${sc.cp}</span>${cpTrendHtml(sc, before)}`;
+}
+
+const RARITY_ORDER = Object.freeze(['starter', 'common', 'uncommon', 'rare', 'boss']);
+
+// The card options menu beside the card. Each item runs the handler the rest of the Studio already uses.
+function cardMenuActions() {
+  const def = selectedCardDef();
+  if (!def) return [];
+  const added = isAddedCard(def), inGame = registries.cards.has(def.id);
+  const openDecks = () => {
+    cardSelectionUi?.select([def.id], { replace: true });
+    setCustomizationView('decks');
+    deckListPanelUi?.element.querySelector('[data-deck-select]')?.focus();
+  };
+  return [
+    { label: 'Duplicate', run: () => document.getElementById('btn-duplicate-card').click() },
+    { label: 'Delete', enabled: added, hint: added ? '' : 'Only cards you added can be deleted', run: () => document.getElementById('btn-delete-card').click() },
+    { label: 'Reset to default', enabled: inGame && !!def._edited && !def._custom, hint: inGame ? (def._edited ? '' : 'No edits to reset') : 'Not a game card', run: () => document.getElementById('btn-reset-card').click() },
+    { separator: true },
+    { label: 'Add to deck…', run: openDecks },
+    { label: 'Remove from deck…', run: openDecks },
+    { label: 'Rebalance…', run: () => studioToolsUi.openBalanceSelection([def.id]) },
+    { separator: true },
+    { label: 'Edit card art', run: () => setCustomizationView('design') },
+    { label: 'View or edit JSON…', run: () => openCardJson(def.id) },
+    { label: 'Export card JSON', hint: 'Download this card as an importable JSON file', run: () => downloadJsonFile(`${def.id}.json`, { name: def.name, cards: [Object.fromEntries(Object.entries(def).filter(([key]) => !key.startsWith('_')))] }) },
+    { label: 'Undock', enabled: cardEditorDockUi?.isDocked?.() !== false, run: () => cardEditorDockUi?.open?.() },
+  ];
+}
+
+// View or edit one card as JSON. Applying goes through mutateSelectedCard, so it is one Undo step.
+let cardJsonDialog = null;
+function openCardJson(id) {
+  const def = state.cards.find((card) => card.id === id);
+  if (!def) return;
+  if (!cardJsonDialog) {
+    cardJsonDialog = document.createElement('dialog'); cardJsonDialog.id = 'card-json-dialog'; cardJsonDialog.className = 'card-json-dialog';
+    cardJsonDialog.setAttribute('aria-labelledby', 'card-json-title');
+    cardJsonDialog.innerHTML = `<h2 id="card-json-title"></h2>
+      <p class="studio-muted">Edits apply to this card only and can be undone. The card ID cannot change here.</p>
+      <textarea id="card-json-text" spellcheck="false" aria-label="Card JSON"></textarea>
+      <p id="card-json-error" class="card-json-error" role="alert"></p>
+      <div class="card-json-actions"><button type="button" class="s-btn" data-json-copy>Copy</button><button type="button" class="s-btn" data-json-close>Close</button><button type="button" class="s-btn s-btn-primary" data-json-apply>Apply</button></div>`;
+    document.body.append(cardJsonDialog);
+    cardJsonDialog.querySelector('[data-json-close]').addEventListener('click', () => cardJsonDialog.close());
+    cardJsonDialog.querySelector('[data-json-copy]').addEventListener('click', () => navigator.clipboard?.writeText(cardJsonDialog.querySelector('#card-json-text').value).then(() => toast('Card JSON copied')));
+    cardJsonDialog.querySelector('[data-json-apply]').addEventListener('click', applyCardJson);
+  }
+  const visible = Object.fromEntries(Object.entries(def).filter(([key]) => !key.startsWith('_')));
+  cardJsonDialog.dataset.cardId = id;
+  cardJsonDialog.querySelector('#card-json-title').textContent = `${def.name || id} JSON`;
+  cardJsonDialog.querySelector('#card-json-text').value = JSON.stringify(visible, null, 2);
+  cardJsonDialog.querySelector('#card-json-error').textContent = '';
+  cardJsonDialog.showModal();
+}
+
+// Shape checks the Studio's renderers rely on, reported before anything changes.
+function cardJsonProblem(card) {
+  if (card.effects !== undefined) {
+    if (!Array.isArray(card.effects)) return '"effects" must be a list.';
+    const bad = card.effects.findIndex((effect) => !effect || typeof effect !== 'object' || Array.isArray(effect) || typeof effect.op !== 'string');
+    if (bad >= 0) return `Effect ${bad + 1} must be an object with an "op" name.`;
+  }
+  if (card.tags !== undefined && (!Array.isArray(card.tags) || card.tags.some((tag) => typeof tag !== 'string'))) return '"tags" must be a list of text.';
+  if (card.name !== undefined && typeof card.name !== 'string') return '"name" must be text.';
+  if (card.textTemplate !== undefined && typeof card.textTemplate !== 'string') return '"textTemplate" must be text.';
+  return '';
+}
+
+function applyCardJson() {
+  const id = cardJsonDialog.dataset.cardId, error = cardJsonDialog.querySelector('#card-json-error');
+  let next;
+  try { next = JSON.parse(cardJsonDialog.querySelector('#card-json-text').value); } catch (err) { error.textContent = `Not valid JSON: ${err.message}`; return; }
+  if (!next || typeof next !== 'object' || Array.isArray(next)) { error.textContent = 'The card must be one JSON object.'; return; }
+  if (next.id !== id) { error.textContent = `Keep the card ID "${id}".`; return; }
+  const problem = cardJsonProblem(next);
+  if (problem) { error.textContent = problem; return; }
+  // Dry run on a copy first: the live card is only touched by JSON that scores.
+  try { scoreCardEntry(normalizeStudioCard(clone(next))); } catch (err) { error.textContent = `Not a valid card: ${err.message}`; return; }
+  if (state.selectedCardId !== id) selectStudioCard(id);
+  const index = state.cards.findIndex((card) => card.id === id), before = clone(state.cards[index]);
+  const history = { undo: [...state.undoStack], redo: [...state.redoStack] };
+  // An explicit name or text in the JSON wins, exactly like typing in the Name or Text field:
+  // it switches that generation off instead of being overwritten by it.
+  const nameChanged = (next.name ?? '') !== (before.name ?? ''), textChanged = (next.textTemplate ?? '') !== (before.textTemplate ?? '');
+  // Snapshot everything first: a failed apply must also undo other cards' auto-names and the Auto-text setting.
+  const snapshot = snapshotState(), autoTextBefore = document.getElementById('toggle-auto-text')?.checked;
+  if (textChanged) {
+    const autoTextToggle = document.getElementById('toggle-auto-text');
+    if (autoTextToggle?.checked) { autoTextToggle.checked = false; writeStoredJson(AUTO_TEXT_KEY, false); }
+  }
+  try {
+    mutateSelectedCard((card) => {
+      const internal = Object.fromEntries(Object.entries(card).filter(([key]) => key.startsWith('_')));
+      for (const key of Object.keys(card)) delete card[key];
+      Object.assign(card, next, internal);
+      if (nameChanged) card._autoName = false;
+      if (textChanged) card._autoText = false;
+    }, { autoName: !nameChanged, autoText: !textChanged });
+  } catch (err) {
+    // Roll back everything the edit touched: all cards, the history entry, the Auto-text setting and the views.
+    try { restoreSnapshot(snapshot); } catch { /* Snapshot data is restored before the views; retain the original apply error. */ }
+    finally {
+      state.undoStack = history.undo;
+      state.redoStack = history.redo;
+      const autoTextToggle = document.getElementById('toggle-auto-text');
+      if (autoTextToggle && autoTextBefore !== undefined && autoTextToggle.checked !== autoTextBefore) { autoTextToggle.checked = autoTextBefore; writeStoredJson(AUTO_TEXT_KEY, autoTextBefore); }
+      updateUndoButtons();
+    }
+    error.textContent = `Not applied: ${err.message}`;
+    return;
+  }
+  cardJsonDialog.close();
+  toast(`Applied JSON to "${next.name || id}"`);
+}
+
+// The card as it ships in the game, scored with the game's weights; null for cards the game does not have.
+function inGameScore(def) {
+  const original = registries.cards.has(def.id) ? registries.cards.get(def.id) : null;
+  if (!original) return null;
+  const sc = scoreCardEntry(clone(original), state.repoScoring);
+  return { cp: sc.cp, rank: sc.rank, rarity: original.rarity || sc.rarity };
+}
+
+function trendClass(now, then) {
+  if (!Number.isFinite(now) || !Number.isFinite(then) || now === then) return '';
+  return now > then ? ' is-up' : ' is-down';
+}
+
+function trendTitle(thenLabel, now, then) {
+  if (!Number.isFinite(now) || !Number.isFinite(then) || now === then) return '';
+  return ` title="${esc(`${now > then ? 'Up' : 'Down'} from ${thenLabel} in game`)}"`;
+}
+
+// Arrow after CP: green and down when CP is below the in-game card, red and up when above.
+function cpTrendHtml(sc, before) {
+  if (!Number.isFinite(before?.cp) || before.cp === sc.cp) return '<span class="cp-trend" aria-hidden="true"></span>';
+  const down = sc.cp < before.cp;
+  const words = `${down ? 'down' : 'up'} from CP ${before.cp} in game`;
+  return `<span class="cp-trend ${down ? 'is-down' : 'is-up'}" title="${esc(words)}" aria-label="${esc(words)}">${down ? '▼' : '▲'}</span>`;
 }
 
 const TARGET_LABELS = Object.freeze({
@@ -2110,8 +2195,8 @@ function scoreMathTableHtml(sc) {
   const S = state.scoring;
   const area = (sc.face.tags || []).includes(S.cardModel?.areaTag || 'targeting:area') ? (S.model?.ENEMIES || 2) : 1;
   const formulaNote = (k) => {
-    if (k === 'SP') return `${sc.face.sp} SP × ${S.costs.sp.weight}`;
-    if (k === 'MP') return `${sc.face.mp} MP × ${S.costs.mp.weight}`;
+    if (k === 'SP') return `${sc.face.sp} SP × ${S.costs.sp.weight}${S.costs.sp.multiplier === true ? ' × positive score' : ''}`;
+    if (k === 'MP') return `${sc.face.mp} MP × ${S.costs.mp.weight}${S.costs.mp.multiplier === true ? ' × positive score' : ''}`;
     if (k === 'damage') return `${sc.face.dmg} final (authored ${sc.face._meta?.authoredDmg ?? sc.face.dmg}) × ${S.effects.damage.weight}/${S.effects.damage.per}${area > 1 ? ` × ${area} AoE` : ''}`;
     if (k === 'block') return `${sc.face.blk} final (authored ${sc.face._meta?.authoredBlk ?? sc.face.blk}) × ${S.effects.block.weight}/${S.effects.block.per}`;
     if (k === 'poise') return `${sc.face.poise} Poise × ${S.effects.poiseDamage.weight}/${S.effects.poiseDamage.per}${area > 1 ? ` × ${area} AoE` : ''}`;
@@ -2137,6 +2222,7 @@ function scoreMathTableHtml(sc) {
 // A plain text written from the card's effects. Used by "Write from effects" and, while the card text's
 // Auto toggle is on, after every feature edit; with Auto off the card text is the designer's own.
 function textFromEffects(def) {
+  if (def.id?.startsWith('subclass.')) return SubclassCardText(def.effects || [], def.keywords || []);
   const parts = [];
   const area = (def.tags || []).includes('targeting:area') ? ' to ALL enemies' : '';
   for (const e of def.effects || []) {
@@ -2220,8 +2306,10 @@ function applyLiveCardEdit(burst, fn) {
   if (JSON.stringify(probe) === JSON.stringify(def)) return;
   burst.begin();
   fn(def);
+  clearNewDraft(def);
   def._edited = true;
   applyAutoText(def);
+  refreshSubclassEdit(def);
   refreshInspectorScoreInPlace(def);
   saveDraft();
 }
@@ -2232,10 +2320,28 @@ const AUTO_TEXT_KEY = 'ashenspire:scoreStudioAutoText:v1';
 const isAutoText = () => Boolean(document.getElementById('toggle-auto-text')?.checked);
 
 function applyAutoText(def) {
-  if (!isAutoText()) return;
+  if (!isAutoText() || def._autoText === false) return;
   def.textTemplate = textFromEffects(def);
   const textInput = document.getElementById('edit-text');
   if (textInput && document.activeElement !== textInput) textInput.value = def.textTemplate;
+}
+
+function refreshSubclassEdit(def) {
+  if (!def.id?.startsWith('subclass.')) return;
+  const refreshed = RefreshSubclassCard(def, { scoring: state.scoring, rebuildText: false });
+  delete def.upgrade;
+  Object.assign(def, refreshed);
+}
+
+function prepareCardEdit(def) {
+  clearNewDraft(def);
+  refreshSubclassEdit(def);
+}
+
+function clearNewDraft(def) {
+  if (!def._newDraft) return;
+  delete def._newDraft;
+  delete def._autoText;
 }
 
 // Refreshes what sits outside the feature list once a number edit is committed.
@@ -2251,11 +2357,13 @@ function mutateSelectedCard(fn, { recordHistory = true, autoName = true, autoTex
   const def = selectedCardDef();
   if (!def) return;
   if (recordHistory) pushHistory();
+  const beforeEdit = JSON.stringify(def);
   fn(def);
-  def._edited = true;
+  if (JSON.stringify(def) !== beforeEdit) { clearNewDraft(def); def._edited = true; }
   // Auto text and Auto-name run in the same step as the edit, so one undo reverts all three.
   if (autoText) applyAutoText(def);
   if (autoName) syncAutoNames({ render: false });
+  refreshSubclassEdit(def);
   // Targeted update: refresh only the inspector and this one card tile.
   renderInspector();
   updateCardTileInPlace(def.id);
@@ -2268,20 +2376,24 @@ function mutateSelectedCard(fn, { recordHistory = true, autoName = true, autoTex
 // ---------------------------------------------------------------------------
 // Rows show the pending copy when weight edits are staged; a row whose value differs from the applied
 // config is marked pending. `shifts: false` skips rescoring every card for the rank-shift summary.
-function renderWeights({ shifts = true } = {}) {
-  const q = document.getElementById('weights-search').value.trim().toLowerCase();
-  const groupF = document.getElementById('weights-group-filter').value;
-  const container = document.getElementById('weights-container');
-  container.innerHTML = '';
-
+// Every weight row, grouped, as the scoring config in state.scoring stands now (swap it with withScoring).
+function buildWeightGroups() {
   const R = state.repoScoring;
-  const buildGroups = () => [
-    { key: 'costs', title: 'Costs (SP / MP)', entries: Object.entries(state.scoring.costs || {}).map(([k, v]) => ({ id: k, label: k.toUpperCase(), val: v.weight, base: R.costs?.[k]?.weight, set: (n) => { state.scoring.costs[k].weight = n; } })) },
-    { key: 'effects', title: 'Effects', entries: Object.entries(state.scoring.effects || {}).map(([k, v]) => ({
-      id: k, label: k, val: v.weight, base: R.effects?.[k]?.weight, set: (n) => { state.scoring.effects[k].weight = n; },
-      per: { value: v.per, base: R.effects?.[k]?.per, set: (n) => { state.scoring.effects[k].per = n; } },
+  return [
+    { key: 'costs', title: 'Costs (SP / MP)', entries: Object.entries(state.scoring.costs || {}).map(([k, v]) => ({
+      id: k, label: k.toUpperCase(), val: v.weight, base: R.costs?.[k]?.weight, step: v.multiplier === true ? 0.05 : 1, set: (n) => { state.scoring.costs[k].weight = n; },
+      mult: weightFormSwitch('costs', k, v),
     })) },
-    { key: 'statuses', title: 'Statuses', entries: Object.entries(state.scoring.statuses || {}).map(([k, v]) => ({ id: k, label: k === 'barrier' ? `Bonus Poise / barrier (${v.target})` : k === 'ward' ? `Ward (Temp HP) / ward (${v.target})` : `${k} (${v.target})`, val: v.weight, base: R.statuses?.[k]?.weight, set: (n) => { state.scoring.statuses[k].weight = n; } })) },
+    { key: 'effects', title: 'Effects', entries: Object.entries(state.scoring.effects || {}).map(([k, v]) => ({
+      id: k, label: k, val: v.weight, base: R.effects?.[k]?.weight, step: v.multiplier === true ? 0.05 : 1, set: (n) => { state.scoring.effects[k].weight = n; },
+      per: { value: v.per, base: R.effects?.[k]?.per, set: (n) => { state.scoring.effects[k].per = n; } },
+      mult: weightFormSwitch('effects', k, v),
+    })) },
+    { key: 'statuses', title: 'Statuses', entries: Object.entries(state.scoring.statuses || {}).map(([k, v]) => ({
+      id: k, label: k === 'barrier' ? `Bonus Poise / barrier (${v.target})` : k === 'ward' ? `Ward (Temp HP) / ward (${v.target})` : `${k} (${v.target})`,
+      val: v.weight, base: R.statuses?.[k]?.weight, step: v.multiplier === true ? 0.05 : 1, set: (n) => { state.scoring.statuses[k].weight = n; },
+      mult: weightFormSwitch('statuses', k, v),
+    })) },
     { key: 'keywords', title: 'Keywords', entries: Object.entries(state.scoring.keywords || {}).map(([k, v]) => {
       const bv = R.keywords?.[k];
       return {
@@ -2298,7 +2410,8 @@ function renderWeights({ shifts = true } = {}) {
       { id: 'unrankedMax', label: 'Unranked Max CP', val: state.scoring.rank.unrankedMax, base: R.rank?.unrankedMax, set: (n) => { state.scoring.rank.unrankedMax = n; } },
       { id: 'width', label: 'Band Width', val: state.scoring.rank.width, base: R.rank?.width, set: (n) => { state.scoring.rank.width = Math.max(1, n); } },
       { id: 'maxRank', label: 'Max Rank', val: state.scoring.rank.maxRank, base: R.rank?.maxRank, set: (n) => { state.scoring.rank.maxRank = Math.max(1, Math.round(n)); } },
-      { id: 'effectCount', label: 'Multi-Effect Bonus', val: state.scoring.effectCount?.weight ?? 5, base: R.effectCount?.weight ?? 5, set: (n) => { (state.scoring.effectCount ||= {}).weight = n; }, surcharge: { value: state.scoring.effectCount?.surchargeEnabled !== false, base: R.effectCount?.surchargeEnabled !== false, set: (on) => { (state.scoring.effectCount ||= {}).surchargeEnabled = Boolean(on); } } },
+      { id: 'effectCount', label: 'Multi-Effect Bonus', val: state.scoring.effectCount?.weight ?? 5, base: R.effectCount?.weight ?? 5, step: state.scoring.effectCount?.multiplier === true ? 0.05 : 1, set: (n) => { (state.scoring.effectCount ||= {}).weight = n; },
+        mult: { value: state.scoring.effectCount?.multiplier === true, base: R.effectCount?.multiplier === true, set: (on) => { SetWeightForm(state.scoring.effectCount ||= {}, R.effectCount, on); } }, surcharge: { value: state.scoring.effectCount?.surchargeEnabled !== false, base: R.effectCount?.surchargeEnabled !== false, set: (on) => { (state.scoring.effectCount ||= {}).surchargeEnabled = Boolean(on); } } },
     ] },
     { key: 'categories', title: 'Categories', entries: CATEGORY_KEYS.map((k) => {
       const v = categoryWeight(state.scoring, k);
@@ -2323,7 +2436,8 @@ function renderWeights({ shifts = true } = {}) {
       const bv = R.tags?.[k];
       const isMult = v.multiplier !== undefined || v.pMultiplier !== undefined;
       // Which multiplier this tag uses when switched on: its own, else the repo's.
-      const multKey = TagMultiplierKey(v, bv);
+      // Every weighted tag can multiply: a tag with no multiplier of its own (or in the repo) switches to pMultiplier (P x n).
+      const multKey = TagMultiplierKey(v, bv) || 'pMultiplier';
       return {
         id: k,
         label: `${v.label || k} (${k})`,
@@ -2334,7 +2448,7 @@ function renderWeights({ shifts = true } = {}) {
         // Damage-type tags score once per action or once per hit (ScoreCard reads per === 'hit').
         per: v.per !== undefined ? { value: v.per, base: bv?.per, options: TAG_PER_OPTIONS, set: (n) => { state.scoring.tags[k].per = n; } } : null,
         // A multiplier tag may be set flat (adds its weight). Switching resets to the no-change value.
-        mult: multKey ? { value: isMult, base: bv ? (bv.multiplier !== undefined || bv.pMultiplier !== undefined) : undefined, set: (on) => { SetTagForm(state.scoring.tags[k], multKey, on); } } : null,
+        mult: multKey ? { value: isMult, base: bv ? (bv.multiplier !== undefined || bv.pMultiplier !== undefined) : undefined, set: (on) => { SetTagForm(state.scoring.tags[k], multKey, on, R.tags?.[k]); } } : null,
         surcharge: { value: v.surchargeEnabled !== false, base: bv ? bv.surchargeEnabled !== false : true, set: (on) => { state.scoring.tags[k].surchargeEnabled = Boolean(on); } },
       };
     }) },
@@ -2407,11 +2521,25 @@ function renderWeights({ shifts = true } = {}) {
       set: (n) => { state.scoring.items.gearFields[k].weight = n; },
     })) },
   ];
-  // Built from the applied config (to mark pending rows) and from the config Apply would produce.
-  const appliedGroups = buildGroups();
+}
+
+function weightEntryIn(groupList, groupKey, id) {
+  return groupList.find((eg) => eg.key === groupKey)?.entries.find((e) => e.id === id);
+}
+
+// The groups as the applied config has them (to mark pending rows) and as Apply would make them (what rows show).
+function weightGroupsShown() {
+  const appliedGroups = buildWeightGroups();
   const staged = stagedScoring();
-  const groups = staged ? withScoring(staged, buildGroups) : appliedGroups;
-  const entryIn = (groupList, groupKey, id) => groupList.find((eg) => eg.key === groupKey)?.entries.find((e) => e.id === id);
+  return { appliedGroups, groups: staged ? withScoring(staged, buildWeightGroups) : appliedGroups };
+}
+
+function renderWeights({ shifts = true } = {}) {
+  const q = document.getElementById('weights-search').value.trim().toLowerCase();
+  const groupF = document.getElementById('weights-group-filter').value;
+  const container = document.getElementById('weights-container');
+  container.innerHTML = '';
+  const { appliedGroups, groups } = weightGroupsShown();
 
   for (const g of groups) {
     if (groupF !== 'all' && g.key !== groupF) continue;
@@ -2424,121 +2552,288 @@ function renderWeights({ shifts = true } = {}) {
     card.innerHTML = `<summary class="section-head"><h3>${esc(g.title)}</h3></summary>`;
     rememberSection(card);
     wireInfoButtons(card, '.weight-row');
-    for (const r of rows) {
-      const numVal = safeNum(r.val, 0);
-      const baseNum = r.base !== undefined ? safeNum(r.base, 0) : undefined;
-      const applied = entryIn(appliedGroups, g.key, r.id);
-      const row = document.createElement('div');
-      row.className = 'weight-row' + (r.per || r.mult || r.surcharge ? ' has-per' : '');
-      const kind = WEIGHT_GROUP_KINDS[g.key];
-      const info = kind ? describeFeature(kind, r.id) : null;
-      const labelHtml = info
-        ? `<span class="feature-label" title="${esc(featureTitleText(info))}">${esc(r.label)} ${infoButtonHtml()}</span>`
-        : `<span>${esc(r.label)}</span>`;
-      const resetTitle = `Reset to ${baseNum ?? numVal}${r.per ? ` per ${r.per.base ?? r.per.value}` : ''}`;
-      // The row reads as a sentence: "[1] pts per [3] damage", with a worked example under it.
-      const shownScoring = () => stagedScoring() || state.scoring;
-      const words = weightSentence(g.key, r.id, shownScoring(), r.label);
-      const weightBox = `<input type="number" class="weight-input" step="${esc(safeNum(r.step, 1))}" value="${esc(numVal)}" aria-label="${esc(`${r.label} points`)}" />`;
-      row.innerHTML = `${labelHtml}<span class="weight-sentence"><span class="weight-words" data-part="before">${esc(words.before)}</span>${weightBox}<span class="weight-words" data-part="mid">${esc(words.mid)}</span>${perControlHtml(r)}<span class="weight-words" data-part="after">${esc(words.after)}</span>${multControlHtml(r)}${surchargeControlHtml(r)}<button type="button" class="weight-reset-btn" title="${esc(resetTitle)}">↺</button></span><div class="weight-example"></div>`;
-      const input = row.querySelector('.weight-input');
-      const perInput = row.querySelector('.weight-per');
-      const multInput = row.querySelector('.weight-mult');
-      const surchargeInput = row.querySelector('.weight-surcharge');
-      const resetBtn = row.querySelector('.weight-reset-btn');
-      const exampleEl = row.querySelector('.weight-example');
-      // The example follows the boxes as they are typed in: a copy of the shown config with the boxes' values set.
-      const typedScoring = () => {
-        const typed = clone(shownScoring());
-        withScoring(typed, () => {
-          const value = Number(input.value);
-          if (input.value !== '' && Number.isFinite(value)) r.set(value);
-          if (r.per && perInput && !r.per.options) {
-            const per = Math.round(Number(perInput.value));
-            if (Number.isFinite(per) && per >= 1) r.per.set(per);
-          }
-          if (r.surcharge && surchargeInput) r.surcharge.set(surchargeInput.checked);
-        });
-        return typed;
-      };
-      const showExample = (scoring = shownScoring()) => {
-        const now = weightSentence(g.key, r.id, scoring, r.label);
-        for (const part of row.querySelectorAll('.weight-sentence > .weight-words')) part.textContent = now[part.dataset.part];
-        exampleEl.textContent = weightExample(g.key, r.id, scoring, r.label);
-      };
-      showExample();
-      input.addEventListener('input', () => showExample(typedScoring()));
-      if (perInput && !r.per.options) perInput.addEventListener('input', () => showExample(typedScoring()));
-      // Staged edits update this row's marks in place, so focus and scroll stay where the owner left them.
-      const perNow = () => (r.per.options ? perInput.value : Number(perInput.value));
-      const perDiffers = (other) => Boolean(r.per) && other !== undefined && perNow() !== other;
-      const multDiffers = (other) => Boolean(multInput) && other !== undefined && multInput.checked !== other;
-      const surchargeDiffers = (other) => Boolean(surchargeInput) && other !== undefined && surchargeInput.checked !== other;
-      const markRow = () => {
-        const value = Number(input.value);
-        const modified = (baseNum !== undefined && value !== baseNum) || perDiffers(r.per?.base) || multDiffers(r.mult?.base) || surchargeDiffers(r.surcharge?.base);
-        const pending = !applied || value !== safeNum(applied.val, 0) || perDiffers(applied.per?.value) || multDiffers(applied.mult?.value) || surchargeDiffers(applied.surcharge?.value);
-        row.classList.toggle('is-modified', modified);
-        row.classList.toggle('is-pending', pending);
-        row.classList.toggle('is-surcharge-off', Boolean(surchargeInput && !surchargeInput.checked));
-        row.title = pending ? 'Staged: Apply to rescore the cards' : '';
-        resetBtn.classList.toggle('is-clean', !modified);
-      };
-      // After an edit the row shows what its setter stored (Band Width 0 is stored as 1), then re-marks.
-      const showStored = () => {
-        const stored = entryIn(withScoring(stagedScoring() || state.scoring, buildGroups), g.key, r.id);
-        if (stored) { input.value = String(safeNum(stored.val, 0)); input.step = String(safeNum(stored.step, 1)); }
-        if (stored?.per && perInput) perInput.value = String(stored.per.value);
-        if (stored?.mult && multInput) multInput.checked = stored.mult.value;
-        if (stored?.surcharge && surchargeInput) surchargeInput.checked = stored.surcharge.value;
-        markRow();
-        showExample();
-      };
-      markRow();
-      input.addEventListener('change', () => {
-        const n = Number(input.value);
-        if (!Number.isFinite(n)) return;
-        applyWeightEdit(() => r.set(n));
-        showStored();
-      });
-      perInput?.addEventListener('change', () => {
-        const next = r.per.options ? perInput.value : Math.max(1, Math.round(Number(perInput.value)));
-        if (!r.per.options && !Number.isFinite(next)) return;
-        applyWeightEdit(() => r.per.set(next));
-        showStored();
-      });
-      multInput?.addEventListener('change', () => {
-        applyWeightEdit(() => r.mult.set(multInput.checked));
-        showStored();
-      });
-      surchargeInput?.addEventListener('change', () => {
-        applyWeightEdit(() => r.surcharge.set(surchargeInput.checked));
-        showStored();
-      });
-      resetBtn.addEventListener('click', () => {
-        const perChanged = perDiffers(r.per?.base) || multDiffers(r.mult?.base) || surchargeDiffers(r.surcharge?.base);
-        if (baseNum === undefined && !perChanged) return;
-        // Read the row's live controls: staged edits do not redraw it, so r.per / r.mult values can be stale.
-        const resetMult = multDiffers(r.mult?.base);
-        const resetPer = perDiffers(r.per?.base);
-        const resetSurcharge = surchargeDiffers(r.surcharge?.base);
-        applyWeightEdit(() => {
-          if (resetMult) r.mult.set(r.mult.base);
-          if (resetSurcharge) r.surcharge.set(r.surcharge.base);
-          if (baseNum !== undefined) r.set(baseNum);
-          if (resetPer) r.per.set(r.per.base);
-        });
-        showStored();
-      });
-      if (info) row.insertAdjacentHTML('beforeend', infoLineHtml(info));
-      card.appendChild(row);
-    }
+    for (const r of rows) card.appendChild(buildWeightRow(g, r, appliedGroups));
     container.appendChild(card);
   }
   if (groupF === 'all' || groupF === 'naming') renderNamingLimitGroup(container, q);
   renderDescriptionGaps();
   updateWeightsToolbar();
   if (shifts) computeShiftCount();
+  // The rows beside the card show the same staged values as this list.
+  if (cardEditorDockUi?.getView?.() === 'weights') cardEditorDockUi.refreshContextFields?.();
+}
+
+// One weight row: label, the number box and its per / multiply / surcharge controls, reset and a worked example.
+// Edits are staged through applyWeightEdit; the main list and the rows beside the card share this code.
+function buildWeightRow(g, r, appliedGroups, { compact = false } = {}) {
+  const numVal = safeNum(r.val, 0);
+  const baseNum = r.base !== undefined ? safeNum(r.base, 0) : undefined;
+  const applied = weightEntryIn(appliedGroups, g.key, r.id);
+  const row = document.createElement('div');
+  row.className = 'weight-row' + (r.per || r.mult || r.surcharge ? ' has-per' : '') + (compact ? ' is-compact' : '');
+  // Rows for the same weight (the main list and the one beside the card) share this key and re-sync each other.
+  row.dataset.weightKey = `${g.key}:${r.id}`;
+  const kind = WEIGHT_GROUP_KINDS[g.key];
+  // A compact row (beside the card) leaves the description and worked example to the main list.
+  const info = kind && !compact ? describeFeature(kind, r.id) : null;
+  const labelHtml = info
+    ? `<span class="feature-label" title="${esc(featureTitleText(info))}">${esc(r.label)} ${infoButtonHtml()}</span>`
+    : `<span>${esc(r.label)}</span>`;
+  const resetTitle = `Reset to ${baseNum ?? numVal}${r.per ? ` per ${r.per.base ?? r.per.value}` : ''}`;
+  // The row reads as a sentence: "[1] pts per [3] damage", with a worked example under it.
+  const shownScoring = () => stagedScoring() || state.scoring;
+  const words = weightSentence(g.key, r.id, shownScoring(), r.label);
+  const weightBox = `<input type="number" class="weight-input" step="${esc(safeNum(r.step, 1))}" value="${esc(numVal)}" aria-label="${esc(`${r.label} points`)}" />`;
+  row.innerHTML = `${labelHtml}<span class="weight-sentence"><span class="weight-words" data-part="before">${esc(words.before)}</span>${weightBox}<span class="weight-words" data-part="mid">${esc(words.mid)}</span>${perControlHtml(r)}<span class="weight-words" data-part="after">${esc(words.after)}</span>${multControlHtml(r)}${surchargeControlHtml(r)}<button type="button" class="weight-reset-btn" title="${esc(resetTitle)}" aria-label="${esc(`${r.label}: ${resetTitle}`)}">↺</button></span>${compact ? '' : '<div class="weight-example"></div>'}`;
+  const input = row.querySelector('.weight-input');
+  const perInput = row.querySelector('.weight-per');
+  const multInput = row.querySelector('.weight-mult');
+  const surchargeInput = row.querySelector('.weight-surcharge');
+  const resetBtn = row.querySelector('.weight-reset-btn');
+  const exampleEl = row.querySelector('.weight-example');
+  // The example follows the boxes as they are typed in: a copy of the shown config with the boxes' values set.
+  const typedScoring = () => {
+    const typed = clone(shownScoring());
+    withScoring(typed, () => {
+      const value = Number(input.value);
+      if (input.value !== '' && Number.isFinite(value)) r.set(value);
+      if (r.per && perInput && !r.per.options) {
+        const per = Math.round(Number(perInput.value));
+        if (Number.isFinite(per) && per >= 1) r.per.set(per);
+      }
+      if (r.surcharge && surchargeInput) r.surcharge.set(surchargeInput.checked);
+    });
+    return typed;
+  };
+  const showExample = (scoring = shownScoring()) => {
+    const now = weightSentence(g.key, r.id, scoring, r.label);
+    for (const part of row.querySelectorAll('.weight-sentence > .weight-words')) part.textContent = now[part.dataset.part];
+    // Only a multiplier-form cost, effect, status, multi-effect bonus or tag reads the selected card's positive score.
+    const multForm = WEIGHT_FORM_GROUPS.has(g.key) ? scoring[g.key]?.[r.id]?.multiplier === true : (g.key === 'rank' && r.id === 'effectCount' && scoring.effectCount?.multiplier === true) || (g.key === 'tags' && scoring.tags?.[r.id]?.pMultiplier !== undefined);
+    const exampleText = weightExample(g.key, r.id, scoring, r.label, multForm ? exampleCard(scoring) : null);
+    if (exampleEl) exampleEl.textContent = exampleText;
+    // Compact rows beside the card keep only the value on the line; the full sentence and example are on hover.
+    if (compact) row.firstElementChild.title = [`${r.label}: ${now.before} ${row.querySelector('.weight-input')?.value ?? ''} ${now.mid} ${now.after}`.replace(/\s+/g, ' ').trim(), exampleText].filter(Boolean).join('\n');
+  };
+  showExample();
+  input.addEventListener('input', () => showExample(typedScoring()));
+  if (perInput && !r.per.options) perInput.addEventListener('input', () => showExample(typedScoring()));
+  // Staged edits update this row's marks in place, so focus and scroll stay where the owner left them.
+  const perNow = () => (r.per.options ? perInput.value : Number(perInput.value));
+  const perDiffers = (other) => Boolean(r.per) && other !== undefined && perNow() !== other;
+  const multDiffers = (other) => Boolean(multInput) && other !== undefined && multInput.checked !== other;
+  const surchargeDiffers = (other) => Boolean(surchargeInput) && other !== undefined && surchargeInput.checked !== other;
+  const markRow = () => {
+    const value = Number(input.value);
+    const modified = (baseNum !== undefined && value !== baseNum) || perDiffers(r.per?.base) || multDiffers(r.mult?.base) || surchargeDiffers(r.surcharge?.base);
+    const pending = !applied || value !== safeNum(applied.val, 0) || perDiffers(applied.per?.value) || multDiffers(applied.mult?.value) || surchargeDiffers(applied.surcharge?.value);
+    row.classList.toggle('is-modified', modified);
+    row.classList.toggle('is-pending', pending);
+    row.classList.toggle('is-surcharge-off', Boolean(surchargeInput && !surchargeInput.checked));
+    row.title = pending ? 'Staged: Apply to rescore the cards' : '';
+    resetBtn.classList.toggle('is-clean', !modified);
+  };
+  // After an edit the row shows what its setter stored (Band Width 0 is stored as 1), then re-marks.
+  const showStored = () => {
+    const stored = weightEntryIn(withScoring(stagedScoring() || state.scoring, buildWeightGroups), g.key, r.id);
+    if (stored) { input.value = String(safeNum(stored.val, 0)); input.step = String(safeNum(stored.step, 1)); }
+    if (stored?.per && perInput) perInput.value = String(stored.per.value);
+    if (stored?.mult && multInput) multInput.checked = stored.mult.value;
+    if (stored?.surcharge && surchargeInput) surchargeInput.checked = stored.surcharge.value;
+    markRow();
+    showExample();
+  };
+  row.weightSync = showStored;
+  const afterEdit = () => { showStored(); syncWeightTwins(row); };
+  markRow();
+  input.addEventListener('change', () => {
+    const n = Number(input.value);
+    if (!Number.isFinite(n)) return;
+    applyWeightEdit(() => r.set(n));
+    afterEdit();
+  });
+  perInput?.addEventListener('change', () => {
+    const next = r.per.options ? perInput.value : Math.max(1, Math.round(Number(perInput.value)));
+    if (!r.per.options && !Number.isFinite(next)) return;
+    applyWeightEdit(() => r.per.set(next));
+    afterEdit();
+  });
+  multInput?.addEventListener('change', () => {
+    applyWeightEdit(() => r.mult.set(multInput.checked));
+    afterEdit();
+  });
+  surchargeInput?.addEventListener('change', () => {
+    applyWeightEdit(() => r.surcharge.set(surchargeInput.checked));
+    afterEdit();
+  });
+  resetBtn.addEventListener('click', () => {
+    const perChanged = perDiffers(r.per?.base) || multDiffers(r.mult?.base) || surchargeDiffers(r.surcharge?.base);
+    if (baseNum === undefined && !perChanged) return;
+    // Read the row's live controls: staged edits do not redraw it, so r.per / r.mult values can be stale.
+    const resetMult = multDiffers(r.mult?.base);
+    const resetPer = perDiffers(r.per?.base);
+    const resetSurcharge = surchargeDiffers(r.surcharge?.base);
+    applyWeightEdit(() => {
+      if (resetMult) r.mult.set(r.mult.base);
+      if (resetSurcharge) r.surcharge.set(r.surcharge.base);
+      if (baseNum !== undefined) r.set(baseNum);
+      if (resetPer) r.per.set(r.per.base);
+    });
+    afterEdit();
+  });
+  if (info) row.insertAdjacentHTML('beforeend', infoLineHtml(info));
+  return row;
+}
+
+// The weight row each effect op is scored by: its EFFECT_SCORE_KEYS weight, else an effects entry of its own name.
+function effectWeightKey(op) {
+  const weight = EFFECT_SCORE_KEYS[op]?.weight ?? (state.scoring.effects?.[op] ? op : null);
+  return weight ? `effects:${weight}` : null;
+}
+
+// The weight row a ScoreCard part is scored by, for one card (upgrade parts are named by the card's tags).
+const SCORE_PART_EFFECT_WEIGHTS = Object.freeze({ 'HP cost': 'loseHp', counter: 'counterStack', blockBreak: 'blockBreak' });
+function scorePartWeightKey(def, part) {
+  if (part === 'SP' || part === 'MP') return `costs:${part.toLowerCase()}`;
+  if (part.startsWith('category:')) return `categories:${part.slice('category:'.length)}`;
+  if (part === 'effect count') return 'rank:effectCount';
+  if (state.scoring.statuses?.[part]) return `statuses:${part}`;
+  const effect = SCORE_PART_EFFECT_WEIGHTS[part] || Object.values(EFFECT_SCORE_KEYS).find((keys) => keys.part === part)?.weight;
+  if (effect) return `effects:${effect}`;
+  if (state.scoring.keywords?.[part]) return `keywords:${part}`;
+  if (state.scoring.tags?.[part]) return `tags:${part}`;
+  const upgrade = (def.tags || []).map(ParseUpgradeTag).find((parsed, i) => parsed && UpgradeTagLabel(def.tags[i]) === part);
+  return upgrade ? `upgradeTags:${upgrade.family}` : null;
+}
+
+// The weights most edited for one card (owner, 2026-11-26): SP and MP cost, its card type, damage, then what
+// its own effects and statuses are multiplied by in effect order; fewer than four of those are topped up with
+// its largest other score parts.
+const CONTEXT_FEATURE_ROWS = 4;
+function cardWeightKeys(def) {
+  const head = ['costs:sp', 'costs:mp'];
+  const kind = cardKindOf(def);
+  if (CATEGORY_KEYS.includes(kind)) head.push(`categories:${kind}`);
+  const features = [];
+  const effects = def.effects || [];
+  if (effects.some((eff) => eff.op === 'damage')) features.push('effects:damage');
+  for (const eff of effects) {
+    const key = eff.op === 'applyStatus' ? `statuses:${eff.status}` : eff.op === 'gainBarrier' ? 'statuses:barrier' : effectWeightKey(eff.op);
+    if (key && !features.includes(key)) features.push(key);
+  }
+  if (features.length < CONTEXT_FEATURE_ROWS) {
+    const parts = Object.entries(scoreCardEntry(def).parts || {}).filter(([, value]) => value).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
+    for (const [part] of parts) {
+      if (features.length >= CONTEXT_FEATURE_ROWS) break;
+      const key = scorePartWeightKey(def, part);
+      if (key && !head.includes(key) && !features.includes(key)) features.push(key);
+    }
+  }
+  return [...head, ...features];
+}
+
+// The Weights view's rows beside the card: the same rows as the main list (staged, synced with their twins).
+function renderCardWeightFields(container, def) {
+  const { appliedGroups, groups } = weightGroupsShown();
+  container.replaceChildren();
+  for (const key of cardWeightKeys(def)) {
+    const split = key.indexOf(':');
+    const g = groups.find((group) => group.key === key.slice(0, split));
+    const r = g && weightEntryIn(groups, g.key, key.slice(split + 1));
+    if (!r) continue;
+    // One small header over the toggle columns, before the first row that is not a cost.
+    if (g.key !== 'costs' && !container.querySelector('.weight-context-head')) container.append(weightContextHead());
+    container.append(buildWeightRow(g, r, appliedGroups, { compact: true }));
+  }
+  return container.children.length > 0;
+}
+
+function weightContextHead() {
+  const head = document.createElement('div');
+  head.className = 'weight-context-head'; head.setAttribute('aria-hidden', 'true');
+  head.innerHTML = '<span title="The weight, its tag or feature">Tag / feature</span><span class="weight-sentence">'
+    + '<span title="Points per unit: per SP, per stack, per damage">Pts</span>'
+    + '<span title="Scalar: use the value as a multiplier of the card\'s positive score">Scalar</span>'
+    + '<span title="Surcharge: apply this CP surcharge">Surch.</span><span></span></span>';
+  return head;
+}
+
+// The Deck lists view's rows beside the card: every deck holding it (custom decks and the read-only class and
+// subclass templates) and an Add to deck select. Changes go through the deck helpers and the panel's commit path.
+function renderCardDeckFields(container, def) {
+  const decks = deckCatalogOptions(state).filter((row) => row.kind !== 'all').map((row) => resolveStudioDeck(state, row.id)).filter(Boolean);
+  const holding = decks.filter((deck) => deck.cardIds.includes(def.id));
+  const addable = decks.filter((deck) => deck.kind === 'custom' && !deck.readOnly && !deck.cardIds.includes(def.id));
+  const list = document.createElement('div');
+  list.className = 'deck-context-list';
+  // Deck ids hold no duplicates (resolveStudioDeck), so a row needs no copy count.
+  const rows = holding.map((deck) => `<div class="deck-context-row" data-deck-id="${esc(deck.id)}">
+      <span class="deck-context-name" title="${esc(deck.name)}">${esc(deck.name)}</span>
+      ${deck.readOnly
+    ? '<span class="deck-context-template" title="Read-only template">template</span>'
+    : `<button type="button" class="s-btn s-btn-sm deck-context-remove" data-deck-remove="${esc(deck.id)}" aria-label="${esc(`Remove ${def.name} from ${deck.name}`)}">✕</button>`}
+    </div>`).join('');
+  const options = addable.map((deck) => `<option value="${esc(deck.id)}">${esc(deck.name)}</option>`).join('');
+  list.innerHTML = `${rows || '<p class="studio-muted deck-context-empty">Not in any deck yet.</p>'}
+    <select class="deck-context-add" aria-label="${esc(`Add ${def.name} to a deck`)}" ${addable.length ? '' : 'disabled'}><option value="">${addable.length ? 'Add to deck…' : 'No other deck to add to'}</option>${options}</select>`;
+  // Same commit as the Deck lists panel: one undo step, the draft, then every view and the panel.
+  const commit = (next, message) => {
+    pushHistory();
+    state.customDecks = next;
+    saveDraft({ autoName: false });
+    syncAllViews();
+    deckListPanelUi?.refresh();
+    toast(message);
+  };
+  // Listeners live on this list, which every render replaces, so they never pile up on the column.
+  list.addEventListener('click', (e) => {
+    const remove = e.target.closest('[data-deck-remove]');
+    if (!remove) return;
+    const deck = holding.find((row) => row.id === remove.dataset.deckRemove);
+    try { commit(removeSelectedCardsFromDeck(state.customDecks, deck.id, [def.id]), `Removed ${def.name} from ${deck.name}.`); }
+    catch (error) { toast(error.message); }
+  });
+  list.querySelector('.deck-context-add').addEventListener('change', (e) => {
+    const deck = addable.find((row) => row.id === e.target.value);
+    if (!deck) return;
+    try { commit(addSelectedCardsToDeck(state.customDecks, deck.id, [def.id]), `Added ${def.name} to ${deck.name}.`); }
+    catch (error) { toast(error.message); }
+  });
+  container.replaceChildren(list);
+  return true;
+}
+
+// Fields beside the card in the Customize views other than Properties.
+function renderContextFields(view, container, cardId) {
+  const def = state.cards.find((card) => card.id === cardId);
+  if (!def) return false;
+  container.dataset.contextView = view;
+  if (view === 'weights') return renderCardWeightFields(container, def);
+  if (view === 'design') return renderCardArtFields(container, def);
+  if (view === 'decks') return renderCardDeckFields(container, def);
+  return false;
+}
+
+// After an edit in one row, every other row for the same weight shows the stored value too.
+function syncWeightTwins(source) {
+  for (const row of document.querySelectorAll('.weight-row[data-weight-key]')) {
+    if (row !== source && row.dataset.weightKey === source.dataset.weightKey) row.weightSync?.();
+  }
+}
+
+// Costs, effects and statuses switch between flat (weight per unit) and multiplier form (P x weight per unit, owner 2026-11-27).
+// Switching resets to the no-change value: weight 0 when on, the repo's flat weight when off.
+const WEIGHT_FORM_GROUPS = new Set(['costs', 'effects', 'statuses']);
+function weightFormSwitch(section, key, entry) {
+  const repo = state.repoScoring?.[section]?.[key];
+  return { value: entry.multiplier === true, base: repo ? repo.multiplier === true : undefined, set: (on) => { SetWeightForm(state.scoring[section][key], repo, on); } };
+}
+
+// The selected card's name and positive score, for the multiplier-form examples; null with no card selected.
+function exampleCard(scoringRef) {
+  const def = selectedCardDef();
+  if (!def) return null;
+  try { return { name: def.name || def.id, positive: ScoreCard(cardDefToFace(def, scoringRef), scoringRef).positive }; } catch { return null; }
 }
 
 // Score categories (ScoreCard's scoring.categories): Martial, Magic and each Card Type.
@@ -2739,11 +3034,16 @@ function renderNamingLimitGroup(container, query) {
 // ---------------------------------------------------------------------------
 // Items & Relics Tab (Weapons, Armours, Relics)
 // ---------------------------------------------------------------------------
-function renderItemCardPreview(entry, container, level = 'inspect') {
+function renderItemCardPreview(entry, container, level = 'inspect', { preferEntry = false } = {}) {
   if (!entry || !container) return;
   container.innerHTML = '';
   let piece;
-  if (entry.kind === 'relic' && studioRegistries.relics.has(entry.id)) {
+  if (preferEntry) {
+    piece = livePieceFromEntry(entry);
+    for (const key of ['props', 'tags', 'passives', 'triggers', 'mods']) {
+      if (entry[key] != null) piece[key] = clone(entry[key]);
+    }
+  } else if (entry.kind === 'relic' && studioRegistries.relics.has(entry.id)) {
     piece = { ...studioRegistries.relics.get(entry.id), name: entry.name, rarity: entry.rarity };
   } else if (entry.kind === 'weapon') {
     const resolved = studioRegistries.equipment.armaments.find((a) => a.id === entry.id);
@@ -2758,6 +3058,73 @@ function renderItemCardPreview(entry, container, level = 'inspect') {
     ? renderCollectibleCard(studioRegistries, piece, 'Relic', { interactive: false, inspection: false, level, itemLayerConfig: state.itemArtLayers })
     : renderEquipmentCard(studioRegistries, piece, { interactive: false, inspection: false, level, itemLayerConfig: state.itemArtLayers });
   container.appendChild(rendered.card);
+}
+
+// Staged candidates share the authored art ID but never become the live card.
+function withRebalancePreviewRegistry(action) {
+  const savedOverrides = new Map(studioCardOverrides);
+  try { return action(); }
+  finally {
+    studioCardOverrides.clear();
+    for (const [id, definition] of savedOverrides) studioCardOverrides.set(id, definition);
+  }
+}
+
+function renderRebalancePreview({ target, original, candidate, beforeElement, afterElement }) {
+  if (!original) { beforeElement.replaceChildren(); afterElement.replaceChildren(); return null; }
+  return withRebalancePreviewRegistry(() => {
+    const before = clone(original), after = clone(candidate || original);
+    if (target === 'items') {
+      renderItemCardPreview(before, beforeElement, 'inspect', { preferEntry: true });
+      renderItemCardPreview(after, afterElement, 'inspect', { preferEntry: true });
+      return { before: ScoreGeneratedItem(before, state.scoring, state.itemRules), after: ScoreGeneratedItem(after, state.scoring, state.itemRules) };
+    }
+    const score = definition => {
+      const face = cardDefToFace(definition, state.scoring), result = ScoreCard(face, state.scoring);
+      const cp = CombatPower(result.raw, face.rarity, state.scoring);
+      const mechanics = ProjectCardMechanicalValues(definition, { registries: studioRegistries, rules: refContextFor(definition).run });
+      return { raw: result.raw, cp, rank: RankOf(cp, state.scoring), rarity: face.rarity, parts: result.parts, face,
+        projectedEffects: mechanics.card.effects, faceTokens: mechanics.tokens, effectValues: mechanics.values, tokenBindings: mechanics.bindings };
+    };
+    const beforeScore = score(before), afterScore = score(after);
+    renderCardWithLayers(before, beforeElement, beforeScore);
+    renderCardWithLayers(after, afterElement, afterScore);
+    return { before: beforeScore, after: afterScore };
+  });
+}
+
+// The staged session has already taken its undo snapshot before this commit hook.
+function prepareRebalanceCommit(entry, target = 'cards') {
+  const id = target === 'items' ? entry.key : entry.id;
+  if (state.scoring.overrides?.[id]) {
+    const remaining = WithoutRankPin(state.scoring.overrides[id]);
+    if (remaining) state.scoring.overrides[id] = remaining;
+    else delete state.scoring.overrides[id];
+  }
+  if (entry.scoringOverride) {
+    const remaining = WithoutRankPin(entry.scoringOverride);
+    if (remaining) entry.scoringOverride = remaining;
+    else delete entry.scoringOverride;
+  }
+  if (target === 'cards') prepareCardEdit(entry);
+}
+
+function populateRebalanceStatusOptions() {
+  const effects = document.getElementById('rebal-effect-options');
+  if (!effects) return;
+  let statuses = document.getElementById('rebal-status-effect-options');
+  if (!statuses) {
+    const heading = document.createElement('p'); heading.className = 'studio-muted'; heading.textContent = 'Status effects';
+    statuses = document.createElement('div'); statuses.id = 'rebal-status-effect-options'; statuses.className = 'rebalance-status-choices'; statuses.setAttribute('role', 'group'); statuses.setAttribute('aria-label', 'Preferred status effects');
+    effects.append(heading, statuses);
+  }
+  const checked = new Set([...statuses.querySelectorAll('input:checked')].map(input => input.value));
+  statuses.replaceChildren();
+  for (const option of focusedEffectOptions(state.scoring).filter(row => row.kind === 'status')) {
+    const label = document.createElement('label'); label.className = 'studio-check';
+    const input = document.createElement('input'); input.type = 'checkbox'; input.dataset.rebalEffect = ''; input.value = option.id; input.checked = checked.has(option.id);
+    label.append(input, document.createTextNode(` ${option.label}`)); statuses.append(label);
+  }
 }
 
 function populateItemTraitControls() {
@@ -2800,8 +3167,10 @@ function getFilteredItems() {
   const kindF = document.getElementById('item-filter-kind')?.value || 'all';
   const rarF = document.getElementById('item-filter-rarity')?.value || 'all';
   const rankF = document.getElementById('item-filter-rank')?.value || 'all';
+  const deckSet = filterMembership(state, document.getElementById('filter-item-deck')?.value || 'all', 'items');
 
   return state.items.filter((entry) => {
+    if (deckSet && !deckSet.has(entry.key)) return false;
     const sc = scoreItemEntry(entry, state.scoring, state.itemRules);
     if (kindF !== 'all' && entry.kind !== kindF) return false;
     if (rarF !== 'all' && entry.rarity !== rarF) return false;
@@ -2856,20 +3225,33 @@ function renderItemsGrid() {
     meta.innerHTML = `<span class="item-kind-pill">${esc(sub)}</span><span>CP <strong>${esc(sc.cp)}</strong> · ${esc(RankName(sc.rank))}</span>`;
     tile.appendChild(meta);
 
-    tile.addEventListener('click', () => {
-      state.selectedItemKey = entry.key;
-      grid.querySelectorAll('.item-grid-tile').forEach((n) => n.classList.toggle('is-selected', n.dataset.itemKey === entry.key));
-      renderItemInspector();
-    });
+    tile.addEventListener('click', () => selectStudioItem(entry.key));
+    cardEditorDockUi?.decorateItemTile?.(tile, entry);
     grid.appendChild(tile);
   }
+  cardEditorDockUi?.refresh();
   setItemsLoading(false);
+}
+
+function selectStudioItem(key) {
+  if (!state.items.some(item => item.key === key)) return;
+  state.selectedItemKey = key;
+  for (const tile of document.querySelectorAll('.item-grid-tile')) tile.classList.toggle('is-selected', tile.dataset.itemKey === key);
+  renderItemInspector();
+  renderArtTab();
+  cardEditorDockUi?.refresh();
 }
 
 function renderItemInspector() {
   const entry = state.items.find((x) => x.key === state.selectedItemKey) || state.items[0];
-  if (!entry) return;
+  if (!entry) {
+    document.getElementById('item-preview-host')?.replaceChildren();
+    state.selectedItemKey = null;
+    cardEditorDockUi?.refresh();
+    return;
+  }
   state.selectedItemKey = entry.key;
+  cardEditorDockUi?.refreshEntity?.();
   populateItemTraitControls();
   const sc = scoreItemEntry(entry, state.scoring, state.itemRules);
 
@@ -2984,6 +3366,115 @@ function activeArtLayerIdx() {
 function setActiveArtLayerIdx(idx) {
   if (state.artTarget === 'items') state.selectedItemLayerIdx = idx;
   else state.selectedLayerIdx = idx;
+}
+
+// One edit from a layer control (the Art layers list, or the rows beside the card): the control's value goes
+// into the layer, then the previews and the visible gallery update without rebuilding the layer controls.
+function applyArtLayerInput(control, layer, isItems) {
+  if (control.dataset.lEnabled !== undefined) layer.enabled = control.checked;
+  else if (control.dataset.lKind) {
+    const k = control.dataset.lKind;
+    const set = new Set(layer.entityKinds || ['weapon', 'armour', 'relic']);
+    if (control.checked) set.add(k); else set.delete(k);
+    layer.entityKinds = [...set];
+  }
+  else if (control.dataset.lField) layer[control.dataset.lField] = control.value;
+  else if (control.dataset.lNum) {
+    layer[control.dataset.lNum] = safeNum(control.value, 0);
+    if (control.dataset.lNum === 'opacity') {
+      const span = control.closest('label')?.querySelector('.opacity-val');
+      if (span) span.textContent = `${layer.opacity}%`;
+    }
+  }
+  saveDraft();
+  renderArtPreviewOnly();
+  refreshGalleryArtSoon();
+  if (isItems) renderItemInspector();
+  else renderInspector();
+}
+
+// The Design view's rows beside the card: each card art layer that applies to it, with Show and Opacity bound to
+// the layer (the same edit path as the Art layers list) and Edit to find it in that list.
+let artContextHold = false;
+function renderCardArtFields(container, def) {
+  // While a row's control is in use (focused, or a pointer is down on it) the rows are kept, so an edit's
+  // queued gallery refresh never rebuilds the slider under the pointer or takes keyboard focus away.
+  const inUse = container.contains(document.activeElement) && document.activeElement.matches('input');
+  const allLayers = state.artLayers.layers || [];
+  // Undo or a reload replaces the layer list: then the rows are rebuilt even while in use, never left on stale layers.
+  if (container.firstChild && container.dataset.cardId === def.id && container.artLayersRef === allLayers && (artContextHold || inUse)) return true;
+  container.dataset.cardId = def.id; container.artLayersRef = allLayers;
+  const layers = matchingCustomLayers(def, { includeDisabled: true });
+  const list = document.createElement('div');
+  list.className = 'art-context-list';
+  if (!layers.length) {
+    list.innerHTML = '<p class="studio-muted art-context-empty">No art layers match this card.</p>';
+    container.replaceChildren(list);
+    return true;
+  }
+  list.innerHTML = layers.map((layer) => {
+    const idx = allLayers.indexOf(layer);
+    const name = layer.name || layer.id;
+    const opacity = safeNum(layer.opacity, 100);
+    return `<div class="art-context-row${layer.enabled === false ? ' is-off' : ''}" data-layer-idx="${idx}">
+      <span class="art-context-name" title="${esc(name)}">${esc(name)}</span>
+      <label class="art-context-show"><input type="checkbox" data-l-enabled="${idx}" ${layer.enabled !== false ? 'checked' : ''} aria-label="${esc(`Show ${name}`)}" /> Show</label>
+      <button type="button" class="s-btn s-btn-sm art-context-edit" data-layer-edit="${idx}" aria-label="${esc(`Edit ${name} in the layer list`)}">Edit</button>
+      <label class="art-context-opacity"><input type="range" data-l-num="opacity" data-l-idx="${idx}" min="0" max="100" value="${esc(opacity)}" aria-label="${esc(`${name} opacity`)}" /><span class="opacity-val">${esc(opacity)}%</span></label>
+    </div>`;
+  }).join('');
+  // Listeners live on this list, which every render replaces, so they never pile up on the column.
+  let historyPushed = false;
+  list.addEventListener('focusin', () => { historyPushed = false; });
+  list.addEventListener('input', (e) => {
+    const idx = Number(e.target.dataset.lIdx ?? e.target.dataset.lEnabled);
+    // Read the layer from the current state at edit time, not from the list these rows were built from.
+    const layer = (state.artLayers.layers || [])[idx];
+    if (!layer) return;
+    if (!historyPushed) { pushHistory(); historyPushed = true; }
+    applyArtLayerInput(e.target, layer, false);
+    e.target.closest('.art-context-row')?.classList.toggle('is-off', layer.enabled === false);
+    mirrorArtListControls(idx, layer);
+  });
+  list.addEventListener('pointerdown', () => {
+    artContextHold = true;
+    window.addEventListener('pointerup', () => { artContextHold = false; }, { once: true });
+  });
+  list.addEventListener('change', () => { historyPushed = false; renderCardsGrid(); });
+  list.addEventListener('click', (e) => {
+    const edit = e.target.closest('[data-layer-edit]');
+    if (edit) showArtLayerInList(Number(edit.dataset.layerEdit));
+  });
+  container.replaceChildren(list);
+  return true;
+}
+
+// The Art layers list shows an edit made beside the card without being rebuilt.
+function mirrorArtListControls(idx, layer) {
+  if (state.artTarget === 'items') return;
+  const cardEl = document.querySelector(`#art-layers-list .layer-card[data-layer-card-idx="${idx}"]`);
+  if (!cardEl) return;
+  const show = cardEl.querySelector(`[data-l-enabled="${idx}"]`);
+  if (show) show.checked = layer.enabled !== false;
+  const opacity = cardEl.querySelector('[data-l-num="opacity"]');
+  if (opacity) {
+    opacity.value = String(safeNum(layer.opacity, 100));
+    const span = opacity.closest('label')?.querySelector('.opacity-val');
+    if (span) span.textContent = `${safeNum(layer.opacity, 100)}%`;
+  }
+}
+
+// Edit beside the card: select that card layer in the Art layers list, open its section and bring it into view.
+function showArtLayerInList(idx) {
+  state.artTarget = 'cards';
+  setActiveArtLayerIdx(idx);
+  renderArtTab();
+  const cardEl = document.querySelector(`#art-layers-list .layer-card[data-layer-card-idx="${idx}"]`);
+  if (!cardEl) return;
+  const section = cardEl.closest('details');
+  if (section && !section.open) section.open = true;
+  cardEl.scrollIntoView({ block: 'center' });
+  cardEl.querySelector('[data-l-field="name"]')?.focus({ preventScroll: true });
 }
 
 function renderArtPreviewOnly() {
@@ -3559,6 +4050,8 @@ async function revertToRepo() {
   const keepItem = state.selectedItemKey;
   studioCardOverrides.clear();
   state.cards = buildCardList();
+  state.subclassCatalog = null;
+  state.customDecks = state.customDecks.filter(deck => !deck.id?.startsWith('subclass-list.'));
   const roster = buildItemRoster(contentBundle);
   state.items = roster.items;
   state.itemRules = roster.rules;
@@ -3612,6 +4105,20 @@ function fillSelect(select, values, allLabel = null) {
 }
 
 let studioToolsUi = null;
+let subclassCatalogUi = null;
+let cardSelectionUi = null;
+let cardEditorDockUi = null;
+let deckListPanelUi = null;
+let activeGallery = 'cards';
+let artGalleryFrame = null;
+
+function refreshGalleryArtSoon() {
+  if (artGalleryFrame !== null) return;
+  artGalleryFrame = requestAnimationFrame(() => {
+    artGalleryFrame = null;
+    if (state.artTarget === 'items') renderItemsGrid(); else renderCardsGrid();
+  });
+}
 
 // Type, class and rarity choices come from the loaded cards (+ custom classes), so no option matches nothing.
 function populateCardOptions() {
@@ -3632,6 +4139,7 @@ function populateCardOptions() {
 }
 
 function syncAllViews() {
+  populateRebalanceStatusOptions();
   populateRankFilter();
   populateCardOptions();
   populateAddFeatureDropdown();
@@ -3641,6 +4149,8 @@ function syncAllViews() {
   renderItemInspector();
   renderWeights();
   renderArtTab();
+  subclassCatalogUi?.refresh();
+  deckListPanelUi?.refresh();
   // The sandbox hand's rank badges follow undo, redo, slot loads, imports and Revert too.
   if (state.sandbox.combat) renderSandbox();
 }
@@ -3648,7 +4158,6 @@ function syncAllViews() {
 // ---------------------------------------------------------------------------
 // Chrome: menus, shortcuts, filter panel, collapsible sections, inspector sheet
 // ---------------------------------------------------------------------------
-const FILTERS_OPEN_KEY = 'ashenspire:scoreStudioFiltersOpen:v1';
 const SECTIONS_KEY = 'ashenspire:scoreStudioSections:v1';
 const NARROW_LAYOUT_QUERY = '(max-width: 900px)';
 
@@ -3668,7 +4177,7 @@ function menuParts(menu) {
 
 function closeMenus(except = null) {
   document.querySelectorAll('.studio-menu').forEach((menu) => {
-    if (menu === except) return;
+    if (menu === except || (except && menu.contains(except))) return;
     const { button, panel } = menuParts(menu);
     panel.hidden = true;
     button.setAttribute('aria-expanded', 'false');
@@ -3682,21 +4191,186 @@ function anyMenuOpen() {
 function setupMenus() {
   document.querySelectorAll('.studio-menu').forEach((menu) => {
     const { button, panel } = menuParts(menu);
-    button.addEventListener('click', () => {
+    const focusable = () => [...panel.querySelectorAll('button:not(:disabled), a[href], label[tabindex], input:not([type="hidden"]), select')].filter(node => node.getClientRects().length);
+    const open = () => {
       const opening = panel.hidden;
       closeMenus(menu);
       panel.hidden = !opening;
       button.setAttribute('aria-expanded', String(opening));
-      if (opening) panel.querySelector('button:not(:disabled):not(.hidden), input:not(:disabled):not([hidden])')?.focus();
+      if (opening) { refreshCommandStates(); focusable()[0]?.focus(); }
+    };
+    button.addEventListener('click', open);
+    button.addEventListener('keydown', e => {
+      if (['ArrowDown', 'ArrowUp'].includes(e.key)) { e.preventDefault(); if (panel.hidden) open(); const nodes = focusable(); (e.key === 'ArrowUp' ? nodes.at(-1) : nodes[0])?.focus(); }
+      if (['ArrowLeft', 'ArrowRight'].includes(e.key) && menu.parentElement?.id === 'studio-menubar') {
+        e.preventDefault();
+        const headings = [...document.querySelectorAll('#studio-menubar > .studio-menu > button')];
+        const i = headings.indexOf(button), next = headings[(i + (e.key === 'ArrowRight' ? 1 : headings.length - 1)) % headings.length];
+        closeMenus(); next?.focus();
+      }
     });
     // Picking an action closes the menu; the path field, Load and the auto-save toggle keep it open.
     panel.addEventListener('click', (e) => {
-      if (e.target.closest('button.menu-item')) closeMenus();
+      if (e.target.closest('button.menu-item, a.menu-item') && !e.target.closest('button[aria-haspopup]')) closeMenus();
+    });
+    panel.addEventListener('keydown', e => {
+      if (e.target.closest('.studio-menu-panel') !== panel) return;
+      const nodes = focusable(), index = nodes.indexOf(document.activeElement);
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); panel.hidden = true; button.setAttribute('aria-expanded', 'false'); button.focus(); }
+      else if (isTextEntry(e.target)) return;
+      else if (e.key === 'ArrowLeft' && menu.parentElement?.id !== 'studio-menubar') { e.preventDefault(); e.stopPropagation(); panel.hidden = true; button.setAttribute('aria-expanded', 'false'); button.focus(); }
+      else if (['ArrowLeft', 'ArrowRight'].includes(e.key) && menu.parentElement?.id === 'studio-menubar') {
+        e.preventDefault(); e.stopPropagation();
+        const headings = [...document.querySelectorAll('#studio-menubar > .studio-menu > button')], i = headings.indexOf(button);
+        headings[(i + (e.key === 'ArrowRight' ? 1 : headings.length - 1)) % headings.length]?.click();
+      }
+      else if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key)) {
+        e.preventDefault(); const step = e.key === 'ArrowUp' ? -1 : 1;
+        const next = e.key === 'Home' ? nodes[0] : e.key === 'End' ? nodes.at(-1) : nodes[(index + step + nodes.length) % nodes.length]; next?.focus();
+      }
     });
   });
   document.addEventListener('click', (e) => {
     if (!e.target.closest('.studio-menu')) closeMenus();
   });
+  document.addEventListener('focusin', e => { if (!e.target.closest('.studio-menu')) closeMenus(); });
+}
+
+function setCustomizationView(view) {
+  document.querySelector(`.studio-tab[data-tab="${activeGallery}"]`).click();
+  cardEditorDockUi?.setView(view);
+  // On narrow screens the pane is a panel of its own: show it, or the chosen view stays hidden.
+  cardEditorDockUi?.setPanel?.('editor');
+  if (cardEditorDockUi && !cardEditorDockUi.isDocked()) cardEditorDockUi.open?.();
+}
+
+function refreshCommandStates() {
+  const hasSelection = activeGallery === 'cards' && Boolean(cardSelectionUi?.selectedIds().length);
+  for (const id of ['menu-new-deck-selection', 'menu-clear-selection', 'menu-rename-selected', 'menu-remove-added', 'menu-balance-selected', 'menu-add-selected-deck', 'menu-remove-selected-deck']) {
+    const button = document.getElementById(id); if (button) button.disabled = !hasSelection;
+  }
+  const selectVisible = document.getElementById('menu-select-visible');
+  if (selectVisible) selectVisible.disabled = activeGallery !== 'cards' || !getFilteredCards().length;
+  const quickBalance = document.getElementById('btn-quick-balance-cards');
+  if (quickBalance) quickBalance.title = hasSelection ? 'Rebalance power for selected cards' : 'Rebalance power for cards';
+  const quickRename = document.getElementById('btn-quick-rename-cards');
+  if (quickRename) quickRename.textContent = hasSelection ? `Generate names for ${cardSelectionUi.selectedIds().length} selected cards` : 'Generate names for all cards…';
+  const remove = document.getElementById('menu-remove-added');
+  if (remove && cardSelectionUi?.toolbar.querySelector('[data-selection-action="delete"]')?.disabled) remove.disabled = true;
+  const rename = document.getElementById('menu-rename-current');
+  if (rename) rename.textContent = activeGallery === 'items' ? 'Rename item…' : 'Rename card…';
+}
+
+function setupStudioMenubar() {
+  populateRebalanceStatusOptions();
+  const panel = name => document.getElementById(`studio-${name}-menu`);
+  const move = (name, id, label) => {
+    const node = document.getElementById(id); if (!node) return;
+    node.classList.add('menu-item'); node.classList.remove('s-btn-primary', 's-btn-icon');
+    node.setAttribute('role', 'menuitem');
+    if (label) node.textContent = label;
+    panel(name).append(node);
+  };
+  const moveLabel = (name, id) => {
+    const input = document.getElementById(id), label = input?.closest('label'); if (!label) return;
+    label.classList.add('menu-item'); label.tabIndex = 0; label.setAttribute('role', 'menuitem'); panel(name).append(label);
+    label.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); input.click(); closeMenus(); } });
+  };
+  const group = (name, text) => { const heading = document.createElement('div'); heading.className = 'studio-menu-group-label'; heading.textContent = text; panel(name).append(heading); };
+  const command = (name, id, text, action) => { const button = document.createElement('button'); button.id = id; button.type = 'button'; button.className = 'menu-item'; button.setAttribute('role', 'menuitem'); button.textContent = text; button.addEventListener('click', action); panel(name).append(button); };
+  const click = id => () => document.getElementById(id)?.click();
+  move('file', 'btn-new-card', 'New card');
+  command('file', 'menu-new-deck-selection', 'New deck from selected cards…', () => cardSelectionUi?.createDeckFromSelection());
+  group('file', 'Subclass catalogs');
+  command('file', 'menu-import-catalog', 'Import subclass catalog…', () => { document.getElementById('btn-subclass-lists').click(); document.getElementById('input-subclass-catalog').click(); });
+  command('file', 'menu-export-catalog', 'Export subclass catalogs…', () => { document.getElementById('btn-subclass-lists').click(); document.getElementById('btn-subclass-download').focus(); });
+  group('file', 'Studio bundles');
+  move('file', 'btn-decks-export-json', 'Download Studio bundle');
+  moveLabel('file', 'input-decks-load-json');
+  move('file', 'btn-decks-save-repo', 'Save Studio bundle to repository');
+  group('file', 'Names');
+  move('file', 'btn-save-names', 'Save names'); move('file', 'btn-save-names-as', 'Save names as…'); moveLabel('file', 'input-load-names');
+  group('file', 'Scoring settings');
+  move('file', 'btn-export-repo', 'Export scoring settings…'); move('file', 'btn-download-json', 'Download scoring JSON'); moveLabel('file', 'input-upload-json');
+  move('file', 'btn-revert', 'Revert to in-game…');
+  const advanced = document.getElementById('btn-more')?.closest('.studio-menu');
+  if (advanced) { panel('file').append(advanced); document.getElementById('btn-more').textContent = 'Advanced settings…'; document.getElementById('btn-more').classList.add('menu-item'); document.getElementById('btn-more').classList.remove('s-btn-icon'); }
+  move('edit', 'btn-undo', 'Undo'); move('edit', 'btn-redo', 'Redo');
+  command('edit', 'menu-rename-current', 'Rename card…', () => {
+    // The docked pane lives in the gallery panel; show it first when Sandbox or Effects is active.
+    document.querySelector(`.studio-tab[data-tab="${activeGallery}"]`)?.click();
+    if (activeGallery === 'items') cardEditorDockUi.editItem(state.selectedItemKey); else cardEditorDockUi.edit(state.selectedCardId);
+    const input = document.getElementById(activeGallery === 'items' ? 'item-edit-name' : 'edit-name'); input.focus(); input.select();
+  });
+  group('edit', 'Card selection');
+  command('edit', 'menu-select-visible', 'Select visible cards', () => cardSelectionUi?.selectVisible());
+  command('edit', 'menu-clear-selection', 'Clear card selection', () => cardSelectionUi?.clear());
+  command('edit', 'menu-rename-selected', 'Rename selected cards…', () => cardSelectionUi?.renameSelected());
+  command('edit', 'menu-remove-added', 'Remove selected added cards…', () => cardSelectionUi?.removeAdded());
+  move('edit', 'btn-rename-all', 'Generate names for all cards…'); move('edit', 'btn-rename-all-items', 'Generate names for all items'); move('edit', 'btn-restore-item-names', 'Restore item names');
+  const restore = document.getElementById('btn-restore-names')?.closest('.studio-menu'); if (restore) { panel('edit').append(restore); document.getElementById('btn-restore-names').classList.add('menu-item'); }
+  command('view', 'menu-view-cards', 'Cards', () => document.querySelector('.studio-tab[data-tab="cards"]').click());
+  command('view', 'menu-view-items', 'Items', () => document.querySelector('.studio-tab[data-tab="items"]').click());
+  group('view', 'Customization pane');
+  for (const [view, text] of [['properties', 'Properties'], ['design', 'Design and art layers'], ['weights', 'Weights'], ['decks', 'Deck lists']]) command('view', `menu-view-${view}`, text, () => setCustomizationView(view));
+  command('view', 'menu-view-dock', 'Dock customization pane', () => cardEditorDockUi?.setDocked(true));
+  command('view', 'menu-view-undock', 'Undock customization pane', () => { cardEditorDockUi?.setDocked(false); cardEditorDockUi?.open?.(); });
+  group('view', 'Gallery'); command('view', 'menu-view-filters', 'Show or hide card filters', click('btn-filters'));
+  command('view', 'menu-view-scale', 'Card size…', () => { setFiltersOpen(true); document.getElementById('card-scale-slider').focus(); });
+  move('view', 'btn-collapse-all', 'Collapse sections'); move('view', 'btn-expand-all', 'Expand sections');
+  group('tools', 'Cards');
+  command('tools', 'menu-balance-selected', 'Rebalance power for selected cards…', () => cardSelectionUi?.balanceSelected());
+  move('tools', 'btn-generate-cards', 'Generate card pool…'); move('tools', 'btn-subclass-lists', 'Generate subclass lists…');
+  move('tools', 'btn-batch-generate-cards', 'Batch generate cards…'); move('tools', 'btn-auto-balance-cards', 'Rebalance power for cards…');
+  group('tools', 'Items'); move('tools', 'btn-batch-generate-items', 'Batch generate items…'); move('tools', 'btn-auto-balance-items', 'Rebalance power for items…');
+  group('tools', 'Lists'); move('tools', 'btn-open-decks', 'Deck lists…'); move('tools', 'btn-custom-decks', 'Manage decks and classes…');
+  for (const [id, text] of [['menu-add-selected-deck', 'Add selected cards to a deck…'], ['menu-remove-selected-deck', 'Remove selected cards from a deck…']]) command('tools', id, text, () => {
+    setCustomizationView('decks');
+    deckListPanelUi?.element.querySelector('[data-deck-select]')?.focus();
+  });
+  // These links use this checkout's verified origin; the menu performs no Git writes.
+  for (const [id, label, href] of [['menu-git-repository', 'Open GitHub repository', 'https://github.com/cehinds/AshenSpire'], ['menu-git-pulls', 'Pull requests', 'https://github.com/cehinds/AshenSpire/pulls'], ['menu-git-history', 'Dev commit history', 'https://github.com/cehinds/AshenSpire/commits/dev/']]) {
+    const link = document.createElement('a'); link.id = id; link.className = 'menu-item'; link.setAttribute('role', 'menuitem'); link.textContent = label; link.href = href; link.target = '_blank'; link.rel = 'noopener noreferrer'; panel('git').append(link);
+  }
+  const sandbox = document.querySelector('.studio-tab[data-tab="sandbox"]'); if (sandbox) move('test', sandbox.id ||= 'sandbox-tab-button', 'Open combat simulator');
+  move('test', 'btn-send-sandbox', 'Test selected card in simulator');
+  move('test', 'btn-apply-sandbox', 'Apply current scoring to simulator');
+  group('test', 'Simulation controls');
+  move('test', 'btn-sandbox-reset', 'Reset simulation'); move('test', 'btn-sandbox-refill', 'Refill Stamina and Mana'); move('test', 'btn-sandbox-endturn', 'End turn');
+  group('test', 'Effects'); move('test', 'effects-tab-button', 'Effects timing');
+  for (const context of ['cards', 'items']) {
+    const row = document.querySelector(`#tab-${context} .filter-bar > .filter-row`);
+    row.classList.add('compact-gallery-controls');
+    const deckLabel = document.createElement('label'); deckLabel.className = 'filter-list-field'; deckLabel.textContent = 'Deck / class list';
+    deckLabel.append(document.getElementById(context === 'cards' ? 'filter-deck' : 'filter-item-deck'));
+    document.querySelector(context === 'cards' ? '#filter-panel' : '#item-filters-modal .item-filter-fields').prepend(deckLabel);
+    for (const [id, label, action] of [[`btn-quick-balance-${context}`, 'Rebalance', () => {
+      if (context === 'cards' && cardSelectionUi?.selectedIds().length) cardSelectionUi.balanceSelected();
+      else click(`btn-auto-balance-${context}`)();
+    }]]) {
+      const button = document.createElement('button'); button.id = id; button.type = 'button'; button.className = 's-btn gallery-quick-action'; button.textContent = label;
+      button.title = label === 'Decks' ? 'Show deck lists' : `Rebalance power for ${context}`; button.addEventListener('click', action); row.append(button);
+      if (label === 'Rebalance') {
+        const split = document.createElement('div'); split.className = 'gallery-balance-split'; button.replaceWith(split); split.append(button);
+        const menu = document.createElement('div'); menu.className = 'studio-menu';
+        const caret = document.createElement('button'); caret.id = `btn-quick-balance-menu-${context}`; caret.type = 'button'; caret.className = 's-btn gallery-balance-caret'; caret.textContent = '▾';
+        caret.setAttribute('aria-label', `Rebalance and generate names for ${context}`); caret.setAttribute('aria-haspopup', 'menu'); caret.setAttribute('aria-expanded', 'false'); caret.setAttribute('aria-controls', `quick-balance-menu-${context}`);
+        const options = document.createElement('div'); options.id = `quick-balance-menu-${context}`; options.className = 'studio-menu-panel is-right'; options.setAttribute('role', 'menu'); options.hidden = true;
+        const rename = document.createElement('button'); rename.id = `btn-quick-rename-${context}`; rename.type = 'button'; rename.className = 'menu-item'; rename.setAttribute('role', 'menuitem'); rename.textContent = `Generate names for all ${context}${context === 'cards' ? '…' : ''}`;
+        rename.addEventListener('click', () => {
+          const ids = context === 'cards' ? cardSelectionUi?.selectedIds() || [] : [];
+          if (ids.length) autoNameSelectedCards([...ids]);
+          else click(context === 'cards' ? 'btn-rename-all' : 'btn-rename-all-items')();
+          if (!document.querySelector('dialog[open]')) caret.focus();
+        });
+        const rebalance = document.createElement('button'); rebalance.type = 'button'; rebalance.className = 'menu-item'; rebalance.setAttribute('role', 'menuitem'); rebalance.textContent = 'Rebalance power…'; rebalance.addEventListener('click', action);
+        options.append(rebalance, rename); menu.append(caret, options); split.append(menu);
+      }
+    }
+    row.append(document.getElementById(context === 'cards' ? 'btn-filters' : 'btn-item-filters'));
+  }
+  for (const row of document.querySelectorAll('.cards-gallery-pane .names-row')) row.classList.add('studio-toolbar-parking');
+  document.querySelector('.studio-actions').hidden = true;
 }
 
 const TEXT_ENTRY_INPUT_TYPES = new Set(['text', 'search', 'number', 'email', 'url', 'tel', 'password']);
@@ -3736,7 +4410,7 @@ function setupShortcuts() {
 }
 
 function activeFilterCount() {
-  return ['filter-type', 'filter-class', 'filter-rank', 'filter-shift']
+  return ['filter-type', 'filter-class', 'filter-rank', 'filter-shift', 'filter-deck']
     .filter((id) => document.getElementById(id).value !== 'all').length;
 }
 
@@ -3747,10 +4421,18 @@ function updateFilterCount() {
   badge.classList.toggle('hidden', count === 0);
 }
 
+function updateItemFilterCount() {
+  const count = ['item-filter-kind', 'item-filter-rarity', 'item-filter-rank', 'filter-item-deck'].filter(id => document.getElementById(id).value !== 'all').length
+    + Number(document.getElementById('item-filter-sort').value !== 'rank-desc');
+  const badge = document.getElementById('item-filter-count');
+  badge.textContent = String(count); badge.classList.toggle('hidden', count === 0);
+}
+
 function setFiltersOpen(open) {
-  document.getElementById('filter-panel').hidden = !open;
+  const dialog = document.getElementById('card-filters-modal');
+  if (open && !dialog.open) dialog.showModal();
+  else if (!open && dialog.open) dialog.close();
   document.getElementById('btn-filters').setAttribute('aria-expanded', String(open));
-  writeStoredJson(FILTERS_OPEN_KEY, open);
 }
 
 const RANK_BADGES_KEY = 'ashenspire:scoreStudioRankBadges:v1';
@@ -3764,9 +4446,14 @@ function setRankBadgesShown(shown) {
 function setupFilterPanel() {
   setRankBadgesShown(readStoredJson(RANK_BADGES_KEY, true) !== false);
   document.getElementById('toggle-rank-badges').addEventListener('change', (e) => setRankBadgesShown(e.target.checked));
-  setFiltersOpen(readStoredJson(FILTERS_OPEN_KEY, false) === true);
+  setFiltersOpen(false);
+  document.getElementById('card-filters-modal').addEventListener('close', () => document.getElementById('btn-filters').setAttribute('aria-expanded', 'false'));
   document.getElementById('btn-filters').addEventListener('click', () => {
-    setFiltersOpen(document.getElementById('filter-panel').hidden);
+    setFiltersOpen(true);
+  });
+  document.getElementById('btn-card-filters-reset').addEventListener('click', () => {
+    for (const id of ['filter-type', 'filter-class', 'filter-rank', 'filter-shift', 'filter-deck']) document.getElementById(id).value = 'all';
+    updateFilterCount(); renderCardsGrid();
   });
 }
 
@@ -3850,9 +4537,24 @@ function wireEvents() {
   document.querySelectorAll('.studio-tab').forEach((btn) => {
     btn.addEventListener('click', () => {
       const tab = btn.dataset.tab;
+      if (tab === 'weights' || tab === 'art') {
+        document.querySelector(`.studio-tab[data-tab="${activeGallery}"]`).click();
+        cardEditorDockUi?.setView?.(tab === 'art' ? 'design' : 'weights');
+        // Import and saved-settings flows land here; on narrow screens the pane must be shown too.
+        cardEditorDockUi?.setPanel?.('editor');
+        if (tab === 'art') renderArtTab(); else renderWeights();
+        return;
+      }
       document.querySelectorAll('.studio-tab').forEach((b) => { b.classList.toggle('is-active', b === btn); b.setAttribute('aria-selected', String(b === btn)); });
-      document.querySelectorAll('[data-window-tab]').forEach((item) => item.classList.toggle('is-active', item.dataset.windowTab === tab));
-      document.querySelectorAll('.studio-panel').forEach((p) => p.classList.toggle('is-active', p.id === `tab-${tab}`));
+      document.querySelectorAll('.studio-main > .studio-panel').forEach((p) => p.classList.toggle('is-active', p.id === `tab-${tab}`));
+      if (tab === 'cards' || tab === 'items') {
+        activeGallery = tab;
+        for (const selector of document.querySelectorAll('.gallery-content-type')) selector.value = tab;
+        state.artTarget = tab;
+        cardEditorDockUi?.setContext?.(tab);
+        renderArtTab();
+        deckListPanelUi?.refresh();
+      }
       if (tab === 'sandbox' && !state.sandbox.combat) startSandboxCombat();
       if (tab === 'art') renderArtTab();
       if (tab === 'effects') {
@@ -3862,23 +4564,12 @@ function wireEvents() {
       }
     });
   });
-  document.querySelectorAll('[data-window-tab]').forEach((item) => {
-    item.addEventListener('click', () => {
-      document.querySelector(`.studio-tab[data-tab="${item.dataset.windowTab}"]`)?.click();
-    });
-  });
 
-  // Hovering another app-bar menu trigger while one app menu is open switches directly, like native desktop apps.
-  document.querySelectorAll('.studio-app-menus .studio-menu').forEach((menu) => {
-    const trigger = menu.querySelector(':scope > button[aria-controls]');
-    const panel = trigger && document.getElementById(trigger.getAttribute('aria-controls'));
-    if (!trigger || !panel) return;
-    trigger.addEventListener('mouseenter', () => {
-      const appMenuOpen = [...document.querySelectorAll('.studio-app-menus .studio-menu-panel')].some((p) => !p.hidden);
-      if (!appMenuOpen || !panel.hidden) return;
-      closeMenus(menu);
-      panel.hidden = false;
-      trigger.setAttribute('aria-expanded', 'true');
+  document.querySelectorAll('.gallery-content-type').forEach((selector) => {
+    selector.addEventListener('change', () => {
+      const context = selector.value;
+      document.querySelector(`.studio-tab[data-tab="${context}"]`)?.click();
+      document.getElementById(`gallery-type-${context}`)?.focus({ preventScroll: true });
     });
   });
 
@@ -3895,21 +4586,29 @@ function wireEvents() {
 
   // New / Duplicate / Reset / Delete card (the last three live in Card Basics' ⋯ menu)
   document.getElementById('btn-new-card').addEventListener('click', () => {
+    const grid = document.getElementById('cards-grid');
+    const before = CaptureCardTilePositions(grid);
     pushHistory();
-    const id = `custom.card_${Date.now().toString(36)}`;
+    let id = `custom.card_${Date.now().toString(36)}`;
+    while (state.cards.some(card => card.id === id)) id += '_new';
     const card = normalizeStudioCard({
-      id, name: 'New Custom Card', class: 'colorless', rarity: 'uncommon', type: 'attack', icon: 'attack',
-      cost: 1, staminaCost: 1, manaCost: 0, damageSchool: 'physical',
-      effects: [{ op: 'damage', target: 'enemy', amount: 8 }],
-      keywords: [], tags: ['camp:physical', 'maneuver:attack', 'source:weapon', 'classification.attack', 'targeting:single'],
-      textTemplate: 'Deal {damage} damage.', _custom: true, _autoName: true,
+      id, name: 'New card', class: 'colorless', rarity: 'common', type: 'skill', icon: 'skill',
+      cost: 1, staminaCost: 1, manaCost: 0, costRule: 'fixed', damageSchool: 'physical',
+      effects: [], keywords: [], tags: ['camp:physical', 'classification.skill', 'targeting.self'],
+      textTemplate: 'New card', _custom: true, _edited: true, _autoName: false, _autoText: false, _newDraft: true,
     });
     state.cards.unshift(card);
     state.selectedCardId = id;
+    document.getElementById('card-search').value = '';
+    for (const key of ['filter-type', 'filter-class', 'filter-rank', 'filter-shift', 'filter-deck']) document.getElementById(key).value = 'all';
+    updateFilterCount();
+    document.querySelector('.studio-tab[data-tab="cards"]').click();
+    cardEditorDockUi?.setView('properties');
     renderCardsGrid();
     renderInspector();
-    saveDraft();
-    toast('Created custom card');
+    animateCardInsertion(grid, id, { before });
+    saveDraft({ autoName: false });
+    toast('Added a new card. Edit its properties to begin.');
   });
 
   document.getElementById('btn-duplicate-card').addEventListener('click', () => {
@@ -3943,17 +4642,16 @@ function wireEvents() {
 
   document.getElementById('btn-delete-card').addEventListener('click', () => {
     const idx = state.cards.findIndex((c) => c.id === state.selectedCardId);
-    if (idx < 0 || !state.cards[idx]._custom) return;
-    const removed = state.cards[idx];
+    if (idx < 0 || !isAddedCard(state.cards[idx])) return;
+    const removed = state.cards[idx], plan = removeAddedCardsFromState(state, [removed.id]);
+    if (!plan.removedIds.length) { toast('Original cards are protected.'); return; }
     pushHistory();
-    state.cards.splice(idx, 1);
+    Object.assign(state, plan.nextState);
     studioCardOverrides.delete(removed.id);
     studioCardOverrides.delete(`${LIVE_ID_PREFIX}${removed.id}`);
-    if (state.scoring.overrides) delete state.scoring.overrides[removed.id];
     state.selectedCardId = state.cards[Math.min(idx, state.cards.length - 1)]?.id || null;
-    renderCardsGrid();
-    renderInspector();
-    saveDraft();
+    syncAllViews();
+    saveDraft({ autoName: false });
     toast(`Deleted "${removed.name}"`);
   });
 
@@ -3998,7 +4696,7 @@ function wireEvents() {
   autoTextToggle.addEventListener('change', () => {
     writeStoredJson(AUTO_TEXT_KEY, autoTextToggle.checked);
     // Turning Auto on writes the text straight away; turning it off keeps the text as it is.
-    if (autoTextToggle.checked) mutateSelectedCard(() => {}, { autoName: false });
+    if (autoTextToggle.checked) mutateSelectedCard(def => { def._autoText = true; }, { autoName: false });
   });
 
   // Gallery card size and inspector preview size (Filters panel), and the inspector resizer (desktop only)
@@ -4007,39 +4705,12 @@ function wireEvents() {
   if (savedInspectorWidth >= INSPECTOR_WIDTH_MIN && savedInspectorWidth <= INSPECTOR_WIDTH_MAX) {
     cardsLayout.style.setProperty('--inspector-width', `${savedInspectorWidth}px`);
   }
-  document.getElementById('card-scale-slider').addEventListener('input', (e) => {
-    document.getElementById('cards-grid').style.setProperty('--card-tile-width', `${e.target.value}px`);
-    requestAnimationFrame(() => document.querySelectorAll('#cards-grid .card').forEach((el) => fitCardFace(el)));
-  });
   document.getElementById('inspector-scale-slider').addEventListener('input', (e) => {
     document.getElementById('inspector-card-preview').style.setProperty('--inspector-card-width', `${e.target.value}px`);
     const cardEl = document.querySelector('#inspector-card-preview .card');
     if (cardEl) requestAnimationFrame(() => fitCardFace(cardEl));
   });
-  const resizer = document.getElementById('inspector-resizer');
-  let draggingResizer = false;
-  resizer.addEventListener('pointerdown', (e) => {
-    if (isNarrowLayout()) return;
-    draggingResizer = true;
-    resizer.classList.add('is-dragging');
-    resizer.setPointerCapture(e.pointerId);
-  });
-  resizer.addEventListener('pointermove', (e) => {
-    if (!draggingResizer) return;
-    const maxWidth = Math.max(INSPECTOR_WIDTH_MIN, Math.min(INSPECTOR_WIDTH_MAX, window.innerWidth - 300));
-    const width = Math.max(INSPECTOR_WIDTH_MIN, Math.min(maxWidth, Math.round(window.innerWidth - e.clientX)));
-    cardsLayout.style.setProperty('--inspector-width', `${width}px`);
-    writeStoredJson(INSPECTOR_WIDTH_KEY, width);
-  });
-  const stopResizerDrag = () => {
-    if (!draggingResizer) return;
-    draggingResizer = false;
-    resizer.classList.remove('is-dragging');
-    const cardEl = document.querySelector('#inspector-card-preview .card');
-    if (cardEl) requestAnimationFrame(() => fitCardFace(cardEl));
-  };
-  resizer.addEventListener('pointerup', stopResizerDrag);
-  resizer.addEventListener('pointercancel', stopResizerDrag);
+  // The shared customization pane owns both card and item resize handles.
   document.getElementById('edit-type').addEventListener('change', (e) => mutateSelectedCard((d) => setCardKind(d, e.target.value)));
   document.getElementById('edit-class').addEventListener('change', (e) => mutateSelectedCard((d) => { d.class = e.target.value; }));
   document.getElementById('edit-rarity').addEventListener('change', (e) => mutateSelectedCard((d) => { d.rarity = e.target.value; }));
@@ -4092,9 +4763,9 @@ function wireEvents() {
       d.keywords ||= [];
       d.tags ||= [];
       if (kind === 'effect') {
-        const selfOps = ['block', 'draw', 'heal', 'restoreStamina', 'restoreMana', 'applyReflect', 'gainBarrier', 'restorePoise'];
+        const selfOps = ['block', 'draw', 'heal', 'restoreStamina', 'restoreMana', 'applyReflect', 'gainBarrier', 'restorePoise', 'removeStatus'];
         const amt = key === 'damage' ? 6 : key === 'block' ? 5 : key === 'gainBarrier' ? 1 : key === 'restorePoise' ? 5 : 2;
-        d.effects.push({ op: key, target: selfOps.includes(key) ? 'self' : getCardTarget(d), amount: amt });
+        d.effects.push({ op: key, target: selfOps.includes(key) ? 'self' : getCardTarget(d), amount: amt, ...(key === 'removeStatus' ? { status: 'weak' } : {}) });
       } else if (kind === 'status') d.effects.push({ op: 'applyStatus', status: key, stacks: (key === 'ward' || key === 'barrier') ? 1 : 2, target: state.scoring.statuses?.[key]?.target || 'enemy' });
       else if (kind === 'kw' && !d.keywords.includes(key)) d.keywords.push(key);
       else if (kind === 'tag' && !d.tags.includes(key)) d.tags.push(key);
@@ -4134,6 +4805,12 @@ function wireEvents() {
   const featureBurst = createEditBurst();
   const featureList = document.getElementById('active-features-list');
   const applyFeatureNumber = (target) => {
+    if (target.dataset.effCharge !== undefined) {
+      const field = target.dataset.chargeField;
+      if (!['damage', 'block', 'heal', 'break', 'manaDiscount', 'buildup'].includes(field)) return false;
+      applyLiveCardEdit(featureBurst, d => { d.effects[Number(target.dataset.effCharge)][field] = Math.max(0, Number(target.value) || 0); });
+      return true;
+    }
     if (target.dataset.effAmt !== undefined) {
       const effectIndex = Number(target.dataset.effAmt);
       const wanted = Number(target.value) || 0;
@@ -4191,9 +4868,16 @@ function wireEvents() {
   document.getElementById('weights-group-filter').addEventListener('change', renderWeights);
 
   // Items & Relics tab events
+  document.getElementById('btn-item-filters').addEventListener('click', () => document.getElementById('item-filters-modal').showModal());
+  document.getElementById('btn-item-filters-reset').addEventListener('click', () => {
+    for (const id of ['item-filter-kind', 'item-filter-rarity', 'item-filter-rank']) document.getElementById(id).value = 'all';
+    document.getElementById('filter-item-deck').value = 'all';
+    document.getElementById('item-filter-sort').value = 'rank-desc';
+    updateItemFilterCount(); renderItemsGrid();
+  });
   const selectedItem = () => state.items.find((x) => x.key === state.selectedItemKey) || null;
   for (const id of ['item-filter-search', 'item-filter-kind', 'item-filter-rarity', 'item-filter-rank', 'item-filter-sort']) {
-    document.getElementById(id)?.addEventListener(id === 'item-filter-search' ? 'input' : 'change', renderItemsGrid);
+    document.getElementById(id)?.addEventListener(id === 'item-filter-search' ? 'input' : 'change', () => { updateItemFilterCount(); renderItemsGrid(); });
   }
   document.getElementById('btn-rename-all-items')?.addEventListener('click', () => {
     pushHistory();
@@ -4427,26 +5111,7 @@ function wireEvents() {
     const layer = activeArtLayersObj().layers[idx];
     if (!layer) return;
     if (!layerEditHistoryPushed) { pushHistory(); layerEditHistoryPushed = true; }
-    if (e.target.dataset.lEnabled !== undefined) layer.enabled = e.target.checked;
-    else if (e.target.dataset.lKind) {
-      const k = e.target.dataset.lKind;
-      const set = new Set(layer.entityKinds || ['weapon', 'armour', 'relic']);
-      if (e.target.checked) set.add(k); else set.delete(k);
-      layer.entityKinds = [...set];
-    }
-    else if (e.target.dataset.lField) layer[e.target.dataset.lField] = e.target.value;
-    else if (e.target.dataset.lNum) {
-      layer[e.target.dataset.lNum] = safeNum(e.target.value, 0);
-      if (e.target.dataset.lNum === 'opacity') {
-        const span = e.target.closest('label')?.querySelector('.opacity-val');
-        if (span) span.textContent = `${layer.opacity}%`;
-      }
-    }
-    saveDraft();
-    // Update the live preview in place without rebuilding #art-layers-list (keeps focus and slider drags).
-    renderArtPreviewOnly();
-    if (state.artTarget === 'items') renderItemInspector();
-    else renderInspector();
+    applyArtLayerInput(e.target, layer, state.artTarget === 'items');
   });
   document.getElementById('art-layers-list').addEventListener('change', () => {
     layerEditHistoryPushed = false;
@@ -4566,58 +5231,6 @@ function wireEvents() {
   document.getElementById('btn-download-json').addEventListener('click', downloadScoringJson);
   document.getElementById('input-upload-json').addEventListener('change', importScoringFile);
 
-  // Application Menu Bar shortcuts (File / Edit / View / Tools / Window / Export dropdown)
-  document.getElementById('btn-menu-new-card')?.addEventListener('click', () => {
-    document.querySelector('.studio-tab[data-tab="cards"]')?.click();
-    document.getElementById('btn-new-card')?.click();
-  });
-  document.getElementById('btn-menu-undo')?.addEventListener('click', () => document.getElementById('btn-undo')?.click());
-  document.getElementById('btn-menu-redo')?.addEventListener('click', () => document.getElementById('btn-redo')?.click());
-  document.getElementById('btn-menu-view-grid')?.addEventListener('click', () => {
-    document.querySelector('.studio-tab[data-tab="cards"]')?.click();
-    document.getElementById('view-grid')?.click();
-  });
-  document.getElementById('btn-menu-view-single')?.addEventListener('click', () => {
-    document.querySelector('.studio-tab[data-tab="cards"]')?.click();
-    document.getElementById('view-single')?.click();
-  });
-  document.getElementById('btn-menu-toggle-filters')?.addEventListener('click', () => {
-    document.querySelector('.studio-tab[data-tab="cards"]')?.click();
-    document.getElementById('btn-filters')?.click();
-  });
-  const menuRankToggle = document.getElementById('menu-toggle-rank-badges');
-  const filterRankToggle = document.getElementById('toggle-rank-badges');
-  if (menuRankToggle && filterRankToggle) {
-    menuRankToggle.checked = filterRankToggle.checked;
-    menuRankToggle.addEventListener('change', () => {
-      filterRankToggle.checked = menuRankToggle.checked;
-      filterRankToggle.dispatchEvent(new Event('change'));
-    });
-    filterRankToggle.addEventListener('change', () => {
-      menuRankToggle.checked = filterRankToggle.checked;
-    });
-  }
-  document.getElementById('btn-menu-custom-decks')?.addEventListener('click', () => document.getElementById('btn-custom-decks')?.click());
-  document.getElementById('btn-reset-inspector-width')?.addEventListener('click', () => {
-    document.querySelector('.cards-layout')?.style.removeProperty('--inspector-width');
-    try { localStorage.removeItem(INSPECTOR_WIDTH_KEY); } catch { /* ignore */ }
-    toast('Inspector width reset');
-  });
-
-  const downloadJsonBlob = (filename, payload, label) => {
-    const blob = new Blob([JSON.stringify(payload, null, 2) + '\n'], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    Object.assign(document.createElement('a'), { href: url, download: filename }).click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-    toast(`Downloaded ${label} (${filename})`);
-  };
-  document.getElementById('btn-export-accept-ranks')?.addEventListener('click', openAcceptRanksDialog);
-  document.getElementById('btn-export-decks-repo')?.addEventListener('click', () => document.getElementById('btn-decks-save-repo')?.click());
-  document.getElementById('btn-export-bundle-json')?.addEventListener('click', () => document.getElementById('btn-decks-export-json')?.click());
-  document.getElementById('btn-export-names-json')?.addEventListener('click', saveNames);
-  document.getElementById('btn-export-art-json')?.addEventListener('click', () => downloadJsonBlob('cardArtLayers.json', state.artLayers, 'card art layers'));
-  document.getElementById('btn-export-item-art-json')?.addEventListener('click', () => downloadJsonBlob('itemArtLayers.json', state.itemArtLayers, 'item art layers'));
-
   // Weights toolbar: staged edits, the studio's saved config, import, export and accepting the new ranks.
   document.getElementById('btn-weights-apply').addEventListener('click', applyPendingWeights);
   document.getElementById('btn-weights-discard').addEventListener('click', discardPendingWeights);
@@ -4655,7 +5268,7 @@ async function checkCardArt() {
 // The studio works on the core card pool only (owner, 2026-11-22).
 function buildCardList() {
   return registries.cards.all()
-    .filter((c) => c && c.id && c.name && !c.ruleTemplate && c.id.startsWith('core.'))
+    .filter((c) => c && c.id && c.name && !c.ruleTemplate && (c.id.startsWith('core.') || c.id.startsWith('subclass.') || configuredCustomCardIds.has(c.id)))
     .map((c) => clone(c))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
@@ -4690,7 +5303,9 @@ async function boot() {
   } catch { /* ignore */ }
 
   initSandboxEnemies();
+  setupStudioMenubar();
   wireEvents();
+  initGalleryZoom({ onCardsResize: () => requestAnimationFrame(() => document.querySelectorAll('#cards-grid .card').forEach(el => fitCardFace(el))) });
   studioToolsUi = initStudioToolsModals({
     state,
     isLocalServer,
@@ -4698,20 +5313,66 @@ async function boot() {
     saveDraft,
     syncAllViews,
     renderCardsGrid,
+    renderItemsGrid,
+    onDeckFilterChange: ({ id, manage }) => {
+      updateFilterCount(); updateItemFilterCount();
+      if (manage || id !== 'all') {
+        const filterDialogs = [...document.querySelectorAll('#card-filters-modal[open], #item-filters-modal[open]')];
+        if (manage) for (const dialog of filterDialogs) dialog.close();
+        if (filterDialogs.length && !manage) cardEditorDockUi?.setView('decks');
+        else setCustomizationView('decks');
+        deckListPanelUi?.open(id);
+        if (!filterDialogs.length || manage) deckListPanelUi?.element.querySelector('[data-deck-select]')?.focus();
+      }
+    },
     toast,
     normalizeStudioCard,
-    deriveFaceFromDef: def => cardDefToFace(def, state.scoring),
+    deriveFaceFromDef: def => withRebalancePreviewRegistry(() => cardDefToFace(clone(def), state.scoring)),
+    renderRebalancePreview,
+    prepareRebalanceCommit,
     getFilteredCards,
     getFilteredItems,
     studioCardOverrides,
+    prepareSubclassEdit: prepareCardEdit,
   });
+  subclassCatalogUi = initSubclassCatalogUi({ state, isLocalServer, pushHistory, saveDraft, syncAllViews, toast, normalizeStudioCard, studioCardOverrides });
+  cardSelectionUi = initCardSelectionUi({ state, pushHistory, saveDraft, syncAllViews, toast, getFilteredCards, normalizeStudioCard,
+    prepareSubclassEdit: prepareCardEdit, applyAutoNames: autoNameSelectedCards,
+    openBalanceSelection: ids => studioToolsUi.openBalanceSelection(ids),
+    onCardsRemoved: ids => { for (const id of ids) { studioCardOverrides.delete(id); studioCardOverrides.delete(`${LIVE_ID_PREFIX}${id}`); } },
+    onSelectionChange: () => { deckListPanelUi?.refresh(); refreshCommandStates(); },
+  });
+  deckListPanelUi = initDeckListPanel({ state, pushHistory, saveDraft, syncAllViews, toast,
+    getContext: () => activeGallery,
+    selectedItemKeys: () => state.selectedItemKey ? [state.selectedItemKey] : [],
+    selectionIds: () => cardSelectionUi.selectedIds(),
+    selectCards: (ids, options) => cardSelectionUi.select(ids, options),
+    selectCard: id => { document.querySelector('.studio-tab[data-tab="cards"]').click(); selectStudioCard(id); },
+    selectItem: key => { document.querySelector('.studio-tab[data-tab="items"]').click(); selectStudioItem(key); },
+    openDeckManager: () => studioToolsUi.openDecksModal(),
+    onOpen: () => { cardEditorDockUi?.setView('decks'); cardEditorDockUi?.setPanel?.('editor'); },
+    onRowSelect: () => cardEditorDockUi?.showProperties(),
+  });
+  cardEditorDockUi = initCardEditorDock({ state, selectCard: selectStudioCard, getCardActions: cardMenuActions, narrowQuery: NARROW_LAYOUT_QUERY,
+    renameCard: () => { const input = document.getElementById('edit-name'); input.focus(); input.select(); },
+    balanceCard: id => studioToolsUi.openBalanceSelection([id]),
+    selectItem: selectStudioItem, getSelectedItemId: () => state.selectedItemKey,
+    getSelectedItemName: key => state.items.find(item => item.key === key)?.name,
+    renameItem: () => { const input = document.getElementById('item-edit-name'); input?.focus(); input?.select(); },
+    balanceItem: key => studioToolsUi.openBalanceItems([key]),
+    views: { design: document.getElementById('tab-art'), weights: document.getElementById('tab-weights'), decks: () => deckListPanelUi?.element },
+    renderContextFields,
+    onViewChange: view => { if (view === 'design') renderArtTab(); else if (view === 'weights') renderWeights(); else if (view === 'decks') deckListPanelUi?.refresh(); },
+  });
+  document.getElementById('btn-open-decks').addEventListener('click', () => { setCustomizationView('decks'); deckListPanelUi?.refresh(); });
+  document.getElementById('btn-custom-decks-items')?.addEventListener('click', () => studioToolsUi.openDecksModal());
 
-  // Web mode (GitHub Pages): nothing can be written to the repo, so repo-write controls hide and
-  // the Export ▾ dropdown downloads JSON files instead.
+  // Web mode (GitHub Pages): nothing can be written to the repo, so the repo controls go and
+  // Download JSON in the More menu is how work leaves the studio.
   if (!isLocalServer) {
     for (const id of ['btn-export-repo', 'btn-save-art', 'btn-revert', 'btn-rebal-save-repo', 'btn-decks-save-repo', ...WEIGHTS_REPO_BUTTON_IDS]) document.getElementById(id)?.classList.add('hidden');
-    document.querySelectorAll('.repo-only-item').forEach((el) => el.classList.add('hidden'));
-    document.getElementById('draft-status').title = 'Web mode: use Export ▾ to download JSON files';
+    document.querySelector('#more-menu .menu-section')?.classList.add('hidden');
+    document.getElementById('draft-status').title = 'Web mode: use Download JSON in the More menu to export';
   }
 
   await loadFromRepo(state.repoPath);
@@ -4748,6 +5409,7 @@ async function boot() {
       if (Array.isArray(draft.itemArtLayers?.layers)) state.itemArtLayers = draft.itemArtLayers;
       if (Array.isArray(draft.customClasses)) state.customClasses = draft.customClasses;
       if (Array.isArray(draft.customDecks)) state.customDecks = draft.customDecks;
+      if (draft.subclassCatalog?.kind === 'ashenspire.subclassCatalog' && Array.isArray(draft.subclassCatalog.lists)) state.subclassCatalog = draft.subclassCatalog;
       for (const draftItem of (Array.isArray(draft.editedItems) ? draft.editedItems : [])) {
         if (!draftItem?.key) continue;
         const j = state.items.findIndex((x) => x.key === draftItem.key);

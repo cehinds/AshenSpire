@@ -14,6 +14,7 @@ import { cardEffectHtml, summarizeCardOption } from '../src/ui/models/CardOption
 import { withKitDom } from './helpers/dom.mjs';
 import { fixCoreMechanics as shipped } from '../src/content/generated/fixCoreMechanics.js';
 import { coreSmashClause, coreSmashHelp, withCoreSmashBlurb } from '../src/model/smashClause.js';
+import { configuredStance } from '../src/model/profileStance.js';
 import { uiStrings } from '../src/content/generated/uiStrings.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
@@ -29,16 +30,23 @@ test('the shared Core Smash sentence states the owner rule', () => {
   assert.match(uiStrings.find(r => r.id === 'card.smash.matchupClause').full, /\{stances\}.*\{mult\}/);
 });
 
-test('every Core card tagged maneuver:smash shows the line, not only core.smash', () => {
+test('every effective Core Smash shows its rule, while casting cards keep their Prepared identity', () => {
   const smashes = core.cards.all().filter(def => def.tags?.includes('maneuver:smash'));
   assert.ok(smashes.some(def => def.id === 'core.reaverSpecial') && smashes.some(def => def.id === 'core.smash'));
   for (const def of smashes) {
     const lines = cardFaceLines(def, null, core);
     const text = lines ? plain(lines) : cardPlainText(core, { cardId: def.id }, { rules: { combatExpansionVersion: 2 } });
-    assert.match(text, RULE, `${def.id} face`);
     const summary = combatCardSummary(def, null, core);
-    if (summary) assert.match(summary, RULE, `${def.id} summary`);
+    if (configuredStance(def) === 'smash') {
+      assert.match(text, RULE, `${def.id} face`);
+      if (summary) assert.match(summary, RULE, `${def.id} summary`);
+    } else {
+      assert.doesNotMatch(text, RULE, `${def.id} does not play in Smash`);
+      if (summary) assert.doesNotMatch(summary, RULE, `${def.id} summary`);
+      assert.equal(coreSmashHelp(def, core), null);
+    }
   }
+  assert.equal(configuredStance(core.cards.get('custom.copy_mwx6xoww')), 'prepared', 'the authored Arcane Smash is a casting card');
 });
 
 test('non-Smash cards and the legacy profile keep their old text', () => {

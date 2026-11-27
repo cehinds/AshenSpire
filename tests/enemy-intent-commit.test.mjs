@@ -14,6 +14,7 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch } from '../src/engine/combat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { rangePairKey } from '../src/model/combatEngagement.js';
+import { EnemyDefinitionOf } from '../src/model/enemyMoveSet.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -50,7 +51,8 @@ test('shown intent and plan equal what the enemy plays, over a seeded multi-roun
       }
       const enemy = combat.enemies[0];
       if (!enemy.alive) break;
-      const def = registries.enemies.get(id);
+      // The instance's move set, its level-card moves (owner, 2026-11-20) included.
+      const def = EnemyDefinitionOf(registries, enemy);
       const plan = shown(enemy), resolving = Boolean(enemy.pendingMove);
       const { started, refused } = endTurn(combat);
       const charged = enemy.pendingMove?.moveId;

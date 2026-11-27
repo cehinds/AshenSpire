@@ -10,10 +10,12 @@ export const ZONES = Object.freeze([
   'DRAW_PILE', 'HAND', 'DISCARD_PILE', 'EXHAUST_PILE', 'SEALED', 'REMOVED_FROM_PLAY',
 ]);
 
-export function destinationAfterPlay(card, result, { sealConditionMet = () => false } = {}) {
+export function destinationAfterPlay(card, result, { sealConditionMet = () => false, withered = false } = {}) {
   if (result.cancelled || !result.legal) return 'HAND';
   if (hasProperty(card, 'lifecycle.seal') && sealConditionMet(card)) return 'SEALED';
   if (hasProperty(card, 'lifecycle.exhaust')) return 'EXHAUST_PILE';
+  // Wither N (useLimit child): the copy has used its last play this fight.
+  if (withered) return 'EXHAUST_PILE';
   if (hasProperty(card, 'lifecycle.recall.afterUse')) return 'HAND';
   // Preserved legacy rule (SPEC §4.3): a played Power leaves play entirely —
   // it is not exhausted and not discarded. Exhaust above still wins on a

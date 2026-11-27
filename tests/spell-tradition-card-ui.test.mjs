@@ -18,11 +18,12 @@ const definition = (school, extras = {}) => ({
   ...extras,
 });
 
-test('exclusive and shared spell types use tradition labels without changing the spell category', () => {
-  for (const [school, label, traditions] of [
-    ['force', 'ARCANE', ['arcane']], ['illusion', 'ARCANE', ['arcane']], ['alteration', 'ARCANE', ['arcane']],
-    ['divine', 'DIVINE', ['divine']], ['decay', 'DIVINE', ['divine']],
-    ...['fire', 'earth', 'lightning', 'frost', null].map(school => [school, 'SPELL', ['arcane', 'divine']]),
+test('exclusive and shared spell types use category labels and marks without changing the spell category', () => {
+  for (const [school, label, traditions, category] of [
+    ['force', 'ARCANE', ['arcane'], 'arcane'], ['illusion', 'ARCANE', ['arcane'], 'arcane'], ['alteration', 'ARCANE', ['arcane'], 'arcane'],
+    ['divine', 'DIVINE', ['divine'], 'divine'], ['decay', 'DIVINE', ['divine'], 'divine'],
+    ...['fire', 'earth', 'lightning', 'frost'].map(school => [school, 'SPELL', ['arcane', 'divine'], 'shared']),
+    [null, 'SPELL', ['arcane', 'divine'], null],
   ]) {
     const def = definition(school);
     const model = playingCardModel(reg, { cardId: def.id }, { definition: def });
@@ -30,31 +31,37 @@ test('exclusive and shared spell types use tradition labels without changing the
     assert.equal(model.type.id, 'spell');
     assert.equal(model.type.label, label);
     assert.deepEqual(model.sigils.traditions, traditions);
+    assert.equal(model.sigils.category, category, school);
     assert.ok(Object.isFrozen(model.sigils.traditions));
     const html = cardSigilsHtml(model.sigils);
-    for (const tradition of traditions) {
-      assert.match(html, new RegExp('data-tradition="' + tradition + '"'));
-      assert.ok(html.includes(TRADITION_SIGILS[tradition].shape));
-    }
-    assert.equal((html.match(/class="combat-sigil combat-sigil-tradition"/g) || []).length, traditions.length);
+    const marks = [...html.matchAll(/data-sigil="(\w+)"/g)].map(match => match[1]);
+    const categoryMarks = category === 'arcane' || category === 'divine' ? [category] : [];
+    assert.deepEqual(marks, ['spell', ...categoryMarks], school);
+    assert.equal((html.match(/class="combat-sigil combat-sigil-tradition"/g) || []).length, categoryMarks.length);
+    for (const id of categoryMarks) assert.ok(html.includes(TRADITION_SIGILS[id].shape));
+    assert.match(html, new RegExp('data-spell-category="' + (category || 'spell') + '"'));
     assert.match(html, new RegExp('card-type-name" data-card-layer="8">' + label[0] + label.slice(1).toLowerCase()));
     if (school) assert.equal(model.sigils.school, school);
   }
 });
 
-test('shared illustrated faces and inspection show both tradition icons and retain their school', () => {
+test('shared illustrated faces show the Spell mark alone and retain their school', () => {
   const def = definition('fire');
   const model = playingCardModel(reg, { cardId: def.id }, { definition: def });
   const html = illustratedCardHtml(model, { rules: '10 damage.', painting: null, glyph: '' });
   assert.match(html, /data-traditions="arcane divine"/);
-  assert.match(html, /data-sigil="arcane"/);
-  assert.match(html, /data-sigil="divine"/);
+  assert.match(html, /data-spell-category="shared"/);
+  assert.match(html, /data-sigil="spell"/);
+  assert.doesNotMatch(html, /data-sigil="arcane"|data-sigil="divine"/);
   assert.match(html, /card-type-name" data-card-layer="8">Spell/);
   const explanation = sigilExplanationHtml(model.sigils);
-  assert.match(explanation, /Arcane magic scales with Intelligence/);
-  assert.match(explanation, /Divine magic scales with Wisdom/);
-  assert.match(explanation, /data-sigil="fire"/);
+  assert.doesNotMatch(explanation, /Arcane magic scales with Intelligence|Divine magic scales with Wisdom/);
+  assert.match(explanation, /data-sigil="spell"[\s\S]*data-sigil="fire"/);
   assert.match(explanation, /Fire magic/);
+  const force = definition('force');
+  const arcane = sigilExplanationHtml(playingCardModel(reg, { cardId: force.id }, { definition: force }).sigils);
+  assert.match(arcane, /data-sigil="spell"[\s\S]*data-sigil="arcane"[\s\S]*data-sigil="force"/);
+  assert.match(arcane, /Arcane magic scales with Intelligence/);
   assert.ok(cardTagRailHtml([{ id: 'tradition:arcane', label: 'Arcane' }]).includes(TRADITION_SIGILS.arcane.shape));
   assert.ok(cardTagRailHtml([{ id: 'tradition:divine', label: 'Divine' }]).includes(TRADITION_SIGILS.divine.shape));
 });
@@ -67,6 +74,7 @@ test('explicit tradition identity and mirrored action metadata survive presentat
   const html = cardSigilsHtml(model.sigils);
   assert.match(html, /data-tradition="divine"/);
   assert.match(html, /data-mirror="counter"/);
+  assert.deepEqual([...html.matchAll(/data-sigil="(\w+)"/g)].map(match => match[1]), ['spell', 'divine', 'counter']);
   assert.match(html, /card-type-name" data-card-layer="8">Divine/);
   assert.ok(html.includes(ACTION_SIGILS.counter.shape));
 });

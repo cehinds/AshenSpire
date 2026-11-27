@@ -93,6 +93,8 @@ test('compact authored rules keep family limits, charge expiry, stacking and HP 
   assert.equal(compactCardRules('Deal 7 damage to the selected enemy. If you previously played at least 1 guile card(s) this turn and If you previously played at least 1 guard card(s) this turn: Deal 4 damage to the selected enemy. Gain 2 Block, once per turn from this family.'), '7 damage to target. If 1+ guile cards played this turn and 1+ guard cards played this turn: 4 damage to target. Gain 2 Block, once per turn per family.');
   assert.equal(compactCardRules('Your next spell this turn costs 1 less Mana (minimum zero); this charge cannot stack with itself.'), 'Next spell this turn costs 1 less Mana (min 0); cannot stack with itself.');
   assert.equal(compactCardRules('Offer 3 HP; the payment must leave at least one HP. Deal 17 damage to every living enemy.'), 'Offer 3 HP (leave at least 1 HP). 17 damage to all enemies.');
+  // Shield Crash read "Gain 14 Block. damage equal to your Block." (owner, 2026-11-17): the verb stays without an amount.
+  assert.equal(compactCardRules('Gain <span class="val">14</span> Block. Deal damage equal to your Block.'), 'Gain <span class="val">14</span> Block. Deal damage equal to your Block.');
 });
 
 test('every base, upgrade, authored rank and equipment profile uses the shared identity', () => {

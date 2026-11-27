@@ -47,6 +47,71 @@
     "caps": {},
     "floor": 1
   },
+  "enemyLevelScaling": {
+    "floorsPerStep": 3,
+    "levels": {
+      "act1": {
+        "minion": [
+          1,
+          2,
+          3
+        ],
+        "elite": [
+          2,
+          3,
+          4
+        ],
+        "boss": 5
+      },
+      "act2": {
+        "minion": [
+          3,
+          4,
+          5
+        ],
+        "elite": [
+          4,
+          5,
+          6
+        ],
+        "boss": 8
+      },
+      "act3": {
+        "minion": [
+          5,
+          6,
+          7
+        ],
+        "elite": [
+          6,
+          7,
+          8
+        ],
+        "boss": 11
+      }
+    },
+    "hpPerStep": 0.08,
+    "gearPerStep": {
+      "ar": 1,
+      "dr": 1
+    },
+    "bossSteps": 2,
+    "spCap": {
+      "minion": 2,
+      "elite": 3,
+      "boss": 3
+    },
+    "attributeCaps": {
+      "elite": {
+        "dexterity": 4,
+        "wisdom": 4
+      },
+      "boss": {
+        "dexterity": 4,
+        "wisdom": 4
+      }
+    }
+  },
   "penaltyFloor": {
     "sp": 1,
     "mp": 0,

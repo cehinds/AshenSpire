@@ -1,4 +1,6 @@
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
+import { scoringContract, tierContract } from './helpers/scoring-contract.mjs';
 import assert from 'node:assert/strict';
 import { registries } from './helpers/fixcore-combat-rules.mjs';
 import { scoring as shippedScoring } from '../src/content/generated/scoring.js';
@@ -29,23 +31,26 @@ import {
   CompileTierCatalog,
 } from '../src/model/tierUnlocks.js';
 
+const arithmetic = scoringContract();
+const contractScoring = { ...shippedScoring, tierUnlocks: tierContract() };
+
 test('EffectiveTier grants +1 tier to Rare cards (Rank 1 Rare == Rank 2 Common == Tier 2)', () => {
-  assert.equal(EffectiveTier(0, 'common', shippedScoring), 0);
-  assert.equal(EffectiveTier(1, 'common', shippedScoring), 1);
-  assert.equal(EffectiveTier(1, 'uncommon', shippedScoring), 1);
-  assert.equal(EffectiveTier(1, 'rare', shippedScoring), 2);
-  assert.equal(EffectiveTier(2, 'common', shippedScoring), 2);
-  assert.equal(EffectiveTier(2, 'rare', shippedScoring), 3);
-  assert.equal(CardEffectiveTier({ rarity: 'rare', rank: 1 }, null, shippedScoring), 2);
-  assert.equal(CardEffectiveTier({ rarity: 'common' }, { rank: 1, rarityOverride: 'rare' }, shippedScoring), 2);
+  assert.equal(EffectiveTier(0, 'common', contractScoring), 0);
+  assert.equal(EffectiveTier(1, 'common', contractScoring), 1);
+  assert.equal(EffectiveTier(1, 'uncommon', contractScoring), 1);
+  assert.equal(EffectiveTier(1, 'rare', contractScoring), 2);
+  assert.equal(EffectiveTier(2, 'common', contractScoring), 2);
+  assert.equal(EffectiveTier(2, 'rare', contractScoring), 3);
+  assert.equal(CardEffectiveTier({ rarity: 'rare', rank: 1 }, null, contractScoring), 2);
+  assert.equal(CardEffectiveTier({ rarity: 'common' }, { rank: 1, rarityOverride: 'rare' }, contractScoring), 2);
 });
 
 test('Improved+ is locked behind Tier 2 (Rank 2 Common or Rank 1 Rare), and Improved+2 behind Tier 3', () => {
-  assert.equal(UpgradeTagStackUnlocked('improved', 1, 0, shippedScoring), true);
-  assert.equal(UpgradeTagStackUnlocked('improved', 2, 1, shippedScoring), false);
-  assert.equal(UpgradeTagStackUnlocked('improved', 2, 2, shippedScoring), true);
-  assert.equal(UpgradeTagStackUnlocked('improved', 3, 2, shippedScoring), false);
-  assert.equal(UpgradeTagStackUnlocked('improved', 3, 3, shippedScoring), true);
+  assert.equal(UpgradeTagStackUnlocked('improved', 1, 0, contractScoring), true);
+  assert.equal(UpgradeTagStackUnlocked('improved', 2, 1, contractScoring), false);
+  assert.equal(UpgradeTagStackUnlocked('improved', 2, 2, contractScoring), true);
+  assert.equal(UpgradeTagStackUnlocked('improved', 3, 2, contractScoring), false);
+  assert.equal(UpgradeTagStackUnlocked('improved', 3, 3, contractScoring), true);
 
   const base = {
     id: 'test.blade',
@@ -63,16 +68,16 @@ test('Improved+ is locked behind Tier 2 (Rank 2 Common or Rank 1 Rare), and Impr
   };
   const alreadyImproved = [{ k: 'dmg', n: 1 }];
   // Rank 1 Common (Tier 1) cannot roll another dmg step (which would create Improved+)
-  const tier1Opts = rollUpgradeOptions(base, alreadyImproved, 1, upgradeStepRng(99, 'c1', 1), { cardRank: 1, everyFamily: true }, 20);
+  const tier1Opts = rollUpgradeOptions(base, alreadyImproved, 1, upgradeStepRng(99, 'c1', 1), { cardRank: 1, everyFamily: true, scoring: contractScoring }, 20);
   assert.ok(!tier1Opts.some((s) => s.k === 'dmg'), 'Rank 1 Common (Tier 1) cannot roll Improved+ dmg');
 
   // Rank 1 Rare (Tier 2) CAN roll dmg (Improved+)
   const rareBase = { ...base, rarity: 'rare' };
-  const tier2RareOpts = rollUpgradeOptions(rareBase, alreadyImproved, 1, upgradeStepRng(99, 'c2', 1), { cardRank: 1, everyFamily: true }, 20);
+  const tier2RareOpts = rollUpgradeOptions(rareBase, alreadyImproved, 1, upgradeStepRng(99, 'c2', 1), { cardRank: 1, everyFamily: true, scoring: contractScoring }, 20);
   assert.ok(tier2RareOpts.some((s) => s.k === 'dmg'), 'Rank 1 Rare (Tier 2) unlocks Improved+ dmg');
 
   // Rank 2 Common (Tier 2) CAN also roll dmg (Improved+)
-  const tier2CommonOpts = rollUpgradeOptions(base, alreadyImproved, 1, upgradeStepRng(99, 'c3', 1), { cardRank: 2, everyFamily: true }, 20);
+  const tier2CommonOpts = rollUpgradeOptions(base, alreadyImproved, 1, upgradeStepRng(99, 'c3', 1), { cardRank: 2, everyFamily: true, scoring: contractScoring }, 20);
   assert.ok(tier2CommonOpts.some((s) => s.k === 'dmg'), 'Rank 2 Common (Tier 2) unlocks Improved+ dmg');
 });
 
@@ -104,17 +109,17 @@ test('Refined (drawback easing), Tempered (combat form), and Purified (healing/c
   assert.equal(UpgradeTagStacks(r2, 'refined'), 2);
   assert.equal(UpgradeTagStacks(r3, 'refined'), 3);
   assert.equal(UpgradeTagLabel('upgrade:refined+'), 'Refined+');
-  assert.equal(UpgradeTagSurcharge(shippedScoring.upgradeTags.refined, 1, 20), 6);
-  assert.equal(UpgradeTagSurcharge(shippedScoring.upgradeTags.refined, 2, 20), 12);
-  assert.equal(UpgradeTagSurcharge(shippedScoring.upgradeTags.refined, 3, 20), 24);
+  assert.equal(UpgradeTagSurcharge(arithmetic.upgradeTags.refined, 1, 20), 6);
+  assert.equal(UpgradeTagSurcharge(arithmetic.upgradeTags.refined, 2, 20), 12);
+  assert.equal(UpgradeTagSurcharge(arithmetic.upgradeTags.refined, 3, 20), 24);
 
   // Tempered: combat form & forging steps (poise, hits, range, block, counter) stamp upgrade:tempered
   const t1 = applyUpgradeSteps(card, [{ k: 'poise', n: 2 }]);
   const t2 = applyUpgradeSteps(card, [{ k: 'poise', n: 2 }, { k: 'tag', tag: 'range:reach' }]);
   assert.equal(UpgradeTagStacks(t1, 'tempered'), 1);
   assert.equal(UpgradeTagStacks(t2, 'tempered'), 2);
-  assert.equal(UpgradeTagSurcharge(shippedScoring.upgradeTags.tempered, 1, 20), 4);
-  assert.equal(UpgradeTagSurcharge(shippedScoring.upgradeTags.tempered, 2, 20), 8);
+  assert.equal(UpgradeTagSurcharge(arithmetic.upgradeTags.tempered, 1, 20), 4);
+  assert.equal(UpgradeTagSurcharge(arithmetic.upgradeTags.tempered, 2, 20), 8);
 
   // Purified: healing & cleansing upgrade line (fx:heal, fx:cleanse) stamps upgrade:purified
   const p1 = applyUpgradeSteps(card, [{ k: 'fx', fx: 'heal', n: 3 }]);
@@ -127,10 +132,10 @@ test('Refined (drawback easing), Tempered (combat form), and Purified (healing/c
 
   // ScoreCard applies surcharges for refined, tempered, purified
   const baseFace = { ...BaseFace(), sp: 1, dmg: 12 };
-  const s0 = ScoreCard(baseFace, shippedScoring).raw;
-  assert.equal(ScoreCard({ ...baseFace, tags: ['upgrade:refined'] }, shippedScoring).raw - s0, 6);
-  assert.equal(ScoreCard({ ...baseFace, tags: ['upgrade:tempered'] }, shippedScoring).raw - s0, 4);
-  assert.equal(ScoreCard({ ...baseFace, tags: ['upgrade:purified'] }, shippedScoring).raw - s0, 4);
+  const s0 = ScoreCard(baseFace, arithmetic).raw;
+  assert.equal(ScoreCard({ ...baseFace, tags: ['upgrade:refined'] }, arithmetic).raw - s0, 6);
+  assert.equal(ScoreCard({ ...baseFace, tags: ['upgrade:tempered'] }, arithmetic).raw - s0, 4);
+  assert.equal(ScoreCard({ ...baseFace, tags: ['upgrade:purified'] }, arithmetic).raw - s0, 4);
 
   // playingCardModel renders labels & tooltips cleanly
   const strike = registries.cards.get('core.strike');
@@ -165,59 +170,59 @@ test('Drawback easing (Refined) is locked at Tier 0-1, unlocks mild easing at Ti
     textTemplate: 'Deal {damage} damage. Exhaust. Ethereal.',
   };
 
-  const t1 = rollUpgradeOptions(drawbackCard, [], 0, upgradeStepRng(7, 'd1', 0), { cardRank: 1, everyFamily: true }, 40);
+  const t1 = rollUpgradeOptions(drawbackCard, [], 0, upgradeStepRng(7, 'd1', 0), { cardRank: 1, everyFamily: true, scoring: contractScoring }, 40);
   assert.ok(!FlatSteps(t1).some((s) => s.k === 'fx' && ['unethereal', 'unexhaust'].includes(s.fx)), 'Tier 1 locks drawback easing');
   assert.ok(!FlatSteps(t1).some((s) => s.k === 'stk' && s.n < 0), 'Tier 1 locks stkEase');
 
-  const t2 = rollUpgradeOptions(drawbackCard, [], 0, upgradeStepRng(7, 'd2', 0), { cardRank: 2, everyFamily: true }, 40);
+  const t2 = rollUpgradeOptions(drawbackCard, [], 0, upgradeStepRng(7, 'd2', 0), { cardRank: 2, everyFamily: true, scoring: contractScoring }, 40);
   assert.ok(FlatSteps(t2).some((s) => (s.k === 'fx' && s.fx === 'unethereal') || (s.k === 'stk' && s.n < 0)), 'Tier 2 unlocks unethereal / stkEase');
   assert.ok(!FlatSteps(t2).some((s) => s.k === 'fx' && s.fx === 'unexhaust'), 'Tier 2 still locks unexhaust');
 
-  const t3 = rollUpgradeOptions(drawbackCard, [], 0, upgradeStepRng(7, 'd3', 0), { cardRank: 3, everyFamily: true }, 40);
+  const t3 = rollUpgradeOptions(drawbackCard, [], 0, upgradeStepRng(7, 'd3', 0), { cardRank: 3, everyFamily: true, scoring: contractScoring }, 40);
   assert.ok(FlatSteps(t3).some((s) => s.k === 'fx' && s.fx === 'unexhaust'), 'Tier 3 unlocks unexhaust');
 });
 
 test('Statuses, stack caps, elements, magic+martial hybrids, cost reductions, and numeric ceilings obey tierUnlocks', () => {
   // Status unlocks & stack caps
-  assert.equal(StatusUnlocked('weak', 0, shippedScoring), true);
-  assert.equal(StatusUnlocked('burn', 0, shippedScoring), false);
-  assert.equal(StatusUnlocked('burn', 1, shippedScoring), true);
-  assert.equal(StatusUnlocked('ward', 1, shippedScoring), false);
-  assert.equal(StatusUnlocked('ward', 2, shippedScoring), true);
-  assert.equal(StatusStackCapAtTier('ward', 2, shippedScoring), 1);
-  assert.equal(StatusStackCapAtTier('ward', 3, shippedScoring), 2);
-  assert.equal(StatusUnlocked('evade', 2, shippedScoring), false);
-  assert.equal(StatusUnlocked('evade', 3, shippedScoring), true);
-  assert.equal(StatusUnlocked('strength', 3, shippedScoring), false);
-  assert.equal(StatusUnlocked('strength', 4, shippedScoring), true);
+  assert.equal(StatusUnlocked('weak', 0, contractScoring), true);
+  assert.equal(StatusUnlocked('burn', 0, contractScoring), false);
+  assert.equal(StatusUnlocked('burn', 1, contractScoring), true);
+  assert.equal(StatusUnlocked('ward', 1, contractScoring), false);
+  assert.equal(StatusUnlocked('ward', 2, contractScoring), true);
+  assert.equal(StatusStackCapAtTier('ward', 2, contractScoring), 1);
+  assert.equal(StatusStackCapAtTier('ward', 3, contractScoring), 2);
+  assert.equal(StatusUnlocked('evade', 2, contractScoring), false);
+  assert.equal(StatusUnlocked('evade', 3, contractScoring), true);
+  assert.equal(StatusUnlocked('strength', 3, contractScoring), false);
+  assert.equal(StatusUnlocked('strength', 4, contractScoring), true);
 
   // Elements & hybrid
-  assert.equal(HybridUnlocked(1, shippedScoring), false);
-  assert.equal(HybridUnlocked(2, shippedScoring), true);
-  assert.equal(ElementUnlocked('fire', 0, shippedScoring), true);
-  assert.equal(ElementUnlocked('arcane', 0, shippedScoring), false);
-  assert.equal(ElementUnlocked('arcane', 1, shippedScoring), true);
-  assert.equal(ElementUnlocked('lightning', 1, shippedScoring), false);
-  assert.equal(ElementUnlocked('lightning', 2, shippedScoring), true);
-  assert.equal(ElementUnlocked('force', 2, shippedScoring), false);
-  assert.equal(ElementUnlocked('force', 3, shippedScoring), true);
+  assert.equal(HybridUnlocked(1, contractScoring), false);
+  assert.equal(HybridUnlocked(2, contractScoring), true);
+  assert.equal(ElementUnlocked('fire', 0, contractScoring), true);
+  assert.equal(ElementUnlocked('arcane', 0, contractScoring), false);
+  assert.equal(ElementUnlocked('arcane', 1, contractScoring), true);
+  assert.equal(ElementUnlocked('lightning', 1, contractScoring), false);
+  assert.equal(ElementUnlocked('lightning', 2, contractScoring), true);
+  assert.equal(ElementUnlocked('force', 2, contractScoring), false);
+  assert.equal(ElementUnlocked('force', 3, contractScoring), true);
 
   // Cost changes & zero-cost gate
-  assert.equal(UpgradeKindUnlocked('costSwap', 0, shippedScoring), false);
-  assert.equal(UpgradeKindUnlocked('costSwap', 1, shippedScoring), true);
-  assert.equal(UpgradeKindUnlocked('cost', 1, shippedScoring), false);
-  assert.equal(UpgradeKindUnlocked('cost', 2, shippedScoring), true);
-  assert.equal(ZeroCostUnlocked(2, shippedScoring), false);
-  assert.equal(ZeroCostUnlocked(3, shippedScoring), true);
+  assert.equal(UpgradeKindUnlocked('costSwap', 0, contractScoring), false);
+  assert.equal(UpgradeKindUnlocked('costSwap', 1, contractScoring), true);
+  assert.equal(UpgradeKindUnlocked('cost', 1, contractScoring), false);
+  assert.equal(UpgradeKindUnlocked('cost', 2, contractScoring), true);
+  assert.equal(ZeroCostUnlocked(2, contractScoring), false);
+  assert.equal(ZeroCostUnlocked(3, contractScoring), true);
 
   // Ceilings & rarity sizes
-  assert.equal(NumericCeilingAtTier('damage', 0, shippedScoring), 12);
-  assert.equal(NumericCeilingAtTier('damage', 2, shippedScoring), 28);
-  assert.equal(NumericCeilingAtTier('damage', 4, shippedScoring), Infinity);
-  assert.equal(UpgradeRarityUnlocked(1, 0, shippedScoring), false);
-  assert.equal(UpgradeRarityUnlocked(1, 1, shippedScoring), true);
-  assert.equal(UpgradeRarityUnlocked(2, 2, shippedScoring), false);
-  assert.equal(UpgradeRarityUnlocked(2, 3, shippedScoring), true);
+  assert.equal(NumericCeilingAtTier('damage', 0, contractScoring), 12);
+  assert.equal(NumericCeilingAtTier('damage', 2, contractScoring), 28);
+  assert.equal(NumericCeilingAtTier('damage', 4, contractScoring), Infinity);
+  assert.equal(UpgradeRarityUnlocked(1, 0, contractScoring), false);
+  assert.equal(UpgradeRarityUnlocked(1, 1, contractScoring), true);
+  assert.equal(UpgradeRarityUnlocked(2, 2, contractScoring), false);
+  assert.equal(UpgradeRarityUnlocked(2, 3, contractScoring), true);
 
   // Pre-compiled O(1) catalog agrees with direct checks
   const cat = CompileTierCatalog(shippedScoring);
@@ -240,7 +245,7 @@ test('GenerateCard with enforceTierUnlocks respects hybrid, element, status, and
     allowedStatuses: ['strength', 'weak'],
     seed: 'tier-gen-1',
     enforceTierUnlocks: true,
-  }, { scoring: shippedScoring });
+  }, { scoring: contractScoring });
   assert.ok(!t1.face.magicShare, 'Tier 1 hybrid falls back to martial');
   assert.ok(!t1.face.statuses.some(([s]) => s === 'strength'), 'Tier 1 never receives Tier 4 status');
 
@@ -253,14 +258,14 @@ test('GenerateCard with enforceTierUnlocks respects hybrid, element, status, and
     effects: 1,
     seed: 'tier-gen-2',
     enforceTierUnlocks: true,
-  }, { scoring: shippedScoring });
+  }, { scoring: contractScoring });
   assert.equal(t2Rare.magicShare, 0.5, 'Rank 1 Rare (Tier 2) unlocks hybrid');
   assert.ok(t2Rare.tags.includes('school:lightning'), 'Rank 1 Rare (Tier 2) unlocks lightning');
 });
 
 test('ValidateScoringConfig accepts shipped tierUnlocks and rejects malformed tierUnlocks', () => {
   assert.deepEqual(ValidateScoringConfig(shippedScoring), []);
-  const bad = structuredClone(shippedScoring);
+  const bad = structuredClone(contractScoring);
   bad.tierUnlocks.upgrades.hits = -1;
   bad.tierUnlocks.rarityBonus = { rare: -1 };
   bad.tierUnlocks.ceilings = { damage: [0] };
@@ -281,23 +286,23 @@ test('stk obeys improved/purified tag-stack gates, ZeroCostUnlocked, NumericCeil
     textTemplate: 'Deal {damage} damage. Apply 1 Bleed.',
   };
   const withImp1 = [{ k: 'dmg', n: 1 }];
-  const t1Stk = rollUpgradeOptions(statusCard, withImp1, 1, upgradeStepRng(3, 's1', 1), { cardRank: 1, everyFamily: true }, 40);
+  const t1Stk = rollUpgradeOptions(statusCard, withImp1, 1, upgradeStepRng(3, 's1', 1), { cardRank: 1, everyFamily: true, scoring: contractScoring }, 40);
   assert.ok(!t1Stk.some((s) => s.k === 'stk'), 'Tier 1 card with Improved cannot roll stk to reach Improved+');
-  const t2Stk = rollUpgradeOptions(statusCard, withImp1, 1, upgradeStepRng(3, 's2', 1), { cardRank: 2, everyFamily: true }, 40);
+  const t2Stk = rollUpgradeOptions(statusCard, withImp1, 1, upgradeStepRng(3, 's2', 1), { cardRank: 2, everyFamily: true, scoring: contractScoring }, 40);
   assert.ok(t2Stk.some((s) => s.k === 'stk'), 'Tier 2 card with Improved unlocks stk (Improved+)');
 
   // ZeroCostUnlocked gates dropping 1 SP -> 0 SP until Tier 3
-  const t2Cost = rollUpgradeOptions(statusCard, [], 0, upgradeStepRng(5, 'zc1', 0), { cardRank: 2, everyFamily: true }, 40);
+  const t2Cost = rollUpgradeOptions(statusCard, [], 0, upgradeStepRng(5, 'zc1', 0), { cardRank: 2, everyFamily: true, scoring: contractScoring }, 40);
   assert.ok(!t2Cost.some((s) => s.k === 'cost'), 'Tier 2 cannot reduce 1 SP to 0 SP');
-  const t3Cost = rollUpgradeOptions(statusCard, [], 0, upgradeStepRng(5, 'zc2', 0), { cardRank: 3, everyFamily: true }, 40);
+  const t3Cost = rollUpgradeOptions(statusCard, [], 0, upgradeStepRng(5, 'zc2', 0), { cardRank: 3, everyFamily: true, scoring: contractScoring }, 40);
   assert.ok(t3Cost.some((s) => s.k === 'cost'), 'Tier 3 unlocks 0-cost reduction');
 
   // limits.tierUnlocks: false disables gating
-  const bypassed = rollUpgradeOptions(statusCard, withImp1, 1, upgradeStepRng(3, 's3', 1), { cardRank: 0, tierUnlocks: false, everyFamily: true }, 40);
+  const bypassed = rollUpgradeOptions(statusCard, withImp1, 1, upgradeStepRng(3, 's3', 1), { cardRank: 0, tierUnlocks: false, everyFamily: true, scoring: contractScoring }, 40);
   assert.ok(bypassed.some((s) => s.k === 'dmg') && bypassed.some((s) => s.k === 'cost'), 'tierUnlocks: false bypasses tier gates');
 
   // StatusStackCapAtTier and CompileTierCatalog edge cases
-  const custom = structuredClone(shippedScoring);
+  const custom = structuredClone(contractScoring);
   custom.tierUnlocks.statuses.customShorthand = 2;
   custom.tierUnlocks.statuses.flatCap = { minTier: 1, maxStacksBase: 2, stacksPerExtraTier: 0 };
   custom.tierUnlocks.upgrades.mythicKind = 7;
@@ -338,4 +343,28 @@ test('Purified fx:heal restores HP and fx:cleanse removes Weak in real combat', 
   dispatch(combat, { type: 'playCard', cardInstanceId: 'pur-play' });
   assert.equal(combat.player.hp, 34, 'fx:heal restores 4 HP');
   assert.equal(combat.player.statuses.weak?.stacks, 1, 'fx:cleanse removes 1 stack of Weak');
+});
+
+
+test('controlled multiplicative surcharge rules compound against positive score', () => {
+  for (const [pMultiplier, expected] of [[.25, [5, 11.25, 19.0625]], [.15, [3, 6.45, 10.4175]]]) {
+    const rule = { mode: 'multiplicative', pMultiplier };
+    for (let n = 1; n <= 3; n++) assert.ok(Math.abs(UpgradeTagSurcharge(rule, n, 20) - expected[n - 1]) < 1e-10);
+  }
+});
+
+test('the shipped gate ladder agrees with its authored thresholds and cached catalog', () => {
+  const source = JSON.parse(readFileSync(new URL('../content/source/scoring.json', import.meta.url), 'utf8'));
+  assert.deepEqual(shippedScoring.tierUnlocks, source.tierUnlocks);
+  const cfg = source.tierUnlocks, catalog = CompileTierCatalog(shippedScoring);
+  for (const [kind, minTier] of Object.entries(cfg.upgrades)) {
+    for (const tier of [Math.max(0, minTier - 1), minTier, minTier + 1]) {
+      assert.equal(UpgradeKindUnlocked(kind, tier, shippedScoring), tier >= minTier, `${kind}/${tier}`);
+      assert.equal(catalog.kindsAtTier(tier).has(kind), tier >= minTier, `${kind}/${tier}/cached`);
+    }
+  }
+  for (const [status, entry] of Object.entries(cfg.statuses)) {
+    const minTier = typeof entry === 'number' ? entry : entry.minTier;
+    for (const tier of [Math.max(0, minTier - 1), minTier, minTier + 1]) assert.equal(StatusUnlocked(status, tier, shippedScoring), tier >= minTier, `${status}/${tier}`);
+  }
 });

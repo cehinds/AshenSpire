@@ -10,7 +10,7 @@ test('missing combat carrier has no identity or tag rows', () => {
     assert.deepEqual(combatProfileTags(carrier), []);
   }
 });
-import { objectTagIds } from '../src/content/tags.js';
+import { objectTagIds, TAGGING } from '../src/content/tags.js';
 import { progressionCards } from '../src/content/progression/cards.js';
 import { basicCardProfiles } from '../src/content/generated/basicCardProfiles.js';
 import { contentBundle } from '../src/content/index.js';
@@ -113,4 +113,79 @@ test('resolved equipment identity overrides source card lookup without guessing 
   assert.equal(combatProfileFor({ id: 'strike', tags: [] }).camp, null);
   assert.equal(combatProfileFor({ name: 'Fire Smash Counter' }).camp, null);
   assert.throws(() => combatProfileFor({ id: 'fixture', tags: ['camp:physical', 'camp:spell'] }), /conflicting/);
+});
+
+const explicitProfileTags = ['camp:spell', 'maneuver:casting', 'school:fire', 'damage:fire', 'range:ranged', 'targeting:area', 'trait:impact'];
+const explicitProfile = { camp: 'spell', maneuver: 'casting', school: 'fire', damageType: 'fire', counterMode: null,
+  range: 'ranged', targeting: 'area', traits: ['impact'] };
+
+test('explicit cardTags and tags remain authoritative, including empty replacements and nullish fallthrough', () => {
+  for (const carrier of [
+    { id: 'fixture.explicit', cardTags: explicitProfileTags, tags: ['camp:physical'] },
+    { cardId: 'fixture.explicit', tags: explicitProfileTags },
+    { abilityFamily: 'fixture.explicit', cardTags: null, tags: explicitProfileTags },
+  ]) {
+    const before = structuredClone(carrier);
+    assert.deepEqual(combatProfileFor(carrier), explicitProfile);
+    assert.deepEqual(carrier, before);
+  }
+  for (const carrier of [{ id: 'fixture.explicit', cardTags: [], tags: explicitProfileTags },
+    { id: 'fixture.explicit', tags: [] }]) {
+    assert.deepEqual(combatProfileFor(carrier), { camp: null, maneuver: null, school: null, damageType: null, counterMode: null });
+  }
+});
+
+test('nullish tags still resolve current source card and scoped enemy rows through the same junction', () => {
+  const card = TAGGING.find(row => row.family === 'card');
+  const move = TAGGING.find(row => row.family === 'enemyMove');
+  const expectedCard = combatProfileFor({ id: card.objectId, tags: objectTagIds('card', card.objectId) });
+  for (const carrier of [card.objectId, { id: card.objectId }, { cardId: card.objectId, tags: null },
+    { abilityFamily: card.objectId, cardTags: null, tags: undefined }]) assert.deepEqual(combatProfileFor(carrier), expectedCard);
+  const expectedMove = combatProfileFor({ enemyId: move.scope, moveId: move.objectId, tags: objectTagIds('enemyMove', move.objectId, move.scope) });
+  for (const carrier of [{ enemyId: move.scope, moveId: move.objectId },
+    { enemyDefinitionId: move.scope, id: move.objectId, cardTags: null, tags: null }]) assert.deepEqual(combatProfileFor(carrier), expectedMove);
+  const missing = { enemyId: 'fixture.absent-scope', moveId: move.objectId };
+  assert.deepEqual(combatProfileFor(missing), combatProfileFor({ ...missing, tags: objectTagIds('enemyMove', move.objectId, missing.enemyId) }));
+});
+
+test('tag getters are evaluated at most once per call and still follow the nullish precedence', () => {
+  const reads = [];
+  let selected = explicitProfileTags;
+  const carrier = { id: 'fixture.getters', get cardTags() { reads.push('cardTags'); return selected; },
+    get tags() { reads.push('tags'); return explicitProfileTags; } };
+  assert.deepEqual(combatProfileFor(carrier), explicitProfile);
+  assert.deepEqual(reads, ['cardTags']);
+  reads.length = 0; selected = null;
+  assert.deepEqual(combatProfileFor(carrier), explicitProfile);
+  assert.deepEqual(reads, ['cardTags', 'tags']);
+  reads.length = 0; selected = [];
+  assert.equal(combatProfileFor(carrier).camp, null);
+  assert.deepEqual(reads, ['cardTags']);
+});
+
+test('malformed id and enemy scope retain eager lookup coercion and error precedence', () => {
+  for (const field of ['id', 'enemyId']) {
+    const reads = [], key = { toString() { reads.push(field); return 'fixture.coerced'; } };
+    const carrier = { id: 'fixture.move', [field]: key, get cardTags() { reads.push('cardTags'); return explicitProfileTags; } };
+    assert.deepEqual(combatProfileFor(carrier), explicitProfile);
+    assert.deepEqual(reads, [field, 'cardTags']);
+    const error = new Error('lookup coercion before tag getter');
+    const broken = { id: 'fixture.move', [field]: { toString() { throw error; } },
+      get cardTags() { throw new Error('tag getter ran first'); } };
+    assert.throws(() => combatProfileFor(broken), candidate => candidate === error);
+    let tagReads = 0;
+    assert.throws(() => combatProfileFor({ id: 'fixture.move', [field]: Symbol('invalid key'),
+      get tags() { tagReads++; return ['camp:physical', 'camp:spell']; } }), TypeError);
+    assert.equal(tagReads, 0);
+  }
+});
+
+test('resolved tags retain strict identity validation and existing family error order', () => {
+  assert.throws(() => combatProfileFor({ id: 'fixture.invalid', cardTags: ['camp:physical', 'camp:spell'], tags: [] }),
+    /fixture.invalid carries conflicting camp: tags/);
+  assert.throws(() => combatProfileFor({ id: 'fixture.invalid', tags: ['camp:unknown', 'school:unknown'] }),
+    /fixture.invalid carries unknown camp: tag 'unknown'/);
+  assert.throws(() => combatProfileFor({ id: 'fixture.invalid', tags: ['camp:spell', 'school:unknown'] }),
+    /fixture.invalid carries unknown school: tag 'unknown'/);
+  assert.throws(() => combatProfileFor({ id: 'fixture.invalid', cardTags: [null], tags: explicitProfileTags }), TypeError);
 });

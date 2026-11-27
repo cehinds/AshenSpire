@@ -1,14 +1,17 @@
 // The Core card-upgrade step generator (docs/ai/tasks/CARD-UPGRADES-2026-10-28.md).
 // Pure and stateless: the roll is mulberry32(hash(run.seed, instanceId, stepIndex)); its callers fold the visit's
 // offer key into the instance id (upgradeOffer.js), so a preview equals the commit and no named RNG stream moves.
-// A leaf module: it imports only rng.js, cardUpgrade.js, combatRanges.js, cardRank.js and generated data.
+// Upgrade candidates share the neutral mechanical projection and CP scorer; stored steps remain authored deltas.
 // Retain is offered as an `fx` step (W25): Core keeps a Retain card in hand at the end of a turn.
 import { mulberry32 } from './rng.js';
 import { applyUpgradeSteps, MAX_CARD_UPGRADES, MAX_UPGRADE_TAG_STACKS, UPGRADE_RARITIES, FlatSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, ELEMENT_IDENTITY, RANK_DOWN_TAG, PHYSICAL_DAMAGE_TYPES, HoldsPacket, RUN_ATTRIBUTE_STATS, hitFloor, currentHits, DrawbackSteps, UpgradeTagStacks, ImprovedScaledAmount } from './cardUpgrade.js';
 import { RANGES, normalizeRange } from './combatRanges.js';
-import { STACK_CAPS, rankedEffectsCapped } from './cardRank.js';
+import { STACK_CAPS, rankedEffectsCapped, VisibleCardRank } from './cardRank.js';
 import { EvaluateUpgradeStepCp, PrepareUpgradeStepCpContext } from './cardUpgradeCp.js';
+import * as MechanicalProjection from './cardMechanicalProjection.js';
 import { GetActiveScoring } from './activeScoring.js';
+import { EffectiveCostGrowth } from './combatMechanics.js';
+import * as CombatPower from './combatPower.js';
 import { fixCoreMechanics } from '../content/generated/fixCoreMechanics.js';
 import {
   EffectiveTier,
@@ -245,7 +248,68 @@ function resolveEffectiveTier(base, current, limits, scoring) {
   return Infinity;
 }
 
-function options(base, current, applied, limits, rarity = 0, scoring = GetActiveScoring()) {
+// Numeric tier limits are in the mechanic units the card face displays. The
+// saved step still stores an authored delta; never compare those input units to
+// a mechanical ceiling or offer an input-only change hidden by rounding.
+function mechanicalNumbers(card, registries, projectionScope, suppliedProjection) {
+  const projected = suppliedProjection || MechanicalProjection.ProjectCardMechanicalValues(card, { registries, projectionScope }).card;
+  const payloads = [[...(projected.effects || []), ...(card.onTurnEndInHand || [])],
+    ...(card.effectVariants || []).map(variant => [...variant.effects, ...(card.onTurnEndInHand || [])])];
+  const totals = { damage: 0, block: 0 };
+  for (const [index, payload] of payloads.entries()) {
+    const effects = index === 0 && !card.onTurnEndInHand?.length ? payload
+      : MechanicalProjection.ProjectCardMechanicalValues({ ...card, effects: index === 0 ? [...(card.effects || []), ...(card.onTurnEndInHand || [])] : payload }, { registries, projectionScope }).card.effects;
+    const sum = { damage: 0, block: 0 };
+    const upper = value => typeof value === 'number' && Number.isFinite(value) ? Math.max(0, value) : value === undefined ? 0 : Infinity;
+    for (const effect of effects) {
+      if (effect.op in sum) sum[effect.op] += upper(effect.amount) * (effect.op === 'damage' ? Math.max(1, upper(effect.hits ?? 1)) : 1) * Math.max(1, upper(effect.repeat ?? 1));
+      if (effect.op === 'grantCardCharge') for (const op of ['damage', 'block']) sum[op] += upper(effect[op]);
+    }
+    for (const op of ['damage', 'block']) totals[op] = Math.max(totals[op], sum[op]);
+  }
+  return { projected, totals };
+}
+
+function numericUpgradeFits(baseNumbers, afterNumbers, tier, scoring) {
+  for (const op of ['damage', 'block']) {
+    const cap = NumericCeilingAtTier(op, tier, scoring);
+    if (Number.isFinite(cap) && afterNumbers.totals[op] > cap) return false;
+    const printed = totalOf(baseNumbers.projected.effects || [], op);
+    if (printed > 0 && totalOf(afterNumbers.projected.effects || [], op) > printed * 2) return false;
+  }
+  return true;
+}
+
+function mechanicalImprovement(current, op, desired, baseNumbers, currentNumbers, tier, scoring, readNumbers) {
+  const kind = op === 'damage' ? 'dmg' : 'blk', before = totalOf(currentNumbers.projected.effects || [], op);
+  const index = firstPlainIndex(currentNumbers.projected.effects || [], op), hits = hitsOf(currentNumbers.projected.effects[index]);
+  const target = before + desired.n * hits;
+  const probe = n => {
+    const numbers = readNumbers(applyUpgradeSteps(current, [{ k: kind, n, improvedStacks: desired.improvedStacks }]));
+    const total = totalOf(numbers.projected.effects || [], op);
+    return { n, total, fits: total <= target && numericUpgradeFits(baseNumbers, numbers, tier, scoring) };
+  };
+  // Most existing cards need only a few raw points to cross a visible plateau.
+  // Bracket the desired mechanic value before binary refinement, rather than
+  // projecting the full stored-step range for every small common upgrade.
+  // upgradeStepsProblems permits authored numeric deltas from 1 through 99.
+  let lower = 1, upper = 1, best = null;
+  while (true) {
+    const row = probe(upper);
+    if (!row.fits) { upper--; break; }
+    best = row;
+    if (row.total === target || upper === 99) return row.total > before ? { ...desired, n: row.n } : null;
+    lower = upper + 1; upper = Math.min(99, upper * 2);
+  }
+  while (lower <= upper) {
+    const row = probe(Math.floor((lower + upper) / 2));
+    if (row.fits) { best = row; if (row.total === target) break; lower = row.n + 1; }
+    else upper = row.n - 1;
+  }
+  return best?.total > before ? { ...desired, n: best.n } : null;
+}
+
+function options(base, current, applied, limits, rarity = 0, scoring = GetActiveScoring(), readNumbers = mechanicalNumbers, improve = mechanicalImprovement) {
   const type = base.type;
   const scale = Number.isFinite(limits.scale) ? limits.scale : 1;
   const sized = (kind) => scale * SIZE_MULT[kind][rarity];
@@ -253,6 +317,13 @@ function options(base, current, applied, limits, rarity = 0, scoring = GetActive
   const found = {};
   const tier = resolveEffectiveTier(base, current, limits, scoring);
   const tierGated = Number.isFinite(tier);
+  const menu = Array.isArray(base.upgradeMenu) ? base.upgradeMenu : null;
+  // A locked size cannot survive the later tier filter or become an ease
+  // partner. Still calculate lower locked sizes when an unlocked size above
+  // needs them for the existing strict-size deduplication rule.
+  const needsNumericSize = kind => !tierGated || menu?.includes(kind)
+    || UpgradeKindUnlocked(kind, tier, scoring)
+      && [0, 1, 2].some(r => r >= rarity && UpgradeRarityUnlocked(r, tier, scoring));
 
   // cost: each cost reduction adds 1 Efficient stack (Efficient / Efficient+ / Efficient+2, max 3 stacks, doubling CP surcharge 10/20/40).
   const efficientStacks = UpgradeTagStacks(current, 'efficient');
@@ -290,8 +361,14 @@ function options(base, current, applied, limits, rarity = 0, scoring = GetActive
     if (dirs.length) found.costSwap = { dirs };
   }
   // A Power eases its drawbacks too (Ethereal, a rising cost, a debuff); it has no Exhaust to drop.
-  if (type === 'power') addDrawbackEase(base, current, found);
+  if (type === 'power') addDrawbackEase(base, current, found, limits.mechanicsContext);
   if (restricted) return found;
+
+  // Cost-only/restricted cards need no numeric projection. Even an unrestricted
+  // card may have no printed damage/Block or have reached its Improved limit.
+  let projectedBase, projectedCurrent;
+  const baseNumbers = () => projectedBase ||= readNumbers(base);
+  const currentNumbers = () => projectedCurrent ||= readNumbers(current);
 
   const effects = current.effects || [];
   const baseEffects = base.effects || [];
@@ -319,29 +396,33 @@ function options(base, current, applied, limits, rarity = 0, scoring = GetActive
   };
   const dmgIndex = firstPlainIndex(effects, 'damage');
   // Compounding 10% Improved scaling (1.10^1, 1.10^2, 1.10^3) capped at maxImpStacks, tier ceiling, and the +100% total-damage guard.
-  if (!counterReturn && dmgIndex >= 0 && hitsAnEnemy(effects[dmgIndex])) {
+  if (!counterReturn && dmgIndex >= 0 && hitsAnEnemy(effects[dmgIndex]) && improvedStacks < maxAllowedImpStacks && needsNumericSize('dmg')) {
     const baseTotal = totalOf(baseEffects, 'damage') || totalOf(effects, 'damage');
     const curTotal = totalOf(effects, 'damage');
     const hits = hitsOf(effects[dmgIndex]);
-    const basePerHit = (baseEffects[dmgIndex]?.op === 'damage' ? baseEffects[dmgIndex].amount : effects[dmgIndex].amount) || 1;
-    const hitRes = improvedDeltaFor(basePerHit, effects[dmgIndex].amount);
-    if (hitRes) {
-      const tierCeiling = tierGated ? NumericCeilingAtTier('damage', tier, scoring) : Infinity;
-      const maxTotal = Math.min(baseTotal * 2, tierCeiling);
-      const maxDelta = Math.floor((maxTotal - curTotal) / Math.max(1, hits));
+    const basePerHit = tierGated ? baseNumbers().projected.effects[dmgIndex]?.amount : (baseEffects[dmgIndex]?.op === 'damage' ? baseEffects[dmgIndex].amount : effects[dmgIndex].amount) || 1;
+    const currentPerHit = tierGated ? currentNumbers().projected.effects[dmgIndex]?.amount : effects[dmgIndex].amount;
+    const hitRes = improvedDeltaFor(basePerHit, currentPerHit);
+    if (hitRes && tierGated) {
+      const choice = improve(current, 'damage', hitRes, baseNumbers(), currentNumbers(), tier, scoring, readNumbers);
+      if (choice) found.dmg = choice;
+    } else if (hitRes) {
+      const maxDelta = Math.floor((baseTotal * 2 - curTotal) / Math.max(1, hits));
       const clamped = Math.min(hitRes.n, maxDelta);
       if (clamped >= 1) found.dmg = { ...hitRes, n: clamped };
     }
   }
   const blkIndex = firstPlainIndex(effects, 'block');
   // Only a Block the card was printed with grows: one an `fx` step added has no printed total to cap against.
-  if (blkIndex >= 0 && totalOf(baseEffects, 'block') > 0) {
+  if (blkIndex >= 0 && totalOf(baseEffects, 'block') > 0 && improvedStacks < maxAllowedImpStacks && needsNumericSize('blk')) {
     const baseTotal = totalOf(baseEffects, 'block');
-    const blkRes = improvedDeltaFor(baseTotal, effects[blkIndex].amount);
-    if (blkRes) {
-      const tierCeiling = tierGated ? NumericCeilingAtTier('block', tier, scoring) : Infinity;
-      const maxTotal = Math.min(baseTotal * 2, tierCeiling);
-      const maxDelta = Math.max(0, maxTotal - effects[blkIndex].amount);
+    const blkRes = improvedDeltaFor(tierGated ? totalOf(baseNumbers().projected.effects || [], 'block') : baseTotal,
+      tierGated ? currentNumbers().projected.effects[blkIndex]?.amount : effects[blkIndex].amount);
+    if (blkRes && tierGated) {
+      const choice = improve(current, 'block', blkRes, baseNumbers(), currentNumbers(), tier, scoring, readNumbers);
+      if (choice) found.blk = choice;
+    } else if (blkRes) {
+      const maxDelta = Math.max(0, baseTotal * 2 - effects[blkIndex].amount);
       const clamped = Math.min(blkRes.n, maxDelta);
       if (clamped >= 1) found.blk = { ...blkRes, n: clamped };
     }
@@ -410,7 +491,7 @@ function options(base, current, applied, limits, rarity = 0, scoring = GetActive
   }
   addTagOptions(base, current, applied, found, dmgIndex, limits, counterReturn, rarity, tier, scoring);
   addMenuOptions(base, current, found, dmgIndex, counterReturn, rarity, scale);
-  addDrawbackEase(base, current, found);
+  addDrawbackEase(base, current, found, limits.mechanicsContext);
   if (!counterReturn && isSpellCard(current) && !applied.some((s) => s.k === 'attr')) found.attr = { stats: RUN_ATTRIBUTE_STATS };
   return found;
 }
@@ -475,10 +556,11 @@ function addMenuOptions(base, current, found, dmgIndex, counterReturn, rarity = 
 }
 
 /** Ethereal and a rising cost (both `fx` steps) and the signed `stk` (proposal section 7) lower what a card's drawback costs. */
-function addDrawbackEase(base, current, found) {
+function addDrawbackEase(base, current, found, mechanicsContext) {
   const effects = current.effects || [];
   if ((current.keywords || []).includes('ethereal')) found['fx:unethereal'] = { fx: 'unethereal' };
-  if (risingCost(current)) found['fx:steady'] = { fx: 'steady' };
+  const growth = EffectiveCostGrowth(current, mechanicsContext);
+  if ((growth?.stamina || 0) > 0 || (growth?.mana || 0) > 0) found['fx:steady'] = { fx: 'steady' };
   const targets = [];
   for (const e of effects) {
     if (isDrawbackStatus(e) && !targets.some((t) => t.status === e.status && t.side === (e.target === 'self' ? 'self' : 'enemy'))) targets.push({ status: e.status, side: e.target === 'self' ? 'self' : 'enemy', count: e.stacks });
@@ -493,7 +575,6 @@ function addDrawbackEase(base, current, found) {
 
 const tagsOf = (card) => card.cardTags ?? card.tags ?? [];
 /** Whether the card's cost still rises with each play (an upgrade's `steady` sets the growth to 0). */
-const risingCost = (card) => !!card.costGrowth && ((card.costGrowth.stamina || 0) > 0 || (card.costGrowth.mana || 0) > 0);
 const familyValue = (tags, prefix) => tags.find((tag) => tag.startsWith(prefix))?.slice(prefix.length) || '';
 // The owner removed ranged cards (2026-11-14): a stance change never offers `ranged` (old saves with it still resolve).
 const ATTACK_MANEUVERS = TAG_FAMILIES['maneuver:'].filter((m) => ['attack', 'smash'].some((x) => x === m));
@@ -598,7 +679,29 @@ const TEMPERED_KINDS = new Set(['hits', 'poise', 'fx:block', 'fx:counter', 'rang
 const PURIFIED_KINDS = new Set(['fx:heal', 'fx:cleanse']);
 
 function optionsByRarity(base, current, applied, limits, scoring = GetActiveScoring()) {
-  const per = [0, 1, 2].map((rarity) => options(base, current, applied, limits, rarity, scoring));
+  // The projection already fingerprints the complete authored definition and
+  // context. Reuse its identity instead of serializing each numeric probe a
+  // second time; held payloads and variants still contribute to its full key.
+  const numericCache = new WeakMap();
+  const byDefinition = new WeakMap();
+  const readNumbers = card => {
+    if (byDefinition.has(card)) return byDefinition.get(card);
+    const projectionScope = limits.preparation?.projectionScope;
+    const key = MechanicalProjection.ProjectCardMechanicalValues(card, { registries: limits.registries, projectionScope });
+    if (!numericCache.has(key)) numericCache.set(key, mechanicalNumbers(card, limits.registries, projectionScope, key.card));
+    const numbers = numericCache.get(key);
+    byDefinition.set(card, numbers);
+    return numbers;
+  };
+  // Tier stack limits can make two or all three rarity sizes identical. Reuse
+  // that exact search, including an infeasible result, within this roll only.
+  const improvementCache = new Map();
+  const improve = (card, op, desired, ...args) => {
+    const key = `${op}:${desired.n}:${desired.improvedStacks}`;
+    if (!improvementCache.has(key)) improvementCache.set(key, mechanicalImprovement(card, op, desired, ...args));
+    return improvementCache.get(key);
+  };
+  const per = [0, 1, 2].map((rarity) => options(base, current, applied, limits, rarity, scoring, readNumbers, improve));
   for (let r = 0; r < 3; r += 1) {
     for (const kind of Object.keys(per[r])) if (kind in PLACED_AT && PLACED_AT[kind] !== r) delete per[r][kind];
     for (const kind of EASE_KINDS) if (r > 0) delete per[r][kind];
@@ -637,6 +740,29 @@ function optionsByRarity(base, current, applied, limits, scoring = GetActiveScor
           if (!UpgradeTagStackUnlocked('purified', purifiedStacks + 1, tier, scoring)) { delete per[r][kind]; continue; }
         }
       }
+    }
+  }
+  if (Number.isFinite(tier)) {
+    let baseNumbers, currentNumbers;
+    // Improved's bounded search already checked the complete payload and
+    // printed-primary guard. Reapplying its identical step cannot change that
+    // result; the other numeric kinds still need their whole-payload check.
+    for (let r = 0; r < 3; r++) for (const kind of ['hits', 'targeting', 'element', 'fx:block', 'fx:target']) {
+      const option = per[r][kind];
+      if (!option) continue;
+      baseNumbers ||= readNumbers(base); currentNumbers ||= readNumbers(current);
+      const fits = value => {
+        const after = readNumbers(applyUpgradeSteps(current, [stepOf(kind, value, 0, r)]));
+        if (['hits', 'targeting'].includes(kind) && totalOf(after.projected.effects || [], 'damage') <= totalOf(currentNumbers.projected.effects || [], 'damage')) return false;
+        return numericUpgradeFits(baseNumbers, after, tier, scoring);
+      };
+      if (kind === 'hits') {
+        option.counts = option.counts.filter(hits => fits({ ...option, counts: [hits] }));
+        if (!option.counts.length) delete per[r][kind];
+      } else if (kind === 'element') {
+        option.schools = option.schools.filter(school => fits({ ...option, schools: [school] }));
+        if (!option.schools.length) delete per[r][kind];
+      } else if (!fits(option)) delete per[r][kind];
     }
   }
   for (const kind of EASE_KINDS) {
@@ -723,7 +849,21 @@ export function rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits
   const applied = FlatSteps(appliedSteps);
   const current = applied.length ? applyUpgradeSteps(baseDef, applied) : baseDef;
   const activeScoring = limits.scoring || GetActiveScoring();
-  const perRarity = optionsByRarity(baseDef, current, applied, limits, activeScoring);
+  // A service plan asks generic eligibility before selecting vendor offers,
+  // and may retry a short offer with a larger count. Only their pure menu and
+  // CP baseline are shared. Every roll below still owns its RNG/rejections.
+  const preparation = limits.preparation;
+  const preparationKey = preparation ? JSON.stringify([baseDef, current, applied,
+    limits.rank, limits.cardRank, VisibleCardRank(limits.instance || baseDef), limits.instance?.rarityOverride,
+    limits.mechanicsContext, limits.playerLevel, limits.scale, limits.tier, limits.tierUnlocks, limits.maxRange, limits.exposure]) : '';
+  let prepared = preparation?.value;
+  if (!prepared || prepared.key !== preparationKey || prepared.scoring !== activeScoring
+    || prepared.registries !== limits.registries) {
+    prepared = { key: preparationKey, scoring: activeScoring, registries: limits.registries,
+      perRarity: optionsByRarity(baseDef, current, applied, limits, activeScoring), cpContext: undefined };
+    if (preparation) preparation.value = prepared;
+  }
+  const perRarity = prepared.perRarity;
   // An authored `upgradeMenu` limits the rolled options to the kinds it names (Star Seer's Ethereal: Reaction, drop Ethereal or more Block).
   // A ranked ability card's grade table owns its numbers, so it applies only drawback-removal steps (cardUpgrade.js DrawbackSteps):
   // it is offered only those, at the common size (a combo's second step would be one the grade table ignores), so the offer equals the
@@ -743,8 +883,11 @@ export function rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits
   // candidates (and matching node-specialty kinds first when limits.nodeSpecialty is provided), instead of
   // eagerly scoring all ~30-60 (r, kind) permutations upfront. Precompute the card's "before" CP baseline once.
   const checkCp = limits.playerLevel != null;
+  if (checkCp && preparation && preparation.scorer?.scoring !== activeScoring) {
+    preparation.scorer = { scoring: activeScoring, score: CombatPower.PrepareCardScorer(activeScoring) };
+  }
   const cpContext = checkCp
-    ? PrepareUpgradeStepCpContext({ baseDef, currentDef: current, instance: limits.instance || null, playerLevel: limits.playerLevel, scoring: activeScoring })
+    ? prepared.cpContext ||= PrepareUpgradeStepCpContext({ baseDef, currentDef: current, instance: limits.instance || null, playerLevel: limits.playerLevel, scoring: activeScoring, registries: limits.registries, mechanicsContext: limits.mechanicsContext, projectionScope: preparation?.projectionScope, scoreCard: preparation?.scorer?.score })
     : null;
   const cpRejected = new Set();
   const curRarity = limits.instance?.rarityOverride || current.rarity || baseDef.rarity || 'common';
@@ -765,9 +908,20 @@ export function rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits
   };
   // kindsAt(r, group): the structurally open kinds (not yet CP-rejected) at rarity r, in WEIGHTS order.
   const vendor = UPGRADE_VENDORS[limits.vendor] || null;
-  const categoryAt = (r, kind) => UpgradeCategoryOf(kind, perRarity[r][kind], current);
-  const kindsAt = (r, group, category) => Object.keys(WEIGHTS).filter((kind) => perRarity[r][kind] && allowed(kind) && openStruct(r, kind) && (!graded || r === 0)
-    && (!group || UpgradeGroupOf(kind) === group) && (!category || categoryAt(r, kind) === category));
+  const categoryCache = new Map();
+  const categoryAt = (r, kind) => {
+    const key = `${r}:${kind}`;
+    if (!categoryCache.has(key)) categoryCache.set(key, UpgradeCategoryOf(kind, perRarity[r][kind], current));
+    return categoryCache.get(key);
+  };
+  const structuralKinds = [0, 1, 2].map(r => Object.keys(WEIGHTS).filter(kind => perRarity[r][kind] && allowed(kind) && (!graded || r === 0)));
+  const poolCache = new Map();
+  const kindsAt = (r, group, category) => {
+    const key = `${r}:${group || ''}:${category || ''}`;
+    if (!poolCache.has(key)) poolCache.set(key, structuralKinds[r].filter(kind => openStruct(r, kind)
+      && (!group || UpgradeGroupOf(kind) === group) && (!category || categoryAt(r, kind) === category)));
+    return poolCache.get(key);
+  };
 
   const tryAcceptCandidate = (r, kind, choice) => {
     const resolved = optionStructAt(r, kind);
@@ -780,12 +934,14 @@ export function rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits
       });
       if (!cpRes.allowed || (step.k === 'dmg' && limits.damageChanges && !limits.damageChanges(current, step, cpRes.rank))) {
         cpRejected.add(resolved.key);
+        poolCache.clear();
         return null;
       }
       if (cpRes.rarity && cpRes.rarity !== curRarity) step = { ...step, nextRarity: cpRes.rarity };
       if (Number.isInteger(cpRes.rank) && cpRes.rank > curRank) step = { ...step, nextRank: cpRes.rank };
     } else if (step.k === 'dmg' && limits.damageChanges && !limits.damageChanges(current, step, curRank)) {
       cpRejected.add(resolved.key);
+      poolCache.clear();
       return null;
     }
     return step;
@@ -872,6 +1028,7 @@ export function rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits
     out.push(accepted);
     // The picked family leaves the draw: the next option is of another family (with everyFamily, only the kind).
     if (limits.everyFamily) takenKinds.add(acceptedKind); else for (const family of [UpgradeKindFamily(acceptedKind, perRarity[acceptedRarity][acceptedKind]), ...UpgradeStepFamilies(accepted)]) takenFamilies.add(family);
+    poolCache.clear();
   }
   return out;
 }

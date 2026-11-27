@@ -4,6 +4,12 @@ import { catalogJSONExpression } from '../tools/catalog-json.mjs';
 import { decodeCatalogJSONText, decodeCatalogJSON } from '../src/model/catalogJson.js';
 import { compileGameProfiles } from '../tools/game-config.mjs';
 import { gameProfileCatalog } from '../src/content/generated/gameProfiles.js';
+import { nodes } from '../src/content/generated/nodes.js';
+import { uiStrings } from '../src/content/generated/uiStrings.js';
+import { scoring } from '../src/content/generated/scoring.js';
+import { sharedOutfitArt } from '../src/content/generated/sharedOutfitArt.js';
+import { readFileSync } from 'node:fs';
+import { productionBundle } from './helpers/production-bundle.mjs';
 const payload = expression => JSON.parse(expression.slice('decodeCatalogJSON('.length, -1));
 const assertSizeBudget = (expression, limit) => assert.ok(expression.length < limit);
 
@@ -34,6 +40,35 @@ test('fixed provenance corpus retains the original 180 KB reduction guard', () =
   assert.equal(decodeCatalogJSONText(payload(packed.expression)), text);
   assertSizeBudget(packed.expression, text.length - 180000);
   assert.throws(() => assertSizeBudget(text, text.length - 180000), assert.AssertionError);
+});
+
+test('frequent short keys and escaped strings use profitable dictionary indices', () => {
+  const value = Array.from({ length: 120 }, (_, index) => ({ id: index, x: index % 2,
+    detail: 'quoted " slash \\ newline\n '.repeat(4), ['field' + index]: 'unique-' + index }));
+  const packed = catalogJSONExpression(value);
+  assert.equal(packed.encoded, true);
+  const data = payload(packed.expression);
+  assert.ok(data.strings.includes('"id"'), 'escaping makes repeated short keys profitable');
+  assert.equal(data.strings[0], '"id"', 'stable frequency ordering gives the first equal-frequency key the shortest index');
+  assert.equal(decodeCatalogJSONText(data), JSON.stringify(value));
+  assert.deepEqual(decodeCatalogJSON(data), value);
+  assert.deepEqual(catalogJSONExpression(value), packed);
+  assertSizeBudget(packed.expression, JSON.stringify(value).length);
+});
+
+test('packed content tables retain their canonical definitions through native imports and the classic loader', () => {
+  const tables = { nodes, uiStrings, scoring, sharedOutfitArt };
+  const require = productionBundle({ additionalModules: Object.keys(tables).map(name => `src/content/generated/${name}.js`) });
+  for (const [name, value] of Object.entries(tables)) {
+    const packed = catalogJSONExpression(value), text = JSON.stringify(value);
+    assert.equal(packed.encoded ? decodeCatalogJSONText(payload(packed.expression)) : packed.expression, text);
+    assert.equal(JSON.stringify(require(`src/content/generated/${name}.js`)[name]), text,
+      `${name}: the real classic compiler and loader retain the complete table`);
+  }
+  for (const [name, value] of Object.entries({ scoring, sharedOutfitArt })) {
+    const source = JSON.parse(readFileSync(new URL(`../content/source/${name}.json`, import.meta.url), 'utf8'));
+    assert.equal(JSON.stringify(value), JSON.stringify(source), `${name}: authored JSON reaches the runtime unchanged`);
+  }
 });
 
 test('repeated objects remain distinct and hostile-looking strings remain data', () => {

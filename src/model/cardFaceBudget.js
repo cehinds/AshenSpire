@@ -5,6 +5,8 @@
 //   minScale     the smallest font, as a share of the face's own full rules size (default 0.7)
 //   minPx        never fit a roomy face below this many on-screen px (default 10); a card whose full size is
 //                already smaller than that keeps its full size as the floor, so the compact hand is never shrunk further
+//   boxMinPx     the roomy floor may drop under minPx to the size that fills the box with maxLines lines, never under
+//                this many on-screen px (default 10; owner, 2026-11-17: four lines of 20-25 characters)
 // A face that cannot show this budget at that floor falls back to the compact projection (the old
 // 3 clauses / 5 words / 90 characters) and its Inspect door.
 import { uiConfig } from '../config/generated/ui.js';
@@ -18,7 +20,7 @@ export function faceBudget(config = uiConfig.components?.card?.components?.rules
     lines, wordsPerLine,
     // A clause may wrap onto a second line; six characters is the budget the compact face already used per word.
     clauses: lines, clauseWords: wordsPerLine * 2, characters: lines * wordsPerLine * 6,
-    minScale: share(config?.minScale, 0.7), minPx: whole(config?.minPx, 10, 0),
+    minScale: share(config?.minScale, 0.7), minPx: whole(config?.minPx, 10, 0), boxMinPx: whole(config?.boxMinPx, 10, 0),
   });
 }
 export const FACE_BUDGET = faceBudget();
