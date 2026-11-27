@@ -76,29 +76,42 @@ const DEFAULT_COST_GROWTH_MAX = 3;
 const UNCAPPED_DISPLAY_THRESHOLD = 100;
 
 /** Wither count shown on face: remaining plays in live combat, else authored N. */
-export function WitherFaceCount(def, rules = null, instanceId = null)
+export function WitherFaceCount(cardDef, rules = null, instanceId = null)
 {
-  if (!Number.isSafeInteger(def?.wither) || def.wither < 1 || def.keywords?.includes('exhaust'))
+  const hasValidWither = Number.isSafeInteger(cardDef?.wither) && cardDef.wither >= 1;
+  const hasExhaustKeyword = Boolean(cardDef?.keywords?.includes('exhaust'));
+
+  if (!hasValidWither || hasExhaustKeyword)
   {
     return null;
   }
-  return rules?.player?.abilityRiders && instanceId
-    ? WitherRemaining(rules.player, { instanceId }, def)
-    : def.wither;
+
+  const hasLiveInstance = Boolean(rules?.player?.abilityRiders && instanceId);
+
+  return hasLiveInstance
+    ? WitherRemaining(rules.player, { instanceId }, cardDef)
+    : cardDef.wither;
 }
 
 /** Rising-cost text derived from `costGrowth`, or null when cost does not rise. */
 export function CostGrowthFaceText(growth)
 {
-  if (!growth) return null;
-  const pools = COST_GROWTH_POOLS.filter(([key]) => Number(growth[key]) > 0);
-  if (!pools.length) return null;
+  if (!growth)
+  {
+    return null;
+  }
+
+  const activePools = COST_GROWTH_POOLS.filter(([key]) => Number(growth[key]) > 0);
+  if (!activePools.length)
+  {
+    return null;
+  }
 
   const perUse = growth.perUse > 1
     ? growth.perUse
     : 1;
-  const isShared = growth.scope === 'card' || growth.perCard === true;
-  const when = isShared
+  const isSharedScope = growth.scope === 'card' || growth.perCard === true;
+  const timingPhrase = isSharedScope
     ? (perUse > 1
         ? `every ${perUse} times you play this card`
         : 'each time you play this card')
@@ -106,45 +119,54 @@ export function CostGrowthFaceText(growth)
         ? `every ${perUse} plays`
         : 'each play');
 
-  const max = growth.uncapped
+  const maxSteps = growth.uncapped
     ? Infinity
     : (growth.max ?? DEFAULT_COST_GROWTH_MAX);
-  const capOf = ([key, unit]) =>
+  const isMultiPool = activePools.length > 1;
+  const formatCap = ([key, unit]) =>
   {
-    const suffix = pools.length > 1
+    const unitSuffix = isMultiPool
       ? ` ${unit}`
       : '';
-    return `+${growth[key] * max}${suffix}`;
+
+    return `+${growth[key] * maxSteps}${unitSuffix}`;
   };
-  const cap = max < UNCAPPED_DISPLAY_THRESHOLD
-    ? ` (max ${pools.map(capOf).join(', ')})`
+
+  const hasDisplayCap = maxSteps < UNCAPPED_DISPLAY_THRESHOLD;
+  const capText = hasDisplayCap
+    ? ` (max ${activePools.map(formatCap).join(', ')})`
     : '';
-  const stepText = pools
+  const stepText = activePools
     .map(([key, unit]) => `+${growth[key]} ${unit}`)
     .join(', ');
-  return `${stepText} ${when} this fight${cap}`;
+
+  return `${stepText} ${timingPhrase} this fight${capText}`;
 }
 
 /** Rule rider lines appended to any face: Wither and rising cost. */
-export function CardRuleRiderLines(def, rules = null, instanceId = null)
+export function CardRuleRiderLines(cardDef, rules = null, instanceId = null)
 {
   const lines = [];
-  const wither = WitherFaceCount(def, rules, instanceId);
-  if (wither !== null)
+  const witherCount = WitherFaceCount(cardDef, rules, instanceId);
+
+  if (witherCount !== null)
   {
     lines.push({
       kind: 'detail',
-      html: `Wither <span class="val">${wither}</span>`,
+      html: `Wither <span class="val">${witherCount}</span>`,
     });
   }
-  const growth = CostGrowthFaceText(def?.costGrowth);
-  if (growth)
+
+  const growthText = CostGrowthFaceText(cardDef?.costGrowth);
+
+  if (growthText)
   {
     lines.push({
       kind: 'detail',
-      html: esc(growth),
+      html: esc(growthText),
     });
   }
+
   return lines;
 }
 

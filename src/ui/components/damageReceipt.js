@@ -4,6 +4,14 @@ import { ActivateOnKey } from '../selection.js';
 
 const number = value => Number.isFinite(value) ? String(Number(value.toFixed(4))) : '?';
 
+const REDUCTION_DISPLAY_SPECS = Object.freeze([
+  ['blockBroken', 'Break Block'],
+  ['poiseBroken', 'Break Poise'],
+  ['wardReduced', 'Ward'],
+  ['poiseReduced', null],
+  ['blocked', 'Block'],
+]);
+
 /** Presentation only: every quantity and named source comes from the engine receipt. */
 export function damageReceiptLines(receipt) {
   if (!Array.isArray(receipt?.hits)) return [];
@@ -17,14 +25,7 @@ export function damageReceiptLines(receipt) {
         : `${source.amount >= 0 ? '+' : '−'}${number(Math.abs(source.amount))}`;
       lines.push(`${source.label || source.id}: ${operation}${source.stage ? ` (${source.stage})` : ''}`);
     }
-    const reductionSpecs = [
-      ['blockBroken', 'Break Block'],
-      ['poiseBroken', 'Break Poise'],
-      ['wardReduced', 'Ward'],
-      ['poiseReduced', null],
-      ['blocked', 'Block'],
-    ];
-    const reductions = reductionSpecs
+    const reductions = REDUCTION_DISPLAY_SPECS
       .filter(([key]) => Number.isFinite(hit[key]) && hit[key] > 0)
       .map(([key, label]) => label
         ? `${label} −${number(hit[key])}`

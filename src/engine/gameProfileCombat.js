@@ -208,27 +208,38 @@ const BREAK_POISE_SOURCE_ID = 'break-poise';
 /** Return a carrier copy without flat break fields, or the original if none were set. */
 export function StripFlatBreakCarrier(carrier)
 {
-  if (!carrier) return carrier;
-  if (!(carrier.breakBlock || carrier.blockBreak || carrier.breakPoise))
+  if (!carrier)
   {
     return carrier;
   }
+
+  const hasFlatBreak = Boolean(carrier.breakBlock || carrier.blockBreak || carrier.breakPoise);
+  if (!hasFlatBreak)
+  {
+    return carrier;
+  }
+
   const {
     breakBlock,
     blockBreak,
     breakPoise,
     ...rest
   } = carrier;
+
   return rest;
 }
 
 /** Flat Block/Poise break capped by target's pools, or null if none. */
-export function HitBreakAmounts(target, carrier, ctx = null)
+export function HitBreakAmounts(target, carrier, context = null)
 {
-  const blockReq = EffectiveBlockBreakAmount(carrier, 0, null, ctx);
-  const poiseReq = EffectivePoiseBreakAmount(carrier, ctx);
-  const block = Math.min(Math.max(0, target?.block || 0), blockReq);
-  const poise = Math.min(Math.max(0, target?.persistentPoise?.value || 0), poiseReq);
+  const requestedBlock = EffectiveBlockBreakAmount(carrier, 0, null, context);
+  const requestedPoise = EffectivePoiseBreakAmount(carrier, context);
+  const targetBlock = Math.max(0, target?.block || 0);
+  const targetPoise = Math.max(0, target?.persistentPoise?.value || 0);
+
+  const block = Math.min(targetBlock, requestedBlock);
+  const poise = Math.min(targetPoise, requestedPoise);
+
   return block > 0 || poise > 0
     ? { block, poise }
     : null;
@@ -240,20 +251,137 @@ export function HitBreakCarrier(carrier, effect, hitIndex = 0)
   const stripped = StripFlatBreakCarrier(carrier);
   const flatBlock = effect?.breakBlock ?? effect?.blockBreak;
   const hasBreak = Boolean(effect && (flatBlock > 0 || effect.breakPoise > 0));
+
   if (hitIndex > 0 || !hasBreak)
   {
     return stripped;
   }
-  const out = { ...stripped };
+
+  const nextCarrier = { ...stripped };
+
   if (flatBlock > 0)
   {
-    out.breakBlock = flatBlock;
+    nextCarrier.breakBlock = flatBlock;
   }
+
   if (effect.breakPoise > 0)
   {
-    out.breakPoise = effect.breakPoise;
+    nextCarrier.breakPoise = effect.breakPoise;
   }
-  return out;
+
+  return nextCarrier;
+}
+
+function resolveFlatBreak(target, carrier, requestedBlockBreak, context, isModern, isEvaded, isFlatReturn)
+{
+  const initialBlockPool = Math.max(0, target?.block || 0);
+  const canBreakBlock = !isEvaded && !isFlatReturn && requestedBlockBreak > 0;
+  const flatBlockBroken = canBreakBlock
+    ? Math.min(initialBlockPool, requestedBlockBreak)
+    : 0;
+
+  const requestedPoiseBreak = isModern && !isFlatReturn
+    ? EffectivePoiseBreakAmount(carrier, context)
+    : 0;
+  const canBreakPoise = !isEvaded && !isFlatReturn && requestedPoiseBreak > 0;
+  const currentPoise = Math.max(0, target?.persistentPoise?.value || 0);
+  const flatPoiseBroken = canBreakPoise
+    ? Math.min(currentPoise, requestedPoiseBreak)
+    : 0;
+
+  const broken = flatBlockBroken > 0 || flatPoiseBroken > 0
+    ? { block: flatBlockBroken, poise: flatPoiseBroken }
+    : null;
+  const effectiveBlockPool = Math.max(0, initialBlockPool - flatBlockBroken);
+  const breakSources = [];
+  let targetAfterBreak = target;
+
+  if (flatBlockBroken > 0)
+  {
+    breakSources.push({
+      id: BREAK_BLOCK_SOURCE_ID,
+      label: 'Break Block',
+      amount: flatBlockBroken,
+      requested: initialBlockPool,
+      effective: effectiveBlockPool,
+      stage: 'mitigation',
+      operation: 'subtract',
+    });
+  }
+
+  if (flatPoiseBroken > 0)
+  {
+    const remainingPoise = target.persistentPoise.value - flatPoiseBroken;
+
+    breakSources.push({
+      id: BREAK_POISE_SOURCE_ID,
+      label: 'Break Poise',
+      amount: flatPoiseBroken,
+      requested: target.persistentPoise.value,
+      effective: remainingPoise,
+      stage: 'mitigation',
+      operation: 'subtract',
+    });
+
+    targetAfterBreak = {
+      ...target,
+      persistentPoise: {
+        ...target.persistentPoise,
+        value: remainingPoise,
+      },
+    };
+  }
+
+  return {
+    broken,
+    flatBlockBroken,
+    effectiveBlockPool,
+    targetAfterBreak,
+    breakSources,
+  };
+}
+
+function buildDamageReceiptHitEntry(fields)
+{
+  const hitEntry = {
+    incoming: fields.incoming,
+    physical: fields.physical,
+    magical: fields.magical,
+    blocked: fields.blocked,
+    barrierReduced: fields.barrierMitigated,
+    wardReduced: fields.wardMitigated,
+    poiseReduced: fields.poiseMitigated,
+    hpLoss: fields.amount,
+    sources: fields.sources,
+  };
+
+  if (fields.broken?.block)
+  {
+    hitEntry.blockBroken = fields.broken.block;
+  }
+
+  if (fields.broken?.poise)
+  {
+    hitEntry.poiseBroken = fields.broken.poise;
+  }
+
+  if (fields.pierceBypassed)
+  {
+    hitEntry.pierced = fields.pierceBypassed;
+    hitEntry.piercePoise = fields.piercePoise;
+  }
+
+  if (fields.magicPoise)
+  {
+    hitEntry.magicPoise = fields.magicPoise;
+  }
+
+  if (fields.poiseDrain)
+  {
+    hitEntry.poiseDamage = fields.poiseDrain;
+  }
+
+  return hitEntry;
 }
 function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { roll = null, proposal = true, forecast = false } = {}) {
   const pierceOut = { spent: 0 };
@@ -308,51 +436,23 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
   const evaded = roll !== null ? roll >= hitChance : forecast && fixCoreEnabled(ctx) && hitChance === 0;
   if (evaded) amount = 0;
   // Flat Block & Poise break (destroys before normal mitigation; never touches Ward).
-  const initialBlockPool = Math.max(0, target?.block || 0);
-  const flatBlockBroken = !evaded && !flatReturn && flatBlockBreakRequested > 0
-    ? Math.min(initialBlockPool, flatBlockBreakRequested)
-    : 0;
-  const flatPoiseBreakRequested = modern && !flatReturn
-    ? EffectivePoiseBreakAmount(carrier, ctx)
-    : 0;
-  const flatPoiseBroken = !evaded && !flatReturn && flatPoiseBreakRequested > 0
-    ? Math.min(Math.max(0, target?.persistentPoise?.value || 0), flatPoiseBreakRequested)
-    : 0;
-  const broken = flatBlockBroken > 0 || flatPoiseBroken > 0
-    ? { block: flatBlockBroken, poise: flatPoiseBroken }
-    : null;
-  const effectiveBlockPool = Math.max(0, initialBlockPool - flatBlockBroken);
-  if (flatBlockBroken > 0)
-  {
-    sources.push({
-      id: BREAK_BLOCK_SOURCE_ID,
-      label: 'Break Block',
-      amount: flatBlockBroken,
-      requested: initialBlockPool,
-      effective: effectiveBlockPool,
-      stage: 'mitigation',
-      operation: 'subtract',
-    });
-  }
-  if (flatPoiseBroken > 0)
-  {
-    sources.push({
-      id: BREAK_POISE_SOURCE_ID,
-      label: 'Break Poise',
-      amount: flatPoiseBroken,
-      requested: target.persistentPoise.value,
-      effective: target.persistentPoise.value - flatPoiseBroken,
-      stage: 'mitigation',
-      operation: 'subtract',
-    });
-    target = {
-      ...target,
-      persistentPoise: {
-        ...target.persistentPoise,
-        value: target.persistentPoise.value - flatPoiseBroken,
-      },
-    };
-  }
+  const flatBreak = resolveFlatBreak(
+    target,
+    carrier,
+    flatBlockBreakRequested,
+    ctx,
+    modern,
+    evaded,
+    flatReturn,
+  );
+  const {
+    broken,
+    flatBlockBroken,
+    effectiveBlockPool,
+  } = flatBreak;
+
+  sources.push(...flatBreak.breakSources);
+  target = flatBreak.targetAfterBreak;
   // Reflect (owner 2026-10-31, SPEC §17): the target's Reflect stacks cut this hit before Block; the stacks and the pre-cut
   // figure ride on the receipt so the landed hit can send its share back. A reflected, countered or unreflectable hit is not cut.
   let reflect = null;
@@ -559,30 +659,36 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
     const poise = PoiseLossAdjust(ctx,source,carrier,defending,{taken:poiseMitigated+poiseDrain,pool:target?.persistentPoise?.value || 0});
     poiseDrain += poise.extra; poiseSpared = poise.spared;
   }
-  if (broken?.poise > 0) poiseDrain += broken.poise;
+  if (broken?.poise > 0)
+  {
+    poiseDrain += broken.poise;
+  }
 
-  const hitEntry = {
+  const hitEntry = buildDamageReceiptHitEntry({
     incoming,
     physical,
     magical,
     blocked,
-    barrierReduced: barrierMitigated,
-    wardReduced: wardMitigated,
-    poiseReduced: poiseMitigated,
-    hpLoss: amount,
+    barrierMitigated,
+    wardMitigated,
+    poiseMitigated,
+    amount,
     sources,
-  };
-  if (broken?.block) hitEntry.blockBroken = broken.block;
-  if (broken?.poise) hitEntry.poiseBroken = broken.poise;
-  if (pierceBypassed) {
-    hitEntry.pierced = pierceBypassed;
-    hitEntry.piercePoise = piercePoise;
-  }
-  if (magicPoise) hitEntry.magicPoise = magicPoise;
-  if (poiseDrain) hitEntry.poiseDamage = poiseDrain;
+    broken,
+    pierceBypassed,
+    piercePoise,
+    magicPoise,
+    poiseDrain,
+  });
 
   const isUncertain = fixCoreEnabled(ctx) && hitChance < 1 && roll === null && !evaded;
   const hasMissRange = fixCoreEnabled(ctx) && hitChance < 1 && !evaded;
+  const staggerManeuvers = stances?.staggerManeuvers || ['smash'];
+  const isInterrupted = advantage
+    && stances?.staggerOnAdvantage === true
+    && staggerManeuvers.includes(attacking);
+  const blockSpentTotal = blockSpent ?? (flatBlockBroken + blocked);
+
   const result = {
     raw,
     rawHit,
@@ -603,32 +709,80 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
     blocked,
     poiseMitigated,
     poiseDrain,
-    blockRemaining: Math.max(0, (target?.block || 0) - (blockSpent ?? (flatBlockBroken + blocked))),
+    blockRemaining: Math.max(0, (target?.block || 0) - blockSpentTotal),
     evaded,
     advantage,
     defenseAdvantage: defense.defenseAdvantage,
     stanceMitigation: defense.mitigation,
     attackStance: attacking,
     defenseStance: defending,
-    interrupted: advantage
-      && stances?.staggerOnAdvantage === true
-      && (stances.staggerManeuvers || ['smash']).includes(attacking),
+    interrupted: isInterrupted,
   };
-  if (pierceOut.spent > 0) result.skinSpent = pierceOut.spent;
-  if (element) result.element = { id: element.element, heal: element.heal };
-  if (reflect) result.reflect = reflect;
-  if (wardHpMode && wardHpAbsorbed > 0) {
+
+  if (pierceOut.spent > 0)
+  {
+    result.skinSpent = pierceOut.spent;
+  }
+
+  if (element)
+  {
+    result.element = {
+      id: element.element,
+      heal: element.heal,
+    };
+  }
+
+  if (reflect)
+  {
+    result.reflect = reflect;
+  }
+
+  if (wardHpMode && wardHpAbsorbed > 0)
+  {
     result.wardHpBuffer = true;
     result.wardHpAbsorbed = wardHpAbsorbed;
   }
-  if (wardRouted) result.wardRouted = true;
-  if (wardBlockFirst) result.wardBlockFirst = true;
-  if (poiseMitigationCost !== undefined) result.poiseMitigationCost = poiseMitigationCost;
-  if (weaponPoiseDamage > 0) result.weaponPoiseDamage = weaponPoiseDamage;
-  if (poiseSpared) result.poiseSpared = poiseSpared;
-  if (broken) result.broken = broken;
-  if (flatBlockBroken > 0) result.blockBrokenFlat = flatBlockBroken;
-  if (smashRule) result.smashVsDefensive = { poiseDamage: poiseDrain };
+
+  if (wardRouted)
+  {
+    result.wardRouted = true;
+  }
+
+  if (wardBlockFirst)
+  {
+    result.wardBlockFirst = true;
+  }
+
+  if (poiseMitigationCost !== undefined)
+  {
+    result.poiseMitigationCost = poiseMitigationCost;
+  }
+
+  if (weaponPoiseDamage > 0)
+  {
+    result.weaponPoiseDamage = weaponPoiseDamage;
+  }
+
+  if (poiseSpared)
+  {
+    result.poiseSpared = poiseSpared;
+  }
+
+  if (broken)
+  {
+    result.broken = broken;
+  }
+
+  if (flatBlockBroken > 0)
+  {
+    result.blockBrokenFlat = flatBlockBroken;
+  }
+
+  if (smashRule)
+  {
+    result.smashVsDefensive = { poiseDamage: poiseDrain };
+  }
+
   return result;
 }
 export function profileCardCosts(ctx, def) {

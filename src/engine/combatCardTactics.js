@@ -296,25 +296,35 @@ export function expandedEnemyMove(enemy, move, moveId, ctx = null) {
   return result;
 }
 
-export function enemyMoveCarrier(enemy, move, moveId, ctx = null)
+export function enemyMoveCarrier(enemy, move, moveId, context = null)
 {
-  const projected = expandedEnemyMove(enemy, move, moveId, ctx);
+  const projectedMove = expandedEnemyMove(enemy, move, moveId, context);
   const carrier = tacticalCarrier(
-    projected,
+    projectedMove,
     {
       enemyId: enemy.enemyId,
       moveId,
       type: 'attack',
     },
-    ctx,
+    context,
     enemy,
   );
+
   // Copy flat break so enemy intent previews match live Block/Poise loss.
-  const hit = projected?.effects?.find(effect => effect?.op === 'damage');
-  const flatBlock = hit?.breakBlock ?? hit?.blockBreak;
-  if (flatBlock > 0) carrier.breakBlock = flatBlock;
-  if (hit?.breakPoise > 0) carrier.breakPoise = hit.breakPoise;
-  return combatExpansionEnabled(ctx)
+  const damageEffect = projectedMove?.effects?.find(effect => effect?.op === 'damage');
+  const flatBlockBreak = damageEffect?.breakBlock ?? damageEffect?.blockBreak;
+
+  if (flatBlockBreak > 0)
+  {
+    carrier.breakBlock = flatBlockBreak;
+  }
+
+  if (damageEffect?.breakPoise > 0)
+  {
+    carrier.breakPoise = damageEffect.breakPoise;
+  }
+
+  return combatExpansionEnabled(context)
     ? expansionCarrierTraits(carrier, enemy)
     : carrier;
 }

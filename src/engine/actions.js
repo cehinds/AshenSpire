@@ -410,6 +410,116 @@ function applyWeaknessEffects(ctx, source, target, receipt) {
   }
 }
 
+function buildDamageDealtEvent(source, target, receipt, carrier, hpBefore)
+{
+  const hpRemoved = Math.max(0, Math.min(receipt.hpLoss, hpBefore));
+
+  const damageEvent = {
+    sourceId: source?.id || null,
+    targetId: target.id,
+    amount: receipt.amount,
+    blocked: receipt.blocked,
+    hpLoss: receipt.hpLoss,
+    hpRemoved,
+    poiseMitigated: receipt.poiseMitigated,
+    poiseAbsorbed: receipt.poiseMitigated,
+    wardMitigated: receipt.wardMitigated,
+    damageReceipt: receipt.damageReceipt,
+    evaded: receipt.evaded,
+    advantage: receipt.advantage,
+    blockRemaining: target.block,
+    wardRemaining: target.persistentWard?.value,
+    poiseRemaining: target.persistentPoise?.value,
+    isAttack: true,
+  };
+
+  if (carrier.instanceId)
+  {
+    damageEvent.cardInstanceId = carrier.instanceId;
+    damageEvent.sourceHand = carrier.sourceHand;
+    damageEvent.grantedBy = carrier.grantedBy;
+
+    if (Object.hasOwn(carrier, 'usedArmamentId'))
+    {
+      damageEvent.usedArmamentId = carrier.usedArmamentId;
+    }
+  }
+
+  if (target.broken)
+  {
+    damageEvent.targetBroken = true;
+  }
+
+  if (receipt.wardHpAbsorbed)
+  {
+    damageEvent.wardAbsorbed = receipt.wardHpAbsorbed;
+    damageEvent.wardHpBuffer = true;
+    damageEvent.wardHpRemaining = target.wardHp || 0;
+  }
+
+  if (receipt.wardRouted)
+  {
+    damageEvent.wardRouted = true;
+  }
+
+  if (receipt.wardBlockFirst)
+  {
+    damageEvent.wardBlockFirst = true;
+  }
+
+  if (receipt.pierceBypassed)
+  {
+    damageEvent.pierced = receipt.pierceBypassed;
+    damageEvent.piercePoise = receipt.piercePoise;
+  }
+
+  if (receipt.magicPoise)
+  {
+    damageEvent.magicPoise = receipt.magicPoise;
+  }
+
+  if (receipt.poiseDrain)
+  {
+    damageEvent.poiseDamage = receipt.poiseDrain;
+  }
+
+  if (receipt.broken?.block)
+  {
+    damageEvent.blockBroken = receipt.broken.block;
+  }
+
+  if (receipt.broken?.poise)
+  {
+    damageEvent.poiseBroken = receipt.broken.poise;
+  }
+
+  if (receipt.weaknesses?.length)
+  {
+    damageEvent.weaknesses = receipt.weaknesses;
+  }
+
+  return damageEvent;
+}
+
+function attachFlatBreakToCarrier(carrier, effect, hitIndex)
+{
+  if (hitIndex !== 0)
+  {
+    return;
+  }
+
+  const flatBlockBreak = effect.breakBlock ?? effect.blockBreak;
+  if (flatBlockBreak > 0)
+  {
+    carrier.breakBlock = flatBlockBreak;
+  }
+
+  if (effect.breakPoise > 0)
+  {
+    carrier.breakPoise = effect.breakPoise;
+  }
+}
+
 // One receipt evaluator drives configured live damage and detached previews.
 function applyProfileDamage(ctx, source, target, base, carrier) {
   // A reflected hit is sent back, not thrown: it needs no hit roll (SPEC §17, Reflect).
@@ -474,53 +584,7 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
   // Stone Skin spent against the Pierce this hit carried (the quote spends nothing; the landed hit does).
   const skinStatus = receipt.skinSpent > 0 ? fixCorePierceRules(fixCoreRules(ctx, target)).skinStatus : null;
   if (skinStatus) statuses.removeStatus(ctx, target, skinStatus, { amount: receipt.skinSpent, reason: 'consumed' });
-  const damageEvent = {
-    sourceId: source?.id || null,
-    targetId: target.id,
-    amount: receipt.amount,
-    blocked: receipt.blocked,
-    hpLoss: receipt.hpLoss,
-    hpRemoved: Math.max(0, Math.min(receipt.hpLoss, hpBefore)),
-    poiseMitigated: receipt.poiseMitigated,
-    poiseAbsorbed: receipt.poiseMitigated,
-    wardMitigated: receipt.wardMitigated,
-    damageReceipt: receipt.damageReceipt,
-    evaded: receipt.evaded,
-    advantage: receipt.advantage,
-    blockRemaining: target.block,
-    wardRemaining: target.persistentWard?.value,
-    poiseRemaining: target.persistentPoise?.value,
-    isAttack: true,
-  };
-  if (carrier.instanceId)
-  {
-    damageEvent.cardInstanceId = carrier.instanceId;
-    damageEvent.sourceHand = carrier.sourceHand;
-    damageEvent.grantedBy = carrier.grantedBy;
-    if (Object.hasOwn(carrier, 'usedArmamentId'))
-    {
-      damageEvent.usedArmamentId = carrier.usedArmamentId;
-    }
-  }
-  if (target.broken) damageEvent.targetBroken = true;
-  if (receipt.wardHpAbsorbed)
-  {
-    damageEvent.wardAbsorbed = receipt.wardHpAbsorbed;
-    damageEvent.wardHpBuffer = true;
-    damageEvent.wardHpRemaining = target.wardHp || 0;
-  }
-  if (receipt.wardRouted) damageEvent.wardRouted = true;
-  if (receipt.wardBlockFirst) damageEvent.wardBlockFirst = true;
-  if (receipt.pierceBypassed)
-  {
-    damageEvent.pierced = receipt.pierceBypassed;
-    damageEvent.piercePoise = receipt.piercePoise;
-  }
-  if (receipt.magicPoise) damageEvent.magicPoise = receipt.magicPoise;
-  if (receipt.poiseDrain) damageEvent.poiseDamage = receipt.poiseDrain;
-  if (receipt.broken?.block) damageEvent.blockBroken = receipt.broken.block;
-  if (receipt.broken?.poise) damageEvent.poiseBroken = receipt.broken.poise;
-  if (receipt.weaknesses?.length) damageEvent.weaknesses = receipt.weaknesses;
+  const damageEvent = buildDamageDealtEvent(source, target, receipt, carrier, hpBefore);
   ctx.emit('damageDealt', damageEvent);
   if (wardBefore > 0 && wardAfter === 0) ctx.emit('wardBroken', { targetId: target.id, targetKind: target.kind, sourceId: source?.id, ...seatOf(ctx, target) });
   if (before > 0 && target.block === 0) ctx.emit('blockBroken', { sourceId: source?.id, targetId: target.id });
@@ -1905,10 +1969,8 @@ export const OPCODE_HANDLERS = Object.freeze({
               : {},
             energySpent: action.meta?.energySpent || 0,
           };
-          // Flat break applies on the first hit per target only.
-          const flatBlockBreak = eff.breakBlock ?? eff.blockBreak;
-          if (h === 0 && flatBlockBreak > 0) carrier.breakBlock = flatBlockBreak;
-          if (h === 0 && eff.breakPoise > 0) carrier.breakPoise = eff.breakPoise;
+
+          attachFlatBreakToCarrier(carrier, eff, h);
           if (action.card?.rangeLineage) carrier.rangeContactId=RangeLineage.inheritedContactId(ctx,action,t);
           if (singleTarget) carrier.elementSpread = spread; // fire's spread is decided once for the whole op
           if (spread && t !== targets[0]) { delete carrier.rangePlan; delete carrier.rangeContactId; } // fire's spread: the other enemies were not in the card's range plan; the live band decides
