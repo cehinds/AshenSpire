@@ -109,7 +109,11 @@ test('remove added cards cleans every deck and subclass reference while preservi
   assert.equal(nextState.subclassCatalog, null);
   assert.equal(nextState.customClasses[0].deckId, null);
   assert.equal(nextState.customClasses[1].deckId, 'previously_missing_deck');
-  assert.equal(nextState.selectedCardId, 'core.original');
+  assert.equal(
+    nextState.selectedCardId,
+    null,
+    'removal makes no replacement choice; the caller names one',
+  );
   assert.deepEqual(nextState.scoring.overrides, { 'core.original': { rank: 1 } });
   assert.deepEqual(nextState.baselineRanks, { 'core.original': 1 });
   assert.deepEqual(nextState.sandbox, { customCardId: null, log: ['Keep log'] });
