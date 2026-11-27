@@ -27,6 +27,7 @@
     "shipping": "Shipping:",
     "shippingLine": "  {path}: {subject}",
     "skipping": "Skipping {path}: already in {ref}.",
+    "alreadyInDev": "Skipping {path}: dev already has this edit.",
     "nothingNew": "Nothing new to ship.",
     "allInDev": "Nothing new to ship: dev already has these edits.",
     "stopped": "\nStopped: fix the error above, then run \"npm run ship\" again. Nothing was pushed.",
@@ -78,6 +79,7 @@
   "receipt": {
     "line": "- **{title}** ([#{pull}]({url}), `{stamp}`). {summary}",
     "sentenceEnd": ".",
-    "sentenceJoiner": ". "
+    "sentenceJoiner": ". ",
+    "$note": "Keep \"- **{title}** ([#{pull}]({url}), `{stamp}`)\" at the start: the changelog checks find a receipt by that shape."
   }
 }

@@ -111,7 +111,15 @@ function carryEdits(worktree, edits)
 {
     edits.forEach((edit) => CarryFile(edit.file, worktree));
     const changed = new Set(ChangedPaths(worktree).map((file) => file.path));
-    return edits.filter((edit) => changed.has(edit.file.path));
+    return edits.filter((edit) =>
+    {
+        const landed = changed.has(edit.file.path);
+        if (!landed)
+        {
+            say('alreadyInDev', { path: edit.file.path });
+        }
+        return landed;
+    });
 }
 
 function runGates(
@@ -367,7 +375,7 @@ if (IsMainModule(import.meta.url))
     }
     catch (error)
     {
-        say('errorPrefix', { error: error.message });
+        console.error(FormatText(TEXT.errorPrefix, { error: error.message }));
         process.exitCode = EXIT.failed;
     }
 }

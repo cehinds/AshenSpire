@@ -89,6 +89,7 @@ The four commands read three JSON files in `tools/owner/`. No code edit is neede
 | How a commit names a change ("Raise X 5→6") | `ownerDiff.json` (`phrases`) |
 
 `{name}` in a message is filled in by the command. Keep the names; change the words around them.
+The changelog line (`receipt.line`) must keep its start, ``- **{title}** ([#{pull}]({url}), `{stamp}`)``, or the changelog checks cannot find it.
 
 ## Rules that still apply
 
