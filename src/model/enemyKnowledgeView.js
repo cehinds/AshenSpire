@@ -8,6 +8,14 @@ import { combatExpansionEquipment } from '../content/combatExpansionEquipment.js
 import { schoolResistanceMultiplier } from './combatRatings.js';
 import { weaknessTraitRows } from './enemyWeaknessRules.js';
 const words = value => String(value || '').replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/[_-]/g, ' ').replace(/^./, char => char.toUpperCase());
+// A fixed HP (an authored override pins the range) reads as one number, not "50–50".
+function baseHpText(range)
+{
+    const [lowest, highest] = range;
+    return lowest === highest
+        ? String(lowest)
+        : `${lowest}–${highest}`;
+}
 
 export function learnedEnemyMoveCards(def, stage, { registries = null, combatMatchupRules = null,
   combatExpansionVersion = 1, stanceRules = null } = {}) {
@@ -42,7 +50,7 @@ export function projectEnemyKnowledge(def, record, { target = enemyKnowledge.bes
     lore: stage >= 1 ? (Array.isArray(def.lore) ? [...def.lore] : def.lore ? [def.lore] : []) : null,
     role: stage >= 1 ? (def.role || words(def.size)) : null,
     resources: stage >= 2 ? [
-      Array.isArray(def.hp) && { label: 'Base HP', value: `${def.hp[0]}–${def.hp[1]}` },
+      Array.isArray(def.hp) && { label: 'Base HP', value: baseHpText(def.hp) },
       def.poiseMax != null && { label: 'Base Poise', value: String(def.poiseMax) },
       { label: 'Base Ward rating', value: String(def.poiseMax || 1) },
       { label: 'Base armour class', value: words(defenses?.armorClass || 'medium') },

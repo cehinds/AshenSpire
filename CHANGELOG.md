@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-27
 
-- **Evade Wither, rising cost, and Smash flat Block break** ([#3017](https://github.com/cehinds/AshenSpire/pull/3017), `0.7.5.147`). Player Evade cards gain Wither 3 and +1 SP per play (max +3); Smash cards now break flat Block before damage (`Break N Block. Deal N damage.`).
+- **Evade Wither, rising cost, and Smash flat Block break** ([#3017](https://github.com/cehinds/AshenSpire/pull/3017), `0.7.5.149`). Player Evade cards gain Wither 3 and +1 SP per play (max +3); Smash cards now break flat Block before damage (`Break N Block. Deal N damage.`).
+- **Set an enemy's HP directly** ([#3024](https://github.com/cehinds/AshenSpire/pull/3024), `0.7.5.149`). An enemy sheet can now set stats.hp, which replaces the HP its level and attributes give. Act and tier scaling still apply on top.
 - **Score Studio keeps one active card and item** ([#3019](https://github.com/cehinds/AshenSpire/pull/3019), `0.7.5.147`). Every panel follows the same card, filters never switch it, and reload brings it back.
 - **A code style guide** ([#3020](https://github.com/cehinds/AshenSpire/pull/3020), `0.7.5.145`). `CODE-STYLE.md` sets how all new and changed code looks. No game changes.
 
