@@ -120,14 +120,14 @@ test('Moon Glaives adds exactly one hit and Iron Knuckles applies its damage bas
   assert.equal(claws.effects.find(e => e.op === 'damage').amount, 5);
 });
 
-test('Storm Sceptre no longer grants Ward and still gives one Prepared Focus', () => {
+test('Storm Sceptre no longer grants Ward, and staffs and sceptres carry no Prepared Mana cut', () => {
   const storm = world({ right: 'stormSceptre' });
   assert.equal(storm.summary.turnGrants.filter(g => g.phase === 'start' && g.status === 'ward').reduce((n, g) => n + g.amount, 0), 0);
   const spell = world().card('core.spark');
   for (const equipped of [storm, world({ right: 'stormSceptre', left: 'ashStaff' })]) {
     const prepared = ApplyGearCardRules(equipped.summary.cardRules, spell, { stance: 'prepared' });
-    assert.equal(prepared.gearManaRules.length, 1, 'staff/sceptre share the built-in Focus');
-    assert.equal(GearManaCost(prepared, 3), 2);
+    assert.equal(prepared.gearManaRules, undefined, 'Initiate tags own the Prepared Mana cut (owner, 2026-11-27)');
+    assert.equal(GearManaCost(prepared, 3), 3);
     assert.equal(GearManaCost(ApplyGearCardRules(equipped.summary.cardRules, spell, { stance: 'idle' }), 3), 3);
   }
 });

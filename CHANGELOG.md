@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-27
 
-- **More reliable Smith and equipment checks** ([#3018](https://github.com/cehinds/AshenSpire/pull/3018), `0.7.5.151`). Smith screen checks use an explicit eligible scenario, while equipment tests follow current item availability and use controlled values for mechanics, so authored balance changes do not leave stale expectations.
+- **More reliable Smith and equipment checks** ([#3018](https://github.com/cehinds/AshenSpire/pull/3018), `0.7.5.153`). Smith screen checks use an explicit eligible scenario, while equipment tests follow current item availability and use controlled values for mechanics, so authored balance changes do not leave stale expectations.
+- **Initiate gear** ([#3026](https://github.com/cehinds/AshenSpire/pull/3026), `0.7.5.153`). In Prepared stance an Initiate cuts 1 Mana off matching spells, one cut per spell. the Starseer's starting robe carries Arcane Initiate and the Herald's Divine Initiate; Dusk Chime carries a Decay Initiate; staffs and robes no longer cut every spell.
 - **Game rules belong in config** ([#3028](https://github.com/cehinds/AshenSpire/pull/3028), `0.7.5.151`). `CODE-STYLE.md` now asks for rules, numbers and player text in config files instead of code. No game changes.
 
 - **Set an enemy's HP directly** ([#3024](https://github.com/cehinds/AshenSpire/pull/3024), `0.7.5.149`). An enemy sheet can now set stats.hp, which replaces the HP its level and attributes give. Act and tier scaling still apply on top.

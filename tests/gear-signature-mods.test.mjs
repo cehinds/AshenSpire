@@ -85,7 +85,7 @@ test('projection mutates neither the content nor the profile snapshot', () => {
   assert.equal(JSON.stringify(contentBundle.equipment.armour), contentBefore, 'the base content is untouched');
 });
 
-test('Sage\'s Robe in a new profile: uncommon Starseer robe, Ward, robe discount and melee vulnerability, signature in its help', () => {
+test('Sage\'s Robe in a new profile: uncommon Starseer robe, Ward and melee vulnerability, signature in its help', () => {
   const profile = current(), registries = registriesFor(profile);
   const row = profile.content.gear.find(item => item.id === 'armor.sagesRobe');
   assert.equal(row.rarity, 'uncommon');
@@ -95,7 +95,8 @@ test('Sage\'s Robe in a new profile: uncommon Starseer robe, Ward, robe discount
   assert.equal(robe.mods.maxMana, 0, 'the current robe group has no flat Mana and the signature replaces raw MP');
   assert.equal(robe.run.equipmentPoolBonuses.maxMana, 0, 'the run pool agrees');
   assert.equal(robe.mods.flags.vulnMelee, 1, 'melee vulnerability stays');
-  assert.ok(robe.summary.cardRules.some(rule => rule.source === 'sagesRobe' && rule.selector === 'spell' && rule.stat === 'manaCost' && rule.amount === -1), 'spell MP discount stays');
+  const manaCuts = robe.summary.cardRules.filter(rule => rule.source === 'sagesRobe' && rule.stat === 'manaCost');
+  assert.deepEqual(manaCuts, [], 'robes carry no type-level Prepared cut (owner, 2026-11-27)');
   assert.equal(wardGrant(robe.summary), 1);
   const help = equipmentCardModel(registries, piece(registries, 'sagesRobe')).bonuses.map(b => b.label);
   assert.ok(help.includes('Start of turn: +1 Ward'), `equipment help shows the signature: ${help.join(' | ')}`);
