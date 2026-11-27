@@ -457,11 +457,15 @@ export function SetWeightForm(entry, repoEntry, multiply)
   entry.weight = repoEntry && repoEntry.multiplier !== true && Number.isFinite(repoEntry.weight) ? repoEntry.weight : 0;
 }
 
-/** Switch a tag between flat (adds `weight`) and its multiplier: 'multiplier' starts at 1 (x1), 'pMultiplier' at 0. */
-export function SetTagForm(tag, multKey, multiply)
+/**
+ * Switch a tag between flat (adds `weight`) and its multiplier: 'multiplier' starts at 1 (x1), 'pMultiplier' at 0.
+ * Switching back to flat restores the repo's flat weight when the repo tag is flat, so on then off stages nothing.
+ */
+export function SetTagForm(tag, multKey, multiply, repoTag = null)
 {
   delete tag.multiplier;
   delete tag.pMultiplier;
-  tag.weight = 0;
+  const repoIsFlat = repoTag && repoTag.multiplier === undefined && repoTag.pMultiplier === undefined && Number.isFinite(repoTag.weight);
+  tag.weight = !multiply && repoIsFlat ? repoTag.weight : 0;
   if (multiply) tag[multKey] = multKey === 'multiplier' ? 1 : 0;
 }

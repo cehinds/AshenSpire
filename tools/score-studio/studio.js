@@ -2297,7 +2297,7 @@ function renderWeights({ shifts = true } = {}) {
         // Damage-type tags score once per action or once per hit (ScoreCard reads per === 'hit').
         per: v.per !== undefined ? { value: v.per, base: bv?.per, options: TAG_PER_OPTIONS, set: (n) => { state.scoring.tags[k].per = n; } } : null,
         // A multiplier tag may be set flat (adds its weight). Switching resets to the no-change value.
-        mult: multKey ? { value: isMult, base: bv ? (bv.multiplier !== undefined || bv.pMultiplier !== undefined) : undefined, set: (on) => { SetTagForm(state.scoring.tags[k], multKey, on); } } : null,
+        mult: multKey ? { value: isMult, base: bv ? (bv.multiplier !== undefined || bv.pMultiplier !== undefined) : undefined, set: (on) => { SetTagForm(state.scoring.tags[k], multKey, on, R.tags?.[k]); } } : null,
         surcharge: { value: v.surchargeEnabled !== false, base: bv ? bv.surchargeEnabled !== false : true, set: (on) => { state.scoring.tags[k].surchargeEnabled = Boolean(on); } },
       };
     }) },

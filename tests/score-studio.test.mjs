@@ -331,8 +331,11 @@ test('weights tab: cost, effect and status rows switch to the multiplier form an
   assert.equal(weightExample('tags', 'damage:blunt', tagged, 'Blunt', { name: 'Strike', positive: 10 }), 'Strike (positive score 10): 3 hits = +3 pts');
   const hit = ScoreCard({ ...BaseFace(), dmg: 10, hits: 2, tags: ['damage:blunt'] }, tagged);
   assert.equal(hit.parts['damage:blunt'], hit.positive * 0.1 * 2);
+  SetTagForm(blunt, key, false, repo.tags['damage:blunt']);
+  assert.deepEqual([blunt.weight, 'pMultiplier' in blunt], [repo.tags['damage:blunt'].weight, false], 'off restores the repo flat weight, so on then off stages nothing');
   SetTagForm(blunt, key, false);
-  assert.deepEqual([blunt.weight, 'pMultiplier' in blunt], [0, false], 'off is flat weight 0, as the other tag switches');
+  assert.equal(blunt.weight, 0, 'without a repo tag to restore, off is flat 0');
+  SetTagForm(blunt, key, false, repo.tags['damage:blunt']);
   // Switching back restores the repo's flat weight and drops the flag, so nothing is left staged.
   SetWeightForm(pending.costs.sp, repo.costs.sp, false);
   SetWeightForm(pending.effects.block, repo.effects.block, false);
