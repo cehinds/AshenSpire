@@ -48,7 +48,19 @@ import { filterMembership, deckCatalogOptions, resolveStudioDeck } from './deckC
 import { initGalleryZoom } from './galleryZoom.js';
 import { focusedEffectOptions } from './focusedRebalance.js';
 import { createAddCardTile, CaptureCardTilePositions, animateCardInsertion } from './addCardTile.js';
-import { GALLERIES, createActiveEntities, createEditBursts, nextInDisplayedOrder, readWorkingContext, writeWorkingContext, resolveWorkingContext, captureTileFocus, restoreTileFocus } from './workingContext.js';
+import {
+  GalleryKind,
+  GALLERIES,
+  TileIdAttribute,
+  createActiveEntities,
+  createEditBursts,
+  nextInDisplayedOrder,
+  readWorkingContext,
+  writeWorkingContext,
+  resolveWorkingContext,
+  captureTileFocus,
+  restoreTileFocus,
+} from './workingContext.js';
 
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
 const AB_STORAGE_KEY = 'ashenspire:scoreStudioAB:v1';
@@ -61,6 +73,44 @@ const UNDO_DEPTH = 40;
 const INSPECTOR_WIDTH_KEY = 'ashenspire:studioInspectorW';
 const INSPECTOR_WIDTH_MIN = 340;
 const INSPECTOR_WIDTH_MAX = 780;
+const GalleryGridId = Object.freeze({
+  [GalleryKind.Cards]: 'cards-grid',
+  [GalleryKind.Items]: 'items-grid',
+});
+const GallerySearchId = Object.freeze({
+  [GalleryKind.Cards]: 'card-search',
+  [GalleryKind.Items]: 'item-filter-search',
+});
+const GalleryTileClass = Object.freeze({
+  [GalleryKind.Cards]: 'studio-card-tile',
+  [GalleryKind.Items]: 'item-grid-tile',
+});
+const CARD_FILTER_SELECT_IDS = Object.freeze([
+  'filter-type',
+  'filter-class',
+  'filter-rank',
+  'filter-shift',
+  'filter-deck',
+]);
+const ITEM_FILTER_SELECT_IDS = Object.freeze([
+  'item-filter-kind',
+  'item-filter-rarity',
+  'item-filter-rank',
+  'filter-item-deck',
+]);
+const FILTER_ALL = 'all';
+const SELECTED_TILE_CLASS = 'is-selected';
+const STUDIO_TAB_SELECTOR = '.studio-tab';
+const ACTIVE_STUDIO_TAB_SELECTOR = '.studio-tab.is-active';
+const REVEAL_SCROLL_OPTIONS = Object.freeze({ block: 'nearest' });
+const NoActiveEntityOption = Object.freeze({
+  [GalleryKind.Cards]: 'No card selected',
+  [GalleryKind.Items]: 'No item selected',
+});
+const DeletedCardToast = Object.freeze({
+  withNext: (removedName, nextName) => `Deleted "${removedName}". Now editing "${nextName}".`,
+  withoutNext: (removedName) => `Deleted "${removedName}". No card selected.`,
+});
 // On GitHub Pages there is no local server: the studio runs on shipped scoring and exports by Download JSON.
 const isLocalServer = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
 
@@ -1006,7 +1056,10 @@ function applyGeneratedPool() {
   const fresh = fitted.map((f) => f.def);
   const exact = fitted.filter((f) => f.gap === 0).length;
   state.cards = [...fresh, ...kept];
-  if (fresh.length) selectStudioCard(fresh[0].id, { render: false, reveal: true });
+  if (fresh.length)
+  {
+    selectStudioCard(fresh[0].id, { render: false, reveal: true });
+  }
   syncAllViews();
   saveDraft();
   toast(`Generated ${fresh.length} card(s), ${exact} at their exact CP. Undo puts the list back.`);
@@ -1486,9 +1539,9 @@ function renderCardsGrid() {
   const grid = document.getElementById('cards-grid');
   grid.classList.toggle('is-single', state.viewMode === 'single');
   const filtered = getFilteredCards();
-  displayedIds.cards = filtered.map((def) => def.id);
+  displayedIds[GalleryKind.Cards] = filtered.map((def) => def.id);
   // The rebuild destroys the tiles: keep the focused tile (by id) and the scroll position.
-  const focused = captureTileFocus(grid, 'card-id');
+  const focused = captureTileFocus(grid, TileIdAttribute[GalleryKind.Cards]);
   const scrollTop = grid.scrollTop;
 
   grid.innerHTML = '';
@@ -1521,68 +1574,128 @@ function renderCardsGrid() {
     trackCardsArtLoading(grid);
   }
   computeShiftCount();
-  if (grid.scrollTop !== scrollTop) grid.scrollTop = scrollTop;
-  restoreTileFocus(grid, 'card-id', focused, document.getElementById('card-search'));
-  consumeReveal('cards');
+  if (grid.scrollTop !== scrollTop)
+  {
+    grid.scrollTop = scrollTop;
+  }
+  restoreTileFocus(
+    grid,
+    TileIdAttribute[GalleryKind.Cards],
+    focused,
+    document.getElementById(GallerySearchId[GalleryKind.Cards]),
+  );
+  consumeReveal(GalleryKind.Cards);
 }
 
 // ---------------------------------------------------------------------------
-// One active card and one active item (SS-002)
+// One active card and one active item
 // ---------------------------------------------------------------------------
 // selectStudioCard and selectStudioItem are the only writers of state.selectedCardId and
 // state.selectedItemKey. An id that is gone gives the empty state, never the first card.
 // Filters never call them. Content changes reconcile through them in syncAllViews.
-const activeEntities = createActiveEntities({ state, onChange: () => { editBursts.endAll(); saveWorkingContext(); } });
+const activeEntities = createActiveEntities({
+  state,
+  onChange: () =>
+  {
+    editBursts.endAll();
+    saveWorkingContext();
+  },
+});
 
 // Reload restore: the gallery and the active card and item, under their own key (never in the draft, snapshots
-// or bundles). The customization view keeps the dock's own key. Writes start once boot has restored them.
+// or bundles). Writes start once boot has restored them.
 let workingContextReady = false;
-function saveWorkingContext() {
-  if (!workingContextReady) return;
+function saveWorkingContext()
+{
+  if (!workingContextReady)
+  {
+    return;
+  }
   writeWorkingContext(localStorage, { gallery: activeGallery, cardId: state.selectedCardId, itemKey: state.selectedItemKey });
 }
 // The ids each gallery shows, in displayed order, as of its last render (null before the first).
-const displayedIds = { cards: null, items: null };
+const displayedIds = { [GalleryKind.Cards]: null, [GalleryKind.Items]: null };
 
 // Filters never change the active entity; this only says whether they hide its tile.
-function isHiddenByFilters(kind, id) {
+function isHiddenByFilters(kind, id)
+{
   return Boolean(id) && Array.isArray(displayedIds[kind]) && !displayedIds[kind].includes(id);
 }
 
 // The banner's Clear: every filter of that gallery back to All, then one re-render.
-function clearGalleryFilters(kind) {
-  if (kind === 'items') { resetItemFilters(); renderItemsGrid(); } else { resetCardFilters(); renderCardsGrid(); }
+function clearGalleryFilters(kind)
+{
+  if (kind === GalleryKind.Items)
+  {
+    resetItemFilters();
+    renderItemsGrid();
+  }
+  else
+  {
+    resetCardFilters();
+    renderCardsGrid();
+  }
 }
 const pendingReveal = new Set();
 
-function activeTile(kind) {
-  const id = activeEntities.get(kind);
-  if (!id) return null;
-  const selector = kind === 'items' ? `.item-grid-tile[data-item-key="${CSS.escape(id)}"]` : `.studio-card-tile[data-card-id="${CSS.escape(id)}"]`;
-  return document.getElementById(kind === 'items' ? 'items-grid' : 'cards-grid')?.querySelector(selector) || null;
+function galleryTileSelector(kind, id)
+{
+  return `.${GalleryTileClass[kind]}[data-${TileIdAttribute[kind]}="${CSS.escape(id)}"]`;
 }
 
-function revealActiveTile(kind) {
-  activeTile(kind)?.scrollIntoView?.({ block: 'nearest' });
+function activeTile(kind)
+{
+  const id = activeEntities.get(kind);
+  if (!id)
+  {
+    return null;
+  }
+  return galleryGrid(kind)?.querySelector(galleryTileSelector(kind, id)) || null;
+}
+
+function revealActiveTile(kind)
+{
+  activeTile(kind)?.scrollIntoView?.(REVEAL_SCROLL_OPTIONS);
 }
 
 // A setter called before a gallery render asks for its tile to be shown once that render lands.
-function consumeReveal(kind) {
-  if (!pendingReveal.delete(kind)) return;
+function consumeReveal(kind)
+{
+  if (!pendingReveal.delete(kind))
+  {
+    return;
+  }
   revealActiveTile(kind);
 }
 
-function selectStudioCard(id, { render = true, reveal = false } = {}) {
-  const { id: active } = activeEntities.set('cards', id);
-  if (!render) { if (reveal) pendingReveal.add('cards'); return active; }
-  for (const tile of document.querySelectorAll('.studio-card-tile')) tile.classList.toggle('is-selected', tile.dataset.cardId === active);
+function selectStudioCard(id, { render = true, reveal = false } = {})
+{
+  const { id: activeId } = activeEntities.set(GalleryKind.Cards, id);
+  if (!render)
+  {
+    if (reveal)
+    {
+      pendingReveal.add(GalleryKind.Cards);
+    }
+    return activeId;
+  }
+  for (const tile of document.querySelectorAll(`.${GalleryTileClass[GalleryKind.Cards]}`))
+  {
+    tile.classList.toggle(SELECTED_TILE_CLASS, tile.dataset.cardId === activeId);
+  }
   renderInspector();
   renderArtTab();
   deckListPanelUi?.refresh();
   cardEditorDockUi?.refresh();
-  if (reveal) revealActiveTile('cards');
-  if (active && isNarrowLayout() && !cardEditorDockUi) openInspectorSheet();
-  return active;
+  if (reveal)
+  {
+    revealActiveTile(GalleryKind.Cards);
+  }
+  if (activeId && isNarrowLayout() && !cardEditorDockUi)
+  {
+    openInspectorSheet();
+  }
+  return activeId;
 }
 
 // ---------------------------------------------------------------------------
@@ -2329,7 +2442,8 @@ function selectedCardDef() {
 // One undo step per burst of typing or spinner ticks; the burst ends after a pause, a new focus or a
 // change of active entity (the setters end every open burst, so one Undo never spans two cards).
 const editBursts = createEditBursts({ pushHistory: () => pushHistory(), delayMs: TEXT_EDIT_BURST_MS });
-function createEditBurst() {
+function createEditBurst()
+{
   return editBursts.create();
 }
 
@@ -3239,8 +3353,8 @@ function renderItemsGrid() {
 
   const countEl = document.getElementById('items-count');
   if (countEl) countEl.textContent = `${filtered.length} / ${state.items.length} items`;
-  displayedIds.items = filtered.map(({ entry }) => entry.key);
-  const focused = captureTileFocus(grid, 'item-key');
+  displayedIds[GalleryKind.Items] = filtered.map(({ entry }) => entry.key);
+  const focused = captureTileFocus(grid, TileIdAttribute[GalleryKind.Items]);
   const scrollTop = grid.scrollTop;
 
   grid.innerHTML = '';
@@ -3271,25 +3385,47 @@ function renderItemsGrid() {
   }
   cardEditorDockUi?.refresh();
   setItemsLoading(false);
-  if (grid.scrollTop !== scrollTop) grid.scrollTop = scrollTop;
-  restoreTileFocus(grid, 'item-key', focused, document.getElementById('item-filter-search'));
-  consumeReveal('items');
+  if (grid.scrollTop !== scrollTop)
+  {
+    grid.scrollTop = scrollTop;
+  }
+  restoreTileFocus(
+    grid,
+    TileIdAttribute[GalleryKind.Items],
+    focused,
+    document.getElementById(GallerySearchId[GalleryKind.Items]),
+  );
+  consumeReveal(GalleryKind.Items);
 }
 
-function selectStudioItem(key, { render = true, reveal = false } = {}) {
-  const { id: active } = activeEntities.set('items', key);
-  if (!render) { if (reveal) pendingReveal.add('items'); return active; }
-  for (const tile of document.querySelectorAll('.item-grid-tile')) tile.classList.toggle('is-selected', tile.dataset.itemKey === active);
+function selectStudioItem(key, { render = true, reveal = false } = {})
+{
+  const { id: activeKey } = activeEntities.set(GalleryKind.Items, key);
+  if (!render)
+  {
+    if (reveal)
+    {
+      pendingReveal.add(GalleryKind.Items);
+    }
+    return activeKey;
+  }
+  for (const tile of document.querySelectorAll(`.${GalleryTileClass[GalleryKind.Items]}`))
+  {
+    tile.classList.toggle(SELECTED_TILE_CLASS, tile.dataset.itemKey === activeKey);
+  }
   renderItemInspector();
   renderArtTab();
   deckListPanelUi?.refresh();
   cardEditorDockUi?.refresh();
-  if (reveal) revealActiveTile('items');
-  return active;
+  if (reveal)
+  {
+    revealActiveTile(GalleryKind.Items);
+  }
+  return activeKey;
 }
 
 function renderItemInspector() {
-  const entry = state.items.find((x) => x.key === state.selectedItemKey);
+  const entry = state.items.find((item) => item.key === state.selectedItemKey);
   if (!entry) {
     // No active item: the pane shows its empty state rather than the first item.
     document.getElementById('item-preview-host')?.replaceChildren();
@@ -3511,7 +3647,7 @@ function mirrorArtListControls(idx, layer) {
 
 // Edit beside the card: select that card layer in the Art layers list, open its section and bring it into view.
 function showArtLayerInList(idx) {
-  showGallery('cards');
+  showGallery(GalleryKind.Cards);
   setActiveArtLayerIdx(idx);
   renderArtTab();
   const cardEl = document.querySelector(`#art-layers-list .layer-card[data-layer-card-idx="${idx}"]`);
@@ -3522,16 +3658,34 @@ function showArtLayerInList(idx) {
   cardEl.querySelector('[data-l-field="name"]')?.focus({ preventScroll: true });
 }
 
-function renderArtPreviewOnly() {
+function renderArtPreviewOnly()
+{
   const sel = document.getElementById('art-preview-card-select');
   const host = document.getElementById('art-live-preview');
   // The picker shows the active entity; with none active the preview is empty, not the first card.
-  if (state.artTarget === 'items') {
-    const item = state.items.find((x) => x.key === sel.value);
-    if (item) renderItemCardPreview(item, host, 'inspect'); else host.replaceChildren();
-  } else {
-    const previewDef = state.cards.find((c) => c.id === sel.value);
-    if (previewDef) renderCardWithLayers(previewDef, host); else host.replaceChildren();
+  if (state.artTarget === GalleryKind.Items)
+  {
+    const item = state.items.find((entry) => entry.key === sel.value);
+    if (item)
+    {
+      renderItemCardPreview(item, host, 'inspect');
+    }
+    else
+    {
+      host.replaceChildren();
+    }
+  }
+  else
+  {
+    const previewDef = state.cards.find((card) => card.id === sel.value);
+    if (previewDef)
+    {
+      renderCardWithLayers(previewDef, host);
+    }
+    else
+    {
+      host.replaceChildren();
+    }
   }
 }
 
@@ -3553,12 +3707,19 @@ function renderArtTab() {
   // Preview picker: it always shows the gallery's active card or item, and choosing one makes it active everywhere.
   const cardSel = document.getElementById('art-preview-card-select');
   cardSel.innerHTML = '';
+  const pickerKind = isItems ? GalleryKind.Items : GalleryKind.Cards;
   const options = isItems
-    ? state.items.map((it) => [it.key, `[${it.kind[0].toUpperCase() + it.kind.slice(1)}] ${it.name || it.id}`])
-    : state.cards.map((c) => [c.id, c.name || c.id]);
-  const activeId = activeEntities.get(isItems ? 'items' : 'cards');
-  if (!activeId) cardSel.appendChild(new Option(isItems ? 'No item selected' : 'No card selected', ''));
-  for (const [value, text] of options) cardSel.appendChild(new Option(text, value));
+    ? state.items.map((item) => [item.key, `[${item.kind[0].toUpperCase() + item.kind.slice(1)}] ${item.name || item.id}`])
+    : state.cards.map((card) => [card.id, card.name || card.id]);
+  const activeId = activeEntities.get(pickerKind);
+  if (!activeId)
+  {
+    cardSel.appendChild(new Option(NoActiveEntityOption[pickerKind], ''));
+  }
+  for (const [value, text] of options)
+  {
+    cardSel.appendChild(new Option(text, value));
+  }
   cardSel.value = activeId || '';
   renderArtPreviewOnly();
 
@@ -4137,26 +4298,41 @@ let cardEditorDockUi = null;
 let deckListPanelUi = null;
 // One gallery context: activeGallery, state.artTarget and the dock's context are set together by the
 // Cards and Items tabs, so the Design target and picker never point at the other kind.
-let activeGallery = 'cards';
+let activeGallery = GalleryKind.Cards;
 let artGalleryFrame = null;
 
-function showGallery(kind) {
-  if (kind !== activeGallery) document.querySelector(`.studio-tab[data-tab="${kind}"]`)?.click();
+function showGallery(kind)
+{
+  if (kind !== activeGallery)
+  {
+    document.querySelector(`${STUDIO_TAB_SELECTOR}[data-tab="${kind}"]`)?.click();
+  }
 }
 
 // Each gallery keeps its own place: the grid scrolls on desktop, the page on narrow screens.
-const galleryScroll = { cards: null, items: null };
-const galleryGrid = (kind) => document.getElementById(kind === 'items' ? 'items-grid' : 'cards-grid');
+const galleryScroll = { [GalleryKind.Cards]: null, [GalleryKind.Items]: null };
 
-function rememberGalleryScroll(kind) {
+function galleryGrid(kind)
+{
+  return document.getElementById(GalleryGridId[kind]);
+}
+
+function rememberGalleryScroll(kind)
+{
   galleryScroll[kind] = { grid: galleryGrid(kind)?.scrollTop || 0, page: window.scrollY };
 }
 
-function restoreGalleryScroll(kind) {
-  const saved = galleryScroll[kind], grid = galleryGrid(kind);
-  if (saved && grid) {
+function restoreGalleryScroll(kind)
+{
+  const saved = galleryScroll[kind];
+  const grid = galleryGrid(kind);
+  if (saved && grid)
+  {
     grid.scrollTop = saved.grid;
-    if (isNarrowLayout()) window.scrollTo(0, saved.page);
+    if (isNarrowLayout())
+    {
+      window.scrollTo(0, saved.page);
+    }
   }
   revealActiveTile(kind);
 }
@@ -4473,15 +4649,23 @@ function updateFilterCount() {
 }
 
 // Every card filter back to All and the search empty. The caller re-renders the gallery.
-function resetCardFilters() {
-  document.getElementById('card-search').value = '';
-  for (const key of ['filter-type', 'filter-class', 'filter-rank', 'filter-shift', 'filter-deck']) document.getElementById(key).value = 'all';
+function resetCardFilters()
+{
+  document.getElementById(GallerySearchId[GalleryKind.Cards]).value = '';
+  for (const filterId of CARD_FILTER_SELECT_IDS)
+  {
+    document.getElementById(filterId).value = FILTER_ALL;
+  }
   updateFilterCount();
 }
 
-function resetItemFilters() {
-  document.getElementById('item-filter-search').value = '';
-  for (const id of ['item-filter-kind', 'item-filter-rarity', 'item-filter-rank', 'filter-item-deck']) document.getElementById(id).value = 'all';
+function resetItemFilters()
+{
+  document.getElementById(GallerySearchId[GalleryKind.Items]).value = '';
+  for (const filterId of ITEM_FILTER_SELECT_IDS)
+  {
+    document.getElementById(filterId).value = FILTER_ALL;
+  }
   updateItemFilterCount();
 }
 
@@ -4609,8 +4793,11 @@ function wireEvents() {
         if (tab === 'art') renderArtTab(); else renderWeights();
         return;
       }
-      const previousTab = document.querySelector('.studio-tab.is-active')?.dataset.tab;
-      if (GALLERIES.includes(previousTab) && previousTab !== tab) rememberGalleryScroll(previousTab);
+      const previousTab = document.querySelector(ACTIVE_STUDIO_TAB_SELECTOR)?.dataset.tab;
+      if (GALLERIES.includes(previousTab) && previousTab !== tab)
+      {
+        rememberGalleryScroll(previousTab);
+      }
       document.querySelectorAll('.studio-tab').forEach((b) => { b.classList.toggle('is-active', b === btn); b.setAttribute('aria-selected', String(b === btn)); });
       document.querySelectorAll('.studio-main > .studio-panel').forEach((p) => p.classList.toggle('is-active', p.id === `tab-${tab}`));
       if (tab === 'cards' || tab === 'items') {
@@ -4621,7 +4808,10 @@ function wireEvents() {
         renderArtTab();
         deckListPanelUi?.refresh();
         // Returning to a gallery puts it back where it was, with its active tile in view.
-        if (previousTab !== tab) restoreGalleryScroll(tab);
+        if (previousTab !== tab)
+        {
+          restoreGalleryScroll(tab);
+        }
         saveWorkingContext();
       }
       if (tab === 'sandbox' && !state.sandbox.combat) startSandboxCombat();
@@ -4711,15 +4901,16 @@ function wireEvents() {
     const removed = state.cards[idx], plan = removeAddedCardsFromState(state, [removed.id]);
     if (!plan.removedIds.length) { toast('Original cards are protected.'); return; }
     // The next card in displayed order (else the one before), named in the toast.
-    const nextId = nextInDisplayedOrder(displayedIds.cards || [], removed.id, state.cards.map((c) => c.id));
+    const nextId = nextInDisplayedOrder(displayedIds[GalleryKind.Cards] || [], removed.id, state.cards.map((card) => card.id));
     pushHistory();
     Object.assign(state, plan.nextState);
     studioCardOverrides.delete(removed.id);
     studioCardOverrides.delete(`${LIVE_ID_PREFIX}${removed.id}`);
-    const next = state.cards.find((c) => c.id === selectStudioCard(nextId, { render: false, reveal: true }));
+    const activeId = selectStudioCard(nextId, { render: false, reveal: true });
+    const next = state.cards.find((card) => card.id === activeId);
     syncAllViews();
     saveDraft({ autoName: false });
-    toast(next ? `Deleted "${removed.name}". Now editing "${next.name}".` : `Deleted "${removed.name}". No card selected.`);
+    toast(next ? DeletedCardToast.withNext(removed.name, next.name) : DeletedCardToast.withoutNext(removed.name));
   });
 
   // Card inspector edits
@@ -5124,10 +5315,20 @@ function wireEvents() {
   // The Design target is the gallery context: Combat Cards or Equipment & Relics switches the gallery too.
   document.querySelectorAll('[data-art-target]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      const kind = btn.dataset.artTarget === 'items' ? 'items' : 'cards';
-      if (kind !== activeGallery) showGallery(kind); else renderArtTab();
+      const kind = btn.dataset.artTarget === GalleryKind.Items ? GalleryKind.Items : GalleryKind.Cards;
+      if (kind !== activeGallery)
+      {
+        showGallery(kind);
+      }
+      else
+      {
+        renderArtTab();
+      }
       // The pane moved with the gallery; keep focus on the target button rather than the page body.
-      if (document.activeElement !== btn) btn.focus({ preventScroll: true });
+      if (document.activeElement !== btn)
+      {
+        btn.focus({ preventScroll: true });
+      }
     });
   });
   document.getElementById('btn-add-layer').addEventListener('click', () => {
@@ -5144,10 +5345,19 @@ function wireEvents() {
     saveDraft();
   });
   // Choosing in the picker changes the active entity everywhere: banner, Properties, tile and deck rows.
-  document.getElementById('art-preview-card-select').addEventListener('change', (e) => {
-    if (!e.target.value) return;
-    if (state.artTarget === 'items') selectStudioItem(e.target.value, { reveal: true });
-    else selectStudioCard(e.target.value, { reveal: true });
+  document.getElementById('art-preview-card-select').addEventListener('change', (event) => {
+    if (!event.target.value)
+    {
+      return;
+    }
+    if (state.artTarget === GalleryKind.Items)
+    {
+      selectStudioItem(event.target.value, { reveal: true });
+    }
+    else
+    {
+      selectStudioCard(event.target.value, { reveal: true });
+    }
   });
   document.getElementById('asset-search').addEventListener('input', renderArtTab);
   document.getElementById('art-layers-list').addEventListener('click', (e) => {
@@ -5409,7 +5619,17 @@ async function boot() {
     selectCard: selectStudioCard,
     selectItem: selectStudioItem,
   });
-  subclassCatalogUi = initSubclassCatalogUi({ state, isLocalServer, pushHistory, saveDraft, syncAllViews, toast, normalizeStudioCard, studioCardOverrides, selectCard: selectStudioCard });
+  subclassCatalogUi = initSubclassCatalogUi({
+    state,
+    isLocalServer,
+    pushHistory,
+    saveDraft,
+    syncAllViews,
+    toast,
+    normalizeStudioCard,
+    studioCardOverrides,
+    selectCard: selectStudioCard,
+  });
   cardSelectionUi = initCardSelectionUi({ state, pushHistory, saveDraft, syncAllViews, toast, getFilteredCards, normalizeStudioCard,
     prepareSubclassEdit: prepareCardEdit, applyAutoNames: autoNameSelectedCards,
     openBalanceSelection: ids => studioToolsUi.openBalanceSelection(ids),
@@ -5511,21 +5731,34 @@ async function boot() {
       restoredDraft = true;
     }
   } catch { /* ignore */ }
-  if (!restoredDraft) refreshDirtyStatus();
+  if (!restoredDraft)
+  {
+    refreshDirtyStatus();
+  }
   restoreWorkingContext();
 }
 
 // After boot: the stored gallery, card and item, or the existing default (first card and item) for a stored id
 // that is gone. Restoring takes no activation.
-function restoreWorkingContext() {
-  const { gallery, cardId, itemKey } = resolveWorkingContext(readWorkingContext(localStorage), state, {
+function restoreWorkingContext()
+{
+  const saved = readWorkingContext(localStorage);
+  const defaults = {
     gallery: activeGallery,
     cardId: state.selectedCardId ?? state.cards[0]?.id,
     itemKey: state.selectedItemKey ?? state.items[0]?.key,
-  });
+  };
+  const { gallery, cardId, itemKey } = resolveWorkingContext(saved, state, defaults);
   selectStudioItem(itemKey);
   selectStudioCard(cardId);
-  if (gallery !== activeGallery) showGallery(gallery); else revealActiveTile(gallery);
+  if (gallery !== activeGallery)
+  {
+    showGallery(gallery);
+  }
+  else
+  {
+    revealActiveTile(gallery);
+  }
   workingContextReady = true;
   saveWorkingContext();
 }

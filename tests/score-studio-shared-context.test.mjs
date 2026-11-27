@@ -275,15 +275,15 @@ test('every writer of the active card and item goes through the two setters', ()
   }
   const studio = source('studio.js');
   assert.equal(studio.match(/state\.artTarget\s*=(?!=)/g)?.length, 1, 'artTarget is set in one place, with activeGallery and the dock context');
-  assert.match(body(studio, 'selectStudioCard'), /activeEntities\.set\('cards'/);
-  assert.match(body(studio, 'selectStudioItem'), /activeEntities\.set\('items'/);
+  assert.match(body(studio, 'selectStudioCard'), /activeEntities\.set\(GalleryKind\.Cards,/);
+  assert.match(body(studio, 'selectStudioItem'), /activeEntities\.set\(GalleryKind\.Items,/);
   for (const name of ['selectStudioCard', 'selectStudioItem'])
   {
     assert.doesNotMatch(body(studio, name), /syncAllViews/, `${name} never rebuilds every view`);
   }
   assert.match(body(studio, 'syncAllViews'), /activeEntities\.reconcile\(\)/, 'content changes reconcile through the setters');
   // The Design picker and target route through the setter and the gallery tabs.
-  assert.match(studio, /art-preview-card-select'\)\.addEventListener\('change'[\s\S]{0,200}selectStudio(Item|Card)\(e\.target\.value/);
+  assert.match(studio, /art-preview-card-select'\)\.addEventListener\('change'[\s\S]{0,200}selectStudio(Item|Card)\(event\.target\.value/);
   assert.match(studio, /data-art-target[\s\S]{0,300}showGallery\(kind\)/);
   assert.match(source('studioToolsModal.js'), /ctx\.selectCard\(state\.cards\[0\]\.id/);
   assert.match(source('studioToolsModal.js'), /ctx\.selectItem\(state\.items\[0\]\.key/);
@@ -310,7 +310,7 @@ test('no silent first-card fallback in the inspectors, the preview, undo or reve
 test('edit bursts end on entity change and view state stays out of snapshots, the draft and bundles', () =>
 {
   const studio = source('studio.js');
-  assert.match(studio, /createActiveEntities\(\{ state, onChange: \(\) => \{ editBursts\.endAll\(\);/);
+  assert.match(studio, /createActiveEntities\(\{\s*state,\s*onChange: \(\) =>\s*\{\s*editBursts\.endAll\(\);/);
   assert.match(body(studio, 'createEditBurst'), /editBursts\.create\(\)/);
   for (const name of ['snapshotState', 'writeDraftNow'])
   {
