@@ -4,10 +4,12 @@ import { ValidateSubclassCatalog, SerializeSubclassCatalog } from '../../src/mod
 import { CardDefinitionToScoreFace } from '../../src/model/cardUpgradeCp.js';
 import { ScoreCard, CombatPower, RankOf } from '../../src/model/combatPower.js';
 import { scoring as shippedScoring } from '../../src/content/generated/scoring.js';
+import { SelectionOptions } from './workingContext.js';
 
 const clone = value => structuredClone(value);
 const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 const DECK_PREFIX = 'subclass-list.';
+const SUBCLASS_REPLACE_ID = 'subclass-replace';
 const CARD_STUDIO_FIELDS = new Set(['face', 'scoringOverride', 'kindIds', 'cardRatingValues']);
 const errorSummary = errors => errors.slice(0, 3).join(' ') + (errors.length > 3 ? ` (${errors.length - 3} more validation errors.)` : '');
 
@@ -206,9 +208,17 @@ export function initSubclassCatalogUi(ctx) {
   }
 
   function apply(catalog) {
-    const next = mergeSubclassCatalog(state, catalog, { replace: el('subclass-replace').checked, normalize: normalizeStudioCard });
+    const { selectedCardId, ...next } = mergeSubclassCatalog(
+      state,
+      catalog,
+      {
+        replace: el(SUBCLASS_REPLACE_ID).checked,
+        normalize: normalizeStudioCard,
+      },
+    );
     pushHistory();
     Object.assign(state, next);
+    ctx.selectCard(selectedCardId, SelectionOptions.DeferredReveal);
     studioCardOverrides.clear();
     preview = null;
     syncAllViews();
@@ -280,7 +290,7 @@ export function initSubclassCatalogUi(ctx) {
     if (!list) return;
     for (const id of ['filter-type', 'filter-class', 'filter-rank', 'filter-shift']) el(id).value = 'all';
     el('card-search').value = '';
-    state.selectedCardId = list.cardIds[0];
+    ctx.selectCard(list.cardIds[0], SelectionOptions.DeferredReveal);
     syncAllViews();
     el('filter-deck').value = DECK_PREFIX + list.id;
     syncAllViews();
