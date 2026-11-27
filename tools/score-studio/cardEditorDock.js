@@ -137,6 +137,39 @@ export function initCardEditorDock(ctx) {
   quick.setAttribute('role', 'group'); quick.setAttribute('aria-label', 'Card basics');
   const scoreSummary = previews.cards?.querySelector('#inspector-score-summary');
   if (scoreSummary) { scoreSummary.before(entityDetails); entityDetails.append(quick); rememberHome(scoreSummary); entityName.append(scoreSummary); }
+  // Card options: a vertical ellipsis at the top right of the fields. The composition root supplies the actions.
+  const cardMenuWrap = doc.createElement('div'); cardMenuWrap.className = 'studio-menu customization-card-menu-wrap';
+  const cardMenuButton = button('\u22EE', () => (cardMenu.hidden ? openCardMenu() : closeCardMenu(true)), 's-btn s-btn-icon customization-card-menu-button');
+  cardMenuButton.id = 'customization-card-menu-button'; cardMenuButton.setAttribute('aria-label', 'Card options');
+  cardMenuButton.setAttribute('aria-haspopup', 'menu'); cardMenuButton.setAttribute('aria-expanded', 'false'); cardMenuButton.setAttribute('aria-controls', 'customization-card-menu');
+  const cardMenu = doc.createElement('div'); cardMenu.id = 'customization-card-menu'; cardMenu.className = 'studio-menu-panel is-right customization-card-menu';
+  cardMenu.setAttribute('role', 'menu'); cardMenu.setAttribute('aria-label', 'Card options'); cardMenu.hidden = true;
+  cardMenuWrap.append(cardMenuButton, cardMenu); quick.append(cardMenuWrap);
+  const menuItems = () => [...cardMenu.querySelectorAll('[role="menuitem"]:not([disabled])')];
+  function openCardMenu() {
+    cardMenu.replaceChildren();
+    for (const action of ctx.getCardActions?.() || []) {
+      if (action.separator) { const line = doc.createElement('div'); line.className = 'menu-sep'; line.setAttribute('role', 'separator'); cardMenu.append(line); continue; }
+      const item = button(action.label, () => { closeCardMenu(false); action.run(); }, 'menu-item');
+      item.setAttribute('role', 'menuitem'); item.disabled = action.enabled === false; if (action.hint) item.title = action.hint;
+      cardMenu.append(item);
+    }
+    cardMenu.hidden = false; cardMenuButton.setAttribute('aria-expanded', 'true');
+    menuItems()[0]?.focus?.();
+  }
+  function closeCardMenu(returnFocus) {
+    if (cardMenu.hidden) return;
+    cardMenu.hidden = true; cardMenuButton.setAttribute('aria-expanded', 'false');
+    if (returnFocus) cardMenuButton.focus?.();
+  }
+  cardMenu.addEventListener('keydown', event => {
+    const items = menuItems(), at = items.indexOf(doc.activeElement);
+    if (event.key === 'Escape') { event.preventDefault(); closeCardMenu(true); }
+    else if (event.key === 'ArrowDown') { event.preventDefault(); items[(at + 1) % items.length]?.focus(); }
+    else if (event.key === 'ArrowUp') { event.preventDefault(); items[(at - 1 + items.length) % items.length]?.focus(); }
+    else if (event.key === 'Tab') closeCardMenu(false);
+  });
+  doc.addEventListener('pointerdown', event => { if (!cardMenu.hidden && !cardMenuWrap.contains(event.target)) closeCardMenu(false); });
   function placeQuickFields() {
     const inHeader = !!scoreSummary && view === 'properties' && context === 'cards' && isValid('cards') && !previewPrefs.collapsed;
     for (const node of quickFields) {
@@ -205,6 +238,23 @@ export function initCardEditorDock(ctx) {
   const modalDock = button('Dock', () => setDocked(true)); modalDock.id = 'card-editor-modal-dock';
   const closeButton = button('Close', close); closeButton.id = 'card-editor-modal-close';
   actions.append(rename, balance, modalDock, closeButton); head.append(title, actions);
+  // The floating editor moves by its title bar.
+  let dialogDrag = null;
+  head.addEventListener('pointerdown', event => {
+    if (event.target.closest?.('button, input, select, a')) return;
+    const box = dialog.getBoundingClientRect(); dialogDrag = { dx: event.clientX - box.left, dy: event.clientY - box.top };
+    head.setPointerCapture?.(event.pointerId); head.classList.add('is-dragging');
+  });
+  head.addEventListener('pointermove', event => {
+    if (!dialogDrag) return;
+    const win = doc.defaultView || globalThis, box = dialog.getBoundingClientRect();
+    const left = Math.max(0, Math.min((win.innerWidth || 1280) - 80, event.clientX - dialogDrag.dx));
+    const top = Math.max(0, Math.min((win.innerHeight || 800) - 40, event.clientY - dialogDrag.dy));
+    dialog.style.margin = '0'; dialog.style.left = `${left}px`; dialog.style.top = `${top}px`;
+    void box;
+  });
+  const endDialogDrag = () => { dialogDrag = null; head.classList.remove('is-dragging'); };
+  head.addEventListener('pointerup', endDialogDrag); head.addEventListener('pointercancel', endDialogDrag);
   const modalBody = doc.createElement('div'); modalBody.className = 'card-editor-modal-body';
   dialog.append(head, modalBody); doc.body.append(dialog);
 
@@ -365,7 +415,7 @@ export function initCardEditorDock(ctx) {
   }
   select.addEventListener('change', () => setView(select.value));
   dialog.addEventListener('cancel', event => { event.preventDefault(); close(); });
-  dialog.addEventListener('close', () => { if (docked) dockPane(); doc.body.classList.remove('card-editor-modal-open'); focusReturn(); });
+  dialog.addEventListener('close', () => { dialog.style.removeProperty('margin'); dialog.style.removeProperty('left'); dialog.style.removeProperty('top'); if (docked) dockPane(); doc.body.classList.remove('card-editor-modal-open'); focusReturn(); });
   dialog.addEventListener('click', event => { if (event.target === dialog) close(); });
   // Both galleries share one remembered width and the same live pane. The old
   // card-only resizer is replaced by these handlers at the composition root.

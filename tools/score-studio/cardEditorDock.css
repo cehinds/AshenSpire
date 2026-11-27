@@ -216,3 +216,24 @@ body.studio-body .customization-quick-fields .name-input-row .studio-switch inpu
 /* Rank and rarity compared with the in-game card: higher is red, lower is green. */
 body.studio-body .customization-entity-name :is(.inspector-score-rank, .inspector-score-rarity).is-up { color: var(--st-bad, #e05252); }
 body.studio-body .customization-entity-name :is(.inspector-score-rank, .inspector-score-rarity).is-down { color: var(--st-good, #4caf50); }
+/* Card options: vertical ellipsis at the top right of the fields beside the card. */
+body.studio-body .customization-entity .customization-quick-fields { position: relative; }
+body.studio-body .customization-quick-fields > .form-wide { padding-right: 34px; }
+body.studio-body .customization-card-menu-wrap { position: absolute; top: 0; right: 0; }
+body.studio-body .customization-card-menu-button { width: 28px; min-width: 28px; height: 28px; padding: 0; font-size: 18px; line-height: 1; }
+body.studio-body .customization-card-menu { min-width: 190px; z-index: 30; }
+body.studio-body .customization-card-menu[hidden] { display: none; }
+body.studio-body .customization-card-menu .menu-item[disabled] { opacity: .45; cursor: not-allowed; }
+body.studio-body .customization-card-menu .menu-sep { height: 1px; margin: 4px 0; background: var(--st-border); }
+/* The floating editor moves by its title bar. */
+body.studio-body .card-editor-modal-head { cursor: move; touch-action: none; }
+body.studio-body .card-editor-modal-head :is(button, input, select) { cursor: pointer; }
+/* View or edit one card as JSON. */
+body.studio-body .card-json-dialog { width: min(720px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); margin: auto; padding: 16px; border: 1px solid var(--st-border); border-radius: 12px; background: var(--st-surface); color: var(--st-text); }
+body.studio-body .card-json-dialog[open] { display: flex; flex-direction: column; gap: 8px; }
+body.studio-body .card-json-dialog::backdrop { background: rgb(0 0 0 / .6); }
+body.studio-body .card-json-dialog h2 { margin: 0; font-size: 16px; }
+body.studio-body .card-json-dialog p { margin: 0; }
+body.studio-body #card-json-text { min-height: 360px; width: 100%; box-sizing: border-box; resize: vertical; font: 12px/1.45 ui-monospace, Consolas, monospace; color: var(--st-text); background: var(--st-surface-2); border: 1px solid var(--st-border); border-radius: 6px; padding: 8px; }
+body.studio-body .card-json-error { min-height: 1.2em; color: var(--st-bad); font-size: 12px; }
+body.studio-body .card-json-actions { display: flex; justify-content: flex-end; gap: 8px; }

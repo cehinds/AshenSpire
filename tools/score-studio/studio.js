@@ -1926,6 +1926,74 @@ function renderScoreSummary(def, sc) {
 
 const RARITY_ORDER = Object.freeze(['starter', 'common', 'uncommon', 'rare', 'boss']);
 
+// The card options menu beside the card. Each item runs the handler the rest of the Studio already uses.
+function cardMenuActions() {
+  const def = selectedCardDef();
+  if (!def) return [];
+  const added = isAddedCard(def), inGame = !!registries.cards.get(def.id);
+  const openDecks = () => {
+    cardSelectionUi?.select([def.id], { replace: true });
+    setCustomizationView('decks');
+    deckListPanelUi?.element.querySelector('[data-deck-select]')?.focus();
+  };
+  return [
+    { label: 'Duplicate', run: () => document.getElementById('btn-duplicate-card').click() },
+    { label: 'Delete', enabled: added, hint: added ? '' : 'Only cards you added can be deleted', run: () => document.getElementById('btn-delete-card').click() },
+    { label: 'Reset to default', enabled: inGame && !!def._edited && !def._custom, hint: inGame ? (def._edited ? '' : 'No edits to reset') : 'Not a game card', run: () => document.getElementById('btn-reset-card').click() },
+    { separator: true },
+    { label: 'Add to deck…', run: openDecks },
+    { label: 'Remove from deck…', run: openDecks },
+    { label: 'Rebalance…', run: () => studioToolsUi.openBalanceSelection([def.id]) },
+    { separator: true },
+    { label: 'Edit card art', run: () => setCustomizationView('design') },
+    { label: 'View or edit JSON…', run: () => openCardJson(def.id) },
+    { label: 'Undock', enabled: cardEditorDockUi?.isDocked?.() !== false, run: () => cardEditorDockUi?.open?.() },
+  ];
+}
+
+// View or edit one card as JSON. Applying goes through mutateSelectedCard, so it is one Undo step.
+let cardJsonDialog = null;
+function openCardJson(id) {
+  const def = state.cards.find((card) => card.id === id);
+  if (!def) return;
+  if (!cardJsonDialog) {
+    cardJsonDialog = document.createElement('dialog'); cardJsonDialog.id = 'card-json-dialog'; cardJsonDialog.className = 'card-json-dialog';
+    cardJsonDialog.setAttribute('aria-labelledby', 'card-json-title');
+    cardJsonDialog.innerHTML = `<h2 id="card-json-title"></h2>
+      <p class="studio-muted">Edits apply to this card only and can be undone. The card ID cannot change here.</p>
+      <textarea id="card-json-text" spellcheck="false" aria-label="Card JSON"></textarea>
+      <p id="card-json-error" class="card-json-error" role="alert"></p>
+      <div class="card-json-actions"><button type="button" class="s-btn" data-json-copy>Copy</button><button type="button" class="s-btn" data-json-close>Close</button><button type="button" class="s-btn s-btn-primary" data-json-apply>Apply</button></div>`;
+    document.body.append(cardJsonDialog);
+    cardJsonDialog.querySelector('[data-json-close]').addEventListener('click', () => cardJsonDialog.close());
+    cardJsonDialog.querySelector('[data-json-copy]').addEventListener('click', () => navigator.clipboard?.writeText(cardJsonDialog.querySelector('#card-json-text').value).then(() => toast('Card JSON copied')));
+    cardJsonDialog.querySelector('[data-json-apply]').addEventListener('click', applyCardJson);
+  }
+  const visible = Object.fromEntries(Object.entries(def).filter(([key]) => !key.startsWith('_')));
+  cardJsonDialog.dataset.cardId = id;
+  cardJsonDialog.querySelector('#card-json-title').textContent = `${def.name || id} JSON`;
+  cardJsonDialog.querySelector('#card-json-text').value = JSON.stringify(visible, null, 2);
+  cardJsonDialog.querySelector('#card-json-error').textContent = '';
+  cardJsonDialog.showModal();
+}
+
+function applyCardJson() {
+  const id = cardJsonDialog.dataset.cardId, error = cardJsonDialog.querySelector('#card-json-error');
+  let next;
+  try { next = JSON.parse(cardJsonDialog.querySelector('#card-json-text').value); } catch (err) { error.textContent = `Not valid JSON: ${err.message}`; return; }
+  if (!next || typeof next !== 'object' || Array.isArray(next)) { error.textContent = 'The card must be one JSON object.'; return; }
+  if (next.id !== id) { error.textContent = `Keep the card ID "${id}".`; return; }
+  try { normalizeStudioCard(clone(next)); } catch (err) { error.textContent = `Not a valid card: ${err.message}`; return; }
+  if (state.selectedCardId !== id) selectStudioCard(id);
+  mutateSelectedCard((card) => {
+    const internal = Object.fromEntries(Object.entries(card).filter(([key]) => key.startsWith('_')));
+    for (const key of Object.keys(card)) delete card[key];
+    Object.assign(card, next, internal);
+  });
+  cardJsonDialog.close();
+  toast(`Applied JSON to "${next.name || id}"`);
+}
+
 // The card as it ships in the game, scored with the game's weights; null for cards the game does not have.
 function inGameScore(def) {
   const original = registries.cards.get(def.id);
@@ -4963,7 +5031,7 @@ async function boot() {
     onOpen: () => { cardEditorDockUi?.setView('decks'); cardEditorDockUi?.setPanel?.('editor'); },
     onRowSelect: () => cardEditorDockUi?.showProperties(),
   });
-  cardEditorDockUi = initCardEditorDock({ state, selectCard: selectStudioCard, narrowQuery: NARROW_LAYOUT_QUERY,
+  cardEditorDockUi = initCardEditorDock({ state, selectCard: selectStudioCard, getCardActions: cardMenuActions, narrowQuery: NARROW_LAYOUT_QUERY,
     renameCard: () => { const input = document.getElementById('edit-name'); input.focus(); input.select(); },
     balanceCard: id => studioToolsUi.openBalanceSelection([id]),
     selectItem: selectStudioItem, getSelectedItemId: () => state.selectedItemKey,
