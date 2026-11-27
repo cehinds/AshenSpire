@@ -10,6 +10,9 @@ Use this directory as the shared reference for the approved planning sequence an
 
 - [First story SS-001: persistent library preview and inspector](stories/SS-001-persistent-workspace.md) — user story, twelve acceptance criteria and implementation tasks written before code changes.
 - [Claude execution prompt for SS-001](stories/SS-001-claude-execution-prompt.md) — copyable implementation handoff using the story's scope and acceptance reference.
+- [SS-002: one active entity and shared working context](stories/SS-002-shared-working-context.md) and its [Claude prompt](stories/SS-002-claude-execution-prompt.md). The selected card or item stays the same across views, filters, Undo and reload.
+- [SS-003: Save tier, save the Studio's own config file](stories/SS-003-studio-save.md) and its [Claude prompt](stories/SS-003-claude-execution-prompt.md). File > Save and Ctrl+S write the Studio config; Auto-save and Export are separate tiers.
+- [SS-004: card templates](stories/SS-004-card-templates.md) and its [Claude prompt](stories/SS-004-claude-execution-prompt.md). Save a card's mechanics as a template and start new cards from it. Depends on SS-003.
 - [Feature checklist](FEATURE-CHECKLIST.md) — tool features first, followed by the complete 180-item requested scope.
 - [Prioritized implementation plan](IMPLEMENTATION-PLAN.md) — eight milestones, 33 work packages, reuse boundaries and 27 future local-game acceptance tests.
 - [Use cases and proposed UI paths](USE-CASES.md) — all 64 researched cases, interaction targets and package mapping.
