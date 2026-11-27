@@ -208,27 +208,30 @@ export function GearSelectorMatches(selector, arg, def) {
 }
 
 const categoryOf = rule => GEAR_TYPES.selectors[rule.selector]?.spellCategory || null;
-const groupTotal = (rules, category, key, field) => rules.filter(rule => categoryOf(rule) === category && key(rule) === field)
+const groupTotal = (rules, category, key, field) => rules
+  .filter(rule => !rule.initiate && categoryOf(rule) === category && key(rule) === field)
   .reduce((sum, rule) => sum + (Number(rule.amount ?? rule.stacks) || 0), 0);
+
+// Initiates never enter the overlap: GearManaCost keeps the single strongest one, so a larger Divine
+// Initiate still wins and no Initiate cancels a plain Mana change.
+const overlapCategoryOf = rule => (rule.initiate
+  ? null
+  : categoryOf(rule));
 
 /**
  * A Shared Spell draws on Arcane and Divine bonuses, but they do not stack: per field (`key`), only the larger group total counts
  * (ties keep Arcane); bonuses from every other selector still add on top (owner 2026-11-20). `rules` already match the card.
  */
-// Initiate cuts are their own group, capped in GearManaCost, so they never cancel a plain Mana change.
-const overlapField = rule => (rule.initiate
-  ? `${INITIATE_FIELD}:${rule.stat}`
-  : rule.stat);
-
-export function GearCategoryOverlap(rules, def, key = overlapField) {
+export function GearCategoryOverlap(rules, def, key = rule => rule.stat) {
   if (SpellCategory(def) !== 'shared') return rules;
-  const fields = new Set(rules.filter(rule => categoryOf(rule)).map(key));
+  const fields = new Set(rules.filter(rule => overlapCategoryOf(rule)).map(key));
   const dropped = new Set();
   for (const field of fields) {
     const arcane = groupTotal(rules, 'arcane', key, field), divine = groupTotal(rules, 'divine', key, field);
     dropped.add(`${Math.abs(divine) > Math.abs(arcane) ? 'arcane' : 'divine'}|${field}`);
   }
-  return rules.filter(rule => !categoryOf(rule) || !dropped.has(`${categoryOf(rule)}|${key(rule)}`));
+  const kept = rule => !overlapCategoryOf(rule) || !dropped.has(`${categoryOf(rule)}|${key(rule)}`);
+  return rules.filter(kept);
 }
 
 /** A rule is triggered (it reads the fight: a stance, a first play, a target) rather than always-on; triggered numbers colour on the face. */

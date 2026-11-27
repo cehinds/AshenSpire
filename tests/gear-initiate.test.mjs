@@ -159,6 +159,18 @@ test('one Initiate cut per spell; other Mana changes still add; the price floors
   assert.equal(GearManaCost(fire, 0), 0, 'never below 0');
 });
 
+test('on a Shared spell the strongest Initiate wins, even against a larger Arcane group', () =>
+{
+  const rules = rulesFor([
+    [
+      ARCANE_INITIATE,
+      ARCANE_INITIATE,
+    ],
+    ['divineSpell.cardInitiate=-2'],
+  ]);
+  assert.equal(manaPaid(rules, spell('fire')), PRINTED_MANA - 2);
+});
+
 test('on a Shared spell an Initiate and a plain Divine Mana change both apply', () =>
 {
   for (const [divineCut, paid] of [
