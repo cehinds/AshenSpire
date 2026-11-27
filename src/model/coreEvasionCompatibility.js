@@ -47,6 +47,8 @@ const PREVIOUS_RUNTIMES = new Set([
   'sha256:eff6f5c38dcdba3c78d012bf55c8baf6fe703f664bc3f3416244b15d1fa07216',
   // Dev before routes.floorTypes (2026-11-27): no floorTypes key; its maps draw as before.
   'sha256:c7da2b47b69f593f6d2a0c9fc71b0cf9c2b8721e96f1760308c41da69b24a555',
+  // Runs saved on the opening-shop kernel.
+  'sha256:d0f8af2b50a2496a9519d285db2529c6c2cf4ace1fdea3bfabd14ad60220ed5a',
   'sha256:defbcd659c0fe2899a69d503916d8d739116d9928b8156c5985764b83efa755f',
   'sha256:7ef8a89a96d4efcbc91d9af13cc735b66f9f741e66ad096d8faf9f8b979e7f28',
   'sha256:0c4e9eae226108858dcb937000b0992a33b778f650bb3e3e17a1c369ba51a0b3',
@@ -207,6 +209,8 @@ const COMPATIBLE_HOST_RUNTIMES = new Set([
   'sha256:c7da2b47b69f593f6d2a0c9fc71b0cf9c2b8721e96f1760308c41da69b24a555',
   // A shop pinned on the shared opening no longer covers a branch shop (routeGuarantees.js).
   'sha256:d0f8af2b50a2496a9519d285db2529c6c2cf4ace1fdea3bfabd14ad60220ed5a',
+  // The regenerated cost.manaOnly mechanic manifest.
+  'sha256:6b8f59041c8006334a8bdee13165b5275e4d0890b5d1c920adfd2cd9c3374058',
 ]);
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return COMPATIBLE_HOST_RUNTIMES.has(currentRuntime)

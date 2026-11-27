@@ -24,8 +24,8 @@ import { GearSelectorMatches } from '../src/model/gearEffects.js';
 const preRegistryRuntime = 'sha256:777939d6ee4065a02491fcd7ff21fc2d9f44271a0d7f10ec3b2435d1786a72cd';
 const registryRuntime = 'sha256:c77d4f30494cb821fc66b9b9ef19b91fbb2c699633fe0137b72ab89d261ec831';
 const preScalingRuntime = 'sha256:eff6f5c38dcdba3c78d012bf55c8baf6fe703f664bc3f3416244b15d1fa07216';
-// Re-pinned: the opening-shop fix moves the kernel; c7da2b... is now in PREVIOUS_RUNTIMES.
-const catalogRuntime = 'sha256:d0f8af2b50a2496a9519d285db2529c6c2cf4ace1fdea3bfabd14ad60220ed5a';
+// Re-pinned for the regenerated cost.manaOnly manifest; d0f8af... is in PREVIOUS_RUNTIMES.
+const catalogRuntime = 'sha256:6b8f59041c8006334a8bdee13165b5275e4d0890b5d1c920adfd2cd9c3374058';
 const preRegistrySave = () => gunzipSync(readFileSync(new URL('./fixtures/pre-registry-dev-7dff4b03-save.json.gz', import.meta.url))).toString('utf8');
 
 test('the real Dev 7dff4b03 save resumes its active fight without changing the old profile or policy', () => {
