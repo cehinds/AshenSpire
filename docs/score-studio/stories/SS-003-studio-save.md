@@ -56,7 +56,7 @@ All criteria are pending until executed. Counts below are targets, not measured 
 
 | ID | Given and when | Observable pass condition |
 | --- | --- | --- |
-| AC01 | Local Studio on `npm run studio`. Edit a disposable QA card, then File > Save. | Both files exist under `content/source/studio/`, parse as JSON with the stated `kind` and `formatVersion`, hold the QA card and the art layers, and nothing else in the tree changes (`git status` shows only those two files). The indicator reads Saved. |
+| AC01 | Local Studio on `npm run studio`. Edit a disposable QA card, then File > Save. | The fixed Studio save files (`cards.json`, `artLayers.json`, and `templates.json` once card templates register) exist under `content/source/studio/`, parse as JSON with the stated `kind` and `formatVersion`, hold the QA card and the art layers, and nothing else in the tree changes (`git status` shows only those files). The indicator reads Saved. |
 | AC02 | Edit again and press Ctrl+S, once with focus in a text field and once on a tile. | Both save. The browser's own Save page dialog never opens. The value typed last is in the file. |
 | AC03 | Save, clear site data for the Studio origin, reload. | The saved QA card and art layers return. The indicator reads Saved. View state is not restored from the file. |
 | AC04 | Save, edit, reload without saving. | The draft is restored on top of the saved config. The indicator reads Draft. |
@@ -64,9 +64,9 @@ All criteria are pending until executed. Counts below are targets, not measured 
 | AC06 | Change a saved file outside the Studio (for example a `git pull`) while a draft from before exists, then reload. | The draft is not applied silently. One choice offers Keep my draft or Use the saved file. Either way nothing is lost until chosen. |
 | AC07 | Save, then Undo, then Redo. | Undo is still available after Save. Undo makes the indicator read Draft. Redo back to the saved content reads Saved. Undo and Redo never write the file. |
 | AC08 | Force a write failure (read-only file or a server that rejects the request). | The indicator reads Save failed and then Draft. Both files keep their previous bytes. No temp file is left behind. The draft is intact. |
-| AC09 | Send a POST to the save endpoint with a path, a `..` segment, extra keys or a body over the size limit. | Every one is refused. The server writes only the two fixed paths. No request field chooses a path. |
+| AC09 | Send a POST to the save endpoint with a path, a `..` segment, extra keys or a body over the size limit. | Every one is refused. The server writes only the fixed Studio save files (`cards.json`, `artLayers.json`, and `templates.json` once card templates register). No request field chooses a path. |
 | AC10 | Open the Pages build (web mode) and use File > Save and Ctrl+S. | One `ashenspire-studio-save.json` downloads. No request goes to `/__studio/`. The indicator says web mode and Download. |
-| AC11 | Run `git status` after a Save session and inspect the saved files. | Only the two Studio files changed. No `.studio-temp/` file, `.env` value, token or view state is tracked or written into them. |
+| AC11 | Run `git status` after a Save session and inspect the saved files. | Only the fixed Studio save files (`cards.json`, `artLayers.json`, and `templates.json` once card templates register) changed. No `.studio-temp/` file, `.env` value, token or view state is tracked or written into them. |
 | AC12 | Save with no edits since the last Save. | No file bytes change (or the write is skipped), and the indicator stays Saved. |
 | AC13 | Repeat AC01 and AC07 at 390 x 844 and with keyboard only. | File > Save is reachable, Ctrl+S works, the indicator is visible and focus returns to where it was. |
 | AC14 | Open the actual local game after a Save. | The game is unchanged: it does not read `content/source/studio/`, no game content rebuild runs, and an ordinary card renders and plays. |
