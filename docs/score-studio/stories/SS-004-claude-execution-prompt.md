@@ -32,7 +32,7 @@ OWNER DECISIONS
 1. Stored in committed content/source/studio/templates.json via the SS-003 Save path, not browser storage.
 2. A template keeps mechanics only: type, target, school, costs, effects, tags, rarity and art layers. It drops the ID, the name and Studio-only _ flags. A card made from it gets a fresh ID and a generated name.
 3. Copy, not linked: later template edits never change existing cards.
-4. Created from the card ⋮ menu "Save as template…" with a name prompt, checked by cardJsonProblem, normalizeStudioCard and a scoring dry run, the same as the JSON dialog.
+4. Created from the card ⋮ menu "Save as template…" with a name prompt, checked by cardJsonProblem, normalizeStudioCard and a scoring dry run, the same as the JSON dialog. A taken name asks "Replace template <name>?"; only Replace overwrites it (same ID), Cancel stores nothing.
 5. Used from Add card, which opens a small picker: Blank, then templates grouped by card type. Duplicate stays for one-offs.
 6. Managed in Tools > Card templates…: Rename, Delete, Import JSON, Export JSON.
 
@@ -44,10 +44,10 @@ Use the full table in the story. In short:
 
 AC01 Save as template stores a template under its type; the source card is unchanged; indicator reads Draft.
 AC02 Exported templates hold only the listed fields.
-AC03 Invalid cards and empty or duplicate names store nothing, with the JSON dialog's message.
+AC03 Invalid cards, empty names, and a taken name followed by Cancel store nothing, with a clear message.
 AC04 The Add card tile and File > New card open one picker: Blank first, then by type; Blank equals today's New; Escape creates nothing.
 AC05 A card from a template has a fresh ID, a generated name, the template's mechanics, is active and in view; one Undo removes it.
-AC06 Renaming, replacing or deleting a template leaves earlier cards byte-identical.
+AC06 Renaming, replacing (taken name, then confirm Replace) or deleting a template leaves earlier cards byte-identical.
 AC07 File > Save writes templates.json; templates return after clearing site data and reloading.
 AC08 Rename and Delete are one Undo step each; Delete names the template; no card changes.
 AC09 Export then Import round-trips; a broken file changes nothing; clashing names get a number and fresh IDs.

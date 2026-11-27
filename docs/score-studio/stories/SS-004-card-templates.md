@@ -17,7 +17,7 @@ The owner accepted these decisions.
 1. Storage. Templates live in a committed Studio file, `content/source/studio/templates.json`, written by the SS-003 Save path. Not browser storage. Until File > Save, a new or changed template is part of the draft like any other change, and the indicator reads Draft.
 2. Content. A template keeps mechanics only: type, target, school, costs, effects, tags, rarity and art layers. It drops the ID, the name and the Studio-only `_` flags. A card made from it gets a fresh ID and a generated name.
 3. Copy, not linked. Later template edits never change existing cards. A card made from a template stores no link to it.
-4. Create. The card ⋮ menu gets "Save as template…". It asks for a name. The card is checked by the same checks as the JSON dialog: `cardJsonProblem`, then `normalizeStudioCard`, then a scoring dry run.
+4. Create. The card ⋮ menu gets "Save as template…". It asks for a name. The card is checked by the same checks as the JSON dialog: `cardJsonProblem`, then `normalizeStudioCard`, then a scoring dry run. If the name is already taken, the prompt asks "Replace template <name>?" with Replace and Cancel; only Replace overwrites it, keeping its ID. Cancel, or Escape, stores nothing.
 5. Use. Add card opens a small picker: Blank first, then templates grouped by card type. Duplicate stays for one-offs.
 6. Manage. Tools > Card templates… lists them, with Rename, Delete, Import JSON and Export JSON.
 
@@ -46,7 +46,7 @@ File format: `{ kind: "ashenspire.studioCardTemplates", formatVersion: 1, templa
 
 In scope:
 
-- "Save as template…" in the card ⋮ menu, with a name prompt and the JSON dialog checks.
+- "Save as template…" in the card ⋮ menu, with a name prompt, the JSON dialog checks, and a confirmed Replace when the name is taken.
 - The Add card picker on the Add card tile and File > New card.
 - Tools > Card templates…: list, Rename, Delete, Import JSON, Export JSON.
 - `templates.json` as a third fixed file in the SS-003 Save path, loaded on start.
@@ -68,10 +68,10 @@ All criteria are pending until executed. Counts below are targets, not measured 
 | --- | --- | --- |
 | AC01 | A disposable QA card is active. Open the card ⋮ menu, choose Save as template…, type a name, press Enter. | The template appears in Tools > Card templates… under its card type. The QA card is byte-identical. The indicator reads Draft. |
 | AC02 | Export the templates as JSON and read the file. | Each template holds only the fields in "What a template holds". No `id` or `name` of the source card, no `_` field and no `scoringOverride`. |
-| AC03 | Try Save as template on a card the JSON dialog would refuse, and with an empty or duplicate name. | Nothing is stored. The message matches the JSON dialog's message, or names the name problem. |
+| AC03 | Try Save as template on a card the JSON dialog would refuse, with an empty name, and with a taken name then Cancel. | Nothing is stored. The message matches the JSON dialog's message, names the name problem, or (taken name) the Replace prompt closes with the old template unchanged. |
 | AC04 | Activate the Add card tile, and separately File > New card. | Both open the same picker: Blank first, then templates grouped by card type. Blank makes the same card New makes today. Escape closes it and creates nothing. |
 | AC05 | Choose a template in the picker. | A new card appears with a fresh unique ID, a generated name and mechanics equal to the template. It is the active card (SS-002), in view and in the banner. One Undo removes it. |
-| AC06 | Make a card from a template, then rename the template, replace it with a new Save as template of the same name, and delete it. | The card made earlier is byte-identical after each step. |
+| AC06 | Make a card from a template, then rename the template, replace it (Save as template with its name, then confirm Replace), and delete it. | The card made earlier is byte-identical after each step. The replaced template keeps its ID and holds the new content. |
 | AC07 | File > Save, clear site data, reload. | `content/source/studio/templates.json` holds the templates and they return in the picker and the list. The indicator reads Saved. |
 | AC08 | Rename and delete a template in the list, then Undo each. | Rename keeps the template's ID and content. Delete asks once and names the template. Each is one Undo step. No card changes. |
 | AC09 | Export the templates, then Import that file into a Studio with none. Import a broken file. Import a file whose names clash. | The round trip reproduces the templates. A broken file changes nothing and names its first problem. Clashing names get a number, and every imported template gets a fresh ID. |
