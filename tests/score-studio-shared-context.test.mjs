@@ -271,6 +271,7 @@ test('every writer of the active card and item goes through the two setters', ()
     'subclassCatalog.js',
     'cardSelection.js',
     'deckListPanel.js',
+    'cardEditorDock.js',
   ];
   for (const file of writerFiles)
   {

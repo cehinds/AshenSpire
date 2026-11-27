@@ -35,6 +35,10 @@ export function initCardEditorDock(ctx) {
   const doc = ctx.document || document;
   const properties = { cards: doc.getElementById('card-inspector'), items: doc.getElementById('item-inspector-pane') };
   if (!properties.cards) throw new Error('Customization requires #card-inspector');
+  if (typeof ctx.selectCard !== 'function')
+  {
+    throw new Error('Customization requires ctx.selectCard');
+  }
   const homes = new Map(), layouts = {};
   function rememberHome(node) {
     if (!node || homes.has(node)) return;
@@ -371,7 +375,6 @@ export function initCardEditorDock(ctx) {
     if (!id) return;
     setContext(kind); returnTarget = { kind, id };
     (kind === 'items' ? ctx.selectItem : ctx.selectCard)?.(id);
-    if (kind === 'cards' && !ctx.selectCard && ctx.state) ctx.state.selectedCardId = id;
     if (docked) showProperties();
     else { setView('properties'); openModal(); }
   }

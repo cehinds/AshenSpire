@@ -402,6 +402,11 @@ test('outside Properties the column beside the card holds the view fields only w
   assert.equal(context.hidden, true);
 }));
 
+test('the dock requires a selectCard callback instead of writing the active card itself', () => withKitDom(dom =>
+{
+  assert.throws(() => fixture(dom, new Map(), { selectCard: undefined }), /requires ctx\.selectCard/);
+}));
+
 test('filters that hide the active card keep it active and show one short notice whose Clear brings its tile back', () => withKitDom(dom =>
 {
   const hidden = new Set(['a']);
