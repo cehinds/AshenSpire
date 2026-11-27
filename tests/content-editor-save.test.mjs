@@ -260,9 +260,11 @@ class FakeWorker extends EventEmitter
         this.terminated = false;
     }
 
+    /** Like a real worker, a terminated one reports 'exit' afterwards. */
     terminate()
     {
         this.terminated = true;
+        setImmediate(() => this.emit('exit', WORKER_EXIT_CODE));
     }
 }
 

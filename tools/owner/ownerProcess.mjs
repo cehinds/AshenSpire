@@ -27,6 +27,7 @@ function spawn(
         encoding: TEXT_ENCODING,
         maxBuffer: LIMITS.maxOutputBytes,
         timeout: timeoutMs,
+        killSignal: LIMITS.stepKillSignal,
     });
     result.timedOut = result.error?.code === TIMED_OUT_CODE;
     result.timeoutText = FormatText(OWNER_TEXT.process.timedOut, {

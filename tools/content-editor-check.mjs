@@ -43,7 +43,13 @@ function startWorker(root)
     return new Worker(new URL(import.meta.url), { workerData: { root } });
 }
 
-/** CollectCheck on a worker; a timeout or an exit without a result ends it as failed. */
+function timedOutCheck(timeoutMs)
+{
+    const seconds = Math.round(timeoutMs / MILLISECONDS_PER_SECOND);
+    return failedCheck('checkTimedOut', { seconds });
+}
+
+/** CollectCheck on a worker; settles only after the worker has exited, so no build outlives it. */
 export function RunContentCheck(root, options = {})
 {
     const {
@@ -53,28 +59,31 @@ export function RunContentCheck(root, options = {})
     return new Promise((resolvePromise, rejectPromise) =>
     {
         const worker = createWorker(root);
-        let settled = false;
-        const finish = (deliver, value) =>
-        {
-            if (settled)
-            {
-                return;
-            }
-            settled = true;
-            clearTimeout(timer);
-            deliver(value);
-        };
+        let outcome = null;
+        let failure = null;
+        // The worker stops past the cap, but exits only once its running step's child has exited.
         const timer = setTimeout(() =>
         {
-            const seconds = Math.round(timeoutMs / MILLISECONDS_PER_SECOND);
-            finish(resolvePromise, failedCheck('checkTimedOut', { seconds }));
+            outcome = timedOutCheck(timeoutMs);
             worker.terminate();
         }, timeoutMs);
-        worker.once(WORKER_EVENTS.message, (result) => finish(resolvePromise, result));
-        worker.once(WORKER_EVENTS.error, (error) => finish(rejectPromise, error));
+        worker.once(WORKER_EVENTS.message, (result) =>
+        {
+            outcome ??= result;
+        });
+        worker.once(WORKER_EVENTS.error, (error) =>
+        {
+            failure = error;
+        });
         worker.once(WORKER_EVENTS.exit, (code) =>
         {
-            finish(resolvePromise, failedCheck('checkStopped', { code }));
+            clearTimeout(timer);
+            if (failure && !outcome)
+            {
+                rejectPromise(failure);
+                return;
+            }
+            resolvePromise(outcome ?? failedCheck('checkStopped', { code }));
         });
     });
 }

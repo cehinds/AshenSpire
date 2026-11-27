@@ -26,7 +26,8 @@
     "outputTailLines": 25,
     "branchTitleLimit": 40,
     "receiptSummaryLines": 2,
-    "stepTimeoutMs": 180000
+    "stepTimeoutMs": 180000,
+    "stepKillSignal": "SIGKILL"
   },
   "editableRoots": [
     "content/source/",
