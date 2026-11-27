@@ -13,10 +13,10 @@ import { core2Registries } from './helpers/core2.mjs';
 import { legacyGearRegistries } from './helpers/legacy-gear.mjs';
 const r = createRegistries(contentBundle);
 
-test('current Staff inspector shows Prepared Focus beside configured stats', () => {
+test('current Staff inspector shows configured stats and no Prepared Mana cut (Initiate tags own it)', () => {
   const current = core2Registries(), piece = current.equipment.armaments.find(p => p.id === 'wyrmhornStaff');
   const m = equipmentCardModel(current, piece), labels = m.bonuses.map(b => b.label);
-  assert.ok(labels.includes('Spells in Prepared stance: -1 MP cost'));
+  assert.ok(!labels.some(label => /Prepared stance: -1 MP/.test(label)), 'staffs carry no type-level Prepared cut');
   assert.ok(m.facts.some(f => f.label === 'intelligence' && f.value === 1), 'rare staff configured attribute receipt remains');
   assert.ok(!m.typeExplanation.includes('every spell'), 'classification copy must not claim unconditional Focus');
   assert.ok(m.bonuses.every(b => !b.value.includes('=') && !b.label.includes('@')), 'no raw modifier strings');
