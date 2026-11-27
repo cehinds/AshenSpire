@@ -62,8 +62,8 @@ export function ReferenceClassId(definition, scoreReference)
 
 ## Names and values
 
-- **Descriptive names:** never single letters. PascalCase for public or exported names, camelCase
-  for private ones.
+- **Descriptive names:** never single letters; use descriptive nouns for every variable so the code
+  is easy to follow. PascalCase for public or exported names, camelCase for private ones.
 - **No magic values:** ids, class names, storage keys, paths and status words become named constants
   or config; tuning numbers go to config.
 

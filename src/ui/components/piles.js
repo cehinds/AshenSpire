@@ -23,7 +23,7 @@ import { SPENT_PILES, spentPileView } from '../models/PileViewerModel.js';
 // migrated surface: the ratchet (tools/uistrings.mjs) caught this file GROWING
 // past its baseline when the spent-pile pair landed, which is exactly the
 // regression it exists to stop.
-import { t } from '../strings.js';
+import { t as translate } from '../strings.js';
 import { MarkSelected } from '../selection.js';
 import { ResolveModalConfig } from '../models/ModalModel.js';
 
@@ -40,36 +40,19 @@ const EXIT_ROLE = 'exit';
 function shuffleCards(cards)
 {
     const list = [...cards];
-    for (let i = list.length - 1; i > 0; i--)
+    for (let currentIndex = list.length - 1; currentIndex > 0; currentIndex--)
     {
-        const j = Math.floor(Math.random() * (i + 1));
-        [list[i], list[j]] = [list[j], list[i]];
+        const swapIndex = Math.floor(Math.random() * (currentIndex + 1));
+        [list[currentIndex], list[swapIndex]] = [list[swapIndex], list[currentIndex]];
     }
     return list;
 }
 
-function resolvePileModalKind(kind, deckView, shuffleForDisplay)
-{
-    if (kind)
-    {
-        return kind;
-    }
-    if (deckView)
-    {
-        return DECK_VIEW_MODAL_KIND;
-    }
-    if (shuffleForDisplay)
-    {
-        return DRAW_PILE_MODAL_KIND;
-    }
-    return PILE_MODAL_KIND;
-}
-
 function buildPileCardGrid(registries, list, config, rules)
 {
-    const faces = list.map((inst) =>
+    const faces = list.map((cardInstance) =>
     {
-        return renderCard(registries, inst, {
+        return renderCard(registries, cardInstance, {
             small: config.smallCards !== false,
             inspectReadOnly: config.inspectReadOnly !== false,
             rules,
@@ -78,7 +61,7 @@ function buildPileCardGrid(registries, list, config, rules)
     const grid = cardGrid(faces, { class: GRID_CLASS });
     if (!list.length)
     {
-        grid.appendChild(flavour(t(config.emptyTextKey), { class: EMPTY_CLASS }));
+        grid.appendChild(flavour(translate(config.emptyTextKey), { class: EMPTY_CLASS }));
     }
     return grid;
 }
@@ -88,21 +71,17 @@ export function openPileModal(
     title,
     cards,
     {
-        kind = '',
-        shuffleForDisplay = false,
+        kind = PILE_MODAL_KIND,
         rules = null,
-        deckView = false,
     } = {},
 )
 {
-    const modalKind = resolvePileModalKind(kind, deckView, shuffleForDisplay);
-    const config = ResolveModalConfig(modalKind);
-    const shouldShuffle = Boolean(shuffleForDisplay || config.shuffleForDisplay);
-    const list = shouldShuffle
+    const config = ResolveModalConfig(kind);
+    const list = config.shuffleForDisplay
         ? shuffleCards(cards)
         : [...cards];
     const done = button({
-        label: t(config.closeLabelKey),
+        label: translate(config.closeLabelKey),
         role: EXIT_ROLE,
         className: DONE_BUTTON_CLASS,
         attrs: { 'data-focusable': 'true' },
@@ -112,7 +91,7 @@ export function openPileModal(
         : 'cards';
     const status = statusText(`${list.length} ${cardWord}`, { class: STATUS_CLASS });
     const eyebrow = config.eyebrowKey
-        ? t(config.eyebrowKey)
+        ? translate(config.eyebrowKey)
         : '';
 
     const shell = OpenModal({
@@ -169,14 +148,14 @@ export function openSpentPileModal(registries, piles, opener = document.activeEl
       return face;
     });
     const grid = cardGrid(faces, { class: 'grid' });
-    if (view.empty) grid.appendChild(flavour(t('piles.empty'), { class: 'pile-empty' }));
+    if (view.empty) grid.appendChild(flavour(translate('piles.empty'), { class: 'pile-empty' }));
     collection.replaceChildren(grid);
     read(view.detail);
   };
   const choose = (id) => { if (!SPENT_PILES.includes(id)) return; active = id; selectedId = null; paint(); };
-  const nav = categoryNav({ items, ariaLabel: t('piles.spent.nav'), choose });
-  const done = button({ label: t('common.close'), role: 'exit', className: 'pile-done', attrs: { 'data-focusable': 'true' } });
-  const shell = OpenModal({ title: t('piles.spent.title'), size: 'xl', className: 'pile-modal spent-pile-modal',
+  const nav = categoryNav({ items, ariaLabel: translate('piles.spent.nav'), choose });
+  const done = button({ label: translate('common.close'), role: 'exit', className: 'pile-done', attrs: { 'data-focusable': 'true' } });
+  const shell = OpenModal({ title: translate('piles.spent.title'), size: 'xl', className: 'pile-modal spent-pile-modal',
     showMenuButton: false, opener, bodyClassName: 'pile-body',
     body: (host) => host.append(railed(nav, pane)),
     primary: done, footSize: 'short',
