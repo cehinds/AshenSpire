@@ -44,7 +44,9 @@ body.studio-body .customization-toolbar label { color: var(--st-muted); font-siz
 body.studio-body #customization-view { flex: 1 1 120px; min-width: 0; height: var(--studio-control-h, 32px); background: var(--st-surface-2); color: var(--st-text); border: 1px solid var(--st-border); border-radius: var(--studio-radius, 4px); }
 /* Active entity: one name, its scope and the one native preview in every view. */
 body.studio-body .customization-entity {
-  display: flex; flex-direction: column; flex: 0 0 auto; gap: 6px; min-width: 0;
+  /* Capped at half the docked pane and scrolls itself, so on short screens the
+     pinned preview can never squeeze the editor below it to nothing. */
+  display: flex; flex-direction: column; flex: 0 0 auto; gap: 6px; min-width: 0; max-height: 50%; overflow-y: auto;
   padding: 10px 12px; border-bottom: 1px solid var(--st-border); border-left: 3px solid var(--st-accent);
 }
 body.studio-body .customization-entity-name { margin: 0; min-width: 0; font-size: 15px; overflow-wrap: anywhere; }
