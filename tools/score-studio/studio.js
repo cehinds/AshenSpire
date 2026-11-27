@@ -1978,19 +1978,44 @@ function openCardJson(id) {
   cardJsonDialog.showModal();
 }
 
+// Shape checks the Studio's renderers rely on, reported before anything changes.
+function cardJsonProblem(card) {
+  if (card.effects !== undefined) {
+    if (!Array.isArray(card.effects)) return '"effects" must be a list.';
+    const bad = card.effects.findIndex((effect) => !effect || typeof effect !== 'object' || Array.isArray(effect) || typeof effect.op !== 'string');
+    if (bad >= 0) return `Effect ${bad + 1} must be an object with an "op" name.`;
+  }
+  if (card.tags !== undefined && (!Array.isArray(card.tags) || card.tags.some((tag) => typeof tag !== 'string'))) return '"tags" must be a list of text.';
+  if (card.name !== undefined && typeof card.name !== 'string') return '"name" must be text.';
+  return '';
+}
+
 function applyCardJson() {
   const id = cardJsonDialog.dataset.cardId, error = cardJsonDialog.querySelector('#card-json-error');
   let next;
   try { next = JSON.parse(cardJsonDialog.querySelector('#card-json-text').value); } catch (err) { error.textContent = `Not valid JSON: ${err.message}`; return; }
   if (!next || typeof next !== 'object' || Array.isArray(next)) { error.textContent = 'The card must be one JSON object.'; return; }
   if (next.id !== id) { error.textContent = `Keep the card ID "${id}".`; return; }
-  try { normalizeStudioCard(clone(next)); } catch (err) { error.textContent = `Not a valid card: ${err.message}`; return; }
+  const problem = cardJsonProblem(next);
+  if (problem) { error.textContent = problem; return; }
+  // Dry run on a copy first: the live card is only touched by JSON that scores.
+  try { scoreCardEntry(normalizeStudioCard(clone(next))); } catch (err) { error.textContent = `Not a valid card: ${err.message}`; return; }
   if (state.selectedCardId !== id) selectStudioCard(id);
-  mutateSelectedCard((card) => {
-    const internal = Object.fromEntries(Object.entries(card).filter(([key]) => key.startsWith('_')));
-    for (const key of Object.keys(card)) delete card[key];
-    Object.assign(card, next, internal);
-  });
+  const index = state.cards.findIndex((card) => card.id === id), before = clone(state.cards[index]), history = state.undoStack.length;
+  try {
+    mutateSelectedCard((card) => {
+      const internal = Object.fromEntries(Object.entries(card).filter(([key]) => key.startsWith('_')));
+      for (const key of Object.keys(card)) delete card[key];
+      Object.assign(card, next, internal);
+    });
+  } catch (err) {
+    // Roll back: the card, the history entry the edit pushed, and the views.
+    state.cards[index] = before;
+    if (state.undoStack.length > history) { state.undoStack.length = history; updateUndoButtons(); }
+    renderInspector(); updateCardTileInPlace(id);
+    error.textContent = `Not applied: ${err.message}`;
+    return;
+  }
   cardJsonDialog.close();
   toast(`Applied JSON to "${next.name || id}"`);
 }
