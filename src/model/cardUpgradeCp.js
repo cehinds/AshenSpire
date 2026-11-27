@@ -1,4 +1,5 @@
 import { BaseFace, ScoreCard, CombatPower, RankOf } from './combatPower.js';
+import { CountCardParts } from './cardLimits.js';
 import { GetActiveScoring } from './activeScoring.js';
 import { VisibleCardRank } from './cardRank.js';
 import { applyUpgradeSteps, upgradeStepsOf } from './cardUpgrade.js';
@@ -24,6 +25,7 @@ export function CardDefinitionToScoreFace(def, { scoring = GetActiveScoring(), r
   face.sp = num(def.staminaCost ?? def.cost, def.cost === 'X' ? 1 : 0);
   face.mp = num(def.manaCost, 0);
   face.kw = [...(def.keywords || [])];
+  face.drawbacks = CountCardParts(def).drawbacks;
   face.tags = tags;
   if (def.wither !== undefined) face.wither = def.wither;
   if (def.costGrowth !== undefined) face.costGrowth = structuredClone(def.costGrowth);

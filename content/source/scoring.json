@@ -417,6 +417,13 @@
     "why": "A card that does several different things is worth more than its parts: it fits more turns and more decks.",
     "surchargeEnabled": true
   },
+  "drawbackCount": {
+    "weight": -5,
+    "multiplier": false,
+    "surchargeEnabled": false,
+    "rule": "Each drawback a card has (CARD_LIMITS drawbacks: drawback ops, drawback keywords, debuffs on self) adds weight. With multiplier on, each adds P x weight.",
+    "why": "Drawbacks make a card weaker; turn this on to price them in Combat Power."
+  },
   "categories": {
     "rule": "Owner 2026-11-23: each category a card belongs to (Martial, Magic, Hybrid when it is both, and its card type) adds weight to the raw score; with multiplier on, the positive score is scaled by weight instead (1 = no change).",
     "martial": {

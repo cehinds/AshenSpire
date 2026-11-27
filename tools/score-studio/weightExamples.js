@@ -42,6 +42,7 @@ const EXAMPLE_POSITIVE_SCORE = 20;
 const EXAMPLE_RAW_SCORE = 10;
 const EXAMPLE_STACKS = 3;
 const EXAMPLE_EFFECTS = 3;
+const EXAMPLE_DRAWBACKS = 2;
 const EXAMPLE_HITS = 3;
 
 export function effectUnit(id, label)
@@ -149,6 +150,13 @@ function rankSentence(id, scoring)
     case 'width': return { before: 'Each rank spans', mid: 'CP', after: '' };
     case 'maxRank': return { before: 'Highest rank', mid: '', after: '' };
     case 'effectCount': return { before: '', mid: `${scoring?.effectCount?.multiplier === true ? '× P' : 'pts'} per extra effect`, after: '' };
+    case 'drawbackCount':
+    {
+      const unit = scoring?.drawbackCount?.multiplier === true
+        ? '× P'
+        : 'pts';
+      return { before: '', mid: `${unit} per drawback`, after: '' };
+    }
     default: return { before: '', mid: '', after: '' };
   }
 }
@@ -358,6 +366,16 @@ function rankExample(id, scoring, example)
       const weight = Number(scoring.effectCount?.weight) || 0;
       if (scoring.effectCount?.multiplier === true) return `${positiveLead(example)}: ${EXAMPLE_EFFECTS} effects = ${pts(example.positive * weight * extra)}`;
       return `${EXAMPLE_EFFECTS} effects = ${pts(weight * extra)}`;
+    }
+    case 'drawbackCount':
+    {
+      const rule = scoring.drawbackCount;
+      if (!rule || rule.surchargeEnabled === false) return 'Surcharge disabled (0 pts)';
+      const weight = Number(rule.weight) || 0;
+      const total = rule.multiplier === true
+        ? example.positive * weight * EXAMPLE_DRAWBACKS
+        : weight * EXAMPLE_DRAWBACKS;
+      return `${EXAMPLE_DRAWBACKS} drawbacks = ${pts(total)}`;
     }
     default:
       return '';
