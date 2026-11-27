@@ -71,9 +71,13 @@ import {
 } from './workingContext.js';
 
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
-const SAVE_SHORTCUT_KEY = 's';
-const STUDIO_SAVE_MENU_ID = 'menu-studio-save';
-const STUDIO_SAVE_SHORTCUT_ARIA = 'Control+S';
+const saveShortcutKey = 's';
+const fileMenu = 'file';
+const studioSaveMenuId = 'menu-studio-save';
+const studioSaveShortcutAria = 'Control+S';
+const ariaKeyShortcutsAttribute = 'aria-keyshortcuts';
+const draftStatusId = 'draft-status';
+const restoredDraftText = 'Restored local draft temp copy';
 const AB_STORAGE_KEY = 'ashenspire:scoreStudioAB:v1';
 // Saved name sets (Rename all), kept apart from the draft so they survive a clean or exported draft.
 const NAME_SETS_STORAGE_KEY = 'ashenspire:scoreStudioNameSets:v1';
@@ -4617,12 +4621,18 @@ function setupStudioMenubar() {
   const studioSaveLabel = isLocalServer
     ? StudioSaveMenuLabel.Local
     : StudioSaveMenuLabel.Web;
-  command('file', STUDIO_SAVE_MENU_ID, studioSaveLabel, () =>
-  {
-    closeMenus();
-    studioSaveUi.save();
-  });
-  document.getElementById(STUDIO_SAVE_MENU_ID).setAttribute('aria-keyshortcuts', STUDIO_SAVE_SHORTCUT_ARIA);
+  command(
+    fileMenu,
+    studioSaveMenuId,
+    studioSaveLabel,
+    () =>
+    {
+      closeMenus();
+      studioSaveUi.save();
+    },
+  );
+  const studioSaveMenuItem = document.getElementById(studioSaveMenuId);
+  studioSaveMenuItem.setAttribute(ariaKeyShortcutsAttribute, studioSaveShortcutAria);
   move('file', 'btn-new-card', 'New card');
   command('file', 'menu-new-deck-selection', 'New deck from selected cards…', () => cardSelectionUi?.createDeckFromSelection());
   group('file', 'Subclass catalogs');
@@ -4741,8 +4751,9 @@ function setupShortcuts() {
     const modifier = e.ctrlKey || e.metaKey;
     if (!modifier) return;
     const key = e.key.toLowerCase();
-    // Ctrl+S saves from anywhere, a text field included, and never opens the browser's Save page dialog.
-    if (key === SAVE_SHORTCUT_KEY && !e.altKey)
+    // Ctrl+S saves from anywhere, a text field included,
+    // and never opens the browser's Save page dialog.
+    if (key === saveShortcutKey && !e.altKey)
     {
       e.preventDefault();
       studioSaveUi?.save();
@@ -5809,7 +5820,7 @@ async function boot() {
   await loadFromRepo(state.repoPath);
   state.coreCardIds = state.cards.map((c) => c.id);
   state.coreShape = MeasurePoolShape(state.cards, { rankOf: (c) => state.baselineRanks[c.id] ?? 0, scoring: state.repoScoring });
-  // The Studio's own saved files load after the game content and before the draft (SS-003).
+  // The Studio's own saved files load after the game content and before the draft.
   await studioSaveUi.loadSavedFiles();
 
   // Restore local draft temp copy if present. Everything is checked first; state changes only after.
@@ -5861,7 +5872,7 @@ async function boot() {
       refreshDirtyStatus();
       if (isDirty() && !studioSaveUi.hasStatus())
       {
-        document.getElementById('draft-status').textContent = 'Restored local draft temp copy';
+        document.getElementById(draftStatusId).textContent = restoredDraftText;
       }
       restoredDraft = true;
     }
@@ -5908,7 +5919,8 @@ function restoreWorkingContext()
   saveWorkingContext();
 }
 
-/** Puts saved or drafted cards over the loaded list: removes the removed Core ids, then replaces by id or adds. */
+// Puts saved or drafted cards over the loaded list:
+// removes the removed Core ids, then replaces by id or adds.
 function mergeStudioCards(cards, removedCardIds)
 {
   if (removedCardIds.length)
