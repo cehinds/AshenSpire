@@ -41,10 +41,10 @@ import { initSubclassCatalogUi, upgradeNames } from './subclassCatalog.js';
 import { CardDefinitionToScoreFace } from '../../src/model/cardUpgradeCp.js';
 import { ProjectCardMechanicalValues } from '../../src/model/cardMechanicalProjection.js';
 import { RefreshSubclassCard, SubclassCardText } from '../../src/model/subclassCardGenerator.js';
-import { initCardSelectionUi, isAddedCard, removeAddedCardsFromState } from './cardSelection.js';
+import { initCardSelectionUi, isAddedCard, removeAddedCardsFromState, addSelectedCardsToDeck, removeSelectedCardsFromDeck } from './cardSelection.js';
 import { initCardEditorDock } from './cardEditorDock.js';
 import { initDeckListPanel } from './deckListPanel.js';
-import { filterMembership } from './deckCatalog.js';
+import { filterMembership, deckCatalogOptions, resolveStudioDeck } from './deckCatalog.js';
 import { initGalleryZoom } from './galleryZoom.js';
 import { focusedEffectOptions } from './focusedRebalance.js';
 import { createAddCardTile, CaptureCardTilePositions, animateCardInsertion } from './addCardTile.js';
@@ -2712,12 +2712,58 @@ function renderCardWeightFields(container, def) {
   return container.children.length > 0;
 }
 
+// The Deck lists view's rows beside the card: every deck holding it (custom decks and the read-only class and
+// subclass templates) and an Add to deck select. Changes go through the deck helpers and the panel's commit path.
+function renderCardDeckFields(container, def) {
+  const decks = deckCatalogOptions(state).filter((row) => row.kind !== 'all').map((row) => resolveStudioDeck(state, row.id)).filter(Boolean);
+  const holding = decks.filter((deck) => deck.cardIds.includes(def.id));
+  const addable = decks.filter((deck) => deck.kind === 'custom' && !deck.readOnly && !deck.cardIds.includes(def.id));
+  const list = document.createElement('div');
+  list.className = 'deck-context-list';
+  // Deck ids hold no duplicates (resolveStudioDeck), so a row needs no copy count.
+  const rows = holding.map((deck) => `<div class="deck-context-row" data-deck-id="${esc(deck.id)}">
+      <span class="deck-context-name" title="${esc(deck.name)}">${esc(deck.name)}</span>
+      ${deck.readOnly
+    ? '<span class="deck-context-template" title="Read-only template">template</span>'
+    : `<button type="button" class="s-btn s-btn-sm deck-context-remove" data-deck-remove="${esc(deck.id)}" aria-label="${esc(`Remove ${def.name} from ${deck.name}`)}">✕</button>`}
+    </div>`).join('');
+  const options = addable.map((deck) => `<option value="${esc(deck.id)}">${esc(deck.name)}</option>`).join('');
+  list.innerHTML = `${rows || '<p class="studio-muted deck-context-empty">Not in any deck yet.</p>'}
+    <select class="deck-context-add" aria-label="${esc(`Add ${def.name} to a deck`)}" ${addable.length ? '' : 'disabled'}><option value="">${addable.length ? 'Add to deck…' : 'No other deck to add to'}</option>${options}</select>`;
+  // Same commit as the Deck lists panel: one undo step, the draft, then every view and the panel.
+  const commit = (next, message) => {
+    pushHistory();
+    state.customDecks = next;
+    saveDraft({ autoName: false });
+    syncAllViews();
+    deckListPanelUi?.refresh();
+    toast(message);
+  };
+  // Listeners live on this list, which every render replaces, so they never pile up on the column.
+  list.addEventListener('click', (e) => {
+    const remove = e.target.closest('[data-deck-remove]');
+    if (!remove) return;
+    const deck = holding.find((row) => row.id === remove.dataset.deckRemove);
+    try { commit(removeSelectedCardsFromDeck(state.customDecks, deck.id, [def.id]), `Removed ${def.name} from ${deck.name}.`); }
+    catch (error) { toast(error.message); }
+  });
+  list.querySelector('.deck-context-add').addEventListener('change', (e) => {
+    const deck = addable.find((row) => row.id === e.target.value);
+    if (!deck) return;
+    try { commit(addSelectedCardsToDeck(state.customDecks, deck.id, [def.id]), `Added ${def.name} to ${deck.name}.`); }
+    catch (error) { toast(error.message); }
+  });
+  container.replaceChildren(list);
+  return true;
+}
+
 // Fields beside the card in the Customize views other than Properties.
 function renderContextFields(view, container, cardId) {
   const def = state.cards.find((card) => card.id === cardId);
   if (!def) return false;
   if (view === 'weights') return renderCardWeightFields(container, def);
   if (view === 'design') return renderCardArtFields(container, def);
+  if (view === 'decks') return renderCardDeckFields(container, def);
   return false;
 }
 

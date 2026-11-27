@@ -260,3 +260,14 @@ body.studio-body .customization-context-fields .art-context-opacity { grid-colum
 body.studio-body .customization-context-fields .art-context-opacity input[type="range"] { flex: 1 1 auto; min-width: 0; width: auto; margin: 0; }
 body.studio-body .customization-context-fields .art-context-opacity .opacity-val { flex: 0 0 34px; text-align: right; }
 body.studio-body .customization-context-fields .art-context-empty { margin: 0; font-size: 12px; }
+/* Deck lists: the decks holding this card, then one Add to deck select. */
+body.studio-body .customization-context-fields .deck-context-list { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+body.studio-body .customization-context-fields .deck-context-row {
+  display: flex; align-items: center; gap: 6px; min-width: 0; min-height: 26px;
+  padding: 2px 4px 2px 8px; border: 1px solid var(--st-border); border-radius: 4px; background: var(--st-surface-2);
+}
+body.studio-body .customization-context-fields .deck-context-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body.studio-body .customization-context-fields .deck-context-template { flex: 0 0 auto; color: var(--st-muted); font-size: 11px; font-style: italic; }
+body.studio-body .customization-context-fields .deck-context-remove { flex: 0 0 auto; min-height: 0; padding: 0 6px; line-height: 20px; }
+body.studio-body .customization-context-fields .deck-context-empty { margin: 0; font-size: 12px; }
+body.studio-body .customization-context-fields .deck-context-add { width: 100%; min-width: 0; height: 28px; background: var(--st-surface-2); color: var(--st-text); border: 1px solid var(--st-border); border-radius: 4px; }
