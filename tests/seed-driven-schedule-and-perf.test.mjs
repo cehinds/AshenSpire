@@ -27,22 +27,31 @@ import { PrecomputeActRewardSchedule, RewardScheduleForOffer, gameProfileRewardO
 // 4.8ms. That is a one-time disk cost of the host, not schedule or picker
 // work, and it landed inside the Act timing below because that file runs
 // first in its shard. Pay it here, before any timed region.
-'n1_0'.localeCompare('n10_0');
+const IcuWarmupLeft = 'n1_0';
+const IcuWarmupRight = 'n10_0';
+IcuWarmupLeft.localeCompare(IcuWarmupRight);
+
+const MicrosecondsPerMillisecond = 1000;
+const ReportedDecimals = 1;
 
 // Wall time, plus the process CPU and OS counters that say why wall time ran
 // longer than CPU (disk faults, blocked or preempted waits) when it does.
-function Measure(work) {
+function Measure(work)
+{
   const usageStart = process.resourceUsage();
   const cpuStart = process.cpuUsage();
-  const t0 = performance.now();
+  const startMs = performance.now();
   const result = work();
-  const ms = performance.now() - t0;
+  const ms = performance.now() - startMs;
   const cpu = process.cpuUsage(cpuStart);
   const usage = process.resourceUsage();
-  const cpuMs = (cpu.user + cpu.system) / 1000;
-  const why = `cpuMs=${cpuMs.toFixed(1)}, majorFaults=${usage.majorPageFault - usageStart.majorPageFault}`
-    + `, blockedSwitches=${usage.voluntaryContextSwitches - usageStart.voluntaryContextSwitches}`
-    + `, preemptedSwitches=${usage.involuntaryContextSwitches - usageStart.involuntaryContextSwitches}`;
+  const cpuMs = (cpu.user + cpu.system) / MicrosecondsPerMillisecond;
+  const why = [
+    `cpuMs=${cpuMs.toFixed(ReportedDecimals)}`,
+    `majorFaults=${usage.majorPageFault - usageStart.majorPageFault}`,
+    `blockedSwitches=${usage.voluntaryContextSwitches - usageStart.voluntaryContextSwitches}`,
+    `preemptedSwitches=${usage.involuntaryContextSwitches - usageStart.involuntaryContextSwitches}`,
+  ].join(', ');
   return { result, ms, why };
 }
 
