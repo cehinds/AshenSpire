@@ -230,6 +230,13 @@
         "tools/readme-sync.mjs",
         "--check"
       ]
+    },
+    {
+      "label": "Check card limits",
+      "args": [
+        "tools/card-limits.mjs",
+        "--check"
+      ]
     }
   ],
   "testSteps": [

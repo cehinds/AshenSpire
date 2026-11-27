@@ -34,7 +34,11 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-27
 
-- **Evade Wither, rising cost, and Smash flat Block break** ([#3017](https://github.com/cehinds/AshenSpire/pull/3017), `0.7.5.163`). Player Evade cards gain Wither 3 and +1 SP per play (max +3); Smash cards now break flat Block before damage (`Break N Block. Deal N damage.`).
+- **Evade Wither, rising cost, and Smash flat Block break** ([#3017](https://github.com/cehinds/AshenSpire/pull/3017), `0.7.5.171`). Player Evade cards gain Wither 3 and +1 SP per play (max +3); Smash cards now break flat Block before damage (`Break N Block. Deal N damage.`).
+- **Behind the scenes: mana-only mechanic notes refreshed** ([#3031](https://github.com/cehinds/AshenSpire/pull/3031), `0.7.5.171`). Generated mechanic notes now name the spell cost rules as the mana-only reader. Nothing you play changes.
+- **Opening shop pins no longer cover every branch** ([#3033](https://github.com/cehinds/AshenSpire/pull/3033), `0.7.5.169`). A shop pinned on floor 1 now counts only where a branch exists, as the map builder does. Core maps are unchanged.
+- **Pin a map floor's room type** ([#3025](https://github.com/cehinds/AshenSpire/pull/3025), `0.7.5.167`). Core routes can now set floorTypes, such as floor 4 always a shop. Without it, maps are unchanged.
+- **Card limits and drawback cost** ([#3030](https://github.com/cehinds/AshenSpire/pull/3030), `0.7.5.165`). Card effect and drawback caps are set in actionCosts.json; none means no limit. Drawbacks can cost Combat Power, flat or as a multiplier, off by default.
 - **Steadier timing checks and a lighter Blacksmith picker** ([#3016](https://github.com/cehinds/AshenSpire/pull/3016), `0.7.5.163`). Timing checks skip a one-time test-machine disk wait. The Blacksmith opens faster, and card upgrade rules now live in config.
 
 - **Spell costs match their cards** ([#3022](https://github.com/cehinds/AshenSpire/pull/3022), `0.7.5.161`). A spell now costs the Mana and Stamina printed on it; the hidden extra Mana on every spell is gone. Prepared stance takes 1 Stamina off a spell, never below 1, and no Mana; Mana cuts in Prepared come from a staff or robes. Arcane Strike and Mana Rite cost Stamina only.

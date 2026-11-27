@@ -7,6 +7,47 @@
     "cast": 2,
     "sweep": 2
   },
+  "CARD_LIMITS": {
+    "maxEffects": null,
+    "maxDrawbacks": null,
+    "cardFiles": [
+      "games/ashenspire/packs/core/cards.json",
+      "games/ashenspire/packs/core/enemyCards.json"
+    ],
+    "text": {
+      "tooManyEffects": "{name} has {count} effects. The limit is {limit} (maxEffects).",
+      "tooManyDrawbacks": "{name} has {count} drawbacks: {listed}. The limit is {limit} (maxDrawbacks).",
+      "cardName": "{id} ({name}){face}",
+      "upgradedFace": " upgraded",
+      "selfDebuff": "{status} on self",
+      "listJoiner": ", ",
+      "ok": "card-limits: ok (effect limit: {effects}, drawback limit: {drawbacks})",
+      "noLimit": "no limit",
+      "failLine": "FAIL {file}: {problem}",
+      "advice": "Edit those cards, or raise the limit in content/source/actionCosts.json (CARD_LIMITS)."
+    },
+    "drawbackOpRequires": {
+      "addCard": "pile"
+    },
+    "selfDebuffStatuses": [
+      "weak",
+      "vulnerable",
+      "frail",
+      "bleed",
+      "burn",
+      "staggered",
+      "silenced",
+      "magicVulnerable",
+      "fireVulnerable",
+      "brittle",
+      "shocked",
+      "chill",
+      "freeze",
+      "insanity",
+      "madness",
+      "venom"
+    ]
+  },
   "CAST_TAGS": [
     "camp:spell",
     "maneuver:casting"

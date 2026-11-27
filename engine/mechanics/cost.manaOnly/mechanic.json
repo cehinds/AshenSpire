@@ -18,5 +18,9 @@
   "presentation": {
     "icon": "cost.manaOnly"
   },
-  "portability": "data"
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/model/spellCostRules.js",
+    "symbol": "SpellCostException"
+  }
 }
