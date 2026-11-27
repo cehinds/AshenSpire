@@ -22,13 +22,20 @@ function isMainModule()
     return Boolean(started) && fileURLToPath(import.meta.url) === resolve(started);
 }
 
+function limitText(limit)
+{
+    return Number.isFinite(limit)
+        ? limit
+        : TEXT.noLimit;
+}
+
 function report(problems)
 {
     if (!problems.length)
     {
         console.log(FillTemplate(TEXT.ok, {
-            effects: CARD_LIMITS.maxEffects,
-            drawbacks: CARD_LIMITS.maxDrawbacks,
+            effects: limitText(CARD_LIMITS.maxEffects),
+            drawbacks: limitText(CARD_LIMITS.maxDrawbacks),
         }));
         return EXIT.ok;
     }
