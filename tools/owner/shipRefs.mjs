@@ -1,63 +1,58 @@
 // Finds where an edit is already shipped: dev, or an open owner pull request branch.
-import { OWNER_TOOLS } from './ownerConfig.mjs';
+import { OWNER_TEXT, OWNER_TOOLS } from './ownerConfig.mjs';
 import { ReadAtRef, ReadWorking } from './ownerGit.mjs';
 import { SameText } from './ownerPaths.mjs';
-import { RunGit, RunProgram } from './ownerProcess.mjs';
+import { RunGit, RunGitHub } from './ownerProcess.mjs';
 
-const OPEN_PULL_LIMIT = '200';
-const GH_PROGRAM = 'gh';
-const NO_LIST_NOTE = 'Could not list open pull requests, so only dev is checked for shipped edits.';
+const GIT = OWNER_TOOLS.git;
 
 function openOwnerBranches()
 {
-    const { baseBranch, branchPrefix } = OWNER_TOOLS.git;
     const args = [
         'pr',
         'list',
         '--state',
         'open',
         '--base',
-        baseBranch,
+        GIT.baseBranch,
         '--limit',
-        OPEN_PULL_LIMIT,
+        String(GIT.openPullLimit),
         '--json',
         'headRefName',
     ];
     try
     {
-        const pulls = JSON.parse(RunProgram(GH_PROGRAM, args));
+        const pulls = JSON.parse(RunGitHub(args));
         return pulls
             .map((pull) => pull.headRefName)
-            .filter((name) => name.startsWith(branchPrefix));
+            .filter((name) => name.startsWith(GIT.branchPrefix));
     }
     catch
     {
-        console.log(NO_LIST_NOTE);
+        console.log(OWNER_TEXT.ship.noPullList);
         return [];
     }
 }
 
 function trackingRefspec(branch)
 {
-    const { remote } = OWNER_TOOLS.git;
-    return `+refs/heads/${branch}:refs/remotes/${remote}/${branch}`;
+    return `+refs/heads/${branch}:refs/remotes/${GIT.remote}/${branch}`;
 }
 
 /** Fetches dev and every open owner pull request branch; returns their ref names. */
 export function FetchShippedRefs()
 {
-    const { remote, baseBranch } = OWNER_TOOLS.git;
     const branches = openOwnerBranches();
     RunGit([
         'fetch',
         '--quiet',
-        remote,
-        baseBranch,
+        GIT.remote,
+        GIT.baseBranch,
         ...branches.map(trackingRefspec),
     ]);
     return [
-        `${remote}/${baseBranch}`,
-        ...branches.map((name) => `${remote}/${name}`),
+        `${GIT.remote}/${GIT.baseBranch}`,
+        ...branches.map((name) => `${GIT.remote}/${name}`),
     ];
 }
 

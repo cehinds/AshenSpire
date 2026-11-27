@@ -1,13 +1,16 @@
 // Runs node scripts, git and gh, and the owner's build and check steps.
 import { spawnSync } from 'node:child_process';
-import { REPO_ROOT } from './ownerConfig.mjs';
+import {
+    FormatText,
+    OWNER_TEXT,
+    OWNER_TOOLS,
+    REPO_ROOT,
+} from './ownerConfig.mjs';
 
-const MAX_OUTPUT_BYTES = 64 * 1024 * 1024;
-const OUTPUT_TAIL_LINES = 25;
-const PASS_MARK = 'ok  ';
-const FAIL_MARK = 'FAIL';
 const TEXT_ENCODING = 'utf8';
 const GIT_PROGRAM = 'git';
+const LIMITS = OWNER_TOOLS.limits;
+const MARKS = OWNER_TEXT.marks;
 
 function spawn(
     program,
@@ -18,7 +21,7 @@ function spawn(
     return spawnSync(program, args, {
         cwd,
         encoding: TEXT_ENCODING,
-        maxBuffer: MAX_OUTPUT_BYTES,
+        maxBuffer: LIMITS.maxOutputBytes,
     });
 }
 
@@ -27,7 +30,7 @@ function lastLines(text)
     return text
         .trim()
         .split('\n')
-        .slice(-OUTPUT_TAIL_LINES)
+        .slice(-LIMITS.outputTailLines)
         .join('\n');
 }
 
@@ -38,7 +41,24 @@ function failureText(
 )
 {
     const detail = (result.stderr || result.stdout || '').trim();
-    return `${program} ${args.join(' ')} failed:\n${detail}`;
+    return FormatText(OWNER_TEXT.process.failed, {
+        command: `${program} ${args.join(' ')}`,
+        detail,
+    });
+}
+
+function failedStep(
+    step,
+    result,
+    log,
+)
+{
+    log(`${MARKS.fail} ${step.label}`);
+    log(lastLines(result.output));
+    return {
+        ok: false,
+        failedStep: step.label,
+    };
 }
 
 /** Runs `node <args>` in `cwd`; returns { ok, output }. */
@@ -74,7 +94,11 @@ export function RunProgram(
     );
     if (result.error)
     {
-        throw new Error(`Could not run ${program}: ${result.error.message}`);
+        const message = FormatText(OWNER_TEXT.process.couldNotRun, {
+            program,
+            error: result.error.message,
+        });
+        throw new Error(message);
     }
     if (result.status !== 0 && !allowFailure)
     {
@@ -100,6 +124,16 @@ export function RunGit(args, options = {})
     );
 }
 
+/** RunProgram for the GitHub CLI named in ownerTools.json. */
+export function RunGitHub(args, options = {})
+{
+    return RunProgram(
+        OWNER_TOOLS.git.githubProgram,
+        args,
+        options,
+    );
+}
+
 /** Runs each step in order with one line per step; stops at the first failure. */
 export function RunSteps(
     steps,
@@ -112,14 +146,13 @@ export function RunSteps(
         const result = RunNode(step.args, cwd);
         if (!result.ok)
         {
-            log(`${FAIL_MARK} ${step.label}`);
-            log(lastLines(result.output));
-            return {
-                ok: false,
-                failedStep: step.label,
-            };
+            return failedStep(
+                step,
+                result,
+                log,
+            );
         }
-        log(`${PASS_MARK} ${step.label}`);
+        log(`${MARKS.pass} ${step.label}`);
     }
     return {
         ok: true,

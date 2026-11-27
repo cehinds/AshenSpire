@@ -2,10 +2,18 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { mergeReceiptLines } from '../pr-restamp.mjs';
-import { OWNER_TOOLS } from './ownerConfig.mjs';
+import {
+    FormatText,
+    OWNER_TEXT,
+    OWNER_TOOLS,
+} from './ownerConfig.mjs';
 import { ChangedPaths } from './ownerGit.mjs';
 import { IsNeverCommitPath } from './ownerPaths.mjs';
-import { RunGit, RunNode, RunProgram } from './ownerProcess.mjs';
+import {
+    RunGit,
+    RunGitHub,
+    RunNode,
+} from './ownerProcess.mjs';
 import {
     BranchNameFor,
     CommitMessage,
@@ -13,18 +21,18 @@ import {
     ReceiptLine,
 } from './shipText.mjs';
 
-const GH_PROGRAM = 'gh';
 const PULL_NUMBER_PATTERN = /\/pull\/(\d+)/;
-const RECEIPT_SUBJECT = 'Add the changelog receipt';
 const TEXT_ENCODING = 'utf8';
+const FIRST_SUFFIX = 2;
+const GIT = OWNER_TOOLS.git;
+const CHANGELOG = OWNER_TOOLS.changelog;
 
 function branchExists(name)
 {
-    const { remote } = OWNER_TOOLS.git;
     const onRemote = RunGit([
         'ls-remote',
         '--heads',
-        remote,
+        GIT.remote,
         name,
     ]);
     const onLocal = RunGit([
@@ -37,37 +45,75 @@ function branchExists(name)
 
 function boxStamp(worktree)
 {
-    const boxPath = join(worktree, OWNER_TOOLS.changelog.buildOrdinalFile);
+    const boxPath = join(worktree, CHANGELOG.buildOrdinalFile);
     const box = JSON.parse(readFileSync(boxPath, TEXT_ENCODING));
     return `${box.release}.${box.ordinal}`;
 }
 
-function manualPullAdvice(branch)
+function createArgs(pull)
 {
-    const { baseBranch } = OWNER_TOOLS.git;
-    const command = `gh pr create --base ${baseBranch} --head ${branch} --fill`;
-    return `Branch ${branch} is on GitHub, but the pull request did not open. Run:\n  ${command}`;
+    return [
+        'pr',
+        'create',
+        '--base',
+        GIT.baseBranch,
+        '--head',
+        pull.branch,
+        '--title',
+        pull.title,
+        '--body',
+        PullRequestBody(pull.described, pull.checkLines),
+    ];
 }
 
-/** Stages `paths` and commits them with a subject and change lines. */
+function pullNotOpened(branch, error)
+{
+    const message = FormatText(OWNER_TEXT.ship.pullNotOpened, {
+        branch,
+        base: GIT.baseBranch,
+        error: error.message,
+    });
+    return new Error(message);
+}
+
+function addReceiptLine(worktree, receipt)
+{
+    const stamp = boxStamp(worktree);
+    const changelogPath = join(worktree, CHANGELOG.file);
+    const base = readFileSync(changelogPath, TEXT_ENCODING);
+    const line = ReceiptLine({
+        ...receipt,
+        stamp,
+    });
+    const merged = mergeReceiptLines(
+        base,
+        line,
+        receipt.pullNumber,
+        stamp,
+    );
+    writeFileSync(changelogPath, merged);
+}
+
+/** Stages `paths` and commits them with { subject, lines }. */
 export function Commit(
     worktree,
     paths,
     message,
 )
 {
-    RunGit([
+    const addArgs = [
         'add',
         '--',
         ...paths,
-    ], { cwd: worktree });
-    const text = CommitMessage(message.subject, message.lines);
-    RunGit([
+    ];
+    const commitArgs = [
         'commit',
         '--quiet',
         '-m',
-        text,
-    ], { cwd: worktree });
+        CommitMessage(message.subject, message.lines),
+    ];
+    RunGit(addArgs, { cwd: worktree });
+    RunGit(commitArgs, { cwd: worktree });
 }
 
 /** Every changed path in the worktree that may be committed (never built HTML or the box). */
@@ -83,7 +129,7 @@ export function UniqueBranchName(title)
 {
     const baseName = BranchNameFor(title);
     let candidate = baseName;
-    for (let suffix = 2; branchExists(candidate); suffix++)
+    for (let suffix = FIRST_SUFFIX; branchExists(candidate); suffix++)
     {
         candidate = `${baseName}${suffix}`;
     }
@@ -93,65 +139,39 @@ export function UniqueBranchName(title)
 /** Opens the pull request into dev and returns { url, pullNumber }. */
 export function OpenPullRequest(worktree, pull)
 {
-    const args = [
-        'pr',
-        'create',
-        '--base',
-        OWNER_TOOLS.git.baseBranch,
-        '--head',
-        pull.branch,
-        '--title',
-        pull.title,
-        '--body',
-        PullRequestBody(pull.described, pull.checkLines),
-    ];
     try
     {
-        const url = RunProgram(
-            GH_PROGRAM,
-            args,
-            { cwd: worktree },
-        );
-        const pullNumber = Number(PULL_NUMBER_PATTERN.exec(url)?.[1]);
+        const url = RunGitHub(createArgs(pull), { cwd: worktree });
+        const match = PULL_NUMBER_PATTERN.exec(url);
         return {
             url,
-            pullNumber,
+            pullNumber: Number(match?.[1]),
         };
     }
     catch (error)
     {
-        throw new Error(`${manualPullAdvice(pull.branch)}\n${error.message}`);
+        throw pullNotOpened(pull.branch, error);
     }
 }
 
 /** Adds the CHANGELOG receipt and the in-game changelog, then commits both. */
 export function WriteReceipt(worktree, receipt)
 {
-    const settings = OWNER_TOOLS.changelog;
-    const stamp = boxStamp(worktree);
-    const changelogPath = join(worktree, settings.file);
-    const base = readFileSync(changelogPath, TEXT_ENCODING);
-    const line = ReceiptLine({
-        ...receipt,
-        stamp,
-    });
-    writeFileSync(changelogPath, mergeReceiptLines(
-        base,
-        line,
-        receipt.pullNumber,
-        stamp,
-    ));
-    const projection = RunNode(settings.projectionArgs, worktree);
+    addReceiptLine(worktree, receipt);
+    const projection = RunNode(CHANGELOG.projectionArgs, worktree);
     if (!projection.ok)
     {
-        throw new Error(`Writing the changelog failed:\n${projection.output}`);
+        const message = FormatText(OWNER_TEXT.ship.changelogFailed, {
+            output: projection.output,
+        });
+        throw new Error(message);
     }
     const paths = [
-        settings.file,
-        settings.generatedModule,
+        CHANGELOG.file,
+        CHANGELOG.generatedModule,
     ];
     Commit(worktree, paths, {
-        subject: RECEIPT_SUBJECT,
+        subject: OWNER_TEXT.commits.receipt,
         lines: [],
     });
 }

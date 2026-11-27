@@ -5,33 +5,37 @@ import { spawn } from 'node:child_process';
 import { watch } from 'node:fs';
 import { join } from 'node:path';
 import { BuildAndCheck } from './check.mjs';
-import { OWNER_TOOLS, REPO_ROOT } from './ownerConfig.mjs';
+import {
+    FormatText,
+    OWNER_TEXT,
+    OWNER_TOOLS,
+    REPO_ROOT,
+} from './ownerConfig.mjs';
 import { RunNode } from './ownerProcess.mjs';
 
 const PLAY = OWNER_TOOLS.play;
+const TEXT = OWNER_TEXT.play;
 const ENEMY_SHEET_BUILD = OWNER_TOOLS.buildSteps.find((step) => step.label === PLAY.enemySheetStep);
-const JSON_EXTENSION = '.json';
-const GENERATED_PREFIX = '_';
 const INHERIT_OUTPUT = 'inherit';
-const FAILED_NOTE = '\nA check failed. The game still opens, but fix the file named above first.';
-const READY_NOTES = [
-    '\nThe game opens in your browser. Score Studio: /tools/score-studio/',
-    'Edit a JSON file and save: the page reloads. Press Ctrl+C here to stop.',
-];
+const CLEAN_EXIT = 0;
 
 function isSheet(fileName)
 {
     return Boolean(fileName)
-        && fileName.endsWith(JSON_EXTENSION)
-        && !fileName.startsWith(GENERATED_PREFIX);
+        && fileName.endsWith(PLAY.enemySheetExtension)
+        && !fileName.startsWith(PLAY.generatedSheetPrefix);
 }
 
 function rebuildSheet(fileName)
 {
     const result = RunNode(ENEMY_SHEET_BUILD.args);
-    console.log(result.ok
-        ? `play: enemy sheet ${fileName} rebuilt`
-        : `play: enemy sheet ${fileName} has an error:\n${result.output}`);
+    const template = result.ok
+        ? TEXT.sheetRebuilt
+        : TEXT.sheetError;
+    console.log(FormatText(template, {
+        file: fileName,
+        output: result.output,
+    }));
 }
 
 /** The server rebuilds content on save; enemy sheets need their own write step first. */
@@ -72,7 +76,7 @@ function startServer()
     });
     server.on('exit', (code) =>
     {
-        process.exit(code ?? 0);
+        process.exit(code ?? CLEAN_EXIT);
     });
 }
 
@@ -80,11 +84,11 @@ function main()
 {
     if (!BuildAndCheck())
     {
-        console.log(FAILED_NOTE);
+        console.log(TEXT.failed);
     }
     watchEnemySheets();
     startServer();
-    READY_NOTES.forEach((note) => console.log(note));
+    TEXT.ready.forEach((note) => console.log(note));
 }
 
 main();

@@ -1,11 +1,31 @@
 {
-  "$note": "Settings for the owner's play, check and ship commands (docs/OWNER-EDITING.md).",
+  "$note": "Pipeline settings for npm run play, check, ship and sync (docs/OWNER-EDITING.md). Words live in ownerText.json, change wording in ownerDiff.json.",
   "git": {
     "remote": "origin",
     "baseBranch": "dev",
     "branchPrefix": "feature/Owner",
     "repositoryUrl": "https://github.com/cehinds/AshenSpire",
-    "workBranch": "owner/editing"
+    "workBranch": "owner/editing",
+    "openPullLimit": 200,
+    "githubProgram": "gh"
+  },
+  "flags": {
+    "quick": "--quick",
+    "dryRun": "--dry-run",
+    "local": "--local",
+    "full": "--full",
+    "prefix": "--"
+  },
+  "files": {
+    "backupFolder": ".owner-backup",
+    "patchFile": ".owner-tools.patch",
+    "worktreePrefix": "ashenspire-owner-"
+  },
+  "limits": {
+    "maxOutputBytes": 67108864,
+    "outputTailLines": 25,
+    "branchTitleLimit": 40,
+    "receiptSummaryLines": 2
   },
   "editableRoots": [
     "content/source/",
@@ -24,6 +44,21 @@
   "neverCommit": [
     "buildordinal.json",
     ".html"
+  ],
+  "generatedLocations": [
+    "src/content/generated/",
+    "src/config/generated/",
+    "src/framework/data/"
+  ],
+  "generatedSuffixes": [
+    ".generated.js",
+    ".generated.css",
+    "game.lock.json",
+    "_reference.json",
+    "_reference.md"
+  ],
+  "rebuiltContentFiles": [
+    "games/ashenspire/packs/core/characters.json"
   ],
   "buildSteps": [
     {
@@ -126,21 +161,8 @@
     ],
     "enemySheetFolder": "games/ashenspire/packs/core/enemies",
     "rebuildDelayMs": 200,
-    "enemySheetStep": "Build enemy sheets"
-  },
-  "generatedLocations": [
-    "src/content/generated/",
-    "src/config/generated/",
-    "src/framework/data/"
-  ],
-  "generatedSuffixes": [
-    ".generated.js",
-    ".generated.css",
-    "game.lock.json",
-    "_reference.json",
-    "_reference.md"
-  ],
-  "rebuiltContentFiles": [
-    "games/ashenspire/packs/core/characters.json"
-  ]
+    "enemySheetStep": "Build enemy sheets",
+    "enemySheetExtension": ".json",
+    "generatedSheetPrefix": "_"
+  }
 }

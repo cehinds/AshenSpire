@@ -1,27 +1,12 @@
 // Walks two versions of a content value and lists each change with the entry it belongs to.
-const ENTRY_KEYS = [
-    'id',
-    'card',
-    'ref',
-    'slot',
-];
-const LABEL_KEYS = [
-    'op',
-    'id',
-    'card',
-    'slot',
-    'status',
-    'tag',
-];
-const QUIET_SEGMENTS = new Set([
-    'effects',
-    'stats',
-    'passives',
-    'shared',
-]);
-const NAME_KEY = 'name';
-const POSITION_PREFIX = '#';
-const SEGMENT_SEPARATOR = ' ';
+import { OWNER_DIFF } from './ownerConfig.mjs';
+
+const ENTRY_KEYS = OWNER_DIFF.entryKeys;
+const LABEL_KEYS = OWNER_DIFF.labelKeys;
+const QUIET_SEGMENTS = new Set(OWNER_DIFF.quietSegments);
+const NAME_KEY = OWNER_DIFF.nameKey;
+const POSITION_PREFIX = OWNER_DIFF.positionPrefix;
+const SEGMENT_SEPARATOR = OWNER_DIFF.segmentJoiner;
 export const CHANGE_KIND = Object.freeze({
     set: 'set',
     add: 'add',

@@ -3,7 +3,13 @@
 // not yet shipped are carried over, with a backup copy in .owner-backup/.
 import { rmSync } from 'node:fs';
 import { join } from 'node:path';
-import { IsMainModule, OWNER_TOOLS, REPO_ROOT } from './ownerConfig.mjs';
+import {
+    FormatText,
+    IsMainModule,
+    OWNER_TEXT,
+    OWNER_TOOLS,
+    REPO_ROOT,
+} from './ownerConfig.mjs';
 import {
     ApplyPatch,
     CapturePatch,
@@ -17,15 +23,13 @@ import {
 import { IsDerivedPath, SameText } from './ownerPaths.mjs';
 import { RunGit, RunSteps } from './ownerProcess.mjs';
 
-const BACKUP_FOLDER = '.owner-backup';
+const BACKUP_FOLDER = OWNER_TOOLS.files.backupFolder;
 const TIMESTAMP_UNSAFE = /[:.]/g;
 const TIMESTAMP_SAFE = '-';
 const HEAD_REF = 'HEAD';
 const QUIET = '--quiet';
-const BLOCKED_NOTE = 'sync stopped. These files changed and are not game content:';
-const BLOCKED_ADVICE = 'Ship or undo them first. Nothing was switched.';
-const KEPT_NOTE = 'Edits not yet shipped, kept for you:';
-const CLASH_NOTE = 'Changed on dev too, so these now hold the dev version. Yours is in the backup:';
+const TEXT = OWNER_TEXT.sync;
+const INDENT = OWNER_TEXT.marks.indent;
 
 function newestBase()
 {
@@ -152,8 +156,12 @@ function moveToNewestBase()
         : '';
     if (unmerged)
     {
-        const advice = 'Ship them, or ask for help before syncing.';
-        throw new Error(`${workBranch} has commits not in ${baseBranch}:\n${unmerged}\n${advice}`);
+        const message = FormatText(TEXT.unmerged, {
+            branch: workBranch,
+            base: baseBranch,
+            commits: unmerged,
+        });
+        throw new Error(message);
     }
     RunGit([
         'switch',
@@ -174,15 +182,15 @@ function reportKept(
     {
         return;
     }
-    console.log(`\n${KEPT_NOTE}`);
-    saved.forEach((file) => console.log(`  ${file.path}`));
-    console.log(`A backup copy of each is in ${backupRoot}`);
+    console.log(TEXT.kept);
+    saved.forEach((file) => console.log(`${INDENT}${file.path}`));
+    console.log(FormatText(TEXT.backup, { folder: backupRoot }));
     if (!clashed.length)
     {
         return;
     }
-    console.log(`\n${CLASH_NOTE}`);
-    clashed.forEach((path) => console.log(`  ${path}`));
+    console.log(TEXT.clashed);
+    clashed.forEach((path) => console.log(`${INDENT}${path}`));
 }
 
 function backupFolder()
@@ -199,9 +207,9 @@ function backupFolder()
 
 function reportBlocking(blocking)
 {
-    console.log(BLOCKED_NOTE);
-    blocking.forEach((path) => console.log(`  ${path}`));
-    console.log(BLOCKED_ADVICE);
+    console.log(TEXT.blocked);
+    blocking.forEach((path) => console.log(`${INDENT}${path}`));
+    console.log(TEXT.blockedAdvice);
 }
 
 function fetchNewest()
@@ -255,7 +263,10 @@ function main()
         return 1;
     }
     switchCarrying(unshipped);
-    console.log(`\nYou are on ${workBranch}, the newest ${baseBranch}.`);
+    console.log(FormatText(TEXT.done, {
+        branch: workBranch,
+        base: baseBranch,
+    }));
     return 0;
 }
 
@@ -267,7 +278,7 @@ if (IsMainModule(import.meta.url))
     }
     catch (error)
     {
-        console.error(`\nsync: ${error.message}`);
+        console.error(FormatText(TEXT.errorPrefix, { error: error.message }));
         process.exitCode = 1;
     }
 }

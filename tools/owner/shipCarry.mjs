@@ -1,5 +1,10 @@
 // Moves the owner's edits into the ship worktree, and judges rebuilt files fairly.
-import { OWNER_TOOLS, REPO_ROOT } from './ownerConfig.mjs';
+import {
+    FormatText,
+    OWNER_TEXT,
+    OWNER_TOOLS,
+    REPO_ROOT,
+} from './ownerConfig.mjs';
 import {
     AddDetachedWorktree,
     ApplyPatch,
@@ -11,12 +16,11 @@ import {
 import { RunGit, RunSteps } from './ownerProcess.mjs';
 
 const HEAD_REF = 'HEAD';
-const BASELINE_SUBJECT = 'Owner rebuild baseline';
-const CLASH_ADVICE = 'Run "npm run sync", redo the edit, then ship again.';
+const BASELINE_SUBJECT = OWNER_TEXT.commits.baseline;
 
 function clashError(path)
 {
-    return new Error(`${path} also changed on dev and the edits clash. ${CLASH_ADVICE}`);
+    return new Error(FormatText(OWNER_TEXT.ship.clash, { path }));
 }
 
 function silent()
@@ -55,7 +59,7 @@ function rebuildBaseline(direct)
         );
         if (!built.ok)
         {
-            throw new Error(`The rebuild failed at "${built.failedStep}". Run "npm run check".`);
+            throw new Error(FormatText(OWNER_TEXT.ship.rebuildFailed, { step: built.failedStep }));
         }
         return commitBaseline(baseline);
     }
