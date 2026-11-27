@@ -20,6 +20,32 @@ import { EvaluateUpgradeStepCp, PrepareUpgradeStepCpContext } from '../src/model
 import { cardUpgradeModel } from '../src/ui/models/CardUpgradeModel.js';
 import { PrecomputeActRewardSchedule, RewardScheduleForOffer, gameProfileRewardOffers } from '../src/model/gameProfileRewards.js';
 
+// The first ICU collation in a process loads its data from the node binary.
+// On a fresh GitHub runner that first read comes from a lazily filled disk:
+// run 45945847782 measured 197.6ms wall, 6.2ms CPU, 25 major page faults and
+// 29 blocking context switches for one `localeCompare`; the next call took
+// 4.8ms. That is a one-time disk cost of the host, not schedule or picker
+// work, and it landed inside the Act timing below because that file runs
+// first in its shard. Pay it here, before any timed region.
+'n1_0'.localeCompare('n10_0');
+
+// Wall time, plus the process CPU and OS counters that say why wall time ran
+// longer than CPU (disk faults, blocked or preempted waits) when it does.
+function Measure(work) {
+  const usageStart = process.resourceUsage();
+  const cpuStart = process.cpuUsage();
+  const t0 = performance.now();
+  const result = work();
+  const ms = performance.now() - t0;
+  const cpu = process.cpuUsage(cpuStart);
+  const usage = process.resourceUsage();
+  const cpuMs = (cpu.user + cpu.system) / 1000;
+  const why = `cpuMs=${cpuMs.toFixed(1)}, majorFaults=${usage.majorPageFault - usageStart.majorPageFault}`
+    + `, blockedSwitches=${usage.voluntaryContextSwitches - usageStart.voluntaryContextSwitches}`
+    + `, preemptedSwitches=${usage.involuntaryContextSwitches - usageStart.involuntaryContextSwitches}`;
+  return { result, ms, why };
+}
+
 test('ActNodeUpgradeStock is deterministic by (seed, nodeKey, vendor), respects tier unlocks, and varies by seed/node', () => {
   ClearScheduleCaches();
   const s1a = ActNodeUpgradeStock(12345, '1:n4', { vendor: 'blacksmith', scoring: shippedScoring });
@@ -52,15 +78,13 @@ test('ActUpgradeSchedule and ActRewardSchedule pre-compute an entire Act map det
   const mapGraph = buildActMap(registries, createRng(777), run.seatOrder[0], 1);
   run.mapGraph = mapGraph;
 
-  const cpuStart = process.cpuUsage();
-  const t0 = performance.now();
-  const upgSchedA = ActUpgradeSchedule(run.seed, mapGraph, { actNumber: 1, scoring: shippedScoring });
-  const rewSchedA = PrecomputeActRewardSchedule(run, mapGraph);
-  const elapsed = performance.now() - t0;
-  const cpuElapsed = process.cpuUsage(cpuStart);
-  const cpuMs = (cpuElapsed.user + cpuElapsed.system) / 1000;
+  const precompute = Measure(() => ({
+    upgSchedA: ActUpgradeSchedule(run.seed, mapGraph, { actNumber: 1, scoring: shippedScoring }),
+    rewSchedA: PrecomputeActRewardSchedule(run, mapGraph),
+  }));
+  const { upgSchedA, rewSchedA } = precompute.result;
 
-  assert.ok(elapsed < 50, `Expected full Act upgrade+reward precompute < 50ms, got ${elapsed.toFixed(1)}ms (cpuMs=${cpuMs.toFixed(1)})`);
+  assert.ok(precompute.ms < 50, `Expected full Act upgrade+reward precompute < 50ms, got ${precompute.ms.toFixed(1)}ms (${precompute.why})`);
   assert.ok(Object.keys(upgSchedA.nodes).length > 0, 'pre-computed upgrade nodes');
   assert.ok(Object.keys(rewSchedA.nodes).length > 0, 'pre-computed reward nodes');
 
@@ -145,14 +169,10 @@ test('Blacksmith 60-card picker is fast cold (< 250ms) and instant on re-selecti
   ];
   const beforeJson = JSON.stringify(run);
 
-  const cpuStart = process.cpuUsage();
-  const t0 = performance.now();
-  const m1 = cardUpgradeModel(registries, run, null, { blacksmith: true });
-  const coldMs = performance.now() - t0;
-  const cpuElapsed = process.cpuUsage(cpuStart);
-  const cpuMs = (cpuElapsed.user + cpuElapsed.system) / 1000;
+  const cold = Measure(() => cardUpgradeModel(registries, run, null, { blacksmith: true }));
+  const m1 = cold.result;
   assert.ok(m1.rows.length >= 40, `expected >= 40 rows, got ${m1.rows.length}`);
-  assert.ok(coldMs < 250, `Expected cold 60-card Blacksmith picker < 250ms, got ${coldMs.toFixed(1)}ms (cpuMs=${cpuMs.toFixed(1)})`);
+  assert.ok(cold.ms < 250, `Expected cold 60-card Blacksmith picker < 250ms, got ${cold.ms.toFixed(1)}ms (${cold.why})`);
 
   // Clicking 10 different cards in the picker hits the WeakMap row cache
   const t1 = performance.now();
