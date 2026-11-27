@@ -120,6 +120,16 @@ test('the upgraded face is checked too', () =>
     ]);
 });
 
+test('a missing cap means no limit', () =>
+{
+    const unlimited = {
+        ...RULES,
+        maxEffects: null,
+        maxDrawbacks: null,
+    };
+    assert.deepEqual(CheckCardLimits([HEAVY_CARD], unlimited), []);
+});
+
 test('every shipped card is within CARD_LIMITS', () =>
 {
     const problems = CheckCardFiles().map((entry) => `${entry.file}: ${entry.problem}`);
