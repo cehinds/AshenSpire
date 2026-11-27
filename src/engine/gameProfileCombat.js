@@ -10,7 +10,13 @@ import { core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
 import { ScaleCardBaseDamage, isSpellCard } from '../model/combatCardProfile.js';
 import { sameStance, stanceEntryBonuses, stanceStaminaCost, stanceManaCost } from '../model/stanceRules.js';
 import { fixCoreEnabled, fixCorePierceRules, fixCoreSmashVsDefensiveRules, protectionReceipt, damageReceipt, fixCoreWardDisabled, FixCoreWardBlockFirst, FixCoreWardHpBuffer, EffectiveWardHp, FixCoreWeaponPoiseRules, ReceiptPoiseLoss } from '../model/fixCoreMechanics.js';
-import { EffectivePierceRules, EffectiveSmashGuardRules, EffectiveBlockBreakAmount, EffectivePoiseBreakAmount } from '../model/combatMechanics.js';
+import {
+  EffectivePierceRules,
+  EffectiveSmashGuardRules,
+  EffectiveBlockBreakAmount,
+  EffectivePoiseBreakAmount,
+  EffectiveProtectionPipeline,
+} from '../model/combatMechanics.js';
 import { WeaponPoiseDamage, StanceHasPoiseMitigation } from '../model/weaponPoise.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { mirroredStance, configuredStance, armsAsCoreCounter, isSpellCounter } from '../model/profileStance.js';
@@ -341,6 +347,19 @@ function resolveFlatBreak(target, carrier, requestedBlockBreak, context, isModer
   };
 }
 
+function attachOptionalFields(targetObject, fieldEntries)
+{
+  for (const [shouldInclude, key, value] of fieldEntries)
+  {
+    if (shouldInclude)
+    {
+      targetObject[key] = value;
+    }
+  }
+
+  return targetObject;
+}
+
 function buildDamageReceiptHitEntry(fields)
 {
   const hitEntry = {
@@ -355,33 +374,385 @@ function buildDamageReceiptHitEntry(fields)
     sources: fields.sources,
   };
 
-  if (fields.broken?.block)
+  return attachOptionalFields(hitEntry, [
+    [Boolean(fields.broken?.block), 'blockBroken', fields.broken?.block],
+    [Boolean(fields.broken?.poise), 'poiseBroken', fields.broken?.poise],
+    [Boolean(fields.pierceBypassed), 'pierced', fields.pierceBypassed],
+    [Boolean(fields.pierceBypassed), 'piercePoise', fields.piercePoise],
+    [Boolean(fields.magicPoise), 'magicPoise', fields.magicPoise],
+    [Boolean(fields.poiseDrain), 'poiseDamage', fields.poiseDrain],
+  ]);
+}
+
+function selectProtectionPipelineId(flags)
+{
+  if (flags.wardBlockFirst)
   {
-    hitEntry.blockBroken = fields.broken.block;
+    return 'protection.wardBlockFirst';
   }
 
-  if (fields.broken?.poise)
+  if (flags.wardRouted)
   {
-    hitEntry.poiseBroken = fields.broken.poise;
+    return 'protection.wardPoiseFirst';
   }
 
-  if (fields.pierceBypassed)
+  if (flags.weaponPoiseRules)
   {
-    hitEntry.pierced = fields.pierceBypassed;
-    hitEntry.piercePoise = fields.piercePoise;
+    return 'protection.weaponPoise';
   }
 
-  if (fields.magicPoise)
+  if (flags.wardHpMode && flags.wardHpPool > 0)
   {
-    hitEntry.magicPoise = fields.magicPoise;
+    return 'protection.wardHpBuffer';
   }
 
-  if (fields.poiseDrain)
+  if (flags.isModern)
   {
-    hitEntry.poiseDamage = fields.poiseDrain;
+    return 'protection.standard';
   }
 
-  return hitEntry;
+  return null;
+}
+
+const PROTECTION_STAGE_HANDLERS = Object.freeze({
+  block(state, pipeline)
+  {
+    const before = state.amount;
+    const blockSoak = Math.min(state.effectiveBlockPool, before);
+    state.blockSpent = state.flatBlockBroken + blockSoak;
+
+    const bypassAmount = pipeline.pierceApplies !== false
+      ? PierceBlockIgnored(
+          state.context,
+          state.target,
+          state.carrier,
+          state.profile,
+          state.totalIncoming,
+          blockSoak,
+          state.pierceOut,
+        )
+      : 0;
+    state.pierceBypassed = Math.min(bypassAmount, blockSoak);
+    state.blocked = blockSoak - state.pierceBypassed;
+    state.amount = before - state.blocked;
+
+    const label = state.wardPoiseRan
+      ? 'Block (after Poise)'
+      : 'Block';
+    state.transition('block', label, before, state.amount, 'mitigation');
+  },
+
+  wardPoise(state, pipeline)
+  {
+    const before = state.amount;
+    const poisePool = Math.max(0, state.target?.persistentPoise?.value || 0);
+    const skipAbsorption = Boolean(state.smashRule && pipeline.smashSkipsPoiseAbsorption !== false);
+    const toPoise = skipAbsorption
+      ? 0
+      : Math.min(before, poisePool);
+
+    if (state.smashRule && !state.evaded)
+    {
+      state.poiseDrain = Math.min(poisePool, Math.floor(state.smashRule.poiseFraction * state.incoming));
+    }
+
+    state.poiseMitigated = toPoise;
+    state.amount = before - toPoise;
+    state.wardPoiseRan = true;
+
+    const label = state.blockSpent !== null
+      ? 'Poise (Ward: absorbs the whole rest)'
+      : 'Poise (Ward: all damage meets Poise first)';
+    state.transition('ward-poise', label, before, state.amount, 'mitigation');
+  },
+
+  wardHp(state)
+  {
+    const before = state.amount;
+    state.wardHpAbsorbed = Math.min(before, state.wardHpPool);
+    state.wardMitigated = state.wardHpAbsorbed;
+    state.amount = before - state.wardHpAbsorbed;
+    state.amountAfterWard = state.amount;
+    state.transition('ward-hp', 'Ward (health buffer)', before, state.amount, 'mitigation');
+  },
+
+  stancePoise(state)
+  {
+    const before = state.amount;
+    const rules = state.weaponPoiseRules;
+    const poisePool = Math.max(0, state.target?.persistentPoise?.value || 0);
+    const canMitigate = before > 0
+      && poisePool > 0
+      && StanceHasPoiseMitigation(rules, state.defending);
+
+    if (canMitigate)
+    {
+      const poiseFraction = rules.mitigationPoiseFraction ?? 0.5;
+      const drainFraction = rules.mitigationDrainDamageFraction ?? 0.5;
+      const drainFlat = rules.mitigationDrainFlat ?? 1;
+
+      state.poiseMitigated = Math.min(before, Math.floor(poisePool * poiseFraction));
+      state.poiseMitigationCost = Math.min(poisePool, Math.floor(before * drainFraction) + drainFlat);
+      state.amount = before - state.poiseMitigated;
+      state.transition('poise-mitigation', 'Poise reduction', before, state.amount, 'mitigation');
+    }
+    else
+    {
+      state.poiseMitigationCost = 0;
+    }
+  },
+
+  weaponPoiseDrain(state, pipeline)
+  {
+    const afterWard = state.amountAfterWard ?? state.amount;
+    const wardAllowsDrain = pipeline.wardShieldsPoise === false
+      || state.wardHpPool === 0
+      || afterWard > 0;
+    const canDrain = !state.evaded && !state.flatReturn && state.incoming > 0 && wardAllowsDrain;
+
+    if (!canDrain)
+    {
+      return;
+    }
+
+    const poisePool = Math.max(0, state.target?.persistentPoise?.value || 0);
+    const weaponResult = WeaponPoiseDamage(
+      state.context,
+      state.source,
+      state.target,
+      state.carrier,
+      {
+        attacking: state.attacking,
+        defending: state.defending,
+        rules: state.weaponPoiseRules,
+      },
+    );
+    state.weaponPoiseDamage = weaponResult.amount;
+
+    const remainingPoise = Math.max(0, poisePool - (state.poiseMitigationCost || 0));
+    state.poiseDrain = Math.min(remainingPoise, state.weaponPoiseDamage);
+  },
+
+  standardPoiseAfterWard(state, pipeline)
+  {
+    const afterWard = state.amount;
+    if (!(afterWard > 0))
+    {
+      state.amount = 0;
+      return;
+    }
+
+    const remPhysical = Math.max(0, state.physical - state.blocked - state.wardHpAbsorbed);
+    const remMagical = Math.max(0, afterWard - remPhysical);
+    const poisePool = Math.max(0, state.target?.persistentPoise?.value || 0);
+    const skipAbsorption = Boolean(state.smashRule && pipeline.smashSkipsPoiseAbsorption !== false);
+
+    const forceShare = skipAbsorption
+      ? null
+      : ForcePoiseShare(state.context, state.carrier);
+    const normalPoise = skipAbsorption
+      ? { amount: remPhysical, reduced: 0, sources: [] }
+      : protectionReceipt(state.context, state.target, 'physical', remPhysical);
+    const poise = forceShare === null
+      ? normalPoise
+      : ForcePoiseReceipt(state.target, remPhysical, forceShare, normalPoise);
+
+    const poiseMeetsMagic = fixCoreWardDisabled(state.context);
+    state.magicPoise = poiseMeetsMagic && !skipAbsorption
+      ? Math.min(remMagical, Math.max(0, poisePool - poise.reduced))
+      : 0;
+    const magicToHp = remMagical - state.magicPoise;
+
+    if (state.smashRule && !state.evaded)
+    {
+      state.poiseDrain = Math.min(poisePool, Math.floor(state.smashRule.poiseFraction * afterWard));
+    }
+
+    state.poiseMitigated = poise.reduced + state.magicPoise;
+    state.sources.push(...poise.sources);
+
+    if (state.magicPoise > 0)
+    {
+      state.sources.push({
+        id: 'poise-magic',
+        label: 'Poise meets the spell',
+        amount: -state.magicPoise,
+        requested: remMagical,
+        effective: magicToHp,
+        stage: 'mitigation',
+        operation: 'add',
+      });
+    }
+
+    state.amount = poise.amount + magicToHp;
+  },
+
+  standardSplit(state, pipeline)
+  {
+    const blockPool = state.effectiveBlockPool;
+    const poiseMeetsMagic = fixCoreWardDisabled(state.context);
+    const skipAbsorption = Boolean(state.smashRule && pipeline.smashSkipsPoiseAbsorption !== false);
+    const plainPhysicalBlocked = Math.min(blockPool, state.physical);
+
+    let plainMagicBlocked;
+    if (poiseMeetsMagic)
+    {
+      const poisePoolFull = Math.max(0, state.target?.persistentPoise?.value || 0);
+      const plainPoise = skipAbsorption
+        ? { reduced: 0 }
+        : protectionReceipt(state.context, state.target, 'physical', state.physical - plainPhysicalBlocked);
+      const plainMagicPoise = skipAbsorption
+        ? 0
+        : Math.min(state.magical, Math.max(0, poisePoolFull - plainPoise.reduced));
+      plainMagicBlocked = Math.min(blockPool - plainPhysicalBlocked, state.magical - plainMagicPoise);
+    }
+    else
+    {
+      plainMagicBlocked = Math.min(blockPool - plainPhysicalBlocked, state.magical);
+    }
+
+    const plainSoaked = plainPhysicalBlocked + plainMagicBlocked;
+    state.blockSpent = state.flatBlockBroken + plainSoaked;
+
+    const bypassAmount = pipeline.pierceApplies !== false
+      ? PierceBlockIgnored(
+          state.context,
+          state.target,
+          state.carrier,
+          state.profile,
+          state.totalIncoming,
+          plainSoaked,
+          state.pierceOut,
+        )
+      : 0;
+    state.pierceBypassed = Math.min(bypassAmount, plainSoaked);
+
+    const piercedPhysicalPart = Math.min(state.pierceBypassed, plainPhysicalBlocked);
+    const physicalBlocked = plainPhysicalBlocked - piercedPhysicalPart;
+    const magicBypass = state.pierceBypassed - piercedPhysicalPart;
+    let magicBlocked = plainMagicBlocked - magicBypass;
+
+    const poisePool = Math.max(0, state.target?.persistentPoise?.value || 0);
+    const stackPierce = fixCorePierceRules(fixCoreRules(state.context, state.target)).blockIgnoredPerStack > 0;
+    const piercePhysical = skipAbsorption || stackPierce
+      ? 0
+      : piercedPhysicalPart;
+
+    state.piercePoise = Math.min(piercePhysical, poisePool);
+    const pierceToHp = piercePhysical - state.piercePoise;
+    const afterPierce = state.piercePoise > 0
+      ? {
+          ...state.target,
+          persistentPoise: {
+            ...state.target.persistentPoise,
+            value: poisePool - state.piercePoise,
+          },
+        }
+      : state.target;
+
+    const poiseIn = state.physical - piercePhysical - physicalBlocked;
+    const forceShare = skipAbsorption
+      ? null
+      : ForcePoiseShare(state.context, state.carrier);
+    const normalPoise = skipAbsorption
+      ? { amount: poiseIn, reduced: 0, sources: [] }
+      : protectionReceipt(state.context, afterPierce, 'physical', poiseIn);
+    const poise = forceShare === null
+      ? normalPoise
+      : ForcePoiseReceipt(afterPierce, poiseIn, forceShare, normalPoise);
+
+    state.magicPoise = poiseMeetsMagic && !skipAbsorption
+      ? Math.min(state.magical, Math.max(0, poisePool - state.piercePoise - poise.reduced))
+      : 0;
+    const magicAfterPoise = state.magical - state.magicPoise;
+
+    if (poiseMeetsMagic)
+    {
+      magicBlocked = Math.min(magicBlocked, magicAfterPoise);
+    }
+
+    state.blocked = physicalBlocked + magicBlocked;
+    const magicAfterBlock = magicAfterPoise - magicBlocked;
+    state.barrierMitigated = 0;
+
+    const magicToHp = poiseMeetsMagic
+      ? magicAfterBlock - state.barrierMitigated
+      : 0;
+    const wardInput = poiseMeetsMagic
+      ? 0
+      : magicAfterBlock - state.barrierMitigated;
+    const ward = protectionReceipt(state.context, state.target, 'magical', wardInput);
+
+    if (state.smashRule && !state.evaded)
+    {
+      state.poiseDrain = Math.min(
+        poisePool - state.piercePoise,
+        Math.floor(state.smashRule.poiseFraction * state.incoming),
+      );
+    }
+
+    state.poiseMitigated = poise.reduced + state.piercePoise + state.magicPoise;
+    state.wardMitigated = ward.reduced;
+
+    if (poiseMeetsMagic)
+    {
+      state.transition('block', 'Block', state.physical, state.physical - physicalBlocked, 'mitigation');
+      state.sources.push(...poise.sources);
+
+      if (state.magicPoise > 0)
+      {
+        state.sources.push({
+          id: 'poise-magic',
+          label: 'Poise meets the spell',
+          amount: -state.magicPoise,
+          requested: state.magical,
+          effective: magicAfterPoise,
+          stage: 'mitigation',
+          operation: 'add',
+        });
+      }
+
+      if (magicBlocked > 0)
+      {
+        state.sources.push({
+          id: 'block-magic',
+          label: 'Block (after Poise)',
+          amount: -magicBlocked,
+          requested: magicAfterPoise,
+          effective: magicAfterBlock,
+          stage: 'mitigation',
+          operation: 'add',
+        });
+      }
+
+      state.transition('barrier', 'Bonus Poise', magicAfterBlock, magicAfterBlock - state.barrierMitigated, 'mitigation');
+    }
+    else
+    {
+      state.transition('block', 'Block', state.totalIncoming, state.totalIncoming - state.blocked, 'mitigation');
+      state.transition('barrier', 'Bonus Poise', magicAfterBlock, magicAfterBlock - state.barrierMitigated, 'mitigation');
+      state.sources.push(...poise.sources);
+    }
+
+    state.sources.push(...ward.sources);
+    state.amount = poise.amount + ward.amount + pierceToHp + magicToHp;
+  },
+});
+
+function runProtectionPipeline(pipeline, state)
+{
+  const order = Array.isArray(pipeline?.order)
+    ? pipeline.order
+    : [];
+
+  for (const stageId of order)
+  {
+    const handler = PROTECTION_STAGE_HANDLERS[stageId];
+    if (handler)
+    {
+      handler(state, pipeline);
+    }
+  }
 }
 function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { roll = null, proposal = true, forecast = false } = {}) {
   const pierceOut = { spent: 0 };
@@ -467,175 +838,83 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
   const parts = packetHit ? PacketSplit({base,share,physicalBonus:ratingBonus,magicBonus:packetPower,magicMultiplier:packetMagicMultiplier,physicalMultiplier,total:incoming}) : splitContactParts({amount:incoming,base,ratingBonus,share,ratingPart:ratingId === 'pr' || share >= 1 ? 'magic' : 'physical',primary:share >= 1 ? 'magic' : 'physical'});
   let physical = modern ? parts.physical : incoming, magical = modern ? parts.magic : 0;
   let barrierMitigated = 0, pierceBypassed = 0, piercePoise = 0, magicPoise = 0, blockSpent = null, wardHpAbsorbed = 0;
-  // Ward health buffer: Block > Ward > Poise + HP.
+  // Mitigation pipeline configured by content/source/mechanics/protection.json.
   const wardHpMode = modern && FixCoreWardHpBuffer(ctx);
-  const wardHpPool = wardHpMode ? EffectiveWardHp(ctx, target) : 0;
-  const weaponPoiseRules = modern ? FixCoreWeaponPoiseRules(ctx) : null;
-  // Legacy Ward (owner, 2026-11-01 / 2026-11-15): saved fights without `routing: "hpBuffer"` route through Poise.
+  const wardHpPool = wardHpMode
+    ? EffectiveWardHp(ctx, target)
+    : 0;
+  const weaponPoiseRules = modern
+    ? FixCoreWeaponPoiseRules(ctx)
+    : null;
   const wardRouted = modern && !wardHpMode && (target?.statuses?.ward?.stacks || 0) > 0;
   const wardBlockFirst = wardRouted && FixCoreWardBlockFirst(ctx);
-  if (wardBlockFirst) {
-    const total = physical + magical;
-    const poisePool = Math.max(0, target?.persistentPoise?.value || 0);
-    const blockSoak = Math.min(effectiveBlockPool, total);
-    blockSpent = flatBlockBroken + blockSoak;
-    const bypassAmount = PierceBlockIgnored(ctx, target, carrier, profile, total, blockSoak, pierceOut);
-    pierceBypassed = Math.min(bypassAmount, blockSoak);
-    blocked = blockSoak - pierceBypassed;
-    const afterBlock = total - blocked;
-    // A Smash against a defensive stance has no absorption (its Poise loss is Poise damage, below).
-    const toPoise = smashRule ? 0 : Math.min(afterBlock, poisePool);
-    poiseDrain = smashRule && !evaded ? Math.min(poisePool, Math.floor(smashRule.poiseFraction * incoming)) : 0;
-    poiseMitigated = toPoise;
-    transition('block', 'Block', total, afterBlock, 'mitigation');
-    transition('ward-poise', 'Poise (Ward: absorbs the whole rest)', afterBlock, afterBlock - toPoise, 'mitigation');
-    amount = afterBlock - toPoise;
-  } else if (wardRouted) {
-    const total = physical + magical;
-    const poisePool = Math.max(0, target?.persistentPoise?.value || 0);
-    // A Smash against a defensive stance has no absorption (its Poise loss is Poise damage, below).
-    const toPoise = smashRule ? 0 : Math.min(total, poisePool);
-    const blockSoak = Math.min(effectiveBlockPool, total - toPoise);
-    blockSpent = flatBlockBroken + blockSoak;
-    const bypassAmount = PierceBlockIgnored(ctx, target, carrier, profile, total, blockSoak, pierceOut);
-    pierceBypassed = Math.min(bypassAmount, blockSoak);
-    blocked = blockSoak - pierceBypassed;
-    poiseDrain = smashRule && !evaded ? Math.min(poisePool, Math.floor(smashRule.poiseFraction * incoming)) : 0;
-    poiseMitigated = toPoise;
-    transition('ward-poise', 'Poise (Ward: all damage meets Poise first)', total, total - toPoise, 'mitigation');
-    transition('block', 'Block (after Poise)', total - toPoise, total - toPoise - blocked, 'mitigation');
-    amount = total - toPoise - blocked;
-  } else if (weaponPoiseRules) {
-    // JSON-configured weapon poise & stance-gated Poise mitigation:
-    // - After Block and Ward, Poise can mitigate the overflow while Countering, Preparing or Smashing.
-    // - Poise damage comes from the attacking weapon (1-3 base, +20% for sceptres/bows/staves, 1.25x Smash, 2x Smash vs Guarding), plus any card poiseDamage effects.
-    const total = physical + magical;
-    const blockSoak = Math.min(effectiveBlockPool, total);
-    blockSpent = flatBlockBroken + blockSoak;
-    const bypassAmount = PierceBlockIgnored(ctx, target, carrier, profile, total, blockSoak, pierceOut);
-    pierceBypassed = Math.min(bypassAmount, blockSoak);
-    blocked = blockSoak - pierceBypassed;
-    const afterBlock = total - blocked;
-    transition('block', 'Block', total, afterBlock, 'mitigation');
-    wardHpAbsorbed = Math.min(afterBlock, wardHpPool);
-    wardMitigated = wardHpAbsorbed;
-    const afterWard = afterBlock - wardHpAbsorbed;
-    transition('ward-hp', 'Ward (health buffer)', afterBlock, afterWard, 'mitigation');
 
-    const poisePool = Math.max(0, target?.persistentPoise?.value || 0);
-    if (afterWard > 0 && poisePool > 0 && StanceHasPoiseMitigation(weaponPoiseRules, defending)) {
-      poiseMitigated = Math.min(afterWard, Math.floor(poisePool * (weaponPoiseRules.mitigationPoiseFraction ?? 0.5)));
-      poiseMitigationCost = Math.min(poisePool, Math.floor(afterWard * (weaponPoiseRules.mitigationDrainDamageFraction ?? 0.5)) + (weaponPoiseRules.mitigationDrainFlat ?? 1));
-      transition('poise-mitigation', 'Poise reduction', afterWard, afterWard - poiseMitigated, 'mitigation');
-    } else {
-      poiseMitigationCost = 0;
-    }
-    amount = afterWard - poiseMitigated;
-    // Inherent Poise damage survives full Block in general. Active Ward
-    // shields Poise until some of the hit gets past the health buffer.
-    if (!evaded && !flatReturn && incoming > 0 && (wardHpPool === 0 || afterWard > 0)) {
-      weaponPoiseDamage = WeaponPoiseDamage(ctx, source, target, carrier, { attacking, defending, rules: weaponPoiseRules }).amount;
-      const remainingPoise = Math.max(0, poisePool - poiseMitigationCost);
-      poiseDrain = Math.min(remainingPoise, weaponPoiseDamage);
-    }
-  } else if (wardHpMode && wardHpPool > 0) {
-    const total = physical + magical;
-    const blockSoak = Math.min(effectiveBlockPool, total);
-    blockSpent = flatBlockBroken + blockSoak;
-    const bypassAmount = PierceBlockIgnored(ctx, target, carrier, profile, total, blockSoak, pierceOut);
-    pierceBypassed = Math.min(bypassAmount, blockSoak);
-    blocked = blockSoak - pierceBypassed;
-    const afterBlock = total - blocked;
-    transition('block', 'Block', total, afterBlock, 'mitigation');
-    wardHpAbsorbed = Math.min(afterBlock, wardHpPool);
-    wardMitigated = wardHpAbsorbed;
-    const afterWard = afterBlock - wardHpAbsorbed;
-    transition('ward-hp', 'Ward (health buffer)', afterBlock, afterWard, 'mitigation');
-    if (afterWard > 0) {
-      const remPhysical = Math.max(0, physical - blocked - wardHpAbsorbed);
-      const remMagical = Math.max(0, afterWard - remPhysical);
-      const poisePool = Math.max(0, target?.persistentPoise?.value || 0);
-      const forceShare = smashRule ? null : ForcePoiseShare(ctx, carrier);
-      const normalPoise = smashRule ? { amount: remPhysical, reduced: 0, sources: [] } : protectionReceipt(ctx, target, 'physical', remPhysical);
-      const poise = forceShare === null ? normalPoise : ForcePoiseReceipt(target, remPhysical, forceShare, normalPoise);
-      const poiseMeetsMagic = fixCoreWardDisabled(ctx);
-      magicPoise = poiseMeetsMagic && !smashRule ? Math.min(remMagical, Math.max(0, poisePool - poise.reduced)) : 0;
-      const magicToHp = remMagical - magicPoise;
-      poiseDrain = smashRule && !evaded ? Math.min(poisePool, Math.floor(smashRule.poiseFraction * afterWard)) : 0;
-      poiseMitigated = poise.reduced + magicPoise;
-      sources.push(...poise.sources);
-      if (magicPoise > 0) sources.push({ id: 'poise-magic', label: 'Poise meets the spell', amount: -magicPoise, requested: remMagical, effective: magicToHp, stage: 'mitigation', operation: 'add' });
-      amount = poise.amount + magicToHp;
-    } else {
-      amount = 0;
-    }
-  } else if (modern) {
-    // Owner: Block soaks the whole hit (physical first, then magic); the magic Block leaves meets Barrier, then Ward.
-    // Block is spent exactly as the same hit without pierce would spend it (so the invariant holds over a whole action). A pierce hit then
-    // lets up to floor(fraction x its damage) of what Block soaked go through instead (owner, 2026-10-26); a reaction carries none.
-    const blockPool = effectiveBlockPool;
-    // Owner, 2026-10-31: with Ward off, magic hits Poise FIRST (1:1) and then Block; physical keeps Block first, then Poise.
-    const poiseMeetsMagic = fixCoreWardDisabled(ctx);
-    const plainPhysicalBlocked = Math.min(blockPool,physical);
-    // Ward off: the magic part meets Poise before Block, so what Block soaks of it is decided after Poise (below); Ward on keeps Block-first.
-    // Block is spent as the same hit without pierce would spend it, so the Ward-off magic lane reads the non-piercing resolution
-    // (physical Block, physical Poise, magic Poise, then magic Block), never the pool a pierce left.
-    let plainMagicBlocked;
-    if (poiseMeetsMagic) {
-      const poisePoolFull = Math.max(0,target?.persistentPoise?.value || 0);
-      const plainPoise = smashRule ? {reduced:0} : protectionReceipt(ctx,target,'physical',physical-plainPhysicalBlocked);
-      const plainMagicPoise = smashRule ? 0 : Math.min(magical,Math.max(0,poisePoolFull-plainPoise.reduced));
-      plainMagicBlocked = Math.min(blockPool-plainPhysicalBlocked,magical-plainMagicPoise);
-    } else plainMagicBlocked = Math.min(blockPool-plainPhysicalBlocked,magical);
-    const plainSoaked = plainPhysicalBlocked+plainMagicBlocked;
-    blockSpent = flatBlockBroken + plainSoaked;
-    const bypassAmount = PierceBlockIgnored(ctx,target,carrier,profile,physical+magical, plainSoaked, pierceOut);
-    pierceBypassed = Math.min(bypassAmount,plainSoaked);
-    const piercedPhysicalPart = Math.min(pierceBypassed,plainPhysicalBlocked);
-    const physicalBlocked = plainPhysicalBlocked-piercedPhysicalPart;
-    const magicBypass = pierceBypassed-piercedPhysicalPart;
-    let magicBlocked = plainMagicBlocked-magicBypass;
-    // Saved fraction-based Pierce keeps its 1:1 Poise absorption (owner, 2026-10-26). Stack-based Pierce adds no special Poise damage:
-    // everything Block leaves uses the ordinary split, including Force's half-Poise share (owner, 2026-11-18).
-    const poisePool = Math.max(0,target?.persistentPoise?.value || 0);
-    // A Smash against a defensive stance has no absorption, so its pierced part gets none either.
-    const stackPierce = fixCorePierceRules(fixCoreRules(ctx,target)).blockIgnoredPerStack > 0;
-    const piercePhysical = smashRule || stackPierce ? 0 : piercedPhysicalPart;
-    piercePoise = Math.min(piercePhysical,poisePool);
-    const pierceToHp = piercePhysical-piercePoise;
-    const afterPierce = piercePoise > 0 ? {...target,persistentPoise:{...target.persistentPoise,value:poisePool-piercePoise}} : target;
-    const poiseIn = physical-piercePhysical-physicalBlocked;
-    // Smash vs a defensive stance: no 25% absorption; the pool instead loses a share of the whole hit (capped at what it holds).
-    // Owner, 2026-11-18: a Force hit sends `elements.force.poiseShare` (half) of what Block left to Poise, the rest to HP, in place of the usual 25%.
-    const forceShare = smashRule ? null : ForcePoiseShare(ctx,carrier);
-    const normalPoise = smashRule ? {amount:poiseIn,reduced:0,sources:[]} : protectionReceipt(ctx,afterPierce,'physical',poiseIn);
-    const poise = forceShare === null ? normalPoise : ForcePoiseReceipt(afterPierce,poiseIn,forceShare,normalPoise);
-    // Magic after the physical part: Poise first (1:1, the pool the physical part left), then the Block the physical part left, then Barrier, then HP.
-    magicPoise = poiseMeetsMagic && !smashRule ? Math.min(magical,Math.max(0,poisePool-piercePoise-poise.reduced)) : 0;
-    const magicAfterPoise = magical-magicPoise;
-    // What Poise left of the magic part meets the Block the plan set aside for it; Block itself is spent as planned (blockSpent).
-    if (poiseMeetsMagic) magicBlocked = Math.min(magicBlocked,magicAfterPoise);
-    blocked = physicalBlocked+magicBlocked;
-    const magicAfterBlock = magicAfterPoise-magicBlocked;
-    barrierMitigated = 0;
-    const magicToHp = poiseMeetsMagic ? magicAfterBlock-barrierMitigated : 0;
-    const ward = protectionReceipt(ctx,target,'magical',poiseMeetsMagic ? 0 : magicAfterBlock-barrierMitigated);
-    // Smash vs a defensive stance: the pool's loss is Poise damage, not absorption, so poiseMitigated (and the log's "absorbed") stay 0.
-    poiseDrain=smashRule && !evaded ? Math.min(poisePool-piercePoise,Math.floor(smashRule.poiseFraction*incoming)) : 0;
-    poiseMitigated=poise.reduced+piercePoise+magicPoise;wardMitigated=ward.reduced;
-    if (poiseMeetsMagic) {
-      transition('block','Block',physical,physical-physicalBlocked,'mitigation');
-      sources.push(...poise.sources);
-      if (magicPoise > 0) sources.push({id:'poise-magic',label:'Poise meets the spell',amount:-magicPoise,requested:magical,effective:magicAfterPoise,stage:'mitigation',operation:'add'});
-      if (magicBlocked > 0) sources.push({id:'block-magic',label:'Block (after Poise)',amount:-magicBlocked,requested:magicAfterPoise,effective:magicAfterBlock,stage:'mitigation',operation:'add'});
-      transition('barrier','Bonus Poise',magicAfterBlock,magicAfterBlock-barrierMitigated,'mitigation');
-    } else {
-      transition('block','Block',physical+magical,physical+magical-blocked,'mitigation');
-      transition('barrier','Bonus Poise',magicAfterBlock,magicAfterBlock-barrierMitigated,'mitigation');
-      sources.push(...poise.sources);
-    }
-    sources.push(...ward.sources);
-    amount=poise.amount+ward.amount+pierceToHp+magicToHp;
+  const pipelineId = selectProtectionPipelineId({
+    isModern: modern,
+    wardBlockFirst,
+    wardRouted,
+    weaponPoiseRules,
+    wardHpMode,
+    wardHpPool,
+  });
+  const activePipeline = EffectiveProtectionPipeline(pipelineId, ctx);
+
+  if (activePipeline)
+  {
+    const mitigationState = {
+      context: ctx,
+      source,
+      target,
+      carrier,
+      profile,
+      sources,
+      transition,
+      pierceOut,
+      smashRule,
+      weaponPoiseRules,
+      attacking,
+      defending,
+      evaded,
+      flatReturn,
+      incoming,
+      physical,
+      magical,
+      totalIncoming: physical + magical,
+      amount: physical + magical,
+      effectiveBlockPool,
+      flatBlockBroken,
+      wardHpPool,
+      blocked,
+      blockSpent,
+      pierceBypassed,
+      piercePoise,
+      magicPoise,
+      barrierMitigated,
+      wardMitigated,
+      wardHpAbsorbed,
+      poiseMitigated,
+      poiseDrain,
+      poiseMitigationCost,
+      weaponPoiseDamage,
+      wardPoiseRan: false,
+      amountAfterWard: null,
+    };
+
+    runProtectionPipeline(activePipeline, mitigationState);
+
+    amount = mitigationState.amount;
+    blocked = mitigationState.blocked;
+    blockSpent = mitigationState.blockSpent;
+    pierceBypassed = mitigationState.pierceBypassed;
+    piercePoise = mitigationState.piercePoise;
+    magicPoise = mitigationState.magicPoise;
+    barrierMitigated = mitigationState.barrierMitigated;
+    wardMitigated = mitigationState.wardMitigated;
+    wardHpAbsorbed = mitigationState.wardHpAbsorbed;
+    poiseMitigated = mitigationState.poiseMitigated;
+    poiseDrain = mitigationState.poiseDrain;
+    poiseMitigationCost = mitigationState.poiseMitigationCost;
+    weaponPoiseDamage = mitigationState.weaponPoiseDamage;
   }
   for (const stage of fixCoreEnabled(ctx) ? [] : defenses?.order || []) {
     if (!defenses.include?.includes(stage)) continue;
@@ -719,71 +998,21 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
     interrupted: isInterrupted,
   };
 
-  if (pierceOut.spent > 0)
-  {
-    result.skinSpent = pierceOut.spent;
-  }
-
-  if (element)
-  {
-    result.element = {
-      id: element.element,
-      heal: element.heal,
-    };
-  }
-
-  if (reflect)
-  {
-    result.reflect = reflect;
-  }
-
-  if (wardHpMode && wardHpAbsorbed > 0)
-  {
-    result.wardHpBuffer = true;
-    result.wardHpAbsorbed = wardHpAbsorbed;
-  }
-
-  if (wardRouted)
-  {
-    result.wardRouted = true;
-  }
-
-  if (wardBlockFirst)
-  {
-    result.wardBlockFirst = true;
-  }
-
-  if (poiseMitigationCost !== undefined)
-  {
-    result.poiseMitigationCost = poiseMitigationCost;
-  }
-
-  if (weaponPoiseDamage > 0)
-  {
-    result.weaponPoiseDamage = weaponPoiseDamage;
-  }
-
-  if (poiseSpared)
-  {
-    result.poiseSpared = poiseSpared;
-  }
-
-  if (broken)
-  {
-    result.broken = broken;
-  }
-
-  if (flatBlockBroken > 0)
-  {
-    result.blockBrokenFlat = flatBlockBroken;
-  }
-
-  if (smashRule)
-  {
-    result.smashVsDefensive = { poiseDamage: poiseDrain };
-  }
-
-  return result;
+  return attachOptionalFields(result, [
+    [pierceOut.spent > 0, 'skinSpent', pierceOut.spent],
+    [Boolean(element), 'element', element ? { id: element.element, heal: element.heal } : null],
+    [Boolean(reflect), 'reflect', reflect],
+    [wardHpMode && wardHpAbsorbed > 0, 'wardHpBuffer', true],
+    [wardHpMode && wardHpAbsorbed > 0, 'wardHpAbsorbed', wardHpAbsorbed],
+    [wardRouted, 'wardRouted', true],
+    [wardBlockFirst, 'wardBlockFirst', true],
+    [poiseMitigationCost !== undefined, 'poiseMitigationCost', poiseMitigationCost],
+    [weaponPoiseDamage > 0, 'weaponPoiseDamage', weaponPoiseDamage],
+    [Boolean(poiseSpared), 'poiseSpared', poiseSpared],
+    [Boolean(broken), 'broken', broken],
+    [flatBlockBroken > 0, 'blockBrokenFlat', flatBlockBroken],
+    [Boolean(smashRule), 'smashVsDefensive', { poiseDamage: poiseDrain }],
+  ]);
 }
 export function profileCardCosts(ctx, def) {
   const resources = configuredModule(ctx, 'resources');

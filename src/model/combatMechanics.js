@@ -190,3 +190,35 @@ export function EffectivePoiseBreakAmount(carrier, context = null)
     ? Math.floor(explicitAmount)
     : 0;
 }
+
+/**
+ * Resolved protection pipeline config (`protection` -> `protection.<mode>`).
+ * Returns null when disabled via `protection.enabled === false` or the child's `enabled === false`.
+ * Falls back to compiled defaults when a partial custom mechanics table omits `protection`.
+ */
+export function EffectiveProtectionPipeline(pipelineId, context = null)
+{
+  if (!pipelineId)
+  {
+    return null;
+  }
+
+  const pipelineRule = MechanicRule(pipelineId, context);
+  if (pipelineRule)
+  {
+    return pipelineRule.enabled === false
+      ? null
+      : pipelineRule;
+  }
+
+  const parentRule = MechanicRule('protection', context);
+  if (parentRule && parentRule.enabled === false)
+  {
+    return null;
+  }
+
+  const defaultRule = GENERATED_MECHANICS?.resolved?.[pipelineId] || null;
+  return defaultRule && defaultRule.enabled !== false
+    ? defaultRule
+    : null;
+}

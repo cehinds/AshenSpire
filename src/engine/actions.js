@@ -410,9 +410,24 @@ function applyWeaknessEffects(ctx, source, target, receipt) {
   }
 }
 
+function attachOptionalFields(targetObject, fieldEntries)
+{
+  for (const [shouldInclude, key, value] of fieldEntries)
+  {
+    if (shouldInclude)
+    {
+      targetObject[key] = value;
+    }
+  }
+
+  return targetObject;
+}
+
 function buildDamageDealtEvent(source, target, receipt, carrier, hpBefore)
 {
   const hpRemoved = Math.max(0, Math.min(receipt.hpLoss, hpBefore));
+  const hasCardInstance = Boolean(carrier.instanceId);
+  const hasUsedArmament = hasCardInstance && Object.hasOwn(carrier, 'usedArmamentId');
 
   const damageEvent = {
     sourceId: source?.id || null,
@@ -433,72 +448,25 @@ function buildDamageDealtEvent(source, target, receipt, carrier, hpBefore)
     isAttack: true,
   };
 
-  if (carrier.instanceId)
-  {
-    damageEvent.cardInstanceId = carrier.instanceId;
-    damageEvent.sourceHand = carrier.sourceHand;
-    damageEvent.grantedBy = carrier.grantedBy;
-
-    if (Object.hasOwn(carrier, 'usedArmamentId'))
-    {
-      damageEvent.usedArmamentId = carrier.usedArmamentId;
-    }
-  }
-
-  if (target.broken)
-  {
-    damageEvent.targetBroken = true;
-  }
-
-  if (receipt.wardHpAbsorbed)
-  {
-    damageEvent.wardAbsorbed = receipt.wardHpAbsorbed;
-    damageEvent.wardHpBuffer = true;
-    damageEvent.wardHpRemaining = target.wardHp || 0;
-  }
-
-  if (receipt.wardRouted)
-  {
-    damageEvent.wardRouted = true;
-  }
-
-  if (receipt.wardBlockFirst)
-  {
-    damageEvent.wardBlockFirst = true;
-  }
-
-  if (receipt.pierceBypassed)
-  {
-    damageEvent.pierced = receipt.pierceBypassed;
-    damageEvent.piercePoise = receipt.piercePoise;
-  }
-
-  if (receipt.magicPoise)
-  {
-    damageEvent.magicPoise = receipt.magicPoise;
-  }
-
-  if (receipt.poiseDrain)
-  {
-    damageEvent.poiseDamage = receipt.poiseDrain;
-  }
-
-  if (receipt.broken?.block)
-  {
-    damageEvent.blockBroken = receipt.broken.block;
-  }
-
-  if (receipt.broken?.poise)
-  {
-    damageEvent.poiseBroken = receipt.broken.poise;
-  }
-
-  if (receipt.weaknesses?.length)
-  {
-    damageEvent.weaknesses = receipt.weaknesses;
-  }
-
-  return damageEvent;
+  return attachOptionalFields(damageEvent, [
+    [hasCardInstance, 'cardInstanceId', carrier.instanceId],
+    [hasCardInstance, 'sourceHand', carrier.sourceHand],
+    [hasCardInstance, 'grantedBy', carrier.grantedBy],
+    [hasUsedArmament, 'usedArmamentId', carrier.usedArmamentId],
+    [Boolean(target.broken), 'targetBroken', true],
+    [Boolean(receipt.wardHpAbsorbed), 'wardAbsorbed', receipt.wardHpAbsorbed],
+    [Boolean(receipt.wardHpAbsorbed), 'wardHpBuffer', true],
+    [Boolean(receipt.wardHpAbsorbed), 'wardHpRemaining', target.wardHp || 0],
+    [Boolean(receipt.wardRouted), 'wardRouted', true],
+    [Boolean(receipt.wardBlockFirst), 'wardBlockFirst', true],
+    [Boolean(receipt.pierceBypassed), 'pierced', receipt.pierceBypassed],
+    [Boolean(receipt.pierceBypassed), 'piercePoise', receipt.piercePoise],
+    [Boolean(receipt.magicPoise), 'magicPoise', receipt.magicPoise],
+    [Boolean(receipt.poiseDrain), 'poiseDamage', receipt.poiseDrain],
+    [Boolean(receipt.broken?.block), 'blockBroken', receipt.broken?.block],
+    [Boolean(receipt.broken?.poise), 'poiseBroken', receipt.broken?.poise],
+    [Boolean(receipt.weaknesses?.length), 'weaknesses', receipt.weaknesses],
+  ]);
 }
 
 function attachFlatBreakToCarrier(carrier, effect, hitIndex)
