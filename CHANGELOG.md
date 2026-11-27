@@ -32,9 +32,13 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-11-27
+
+- **Score Studio keeps the library, card preview and editor together** ([#3008](https://github.com/cehinds/AshenSpire/pull/3008), `0.7.5.134`). The customization pane now shows the selected card's name, preview and what an edit will change in every view, Edit and deck-list rows open the card's properties in place instead of a dialog, an empty state replaces stale content when no card is selected, and narrow screens get a Library / Card switch. The resize handle works with Home, End and arrow keys.
+- **Faster card checks** ([#3009](https://github.com/cehinds/AshenSpire/pull/3009), `0.7.5.134`). Avoid unused authored tag lookups when cards already have resolved tags, while preserving card identity and validation.
+
 ## 2026-11-26
 
-- **Score Studio keeps the library, card preview and editor together** ([#3008](https://github.com/cehinds/AshenSpire/pull/3008), `0.7.5.132`). The customization pane now shows the selected card's name, preview and what an edit will change in every view, Edit and deck-list rows open the card's properties in place instead of a dialog, an empty state replaces stale content when no card is selected, and narrow screens get a Library / Card switch. The resize handle works with Home, End and arrow keys.
 - **Score Studio implementation reference and first workspace story** ([#3006](https://github.com/cehinds/AshenSpire/pull/3006), `0.7.5.132`). The project guide links the prioritized Score Studio plan, complete feature checklist and use cases. The first persistent library, preview and inspector task has a user story, acceptance criteria and implementation checklist. This adds a shared reference; the proposed UI features are not implemented by this change.
 - **One editor tool specification** ([#3004](https://github.com/cehinds/AshenSpire/pull/3004), `0.7.5.130`). The editor requirements now share one specification for a dockable workbench, reusable UI and JSON contracts, contextual tools and real-game acceptance. The superseded generator plan is removed after preserving its requirements; existing operating and scoring guides remain supporting references. This documents future work and does not implement the editor.
 - **Reliable content checks and saved-run continuity** ([#3003](https://github.com/cehinds/AshenSpire/pull/3003), `0.7.5.130`). Development tests follow authored decks, weights, items and prices while testing mechanics with controlled examples. Keep verified older saves readable after profile regeneration, enforce export naming, and let stance breaks read each enemy's own level moves. Reuse upgrade calculations within one operation, preserve saved-profile metadata, and keep packed content compact and independent of module entry order.
