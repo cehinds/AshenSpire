@@ -3,57 +3,98 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { withKitDom } from './helpers/dom.mjs';
 import {
-  WORKING_CONTEXT_KEY, createActiveEntities, nextInDisplayedOrder, createEditBursts,
-  readWorkingContext, writeWorkingContext, resolveWorkingContext, captureTileFocus, restoreTileFocus,
+  GalleryKind,
+  TileIdAttribute,
+  WORKING_CONTEXT_KEY,
+  createActiveEntities,
+  nextInDisplayedOrder,
+  createEditBursts,
+  readWorkingContext,
+  writeWorkingContext,
+  resolveWorkingContext,
+  captureTileFocus,
+  restoreTileFocus,
 } from '../tools/score-studio/workingContext.js';
 
-const studioState = () => ({
-  cards: [{ id: 'a', name: 'Alpha' }, { id: 'b', name: 'Beta' }, { id: 'c', name: 'Gamma' }],
-  items: [{ key: 'weapon:one' }, { key: 'weapon:two' }],
-  selectedCardId: null, selectedItemKey: null,
-});
+const UNKNOWN_KIND = 'decks';
+const CARD_TILE_ATTRIBUTE = TileIdAttribute[GalleryKind.Cards];
+const CARD_GRID_ID = 'cards-grid';
+const CARD_SEARCH_ID = 'card-search';
+const CARD_TILE_CLASS = 'studio-card-tile';
+const EDIT_BUTTON_CLASS = 'card-editor-edit-button';
 
-test('one setter per kind writes the active entity and reports each real change once', () => {
-  const state = studioState(), changes = [];
+function studioState()
+{
+  return {
+    cards: [
+      { id: 'a', name: 'Alpha' },
+      { id: 'b', name: 'Beta' },
+      { id: 'c', name: 'Gamma' },
+    ],
+    items: [{ key: 'weapon:one' }, { key: 'weapon:two' }],
+    selectedCardId: null,
+    selectedItemKey: null,
+  };
+}
+
+// Timers run only when a test calls them, so a burst's pause is under the test's control.
+function manualTimers()
+{
+  const pending = [];
+  function setTimer(callback)
+  {
+    pending.push(callback);
+    return pending.length;
+  }
+  return { pending, setTimer, clearTimer: () => {} };
+}
+
+test('one setter per kind writes the active entity and reports each real change once', () =>
+{
+  const state = studioState();
+  const changes = [];
   const active = createActiveEntities({ state, onChange: (kind, id) => changes.push([kind, id]) });
-  assert.deepEqual(active.set('cards', 'b'), { id: 'b', changed: true });
-  assert.deepEqual(active.set('cards', 'b'), { id: 'b', changed: false });
-  active.set('items', 'weapon:two');
+  assert.deepEqual(active.set(GalleryKind.Cards, 'b'), { id: 'b', changed: true });
+  assert.deepEqual(active.set(GalleryKind.Cards, 'b'), { id: 'b', changed: false });
+  active.set(GalleryKind.Items, 'weapon:two');
   assert.equal(state.selectedCardId, 'b');
   assert.equal(state.selectedItemKey, 'weapon:two');
-  assert.deepEqual(changes, [['cards', 'b'], ['items', 'weapon:two']]);
-  assert.throws(() => active.set('decks', 'x'), /Unknown entity kind/);
+  assert.deepEqual(changes, [[GalleryKind.Cards, 'b'], [GalleryKind.Items, 'weapon:two']]);
+  assert.throws(() => active.set(UNKNOWN_KIND, 'x'), /Unknown entity kind/);
 });
 
-test('a removed or unknown entity clears to the empty state, never the first card', () => {
+test('a removed or unknown entity clears to the empty state, never the first card', () =>
+{
   const state = studioState();
   const active = createActiveEntities({ state });
-  active.set('cards', 'c');
-  assert.deepEqual(active.set('cards', 'missing'), { id: null, changed: true });
+  active.set(GalleryKind.Cards, 'c');
+  assert.deepEqual(active.set(GalleryKind.Cards, 'missing'), { id: null, changed: true });
   assert.equal(state.selectedCardId, null, 'an unknown id is not replaced by the first card');
-  active.set('cards', 'c');
+  active.set(GalleryKind.Cards, 'c');
   // Undo of New, Revert or an import that drops the card: content changes, then reconcile.
   state.cards = state.cards.filter(card => card.id !== 'c');
   active.reconcile();
   assert.equal(state.selectedCardId, null);
-  // A still-valid entity is kept through a content change.
-  active.set('cards', 'b');
+  active.set(GalleryKind.Cards, 'b');
   state.cards = [...state.cards];
   active.reconcile();
   assert.equal(state.selectedCardId, 'b');
 });
 
-test('an out-of-band write is reconciled through the setter and still counts as a change', () => {
-  const state = studioState(), changes = [];
+test('an out-of-band write is reconciled through the setter and still counts as a change', () =>
+{
+  const state = studioState();
+  const changes = [];
   const active = createActiveEntities({ state, onChange: kind => changes.push(kind) });
-  active.set('cards', 'a');
+  active.set(GalleryKind.Cards, 'a');
   state.selectedCardId = 'b';
   active.reconcile();
   assert.equal(state.selectedCardId, 'b');
-  assert.deepEqual(changes, ['cards', 'cards', 'items']);
+  assert.deepEqual(changes, [GalleryKind.Cards, GalleryKind.Cards, GalleryKind.Items]);
 });
 
-test('Delete selects the next entity in displayed order, else the previous one, else none', () => {
+test('Delete selects the next entity in displayed order, else the previous one, else none', () =>
+{
   assert.equal(nextInDisplayedOrder(['a', 'b', 'c'], 'b'), 'c');
   assert.equal(nextInDisplayedOrder(['a', 'b', 'c'], 'c'), 'b');
   assert.equal(nextInDisplayedOrder(['b'], 'b'), null);
@@ -64,117 +105,182 @@ test('Delete selects the next entity in displayed order, else the previous one, 
   assert.equal(nextInDisplayedOrder([], 'z', []), null);
 });
 
-test('an entity change ends every open edit burst, so one Undo never spans two cards', () => {
-  const history = [], timers = [];
-  const bursts = createEditBursts({ pushHistory: () => history.push(history.length), setTimer: fn => { timers.push(fn); return timers.length; }, clearTimer: () => {} });
-  const name = bursts.create(), cost = bursts.create();
-  name.begin(); name.begin(); cost.begin();
+test('an entity change ends every open edit burst, so one Undo never spans two cards', () =>
+{
+  const history = [];
+  const { setTimer, clearTimer } = manualTimers();
+  const bursts = createEditBursts({ pushHistory: () => history.push(history.length), setTimer, clearTimer });
+  const nameBurst = bursts.create();
+  const costBurst = bursts.create();
+  nameBurst.begin();
+  nameBurst.begin();
+  costBurst.begin();
   assert.equal(history.length, 2, 'one undo step per burst');
   assert.equal(bursts.openCount(), 2);
   bursts.endAll();
   assert.equal(bursts.openCount(), 0);
-  name.begin();
+  nameBurst.begin();
   assert.equal(history.length, 3, 'typing after the entity change records a new undo step');
-  name.end();
-  assert.equal(name.isOpen(), false);
+  nameBurst.end();
+  assert.equal(nameBurst.isOpen(), false);
 });
 
-test('a burst still closes on its own after the pause', () => {
-  const history = [], timers = [];
-  const bursts = createEditBursts({ pushHistory: () => history.push(1), setTimer: fn => { timers.push(fn); return timers.length; }, clearTimer: () => {} });
+test('a burst still closes on its own after the pause', () =>
+{
+  const history = [];
+  const { pending, setTimer, clearTimer } = manualTimers();
+  const bursts = createEditBursts({ pushHistory: () => history.push(1), setTimer, clearTimer });
   const burst = bursts.create();
   burst.begin();
-  timers.at(-1)();
+  pending.at(-1)();
   burst.begin();
   assert.equal(history.length, 2);
 });
 
-test('reload restore keeps view state under its own key and falls back when a stored id is gone', () => {
+test('reload restore keeps view state under its own key and falls back when a stored id is gone', () =>
+{
   const stored = new Map();
-  const storage = { getItem: key => stored.get(key) ?? null, setItem: (key, value) => stored.set(key, value) };
-  writeWorkingContext(storage, { gallery: 'items', cardId: 'c', itemKey: 'weapon:two' });
+  const storage = {
+    getItem: key => stored.get(key) ?? null,
+    setItem: (key, value) => stored.set(key, value),
+  };
+  const savedContext = { gallery: GalleryKind.Items, cardId: 'c', itemKey: 'weapon:two' };
+  const defaults = { cardId: 'a', itemKey: 'weapon:one' };
+  writeWorkingContext(storage, savedContext);
   assert.deepEqual([...stored.keys()], [WORKING_CONTEXT_KEY]);
   assert.ok(!WORKING_CONTEXT_KEY.includes('Draft'), 'view state is not stored with the draft');
   const saved = readWorkingContext(storage);
-  assert.deepEqual(saved, { gallery: 'items', cardId: 'c', itemKey: 'weapon:two' });
+  assert.deepEqual(saved, savedContext);
   const state = studioState();
-  assert.deepEqual(resolveWorkingContext(saved, state, { cardId: 'a', itemKey: 'weapon:one' }), { gallery: 'items', cardId: 'c', itemKey: 'weapon:two' });
+  assert.deepEqual(resolveWorkingContext(saved, state, defaults), savedContext);
   // The stored card was deleted: the existing default returns without error.
   state.cards = state.cards.filter(card => card.id !== 'c');
-  assert.deepEqual(resolveWorkingContext(saved, state, { cardId: 'a', itemKey: 'weapon:one' }), { gallery: 'items', cardId: 'a', itemKey: 'weapon:two' });
-  assert.deepEqual(resolveWorkingContext({ gallery: 'weights', cardId: 42 }, state, { cardId: 'a' }), { gallery: 'cards', cardId: 'a', itemKey: null });
+  assert.deepEqual(
+    resolveWorkingContext(saved, state, defaults),
+    { gallery: GalleryKind.Items, cardId: 'a', itemKey: 'weapon:two' },
+  );
+  assert.deepEqual(
+    resolveWorkingContext({ gallery: 'weights', cardId: 42 }, state, { cardId: 'a' }),
+    { gallery: GalleryKind.Cards, cardId: 'a', itemKey: null },
+  );
   stored.set(WORKING_CONTEXT_KEY, '{not json');
   assert.equal(readWorkingContext(storage), null);
-  assert.equal(readWorkingContext({ getItem: () => { throw new Error('blocked'); } }), null);
-  assert.doesNotThrow(() => writeWorkingContext({ setItem: () => { throw new Error('full'); } }, { gallery: 'cards' }));
+  const blockedStorage = {
+    getItem: () =>
+    {
+      throw new Error('blocked');
+    },
+  };
+  assert.equal(readWorkingContext(blockedStorage), null);
+  const fullStorage = {
+    setItem: () =>
+    {
+      throw new Error('full');
+    },
+  };
+  assert.doesNotThrow(() => writeWorkingContext(fullStorage, { gallery: GalleryKind.Cards }));
 });
 
-function galleryFixture(dom) {
+function galleryFixture(dom)
+{
   const { document: doc } = dom;
-  doc.body.innerHTML = '<input id="card-search"><div id="cards-grid"></div>';
-  const grid = doc.getElementById('cards-grid');
-  const render = ids => {
+  doc.body.innerHTML = `<input id="${CARD_SEARCH_ID}"><div id="${CARD_GRID_ID}"></div>`;
+  const grid = doc.getElementById(CARD_GRID_ID);
+  function render(ids)
+  {
     grid.replaceChildren();
-    for (const id of ids) {
-      const tile = doc.createElement('div'); tile.className = 'studio-card-tile'; tile.dataset.cardId = id; tile.tabIndex = 0;
-      const edit = doc.createElement('button'); edit.className = 'card-editor-edit-button';
-      tile.append(edit); grid.append(tile);
+    for (const id of ids)
+    {
+      const tile = doc.createElement('div');
+      tile.className = CARD_TILE_CLASS;
+      tile.dataset.cardId = id;
+      tile.tabIndex = 0;
+      const editButton = doc.createElement('button');
+      editButton.className = EDIT_BUTTON_CLASS;
+      tile.append(editButton);
+      grid.append(tile);
     }
-  };
-  const tile = id => grid.querySelectorAll('.studio-card-tile').find(node => node.dataset.cardId === id);
-  return { doc, grid, render, tile };
+  }
+  function tile(id)
+  {
+    return grid.querySelectorAll(`.${CARD_TILE_CLASS}`).find(node => node.dataset.cardId === id);
+  }
+  const search = () => doc.getElementById(CARD_SEARCH_ID);
+  return { doc, grid, render, tile, search };
 }
 
-test('a gallery re-render keeps focus on the tile with the same id', () => withKitDom(dom => {
-  const { doc, grid, render, tile } = galleryFixture(dom);
+test('a gallery re-render keeps focus on the tile with the same id', () => withKitDom(dom =>
+{
+  const { doc, grid, render, tile, search } = galleryFixture(dom);
   render(['a', 'b', 'c']);
   tile('b').focus();
-  const captured = captureTileFocus(grid, 'card-id', doc);
+  const captured = captureTileFocus(grid, CARD_TILE_ATTRIBUTE, doc);
   assert.deepEqual(captured, { id: 'b', part: null });
   render(['a', 'b', 'c']);
   assert.notEqual(doc.activeElement, tile('b'), 'the rebuild destroyed the focused tile');
-  restoreTileFocus(grid, 'card-id', captured, doc.getElementById('card-search'), doc);
+  restoreTileFocus(grid, CARD_TILE_ATTRIBUTE, captured, search(), doc);
   assert.equal(doc.activeElement, tile('b'));
 }));
 
-test('focus inside a tile returns to the same part; a removed tile moves focus to a named control', () => withKitDom(dom => {
-  const { doc, grid, render, tile } = galleryFixture(dom);
+test('focus inside a tile returns to the same part; a removed tile moves focus to a named control', () => withKitDom(dom =>
+{
+  const { doc, grid, render, tile, search } = galleryFixture(dom);
+  const editButtonOf = id => tile(id).querySelector(`.${EDIT_BUTTON_CLASS}`);
   render(['a', 'b']);
-  tile('a').querySelector('.card-editor-edit-button').focus();
-  let captured = captureTileFocus(grid, 'card-id', doc);
-  assert.deepEqual(captured, { id: 'a', part: '.card-editor-edit-button' });
+  editButtonOf('a').focus();
+  let captured = captureTileFocus(grid, CARD_TILE_ATTRIBUTE, doc);
+  assert.deepEqual(captured, { id: 'a', part: `.${EDIT_BUTTON_CLASS}` });
   render(['a', 'b']);
-  restoreTileFocus(grid, 'card-id', captured, doc.getElementById('card-search'), doc);
-  assert.equal(doc.activeElement, tile('a').querySelector('.card-editor-edit-button'));
+  restoreTileFocus(grid, CARD_TILE_ATTRIBUTE, captured, search(), doc);
+  assert.equal(doc.activeElement, editButtonOf('a'));
   tile('b').focus();
-  captured = captureTileFocus(grid, 'card-id', doc);
+  captured = captureTileFocus(grid, CARD_TILE_ATTRIBUTE, doc);
   render(['a']);
-  restoreTileFocus(grid, 'card-id', captured, doc.getElementById('card-search'), doc);
-  assert.equal(doc.activeElement, doc.getElementById('card-search'), 'focus never drops to the page body');
+  restoreTileFocus(grid, CARD_TILE_ATTRIBUTE, captured, search(), doc);
+  assert.equal(doc.activeElement, search(), 'focus never drops to the page body');
   // Focus outside the gallery is left alone.
-  doc.getElementById('card-search').focus();
-  assert.equal(captureTileFocus(grid, 'card-id', doc), null);
+  search().focus();
+  assert.equal(captureTileFocus(grid, CARD_TILE_ATTRIBUTE, doc), null);
 }));
 
 // Static routing checks on the composition root: studio.js boots the page on import, so these read its source.
-const source = name => readFileSync(new URL(`../tools/score-studio/${name}`, import.meta.url), 'utf8');
-const body = (src, name) => {
+function source(name)
+{
+  return readFileSync(new URL(`../tools/score-studio/${name}`, import.meta.url), 'utf8');
+}
+
+function body(src, name)
+{
   const start = src.indexOf(`function ${name}(`);
   assert.ok(start >= 0, `${name} exists`);
-  const next = src.indexOf('\nfunction ', start + 1), nextAsync = src.indexOf('\nasync function ', start + 1);
-  return src.slice(start, Math.min(...[next, nextAsync, src.length].filter(at => at > start)));
-};
+  const nextFunction = src.indexOf('\nfunction ', start + 1);
+  const nextAsyncFunction = src.indexOf('\nasync function ', start + 1);
+  const ends = [nextFunction, nextAsyncFunction, src.length].filter(index => index > start);
+  return src.slice(start, Math.min(...ends));
+}
 
-test('every writer of the active card and item goes through the two setters', () => {
+test('every writer of the active card and item goes through the two setters', () =>
+{
   const writes = /state\.selected(CardId|ItemKey)\s*=(?!=)/;
-  for (const file of ['studio.js', 'studioToolsModal.js', 'subclassCatalog.js', 'cardSelection.js', 'deckListPanel.js']) {
+  const writerFiles = [
+    'studio.js',
+    'studioToolsModal.js',
+    'subclassCatalog.js',
+    'cardSelection.js',
+    'deckListPanel.js',
+  ];
+  for (const file of writerFiles)
+  {
     assert.doesNotMatch(source(file), writes, `${file} writes the active entity only through the setters`);
   }
   const studio = source('studio.js');
   assert.equal(studio.match(/state\.artTarget\s*=(?!=)/g)?.length, 1, 'artTarget is set in one place, with activeGallery and the dock context');
   assert.match(body(studio, 'selectStudioCard'), /activeEntities\.set\('cards'/);
   assert.match(body(studio, 'selectStudioItem'), /activeEntities\.set\('items'/);
-  for (const name of ['selectStudioCard', 'selectStudioItem']) assert.doesNotMatch(body(studio, name), /syncAllViews/, `${name} never rebuilds every view`);
+  for (const name of ['selectStudioCard', 'selectStudioItem'])
+  {
+    assert.doesNotMatch(body(studio, name), /syncAllViews/, `${name} never rebuilds every view`);
+  }
   assert.match(body(studio, 'syncAllViews'), /activeEntities\.reconcile\(\)/, 'content changes reconcile through the setters');
   // The Design picker and target route through the setter and the gallery tabs.
   assert.match(studio, /art-preview-card-select'\)\.addEventListener\('change'[\s\S]{0,200}selectStudio(Item|Card)\(e\.target\.value/);
@@ -184,20 +290,34 @@ test('every writer of the active card and item goes through the two setters', ()
   assert.match(source('subclassCatalog.js'), /ctx\.selectCard\(list\.cardIds\[0\]/);
 });
 
-test('no silent first-card fallback in the inspectors, the preview, undo or revert', () => {
+test('no silent first-card fallback in the inspectors, the preview, undo or revert', () =>
+{
   const studio = source('studio.js');
-  for (const name of ['renderInspector', 'renderItemInspector', 'renderArtPreviewOnly', 'restoreSnapshot', 'revertToRepo']) {
+  const viewFunctions = [
+    'renderInspector',
+    'renderItemInspector',
+    'renderArtPreviewOnly',
+    'restoreSnapshot',
+    'revertToRepo',
+  ];
+  for (const name of viewFunctions)
+  {
     assert.doesNotMatch(body(studio, name), /state\.(cards|items)\[0\]/, `${name} never falls back to the first entity`);
   }
   assert.doesNotMatch(body(studio, 'renderArtTab'), /state\.(cards|items)\[0\]/, 'the picker follows the active entity');
 });
 
-test('edit bursts end on entity change and view state stays out of snapshots, the draft and bundles', () => {
+test('edit bursts end on entity change and view state stays out of snapshots, the draft and bundles', () =>
+{
   const studio = source('studio.js');
   assert.match(studio, /createActiveEntities\(\{ state, onChange: \(\) => \{ editBursts\.endAll\(\);/);
   assert.match(body(studio, 'createEditBurst'), /editBursts\.create\(\)/);
-  for (const name of ['snapshotState', 'writeDraftNow']) {
+  for (const name of ['snapshotState', 'writeDraftNow'])
+  {
     assert.doesNotMatch(body(studio, name), /selectedCardId|selectedItemKey|activeGallery|WorkingContext/, `${name} holds content only`);
   }
-  for (const file of ['studioToolsModal.js', 'studio.js']) assert.doesNotMatch(source(file), /scoreStudioWorkingContext/, `${file} does not spell the view-state key itself`);
+  for (const file of ['studioToolsModal.js', 'studio.js'])
+  {
+    assert.doesNotMatch(source(file), /scoreStudioWorkingContext/, `${file} does not spell the view-state key itself`);
+  }
 });
