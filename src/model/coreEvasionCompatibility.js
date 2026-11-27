@@ -41,8 +41,8 @@
 // Prepared-only Focus wording and the shared Evade grant source reference move only the runtime artifact identity.
 // The 2026-11-19 deferred Axe Strength grant repoints its generated mechanic reader to finishAbilityPlay; the preceding runtime keeps its own snapshotted rules.
 const PREVIOUS_RUNTIMES = new Set([
-  // Before Evade/Wither/Smash/Retreat breakBlock/breakPoise op args in engine/runtime/ops.json.
-  'sha256:659730689c3f0675a28b5ecbf6ef6c2bcbefa32b77c4794a5a5f9c14f0b8f07d',
+  // Dev's spell-cost hotfix runtime, before the breakBlock/breakPoise op args.
+  'sha256:defbcd659c0fe2899a69d503916d8d739116d9928b8156c5985764b83efa755f',
   // Before catalog regeneration 7c32f9ef4bc: keep the exact recorded profile and its tradition tags.
   'sha256:c77d4f30494cb821fc66b9b9ef19b91fbb2c699633fe0137b72ab89d261ec831',
   // Dev c5c5ec4a before #3002: no enemyLevelScaling table or enemy level-card lists.
@@ -52,6 +52,8 @@ const PREVIOUS_RUNTIMES = new Set([
   'sha256:d2993c77a6e8a5ff16dc1b5edf11d30cb924d790e7875af0452a4e8f0183ef63',
   'sha256:5311c2f843c0f42ef94e4b8ab0f4050400fdbc383c4c2395ef14bb563453801d',
   'sha256:777939d6ee4065a02491fcd7ff21fc2d9f44271a0d7f10ec3b2435d1786a72cd',
+  // Star Seer hotfix 2026-11-26 (spellCosts.manaSurcharge 0, preparedStaminaMinimum, preparedManaDiscount): runs saved on the enemy-level-scaling runtime keep their rules.
+  'sha256:659730689c3f0675a28b5ecbf6ef6c2bcbefa32b77c4794a5a5f9c14f0b8f07d',
   'sha256:d243637be191cbe2c2580420f88bf2f5a672caa4a17e0c8c0eeca7685b75cf7d',
   'sha256:e316635810ab4101030e92e5d2169d0659ce1536caf82f1333f33b854ca4a6c3',
   'sha256:0805e9ad9ee6882390661bd96cc146d4645da893d78d3bec82c2563640b5323f',
@@ -193,8 +195,12 @@ const COMPATIBLE_HOST_RUNTIMES = new Set([
   'sha256:c77d4f30494cb821fc66b9b9ef19b91fbb2c699633fe0137b72ab89d261ec831',
   // Enemy level scaling (spCap in engine/kernel/gameConfig.js) moves the host runtime; prior saves keep their own rules.
   'sha256:659730689c3f0675a28b5ecbf6ef6c2bcbefa32b77c4794a5a5f9c14f0b8f07d',
+  // Owner hotfix 2026-11-26 (spellCosts: manaSurcharge 0, Prepared SP floor 1; the Prepared Mana cut is gear-only) moves the host runtime; prior saves keep their own rules.
+  'sha256:defbcd659c0fe2899a69d503916d8d739116d9928b8156c5985764b83efa755f',
   // Flat breakBlock/breakPoise damage op fields (engine/runtime/ops.json) move the host runtime; prior saves keep their own rules.
   'sha256:a8dd5f6ad6b903aade4671ac2532fed89ef5a38e80be5420077593e7d3032024',
+  // breakBlock/breakPoise op fields merged onto the spell-cost hotfix move the host runtime.
+  'sha256:b79156d5e2888a9529e849fcde159356e98de4375fd22a29e7dac77ee52a9f80',
 ]);
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return COMPATIBLE_HOST_RUNTIMES.has(currentRuntime)

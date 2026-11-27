@@ -74,7 +74,7 @@ test('Rogue Backstep and Hit and Run exhaust their actual base copies after play
   }
 });
 
-test('Gale Push pays exactly 1 SP and 2 MP with the current Reaver loadout', async () => {
+test('Gale Push pays exactly its printed 1 SP and 1 MP with the current Reaver loadout', async () => {
   const { bandsFight } = await import('./helpers/bands-fight.mjs');
   const { dispatch, previewCard } = await import('../src/engine/combat.js');
   const combat = bandsFight({ hand: ['core.galePush'], enemyIds: ['wanderingSoldier'], stamina: 6 });
@@ -83,15 +83,15 @@ test('Gale Push pays exactly 1 SP and 2 MP with the current Reaver loadout', asy
   const before = { stamina: combat.player.stamina, mana: combat.player.mana };
   dispatch(combat, { type: 'playCard', cardInstanceId: 'qa0', targetId: enemy.id });
   assert.equal(shown.staminaCost, 1);
-  assert.equal(combat.fixCoreRules.spellCosts.manaSurcharge, 1);
-  assert.equal(shown.manaCost, 2, 'authored 1 MP plus the existing spell surcharge once');
+  assert.equal(combat.fixCoreRules.spellCosts.manaSurcharge, 0, 'no spell Mana surcharge since 2026-11-26');
+  assert.equal(shown.manaCost, 1, 'the authored 1 MP is the paid Mana');
   assert.equal(before.stamina - combat.player.stamina, shown.staminaCost);
   assert.equal(before.mana - combat.player.mana, shown.manaCost);
   assert.equal(enemy.row, 'back');
   assert.equal(enemy.statuses.retreat?.stacks, 1);
 });
 
-test('armoured and unarmoured Gale Push retain the exact spell surcharge and refuse one Mana below the quote without spending', async () => {
+test('armoured and unarmoured Gale Push keep the printed spell cost and refuse one Mana below the quote without spending', async () => {
   const { bandsFight } = await import('./helpers/bands-fight.mjs');
   const { dispatch, previewCard } = await import('../src/engine/combat.js');
   const { RefreshGearItemProps } = await import('../src/engine/gearHooks.js');
@@ -105,7 +105,7 @@ test('armoured and unarmoured Gale Push retain the exact spell surcharge and ref
     const enemy = combat.enemies[0];
     const shown = previewCard(combat, 'qa0', enemy.id);
     assert.equal(shown.staminaCost, 1);
-    assert.equal(shown.manaCost, 2, 'armour removal does not remove the saved spell-cost rule');
+    assert.equal(shown.manaCost, 1, 'armour removal does not change the spell cost');
     combat.player.mana = shown.manaCost - 1;
     const beforeReject = JSON.stringify(serializeCombatSnapshot(combat));
     assert.throws(() => dispatch(combat, { type: 'playCard', cardInstanceId: 'qa0', targetId: enemy.id }), /mana/i);

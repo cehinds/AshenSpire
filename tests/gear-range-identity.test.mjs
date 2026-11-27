@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { ApplyGearCardRules } from '../src/model/gearEffects.js';
+import { ApplyGearCardRules, GearSelectorMatches } from '../src/model/gearEffects.js';
 import { combatProfileFor } from '../src/model/combatCardProfile.js';
 import { stanceOf } from '../src/model/stanceRules.js';
 import { core2Registries } from './helpers/core2.mjs';
@@ -40,8 +40,8 @@ for (const overrides of [
 });
 
 const registries = core2Registries();
-for (const cardId of ['core.meteor', 'custom.copy_mwx6hh79']) test(`${cardId}: Prepared keeps the authored spell identity and pays one Graduate cut plus independent robe/Focus cuts`, () => {
-  for (const [hand, focus] of [['greatsword', 0], ['ashStaff', 1]]) {
+for (const cardId of ['core.meteor', 'custom.copy_mwx6hh79']) test(`${cardId}: Prepared keeps the authored spell identity and pays one Graduate cut plus the robe's Initiate`, () => {
+  for (const hand of ['greatsword', 'ashStaff']) {
     const run = createRunState({ registries, classId: 'starseer', seed: 29,
       profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['one'] } } } });
     run.loadout.sets.rightHand[0] = hand; run.loadout.sets.leftHand[0] = null;
@@ -54,13 +54,17 @@ for (const cardId of ['core.meteor', 'custom.copy_mwx6hh79']) test(`${cardId}: P
     const resolved = resolveCombatCard(combat, combat.piles.hand[0]);
     assert.equal(stanceOf(resolved).camp, 'spell');
     assert.equal(stanceOf(resolved).school, combatProfileFor(authored).school);
+    // The Starseer robe's Arcane Initiate; staffs carry no Prepared cut (owner, 2026-11-27).
+    const initiate = GearSelectorMatches('arcaneSpell', null, resolved)
+      ? 1
+      : 0;
     const expected = {
       energy: Math.max(0, authored.staminaCost - 1),
       stamina: Math.max(0, authored.staminaCost - 1),
-      mana: Math.max(0, Math.max(0, authored.manaCost - 1) + 1 - 1 - focus),
+      mana: Math.max(0, Math.max(0, authored.manaCost - 1) - initiate),
     };
     const quote = cardPlayCosts(combat, 'range-identity');
-    assert.deepEqual(quote, expected, `${cardId}/${hand}: authored price, Graduate, surcharge, robe, Focus`);
+    assert.deepEqual(quote, expected, `${cardId}/${hand}: authored price, Graduate, robe Initiate`);
     const played = dispatch(combat, { type: 'playCard', cardInstanceId: 'range-identity', targetId: combat.enemies[0].id });
     assert.equal(played.events.find(event => event.type === 'cardPlayed').manaSpent, expected.mana);
   }

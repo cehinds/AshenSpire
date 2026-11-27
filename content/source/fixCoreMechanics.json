@@ -119,11 +119,13 @@
   },
   "spellCosts": {
     "version": 1,
-    "manaSurcharge": 1,
+    "manaSurcharge": 0,
     "staminaSurcharge": 0,
     "cantripTag": "rank.cantrip",
     "manaOnlyTag": "cost.manaOnly",
     "preparedStaminaDiscount": 1,
+    "preparedStaminaMinimum": 1,
+    "preparedManaDiscount": 0,
     "focusManaDiscount": 1
   },
   "elementFlux": {

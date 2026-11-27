@@ -226,11 +226,14 @@ function validateStanceBenefits(rows) {
 }
 // Owner, 2026-11-15 (W25-F): spell costs and the elemental flux stance, in data. A missing block (a fight saved before this ruling) keeps today's costs and has no flux.
 // spellCosts: manaSurcharge (every spell), staminaSurcharge (every spell except a `cantripTag` one), preparedStaminaDiscount (in Prepared), focusManaDiscount (a Focus item held), optional manaOnlyTag (a spell with it pays 0 Stamina; a fight without the key ignores the tag). Logic: src/engine/spellCosts.js.
+// Owner, 2026-11-26 (Star Seer hotfix): optional preparedStaminaMinimum (Prepared never cuts Stamina below it; absent = 0) and preparedManaDiscount (Mana off every spell in Prepared, floored at 0; absent = 0).
 // elementFlux: multiplier of the next card of the flux element (floored per number). Logic: src/engine/elementFlux.js.
 const SPELL_COST_INTEGERS = Object.freeze(['manaSurcharge', 'staminaSurcharge', 'preparedStaminaDiscount', 'focusManaDiscount']);
+const SPELL_COST_OPTIONAL_INTEGERS = Object.freeze(['preparedStaminaMinimum', 'preparedManaDiscount']);
 function validateSpellCosts(row) {
   if (row === undefined) return;
-  if (typeof row !== 'object' || row === null || row.version !== 1 || Object.keys(row).some(key => !['version', 'cantripTag', 'manaOnlyTag', ...SPELL_COST_INTEGERS].includes(key))
+  if (SPELL_COST_OPTIONAL_INTEGERS.some(key => row?.[key] !== undefined && (!Number.isInteger(row[key]) || row[key] < 0))) throw new Error(`FixCore spellCosts ${SPELL_COST_OPTIONAL_INTEGERS.join(', ')} must be whole numbers >= 0 when present`);
+  if (typeof row !== 'object' || row === null || row.version !== 1 || Object.keys(row).some(key => !['version', 'cantripTag', 'manaOnlyTag', ...SPELL_COST_INTEGERS, ...SPELL_COST_OPTIONAL_INTEGERS].includes(key))
     || SPELL_COST_INTEGERS.some(key => !Number.isInteger(row[key]) || row[key] < 0) || typeof row.cantripTag !== 'string' || !row.cantripTag
     || (row.manaOnlyTag !== undefined && (typeof row.manaOnlyTag !== 'string' || !row.manaOnlyTag))) throw new Error(`FixCore spellCosts requires version 1, a cantripTag and whole numbers >= 0 for ${SPELL_COST_INTEGERS.join(', ')}`);
 }
