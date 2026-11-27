@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { withKitDom } from './helpers/dom.mjs';
 import {
   WORKING_CONTEXT_KEY, createActiveEntities, nextInDisplayedOrder, createEditBursts,
@@ -154,3 +155,49 @@ test('focus inside a tile returns to the same part; a removed tile moves focus t
   doc.getElementById('card-search').focus();
   assert.equal(captureTileFocus(grid, 'card-id', doc), null);
 }));
+
+// Static routing checks on the composition root: studio.js boots the page on import, so these read its source.
+const source = name => readFileSync(new URL(`../tools/score-studio/${name}`, import.meta.url), 'utf8');
+const body = (src, name) => {
+  const start = src.indexOf(`function ${name}(`);
+  assert.ok(start >= 0, `${name} exists`);
+  const next = src.indexOf('\nfunction ', start + 1), nextAsync = src.indexOf('\nasync function ', start + 1);
+  return src.slice(start, Math.min(...[next, nextAsync, src.length].filter(at => at > start)));
+};
+
+test('every writer of the active card and item goes through the two setters', () => {
+  const writes = /state\.selected(CardId|ItemKey)\s*=(?!=)/;
+  for (const file of ['studio.js', 'studioToolsModal.js', 'subclassCatalog.js', 'cardSelection.js', 'deckListPanel.js']) {
+    assert.doesNotMatch(source(file), writes, `${file} writes the active entity only through the setters`);
+  }
+  const studio = source('studio.js');
+  assert.equal(studio.match(/state\.artTarget\s*=(?!=)/g)?.length, 1, 'artTarget is set in one place, with activeGallery and the dock context');
+  assert.match(body(studio, 'selectStudioCard'), /activeEntities\.set\('cards'/);
+  assert.match(body(studio, 'selectStudioItem'), /activeEntities\.set\('items'/);
+  for (const name of ['selectStudioCard', 'selectStudioItem']) assert.doesNotMatch(body(studio, name), /syncAllViews/, `${name} never rebuilds every view`);
+  assert.match(body(studio, 'syncAllViews'), /activeEntities\.reconcile\(\)/, 'content changes reconcile through the setters');
+  // The Design picker and target route through the setter and the gallery tabs.
+  assert.match(studio, /art-preview-card-select'\)\.addEventListener\('change'[\s\S]{0,200}selectStudio(Item|Card)\(e\.target\.value/);
+  assert.match(studio, /data-art-target[\s\S]{0,300}showGallery\(kind\)/);
+  assert.match(source('studioToolsModal.js'), /ctx\.selectCard\(state\.cards\[0\]\.id/);
+  assert.match(source('studioToolsModal.js'), /ctx\.selectItem\(state\.items\[0\]\.key/);
+  assert.match(source('subclassCatalog.js'), /ctx\.selectCard\(list\.cardIds\[0\]/);
+});
+
+test('no silent first-card fallback in the inspectors, the preview, undo or revert', () => {
+  const studio = source('studio.js');
+  for (const name of ['renderInspector', 'renderItemInspector', 'renderArtPreviewOnly', 'restoreSnapshot', 'revertToRepo']) {
+    assert.doesNotMatch(body(studio, name), /state\.(cards|items)\[0\]/, `${name} never falls back to the first entity`);
+  }
+  assert.doesNotMatch(body(studio, 'renderArtTab'), /state\.(cards|items)\[0\]/, 'the picker follows the active entity');
+});
+
+test('edit bursts end on entity change and view state stays out of snapshots, the draft and bundles', () => {
+  const studio = source('studio.js');
+  assert.match(studio, /createActiveEntities\(\{ state, onChange: \(\) => \{ editBursts\.endAll\(\);/);
+  assert.match(body(studio, 'createEditBurst'), /editBursts\.create\(\)/);
+  for (const name of ['snapshotState', 'writeDraftNow']) {
+    assert.doesNotMatch(body(studio, name), /selectedCardId|selectedItemKey|activeGallery|WorkingContext/, `${name} holds content only`);
+  }
+  for (const file of ['studioToolsModal.js', 'studio.js']) assert.doesNotMatch(source(file), /scoreStudioWorkingContext/, `${file} does not spell the view-state key itself`);
+});
