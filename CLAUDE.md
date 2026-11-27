@@ -31,7 +31,8 @@ promote `dev` → `review` (same wait rules: architecture-sync and build-stamp
 settled), never `dev` → `test`; per-PR review into `dev` stays. Nothing is fixed
 on `review`: a finding goes to a `chore/*` branch cut from `dev`, a PR into
 `dev`, a new promotion to `review`, review, then `test`. Heavy CI stays on
-`test`; no CI workflows run on `review`. Version bumps: `release` raises the
+`test`; on `review`, `tests.yml` runs the core suite and the discovered test
+shards, which left `dev` (owner, 2026-11-27). Version bumps: `release` raises the
 third number (fourth reset to 0), `main` the second (third and fourth reset),
 and a push to `test` raises the fourth number (the build ordinal) by one and
 resets nothing (`version-advance.yml`, docs/versioning.md).
