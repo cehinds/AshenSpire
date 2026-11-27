@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-27
 
-- **Heavier tests run on review** ([#3029](https://github.com/cehinds/AshenSpire/pull/3029), `0.7.5.153`). Pull requests into dev now run the core suite only. The discovered test shards run when dev is promoted to review.
+- **Heavier tests run on review** ([#3029](https://github.com/cehinds/AshenSpire/pull/3029), `0.7.5.155`). Pull requests into dev now run the core suite only. The discovered test shards run when dev is promoted to review.
 - **Initiate gear** ([#3026](https://github.com/cehinds/AshenSpire/pull/3026), `0.7.5.153`). In Prepared stance an Initiate cuts 1 Mana off matching spells, one cut per spell. the Starseer's starting robe carries Arcane Initiate and the Herald's Divine Initiate; Dusk Chime carries a Decay Initiate; staffs and robes no longer cut every spell.
 - **Game rules belong in config** ([#3028](https://github.com/cehinds/AshenSpire/pull/3028), `0.7.5.151`). `CODE-STYLE.md` now asks for rules, numbers and player text in config files instead of code. No game changes.
 
