@@ -1654,7 +1654,7 @@ Every Core enemy has a character sheet, `games/ashenspire/packs/core/enemies/<en
 unique key and equals the enemy's `id`). The sheets are the source of truth for the `character.enemy` rows of
 `characters.json`; do not hand-edit those rows.
 
-- **Stats:** `stats` (attributes, attributePriority, levelProfile, poiseMax, spFloor). `derived` is generated; edits are ignored.
+- **Stats:** `stats` (attributes, attributePriority, levelProfile, poiseMax, spFloor, mpFloor, hp). `hp` is optional: a whole number of 1 or more that replaces the attribute and level HP (row field `hpOverride`); Custom Climb `hpMult`, the floor step and `hpScaleByTier` still apply on top. `derived` is generated; edits are ignored.
 - **Equipment:** `equipment` (gear by slot) and `relics`, each `{ "slot", "ref" }`.
 - **Deck:** `deck` is the current deck, one reference per copy (repeat a ref for more copies). `reserve` is the cards it gains mid-fight (`enemy.unlockCards`); each reserve card must also be listed in a `behaviour.phases[].unlockCards` (and the reverse), or `--check` fails, because only a phase brings a reserve card into play. `ai` holds the planner hints per card.
 - **Everything else:** `behaviour` (weaknesses, range fields, phases, firstCard, arcaneExposure, blighted, presentation). Unknown keys anywhere else (top level, `stats`) are rejected by `--check`. Unknown fields under `behaviour` pass straight through to the row, so new enemy fields (for example `element`, `startStatuses`) live there. `keyOrder` only keeps the row's key order stable; leave it.

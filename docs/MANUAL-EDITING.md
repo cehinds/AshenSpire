@@ -58,7 +58,7 @@ Paths are inside `content/source/` unless they start with `src/`.
 
 | To change... | Edit this file | Notes |
 | --- | --- | --- |
-| An enemy's HP, attributes, deck, behavior and boss phases | `games/ashenspire/packs/core/enemies/<id>.json` | Core enemy sheets are the source; generated enemy rows in `characters.json` and `_reference` files are checked by `node tools/enemy-sheets.mjs --check`. |
+| An enemy's HP, attributes, deck, behavior and boss phases | `games/ashenspire/packs/core/enemies/<id>.json` | Core enemy sheets are the source; generated enemy rows in `characters.json` and `_reference` files are checked by `node tools/enemy-sheets.mjs --check`. HP comes from attributes and level; set `stats.hp` (a whole number) to fix it, and difficulty, floor and tier HP scaling still apply on top. |
 | Which enemies appear together, per region | `wealdEncounters.json`, `marchesEncounters.json`, `reachEncounters.json` | One row per fight: enemies, weight, pool, floor band. |
 | Boss tougher or easier by tier | `balanceBossTiers.json`, `balanceSeatTiers.json` | See the balance table below. |
 | Event text and choices | `events.json` | Choice ids go in `eventChoiceIds.json`, same length as the choices. |
