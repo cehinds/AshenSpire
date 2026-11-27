@@ -420,36 +420,34 @@ test('outside Properties the column beside the card holds the view fields only w
   assert.equal(context.hidden, true);
 }));
 
-test('the dock requires a selectCard callback instead of writing the active card itself', () => withKitDom(dom =>
-{
-  assert.throws(
-    () => fixture(
-      dom,
-      new Map(),
-      { selectCard: undefined },
-    ),
-    /requires ctx\.selectCard/,
-  );
-}));
+test(
+  'the dock requires a selectCard callback instead of writing the active card itself',
+  () => withKitDom(dom =>
+  {
+    assert.throws(
+      () => fixture(
+        dom,
+        new Map(),
+        { selectCard: undefined },
+      ),
+      /requires ctx\.selectCard/,
+    );
+  }),
+);
 
-test('filters that hide the active card keep it active and show one short notice whose Clear brings its tile back', () => withKitDom(dom =>
+// The dock fixture with filters that hide the cards in hidden until Clear runs.
+function filterNoteFixture(dom, hidden)
 {
-  const hidden = new Set([FilterNoteFixture.ActiveCardId]);
-  let api = null;
+  let parts = null;
 
   function clearFilters(kind)
   {
     hidden.clear();
-    calls.push([FilterNoteFixture.ClearCall, kind]);
-    api.refresh();
+    parts.calls.push([FilterNoteFixture.ClearCall, kind]);
+    parts.api.refresh();
   }
 
-  const {
-    doc,
-    state,
-    calls,
-    ...rest
-  } = fixture(
+  parts = fixture(
     dom,
     new Map(),
     {
@@ -457,34 +455,45 @@ test('filters that hide the active card keep it active and show one short notice
       clearFilters,
     },
   );
-  api = rest.api;
-  api.refresh();
-  const note = doc.getElementById(FilterNoteId.Note);
+  return parts;
+}
+
+// The notice shows one action while the card stays active and named in the banner.
+function assertNoticeKeepsActiveCard({ doc, state }, note)
+{
   assert.equal(
     note.hidden,
     false,
     'the banner says the active card is hidden',
   );
-  assert.match(note.querySelector(FilterNoteFixture.TextSelector).textContent, /Hidden by current filters/);
+  const noticeText = note.querySelector(FilterNoteFixture.TextSelector).textContent;
+  assert.match(noticeText, /Hidden by current filters/);
   assert.equal(
     state.selectedCardId,
     FilterNoteFixture.ActiveCardId,
     'filters never change the active card',
   );
-  const bannerName = doc.getElementById(FilterNoteFixture.EntityNameId).querySelector(FilterNoteFixture.EntityNameTextSelector);
+  const entityName = doc.getElementById(FilterNoteFixture.EntityNameId);
+  const bannerName = entityName.querySelector(FilterNoteFixture.EntityNameTextSelector);
   assert.equal(
     bannerName.textContent,
     FilterNoteFixture.ActiveCardName,
     'the banner still shows the active card',
   );
   const clear = doc.getElementById(FilterNoteId.Clear);
-  assert.equal(clear.getAttribute(FilterNoteFixture.AriaLabelAttribute), FilterNoteFixture.ClearAriaLabel);
+  const clearLabel = clear.getAttribute(FilterNoteFixture.AriaLabelAttribute);
+  assert.equal(clearLabel, FilterNoteFixture.ClearAriaLabel);
   assert.equal(
     note.querySelectorAll(FilterNoteFixture.ButtonSelector).length,
     1,
     'one action, no extra controls',
   );
-  clear.click();
+}
+
+// Clear asks the studio to clear the card filters, then hides the notice and focuses the tile.
+function assertClearShowsActiveTile({ doc, state, calls }, note)
+{
+  doc.getElementById(FilterNoteId.Clear).click();
   const clearCalls = calls.filter(row => row[0] === FilterNoteFixture.ClearCall);
   assert.deepEqual(clearCalls, [[FilterNoteFixture.ClearCall, GalleryKind.Cards]]);
   assert.equal(
@@ -498,12 +507,30 @@ test('filters that hide the active card keep it active and show one short notice
     'focus lands on the active tile, not the page body',
   );
   assert.equal(state.selectedCardId, FilterNoteFixture.ActiveCardId);
-  // A visible active card, or no active card, shows no notice.
-  hidden.add(FilterNoteFixture.OtherCardId);
-  api.refresh();
-  assert.equal(note.hidden, true);
-  state.selectedCardId = null;
-  hidden.add(null);
-  api.refresh();
-  assert.equal(note.hidden, true);
-}));
+}
+
+test(
+  'filters that hide the active card keep it active; one notice with Clear brings its tile back',
+  () => withKitDom(dom =>
+  {
+    const hidden = new Set([FilterNoteFixture.ActiveCardId]);
+    const dock = filterNoteFixture(dom, hidden);
+    const {
+      doc,
+      state,
+      api,
+    } = dock;
+    api.refresh();
+    const note = doc.getElementById(FilterNoteId.Note);
+    assertNoticeKeepsActiveCard(dock, note);
+    assertClearShowsActiveTile(dock, note);
+    // A visible active card, or no active card, shows no notice.
+    hidden.add(FilterNoteFixture.OtherCardId);
+    api.refresh();
+    assert.equal(note.hidden, true);
+    state.selectedCardId = null;
+    hidden.add(null);
+    api.refresh();
+    assert.equal(note.hidden, true);
+  }),
+);
