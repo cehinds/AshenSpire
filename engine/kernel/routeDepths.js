@@ -82,43 +82,78 @@ export function RestChoices(candidates, authored, spread)
     : [candidates[0]];
 }
 
-function firstPartial(fixedFirst)
+function restWalkKey(state)
 {
-  if (fixedFirst)
-  {
-    return { placed: [1], previous: 1 };
-  }
-  return { placed: [], previous: 0 };
+  return `${state.index}:${state.previous}`;
 }
 
-// Every rest placement an act can roll from these authored rest floors.
-export function RestPlacements(restFloors, count, restGap, spread, lowest)
+// The rest placement as a walk over depths, for checks that must not list every placement.
+// steps(state, floor) gives each way the walk may go on `floor` and whether it is a rest.
+export function RestWalk(restFloors, routes, lowest)
 {
+  const count = routes.prebossNodes;
   const sorted = [...restFloors].sort((a, b) => a - b);
-  if (!restGap)
+  if (!routes.restGap)
   {
-    return [sorted];
+    const fixed = new Set(sorted);
+    return {
+      start: { index: 0, previous: 0 },
+      key: restWalkKey,
+      steps: (state, floor) => [{ state, rest: fixed.has(floor) }],
+    };
   }
+  const spread = routes.restFloorSpread || 0;
   const movable = movingRests(sorted, count);
-  const tail = sorted.includes(count)
-    ? [count]
-    : [];
-  let partials = [firstPartial(sorted[0] === 1)];
-  movable.forEach((authored, index) =>
+  const fixed = new Set(sorted.filter(floor => !movable.includes(floor)));
+  const choicesByState = new Map();
+  const choicesOf = state =>
   {
-    const base = {
-      authored,
-      next: movable[index + 1],
+    const key = restWalkKey(state);
+    if (!choicesByState.has(key))
+    {
+      choicesByState.set(key, choicesFor(state));
+    }
+    return choicesByState.get(key);
+  };
+  const choicesFor = state =>
+  {
+    const place = {
+      previous: state.previous,
+      authored: movable[state.index],
+      next: movable[state.index + 1],
       count,
-      restGap,
+      restGap: routes.restGap,
       spread,
       lowest,
     };
-    partials = partials.flatMap(({ placed, previous }) =>
+    return RestChoices(RestCandidates(place), place.authored, spread);
+  };
+  const steps = (state, floor) =>
+  {
+    if (state.index >= movable.length)
     {
-      const choices = RestChoices(RestCandidates({ ...base, previous }), authored, spread);
-      return choices.map(chosen => ({ placed: [...placed, chosen], previous: chosen }));
-    });
-  });
-  return partials.map(({ placed }) => [...placed, ...tail]);
+      return [{ state, rest: fixed.has(floor) }];
+    }
+    const choices = choicesOf(state);
+    const passed = choices.filter(choice => choice < floor);
+    if (passed.length === choices.length)
+    {
+      const advanced = passed.map(choice => ({ index: state.index + 1, previous: choice }));
+      return advanced.flatMap(next => steps(next, floor));
+    }
+    const ways = [];
+    if (choices.includes(floor))
+    {
+      ways.push({ state: { index: state.index + 1, previous: floor }, rest: true });
+    }
+    if (Math.max(...choices) > floor)
+    {
+      ways.push({ state, rest: fixed.has(floor) });
+    }
+    return ways;
+  };
+  const start = sorted[0] === 1
+    ? { index: 0, previous: 1 }
+    : { index: 0, previous: 0 };
+  return { start, key: restWalkKey, steps };
 }

@@ -1,6 +1,6 @@
-// Every lane shape drawBranchShape (src/engine/actmap.js) can draw, walked without the RNG. A
-// shape maps each branch depth to its open lanes { lo, hi }. Both share these constants; a draw
-// that can go either way (fork, narrow) is followed both ways, so no reachable shape is missed.
+// The lane steps drawBranchShape (src/engine/actmap.js) can take, without the RNG. A branch's
+// open lanes at a depth are { lo, hi }; a draw that can go either way (fork, narrow) yields both
+// next steps, so walking the steps depth by depth reaches every shape the builder can draw.
 import { BranchFullDepth } from './routeDepths.js';
 
 // The board is at most this many times branchColumns lanes wide, shared by the branches.
@@ -42,7 +42,8 @@ function forkChoices(forkPercent)
   return choices;
 }
 
-function openings(lanes)
+// The open lanes a branch may start with on its first depth.
+export function BranchOpenings(lanes)
 {
   const widths = lanes >= TWO_LANE_OPENING_LANES
     ? [1, 2]
@@ -101,43 +102,32 @@ function uniqueSteps(steps)
   return [...seen.values()];
 }
 
-function extend(shapes, active, floor, walk)
-{
-  if (floor >= walk.count)
-  {
-    shapes.push(active);
-    return;
-  }
-  const open = active[floor];
-  const steps = floor < walk.fillBy
-    ? forkSteps(open, floor, walk)
-    : narrowSteps(open, floor, walk);
-  for (const next of uniqueSteps(steps))
-  {
-    extend(shapes, { ...active, [floor + 1]: next }, floor + 1, walk);
-  }
-}
-
-// Every shape one branch of `lanes` lanes can take, as { [depth]: { lo, hi } }.
-export function BranchShapes(lanes, routes, shape)
+// Everything the step walk needs for one branch of `lanes` lanes.
+export function BranchWalk(lanes, routes, shape)
 {
   const count = routes.prebossNodes;
-  const first = shape.firstBranchDepth;
-  if (count < first)
-  {
-    return [{}];
-  }
-  const walk = {
+  return {
     lanes,
     count,
     shape,
     fillBy: BranchFullDepth(count, shape),
     forks: forkChoices(routes.forkPercent),
+    known: new Map(),
   };
-  const shapes = [];
-  for (const open of openings(lanes))
+}
+
+// Every open-lane interval the branch may have on floor + 1, given `open` on floor.
+export function BranchSteps(open, floor, walk)
+{
+  const key = `${floor}:${open.lo}:${open.hi}`;
+  if (walk.known.has(key))
   {
-    extend(shapes, { [first]: open }, first, walk);
+    return walk.known.get(key);
   }
-  return shapes;
+  const steps = floor < walk.fillBy
+    ? forkSteps(open, floor, walk)
+    : narrowSteps(open, floor, walk);
+  const unique = uniqueSteps(steps);
+  walk.known.set(key, unique);
+  return unique;
 }

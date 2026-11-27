@@ -125,7 +125,8 @@ Every node on that floor is that type, in every act.
 - It is floor 1 while `firstFloor` is set.
 - On some branch shape and rest placement the map can roll, it leaves a lane no free floor
   for its elite, or a branch no free floor for its shop, where there was one without pins.
-  The check walks every shape and placement, and places elites before the shop as the map does.
+  The check walks the map depth by depth over every shape and rest placement it can roll,
+  placing elites before the shop as the map does.
 
 The error names the pinned floors to unpin.
 

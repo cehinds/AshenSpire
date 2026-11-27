@@ -1,117 +1,272 @@
 // A branched route gives every lane one guaranteed elite and, with shopsPerBranch, every branch
 // one guaranteed shop, drawn as buildBranchedActMap does: elites first, on any free depth of the
-// lane, then the shop on a free shop-depth slot no elite took. For every branch shape and rest
-// placement the builder can roll, pins are refused when they break a guarantee that held without.
-import { DepthRange, RestPlacements } from './routeDepths.js';
-import { BranchLaneCounts, BranchShapes } from './routeBranchShapes.js';
+// lane, then the shop on a free shop-depth slot no elite took. The check walks depth by depth over
+// small states (open lanes, rest walk, each lane's progress), never whole map histories, and
+// refuses pins when some reachable map breaks a guarantee that held there without them.
+import { DepthRange, RestWalk } from './routeDepths.js';
+import {
+  BranchLaneCounts,
+  BranchOpenings,
+  BranchWalk,
+  BranchSteps,
+} from './routeBranchShapes.js';
 import { ELITE_ROOM, SHOP_ROOM } from './routeFloorPins.js';
 
-const NO_PINS = new Map();
+// Lane progress codes. CLOSED marks a lane not open (yet, or any more).
+const CLOSED = -1;
+// Shop walk, with pins: no free slot, none but its elite covered by a pin, one its elite may take.
+const SLOT_NONE = 0;
+const SLOT_COVERED = 1;
+const SLOT_ELITE_ONE = 2;
+// Shop walk, without pins: no slot, or one its elite may take; more keeps the shop.
+const PLAIN_NONE = 0;
+const PLAIN_ELITE_ONE = 1;
+// Elite walk: open with no elite floor yet, one only without pins, or holding one with pins.
+const ELITE_NONE = 0;
+const ELITE_UNPINNED_ONLY = 1;
+const ELITE_HELD = 2;
 
-function laneOpen(active, depth, lane)
+function floorFacts(rules, floor, rest, pinned)
 {
-  const open = active[depth];
-  return !!open && lane >= open.lo && lane <= open.hi;
+  return {
+    rest,
+    pinnedType: pinned.get(floor) ?? null,
+    inShop: floor >= rules.shopFirst && floor <= rules.shopLast,
+    eliteable: rules.elites && floor >= rules.firstElite,
+  };
 }
 
-function branchOpen(active, depth)
+// With pins the lane must keep failing; null means it now keeps a slot, so the path is dropped.
+function nextSlot(slot, facts)
 {
-  return !!active[depth];
-}
-
-// The depths a lane's guaranteed elite may take, or null when a pinned elite already holds it.
-function eliteDepths(rules, active, lane, rests, pinned)
-{
-  const laneDepths = DepthRange(rules.firstElite, rules.count)
-    .filter(depth => laneOpen(active, depth, lane));
-  const pinnedElite = laneDepths.some(depth => pinned.get(depth) === ELITE_ROOM);
-  if (pinnedElite)
+  if (facts.pinnedType === ELITE_ROOM)
   {
-    return null;
+    return slot === SLOT_ELITE_ONE
+      ? null
+      : SLOT_COVERED;
   }
-  return laneDepths.filter(depth => !rests.has(depth) && !pinned.has(depth));
-}
-
-function laneHoldsElite(rules, active, lane, rests, pinned)
-{
-  const depths = eliteDepths(rules, active, lane, rests, pinned);
-  return depths === null || depths.length > 0;
-}
-
-// A lane keeps a shop slot unless its only one may be its own elite's depth.
-function laneKeepsShopSlot(rules, active, lane, rests, pinned)
-{
-  const slots = DepthRange(rules.shopFirst, rules.shopLast)
-    .filter(depth => laneOpen(active, depth, lane) && !rests.has(depth) && !pinned.has(depth));
-  if (slots.length !== 1)
+  if (facts.pinnedType !== null || !facts.inShop)
   {
-    return slots.length > 1;
+    return slot;
   }
-  const elites = rules.elites
-    ? eliteDepths(rules, active, lane, rests, pinned)
+  return slot === SLOT_NONE && facts.eliteable
+    ? SLOT_ELITE_ONE
     : null;
-  return elites === null || !elites.includes(slots[0]);
 }
 
-function branchHoldsShop(rules, active, lanes, rests, pinned)
+// Without pins; null means the lane keeps a slot, which the walk records in `kept`.
+function nextPlain(plain, facts)
 {
-  const shopDepths = DepthRange(rules.shopFirst, rules.shopLast)
-    .filter(depth => branchOpen(active, depth));
-  const pinnedShop = shopDepths.some(depth => pinned.get(depth) === SHOP_ROOM);
-  if (pinnedShop)
+  if (!facts.inShop || plain === null)
   {
-    return true;
+    return plain;
   }
-  return DepthRange(0, lanes - 1)
-    .some(lane => laneKeepsShopSlot(rules, active, lane, rests, pinned));
+  return plain === PLAIN_NONE && facts.eliteable
+    ? PLAIN_ELITE_ONE
+    : null;
 }
 
-function pinnedOn(pinned, depths)
-{
-  return depths.filter(depth => pinned.has(depth));
-}
-
-function brokenElite(rules, active, lanes, rests, pinned)
-{
-  for (const lane of DepthRange(0, lanes - 1))
+// Each shop lane is two codes, the pinned slot and the plain one, side by side.
+const SHOP_PLAN = {
+  width: 2,
+  open: (codes, lane) =>
   {
-    const broken = !laneHoldsElite(rules, active, lane, rests, pinned)
-      && laneHoldsElite(rules, active, lane, rests, NO_PINS);
-    if (broken)
+    codes[2 * lane] = SLOT_NONE;
+    codes[2 * lane + 1] = PLAIN_NONE;
+  },
+  close: (walkState, lane) =>
+  {
+    walkState.codes[2 * lane] = CLOSED;
+    walkState.codes[2 * lane + 1] = CLOSED;
+  },
+  apply: (walkState, lane, facts) =>
+  {
+    if (facts.rest)
     {
-      const depths = DepthRange(rules.firstElite, rules.count)
-        .filter(depth => laneOpen(active, depth, lane));
-      return pinnedOn(pinned, depths);
+      return true;
+    }
+    const { codes } = walkState;
+    const slot = nextSlot(codes[2 * lane], facts);
+    if (slot === null)
+    {
+      return false;
+    }
+    const plain = nextPlain(codes[2 * lane + 1], facts);
+    codes[2 * lane] = slot;
+    codes[2 * lane + 1] = plain ?? PLAIN_NONE;
+    walkState.flag = walkState.flag || plain === null;
+    return true;
+  },
+  broken: walkState => walkState.flag,
+};
+
+const ELITE_PLAN = {
+  width: 1,
+  open: (codes, lane) =>
+  {
+    codes[lane] = ELITE_NONE;
+  },
+  close: (walkState, lane) =>
+  {
+    walkState.flag = walkState.flag || walkState.codes[lane] === ELITE_UNPINNED_ONLY;
+    walkState.codes[lane] = CLOSED;
+  },
+  apply: (walkState, lane, facts) =>
+  {
+    if (facts.rest || !facts.eliteable)
+    {
+      return true;
+    }
+    const { codes } = walkState;
+    const held = facts.pinnedType === null || facts.pinnedType === ELITE_ROOM;
+    if (held)
+    {
+      codes[lane] = ELITE_HELD;
+    }
+    else if (codes[lane] === ELITE_NONE)
+    {
+      codes[lane] = ELITE_UNPINNED_ONLY;
+    }
+    return true;
+  },
+  broken: walkState => walkState.flag || walkState.codes.includes(ELITE_UNPINNED_ONLY),
+};
+
+function entryKey(entry, restWalk)
+{
+  const { open, restState, walkState } = entry;
+  const flag = walkState.flag
+    ? 1
+    : 0;
+  return `${open.lo}:${open.hi}|${restWalk.key(restState)}|${walkState.codes.join(',')}|${flag}`;
+}
+
+function enterFloor(plan, entry, before, facts)
+{
+  const walkState = entry.walkState;
+  for (let lane = entry.open.lo; lane <= entry.open.hi; lane++)
+  {
+    const opened = !before || lane < before.lo || lane > before.hi;
+    if (opened)
+    {
+      plan.open(walkState.codes, lane);
+    }
+    if (!plan.apply(walkState, lane, facts))
+    {
+      return false;
     }
   }
-  return null;
+  return true;
 }
 
-function brokenShop(rules, active, lanes, rests, pinned)
+function closedState(plan, walkState, before, after)
 {
-  const broken = !branchHoldsShop(rules, active, lanes, rests, pinned)
-    && branchHoldsShop(rules, active, lanes, rests, NO_PINS);
-  if (!broken)
+  const next = { codes: [...walkState.codes], flag: walkState.flag };
+  for (let lane = before.lo; lane <= before.hi; lane++)
   {
-    return null;
+    if (lane < after.lo || lane > after.hi)
+    {
+      plan.close(next, lane);
+    }
   }
-  return pinnedOn(pinned, DepthRange(rules.shopFirst, rules.shopLast));
+  return next;
 }
 
-function eliteText(depths)
+function addEntry(frontier, entry, restWalk)
 {
-  return `floorTypes can leave a lane no free floor for its elite. Unpin one of depths`
-    + ` ${depths.join(', ')}, or pin an elite`;
+  const key = entryKey(entry, restWalk);
+  if (!frontier.has(key))
+  {
+    frontier.set(key, entry);
+  }
 }
 
-function shopText(depths, rules)
+function restStatesBefore(restWalk, firstDepth)
 {
-  return `floorTypes can leave a branch no free floor for its shop. Unpin one of depths`
-    + ` ${depths.join(', ')}, or pin a shop on depth ${rules.shopFirst} to ${rules.shopLast}`;
+  let states = [restWalk.start];
+  for (let floor = 1; floor < firstDepth; floor++)
+  {
+    states = states.flatMap(state => restWalk.steps(state, floor).map(way => way.state));
+  }
+  return states;
 }
 
-// The rest placements every act can roll; acts before startRestFromAct drop depth 1.
-function actRestPlacements(routes, shape)
+function firstFrontier(plan, rules, context)
+{
+  const { walk, restWalk, pinned } = context;
+  const frontier = new Map();
+  const blank = Array(walk.lanes * plan.width).fill(CLOSED);
+  for (const open of BranchOpenings(walk.lanes))
+  {
+    for (const restState of restStatesBefore(restWalk, rules.firstDepth))
+    {
+      for (const way of restWalk.steps(restState, rules.firstDepth))
+      {
+        const facts = floorFacts(rules, rules.firstDepth, way.rest, pinned);
+        const walkState = { codes: [...blank], flag: false };
+        const entry = { open, restState: way.state, walkState };
+        if (enterFloor(plan, entry, null, facts))
+        {
+          addEntry(frontier, entry, restWalk);
+        }
+      }
+    }
+  }
+  return frontier;
+}
+
+function nextFrontier(plan, rules, frontier, floor, context)
+{
+  const { walk, restWalk, pinned } = context;
+  const next = new Map();
+  for (const entry of frontier.values())
+  {
+    for (const open of BranchSteps(entry.open, floor, walk))
+    {
+      const closed = closedState(plan, entry.walkState, entry.open, open);
+      for (const way of restWalk.steps(entry.restState, floor + 1))
+      {
+        const facts = floorFacts(rules, floor + 1, way.rest, pinned);
+        const walkState = { codes: [...closed.codes], flag: closed.flag };
+        const step = { open, restState: way.state, walkState };
+        if (enterFloor(plan, step, entry.open, facts))
+        {
+          addEntry(next, step, restWalk);
+        }
+      }
+    }
+  }
+  return next;
+}
+
+// True when some map this branch can draw breaks the plan's guarantee.
+function walkFindsBreak(plan, rules, context)
+{
+  let frontier = firstFrontier(plan, rules, context);
+  for (let floor = rules.firstDepth; floor < rules.count && frontier.size; floor++)
+  {
+    frontier = nextFrontier(plan, rules, frontier, floor, context);
+  }
+  return [...frontier.values()].some(entry => plan.broken(entry.walkState));
+}
+
+function guaranteeRules(routes, shape, types)
+{
+  const shopFirst = shape.guaranteedShopDepths.first;
+  const shopLast = Math.min(shape.guaranteedShopDepths.last, routes.prebossNodes);
+  return {
+    count: routes.prebossNodes,
+    firstDepth: shape.firstBranchDepth,
+    firstElite: Math.max(shape.firstBranchDepth, routes.minimumThreatFloor),
+    shopFirst,
+    shopLast,
+    elites: types.pinnable.includes(ELITE_ROOM),
+    shops: routes.shopsPerBranch > 0 && types.pinnable.includes(SHOP_ROOM),
+  };
+}
+
+// The rest walks every act can take; acts before startRestFromAct drop depth 1.
+function actRestWalks(routes, shape)
 {
   const authored = routes.restFloors || [];
   const variants = [authored];
@@ -120,69 +275,55 @@ function actRestPlacements(routes, shape)
   {
     variants.push(authored.filter(depth => depth !== 1));
   }
-  const spread = routes.restFloorSpread || 0;
-  const lowest = shape.firstBranchDepth;
-  return variants.flatMap(restFloors =>
-    RestPlacements(restFloors, routes.prebossNodes, routes.restGap, spread, lowest));
+  return variants.map(restFloors => RestWalk(restFloors, routes, shape.firstBranchDepth));
 }
 
-function guaranteeRules(routes, shape, types)
+function pinnedIn(pinned, first, last)
 {
-  const shopsWanted = routes.shopsPerBranch > 0 && types.pinnable.includes(SHOP_ROOM);
-  return {
-    count: routes.prebossNodes,
-    firstElite: Math.max(shape.firstBranchDepth, routes.minimumThreatFloor),
-    shopFirst: shape.guaranteedShopDepths.first,
-    shopLast: Math.min(shape.guaranteedShopDepths.last, routes.prebossNodes),
-    elites: types.pinnable.includes(ELITE_ROOM),
-    shops: shopsWanted,
-  };
+  return DepthRange(first, last).filter(depth => pinned.has(depth));
 }
 
-function caseProblems(rules, active, lanes, rests, pinned)
+function brokenGuarantees(rules, routes, shape, pinned)
 {
-  const problems = {};
-  if (rules.elites)
+  const pinnedShop = pinnedIn(pinned, rules.shopFirst, rules.shopLast)
+    .some(depth => pinned.get(depth) === SHOP_ROOM);
+  const broken = { elite: false, shop: false };
+  for (const restWalk of actRestWalks(routes, shape))
   {
-    problems.elite = brokenElite(rules, active, lanes, rests, pinned);
+    for (const lanes of BranchLaneCounts(routes))
+    {
+      const context = { walk: BranchWalk(lanes, routes, shape), restWalk, pinned };
+      const checkElite = rules.elites && !broken.elite;
+      broken.elite = broken.elite || (checkElite && walkFindsBreak(ELITE_PLAN, rules, context));
+      const checkShop = rules.shops && !pinnedShop && !broken.shop;
+      broken.shop = broken.shop || (checkShop && walkFindsBreak(SHOP_PLAN, rules, context));
+    }
   }
-  if (rules.shops)
-  {
-    problems.shop = brokenShop(rules, active, lanes, rests, pinned);
-  }
-  return problems;
+  return broken;
 }
 
-// One plain sentence per broken guarantee, from the first shape and rests that break it.
+// One plain sentence per broken guarantee.
 export function GuaranteeProblems(routes, shape, types, pinned)
 {
-  if (routes.maxBranches == null || pinned.size === 0)
+  const count = routes.prebossNodes;
+  if (routes.maxBranches == null || pinned.size === 0 || count < shape.firstBranchDepth)
   {
     return [];
   }
   const rules = guaranteeRules(routes, shape, types);
-  const found = {};
-  for (const placement of actRestPlacements(routes, shape))
-  {
-    const rests = new Set(placement);
-    for (const lanes of BranchLaneCounts(routes))
-    {
-      for (const active of BranchShapes(lanes, routes, shape))
-      {
-        const problems = caseProblems(rules, active, lanes, rests, pinned);
-        found.elite = found.elite || problems.elite;
-        found.shop = found.shop || problems.shop;
-      }
-    }
-  }
+  const broken = brokenGuarantees(rules, routes, shape, pinned);
   const texts = [];
-  if (found.elite)
+  if (broken.elite)
   {
-    texts.push(eliteText(found.elite));
+    const depths = pinnedIn(pinned, rules.firstElite, count).join(', ');
+    texts.push('floorTypes can leave a lane no free floor for its elite. Unpin one of depths'
+      + ` ${depths}, or pin an elite`);
   }
-  if (found.shop)
+  if (broken.shop)
   {
-    texts.push(shopText(found.shop, rules));
+    const depths = pinnedIn(pinned, rules.shopFirst, rules.shopLast).join(', ');
+    texts.push('floorTypes can leave a branch no free floor for its shop. Unpin one of depths'
+      + ` ${depths}, or pin a shop on depth ${rules.shopFirst} to ${rules.shopLast}`);
   }
   return texts;
 }

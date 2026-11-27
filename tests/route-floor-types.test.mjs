@@ -3,6 +3,7 @@
 // the loaded Core route config, so retuning routes.json moves the inputs, not the expectations.
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import {
@@ -15,12 +16,18 @@ import { buildActMap } from '../src/engine/actmap.js';
 import { createRng } from '../src/engine/rng.js';
 import { RouteShapeOf } from '../src/model/routeShape.js';
 import {
+  DepthRange,
   PossibleRestDepths,
   PinnableDepths,
   BranchFullDepth,
-  RestPlacements,
+  RestWalk,
 } from '../engine/kernel/routeDepths.js';
-import { BranchShapes, BranchLaneCount } from '../engine/kernel/routeBranchShapes.js';
+import {
+  BranchLaneCount,
+  BranchOpenings,
+  BranchWalk,
+  BranchSteps,
+} from '../engine/kernel/routeBranchShapes.js';
 import {
   RouteRoomTypes,
   ELITE_ROOM,
@@ -387,55 +394,123 @@ function LaneIntervals(map, branch, lanes, lastDepth)
   return open;
 }
 
-function Truncated(active, lastDepth)
+function SameLanes(a, b)
 {
-  const kept = Object.entries(active).filter(([depth]) => Number(depth) <= lastDepth);
-  return JSON.stringify(Object.fromEntries(kept));
+  return a.lo === b.lo && a.hi === b.hi;
 }
 
-function WalkedShapes(config, lastDepth)
+// True when the walk's steps can draw this branch's open lanes, depth by depth.
+function ShapeIsWalked(drawn, walk, first, lastDepth)
 {
-  const known = new Map();
-  return lanes =>
+  if (!BranchOpenings(walk.lanes).some(open => SameLanes(open, drawn[first])))
   {
-    if (!known.has(lanes))
+    return false;
+  }
+  for (let floor = first; floor < lastDepth; floor++)
+  {
+    const steps = BranchSteps(drawn[floor], floor, walk);
+    if (!steps.some(step => SameLanes(step, drawn[floor + 1])))
     {
-      const shapes = BranchShapes(lanes, config.settings, config.shape);
-      known.set(lanes, new Set(shapes.map(active => Truncated(active, lastDepth))));
+      return false;
     }
-    return known.get(lanes);
-  };
+  }
+  return true;
 }
 
-function WalkedRests(config)
+// True when the rest walk can place exactly these rests.
+function RestsAreWalked(rests, restWalk, count)
 {
-  const { restGap, restFloorSpread, restFloors } = config.settings;
-  const spread = restFloorSpread || 0;
-  const lowest = config.shape.firstBranchDepth;
-  const placements = RestPlacements(restFloors, config.count, restGap, spread, lowest);
-  return placements.map(rests => rests.filter(depth => depth > 1).join(','));
+  let states = [restWalk.start];
+  for (let floor = 1; floor <= count && states.length; floor++)
+  {
+    states = states.flatMap(state => restWalk.steps(state, floor))
+      .filter(way => way.rest === rests.has(floor))
+      .map(way => way.state);
+  }
+  return states.length > 0;
 }
 
 test('every branch shape and rest placement the builder rolls is one the resolver walks', () =>
 {
   const config = RouteConfig();
-  const lastDepth = config.count - 1;
-  const shapesOf = WalkedShapes(config, lastDepth);
-  const placements = WalkedRests(config);
+  const { settings, shape, count } = config;
+  const lastDepth = count - 1;
+  const lowest = shape.firstBranchDepth;
+  const restVariants = [
+    settings.restFloors,
+    settings.restFloors.filter(depth => depth !== 1),
+  ].map(restFloors => RestWalk(restFloors, settings, lowest));
   EachMap(config.core, config.acts, (map, label) =>
   {
-    const lanes = BranchLaneCount(config.settings.branchColumns, map.bossIds.length);
+    const lanes = BranchLaneCount(settings.branchColumns, map.bossIds.length);
+    const walk = BranchWalk(lanes, settings, shape);
     map.bossIds.forEach((bossId, branch) =>
     {
-      const drawn = Truncated(LaneIntervals(map, branch, lanes, lastDepth), lastDepth);
-      assert.ok(shapesOf(lanes).has(drawn), `${label} branch ${branch} shape is walked`);
+      const drawn = LaneIntervals(map, branch, lanes, lastDepth);
+      const walked = ShapeIsWalked(drawn, walk, lowest, lastDepth);
+      assert.ok(walked, `${label} branch ${branch} shape is walked`);
     });
-    const rests = Object.values(map.nodes)
-      .filter(node => node.actualType === 'rest' && node.floor > 1)
+    const restDepths = Object.values(map.nodes)
+      .filter(node => node.actualType === 'rest')
       .map(node => node.floor);
-    const placed = [...new Set(rests)].sort((a, b) => a - b).join(',');
-    assert.ok(placements.includes(placed), `${label} rests ${placed} are walked`);
+    const rests = new Set(restDepths);
+    const walked = restVariants.some(restWalk => RestsAreWalked(rests, restWalk, count));
+    assert.ok(walked, `${label} rests ${[...rests].join(',')} are walked`);
   });
+});
+
+// Budget for resolving the largest route the routes schema allows, with a few pins.
+const RESOLVE_BUDGET_MS = 200;
+const HEAP_BUDGET_BYTES = 64 * 1024 * 1024;
+const LARGE_ROUTE_RESTS = 5;
+const SCHEMA_URL = new URL('../engine/modules/routes/settings.schema.json', import.meta.url);
+
+function LargestRoute()
+{
+  const schema = JSON.parse(readFileSync(SCHEMA_URL, 'utf8')).properties;
+  const count = schema.prebossNodes.maximum;
+  const gapSchema = schema.restGap.anyOf.find(option => option.type === 'object').properties;
+  const step = Math.floor(count / LARGE_ROUTE_RESTS);
+  const middle = DepthRange(1, LARGE_ROUTE_RESTS - 1).map(index => index * step);
+  const restFloors = [
+    1,
+    ...middle,
+    count,
+  ];
+  return {
+    prebossNodes: count,
+    restFloors,
+    restsPerAct: restFloors.length,
+    branchColumns: schema.branchColumns.maximum,
+    maxBranches: schema.maxBranches.maximum,
+    restGap: { min: gapSchema.min.minimum, max: gapSchema.max.maximum },
+    restFloorSpread: schema.restFloorSpread.anyOf[0].maximum,
+  };
+}
+
+test('the largest route the schema allows resolves with pins in bounded time and memory', () =>
+{
+  const route = LargestRoute();
+  const config = RouteConfig(route);
+  const free = config.branchDepths.filter(depth => depth >= config.settings.minimumThreatFloor);
+  const floorTypes = {
+    [config.shopSpan[0]]: config.plain,
+    [free[Math.floor(free.length / 2)]]: ELITE_ROOM,
+    [free.at(-1)]: config.plain,
+  };
+  const author = {
+    formatVersion: 1,
+    core: 'ashen.core@2.0.0',
+    modules: { routes: { ...route, floorTypes } },
+  };
+  const heapBefore = process.memoryUsage().heapUsed;
+  const started = performance.now();
+  const profile = resolveGameProfile(author);
+  const elapsed = performance.now() - started;
+  const heapGrowth = process.memoryUsage().heapUsed - heapBefore;
+  assert.ok(elapsed < RESOLVE_BUDGET_MS, `resolved in ${elapsed.toFixed(0)} ms`);
+  assert.ok(heapGrowth < HEAP_BUDGET_BYTES, `heap grew ${heapGrowth} bytes`);
+  assert.deepEqual(profile.modules.routes.floorTypes, floorTypes);
 });
 
 function InvalidTables(config)

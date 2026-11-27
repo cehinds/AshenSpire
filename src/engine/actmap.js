@@ -141,6 +141,20 @@ export function drawSeatOrder(registries, rng, { firstSeat = null } = {}) {
 }
 
 
+// The floorTypes verdict per routes content: the check runs once, not on every map build.
+const floorTypeVerdicts = new WeakMap();
+function cachedFloorTypeProblems(rules, routeShape)
+{
+  const cached = floorTypeVerdicts.get(rules);
+  if (cached && cached.routeShape === routeShape)
+  {
+    return cached.problems;
+  }
+  const problems = RouteFloorTypeProblems(rules, rules, routeShape);
+  floorTypeVerdicts.set(rules, { routeShape, problems });
+  return problems;
+}
+
 // The type a depth is forced to: firstFloor on depth 1, else its floorTypes pin, else null.
 function pinnedTypeAt(floor, firstFloor, pinnedFloors)
 {
@@ -195,7 +209,7 @@ export function buildGameProfileActMap(registries, rng, seat, tier, { history = 
   // (a rest floor is a single shared node, not a lane per type).
   if (firstFloor !== null && (!alternatives.includes(firstFloor) || (restFloors.includes(1) && startRestFromAct === null) || (firstFloor === 'elite' && minimumThreatFloor > 1))) throw new Error('Invalid configured firstFloor');
   const routeShape = RouteShapeOf(registries);
-  const floorTypeProblems = RouteFloorTypeProblems(rules, rules, routeShape);
+  const floorTypeProblems = cachedFloorTypeProblems(rules, routeShape);
   if (floorTypeProblems.length)
   {
     throw new Error(`Invalid configured floorTypes: ${floorTypeProblems[0]}`);
