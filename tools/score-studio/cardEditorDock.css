@@ -179,7 +179,8 @@ body.studio-body .customization-entity-details { display: flex; flex-direction: 
 body.studio-body .customization-entity .customization-quick-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 8px; min-width: 0; }
 body.studio-body .customization-quick-fields[hidden] { display: none !important; }
 body.studio-body .customization-quick-fields > * { min-width: 0; font-size: 12px; }
-body.studio-body .customization-quick-fields > :is(.form-wide, label:has(#edit-type)) { grid-column: 1 / -1; }
+body.studio-body .customization-quick-fields > .form-wide { grid-column: 1 / -1; }
+body.studio-body .customization-quick-fields .name-input-row .studio-switch { flex-direction: row; flex: 0 0 auto; white-space: nowrap; }
 body.studio-body .customization-quick-fields .name-hint { display: none; }
 body.studio-body .customization-quick-fields :is(input:not([type="checkbox"]), select) { width: 100%; min-width: 0; }
 /* A dragged height keeps the fields reachable without growing the header. */

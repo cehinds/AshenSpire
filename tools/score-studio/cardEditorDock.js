@@ -125,9 +125,9 @@ export function initCardEditorDock(ctx) {
   }
   entityName.setAttribute('aria-controls', previewSlot.id);
   entityName.addEventListener('click', () => setPreviewCollapsed(!previewPrefs.collapsed));
-  // Card basics beside the card: the live Name, Card Type, SP and MP fields move next to CP while the
+  // Card basics beside the card: the live Name, Card Type, Rarity, SP and MP fields move next to CP while the
   // preview is open in Properties, and go back to Card Basics otherwise. Moved, never cloned.
-  const quickFields = ['edit-name', 'edit-type', 'edit-sp', 'edit-mp']
+  const quickFields = ['edit-name', 'edit-type', 'edit-rarity', 'edit-sp', 'edit-mp']
     .map(id => doc.getElementById(id)?.closest('.form-wide, label, .studio-field')).filter(Boolean);
   for (const node of quickFields) rememberHome(node);
   const entityDetails = doc.createElement('div'); entityDetails.className = 'customization-entity-details';
