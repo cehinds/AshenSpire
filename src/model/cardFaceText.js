@@ -7,6 +7,7 @@ import { coreSmashClause } from './smashClause.js';
 import { stanceEntryBonuses, stanceRulesFor, stanceOf } from './stanceRules.js';
 import { fixCoreEnabled, evadeGrantOnlyCard } from './fixCoreMechanics.js';
 import { armsAsCoreCounter } from './profileStance.js';
+import { EffectiveCostGrowth } from './combatMechanics.js';
 // src/model/cardFaceText.js — the text a playing card's face says, as lines.
 //
 // ONE MODEL FOR EVERY CARD FACE. It reads the same context combatCardSummary
@@ -72,7 +73,6 @@ const COST_GROWTH_POOLS = Object.freeze([
   ['stamina', 'SP'],
   ['mana', 'MP'],
 ]);
-const DEFAULT_COST_GROWTH_MAX = 3;
 const UNCAPPED_DISPLAY_THRESHOLD = 100;
 
 /** Wither count shown on face: remaining plays in live combat, else authored N. */
@@ -93,9 +93,12 @@ export function WitherFaceCount(cardDef, rules = null, instanceId = null)
     : cardDef.wither;
 }
 
-/** Rising-cost text derived from `costGrowth`, or null when cost does not rise. */
-export function CostGrowthFaceText(growth)
+/** Rising-cost text from the costGrowth the engine charges under `ctx`, or null when cost does not rise. */
+export function CostGrowthFaceText(authoredGrowth, ctx = null)
 {
+  const growth = authoredGrowth
+    ? EffectiveCostGrowth({ costGrowth: authoredGrowth }, ctx)
+    : null;
   if (!growth)
   {
     return null;
@@ -121,7 +124,7 @@ export function CostGrowthFaceText(growth)
 
   const maxSteps = growth.uncapped
     ? Infinity
-    : (growth.max ?? DEFAULT_COST_GROWTH_MAX);
+    : growth.max;
   const isMultiPool = activePools.length > 1;
   const formatCap = ([key, unit]) =>
   {
@@ -157,7 +160,7 @@ export function CardRuleRiderLines(cardDef, rules = null, instanceId = null)
     });
   }
 
-  const growthText = CostGrowthFaceText(cardDef?.costGrowth);
+  const growthText = CostGrowthFaceText(cardDef?.costGrowth, rules);
 
   if (growthText)
   {
@@ -647,7 +650,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
   {
     byKind.detail.push(`Wither ${num(wither)}`);
   }
-  const growthLine = CostGrowthFaceText(def.costGrowth);
+  const growthLine = CostGrowthFaceText(def.costGrowth, rules || registries);
   if (growthLine)
   {
     byKind.detail.push(esc(growthLine));

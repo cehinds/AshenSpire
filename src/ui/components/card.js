@@ -1008,7 +1008,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
   // follow, then the chips.
   const common = html.slice(commonStart);
   html = html.slice(0, commonStart);
-  const growthRule = CostGrowthFaceText(def.costGrowth);
+  const growthRule = CostGrowthFaceText(def.costGrowth, registries);
   html += `<div class="ctext">${fillTemplate(def, tokens, null, damageSequences, wardReadsAsPoise(registries) ? { preview: null } : null, registries, statusContext)}${growthRule ? ' ' + esc(growthRule) + '.' : ''}</div>`;
   html += cardStatusDetailsHtml(registries, def, statusContext);
   // Nested keyword + status tooltips (SPEC §7.3).
