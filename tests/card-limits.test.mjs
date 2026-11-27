@@ -1,4 +1,5 @@
-// Card effect and drawback limits (CARD_LIMITS in content/source/actionCosts.json).
+// Card effect and drawback limits. Ops, statuses, keywords and every expected sentence come
+// from CARD_LIMITS and the drawback tables in actionCosts.json, so retuning needs no test edit.
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
@@ -6,47 +7,63 @@ import {
     CountCardParts,
     DEFAULT_CARD_LIMIT_RULES,
 } from '../src/model/cardLimits.js';
+import { FillTemplate } from '../src/model/textTemplate.js';
 import { CheckCardFiles } from '../tools/card-limits.mjs';
 
-const TIGHT_RULES = {
-    ...DEFAULT_CARD_LIMIT_RULES,
-    maxEffects: 2,
-    maxDrawbacks: 1,
+const RULES = DEFAULT_CARD_LIMIT_RULES;
+const TEXT = RULES.text;
+const DRAWBACK_OP = Object.keys(RULES.drawbackOps)[0];
+const SELF_DEBUFF = RULES.selfDebuffStatuses[0];
+const DRAWBACK_KEYWORD = Object.keys(RULES.keywordTags)
+    .find((keyword) => RULES.drawbackKeywordTags.includes(RULES.keywordTags[keyword]));
+const PLAIN_EFFECT = {
+    op: 'damage',
+    target: 'enemy',
+    amount: 6,
 };
-
 const HEAVY_CARD = {
     id: 'test.heavy',
     name: 'Heavy',
-    keywords: ['exhaust'],
+    keywords: [DRAWBACK_KEYWORD],
     effects: [
+        PLAIN_EFFECT,
         {
-            op: 'damage',
-            target: 'enemy',
-            amount: 6,
-        },
-        {
-            op: 'loseHp',
+            op: DRAWBACK_OP,
             target: 'self',
-            amount: 2,
         },
         {
             op: 'applyStatus',
             target: 'self',
-            status: 'frail',
+            status: SELF_DEBUFF,
             stacks: 1,
         },
     ],
 };
+const HEAVY_DRAWBACKS = [
+    DRAWBACK_OP,
+    FillTemplate(TEXT.selfDebuff, { status: SELF_DEBUFF }),
+    DRAWBACK_KEYWORD,
+];
+const TIGHT_RULES = {
+    ...RULES,
+    maxEffects: HEAVY_CARD.effects.length - 1,
+    maxDrawbacks: HEAVY_DRAWBACKS.length - 1,
+};
+
+function cardName(card, face)
+{
+    return FillTemplate(TEXT.cardName, {
+        id: card.id,
+        name: card.name,
+        face,
+    });
+}
 
 test('drawbacks count drawback ops, drawback keywords and debuffs on self', () =>
 {
     const parts = CountCardParts(HEAVY_CARD);
-    assert.equal(parts.effects, 3);
-    assert.deepEqual(parts.drawbacks, [
-        'loseHp',
-        'frail on self',
-        'exhaust',
-    ]);
+    assert.equal(parts.effects, HEAVY_CARD.effects.length);
+    assert.deepEqual(parts.drawbacks, HEAVY_DRAWBACKS);
 });
 
 test('a debuff on an enemy is not a drawback', () =>
@@ -57,7 +74,7 @@ test('a debuff on an enemy is not a drawback', () =>
             {
                 op: 'applyStatus',
                 target: 'enemy',
-                status: 'weak',
+                status: SELF_DEBUFF,
                 stacks: 1,
             },
         ],
@@ -67,35 +84,40 @@ test('a debuff on an enemy is not a drawback', () =>
 
 test('cards over a limit are named with the limit they break', () =>
 {
+    const name = cardName(HEAVY_CARD, '');
     const problems = CheckCardLimits([HEAVY_CARD], TIGHT_RULES);
-    assert.equal(problems.length, 2);
-    assert.match(problems[0], /test\.heavy \(Heavy\) has 3 effects\. The limit is 2/);
-    assert.match(problems[1], /has 3 drawbacks: loseHp, frail on self, exhaust\. The limit is 1/);
+    assert.deepEqual(problems, [
+        FillTemplate(TEXT.tooManyEffects, {
+            name,
+            count: HEAVY_CARD.effects.length,
+            limit: TIGHT_RULES.maxEffects,
+        }),
+        FillTemplate(TEXT.tooManyDrawbacks, {
+            name,
+            count: HEAVY_DRAWBACKS.length,
+            listed: HEAVY_DRAWBACKS.join(TEXT.listJoiner),
+            limit: TIGHT_RULES.maxDrawbacks,
+        }),
+    ]);
 });
 
 test('the upgraded face is checked too', () =>
 {
+    const effects = Array.from({ length: TIGHT_RULES.maxEffects + 1 }, () => PLAIN_EFFECT);
     const card = {
         id: 'test.grows',
         name: 'Grows',
         effects: [],
-        upgrade: {
-            effects: [
-                {
-                    op: 'damage',
-                },
-                {
-                    op: 'block',
-                },
-                {
-                    op: 'draw',
-                },
-            ],
-        },
+        upgrade: { effects },
     };
     const problems = CheckCardLimits([card], TIGHT_RULES);
-    assert.equal(problems.length, 1);
-    assert.match(problems[0], /test\.grows \(Grows\) upgraded has 3 effects/);
+    assert.deepEqual(problems, [
+        FillTemplate(TEXT.tooManyEffects, {
+            name: cardName(card, TEXT.upgradedFace),
+            count: effects.length,
+            limit: TIGHT_RULES.maxEffects,
+        }),
+    ]);
 });
 
 test('every shipped card is within CARD_LIMITS', () =>
