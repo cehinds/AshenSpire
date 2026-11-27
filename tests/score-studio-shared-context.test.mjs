@@ -154,31 +154,25 @@ test('Delete selects the next entity in displayed order, else the previous one, 
   assert.equal(NextInDisplayedOrder(fullOrder, Gamma), Beta);
   assert.equal(NextInDisplayedOrder([Beta], Beta), null);
   // Filtered display order wins over the full list.
-  assert.equal(
-    NextInDisplayedOrder(
-      [Gamma, Alpha],
-      Gamma,
-      fullOrder,
-    ),
-    Alpha,
-  );
-  // A removed card hidden by filters falls back to the full order.
-  assert.equal(
-    NextInDisplayedOrder(
-      [Alpha],
-      Beta,
-      fullOrder,
-    ),
+  const nextInFiltered = NextInDisplayedOrder(
+    [Gamma, Alpha],
     Gamma,
+    fullOrder,
   );
-  assert.equal(
-    NextInDisplayedOrder(
-      [],
-      MISSING_ID,
-      [],
-    ),
-    null,
+  assert.equal(nextInFiltered, Alpha);
+  // A removed card hidden by filters falls back to the full order.
+  const nextForHidden = NextInDisplayedOrder(
+    [Alpha],
+    Beta,
+    fullOrder,
   );
+  assert.equal(nextForHidden, Gamma);
+  const nextInEmpty = NextInDisplayedOrder(
+    [],
+    MISSING_ID,
+    [],
+  );
+  assert.equal(nextInEmpty, null);
 });
 
 test('an entity change ends every open edit burst, so one Undo never spans two cards', () =>
@@ -233,24 +227,19 @@ test('a burst still closes on its own after the pause', () =>
   assert.equal(history.length, 2);
 });
 
-test('reload restore keeps view state under its own key and falls back when a stored id is gone', () =>
+function memoryStorage()
 {
   const stored = new Map();
   const storage = {
     getItem: key => stored.get(key) ?? null,
     setItem: (key, value) => stored.set(key, value),
   };
-  const savedContext = {
-    gallery: GalleryKind.Items,
-    cardId: CardId.Gamma,
-    itemKey: ItemKey.Two,
-  };
-  const defaults = { cardId: CardId.Alpha, itemKey: ItemKey.One };
-  WriteWorkingContext(storage, savedContext);
-  assert.deepEqual([...stored.keys()], [WorkingContextKey]);
-  assert.ok(!WorkingContextKey.includes(DRAFT_KEY_WORD), 'view state is not stored with the draft');
-  const saved = ReadWorkingContext(storage);
-  assert.deepEqual(saved, savedContext);
+  return { stored, storage };
+}
+
+// A stored id that is gone, or an unknown gallery, falls back to the defaults.
+function assertResolveFallsBack(saved, defaults)
+{
   const state = studioState();
   assert.deepEqual(
     ResolveWorkingContext(
@@ -258,7 +247,7 @@ test('reload restore keeps view state under its own key and falls back when a st
       state,
       defaults,
     ),
-    savedContext,
+    saved,
   );
   // The stored card was deleted: the existing default returns without error.
   state.cards = state.cards.filter(card => card.id !== CardId.Gamma);
@@ -287,6 +276,11 @@ test('reload restore keeps view state under its own key and falls back when a st
       itemKey: null,
     },
   );
+}
+
+// Unreadable, blocked or full storage only loses the reload restore.
+function assertBadStorageIsHarmless(stored, storage)
+{
   stored.set(WorkingContextKey, '{not json');
   assert.equal(ReadWorkingContext(storage), null);
   const blockedStorage = {
@@ -303,7 +297,29 @@ test('reload restore keeps view state under its own key and falls back when a st
     },
   };
   assert.doesNotThrow(() => WriteWorkingContext(fullStorage, { gallery: GalleryKind.Cards }));
-});
+}
+
+test(
+  'reload restore keeps view state under its own key and falls back when a stored id is gone',
+  () =>
+  {
+    const { stored, storage } = memoryStorage();
+    const savedContext = {
+      gallery: GalleryKind.Items,
+      cardId: CardId.Gamma,
+      itemKey: ItemKey.Two,
+    };
+    const defaults = { cardId: CardId.Alpha, itemKey: ItemKey.One };
+    WriteWorkingContext(storage, savedContext);
+    assert.deepEqual([...stored.keys()], [WorkingContextKey]);
+    const keyNamesDraft = WorkingContextKey.includes(DRAFT_KEY_WORD);
+    assert.ok(!keyNamesDraft, 'view state is not stored with the draft');
+    const saved = ReadWorkingContext(storage);
+    assert.deepEqual(saved, savedContext);
+    assertResolveFallsBack(saved, defaults);
+    assertBadStorageIsHarmless(stored, storage);
+  },
+);
 
 function galleryFixture(dom)
 {
@@ -329,7 +345,8 @@ function galleryFixture(dom)
 
   function tile(id)
   {
-    return grid.querySelectorAll(`.${CARD_TILE_CLASS}`).find(node => node.dataset.cardId === id);
+    const tiles = grid.querySelectorAll(`.${CARD_TILE_CLASS}`);
+    return tiles.find(node => node.dataset.cardId === id);
   }
 
   const search = () => doc.getElementById(CARD_SEARCH_ID);
@@ -342,26 +359,46 @@ function galleryFixture(dom)
   };
 }
 
-test('a gallery re-render keeps focus on the tile with the same id', () => withKitDom(dom =>
+function captureGalleryFocus({ grid, doc })
+{
+  return CaptureTileFocus(
+    grid,
+    CARD_TILE_ATTRIBUTE,
+    doc,
+  );
+}
+
+function restoreGalleryFocus(gallery, captured)
 {
   const {
-    doc,
     grid,
+    doc,
+    search,
+  } = gallery;
+  return RestoreTileFocus(
+    grid,
+    CARD_TILE_ATTRIBUTE,
+    captured,
+    search(),
+    doc,
+  );
+}
+
+test('a gallery re-render keeps focus on the tile with the same id', () => withKitDom(dom =>
+{
+  const gallery = galleryFixture(dom);
+  const {
+    doc,
     render,
     tile,
-    search,
-  } = galleryFixture(dom);
+  } = gallery;
   render([
     CardId.Alpha,
     CardId.Beta,
     CardId.Gamma,
   ]);
   tile(CardId.Beta).focus();
-  const captured = CaptureTileFocus(
-    grid,
-    CARD_TILE_ATTRIBUTE,
-    doc,
-  );
+  const captured = captureGalleryFocus(gallery);
   assert.deepEqual(captured, { id: CardId.Beta, part: null });
   render([
     CardId.Alpha,
@@ -373,75 +410,46 @@ test('a gallery re-render keeps focus on the tile with the same id', () => withK
     tile(CardId.Beta),
     'the rebuild destroyed the focused tile',
   );
-  RestoreTileFocus(
-    grid,
-    CARD_TILE_ATTRIBUTE,
-    captured,
-    search(),
-    doc,
-  );
+  restoreGalleryFocus(gallery, captured);
   assert.equal(doc.activeElement, tile(CardId.Beta));
 }));
 
-test('focus inside a tile returns to the same part; a removed tile moves focus to a named control', () => withKitDom(dom =>
-{
-  const {
-    doc,
-    grid,
-    render,
-    tile,
-    search,
-  } = galleryFixture(dom);
-  const editButtonOf = id => tile(id).querySelector(`.${EDIT_BUTTON_CLASS}`);
-  render([CardId.Alpha, CardId.Beta]);
-  editButtonOf(CardId.Alpha).focus();
-  let captured = CaptureTileFocus(
-    grid,
-    CARD_TILE_ATTRIBUTE,
-    doc,
-  );
-  assert.deepEqual(captured, { id: CardId.Alpha, part: `.${EDIT_BUTTON_CLASS}` });
-  render([CardId.Alpha, CardId.Beta]);
-  RestoreTileFocus(
-    grid,
-    CARD_TILE_ATTRIBUTE,
-    captured,
-    search(),
-    doc,
-  );
-  assert.equal(doc.activeElement, editButtonOf(CardId.Alpha));
-  tile(CardId.Beta).focus();
-  captured = CaptureTileFocus(
-    grid,
-    CARD_TILE_ATTRIBUTE,
-    doc,
-  );
-  render([CardId.Alpha]);
-  RestoreTileFocus(
-    grid,
-    CARD_TILE_ATTRIBUTE,
-    captured,
-    search(),
-    doc,
-  );
-  assert.equal(
-    doc.activeElement,
-    search(),
-    'focus never drops to the page body',
-  );
-  // Focus outside the gallery is left alone.
-  search().focus();
-  assert.equal(
-    CaptureTileFocus(
-      grid,
-      CARD_TILE_ATTRIBUTE,
+test(
+  'focus inside a tile returns to the same part; a removed tile moves focus to a named control',
+  () => withKitDom(dom =>
+  {
+    const gallery = galleryFixture(dom);
+    const {
       doc,
-    ),
-    null,
-  );
-}));
+      render,
+      tile,
+      search,
+    } = gallery;
+    const editButtonOf = id => tile(id).querySelector(`.${EDIT_BUTTON_CLASS}`);
+    render([CardId.Alpha, CardId.Beta]);
+    editButtonOf(CardId.Alpha).focus();
+    let captured = captureGalleryFocus(gallery);
+    assert.deepEqual(captured, { id: CardId.Alpha, part: `.${EDIT_BUTTON_CLASS}` });
+    render([CardId.Alpha, CardId.Beta]);
+    restoreGalleryFocus(gallery, captured);
+    assert.equal(doc.activeElement, editButtonOf(CardId.Alpha));
+    tile(CardId.Beta).focus();
+    captured = captureGalleryFocus(gallery);
+    render([CardId.Alpha]);
+    restoreGalleryFocus(gallery, captured);
+    assert.equal(
+      doc.activeElement,
+      search(),
+      'focus never drops to the page body',
+    );
+    // Focus outside the gallery is left alone.
+    search().focus();
+    assert.equal(captureGalleryFocus(gallery), null);
+  }),
+);
 
-// Static routing checks on the composition root: studio.js boots the page on import, so these read its source.
+// Static routing checks on the composition root.
+// studio.js boots the page on import, so these read its source.
 function source(name)
 {
   return readFileSync(new URL(`../tools/score-studio/${name}`, import.meta.url), 'utf8');
@@ -461,7 +469,13 @@ function body(sourceText, name)
   return sourceText.slice(start, Math.min(...ends));
 }
 
-test('every writer of the active card and item goes through the two setters', () =>
+// One pattern from consecutive parts, so a long source pattern reads piece by piece.
+function joinedPattern(...parts)
+{
+  return new RegExp(parts.map(part => part.source).join(''));
+}
+
+function assertNoDirectActiveWrites()
 {
   const writes = /state\.selected(CardId|ItemKey)\s*=(?!=)/;
   const writerFiles = [
@@ -480,12 +494,10 @@ test('every writer of the active card and item goes through the two setters', ()
       `${file} writes the active entity only through the setters`,
     );
   }
-  const studio = source('studio.js');
-  assert.equal(
-    studio.match(/state\.artTarget\s*=(?!=)/g)?.length,
-    1,
-    'artTarget is set in one place, with activeGallery and the dock context',
-  );
+}
+
+function assertSelectorsUseSetters(studio)
+{
   assert.match(body(studio, 'selectStudioCard'), /selectGalleryEntity\(\s*GalleryKind\.Cards,/);
   assert.match(body(studio, 'selectStudioItem'), /selectGalleryEntity\(\s*GalleryKind\.Items,/);
   assert.match(body(studio, 'selectGalleryEntity'), /activeEntities\.set\(kind,/);
@@ -506,13 +518,36 @@ test('every writer of the active card and item goes through the two setters', ()
     /activeEntities\.reconcile\(\)/,
     'content changes reconcile through the setters',
   );
-  // The Design picker and target route through the setter and the gallery tabs.
+}
+
+// The Design picker and target route through the setter and the gallery tabs.
+function assertPickersUseSetters(studio)
+{
+  const pickerListener = /getElementById\(ART_PREVIEW_SELECT_ID\)\.addEventListener\(CHANGE_EVENT/;
+  const pickerSelectsThroughSetter = joinedPattern(
+    pickerListener,
+    /[\s\S]{0,200}/,
+    /selectStudio(Item|Card)\(event\.target\.value/,
+  );
   assert.match(studio, /const ART_PREVIEW_SELECT_ID = 'art-preview-card-select';/);
-  assert.match(studio, /getElementById\(ART_PREVIEW_SELECT_ID\)\.addEventListener\(CHANGE_EVENT[\s\S]{0,200}selectStudio(Item|Card)\(event\.target\.value/);
+  assert.match(studio, pickerSelectsThroughSetter);
   assert.match(studio, /data-art-target[\s\S]{0,300}showGallery\(kind\)/);
   assert.match(source('studioToolsModal.js'), /ctx\.selectCard\(state\.cards\[0\]\.id/);
   assert.match(source('studioToolsModal.js'), /ctx\.selectItem\(state\.items\[0\]\.key/);
   assert.match(source('subclassCatalog.js'), /ctx\.selectCard\(list\.cardIds\[0\]/);
+}
+
+test('every writer of the active card and item goes through the two setters', () =>
+{
+  assertNoDirectActiveWrites();
+  const studio = source('studio.js');
+  assert.equal(
+    studio.match(/state\.artTarget\s*=(?!=)/g)?.length,
+    1,
+    'artTarget is set in one place, with activeGallery and the dock context',
+  );
+  assertSelectorsUseSetters(studio);
+  assertPickersUseSetters(studio);
 });
 
 test('no silent first-card fallback in the inspectors, the preview, undo or revert', () =>
@@ -540,25 +575,32 @@ test('no silent first-card fallback in the inspectors, the preview, undo or reve
   );
 });
 
-test('edit bursts end on entity change and view state stays out of snapshots, the draft and bundles', () =>
-{
-  const studio = source('studio.js');
-  assert.match(studio, /CreateActiveEntities\(\{\s*state,\s*onChange: \(\) =>\s*\{\s*editBursts\.endAll\(\);/);
-  assert.match(body(studio, 'createEditBurst'), /editBursts\.create\(\)/);
-  for (const name of ['snapshotState', 'writeDraftNow'])
+test(
+  'edit bursts end on entity change and view state stays out of snapshots, the draft and bundles',
+  () =>
   {
-    assert.doesNotMatch(
-      body(studio, name),
-      /selectedCardId|selectedItemKey|activeGallery|WorkingContext/,
-      `${name} holds content only`,
+    const studio = source('studio.js');
+    const endsBurstsOnChange = joinedPattern(
+      /CreateActiveEntities\(\{\s*state,/,
+      /\s*onChange: \(\) =>\s*\{\s*editBursts\.endAll\(\);/,
     );
-  }
-  for (const file of ['studioToolsModal.js', 'studio.js'])
-  {
-    assert.doesNotMatch(
-      source(file),
-      /scoreStudioWorkingContext/,
-      `${file} does not spell the view-state key itself`,
-    );
-  }
-});
+    assert.match(studio, endsBurstsOnChange);
+    assert.match(body(studio, 'createEditBurst'), /editBursts\.create\(\)/);
+    for (const name of ['snapshotState', 'writeDraftNow'])
+    {
+      assert.doesNotMatch(
+        body(studio, name),
+        /selectedCardId|selectedItemKey|activeGallery|WorkingContext/,
+        `${name} holds content only`,
+      );
+    }
+    for (const file of ['studioToolsModal.js', 'studio.js'])
+    {
+      assert.doesNotMatch(
+        source(file),
+        /scoreStudioWorkingContext/,
+        `${file} does not spell the view-state key itself`,
+      );
+    }
+  },
+);
