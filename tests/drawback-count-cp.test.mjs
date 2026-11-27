@@ -1,16 +1,20 @@
 // scoring.drawbackCount: Combat Power per drawback, flat or as a multiplier of the positive score.
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { test } from 'node:test';
+import { fileURLToPath } from 'node:url';
 import { CountCardParts, CountFaceDrawbacks } from '../src/model/cardLimits.js';
 import { HeadlessCardFace } from '../src/model/autoBalance.js';
+import { CardDefinitionToScoreFace } from '../src/model/cardUpgradeCp.js';
 import { CountSurcharge, ScoreCard } from '../src/model/combatPower.js';
 import { scoring as shippedScoring } from '../src/content/generated/scoring.js';
 import { CARD_LIMITS } from '../src/content/actionCosts.js';
 
 const PART = 'drawback count';
 const MULTIPLIER_WEIGHT = -0.1;
-const cards = JSON.parse(readFileSync(new URL(`../${CARD_LIMITS.cardFiles[0]}`, import.meta.url), 'utf8'));
+const REPO_ROOT = fileURLToPath(new URL('..', import.meta.url));
+const cards = JSON.parse(readFileSync(join(REPO_ROOT, CARD_LIMITS.cardFiles[0]), 'utf8'));
 
 function scoringWith(drawbackCount)
 {
@@ -33,6 +37,30 @@ test('a face counts the same drawbacks as its card', () =>
     {
         const face = HeadlessCardFace(card, shippedScoring);
         assert.equal(CountFaceDrawbacks(face).length, CountCardParts(card).drawbacks.length, card.id);
+    });
+});
+
+const CARD_SOURCE_FOLDER = 'content/source/cards/';
+
+function everyAuthoredCard()
+{
+    const folder = join(REPO_ROOT, CARD_SOURCE_FOLDER);
+    const shared = readdirSync(folder)
+        .filter((name) => name.endsWith('.json'))
+        .flatMap((name) => JSON.parse(readFileSync(join(folder, name), 'utf8')));
+    return [
+        ...cards,
+        ...shared,
+    ];
+}
+
+test('both face projections keep every authored drawback, repeats included', () =>
+{
+    everyAuthoredCard().forEach((card) =>
+    {
+        const expected = CountCardParts(card).drawbacks;
+        assert.deepEqual(CountFaceDrawbacks(HeadlessCardFace(card, shippedScoring)), expected, card.id);
+        assert.deepEqual(CountFaceDrawbacks(CardDefinitionToScoreFace(card)), expected, card.id);
     });
 });
 

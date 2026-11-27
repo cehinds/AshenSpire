@@ -20,6 +20,7 @@ export const DEFAULT_CARD_LIMIT_RULES = Object.freeze({
     drawbackKeywordTags: DRAWBACK_KEYWORD_TAGS,
     keywordTags: KEYWORD_TAGS,
     text: CARD_LIMITS.text,
+    drawbackOpRequires: CARD_LIMITS.drawbackOpRequires,
 });
 
 /** A null or missing cap in CARD_LIMITS means no limit. */
@@ -39,7 +40,11 @@ function effectDrawback(effect, rules)
 {
     if (rules.drawbackOps[effect.op])
     {
-        return effect.op;
+        const required = rules.drawbackOpRequires?.[effect.op];
+        const counts = !required || effect[required] !== undefined;
+        return counts
+            ? effect.op
+            : null;
     }
     const isSelfDebuff = effect.op === APPLY_STATUS_OP
         && effect.target === SELF_TARGET
@@ -137,9 +142,13 @@ export function CountCardParts(card, rules = DEFAULT_CARD_LIMIT_RULES)
     };
 }
 
-/** Drawbacks on a scored face (fields loseHp, discard, kw, statuses as [id, stacks, target]). */
+/** Drawbacks on a scored face: the authored list when projected from a card, else inferred. */
 export function CountFaceDrawbacks(face, rules = DEFAULT_CARD_LIMIT_RULES)
 {
+    if (Array.isArray(face.drawbacks))
+    {
+        return face.drawbacks;
+    }
     const fromOps = Object.keys(rules.drawbackOps).filter((op) => face[op] > 0);
     const fromKeywords = listOf(face.kw)
         .filter((keyword) => isDrawbackKeyword(keyword, rules));
