@@ -1,28 +1,33 @@
 # Player sprite cleanup — continuation
 
-Updated: 2026-11-27, America/Anchorage. Baseline observations remain dated 2026-11-26.
+Updated: 2026-11-27, America/Anchorage. Implementation approved after readability delivery.
 
 ## Status and scope
 
-The plan, baseline evidence, and readability cleanup are complete. Primary
-cases: **Starseer taking a hit** and **Reaver Sweep**. Sprite fixes remain open.
+The owner approved execution. **Implementation is in progress** on
+`fix/PlayerSpriteConsistency`, beginning with Starseer hit and Reaver Sweep.
+Read [the execution checkpoint](implementation/EXECUTION.md) first for authority,
+worker ownership, current findings, and next actions. Historical baseline
+evidence remains immutable; new captures belong under `implementation/`.
 
 - [Overview and user stories](README.md)
 - [Implementation plan](IMPLEMENTATION-PLAN.md)
 - [Evidence checklist](EVIDENCE-CHECKLIST.md)
 - [Review and checks](REVIEW.md)
 
-The owner authorized concurrent investigation, planning artifacts, routine
-pushes, and this readability cleanup. Preserve behavior, evidence, other edits,
-and worktrees. Sprite implementation, replacement art, PR creation, merge,
-promotion, and publication remain outside this task.
+The owner authorized concurrent implementation of the approved cleanup plan,
+with routine pushes and continuation updates. Preserve evidence, other edits,
+and worktrees. Merge, promotion, game/art releases, and publication retain their
+explicit authority requirements. The previous planning-only restriction is
+superseded by the owner's execution instruction.
 
 ## Baseline
 
 | Item | Recorded value |
 | --- | --- |
 | Repository | cehinds/AshenSpire |
-| Planning branch | codex/player-sprite-cleanup-plan |
+| Planning branch | codex/player-sprite-cleanup-plan (retained) |
+| Implementation branch | fix/PlayerSpriteConsistency |
 | Audited source | 49eca254d795d06266aa23941cb2b31fe77b27bf — fetched/live Dev ref at observation |
 | Test source ref observed | f33b112f89ad1029f48112dd84266006ddc3fe15 |
 | Art pin | cehinds/AI-Art, ashenspire-hd-assets-v30 |
@@ -79,7 +84,8 @@ acceptance remain open. See the verification report.
    Reproduction must reject inputs differing from the retained baseline.
 3. Check the readability results in REVIEW.md and confirm the latest commit
    matches the live planning branch before continuing.
-4. Present the plan. Start the Reaver Sweep/Starseer hit pilot only when requested.
+4. Follow implementation/EXECUTION.md. Complete and validate the approved pilot
+   before expanding. Never mark an implementation item done without its evidence.
 
 Readability ownership: A — measurement audit; B — main/report Markdown;
 C — visual/runtime scripts; coordinator — evidence verifier, continuation,
