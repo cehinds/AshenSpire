@@ -282,6 +282,41 @@ test('weights tab: the multiply-instead switch stores flat or multiplier, and th
   assert.deepEqual(ValidateScoringConfig(scoring), []);
 });
 
+test('weights tab: cost, effect and status rows switch to the multiplier form and back without a stray change', async () => {
+  const { weightSentence, weightExample, SetWeightForm } = await import('../tools/score-studio/weightExamples.js');
+  const { ScoringDiffPaths, MergePendingScoring } = await import('../tools/score-studio/weightsStaging.js');
+  const applied = structuredClone(shippedScoring);
+  const repo = shippedScoring;
+  // Stage the switch as applyWeightEdit does: a pending copy next to the base it came from.
+  const pending = structuredClone(applied);
+  SetWeightForm(pending.costs.sp, repo.costs.sp, true);
+  assert.deepEqual([pending.costs.sp.multiplier, pending.costs.sp.weight], [true, 0], 'on starts at the no-change weight 0');
+  pending.costs.sp.weight = -0.1;
+  SetWeightForm(pending.effects.block, repo.effects.block, true);
+  SetWeightForm(pending.statuses.vulnerable, repo.statuses.vulnerable, true);
+  assert.deepEqual(ScoringDiffPaths(applied, pending).sort(), ['costs.sp.multiplier', 'costs.sp.weight', 'effects.block.multiplier', 'effects.block.weight', 'statuses.vulnerable.multiplier', 'statuses.vulnerable.weight']);
+  assert.deepEqual(ValidateScoringConfig(pending), []);
+  // Apply: the merged config scores SP as P x -0.1 per SP, so the stronger card pays more.
+  const merged = MergePendingScoring(applied, applied, pending);
+  const low = ScoreCard({ ...BaseFace(), sp: 1, dmg: 5 }, merged), high = ScoreCard({ ...BaseFace(), sp: 1, dmg: 40 }, merged);
+  assert.equal(low.parts.SP, low.positive * -0.1);
+  assert.equal(high.parts.SP, high.positive * -0.1);
+  assert.ok(high.parts.SP < low.parts.SP);
+  // The words and the worked example name the multiplier form, with the selected card's positive score when given.
+  assert.deepEqual(weightSentence('costs', 'sp', merged), { before: '', mid: '× P per SP', after: '' });
+  assert.deepEqual(weightSentence('effects', 'block', merged, 'block'), { before: '', mid: '× P per', after: 'Block' });
+  assert.deepEqual(weightSentence('statuses', 'vulnerable', merged), { before: '', mid: '× P per stack', after: '' });
+  assert.equal(weightExample('costs', 'sp', merged, 'SP'), 'Positive score 20: 2 SP = -4 pts');
+  assert.equal(weightExample('costs', 'sp', merged, 'SP', { name: 'Strike', positive: 14 }), 'Strike (positive score 14): 2 SP = -2.8 pts');
+  assert.equal(weightSentence('costs', 'mp', merged).mid, 'pts per MP', 'a flat row keeps its words');
+  // Switching back restores the repo's flat weight and drops the flag, so nothing is left staged.
+  SetWeightForm(pending.costs.sp, repo.costs.sp, false);
+  SetWeightForm(pending.effects.block, repo.effects.block, false);
+  SetWeightForm(pending.statuses.vulnerable, repo.statuses.vulnerable, false);
+  assert.deepEqual(ScoringDiffPaths(applied, pending), []);
+  assert.deepEqual(pending, applied);
+});
+
 test('studio restore: a draft with the old naming tables takes the repo naming and drops prefix / suffix', async () => {
   const { RefreshRestoredNaming, NamingIsStale } = await import('../tools/score-studio/weightsStaging.js');
   const { CardName } = await import('../src/model/combatPower.js');

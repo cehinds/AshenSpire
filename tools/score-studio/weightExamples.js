@@ -85,11 +85,12 @@ export function weightSentence(groupKey, id, scoring, label)
   switch (groupKey)
   {
     case 'costs':
-      return { before: '', mid: `pts per ${String(id).toUpperCase()}`, after: '' };
+      return { before: '', mid: `${multiplied(scoring, 'costs', id) ? '× P' : 'pts'} per ${String(id).toUpperCase()}`, after: '' };
     case 'effects':
-      return { before: '', mid: 'pts per', after: effectUnit(id, label) };
+      return { before: '', mid: `${multiplied(scoring, 'effects', id) ? '× P' : 'pts'} per`, after: effectUnit(id, label) };
     case 'statuses':
-      return { before: '', mid: 'pts per stack', after: '' };
+      if (!multiplied(scoring, 'statuses', id)) return { before: '', mid: 'pts per stack', after: '' };
+      return { before: '', mid: FORMULA_STATUSES.has(id) ? '× P per formula pt' : '× P per stack', after: '' };
     case 'keywords':
       return scoring.keywords?.[id]?.flat !== undefined
         ? { before: 'adds', mid: 'pts', after: '' }
@@ -163,17 +164,30 @@ function tagSentence(tag)
   }
 }
 
-/** One short line showing what the row's numbers do to a card, worked out with the scorer's math. */
-export function weightExample(groupKey, id, scoring, label)
+// A cost, effect or status in multiplier form (owner, 2026-11-27): it scores P x weight per unit.
+const multiplied = (scoring, section, id) => scoring?.[section]?.[id]?.multiplier === true;
+
+// "Positive score 20" or, for the card in hand, "Strike (positive score 14)".
+function positiveLead(example)
 {
+  return example.name ? `${example.name} (positive score ${num(example.positive)})` : `Positive score ${num(example.positive)}`;
+}
+
+/**
+ * One short line showing what the row's numbers do to a card, worked out with the scorer's math.
+ * `card` ({name, positive}) is the card the multiplier-form examples use; without it they use positive score 20.
+ */
+export function weightExample(groupKey, id, scoring, label, card = null)
+{
+  const example = Number.isFinite(card?.positive) ? { name: card.name || '', positive: card.positive } : { name: '', positive: EXAMPLE_POSITIVE_SCORE };
   switch (groupKey)
   {
     case 'costs':
-      return costExample(id, scoring);
+      return costExample(id, scoring, example);
     case 'effects':
-      return effectExample(id, scoring, label);
+      return effectExample(id, scoring, label, example);
     case 'statuses':
-      return statusExample(id, scoring);
+      return statusExample(id, scoring, example);
     case 'keywords':
       return keywordExample(id, scoring);
     case 'rarity':
@@ -257,39 +271,50 @@ function gearFieldExample(id, scoring, label)
   return `+1 ${field.label || label || id} (always-on) = ${signedPts(w)}; conditional = ${signedPts(w * (Number(scoring.items?.conditionFactor ?? 0.65)))}`;
 }
 
-function costExample(id, scoring)
+function costExample(id, scoring, example)
 {
   const weight = Number(scoring.costs?.[id]?.weight) || 0;
+  if (multiplied(scoring, 'costs', id)) return `${positiveLead(example)}: 2 ${String(id).toUpperCase()} = ${pts(example.positive * weight * 2)}`;
   return `2 ${String(id).toUpperCase()} = ${pts(weight * 2)}`;
 }
 
-// ScoreCard's effect value: weight x amount / per (ew in combatPower.js).
-function effectExample(id, scoring, label)
+// ScoreCard's effect value: weight x amount / per (ew in combatPower.js), times P in multiplier form.
+function effectExample(id, scoring, label, example)
 {
   if (UNREAD_EFFECTS[id]) return UNREAD_EFFECTS[id];
   const source = BORROWED_EFFECT_WEIGHTS[id];
-  if (source) return `Not this box: scored with the ${source} row (${effectExample(source, scoring, source).replace(effectUnit(source, source), effectUnit(id, label))})`;
+  if (source) return `Not this box: scored with the ${source} row (${effectExample(source, scoring, source, example).replace(effectUnit(source, source), effectUnit(id, label))})`;
   const entry = scoring.effects?.[id];
   if (!entry) return '';
   const per = Math.max(1, Number(entry.per) || 1);
   const weight = Number(entry.weight) || 0;
-  if (COUNTED_ONCE_EFFECTS.has(id)) return `Counted once per card: ${signedPts(weight / per)}`;
-  if (id === 'counterStack') return `Any Counter card: ${signedPts(weight / per)}`;
+  const mult = multiplied(scoring, 'effects', id);
+  const scale = mult ? example.positive : 1;
+  const lead = mult ? `${positiveLead(example)}: ` : '';
+  if (COUNTED_ONCE_EFFECTS.has(id)) return `${lead}Counted once per card: ${signedPts(scale * weight / per)}`;
+  if (id === 'counterStack') return `${lead}Any Counter card: ${signedPts(scale * weight / per)}`;
   const amount = per * 2;
-  return `${amount} ${effectUnit(id, label)} = ${pts(weight * amount / per)}`;
+  return `${lead}${amount} ${effectUnit(id, label)} = ${pts(scale * weight * amount / per)}`;
 }
 
 // The scorer's real value for a few stacks, so capped and formula statuses show what they score.
-function statusExample(id, scoring)
+// In multiplier form the units are the flat form at weight 1 (the formula value for a formula status), times P x weight.
+function statusExample(id, scoring, example)
 {
   const status = scoring.statuses?.[id];
   if (!status) return '';
   const target = status.target === 'self' ? 'self' : 'enemy';
   const face = { ...BaseFace(), statuses: [[id, EXAMPLE_STACKS, target]] };
+  const decayNote = (scoring.cardModel?.decayOneStatuses || []).includes(id) ? ` (counts at most ${scoring.model?.R} stacks)` : '';
+  if (multiplied(scoring, 'statuses', id))
+  {
+    const unitScoring = { ...scoring, statuses: { ...scoring.statuses, [id]: { ...status, weight: 1, multiplier: false } } };
+    const units = ScoreCard(face, unitScoring).parts[id] || 0;
+    const note = FORMULA_STATUSES.has(id) ? ` (${num(units)} formula pts)` : decayNote;
+    return `${positiveLead(example)}: ${EXAMPLE_STACKS} stacks = ${pts(example.positive * (Number(status.weight) || 0) * units)}${note}`;
+  }
   const value = ScoreCard(face, scoring).parts[id] || 0;
-  let note = '';
-  if (FORMULA_STATUSES.has(id)) note = ' (set by a formula, not this box)';
-  else if ((scoring.cardModel?.decayOneStatuses || []).includes(id)) note = ` (counts at most ${scoring.model?.R} stacks)`;
+  const note = FORMULA_STATUSES.has(id) ? ' (set by a formula, not this box)' : decayNote;
   return `${EXAMPLE_STACKS} stacks = ${pts(value)}${note}`;
 }
 
@@ -406,6 +431,23 @@ export function SetKeywordForm(keyword, multiply)
     delete keyword.multiplier;
     keyword.flat = 0;
   }
+}
+
+/**
+ * Switch a cost, effect or status between flat (weight per unit) and multiplier form (P x weight per unit). On starts at weight 0
+ * (no change); off goes back to the repo's flat weight, else 0. Off drops the flag unless the repo spells it out.
+ */
+export function SetWeightForm(entry, repoEntry, multiply)
+{
+  if (multiply)
+  {
+    entry.multiplier = true;
+    entry.weight = 0;
+    return;
+  }
+  if (repoEntry && 'multiplier' in repoEntry) entry.multiplier = false;
+  else delete entry.multiplier;
+  entry.weight = repoEntry && repoEntry.multiplier !== true && Number.isFinite(repoEntry.weight) ? repoEntry.weight : 0;
 }
 
 /** Switch a tag between flat (adds `weight`) and its multiplier: 'multiplier' starts at 1 (x1), 'pMultiplier' at 0. */
