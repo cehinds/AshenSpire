@@ -9,6 +9,17 @@ import { ValidateScoringConfig } from '../src/model/activeScoring.js';
 import { ValidateSubclassCatalog, SerializeSubclassCatalog } from '../src/model/subclassCatalogExport.js';
 import { tryAcquire, lockEnv, busyMessage } from './lib/build-lock.mjs';
 import { expansionStatuses } from '../src/content/combatStatusRules.js';
+import { createHash } from 'node:crypto';
+import { writeFileAtomic } from './lib/write-atomic.mjs';
+import {
+  STUDIO_SAVE_FILES,
+  STUDIO_SAVE_FILE_NAMES,
+  STUDIO_SAVE_FORMAT_VERSION,
+  STUDIO_SAVE_HEADER_KEYS,
+  studioSaveData,
+  studioSaveDocument,
+  stableJson,
+} from './score-studio/studioSaveFiles.js';
 
 export const DEFAULT_SCORING_PATH = 'content/source/scoring.json';
 export const DEFAULT_ART_LAYERS_PATH = 'content/source/cardArtLayers.json';
@@ -301,4 +312,236 @@ function saveSubclassCatalogLocked(rootDir, { catalog, rebuild, env }) {
     throw new Error(`Subclass export rolled back: ${error.message}`);
   }
   return { cardCount: catalog.cards.length, listCount: catalog.lists.length, paths: [...writes.keys()], rebuilt };
+}
+
+// ---------------------------------------------------------------------------
+// Studio Save (SS-003): the Studio's own config, in fixed files under content/source/studio/.
+// No request field names a path: the files are STUDIO_SAVE_FILES, and nothing else is written.
+// ---------------------------------------------------------------------------
+
+const STUDIO_SAVE_LABEL = 'Studio save';
+const STUDIO_SAVE_REQUEST_KEYS = Object.freeze([
+  'revision',
+  'files',
+]);
+const ABSENT_FILE_MARK = '<absent>';
+const HTTP_BAD_REQUEST = 400;
+const HTTP_CONFLICT = 409;
+export const STUDIO_SAVE_STALE_MESSAGE = 'The Studio save files changed since this Studio loaded them (another tab, or a git pull). Reload to see them; your draft is kept.';
+
+class StudioSaveError extends Error
+{
+  constructor(message, statusCode = HTTP_BAD_REQUEST)
+  {
+    super(message);
+    this.statusCode = statusCode;
+  }
+}
+
+const isPlainObject = (value) => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+function refuse(message)
+{
+  throw new StudioSaveError(`${STUDIO_SAVE_LABEL} refused: ${message}`);
+}
+
+function requireExactKeys(value, allowedKeys, where)
+{
+  if (!isPlainObject(value))
+  {
+    refuse(`${where} must be a JSON object.`);
+  }
+  const extra = Object.keys(value).filter((key) => !allowedKeys.includes(key));
+  if (extra.length)
+  {
+    refuse(`${where} has keys that are not allowed: ${extra.join(', ')}.`);
+  }
+}
+
+function requireLayerSet(value, where)
+{
+  if (!isPlainObject(value) || !Array.isArray(value.layers))
+  {
+    refuse(`${where} must be an object with a "layers" array.`);
+  }
+}
+
+const isCardObject = (card) => isPlainObject(card) && typeof card.id === 'string' && Boolean(card.id);
+const isCardId = (id) => typeof id === 'string' && Boolean(id);
+
+const STUDIO_SAVE_DATA_CHECKS = Object.freeze({
+  [STUDIO_SAVE_FILE_NAMES.cards]: (data) =>
+  {
+    if (!Array.isArray(data.cards) || !data.cards.every(isCardObject))
+    {
+      refuse('cards must be an array of card objects, each with an id.');
+    }
+    if (new Set(data.cards.map((card) => card.id)).size !== data.cards.length)
+    {
+      refuse('cards holds the same id twice.');
+    }
+    if (!Array.isArray(data.removedCardIds) || !data.removedCardIds.every(isCardId))
+    {
+      refuse('removedCardIds must be an array of card ids.');
+    }
+  },
+  [STUDIO_SAVE_FILE_NAMES.artLayers]: (data) =>
+  {
+    requireLayerSet(data.cardArtLayers, 'cardArtLayers');
+    requireLayerSet(data.itemArtLayers, 'itemArtLayers');
+  },
+  [STUDIO_SAVE_FILE_NAMES.templates]: (data) =>
+  {
+    if (!Array.isArray(data.templates) || !data.templates.every(isPlainObject))
+    {
+      refuse('templates must be an array of objects.');
+    }
+  },
+});
+
+/** Checks one file's document as the Studio sent it and returns its data keys. */
+function validateStudioSaveDocument(name, document)
+{
+  const spec = STUDIO_SAVE_FILES[name];
+  requireExactKeys(document, [...STUDIO_SAVE_HEADER_KEYS, ...spec.dataKeys], name);
+  if (document.kind !== spec.kind)
+  {
+    refuse(`${name} must have kind "${spec.kind}".`);
+  }
+  if (document.formatVersion !== STUDIO_SAVE_FORMAT_VERSION)
+  {
+    refuse(`${name} must have formatVersion ${STUDIO_SAVE_FORMAT_VERSION}.`);
+  }
+  const missing = spec.dataKeys.filter((key) => !(key in document));
+  if (missing.length)
+  {
+    refuse(`${name} is missing ${missing.join(', ')}.`);
+  }
+  const data = studioSaveData(name, document);
+  STUDIO_SAVE_DATA_CHECKS[name](data);
+  return data;
+}
+
+function studioSaveSerialize(name, data, savedAt)
+{
+  return JSON.stringify(studioSaveDocument(name, data, savedAt), null, 2) + '\n';
+}
+
+function studioSaveRevisionOf(bytesByName)
+{
+  const hash = createHash('sha256');
+  for (const name of Object.keys(STUDIO_SAVE_FILES))
+  {
+    hash.update(`${name}\n${bytesByName[name] ?? ABSENT_FILE_MARK}\n`);
+  }
+  return hash.digest('hex');
+}
+
+function readStudioSaveBytes(pathOf)
+{
+  const bytesByName = {};
+  for (const [name, spec] of Object.entries(STUDIO_SAVE_FILES))
+  {
+    const target = pathOf(spec.path);
+    bytesByName[name] = existsSync(target) ? readFileSync(target, 'utf8') : null;
+  }
+  return bytesByName;
+}
+
+/** The saved Studio files: { revision, paths, files: { name: document | null } }. */
+export function readStudioSave(rootDir)
+{
+  const pathOf = guardedRepoPath(rootDir, STUDIO_SAVE_LABEL);
+  const bytesByName = readStudioSaveBytes(pathOf);
+  const files = {};
+  const paths = {};
+  for (const [name, spec] of Object.entries(STUDIO_SAVE_FILES))
+  {
+    paths[name] = spec.path;
+    files[name] = bytesByName[name] === null ? null : JSON.parse(bytesByName[name]);
+  }
+  return { revision: studioSaveRevisionOf(bytesByName), paths, files };
+}
+
+function restorePriorBytes(written, priorBytes)
+{
+  for (const write of written)
+  {
+    const prior = priorBytes[write.name];
+    if (prior === null)
+    {
+      rmSync(write.target, { force: true });
+    }
+    else
+    {
+      writeFileAtomic(write.target, prior);
+    }
+  }
+}
+
+/**
+ * Writes the files a Studio Save sent, all or none. Refuses a stale revision (409), any key outside
+ * the fixed shape, and an unknown file name. A file whose data equals what is on disk keeps its
+ * bytes. `writeFile` and `now` exist for tests only; the endpoint never passes them.
+ */
+export function saveStudioSave(rootDir, body, { writeFile = writeFileAtomic, now = () => new Date().toISOString() } = {})
+{
+  requireExactKeys(body, STUDIO_SAVE_REQUEST_KEYS, 'The request');
+  if (typeof body.revision !== 'string')
+  {
+    refuse('revision must be the revision the Studio loaded.');
+  }
+  requireExactKeys(body.files, Object.keys(STUDIO_SAVE_FILES), 'files');
+  const names = Object.keys(body.files);
+  if (!names.length)
+  {
+    refuse('files is empty.');
+  }
+  const dataByName = Object.fromEntries(names.map((name) => [name, validateStudioSaveDocument(name, body.files[name])]));
+  const pathOf = guardedRepoPath(rootDir, STUDIO_SAVE_LABEL);
+  const priorBytes = readStudioSaveBytes(pathOf);
+  if (studioSaveRevisionOf(priorBytes) !== body.revision)
+  {
+    throw new StudioSaveError(STUDIO_SAVE_STALE_MESSAGE, HTTP_CONFLICT);
+  }
+  const savedAt = now();
+  const writes = [];
+  const unchanged = [];
+  for (const name of names)
+  {
+    const prior = priorBytes[name] === null ? null : JSON.parse(priorBytes[name]);
+    if (prior && stableJson(studioSaveData(name, prior)) === stableJson(dataByName[name]))
+    {
+      unchanged.push(name);
+      continue;
+    }
+    writes.push({
+      name,
+      target: pathOf(STUDIO_SAVE_FILES[name].path),
+      bytes: studioSaveSerialize(name, dataByName[name], savedAt),
+    });
+  }
+  const written = [];
+  try
+  {
+    for (const write of writes)
+    {
+      mkdirSync(dirname(write.target), { recursive: true });
+      writeFile(write.target, write.bytes);
+      written.push(write);
+    }
+  }
+  catch (error)
+  {
+    restorePriorBytes(written, priorBytes);
+    throw new StudioSaveError(`${STUDIO_SAVE_LABEL} failed and was rolled back: ${error.message}`);
+  }
+  const current = readStudioSave(rootDir);
+  return {
+    revision: current.revision,
+    paths: current.paths,
+    savedAt: writes.length ? savedAt : null,
+    written: writes.map((write) => write.name),
+    unchanged,
+  };
 }
