@@ -9,6 +9,11 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { cardPlayCosts, dispatch } from '../src/engine/combat.js';
 import { resolveCombatCard } from '../src/engine/combatExpansion.js';
+import {
+    CardSpellCostExceptions,
+    ExpectedSpellPrice,
+    SpellCostCondition,
+} from './helpers/spellCostRules.mjs';
 
 const spell = {
   id: 'qa.reach-spell', type: 'attack', cost: 1, staminaCost: 1, manaCost: 1,
@@ -40,29 +45,87 @@ for (const overrides of [
 });
 
 const registries = core2Registries();
-for (const cardId of ['core.meteor', 'custom.copy_mwx6hh79']) test(`${cardId}: Prepared keeps the authored spell identity and pays one Graduate cut plus independent robe/Focus cuts`, () => {
-  for (const [hand, focus] of [['greatsword', 0], ['ashStaff', 1]]) {
-    const run = createRunState({ registries, classId: 'starseer', seed: 29,
-      profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['one'] } } } });
-    run.loadout.sets.rightHand[0] = hand; run.loadout.sets.leftHand[0] = null;
-    const combat = createRunCombat({ registries, run, rng: createRng(29), enemyIds: ['wanderingSoldier'] });
-    combat.player.stamina = combat.player.maxStamina = 20;
-    combat.player.mana = combat.player.maxMana = 20;
+const preparedCardIds = [
+    'core.meteor',
+    'custom.copy_mwx6hh79',
+];
+// [right hand, Focus Mana cut in Prepared]
+const preparedHands = [
+    ['greatsword', 0],
+    ['ashStaff', 1],
+];
+// Worked gear and class cuts in Prepared: the Graduate takes one positive printed MP, the robe one.
+const graduateManaCut = 1;
+const robeManaCut = 1;
+const quoteInstanceId = 'range-identity';
+const deepPool = 20;
+
+function preparedFight(cardId, hand)
+{
+    const run = createRunState({
+        registries,
+        classId: 'starseer',
+        seed: 29,
+        profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['one'] } } },
+    });
+    run.loadout.sets.rightHand[0] = hand;
+    run.loadout.sets.leftHand[0] = null;
+    const combat = createRunCombat({
+        registries,
+        run,
+        rng: createRng(29),
+        enemyIds: ['wanderingSoldier'],
+    });
+    combat.player.stamina = combat.player.maxStamina = deepPool;
+    combat.player.mana = combat.player.maxMana = deepPool;
     combat.player.combatStance = { maneuver: 'prepared', camp: 'spell' };
-    combat.piles.hand = [{ cardId, instanceId: 'range-identity' }];
-    const authored = combat.gameProfile.content.cards.find(card => card.id === cardId);
-    const resolved = resolveCombatCard(combat, combat.piles.hand[0]);
-    assert.equal(stanceOf(resolved).camp, 'spell');
-    assert.equal(stanceOf(resolved).school, combatProfileFor(authored).school);
-    const expected = {
-      // Owner 2026-11-26: no spell surcharge; Prepared takes SP to max(SP - 1, 1) without raising a price at or under 1, and no Mana.
-      energy: authored.staminaCost > 1 ? authored.staminaCost - 1 : authored.staminaCost,
-      stamina: authored.staminaCost > 1 ? authored.staminaCost - 1 : authored.staminaCost,
-      mana: Math.max(0, Math.max(0, authored.manaCost - 1) - 1 - focus),
+    combat.piles.hand = [{ cardId, instanceId: quoteInstanceId }];
+    return combat;
+}
+
+function expectedPreparedQuote(combat, authored, focusCut)
+{
+    const block = combat.fixCoreRules.spellCosts;
+    const graduateCut = authored.manaCost > 0
+        ? graduateManaCut
+        : 0;
+    const spellPrice = ExpectedSpellPrice({
+        block,
+        conditions: [SpellCostCondition.Prepared],
+        exceptions: CardSpellCostExceptions(block, authored),
+        price: {
+            stamina: authored.staminaCost,
+            mana: authored.manaCost - graduateCut,
+        },
+    });
+    return {
+        energy: spellPrice.stamina,
+        stamina: spellPrice.stamina,
+        mana: Math.max(0, spellPrice.mana - robeManaCut - focusCut),
     };
-    const quote = cardPlayCosts(combat, 'range-identity');
-    assert.deepEqual(quote, expected, `${cardId}/${hand}: authored price, Graduate, robe, Focus`);
-    const played = dispatch(combat, { type: 'playCard', cardInstanceId: 'range-identity', targetId: combat.enemies[0].id });
-    assert.equal(played.events.find(event => event.type === 'cardPlayed').manaSpent, expected.mana);
-  }
-});
+}
+
+for (const cardId of preparedCardIds)
+{
+    test(`${cardId}: Prepared keeps the spell identity and pays the rule, Graduate, gear cuts`, () =>
+    {
+        for (const [hand, focusCut] of preparedHands)
+        {
+            const combat = preparedFight(cardId, hand);
+            const authored = combat.gameProfile.content.cards.find(card => card.id === cardId);
+            const resolved = resolveCombatCard(combat, combat.piles.hand[0]);
+            assert.equal(stanceOf(resolved).camp, 'spell');
+            assert.equal(stanceOf(resolved).school, combatProfileFor(authored).school);
+            const expected = expectedPreparedQuote(combat, authored, focusCut);
+            const quote = cardPlayCosts(combat, quoteInstanceId);
+            assert.deepEqual(quote, expected, `${cardId}/${hand}: rules, Graduate, robe, Focus`);
+            const played = dispatch(combat, {
+                type: 'playCard',
+                cardInstanceId: quoteInstanceId,
+                targetId: combat.enemies[0].id,
+            });
+            const paid = played.events.find(event => event.type === 'cardPlayed');
+            assert.equal(paid.manaSpent, expected.mana);
+        }
+    });
+}
