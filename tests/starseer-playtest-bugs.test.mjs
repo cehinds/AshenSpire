@@ -8,6 +8,12 @@ import { applyGameProfileToContent, resolveGameProfile } from '../src/model/game
 import { CardInspectorFlavor } from '../src/ui/components/card.js';
 import { armouryStatsModel } from '../src/ui/models/ArmouryStatsModel.js';
 import { staticCardTokens } from '../src/model/playingCard.js';
+import { ResolveModalConfig } from '../src/ui/models/ModalModel.js';
+import {
+    DECK_VIEW_MODAL_KIND,
+    DRAW_PILE_MODAL_KIND,
+    PILE_MODAL_KIND,
+} from '../src/ui/components/piles.js';
 
 const FIXTURE_TEXT = 'Core adapter fixture. Values are provisional and authored in cards.json.';
 const LORE_TEXT = 'Forged in the ash of the first kiln.';
@@ -59,8 +65,23 @@ test('Core 2 Starseer deck view passes run rules and hides x0 equipment card ent
 
     const equipmentPath = new URL('../src/ui/screens/equipment.js', import.meta.url);
     const equipmentSrc = readFileSync(equipmentPath, 'utf8');
-    assert.match(equipmentSrc, /openPileModal\(registries,[\s\S]{0,120}rules:\s*run/);
+    assert.match(equipmentSrc, /openPileModal\([\s\S]{0,300}kind:\s*DECK_VIEW_MODAL_KIND/);
+    assert.match(equipmentSrc, /openPileModal\([\s\S]{0,300}rules:\s*run/);
     const mainPath = new URL('../src/main.js', import.meta.url);
     const mainSrc = readFileSync(mainPath, 'utf8');
-    assert.match(mainSrc, /openPileModal\(registries,[\s\S]{0,120}rules:\s*run/);
+    assert.match(mainSrc, /openPileModal\([\s\S]{0,300}kind:\s*DECK_VIEW_MODAL_KIND/);
+    assert.match(mainSrc, /openPileModal\([\s\S]{0,300}rules:\s*run/);
+});
+
+test('pile modals resolve their presentation and behavior from modal.json', () =>
+{
+    const basePile = ResolveModalConfig(PILE_MODAL_KIND);
+    const deckView = ResolveModalConfig(DECK_VIEW_MODAL_KIND);
+    const drawPile = ResolveModalConfig(DRAW_PILE_MODAL_KIND);
+
+    assert.equal(basePile.className, 'pile-modal');
+    assert.equal(basePile.eyebrowKey, 'piles.eyebrow');
+    assert.equal(deckView.className, 'pile-modal deck-view-modal');
+    assert.equal(deckView.eyebrowKey, '');
+    assert.equal(drawPile.shuffleForDisplay, true);
 });

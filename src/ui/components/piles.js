@@ -25,47 +25,112 @@ import { SPENT_PILES, spentPileView } from '../models/PileViewerModel.js';
 // regression it exists to stop.
 import { t } from '../strings.js';
 import { MarkSelected } from '../selection.js';
+import { ResolveModalConfig } from '../models/ModalModel.js';
 
-export function openPileModal(registries, title, cards, {
-  shuffleForDisplay = false,
-  rules = null,
-  deckView = false,
-} = {}) {
-  let list = [...cards];
-  if (shuffleForDisplay) {
-    for (let i = list.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [list[i], list[j]] = [list[j], list[i]];
+export const PILE_MODAL_KIND = 'pileViewer';
+export const DECK_VIEW_MODAL_KIND = 'deckView';
+export const DRAW_PILE_MODAL_KIND = 'drawPile';
+
+const DONE_BUTTON_CLASS = 'pile-done';
+const STATUS_CLASS = 'modal-head-status';
+const GRID_CLASS = 'grid';
+const EMPTY_CLASS = 'pile-empty';
+const EXIT_ROLE = 'exit';
+
+function shuffleCards(cards)
+{
+    const list = [...cards];
+    for (let i = list.length - 1; i > 0; i--)
+    {
+        const j = Math.floor(Math.random() * (i + 1));
+        [list[i], list[j]] = [list[j], list[i]];
     }
-  }
+    return list;
+}
 
-  const done = button({ label: t('common.close'), role: 'exit', className: 'pile-done', attrs: { 'data-focusable': 'true' } });
+function resolvePileModalKind(kind, deckView, shuffleForDisplay)
+{
+    if (kind)
+    {
+        return kind;
+    }
+    if (deckView)
+    {
+        return DECK_VIEW_MODAL_KIND;
+    }
+    if (shuffleForDisplay)
+    {
+        return DRAW_PILE_MODAL_KIND;
+    }
+    return PILE_MODAL_KIND;
+}
 
-  // The COUNT is the head's status, never part of the name. The pile's name
-  // stays put while `(5)` changes underneath it. The old markup
-  // baked the number into the <h2>, so the thing a player reads as the name
-  // of the surface changed every time a card moved.
-  const status = statusText(`${list.length} ${list.length === 1 ? 'card' : 'cards'}`, { class: 'modal-head-status' });
+function buildPileCardGrid(registries, list, config, rules)
+{
+    const faces = list.map((inst) =>
+    {
+        return renderCard(registries, inst, {
+            small: config.smallCards !== false,
+            inspectReadOnly: config.inspectReadOnly !== false,
+            rules,
+        });
+    });
+    const grid = cardGrid(faces, { class: GRID_CLASS });
+    if (!list.length)
+    {
+        grid.appendChild(flavour(t(config.emptyTextKey), { class: EMPTY_CLASS }));
+    }
+    return grid;
+}
 
-  const shell = OpenModal({
-    size: 'xl',
-    className: deckView ? 'pile-modal deck-view-modal' : 'pile-modal',
-    eyebrow: deckView ? '' : t('piles.eyebrow'),
+export function openPileModal(
+    registries,
     title,
-    headExtras: status,
-    bodyClassName: 'pile-body',
-    body: (host) => {
-      // The body is the kit's CardGrid: the same faces the fan draws, wrapped,
-      // at one gap. An empty pile says so in Flavour rather than drawing air.
-      const grid = cardGrid(list.map((inst) => renderCard(registries, inst, { small: true, inspectReadOnly: true, rules })), { class: 'grid' });
-      if (!list.length) grid.appendChild(flavour(t('piles.empty'), { class: 'pile-empty' }));
-      host.appendChild(grid);
-    },
-    primary: done,
-    footSize: 'short',
-  });
-  done.addEventListener('click', shell.close);
-  return shell.veil;
+    cards,
+    {
+        kind = '',
+        shuffleForDisplay = false,
+        rules = null,
+        deckView = false,
+    } = {},
+)
+{
+    const modalKind = resolvePileModalKind(kind, deckView, shuffleForDisplay);
+    const config = ResolveModalConfig(modalKind);
+    const shouldShuffle = Boolean(shuffleForDisplay || config.shuffleForDisplay);
+    const list = shouldShuffle
+        ? shuffleCards(cards)
+        : [...cards];
+    const done = button({
+        label: t(config.closeLabelKey),
+        role: EXIT_ROLE,
+        className: DONE_BUTTON_CLASS,
+        attrs: { 'data-focusable': 'true' },
+    });
+    const cardWord = list.length === 1
+        ? 'card'
+        : 'cards';
+    const status = statusText(`${list.length} ${cardWord}`, { class: STATUS_CLASS });
+    const eyebrow = config.eyebrowKey
+        ? t(config.eyebrowKey)
+        : '';
+
+    const shell = OpenModal({
+        size: config.size,
+        className: config.className,
+        eyebrow,
+        title,
+        headExtras: status,
+        bodyClassName: config.bodyClassName,
+        body: (host) =>
+        {
+            host.appendChild(buildPileCardGrid(registries, list, config, rules));
+        },
+        primary: done,
+        footSize: config.footSize,
+    });
+    done.addEventListener('click', shell.close);
+    return shell.veil;
 }
 
 /**

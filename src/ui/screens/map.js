@@ -106,7 +106,19 @@ if (typeof window !== 'undefined') {
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushPendingSave(); });
 }
 // A callback that hands control away: flush the queued save first, then run it.
-const leaving = (fn) => (typeof fn === 'function' ? (...args) => { hideTooltip(); flushPendingSave(); return fn(...args); } : fn);
+function leaving(callback)
+{
+    if (typeof callback !== 'function')
+    {
+        return callback;
+    }
+    return (...args) =>
+    {
+        hideTooltip();
+        flushPendingSave();
+        return callback(...args);
+    };
+}
 // The explicit Save writes the same run the queued commit would: drop the
 // queued one instead of flushing it, so one Save is one write (PR #1830 review).
 function dropPendingSave() {

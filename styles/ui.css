@@ -1201,9 +1201,20 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   [data-settings-host] .set-panel .as-row.setting:has(> .r-trail > :is(.as-toggle, .as-switch)) > .as-labelstack { flex: 1 1 0; min-width: 0; }
   [data-settings-host] .set-panel .choice-group { flex-wrap: wrap; }
   :root [data-settings-host] .set-stepper > input[type='number'] { flex-basis: 6.4rem; width: 6.4rem; padding-inline: .15rem; }
-  :root [data-settings-host] .set-row-dropdown { grid-template-columns: minmax(0, 1fr); }
-  :root [data-settings-host] .set-row-dropdown > * { min-width: 0; }
-  :root [data-settings-host] .set-choice-select { width: 100%; max-width: 100%; min-width: 0; }
+  /* Prevent dropdown rows from expanding past the 375px phone panel width. */
+  :root [data-settings-host] .set-row-dropdown {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  :root [data-settings-host] .set-row-dropdown > * {
+    min-width: 0;
+  }
+
+  :root [data-settings-host] .set-choice-select {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
 }
 /* LIVE PREVIEW STRIP (src/ui/components/settingsPreview.js) — above General ›
    Display and Accessibility. It only arranges the sample; every face in it is

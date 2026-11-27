@@ -92,7 +92,7 @@ import { runClassIdentity } from '../../model/classCard.js';
 import { CharacterDisplayName } from '../../model/characterName.js';
 import { characterLevel } from '../../model/levelup.js';
 import { cardKind } from '../../model/tree.js';
-import { openPileModal, openSpentPileModal } from '../components/piles.js';
+import { DRAW_PILE_MODAL_KIND, openPileModal, openSpentPileModal } from '../components/piles.js';
 import { resolveActionAnimation } from '../../model/actionAnimation.js';
 import { enemyMoveCards } from '../../model/enemyMoveCards.js';
 import { EnemyDefinitionOf, EnemyMoveOf, EnemyEventMoveOf } from '../../model/enemyMoveSet.js';
@@ -4136,7 +4136,15 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   });
   endTurnBeat.refresh();
 
-  const showDraw = () => openPileModal(registries, 'Draw pile', combat.piles.draw, { shuffleForDisplay: true, rules: combat });
+  const showDraw = () => openPileModal(
+    registries,
+    'Draw pile',
+    combat.piles.draw,
+    {
+      kind: DRAW_PILE_MODAL_KIND,
+      rules: combat,
+    },
+  );
   const showSpent = () => openSpentPileModal(registries, combat.piles, $('.pile.spent'), { rules: combat });
 
   $('.pile.draw').addEventListener('click', showDraw);

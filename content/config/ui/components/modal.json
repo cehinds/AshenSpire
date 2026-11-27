@@ -111,6 +111,28 @@
       "cancelLabelKey": "common.back",
       "emptyTextKey": "armoury.picker.none",
       "columns": 1
+    },
+    "pileViewer": {
+      "extends": "base",
+      "size": "xl",
+      "footSize": "short",
+      "className": "pile-modal",
+      "bodyClassName": "pile-body",
+      "eyebrowKey": "piles.eyebrow",
+      "emptyTextKey": "piles.empty",
+      "closeLabelKey": "common.close",
+      "shuffleForDisplay": false,
+      "smallCards": true,
+      "inspectReadOnly": true
+    },
+    "deckView": {
+      "extends": "pileViewer",
+      "className": "pile-modal deck-view-modal",
+      "eyebrowKey": ""
+    },
+    "drawPile": {
+      "extends": "pileViewer",
+      "shuffleForDisplay": true
     }
   }
 }

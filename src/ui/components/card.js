@@ -40,6 +40,7 @@ import { assetUrl } from '../assetmap.js';
 import { t, tFull } from '../strings.js';
 import { loreLine } from './loreLine.js';
 import { buildChannel } from '../buildChannel.js';
+import { uiConfig } from '../../config/generated/ui.js';
 import { cardChoice } from '../../model/cardChoices.js';
 import { engravedIconHtml, engravedGlyphId } from './engravedIcon.js';
 import { equipmentCardArt } from '../assets.js';
@@ -55,8 +56,11 @@ import { evadeGrantOnlyCard, CounterStacksForCard, FixCoreCounterStacks } from '
 import { wardReadsAsPoise, wardOffCardText } from '../../model/wardOffCardText.js';
 import { spellDefenseSplit } from '../../model/spellDefense.js';
 
-const DEV_BUILD_CHANNEL = 'dev';
-const DEV_FIXTURE_FLAVOR_PATTERN = /^Core adapter fixture\b/i;
+function isDevFixtureFlavor(text, prefixes)
+{
+    const lowered = text.toLowerCase();
+    return prefixes.some((prefix) => lowered.startsWith(String(prefix).toLowerCase()));
+}
 
 export function CardInspectorFlavor(flavor, channel = buildChannel())
 {
@@ -67,7 +71,10 @@ export function CardInspectorFlavor(flavor, channel = buildChannel())
     {
         return '';
     }
-    if (DEV_FIXTURE_FLAVOR_PATTERN.test(text) && channel !== DEV_BUILD_CHANNEL)
+    const rules = uiConfig.components.card.behavior.devFixtureFlavor;
+    const allowedChannels = rules?.allowedChannels || [];
+    const prefixes = rules?.prefixes || [];
+    if (isDevFixtureFlavor(text, prefixes) && !allowedChannels.includes(channel))
     {
         return '';
     }
