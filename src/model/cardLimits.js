@@ -5,12 +5,11 @@ import {
     DRAWBACK_OPS,
     KEYWORD_TAGS,
 } from '../content/actionCosts.js';
+import { FillTemplate } from './textTemplate.js';
 
 const APPLY_STATUS_OP = 'applyStatus';
 const SELF_TARGET = 'self';
-const SELF_SUFFIX = ' on self';
-const UPGRADED_SUFFIX = ' upgraded';
-const LIST_JOINER = ', ';
+const NO_FACE = '';
 
 /** The rules the checks use; tests and the Studio pass their own to try other limits. */
 export const DEFAULT_CARD_LIMIT_RULES = Object.freeze({
@@ -20,6 +19,7 @@ export const DEFAULT_CARD_LIMIT_RULES = Object.freeze({
     drawbackOps: DRAWBACK_OPS,
     drawbackKeywordTags: DRAWBACK_KEYWORD_TAGS,
     keywordTags: KEYWORD_TAGS,
+    text: CARD_LIMITS.text,
 });
 
 function listOf(value)
@@ -42,7 +42,7 @@ function effectDrawback(effect, rules)
     {
         return null;
     }
-    return `${effect.status}${SELF_SUFFIX}`;
+    return FillTemplate(rules.text.selfDebuff, { status: effect.status });
 }
 
 function isDrawbackKeyword(keyword, rules)
@@ -61,7 +61,11 @@ function effectsProblem(
     {
         return null;
     }
-    return `${name} has ${count} effects. The limit is ${rules.maxEffects} (maxEffects).`;
+    return FillTemplate(rules.text.tooManyEffects, {
+        name,
+        count,
+        limit: rules.maxEffects,
+    });
 }
 
 function drawbacksProblem(
@@ -74,19 +78,26 @@ function drawbacksProblem(
     {
         return null;
     }
-    const listed = drawbacks.join(LIST_JOINER);
-    const limit = `The limit is ${rules.maxDrawbacks} (maxDrawbacks).`;
-    return `${name} has ${drawbacks.length} drawbacks: ${listed}. ${limit}`;
+    return FillTemplate(rules.text.tooManyDrawbacks, {
+        name,
+        count: drawbacks.length,
+        listed: drawbacks.join(rules.text.listJoiner),
+        limit: rules.maxDrawbacks,
+    });
 }
 
 function faceProblems(
     face,
-    label,
+    faceLabel,
     rules,
 )
 {
     const parts = CountCardParts(face, rules);
-    const name = `${face.id} (${face.name || face.id})${label}`;
+    const name = FillTemplate(rules.text.cardName, {
+        id: face.id,
+        name: face.name || face.id,
+        face: faceLabel,
+    });
     const problems = [
         effectsProblem(
             name,
@@ -128,7 +139,7 @@ export function CheckCardLimits(cards, rules = DEFAULT_CARD_LIMIT_RULES)
     {
         problems.push(...faceProblems(
             card,
-            '',
+            NO_FACE,
             rules,
         ));
         if (!card.upgrade)
@@ -141,7 +152,7 @@ export function CheckCardLimits(cards, rules = DEFAULT_CARD_LIMIT_RULES)
         };
         problems.push(...faceProblems(
             upgraded,
-            UPGRADED_SUFFIX,
+            rules.text.upgradedFace,
             rules,
         ));
     }

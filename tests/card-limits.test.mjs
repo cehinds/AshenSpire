@@ -100,5 +100,6 @@ test('the upgraded face is checked too', () =>
 
 test('every shipped card is within CARD_LIMITS', () =>
 {
-    assert.deepEqual(CheckCardFiles(), []);
+    const problems = CheckCardFiles().map((entry) => `${entry.file}: ${entry.problem}`);
+    assert.deepEqual(problems, []);
 });

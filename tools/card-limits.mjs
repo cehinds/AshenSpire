@@ -6,11 +6,15 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CARD_LIMITS } from '../src/content/actionCosts.js';
 import { CheckCardLimits } from '../src/model/cardLimits.js';
+import { FillTemplate } from '../src/model/textTemplate.js';
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
-const SETTINGS_FILE = 'content/source/actionCosts.json';
+const TEXT = CARD_LIMITS.text;
 const TEXT_ENCODING = 'utf8';
-const FAIL_MARK = 'FAIL';
+const EXIT = Object.freeze({
+    ok: 0,
+    failed: 1,
+});
 
 function isMainModule()
 {
@@ -18,35 +22,34 @@ function isMainModule()
     return Boolean(started) && fileURLToPath(import.meta.url) === resolve(started);
 }
 
-function okLine()
-{
-    const effects = `${CARD_LIMITS.maxEffects} effects`;
-    const drawbacks = `${CARD_LIMITS.maxDrawbacks} drawbacks`;
-    return `card-limits: ok (max ${effects}, ${drawbacks})`;
-}
-
 function report(problems)
 {
     if (!problems.length)
     {
-        console.log(okLine());
-        return 0;
+        console.log(FillTemplate(TEXT.ok, {
+            effects: CARD_LIMITS.maxEffects,
+            drawbacks: CARD_LIMITS.maxDrawbacks,
+        }));
+        return EXIT.ok;
     }
-    problems.forEach((problem) => console.log(`${FAIL_MARK} ${problem}`));
-    console.log(`\nEdit those cards, or raise the limit in ${SETTINGS_FILE} (CARD_LIMITS).`);
-    return 1;
+    problems.forEach((problem) => console.log(FillTemplate(TEXT.failLine, problem)));
+    console.log(`\n${TEXT.advice}`);
+    return EXIT.failed;
 }
 
-/** Problems across every file CARD_LIMITS.cardFiles names, each prefixed with its file. */
+function fileProblems(root, file)
+{
+    const cards = JSON.parse(readFileSync(resolve(root, file), TEXT_ENCODING));
+    return CheckCardLimits(cards).map((problem) => ({
+        file,
+        problem,
+    }));
+}
+
+/** Problems across every file CARD_LIMITS.cardFiles names: [{ file, problem }]. */
 export function CheckCardFiles(root = ROOT)
 {
-    const problems = [];
-    for (const file of CARD_LIMITS.cardFiles)
-    {
-        const cards = JSON.parse(readFileSync(resolve(root, file), TEXT_ENCODING));
-        CheckCardLimits(cards).forEach((problem) => problems.push(`${file}: ${problem}`));
-    }
-    return problems;
+    return CARD_LIMITS.cardFiles.flatMap((file) => fileProblems(root, file));
 }
 
 if (isMainModule())

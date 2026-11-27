@@ -2,6 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { FillTemplate } from '../../src/model/textTemplate.js';
 
 const TEXT_ENCODING = 'utf8';
 const PLACEHOLDER = /\{(\w+)\}/g;
@@ -19,17 +20,7 @@ export const OWNER_TEXT = readJson('ownerText.json');
 export const OWNER_DIFF = readJson('ownerDiff.json');
 
 /** Fills each {name} in a template from `values`; unknown names stay as written. */
-export function FormatText(template, values = {})
-{
-    return template.replace(PLACEHOLDER, (match, key) =>
-    {
-        if (!(key in values))
-        {
-            return match;
-        }
-        return String(values[key]);
-    });
-}
+export const FormatText = FillTemplate;
 
 /** True when this module file is the script node was started with. */
 export function IsMainModule(moduleUrl)
