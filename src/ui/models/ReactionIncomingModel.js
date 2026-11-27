@@ -1,4 +1,5 @@
 import { enemyMoveCarrier } from '../../engine/combatCardTactics.js';
+import { EnemyEventMoveOf } from '../../model/enemyMoveSet.js';
 
 // What the reaction prompt is answering. When the prompt answers a committed enemy reaction move
 // (a version 2 stack entry, listed by name in the reaction modal), the incoming maneuver is that
@@ -14,7 +15,7 @@ export function stackedEnemyReactionIntent(combat, pending, seat) {
     && row.ownerId === pending.sourceId && (row.targetPlayerId == null || row.targetPlayerId === seat));
   if (!entry) return null;
   const enemy = combat.enemies?.find(row => row.id === entry.ownerId);
-  const move = combat.registries?.enemies?.get(entry.enemyId ?? enemy?.enemyId)?.moves?.[entry.moveId];
+  const move = EnemyEventMoveOf(combat.registries, { enemy, enemyId: entry.enemyId ?? enemy?.enemyId, moveId: entry.moveId });
   const unknown = { hidden: true, revealed: false, profile: {} };
   if (!enemy || !move) return unknown;
   let maneuver = null;

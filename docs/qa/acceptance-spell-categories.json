@@ -1,0 +1,197 @@
+{
+  "request": "show the spell icon with the icon of their category and the name of their category at the bottom of the card (owner, 2026-11-20: Arcane and Divine are both spells; shared schools are simply given the spell name)",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "scenes": [
+    {
+      "name": "mindLance Arcane footer",
+      "url": "?shot=map&shotDeckAdd=core.mindLance,core.purifyingLight,core.cleansingEmbers&shotDeckEditor=1",
+      "ready": ".deck-editor",
+      "settleMs": 900,
+      "actions": [
+        {
+          "rightClick": ".deck-editor-tile[data-key^=\"card:core.mindLance~\"] .deck-editor-main"
+        },
+        {
+          "wait": {
+            "ms": 200
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Card inspection is open",
+          "selector": ".deck-editor-inspector"
+        },
+        {
+          "kind": "visible",
+          "label": "Spell mark is on the footer",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-sigil-band [data-sigil=\"spell\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "Arcane mark is on the footer",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-sigil-band [data-sigil=\"arcane\"]"
+        },
+        {
+          "kind": "count",
+          "label": "Exactly one category mark",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-sigil-band .combat-sigil-tradition",
+          "eq": 1
+        },
+        {
+          "kind": "text",
+          "label": "Footer word is Arcane",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-type-name",
+          "includes": "Arcane"
+        },
+        {
+          "kind": "within",
+          "label": "Footer stays inside the card",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-sigil-band",
+          "container": ".deck-editor-inspector .playing-poker-card"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console or page errors (art-pack 404s ignored: packs not fetched locally)",
+          "ignore": ["Failed to load resource: the server responded with a status of 404"],
+          "max": 0
+        }
+      ],
+      "failure": []
+    },
+    {
+      "name": "purifyingLight Divine footer",
+      "url": "?shot=map&shotDeckAdd=core.mindLance,core.purifyingLight,core.cleansingEmbers&shotDeckEditor=1",
+      "ready": ".deck-editor",
+      "settleMs": 900,
+      "actions": [
+        {
+          "rightClick": ".deck-editor-tile[data-key^=\"card:core.purifyingLight~\"] .deck-editor-main"
+        },
+        {
+          "wait": {
+            "ms": 200
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Card inspection is open",
+          "selector": ".deck-editor-inspector"
+        },
+        {
+          "kind": "visible",
+          "label": "Spell mark is on the footer",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-sigil-band [data-sigil=\"spell\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "Divine mark is on the footer",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-sigil-band [data-sigil=\"divine\"]"
+        },
+        {
+          "kind": "count",
+          "label": "Exactly one category mark",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-sigil-band .combat-sigil-tradition",
+          "eq": 1
+        },
+        {
+          "kind": "text",
+          "label": "Footer word is Divine",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-type-name",
+          "includes": "Divine"
+        },
+        {
+          "kind": "within",
+          "label": "Footer stays inside the card",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-sigil-band",
+          "container": ".deck-editor-inspector .playing-poker-card"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console or page errors (art-pack 404s ignored: packs not fetched locally)",
+          "ignore": ["Failed to load resource: the server responded with a status of 404"],
+          "max": 0
+        }
+      ],
+      "failure": []
+    },
+    {
+      "name": "cleansingEmbers Spell footer",
+      "url": "?shot=map&shotDeckAdd=core.mindLance,core.purifyingLight,core.cleansingEmbers&shotDeckEditor=1",
+      "ready": ".deck-editor",
+      "settleMs": 900,
+      "actions": [
+        {
+          "rightClick": ".deck-editor-tile[data-key^=\"card:core.cleansingEmbers~\"] .deck-editor-main"
+        },
+        {
+          "wait": {
+            "ms": 200
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Card inspection is open",
+          "selector": ".deck-editor-inspector"
+        },
+        {
+          "kind": "visible",
+          "label": "Spell mark is on the footer",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-sigil-band [data-sigil=\"spell\"]"
+        },
+        {
+          "kind": "count",
+          "label": "Shared spell shows no category mark",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-sigil-band .combat-sigil-tradition",
+          "eq": 0
+        },
+        {
+          "kind": "text",
+          "label": "Footer word is Spell",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-type-name",
+          "includes": "Spell"
+        },
+        {
+          "kind": "within",
+          "label": "Footer stays inside the card",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-sigil-band",
+          "container": ".deck-editor-inspector .playing-poker-card"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console or page errors (art-pack 404s ignored: packs not fetched locally)",
+          "ignore": ["Failed to load resource: the server responded with a status of 404"],
+          "max": 0
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "Old shared footer: Arcane mark still shown",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-sigil-band [data-sigil=\"arcane\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "Old shared footer: Divine mark still shown",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-sigil-band [data-sigil=\"divine\"]"
+        }
+      ]
+    }
+  ]
+}

@@ -1019,6 +1019,7 @@
         "manaCost": 1,
         "type": "skill",
         "keywords": [],
+        "faceTemplate": ["Apply {base.restrained} Restrained.", "Its hand gains a burden."],
         "effects": [
           {
             "op": "applyStatus",
@@ -2847,6 +2848,7 @@
         "manaCost": 1,
         "type": "skill",
         "keywords": [],
+        "faceTemplate": ["Gain {base.read-intent} Read Intent.", "Reveal enemy intent and hand."],
         "effects": [
           {
             "op": "applyStatus",
@@ -4547,6 +4549,7 @@
         "manaCost": 0,
         "type": "attack",
         "keywords": [],
+        "faceTemplate": ["Deal {damage} damage.", "Costs +1 Stamina each play.", "Max +3."],
         "effects": [
           {
             "op": "damage",
@@ -4917,6 +4920,7 @@
         "manaCost": 1,
         "type": "attack",
         "keywords": [],
+        "faceTemplate": ["Spend all Stamina.", "Deal {damage} damage.", "Hits one enemy per Stamina."],
         "effects": [
           {
             "op": "damage",
@@ -5038,6 +5042,7 @@
         "manaCost": 1,
         "type": "skill",
         "keywords": [],
+        "faceTemplate": ["Gain {base.conceal} Conceal.", "Hide that many cards.", "For that many turns."],
         "effects": [
           {
             "op": "applyStatus",

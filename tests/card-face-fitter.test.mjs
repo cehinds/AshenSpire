@@ -39,13 +39,26 @@ function faceFixture(lengths, { width = 120, height = 25.66 } = {}) {
 // Owner 2026-11-02: no Inspect replacement. Every clause stays on the face; the font shrinks to the floor.
 // Wave 2 (sizes): the floor is 13 px (rulesText.minPx), so a face that cannot fit its words at 13 px keeps them all, at 13 px,
 // and says so (rulesOverflow) for the Inspect cue instead of shrinking to an unreadable size.
-test('an overflowing primary keeps every clause and shrinks down to the 13px floor, never under it', () => {
+// Owner 2026-11-17: the box holds up to four lines with 1px of padding and nothing bleeds, so a face that cannot fit at
+// 13 px goes under it, to the size that holds four lines, never under the 6 px hard floor (rulesText.boxLines, hardMinPx).
+test('an overflowing primary keeps every clause and shrinks under the 13px floor to fit four lines', () => {
   const f = faceFixture([80, 10]);
   fitIllustratedCards([f.card]);
   assert.ok(f.clauses.every(clause => clause.style.display === ''), 'no clause is hidden');
-  assert.equal(parseFloat(f.text.style.fontSize), 13, 'shrinks to the configured 13px floor and stops there');
-  assert.equal(f.face.dataset.rulesOverflow, 'true', 'it does not fit at the floor, so the face says so');
-  assert.equal(f.text.dataset.rulesComplete, 'false');
+  const font = parseFloat(f.text.style.fontSize);
+  assert.ok(font < 13 && font >= 6, `shrinks under the 13px floor to fit, never under 6px: ${font}`);
+  assert.equal(f.text.style.padding, '1px', 'the box keeps 1px of inner padding');
+  assert.ok(f.text.scrollHeight <= f.layer.clientHeight, 'nothing bleeds');
+  assert.equal(f.face.dataset.rulesOverflow, 'false');
+  assert.equal(f.text.dataset.rulesComplete, 'true');
+});
+
+test('a face too long even at the 6px hard floor stops there and says it overflows', () => {
+  const f = faceFixture([400, 100]);
+  fitIllustratedCards([f.card]);
+  assert.ok(f.clauses.every(clause => clause.style.display === ''), 'no clause is hidden');
+  assert.ok(parseFloat(f.text.style.fontSize) >= 6, 'never under the hard floor');
+  assert.equal(f.face.dataset.rulesOverflow, 'true');
 });
 
 test('a primary that fits at the 13px floor keeps every clause and reports no overflow', () => {
@@ -83,7 +96,9 @@ test('resizing a face re-fits it and never swaps in the Inspect text', () => {
   assert.ok(f.clauses.every(clause => clause.style.display === ''));
 });
 
-test('a scoped rules font reduction refits the same face and clears clipping, then restores the normal floor', () => withKitDom(() => {
+// Owner 2026-11-17: a face that cannot fit at the 13px floor goes under it to hold four lines, so this face settles
+// under 13px with every word; the scoped reduction still refits it and the normal fit comes back without it.
+test('a scoped rules font reduction refits the same face, then restores the normal fit', () => withKitDom(() => {
   const f = faceFixture([20, 10]);
   const readStyle = globalThis.getComputedStyle;
   let reduction = '';
@@ -93,17 +108,18 @@ test('a scoped rules font reduction refits the same face and clears clipping, th
   try {
     invalidateLayoutMetrics();
     fitCards([f.card]);
-    assert.equal(parseFloat(f.text.style.fontSize), 13);
-    assert.equal(f.text.dataset.rulesComplete, 'false');
+    const normal = parseFloat(f.text.style.fontSize);
+    assert.ok(normal < 13 && normal > 11, `fits four lines just under the 13px floor: ${normal}`);
+    assert.equal(f.text.dataset.rulesComplete, 'true');
     reduction = '2';
     fitCards([f.card]);
-    assert.equal(parseFloat(f.text.style.fontSize), 11);
-    assert.equal(f.text.dataset.rulesComplete, 'true', 'the same words fit once the scoped reduction changes');
+    assert.equal(parseFloat(f.text.style.fontSize), 11, 'the same face refits once the scoped reduction changes');
+    assert.equal(f.text.dataset.rulesComplete, 'true');
     assert.ok(f.text.scrollHeight <= f.layer.clientHeight + 1);
     reduction = '';
     fitCards([f.card]);
-    assert.equal(parseFloat(f.text.style.fontSize), 13, 'non-reward styling keeps its original readable floor');
-    assert.equal(f.text.dataset.rulesComplete, 'false');
+    assert.equal(parseFloat(f.text.style.fontSize), normal, 'non-reward styling keeps its original fit');
+    assert.equal(f.text.dataset.rulesComplete, 'true');
   } finally {
     globalThis.getComputedStyle = readStyle;
   }
@@ -121,7 +137,8 @@ test('phone rules retain their existing readable floor when a hand or reward sur
     invalidateLayoutMetrics();
     fitCards([f.card]);
     const phoneFloor = parseFloat(f.text.style.fontSize);
-    assert.ok(Math.abs(phoneFloor - (13 - 8 / 3)) < 0.001);
+    // Owner 2026-11-17: under the phone floor (13 - 8/3 px) only to hold four lines, never under the 6px hard floor.
+    assert.ok(phoneFloor <= 13 - 8 / 3 + 0.001 && phoneFloor >= 6, `phone fit: ${phoneFloor}`);
     reduction = '2';
     fitCards([f.card]);
     assert.equal(parseFloat(f.text.style.fontSize), phoneFloor, 'the surface does not stack another reduction onto the phone floor');

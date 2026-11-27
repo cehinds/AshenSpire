@@ -116,12 +116,16 @@ test('each attack status matches its school or camp, at both grades', () => {
 });
 
 test('the riders added this wave keep both grades in step', () => {
-  const RIDERS = { pommelStrike: 'weak', drivingThrust: 'bleed', hammerBlow: 'vulnerable', cometLance: 'chill', smite: 'regen', meteor: 'burn', ironbreaker: 'vulnerable', whirlwind: 'bleed' };
+  const RIDERS = { pommelStrike: 'weak', drivingThrust: 'bleed', hammerBlow: 'vulnerable', smite: 'regen', meteor: 'burn', ironbreaker: 'vulnerable', whirlwind: 'bleed' };
   for (const [id, status] of Object.entries(RIDERS)) {
     const card = cards.find(row => row.id === `core.${id}`);
     for (const effects of [card.effects, card.upgrade.effects]) assert.ok(effects.some(e => e.op === 'applyStatus' && e.status === status && e.stacks >= 1), `${id} ${status}`);
     assert.ok(card.textTemplate.includes(`{${status}}`), `${id} face names ${status}`);
   }
+  // Owner-authored Arcane Sweep replaces the base Chill rider with an area hit; its upgrade keeps Chill.
+  const sweep = cards.find(row => row.id === 'core.cometLance');
+  assert.deepEqual(sweep.effects, [{ op: 'damage', target: 'allEnemies', amount: 13 }]);
+  assert.deepEqual(sweep.upgrade.effects.filter(effect => effect.op === 'applyStatus'), [{ op: 'applyStatus', target: 'enemy', status: 'chill', stacks: 2 }]);
   const hit = cards.find(row => row.id === 'core.hitAndRun');
   for (const effects of [hit.effects, hit.upgrade.effects]) assert.ok(effects.some(e => e.op === 'draw' && e.amount === 1));
 });

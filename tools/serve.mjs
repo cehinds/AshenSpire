@@ -50,7 +50,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawn, execFile } from 'node:child_process';
 import { sourceDigest, stampSource, readOrdinal, padOrdinal, VERSION_MODULE, RUN_PATH_SERVE } from './buildversion.mjs';
 import { saveFirstStepDefaults } from './prologue-editor-save.mjs';
-import { readStudioConfig, saveStudioScoring, saveStudioArtLayers, saveStudioItemArtLayers, saveStudioDecks } from './score-studio-save.mjs';
+import { readStudioConfig, saveStudioScoring, saveStudioArtLayers, saveStudioItemArtLayers, saveStudioDecks, saveStudioSubclassCatalog } from './score-studio-save.mjs';
 import { artPath, packTreeOf, HIGH_TREE } from './art-source.mjs';
 import { authoringRoot, compositeSourcePath, isAuthoringFile } from './art-authoring.mjs';
 import { existsSync, readdirSync, statSync, watch as fsWatch } from 'node:fs';
@@ -448,7 +448,7 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, editorWrite =
         } catch (error) { reply(400, { ok: false, error: error.message }); }
         return;
       }
-      if (urlPath === '/__studio/config' || urlPath === '/__studio/scoring' || urlPath === '/__studio/art-layers' || urlPath === '/__studio/item-art-layers' || urlPath === '/__studio/custom-decks') {
+      if (urlPath === '/__studio/config' || urlPath === '/__studio/scoring' || urlPath === '/__studio/art-layers' || urlPath === '/__studio/item-art-layers' || urlPath === '/__studio/custom-decks' || urlPath === '/__studio/subclass-catalog') {
         const remote = req.socket.remoteAddress || '';
         const local = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(remote);
         const host = req.headers.host || '';
@@ -471,7 +471,7 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, editorWrite =
           reply(403, { ok: false, error: 'Save must come from the local Score Studio.' }); return;
         }
         try {
-          const maxBytes = urlPath === '/__studio/custom-decks' ? 4 * 1024 * 1024 : 1048576;
+          const maxBytes = ['/__studio/custom-decks', '/__studio/subclass-catalog'].includes(urlPath) ? 4 * 1024 * 1024 : 1048576;
           const chunks = []; let size = 0;
           for await (const chunk of req) {
             size += chunk.length;
@@ -479,7 +479,9 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, editorWrite =
             chunks.push(chunk);
           }
           const body = JSON.parse(Buffer.concat(chunks).toString('utf8'));
-          if (urlPath === '/__studio/scoring') {
+          if (urlPath === '/__studio/subclass-catalog') {
+            reply(200, { ok: true, ...saveStudioSubclassCatalog(rootResolved, body) });
+          } else if (urlPath === '/__studio/scoring') {
             reply(200, { ok: true, ...saveStudioScoring(rootResolved, body) });
           } else if (urlPath === '/__studio/item-art-layers') {
             reply(200, { ok: true, ...saveStudioItemArtLayers(rootResolved, body) });

@@ -12,6 +12,15 @@ const PHONE_SHRINK_PX=(Number(FACE_TEXT.phoneShrinkPt)||0)*4/3;
 const isPhoneLayout=()=>typeof document!=='undefined'&&document.documentElement?.dataset?.formFactor==='mobile';
 const LINE_HEIGHT_FLOOR=Number(FACE_TEXT.lineHeightFloor)||0.92;
 const LINE_HEIGHT_STEP=Number(FACE_TEXT.lineHeightStep)||0.04;
+// Owner, 2026-11-17: the rules box holds up to boxLines lines of 20-25 characters inside paddingPx of inner padding,
+// with no bleed. When the configured floor (minPx) cannot hold the face in that many lines, the floor drops to the size
+// that does, never under hardMinPx on screen.
+const RULES_BOX_LINES=Number(FACE_TEXT.boxLines)||4;
+const RULES_PADDING_PX=Number(FACE_TEXT.paddingPx)>=0?Number(FACE_TEXT.paddingPx):1;
+const RULES_HARD_MIN_PX=Number(FACE_TEXT.hardMinPx)||6;
+// A smaller font that stops a single word standing alone on a line above the last: tried in steps of this share,
+// down to LONE_WORD_FLOOR of the row's floor (never under the hard minimum).
+const LONE_WORD_STEP=0.94, LONE_WORD_STEPS=8, LONE_WORD_FLOOR=0.8;
 const ruleGeometry = new WeakMap();
 // A rules row may carry two readings as inert <template>s (illustratedCard.js): the compact one it shows by default and a
 // fuller "roomy" one. showReading swaps the visible clauses between them. The compact nodes are the painted ones (card.js
@@ -51,15 +60,36 @@ export function showReading(text,reading){
 }
 // The roomy reading uses the configured floor with the same phone reduction as the compact reading.
 // A face whose full size is already below that keeps its full size as the floor.
-export function roomyFloor(high,low,zoom,phoneShrink=0){
-  const minimumOnScreen=FACE_BUDGET.minPx-phoneShrink;
+// Owner, 2026-11-17: the box holds four lines of 20-25 characters, so the absolute floor gives way to `boxLines`, the size
+// at which the roomy lines fill the box, never under FACE_BUDGET.boxMinPx on screen; the share of the full size (minScale) still holds.
+export function roomyFloor(high,low,zoom,phoneShrink=0,boxLines=Infinity){
+  const minimumOnScreen=Math.min(FACE_BUDGET.minPx-phoneShrink,Math.max(FACE_BUDGET.boxMinPx,boxLines*zoom));
   return Math.min(high,Math.max(low,high*FACE_BUDGET.minScale,Math.min(minimumOnScreen/zoom,high)));
+}
+/**
+ * True when a rendered rules row has a line of one word above its last line (owner, 2026-11-17: only the last line
+ * may hold a single word). A word may span text nodes ("1" in a number span, then "."); its line is its first character's.
+ */
+export function HasLoneWordLine(text){
+  const doc=text?.ownerDocument;
+  if(!doc?.createTreeWalker||!doc.createRange)return false;
+  const nodes=[];let all='';
+  const walker=doc.createTreeWalker(text,4);
+  for(let node=walker.nextNode();node;node=walker.nextNode()){nodes.push([node,all.length]);all+=node.data;}
+  const lines=[];
+  for(const match of all.matchAll(/\S+/g)){
+    let i=nodes.length-1;while(i>0&&nodes[i][1]>match.index)i--;
+    const range=doc.createRange();range.setStart(nodes[i][0],match.index-nodes[i][1]);range.setEnd(nodes[i][0],match.index-nodes[i][1]+1);
+    const rect=range.getClientRects()[0];if(!rect)continue;
+    const last=lines[lines.length-1];
+    if(last&&Math.abs(rect.top-last.top)<rect.height/2)last.words++;else lines.push({top:rect.top,words:1});
+  }
+  return lines.slice(0,-1).some(line=>line.words===1);
 }
 // Surface rules adjustments share the existing phone reduction, rather than
 // stacking with it. Names, costs and inspection outside that surface keep their bounds.
 const surfaceRulesReduction = face => Math.max(0, parseFloat(getComputedStyle(face).getPropertyValue('--card-rules-font-reduction-px')) || 0);
 const rulesFontReduction = (phoneShrink, surfaceReduction) => Math.max(phoneShrink, surfaceReduction);
-const GLANCE_LINES = 2;
 // A face's fit is a pure function of its width, its text, its line budgets, the
 // page scale and the loaded fonts, and a full fit is a search of many forced
 // layouts. The inputs the last fit used are kept per face, and a face asked to
@@ -162,14 +192,11 @@ export function fitIllustratedCards(cards) {
       const bounded=text.dataset.faceLines==='true'&&clauses.length>0;
       const fullRules=face.dataset.fullRules==='true';
       const expandedHandRules=rules&&Number(text.dataset.maxLines)>3;
+      // Rules on a face hold at most RULES_BOX_LINES rendered lines (owner, 2026-11-17); a complete-rules face reads as long as it is.
       const row={face,text,layer,scale,rules,bounded,clauses,signature:signatures[i],textIndex:textIndex++,fullRules,lineHeight:rules&&!fullRules?1.05:1.25,compact:rules&&!fullRules&&!expandedHandRules,
-        lines:bounded?Infinity:rules?Infinity:Number(text.dataset.maxLines)||1,
+        lines:rules?(fullRules?Infinity:RULES_BOX_LINES):Number(text.dataset.maxLines)||1,pad:rules?RULES_PADDING_PX/zoom:0,
         hasHiddenLines:Boolean(face.querySelector('[data-face-overflow="true"]')),
         hasHiddenRules:face.dataset.rulesHidden==='true',hasRoomy};
-      // A glance face shows its rules in one or two rendered lines; the font
-      // shrinks (to the readable floor) to get there. Rules that still need more
-      // keep their real words (owner 2026-11-02: no Inspect replacement text).
-      if(row.compact&&!bounded&&!phone)row.lines=GLANCE_LINES;
       if(bounded){
         for(const clause of clauses)clause.style.display='';
       }
@@ -195,6 +222,7 @@ export function fitIllustratedCards(cards) {
         text.style.display='block';
         // Two short benefit rows remain readable in the narrow native hand bay.
         text.style.lineHeight=String(row.lineHeight);
+        text.style.padding=row.pad+'px';text.style.boxSizing='border-box';
       }
       // Rules shrink until they fit their box, down to the configured on-screen
       // floor (rulesText.minPx). They used to stop at eleven on-screen pixels
@@ -219,18 +247,26 @@ export function fitIllustratedCards(cards) {
     row.layer.style.height=Math.max(1,row.rankHeight-row.rankInset)/row.faceHeight*100+'%';
   }
   for(const row of texts)row.boxHeight=row.layer.clientHeight;
+  // A face's rules may go under the configured floor to the largest size that holds them in RULES_BOX_LINES lines inside
+  // the box (the search below finds it), never under RULES_HARD_MIN_PX on screen. The floor still governs the roomy reading.
+  for(const row of texts)if(row.rules&&!row.fullRules){
+    row.low=Math.min(row.low,RULES_HARD_MIN_PX/zoom);
+    row.high=Math.max(row.high,row.low);
+  }
   // THE ROOMY READING, IF IT FITS. Each roomy-capable row tries its fuller text at the floor font in three phases (write
   // them all, read them all, put back the ones that did not fit) so a hand costs two layouts, not two per card.
   const roomyRows=texts.filter(row=>row.hasRoomy);
   for(const row of roomyRows){
-    row.floor=roomyFloor(row.high,row.low,zoom,row.fontReduction);
+    // One pixel spare inside the padding: scrollHeight rounds.
+    row.floor=roomyFloor(row.high,row.low,zoom,row.fontReduction,(row.boxHeight-2*row.pad-1)/(FACE_BUDGET.lines*row.lineHeight));
     showReading(row.text,'roomy');
     Object.assign(row.text.style,{maxHeight:'none',lineHeight:String(row.lineHeight),fontSize:row.floor+'px',webkitLineClamp:'unset'});
   }
   for(const row of roomyRows){
     const lineBox=row.floor*row.lineHeight;
-    row.roomy=row.text.scrollHeight<=row.boxHeight+1&&row.text.scrollWidth<=row.text.clientWidth+1
-      &&row.text.scrollHeight<=lineBox*FACE_BUDGET.lines+1;
+    // No rounding pixel on the box: a roomy reading that only fits by one is not shown (owner, 2026-11-17: no bleed).
+    row.roomy=row.text.scrollHeight<=row.boxHeight&&row.text.scrollWidth<=row.text.clientWidth+1
+      &&row.text.scrollHeight<=lineBox*FACE_BUDGET.lines+2*row.pad+1;
   }
   for(const row of roomyRows){
     if(!row.roomy)showReading(row.text,'compact');
@@ -248,7 +284,9 @@ export function fitIllustratedCards(cards) {
   for(const row of rules)row.face.dataset.rulesDense='false';
   const probe=(list,sizeOf)=>{
     for(const row of list){row.text.style.webkitLineClamp='unset';row.text.style.fontSize=sizeOf(row)+'px';}
-    return list.map(row=>row.text.scrollHeight<=Math.min(row.boxHeight,sizeOf(row)*row.lineHeight*row.lines)+1&&row.text.scrollWidth<=row.text.clientWidth+1);
+    // A rules row gets no rounding pixel: its box is the parchment, and a pixel over is a bleed (owner, 2026-11-17).
+    // The line count allows scrollHeight's rounding pixel; the box itself does not (a pixel over the parchment is a bleed).
+    return list.map(row=>row.text.scrollHeight<=row.boxHeight+(row.rules&&!row.fullRules?0:1)&&row.text.scrollHeight<=sizeOf(row)*row.lineHeight*row.lines+2*row.pad+1&&row.text.scrollWidth<=row.text.clientWidth+1);
   };
   const atHigh=probe(measured,row=>row.high);
   const search=[];
@@ -259,6 +297,21 @@ export function fitIllustratedCards(cards) {
     search.forEach((row,i)=>{const size=mid(row);if(fits[i])row.lo=size;else row.hi=size;});
   }
   for(const row of search)row.result=row.lo;
+  // Owner, 2026-11-17: only the last line may hold a single word. A face that shows one above it tries a slightly
+  // smaller font (every such row written, then read, per step), a little under its floor if need be, and keeps its size if none helps.
+  let lonely=measured.filter(row=>row.rules&&!row.fullRules);
+  for(const row of lonely)row.text.style.fontSize=row.result+'px';
+  lonely=lonely.filter(row=>HasLoneWordLine(row.text));
+  for(const row of lonely){row.widest=row.result;row.loneFloor=Math.max(RULES_HARD_MIN_PX/zoom,row.low*LONE_WORD_FLOOR);}
+  for(let step=0;step<LONE_WORD_STEPS&&lonely.length;step++){
+    for(const row of lonely){row.result=Math.max(row.loneFloor,row.result*LONE_WORD_STEP);row.text.style.fontSize=row.result+'px';}
+    lonely=lonely.filter(row=>{
+      if(!HasLoneWordLine(row.text))return false;
+      if(row.result>row.loneFloor)return true;
+      row.result=row.widest;return false;
+    });
+  }
+  for(const row of lonely)row.result=row.widest;
   for(const row of measured){
     if(fitResults.size>=FIT_RESULTS_MAX)fitResults.delete(fitResults.keys().next().value);
     fitResults.set(row.fitKey,row.result);
@@ -296,9 +349,9 @@ export function fitIllustratedCards(cards) {
     row.finalHeight=row.layer.clientHeight;
     // Lines actually rendered at the settled size (guarding a zero line box).
     const lineBox=(parseFloat(row.text.style.fontSize)||0)*(parseFloat(row.text.style.lineHeight)||row.lineHeight);
-    row.renderedLines=lineBox>0?Math.round(row.text.scrollHeight/lineBox):0;
+    row.renderedLines=lineBox>0?Math.round((row.text.scrollHeight-2*row.pad)/lineBox):0;
     row.overflow=Boolean(row.hasHiddenRules||row.hasHiddenLines||row.overflow||row.clipped
-      ||(row.compact&&!row.bounded&&row.renderedLines>GLANCE_LINES)
+      ||row.renderedLines>row.lines
       ||row.text.scrollHeight>Math.min(row.finalHeight,row.text.clientHeight)+1
       ||row.text.scrollWidth>row.text.clientWidth+1);
   }

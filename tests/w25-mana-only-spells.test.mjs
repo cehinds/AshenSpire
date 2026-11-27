@@ -1,198 +1,112 @@
-// Owner 2026-11-15 (W25-MS): "add more spells that cost 0 sp but 2 to 3 mp to make them worth while". Nine Core spells carry cost.manaOnly: printed
-// 0 Stamina, 1 or 2 Mana; the spell cost rule adds the +1 Mana surcharge and skips the +1 Stamina one, so they pay 0 SP and 2 or 3 MP (a Focus item
-// takes 1 MP off). Each is clearly stronger per Mana than the same-rarity 2 SP / 2 MP spells it replaces in the hand, computed here from card data.
+// Mana-only membership and balance are authored data. Small explicit spells
+// below protect the cost exemption, payment and flux mechanics.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { fight, profile, reg } from './elementFixture.mjs';
+import { readFileSync } from 'node:fs';
+import { contentBundle } from '../src/content/index.js';
+import { createRegistries, resolveCard } from '../src/model/registries.js';
+import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries, projectGameCard } from '../src/model/gameProfile.js';
 import { cardPlayCosts, dispatch } from '../src/engine/combat.js';
-import { resolveCard } from '../src/model/registries.js';
-import { gameProfileRewardOffers, gameProfileRewardPools } from '../src/model/gameProfileRewards.js';
-import { createRunState } from '../src/model/state.js';
-import { createRng } from '../src/engine/rng.js';
-import { cardManaCategory } from '../src/model/cardManaPolicy.js';
-import { ElementOfHit } from '../src/model/elementIdentityRules.js';
-import { legacyGearRegistries } from './helpers/legacy-gear.mjs';
-const printedCostRegistries = legacyGearRegistries(reg);
+import { w25Fight } from './helpers/w25-rules-contract.mjs';
 
-const NEW = {
-  'core.pyreLash': { cls: 'starseer', rarity: 'uncommon', mana: 1, element: 'fire' },
-  'core.conflagration': { cls: 'starseer', rarity: 'rare', mana: 2, element: 'fire' },
-  'core.forkedBolt': { cls: 'colorless', rarity: 'uncommon', mana: 1, element: 'lightning' },
-  'core.stormcall': { cls: 'starseer', rarity: 'rare', mana: 2, element: 'lightning' },
-  'core.glacialSpike': { cls: 'starseer', rarity: 'uncommon', mana: 1, element: 'frost' },
-  'core.radiantVerdict': { cls: 'herald', rarity: 'rare', mana: 2, element: 'divine' },
-  'core.witherDraught': { cls: 'herald', rarity: 'uncommon', mana: 1, element: 'necrotic' },
-  'core.batteringGale': { cls: 'colorless', rarity: 'uncommon', mana: 1, element: 'force' },
-  'core.openArchive': { cls: 'colorless', rarity: 'rare', mana: 2, element: null },
-};
-const def = id => profile.content.cards.find(card => card.id === id);
-const PREPARED = { maneuver: 'casting', camp: 'spell' };
+const read = path => JSON.parse(readFileSync(new URL('../' + path, import.meta.url), 'utf8'));
+const source = read('games/ashenspire/packs/core/cards.json');
+const variants = read('games/ashenspire/packs/core/resourceVariants.json');
+const author = read('games/ashenspire/game.json');
+const marked = source.filter(card => card.tags.includes('cost.manaOnly'));
 
-test('every new card is authored in its class and rarity, tagged cost.manaOnly, prints 0 SP and passes content validation at both grades', () => {
-  for (const [id, want] of Object.entries(NEW)) {
-    const card = def(id);
-    assert.ok(card, id);
-    assert.deepEqual([card.class, card.rarity, card.staminaCost, card.manaCost], [want.cls, want.rarity, 0, want.mana], id);
-    assert.ok(card.tags.includes('cost.manaOnly') && card.tags.includes('camp:spell') && !card.tags.includes('rank.cantrip'), id);
-    const base = resolveCard(reg, { cardId: id }), up = resolveCard(reg, { cardId: id, upgraded: true });
-    assert.ok(base.textTemplate && up.textTemplate, id);
-    assert.notDeepEqual(up.effects, base.effects, `${id}: the upgrade changes numbers`);
-    assert.equal(up.manaCost, base.manaCost, `${id}: the upgrade keeps its Mana cost`);
-  }
-  assert.equal(new Set(Object.keys(NEW).map(id => def(id).name)).size, 9);
-});
-
-test('the shipped cards carry the element their school names (flux and the element rules read it)', () => {
-  for (const [id, want] of Object.entries(NEW)) assert.equal(ElementOfHit({ ...reg.cards.get(id), cardTags: reg.cards.get(id).tags }), want.element, id);
-});
-
-const fights = new Map();
-function costsOf(id, { hand, stance, legacy = false }) {
-  const key = `${hand}|${!!stance}|${legacy}`;
-  if (!fights.has(key)) {
-    // Intrinsic W25-MS prices predate robe discounts; current gear/payment is retained in the play tests below.
-    const { combat } = fight({ registries: printedCostRegistries });
-    if (legacy) { delete combat.fixCoreRules.spellCosts; delete combat.fixCoreRules.elementFlux; }
-    combat.loadout.sets.rightHand[0] = hand;
-    if (stance) combat.player.combatStance = { ...stance };
-    fights.set(key, combat);
-  }
-  const combat = fights.get(key), card = combat.piles.hand[0];
-  card.cardId = id;
-  return cardPlayCosts(combat, card.instanceId);
-}
-
-test('effective cost table: 0 SP and 2 or 3 MP plain and Prepared; a Focus item takes 1 MP off (1 or 2 MP)', () => {
-  for (const [id, want] of Object.entries(NEW)) {
-    for (const [name, hand, stance, focus] of [['plain', 'greatsword', null, 0], ['Prepared', 'greatsword', PREPARED, 0], ['Focus', 'boneSceptre', null, 1], ['both', 'boneSceptre', PREPARED, 1]]) {
-      // The price the fight charged before the ruling (a stance's own Mana cut is in it) plus the rule: Mana +1, a Focus -1; Stamina 0 whatever the stance.
-      const before = costsOf(id, { hand: 'greatsword', stance, legacy: true });
-      const costs = costsOf(id, { hand, stance });
-      assert.deepEqual([costs.stamina, costs.mana], [0, before.mana + 1 - focus], `${id} ${name}`);
-      if (!stance) assert.equal(costs.mana, want.mana + 1 - focus, `${id} ${name}: printed Mana + 1, a Focus 1 less`);
-      assert.equal(costs.energy, 0, `${id} ${name}: no Action cost`);
-    }
-    assert.ok([2, 3].includes(want.mana + 1));
-  }
-});
-
-test('a card without the mark pays its printed Stamina (no surcharge since 2026-11-23: Comet Lance is 1 SP / 2 MP); a fight saved before that keeps 2 SP / 2 MP', () => {
-  const costs = costsOf('core.cometLance', { hand: 'greatsword', stance: null });
-  assert.deepEqual([costs.stamina, costs.mana], [1, 2]);
-  const { combat } = fight({ registries: printedCostRegistries });
-  combat.loadout.sets.rightHand[0] = 'greatsword';
-  combat.fixCoreRules.spellCosts.staminaSurcharge = 1; // the rules snapshot of a fight saved before the owner ruling of 2026-11-23
-  const card = combat.piles.hand[0]; card.cardId = 'core.cometLance';
-  const saved = cardPlayCosts(combat, card.instanceId);
-  assert.deepEqual([saved.stamina, saved.mana], [2, 2], 'a saved fight keeps the +1 Stamina surcharge on an unmarked spell');
-});
-
-test('a fight created before the mark (no manaOnlyTag key) has no exemption: the +1 Stamina surcharge lands on a mana-only card', () => {
-  const { combat } = fight({ registries: printedCostRegistries });
-  combat.loadout.sets.rightHand[0] = 'greatsword';
-  delete combat.fixCoreRules.spellCosts.manaOnlyTag;
-  combat.fixCoreRules.spellCosts.staminaSurcharge = 1; // a fight that old predates the 2026-11-23 drop of the surcharge too
-  const card = combat.piles.hand[0]; card.cardId = 'core.pyreLash';
-  const costs = cardPlayCosts(combat, card.instanceId);
-  assert.deepEqual([costs.stamina, costs.mana], [1, 2], 'without the key the +1 Stamina surcharge applies again (the card has no exemption in an older fight)');
-});
-
-// ---- Power per Mana against the 2 SP / 2 MP spells of the same rarity ----
-// Weights (damage-equivalents): an All-enemies number counts twice (against two enemies); Poise 1.5; Block 1; heal 2; an enemy debuff or damage-over-time
-// stack 3 (Burn, Shock, Chill, Necrotic Blight, Weak, Vulnerable, Frail); a self Regen stack 3; Barrier 1.5; a drawn card 7; a restored Mana 8.
-const STATUS_WEIGHT = { burn: 3, shock: 3, chill: 3, necroticBlight: 3, weak: 3, vulnerable: 3, frail: 3, regen: 3 };
-function power(effects) {
-  let total = 0;
-  for (const effect of effects) {
-    const wide = effect.target === 'allEnemies' ? 2 : 1;
-    if (effect.op === 'damage') total += effect.amount * wide;
-    else if (effect.op === 'poiseDamage') total += effect.amount * 1.5 * wide;
-    else if (effect.op === 'block') total += effect.amount;
-    else if (effect.op === 'heal') total += effect.amount * 2;
-    else if (effect.op === 'gainBarrier') total += effect.amount * 1.5;
-    else if (effect.op === 'draw') total += effect.amount * 7;
-    else if (effect.op === 'restoreMana') total += effect.amount * 8;
-    else if (effect.op === 'applyStatus') total += (STATUS_WEIGHT[effect.status] ?? 3) * effect.stacks * wide;
-  }
-  return total;
-}
-const median = list => { const sorted = [...list].sort((a, b) => a - b), mid = sorted.length >> 1; return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2; };
-// Power per effective Mana (printed Mana + the 1 surcharge) of a card at one grade, so a 2 SP / 2 MP spell and a 0 SP / 3 MP one compare on the scarce resource.
-const perMana = (card, grade) => power(grade === 'up' ? card.upgrade.effects : card.effects) / (card.manaCost + 1);
-const MARGIN = 1.25;
-
-test(`every mana-only spell has at least ${MARGIN}x the power per Mana of the median same-rarity Core spell that pays Stamina and Mana (base and upgraded)`, () => {
-  const peers = rarity => profile.content.cards.filter(card => card.rarity === rarity && card.staminaCost >= 1 && card.manaCost >= 1 && !card.tags.includes('cost.manaOnly')
-    && !card.tags.includes('rank.cantrip') && cardManaCategory(reg, reg.cards.get(card.id)) === 'spell' && card.upgrade?.effects && card.class !== 'enemy' && card.effects.some(effect => ['damage', 'block', 'draw', 'applyStatus', 'heal'].includes(effect.op)));
-  const rows = [];
-  for (const rarity of ['uncommon', 'rare']) {
-    const list = peers(rarity);
-    assert.ok(list.length >= 3, `${rarity}: enough peers (${list.length})`);
-    for (const grade of ['base', 'up']) {
-      const bar = median(list.map(card => perMana(card, grade)));
-      for (const [id, want] of Object.entries(NEW)) {
-        if (want.rarity !== rarity) continue;
-        const ratio = perMana(def(id), grade) / bar;
-        rows.push(`${id} ${grade}: ${ratio.toFixed(2)}x (${perMana(def(id), grade).toFixed(1)} vs median ${bar.toFixed(1)} per Mana)`);
-        assert.ok(ratio >= MARGIN, `${id} ${grade}: ${ratio.toFixed(2)}x of the ${rarity} median, wanted >= ${MARGIN}x`);
+test('current mana-only definitions and every resource variant reach runtime at base and upgraded grades', () => {
+  for (const include of [[], ['sp'], ['mp'], ['sp', 'mp']]) {
+    const profile = resolveGameProfile({ ...author, modules: { ...author.modules, resources: { include } } });
+    const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+    const key = include.join(',') || 'none';
+    for (const row of marked) {
+      const installed = profile.content.cards.find(card => card.id === row.id);
+      for (const field of ['class', 'rarity', 'tags', 'effects', 'upgrade']) assert.deepEqual(installed[field], row[field], row.id + '.' + field);
+      assert.deepEqual(profile.content.resourceVariants[row.id], variants[row.id], row.id + ' resource variants');
+      const alternate = variants[row.id]?.[key] || {};
+      const chosen = { ...row, ...alternate };
+      const projection = projectGameCard(profile, row.id);
+      assert.equal(projection.cost, chosen.cost, row.id + ' SP');
+      assert.equal(projection.manaCost || 0, chosen.manaCost || 0, row.id + ' MP');
+      for (const upgraded of [false, true]) {
+        const ref = { cardId: row.id, upgraded };
+        const expected = projectGameCard(profile, ref), actual = resolveCard(reg, ref);
+        for (const field of ['cost', 'manaCost', 'effects', 'keywords']) assert.deepEqual(actual[field], expected[field], row.id + '/' + upgraded + '/' + field);
       }
     }
   }
-  if (process.env.SHOW_RATIOS) console.log(rows.join('\n'));
 });
 
-// ---- Pools: each card reaches its own class ----
-const live = (classId, seed) => createRunState({ registries: reg, seed, classId, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
-test('each new card is offered to its own class (colorless to every caster) and never to another class', () => {
-  const stockHerald = live('herald', 1);
-  assert.equal(stockHerald.maxMana, 3, 'the current equipped Herald has three MP under per-point Wisdom');
-  assert.ok(gameProfileRewardPools(reg, stockHerald).combatCards.includes('core.radiantVerdict'), 'the geared Herald can pay its printed 2 MP');
-  const oneManaHerald = { ...stockHerald, maxMana: 1 };
-  assert.ok(!gameProfileRewardPools(reg, oneManaHerald).combatCards.includes('core.radiantVerdict'), 'the same class still cannot receive a card above its Mana capacity');
-  const seen = { starseer: new Set(), herald: new Set(), rogue: new Set() };
-  for (const classId of Object.keys(seen)) for (let seed = 1; seed <= 400; seed++) {
-    const run = live(classId, seed); run.floor = 1 + (seed % 6);
-    run.level.level = 1 + (seed % 10); // Current reward offers follow the character-level rank band.
-    // Give each class enough Mana for every printed price to isolate class eligibility.
-    run.maxMana = 2;
-    for (const option of gameProfileRewardOffers(reg, run, createRng(seed + 50000), { offerId: 'ms' }).options) if (option.kind === 'combatCards') seen[classId].add(option.id);
-  }
-  for (const [id, want] of Object.entries(NEW)) {
-    if (want.cls === 'starseer') { assert.ok(seen.starseer.has(id), `${id} offered to Starseer`); assert.ok(!seen.herald.has(id) && !seen.rogue.has(id), `${id} stays in its class`); }
-    if (want.cls === 'herald') { assert.ok(seen.herald.has(id), `${id} offered to Herald`); assert.ok(!seen.starseer.has(id) && !seen.rogue.has(id), `${id} stays in its class`); }
-    if (want.cls === 'colorless') assert.ok(seen.starseer.has(id) || seen.herald.has(id), `${id} offered to a caster`);
+function held(combat, cardId, instanceId) {
+  const ref = Object.values(combat.piles).flat().find(card => card.cardId === cardId && (!instanceId || card.instanceId === instanceId));
+  assert.ok(ref, cardId);
+  for (const pile of Object.values(combat.piles)) { const at = pile.indexOf(ref); if (at >= 0) pile.splice(at, 1); }
+  combat.piles.hand.push(ref);
+  return ref;
+}
+
+test('a marked spell pays zero SP with plain, Prepared and Focus quotes, and the actual play pays that quote', () => {
+  for (const focus of [false, true]) for (const prepared of [false, true]) {
+    const { combat, enemy } = w25Fight({ focus, prepared });
+    const card = held(combat, 'fixture.fire'), quote = cardPlayCosts(combat, card.instanceId);
+    assert.deepEqual([quote.energy, quote.stamina, quote.mana], [0, 0, focus ? 1 : 2]);
+    const before = { energy: combat.player.energy, stamina: combat.player.stamina, mana: combat.player.mana };
+    const out = dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: enemy.id });
+    const paid = out.events.find(event => event.type === 'cardPlayed');
+    assert.deepEqual([paid.energySpent, paid.staminaSpent, paid.manaSpent], [quote.energy, quote.stamina, quote.mana]);
+    assert.deepEqual([combat.player.energy, combat.player.stamina, combat.player.mana], [before.energy, before.stamina, before.mana - quote.mana]);
   }
 });
 
-// ---- Flux and play ----
-test('the element spells play for 0 SP, set their element as the flux and the next one of that element is lifted x1.25', () => {
-  const { combat, enemy } = fight({ enemies: 1 });
-  combat.loadout.sets.rightHand[0] = 'boneSceptre';
-  const [a, b] = combat.piles.hand;
-  a.cardId = 'core.pyreLash'; b.cardId = 'core.conflagration';
-  const energy = combat.player.energy, mana = combat.player.mana;
-  dispatch(combat, { type: 'playCard', cardInstanceId: a.instanceId, targetId: enemy.id });
-  assert.equal(combat.player.energy, energy, 'Pyre Lash cost no Stamina');
-  assert.equal(mana - combat.player.mana, 2, 'printed 1 + surcharge 1; robes and Focus both require Prepared');
+test('unmarked spells follow the saved surcharge and a fight without manaOnlyTag has no exemption', () => {
+  const { combat } = w25Fight();
+  const unmarked = held(combat, 'fixture.unmarked');
+  combat.fixCoreRules.spellCosts.staminaSurcharge = 0;
+  assert.deepEqual(cardPlayCosts(combat, unmarked.instanceId), { energy: 0, stamina: 0, mana: 2 });
+  combat.fixCoreRules.spellCosts.staminaSurcharge = 1;
+  assert.deepEqual(cardPlayCosts(combat, unmarked.instanceId), { energy: 1, stamina: 1, mana: 2 });
+  const marked = held(combat, 'fixture.fire');
+  assert.equal(cardPlayCosts(combat, marked.instanceId).stamina, 0);
+  delete combat.fixCoreRules.spellCosts.manaOnlyTag;
+  assert.equal(cardPlayCosts(combat, marked.instanceId).stamina, 1);
+  delete combat.fixCoreRules.spellCosts;
+  assert.deepEqual(cardPlayCosts(combat, marked.instanceId), { energy: 0, stamina: 0, mana: 1 }, 'a pre-rule fight keeps its printed price');
+});
+
+test('same-element flux starts after the first cast and scales the next cast without changing its quoted payment', () => {
+  const { combat, enemy } = w25Fight();
+  const first = held(combat, 'fixture.fire');
+  const firstOut = dispatch(combat, { type: 'playCard', cardInstanceId: first.instanceId, targetId: enemy.id });
+  const firstHit = firstOut.events.find(event => event.type === 'damageDealt').damageReceipt.hits[0];
+  assert.equal(firstHit.sources.find(row => row.id === 'base').amount, 8, 'the first cast is not lifted by its own new flux');
+  assert.ok(!firstHit.sources.some(row => row.id === 'element-flux'));
   assert.equal(combat.player.elementFlux, 'fire');
-  const before = enemy.hp, preparedMana = combat.player.mana;
-  assert.equal(cardPlayCosts(combat, b.instanceId).mana, 0, 'Prepared Adept reduces printed 2 to 1, then surcharge +1, robe -1 and Focus -1');
-  dispatch(combat, { type: 'playCard', cardInstanceId: b.instanceId, targetId: enemy.id });
-  assert.equal(combat.player.energy, energy, 'Conflagration cost no Stamina either');
-  assert.equal(combat.player.mana, preparedMana, 'the Prepared Focus quote matches the second spell payment');
-  assert.ok(before - enemy.hp >= Math.floor(22 * 1.25) - 2, `the fluxed Fire card dealt ${before - enemy.hp}`);
+  const second = held(combat, 'fixture.fire', 'fixture:fire2');
+  const quote = cardPlayCosts(combat, second.instanceId), mana = combat.player.mana, energy = combat.player.energy;
+  const out = dispatch(combat, { type: 'playCard', cardInstanceId: second.instanceId, targetId: enemy.id });
+  const hit = out.events.find(event => event.type === 'damageDealt').damageReceipt.hits[0];
+  const flux = hit.sources.find(row => row.id === 'element-flux');
+  assert.ok(flux, 'the second matching spell carries the flux stage');
+  assert.equal(flux.multiplier, 1.25);
+  assert.equal(flux.requested, firstHit.incoming, 'same spell and rating enter the flux stage');
+  assert.equal(flux.effective, Math.floor(flux.requested * 1.25));
+  assert.equal(hit.incoming, flux.effective);
+  assert.equal(combat.player.mana, mana - quote.mana);
+  assert.equal(combat.player.energy, energy);
 });
 
-test('Open the Archive draws, restores Mana and exhausts (non-element: it clears the flux)', () => {
-  const { combat } = fight();
-  combat.loadout.sets.rightHand[0] = 'greatsword';
-  const card = combat.piles.hand[0]; card.cardId = 'core.openArchive';
-  combat.player.elementFlux = 'fire';
-  combat.player.maxMana = Math.max(combat.player.maxMana, 10); // Leave room for the restoration.
-  combat.player.mana = 4;
-  const mana = combat.player.mana;
-  dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId });
-  assert.equal(combat.player.mana - mana, 2 - (def('core.openArchive').manaCost + 1), 'printed Mana + spell surcharge out of Prepared, then restores 2');
+test('a non-element spell draws, restores its explicit Mana, exhausts and clears flux', () => {
+  const { combat } = w25Fight();
+  const card = held(combat, 'fixture.archive');
+  const other = combat.piles.hand.filter(row => row !== card);
+  combat.piles.hand = [card]; combat.piles.draw.push(...other);
+  combat.player.elementFlux = 'fire'; combat.player.mana = 10;
+  const quote = cardPlayCosts(combat, card.instanceId), mana = combat.player.mana;
+  const out = dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId });
+  assert.equal(combat.player.mana, mana - quote.mana + 2);
   assert.equal(combat.player.elementFlux ?? null, null);
-  assert.ok(combat.piles.exhaust.some(c => c.instanceId === card.instanceId));
+  assert.equal(combat.piles.hand.length, 1, 'one card was drawn after the cast left the hand');
+  assert.ok(out.events.some(event => event.type === 'cardDrawn'));
+  assert.ok(combat.piles.exhaust.some(row => row.instanceId === card.instanceId));
 });

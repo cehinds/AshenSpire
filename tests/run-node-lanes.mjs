@@ -66,6 +66,61 @@ export const SLOW_DISCOVERED = new Map([
   ['tests/simrun-loop.test.mjs', 'runs tools/measure-classes.mjs --check against runsim'],
 ]);
 
+// These files assert wall-clock limits. Keep each in its original discovery
+// shard, but run it alone before that shard's CPU-heavy parallel batch. No
+// assertions, limits, discovery membership or platform concurrency change.
+export const ISOLATED_TIMING_DISCOVERED = new Map([
+  ['tests/seed-driven-schedule-and-perf.test.mjs', 'measures the cold 60-card Blacksmith picker against its 250ms limit'],
+  ['tests/upgrade-tags-and-perf.test.mjs', 'measures the 60-card Blacksmith picker against its 500ms limit'],
+]);
+
+export function discoveryExecutionBatches(files) {
+  if (!files.length || new Set(files).size !== files.length) throw new Error('discovery batches require nonempty, unique assigned files');
+  const isolated = files.filter(file => ISOLATED_TIMING_DISCOVERED.has(file)).map(file => [file]);
+  const parallel = files.filter(file => !ISOLATED_TIMING_DISCOVERED.has(file));
+  return [...isolated, ...(parallel.length ? [parallel] : [])];
+}
+
+export function reporterSummaryCounts(out) {
+  const blocks = out.split(/^ℹ tests /m).slice(1);
+  if (!blocks.length) return null;
+  let tests = 0, failed = 0;
+  for (const block of blocks) {
+    const testCount = /^(\d+)(?:\r?\n|$)/.exec(block);
+    const failures = [...block.matchAll(/^ℹ fail (\d+)\r?$/gm)];
+    if (!testCount || failures.length !== 1) return null;
+    const count = Number(testCount[1]), fail = Number(failures[0][1]);
+    if (!Number.isSafeInteger(count) || !Number.isSafeInteger(fail) || fail > count) return null;
+    tests += count; failed += fail;
+  }
+  if (!Number.isSafeInteger(tests) || !Number.isSafeInteger(failed)) return null;
+  return { tests, failed, summaries: blocks.length };
+}
+
+/** Synchronous child batches share one deadline. Ordinary failures do not hide
+ * the rest of the assigned corpus, but a timeout stops further launches. */
+export function runDiscoveryBatches(batches, { runBatch, timeoutMs, now = () => performance.now() }) {
+  const assigned = batches.flat();
+  if (!batches.length || batches.some(batch => !batch.length) || new Set(assigned).size !== assigned.length) throw new Error('discovery batches require nonempty, unique assigned files');
+  if (!Number.isFinite(timeoutMs) || timeoutMs < 0) throw new Error('discovery timeout must be finite and non-negative');
+  const deadline = now() + timeoutMs;
+  const results = [];
+  let timedOut = false;
+  for (const files of batches) {
+    const remaining = Math.floor(deadline - now());
+    if (remaining <= 0) { timedOut = true; break; }
+    const result = runBatch(files, remaining);
+    const out = `${result.stdout || ''}${result.stderr || ''}`;
+    const summary = reporterSummaryCounts(out);
+    const ok = result.status === 0 && !result.error && summary?.summaries === 1 && summary.tests > 0 && summary.failed === 0;
+    results.push({ ...result, out, summary, ok });
+    if (result.error?.code === 'ETIMEDOUT') { timedOut = true; break; }
+  }
+  if (now() > deadline) timedOut = true;
+  return { results, out: results.map(result => result.out).join('\n'), timedOut,
+    ok: !timedOut && results.length === batches.length && results.every(result => result.ok) };
+}
+
 export function discoverySpeedFiles(files, slow) {
   if (slow === 'include') return files.slice();
   if (slow === 'exclude') return files.filter(file => !SLOW_DISCOVERED.has(file));
@@ -90,11 +145,9 @@ export function selftestInGroup(group, tool) {
 // The summary counts for one shard. A shard stopped by its time limit never
 // prints node --test's "ℹ tests N" / "ℹ fail N" lines, so its counts are
 // unknown; say so instead of printing NaN.
-export function shardSummaryCounts({ out, timedOut, limitMinutes, files }) {
+export function shardSummaryCounts({ out, timedOut, limitMinutes, files, expectedSummaries }) {
   if (timedOut) return `${files} files, stopped after ${limitMinutes} minutes (timed out; no test summary)`;
-  const count = (label) => Number(out.match(new RegExp(`^ℹ ${label} (\\d+)$`, 'm'))?.[1] ?? NaN);
-  const tests = count('tests');
-  const failed = count('fail');
-  if (!Number.isFinite(tests) || !Number.isFinite(failed)) return `${files} files, counts unavailable`;
-  return `${files} files, ${tests} tests, ${failed} failed`;
+  const counts = reporterSummaryCounts(out);
+  if (!counts || expectedSummaries !== undefined && counts.summaries !== expectedSummaries) return `${files} files, counts unavailable`;
+  return `${files} files, ${counts.tests} tests, ${counts.failed} failed`;
 }

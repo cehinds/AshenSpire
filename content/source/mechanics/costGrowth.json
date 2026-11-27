@@ -1,0 +1,30 @@
+{
+  "costGrowth": {
+    "enabled": true,
+    "scope": "instance",
+    "perUse": 1,
+    "stamina": 1,
+    "mana": 0,
+    "maxSteps": 3,
+    "uncapped": false,
+    "showOnFace": true,
+    "easedBySteady": true
+  },
+  "costGrowth.shared": {
+    "extends": "costGrowth",
+    "scope": "card"
+  },
+  "costGrowth.evade": {
+    "extends": "costGrowth.shared",
+    "stamina": 1
+  },
+  "costGrowth.retreat": {
+    "extends": "costGrowth.shared",
+    "stamina": 1,
+    "maxSteps": 3
+  },
+  "costGrowth.choiceMode": {
+    "extends": "costGrowth",
+    "scope": "instance"
+  }
+}

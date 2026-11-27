@@ -71,25 +71,27 @@ import { cardSigilIdentity } from '../src/content/combatSigils.js';
 import { cardSigilsHtml, sigilExplanationHtml } from '../src/ui/components/combatSigilView.js';
 import { playingCardModel } from '../src/model/playingCard.js';
 
-test('footer of a shared mirrored cantrip retains both traditions and the basic mark', () => {
+test('footer of a shared mirrored cantrip shows the Spell mark and the basic mark', () => {
+  // Arcane Spark authors both tradition tags (games/ashenspire/packs/core/cards.json), so it is Shared.
   const model = playingCardModel(reg, { cardId: 'core.cantrip', instanceId: 'x', upgraded: false });
-  assert.deepEqual(model.sigils, { action: 'spell', school: null, mirror: 'attack', traditions: ['arcane', 'divine'], displayLabel: 'Spell' });
+  assert.deepEqual(model.sigils, { action: 'spell', school: null, mirror: 'attack', traditions: ['arcane', 'divine'], category: 'shared', displayLabel: 'Spell' });
   const html = cardSigilsHtml(model.sigils);
   assert.match(html, /data-primary-sigil="spell"/);
   assert.match(html, /data-mirror="attack"/);
   const marks = [...html.matchAll(/data-sigil="(\w+)"/g)].map(m => m[1]);
-  assert.deepEqual(marks, ['arcane', 'divine', 'attack'], 'both tradition marks precede the mirrored Attack mark');
+  assert.deepEqual(marks, ['spell', 'attack'], 'a Shared Spell wears no tradition mark');
   assert.match(html, /card-type-name[^>]*>Spell</);
-  assert.match(sigilExplanationHtml(model.sigils), /Arcane[\s\S]*Divine[\s\S]*Attack/);
+  assert.match(sigilExplanationHtml(model.sigils), /Spell[\s\S]*Attack/);
+  assert.doesNotMatch(sigilExplanationHtml(model.sigils), /Arcane magic|Divine magic/);
 });
 
 test('generic smash mirror retains its word; a current exclusive spell uses its tradition', () => {
   assert.deepEqual(cardSigilIdentity('Spell', { camp: 'spell', mirrors: 'smash' }), { action: 'spell', school: null, mirror: 'smash' });
   assert.match(cardSigilsHtml(cardSigilIdentity('Spell', { camp: 'spell', mirrors: 'smash' })), /card-type-name[^>]*>Smash</);
   const special = playingCardModel(reg, { cardId: 'core.starseerSpecial', instanceId: 'y', upgraded: false });
-  assert.deepEqual(special.sigils, { action: 'spell', school: 'force', traditions: ['arcane'], displayLabel: 'Arcane' });
+  assert.deepEqual(special.sigils, { action: 'spell', school: 'force', traditions: ['arcane'], category: 'arcane', displayLabel: 'Arcane' });
   const html = cardSigilsHtml(special.sigils);
-  assert.deepEqual([...html.matchAll(/data-sigil="(\w+)"/g)].map(m => m[1]), ['arcane']);
+  assert.deepEqual([...html.matchAll(/data-sigil="(\w+)"/g)].map(m => m[1]), ['spell', 'arcane']);
   assert.match(html, /card-type-name[^>]*>Arcane</);
   assert.doesNotMatch(html, /data-mirror/);
   assert.deepEqual(cardSigilIdentity('Attack', { camp: 'physical', mirrors: 'smash' }), { action: 'attack', school: null }, 'only a Spell mirrors');
@@ -123,13 +125,13 @@ test('Arcane Strike, Ritual Ward and Staff Channel are Spells and Cantrips in th
   assert.equal(stanceOf(slash).camp, 'physical');
 });
 
-test('equipment spell footers show school traditions and retain each mirrored basic mark', () => {
+test('equipment spell footers show the Spell mark, the category mark and each mirrored basic mark', () => {
   const foot = (card, id) => { const m = playingCardModel(reg, { cardId: card, profileId: id, instanceId: 'p-' + id, upgraded: false }); return cardSigilsHtml(m.sigils); };
   const marks = html => [...html.matchAll(/data-sigil="(\w+)"/g)].map(m => m[1]);
   const word = html => html.match(/card-type-name[^>]*>([^<]*)</)[1];
-  let h = foot('strike', 'sceptreArcaneAttack'); assert.deepEqual(marks(h), ['divine', 'attack']); assert.equal(word(h), 'Divine');
-  h = foot('defend', 'sceptreGuard'); assert.deepEqual(marks(h), ['divine', 'defend']); assert.equal(word(h), 'Divine');
-  h = foot('technique', 'staffTechnique'); assert.deepEqual(marks(h), ['arcane', 'skill']); assert.equal(word(h), 'Arcane');
+  let h = foot('strike', 'sceptreArcaneAttack'); assert.deepEqual(marks(h), ['spell', 'divine', 'attack']); assert.equal(word(h), 'Divine');
+  h = foot('defend', 'sceptreGuard'); assert.deepEqual(marks(h), ['spell', 'divine', 'defend']); assert.equal(word(h), 'Divine');
+  h = foot('technique', 'staffTechnique'); assert.deepEqual(marks(h), ['spell', 'arcane', 'skill']); assert.equal(word(h), 'Arcane');
   h = foot('strike', 'bladeAttack'); assert.deepEqual(marks(h), ['attack']); assert.equal(word(h), 'Attack');
   assert.equal(mirrorSigil('technique').mark.label, 'Technique');
 });

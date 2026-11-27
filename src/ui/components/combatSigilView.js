@@ -9,22 +9,30 @@ export function sigilHtml(id, kind = 'action', { tooltip = true } = {}) {
   return `<span class="combat-sigil combat-sigil-${kind}" role="img" aria-label="${esc(mark.label)}" aria-description="${esc(mark.help)}"${tooltip ? ` title="${esc(mark.label + ': ' + mark.help)}"` : ''} data-sigil="${esc(id)}"><svg viewBox="0 0 32 32" fill="${mark.solid ? 'currentColor' : 'none'}" fill-rule="evenodd" stroke="${mark.solid ? 'none' : 'currentColor'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${mark.shape}</svg></span>`;
 }
 
+// Under spell traditions only an Arcane or Divine Spell wears its category mark; Shared and schoolless Spells wear the Spell mark alone.
+const categoryMark = identity => ['arcane', 'divine'].includes(identity.category) ? identity.category : null;
+const iconHtml = (inner, className = '', attributes = '') => `<span class="card-action-icon${className}"${attributes} data-card-layer="7">${inner}</span>`;
+
 export function cardSigilsHtml(identity) {
   if (!identity) return '';
   const mark = identity.mirror ? mirrorSigil(identity.mirror).mark : ACTION_SIGILS[identity.action];
   // The existing bottom layer owns the footer. School and other tags use the rail.
-  // A mirrored Spell retains its basic's mark. Tradition-aware cards use the
-  // new type label; generic callers retain the historical basic's word.
-  const mirror = identity.mirror ? `<span class="card-action-icon card-mirror-icon" data-card-layer="7">${sigilHtml(mirrorSigil(identity.mirror).id, 'action', {tooltip:false})}</span>` : '';
-  const traditionIcons = identity.traditions?.map(id => `<span class="card-action-icon card-tradition-icon" data-tradition="${esc(id)}" data-card-layer="7">${sigilHtml(id, 'tradition', {tooltip:false})}</span>`).join('');
-  const icons = traditionIcons || `<span class="card-action-icon" data-card-layer="7">${sigilHtml(identity.action, 'action', {tooltip:false})}</span>`;
-  return `<div class="card-sigil-band" data-card-binding="tags" data-primary-sigil="${esc(identity.action)}"${identity.traditions ? ` data-traditions="${esc(identity.traditions.join(' '))}"` : ''}${identity.mirror ? ` data-mirror="${esc(identity.mirror)}"` : ''}>${icons}${mirror}<span class="card-type-name" data-card-layer="8">${esc(identity.displayLabel || mark.label)}</span></div>`;
+  // Order: the action mark, the category mark (Arcane or Divine only), then a
+  // mirrored Spell's basic mark. Tradition-aware cards use the type label;
+  // generic callers retain the historical basic's word.
+  const category = identity.traditions ? categoryMark(identity) : null;
+  const action = iconHtml(sigilHtml(identity.action, 'action', {tooltip:false}));
+  const categoryIcon = category ? iconHtml(sigilHtml(category, 'tradition', {tooltip:false}), ' card-tradition-icon', ` data-tradition="${esc(category)}"`) : '';
+  const mirror = identity.mirror ? iconHtml(sigilHtml(mirrorSigil(identity.mirror).id, 'action', {tooltip:false}), ' card-mirror-icon') : '';
+  const attributes = (identity.traditions ? ` data-traditions="${esc(identity.traditions.join(' '))}" data-spell-category="${esc(identity.category || 'spell')}"` : '')
+    + (identity.mirror ? ` data-mirror="${esc(identity.mirror)}"` : '');
+  return `<div class="card-sigil-band" data-card-binding="tags" data-primary-sigil="${esc(identity.action)}"${attributes}>${action}${categoryIcon}${mirror}<span class="card-type-name" data-card-layer="8">${esc(identity.displayLabel || mark.label)}</span></div>`;
 }
 
 export function sigilExplanationHtml(identity) {
   if (!identity) return '';
-  const traditions = (identity.traditions || []).map(id => ['tradition', id]);
-  const identities = [...traditions, ...(!traditions.length || identity.action !== 'spell' ? [['action', identity.action]] : []),
+  const category = identity.traditions ? categoryMark(identity) : null;
+  const identities = [['action', identity.action], ...(category ? [['tradition', category]] : []),
     ['mirror', identity.mirror], ['school', identity.school]];
   return `<div class="inspection-sigils">${identities.map(([kind, rawId]) => {
     const catalog = kind === 'school' ? SCHOOL_SIGILS : kind === 'tradition' ? TRADITION_SIGILS : ACTION_SIGILS;
@@ -37,7 +45,8 @@ export function sigilExplanationHtml(identity) {
 // Shorten repeated prose, keeping numeric markup, target scope, turn limits,
 // charge expiry/stacking and HP-payment floors intact.
 export function compactCardRules(html) {
-  return html.replace(/\s+/g, ' ').replace(/(^|\. |: )Deal /g, '$1')
+  // "Deal" drops only before its amount ("Deal 6 damage" reads "6 damage"); "Deal damage equal to ..." keeps its verb.
+  return html.replace(/\s+/g, ' ').replace(/(^|\. |: )Deal (?=(?:<[^>]+>)*\d)/g, '$1')
     .replace(/, plus (\d+) for each ((?:<span class="st-bleed">)?[A-Za-z][A-Za-z ]*?(?:<\/span>)?) on the target(?=[.;]|$)/g, ', +$1 per target $2')
     .replace(/At the start of your turn, gain (\d+) ([A-Za-z][A-Za-z ]*?) and take (\d+) damage(?=[.;]|$)/g, 'Your turn start: +$1 $2; take $3 damage')
     .replace(/to the selected enemy/g, 'to target')

@@ -16,6 +16,9 @@ import { withKitDom } from './helpers/dom.mjs';
 // effect in five-word clauses carries the card's authored `faceTemplate` instead of the Inspect cue.
 const CUE = 'Inspect full effect';
 const wordsIn = text => text.split(/\s+/).filter(word => /[\p{L}\p{N}]/u.test(word)).length;
+// Owner, 2026-11-17: the face box holds four lines of 20-25 characters, and Reframe reads "Change 1 card's stance to
+// Smash this combat." A face line is five words or fewer, or one summary line that fills at most two box lines.
+const FACE_LINE_SHORT = line => wordsIn(line) <= 5 || line.length <= 2 * 25;
 
 // Every face line the real card renderer prints, as plain text.
 function facesOf(dom, registries, ref, rules) {
@@ -44,7 +47,7 @@ test('no card face in the registry shows the Inspect placeholder', async () => {
       const lines = facesOf(dom, registries, { cardId: card.id, ...extra }, rules), label = `${name}: ${card.id} ${JSON.stringify(extra)}`;
       assert.ok(lines.length >= 1 && lines.length <= 3, `${label}: ${lines.join(' | ')}`);
       assert.ok(lines.every(line => !line.includes(CUE) && !/[{}]/.test(line)), `${label}: ${lines.join(' | ')}`);
-      if (!(card.id === 'backstep' && extra.abilityRank === 5) && card.id !== 'core.hitAndRun') assert.ok(lines.every(line => wordsIn(line) <= 5), `${label}: more than five words in ${lines.join(' | ')}`); // rogue Backstep gained Exhaust (owner 2026-11-19); its rank-5 extras make one line long
+      if (!(card.id === 'backstep' && extra.abilityRank === 5) && card.id !== 'core.hitAndRun') assert.ok(lines.every(FACE_LINE_SHORT), `${label}: a face line longer than five words or two box lines in ${lines.join(' | ')}`); // rogue Backstep gained Exhaust (owner 2026-11-19); its rank-5 extras make one line long
       checked++;
     }
     assert.ok(checked >= registries.cards.all().length * 4);
@@ -65,6 +68,16 @@ test('Nightstep keeps its effects and both per-family caps on the compact face',
     assert.match(detail, /INT this turn/);
   });
 });
+
+test('a face says the effect after a selection prompt, never the prompt alone', () => withKitDom(dom => {
+  // Owner, 2026-11-17: Reframe's face said only "Choose a hand card." while its rules change that card's stance.
+  const reg = createRegistries(contentBundle), rules = { combatExpansionVersion: 2 };
+  assert.deepEqual(facesOf(dom, reg, { cardId: 'base.modify-card-stance' }, rules), ["Change 1 card's stance to Smash this combat."]);
+  assert.deepEqual(facesOf(dom, reg, { cardId: 'base.modify-card-range' }, rules), ["Change 1 card's range to Reach this combat."]);
+  // A plain second sentence too long for a clause no longer vanishes behind a short first one.
+  assert.deepEqual(facesOf(dom, reg, { cardId: 'base.hide-cards' }, rules), ['Gain 2 Conceal.', 'Hide that many cards.', 'For that many turns.']);
+  assert.deepEqual(facesOf(dom, reg, { cardId: 'mindSpike' }, rules), ['Deal 5 damage.', 'Target becomes Confused.']);
+}));
 
 test('Foresight draws and Exile Recovery says what it returns', () => withKitDom(dom => {
   const reg = createRegistries(contentBundle), rules = { combatExpansionVersion: 2 };

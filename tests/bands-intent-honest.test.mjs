@@ -6,6 +6,7 @@ import { dispatch } from '../src/engine/combat.js';
 import { bandsFight, pairOf, registries } from './helpers/bands-fight.mjs';
 import { enemyTurnSp, enemyMoveQuote, extendEnemyQueue } from '../src/engine/combatRoundsAdapter.js';
 import { GrantRetreatCard } from '../src/engine/bandRows.js';
+import { EnemyDefinitionOf } from '../src/model/enemyMoveSet.js';
 
 const moves = combat => combat.eventLog.filter(e => e.type === 'enemyMoveStarted' && e.sourceId === 'e1').map(e => e.moveId);
 const fight = (seed, hand = []) => bandsFight({ enemyIds: ['courtSurgeon', 'wanderingSoldier'], seed, hand });
@@ -121,7 +122,8 @@ test('a plan never hides an attack the pool cannot pay: every stored approachFor
   for (const id of ids) for (const seed of [1, 2, 3]) {
     let combat;
     try { combat = bandsFight({ enemyIds: [id, 'wanderingSoldier'], seed, encounter: { id: 'x', rows: ['back', 'front'] } }); } catch { continue; }
-    const [enemy] = combat.enemies, def = registries.enemies.get(id);
+    // The instance's move set: a stepped enemy's level-card moves (owner, 2026-11-20) can be the attack behind the step.
+    const [enemy] = combat.enemies, def = EnemyDefinitionOf(registries, enemy);
     const pool = enemyTurnSp(enemy, def, combat);
     for (const entry of [{ moveId: enemy.intent?.moveId, approachFor: enemy.intent?.approachFor }, ...(enemy.plannedMoves || [])]) {
       if (!entry.approachFor) continue;

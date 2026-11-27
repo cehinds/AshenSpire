@@ -127,17 +127,21 @@ test('the Core rest model lists Upgrade Card with a preview per upgradable deck 
 });
 
 test('a procedural step the template does not mention (an added status) still shows in the preview', () => {
-  let found = 0;
-  for (let seed = 1; seed <= 40 && !found; seed += 1) {
-    const run = createRunState({ registries, classId: 'reaver', seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
-    strike(run).rank = 1;
-    const model = cardUpgradeModel(registries, run, strike(run).instanceId);
-    if (model.selected.plan.step.k !== 'addStatus') continue;
-    found = seed;
-    const html = upgradePreviewHtml(registries, { cardId: 'core.strike' }, model.faces);
-    assert.match(html, new RegExp(`(Weak|Bleed)[^<]*<span class="val up">${model.selected.plan.step.stacks}`), 'the new status is named and marked as raised');
-  }
-  assert.ok(found, 'some seed rolls an added status');
+  // Restrict an authored fixture to the status family: this tests the renderer,
+  // independently of which family the current balance happens to roll first.
+  const base = { ...registries.cards.get('core.strike'), upgradeMenu: ['addStatus'] };
+  delete base.upgrade;
+  const previewRegistries = { ...registries, cards: {
+    ...registries.cards,
+    get: id => id === base.id ? base : registries.cards.get(id),
+    all: () => registries.cards.all().map(card => card.id === base.id ? base : card),
+  } };
+  const run = createRunState({ registries: previewRegistries, classId: 'reaver', seed: 1, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  strike(run).rank = 1;
+  const model = cardUpgradeModel(previewRegistries, run, strike(run).instanceId);
+  assert.equal(model.selected.plan.step.k, 'addStatus');
+  const html = upgradePreviewHtml(previewRegistries, { cardId: base.id }, model.faces);
+  assert.match(html, new RegExp(`(Weak|Bleed)[^<]*<span class="val up">${model.selected.plan.step.stacks}`), 'the new status is named and marked as raised');
 });
 
 test('the picker omits capped cards and draws available cards with their upgrade cost', async () => {

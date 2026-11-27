@@ -1717,6 +1717,8 @@ test('Reading Desk rows share the card face tradition labels and icons without c
     ['core.purifyingLight', 'Divine', ['divine']],
     ['core.cleansingEmbers', 'Spell', ['arcane', 'divine']],
   ];
+  // The face footer shows only an Arcane or Divine category mark; a Shared Spell wears the Spell mark alone (owner 2026-11-20).
+  const faceMarks = traditions => traditions.length === 1 ? 1 : 0;
   const profile = resolveGameProfile('core');
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   for (const marker of [1, 0, null]) withDom(() => {
@@ -1738,7 +1740,7 @@ test('Reading Desk rows share the card face tradition labels and icons without c
       const face = editor.root.querySelector('.deck-editor-inspector .playing-poker-card');
       assert.ok(face, `${id}: selecting a row renders its face`);
       assert.equal(face.querySelector('.card-sigil-band').dataset.traditions, marker === 1 ? traditions.join(' ') : undefined);
-      assert.equal(face.querySelectorAll('.combat-sigil-tradition').length, marker === 1 ? traditions.length : 0);
+      assert.equal(face.querySelectorAll('.combat-sigil-tradition').length, marker === 1 ? faceMarks(traditions) : 0);
     }
     editor.close();
   });

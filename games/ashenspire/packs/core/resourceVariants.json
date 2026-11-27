@@ -908,8 +908,8 @@
       "manaCost": 0
     },
     "sp": {
-      "cost": 1,
-      "staminaCost": 1,
+      "cost": 0,
+      "staminaCost": 0,
       "manaCost": 0
     },
     "mp": {
@@ -918,8 +918,8 @@
       "manaCost": 1
     },
     "sp,mp": {
-      "cost": 1,
-      "staminaCost": 1,
+      "cost": 0,
+      "staminaCost": 0,
       "manaCost": 1
     }
   },
@@ -952,19 +952,19 @@
       "manaCost": 0
     },
     "sp": {
-      "cost": 1,
-      "staminaCost": 1,
+      "cost": 2,
+      "staminaCost": 2,
       "manaCost": 0
     },
     "mp": {
       "cost": 0,
       "staminaCost": 0,
-      "manaCost": 3
+      "manaCost": 2
     },
     "sp,mp": {
-      "cost": 1,
-      "staminaCost": 1,
-      "manaCost": 3
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 2
     }
   },
   "core.sanctifiedWard": {
@@ -1062,19 +1062,19 @@
       "manaCost": 0
     },
     "sp": {
-      "cost": 1,
-      "staminaCost": 1,
+      "cost": 2,
+      "staminaCost": 2,
       "manaCost": 0
     },
     "mp": {
       "cost": 0,
       "staminaCost": 0,
-      "manaCost": 1
+      "manaCost": 0
     },
     "sp,mp": {
-      "cost": 1,
-      "staminaCost": 1,
-      "manaCost": 1
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 0
     }
   },
   "core.emberWave": {
@@ -1223,12 +1223,12 @@
     "mp": {
       "cost": 0,
       "staminaCost": 0,
-      "manaCost": 1
+      "manaCost": 0
     },
     "sp,mp": {
       "cost": 1,
       "staminaCost": 1,
-      "manaCost": 1
+      "manaCost": 0
     }
   },
   "core.censure": {
@@ -1883,12 +1883,12 @@
     "mp": {
       "cost": 0,
       "staminaCost": 0,
-      "manaCost": 1
+      "manaCost": 2
     },
     "sp,mp": {
       "cost": 0,
       "staminaCost": 0,
-      "manaCost": 1
+      "manaCost": 2
     }
   },
   "core.radiantVerdict": {
@@ -2197,6 +2197,72 @@
       "cost": 1,
       "staminaCost": 1,
       "manaCost": 0
+    }
+  },
+  "custom.card_mwx2mb6p": {
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "sp,mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 1
+    }
+  },
+  "custom.copy_mwx6hh79": {
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "sp,mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 1
+    }
+  },
+  "custom.copy_mwx6xoww": {
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "sp,mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 1
     }
   }
 }

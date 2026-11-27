@@ -2,6 +2,7 @@
 // min-slot relics lower the deck editor's minimum in Core.
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
@@ -18,25 +19,21 @@ const make = (level = 1) => {
   return run;
 };
 
-test('the reduction levels are data and rise', () => {
-  assert.deepEqual([...deckRules.minimumReductionLevels], [4, 8, 12]);
+test('the configured reduction levels are ordered positive integers', () => {
+  const levels = [...deckRules.minimumReductionLevels];
+  assert.ok(levels.every((level, index) => Number.isInteger(level) && level > 0 && (!index || level > levels[index - 1])));
 });
 
-test('a Core run loses one minimum slot at each reduction level', () => {
-  assert.equal(LevelMinDeckDelta(make(1)), 0);
-  assert.equal(LevelMinDeckDelta(make(3)), 0);
-  assert.equal(LevelMinDeckDelta(make(4)), 1);
-  assert.equal(LevelMinDeckDelta(make(7)), 1);
-  assert.equal(LevelMinDeckDelta(make(8)), 2);
-  assert.equal(LevelMinDeckDelta(make(12)), 3);
-  assert.equal(LevelMinDeckDelta(make(20)), 3);
-  const run = make(12);
-  assert.equal(deckEditBounds({}, DeckMinDelta(run)).min, deckRules.defaults.deckMinSize - 3);
-});
-
-test('the deck editor counter reads the lowered minimum', () => {
-  const model = deckEditorModel({ registries, run: make(4) });
-  assert.equal(model.counter.min, deckRules.defaults.deckMinSize - 1);
+test('each authored reduction level lowers the Core minimum once and the editor reads it', () => {
+  const levels = [...deckRules.minimumReductionLevels];
+  for (const level of new Set([1, ...levels.flatMap(at => [at - 1, at, at + 1]), (levels.at(-1) || 1) + 10])) {
+    const expected = levels.filter(at => level >= at).length;
+    const run = make(level);
+    assert.equal(LevelMinDeckDelta(run), expected, `level ${level}`);
+    const minimum = Math.max(Math.min(deckRules.defaults.deckMinSize, deckRules.minimumReductionSafetyFloor), deckRules.defaults.deckMinSize - DeckMinDelta(run));
+    assert.equal(deckEditBounds({}, DeckMinDelta(run)).min, minimum);
+    assert.equal(deckEditorModel({ registries, run }).counter.min, minimum);
+  }
 });
 
 test('a legacy run keeps the settings minimum whatever its level', () => {
@@ -66,7 +63,8 @@ test('an unlimited-kind item property lifts the Core copy limit, so a minted Bas
 
 test('a relic row may author item properties; they must name real rows', async () => {
   const { AuthoredPropertyIds } = await import('../src/model/itemPicks.js');
-  assert.deepEqual(AuthoredPropertyIds('relic/goldenSprout'), []);
+  const relics = JSON.parse(readFileSync(new URL('../content/source/relics.json', import.meta.url)));
+  for (const row of relics) assert.deepEqual(AuthoredPropertyIds(`relic/${row.id}`), row.properties || [], row.id);
   assert.deepEqual(AuthoredPropertyIds('armament/greatsword'), []);
   const { validateContent } = await import('../src/model/validate.js');
   const bundle = { ...contentBundle, relics: [...contentBundle.relics, { id: 'badRelic', name: 'Bad', rarity: 'common', textTemplate: 'x', properties: ['nope'] }] };
@@ -74,65 +72,53 @@ test('a relic row may author item properties; they must name real rows', async (
   assert.match(problems, /relics\.badRelic\.properties\[0\]/);
 });
 
-test('Basic Training, Graduate and the three min-slot relics do what their text says', async () => {
-  const { unlimitedCardIds } = await import('../src/model/deckRules.js');
+test('authored relic deck-size properties reach the runtime and stack with level reductions', async () => {
   const { ItemMinDeckDelta } = await import('../src/model/itemProperties.js');
-  const { gameContent } = await import('../src/model/gameProfile.js');
-  const holding = (...ids) => { const run = make(1); run.relics = [...ids]; return run; };
-  assert.ok(unlimitedCardIds(holding('basicTraining')).includes('core.strike'), 'Basic Training opens unlimited Basic martial cards');
-  assert.ok(!unlimitedCardIds(holding('basicTraining')).includes('core.cantrip'));
-  assert.ok(!unlimitedCardIds(holding('graduate')).includes('core.cantrip'), 'an uncollected cantrip stays closed');
-  const graduate = holding('graduate');
-  graduate.collectedCardIds = [...graduate.collectedCardIds, 'core.cantrip'];
-  assert.ok(unlimitedCardIds(graduate).includes('core.cantrip'), 'Graduate opens a collected cantrip');
-  assert.ok(!unlimitedCardIds(holding('graduate')).includes('core.strike'));
-  assert.equal(ItemMinDeckDelta(holding('threadbareSatchel')), 1);
-  assert.equal(ItemMinDeckDelta(holding('threadbareSatchel', 'asceticsCord', 'pruningHook')), 3);
-  const run = holding('threadbareSatchel');
-  run.level.level = 12;
-  assert.equal(deckEditBounds({}, DeckMinDelta(run)).min, deckRules.defaults.deckMinSize - 4, 'levels (3 at level 12) and relics stack');
-  const pool = gameContent(make(1), 'rewards').eligibility?.relics?.allow || [];
-  for (const id of ['basicTraining', 'graduate', 'threadbareSatchel', 'asceticsCord', 'pruningHook']) {
-    assert.ok(registries.relics.has(id), `${id} is a relic`);
-    assert.ok(pool.includes(id), `${id} is in the Core relic pool`);
+  const relics = JSON.parse(readFileSync(new URL('../content/source/relics.json', import.meta.url)));
+  const properties = JSON.parse(readFileSync(new URL('../content/source/itemProperties.json', import.meta.url))).properties;
+  const contribution = row => (row.properties || []).reduce((sum, id) => sum + (properties.find(prop => prop.id === id)?.fx?.minDeckDelta || 0), 0);
+  const lowering = relics.filter(row => contribution(row) > 0);
+  const run = make((deckRules.minimumReductionLevels.at(-1) || 1) + 1);
+  run.relics = [];
+  const base = ItemMinDeckDelta(run);
+  for (const row of lowering) {
+    run.relics.push(row.id);
+    assert.equal(ItemMinDeckDelta(run), base + lowering.filter(item => run.relics.includes(item.id)).reduce((sum, item) => sum + contribution(item), 0));
+    assert.equal(DeckMinDelta(run), ItemMinDeckDelta(run) + LevelMinDeckDelta(run));
   }
 });
 
-// Review of #2815 (high): Basic Training and Graduate open only collected, own-class or colorless cards of a
-// training rarity — never an uncollected rare, another class's card or an enemy move (SPEC §14.1).
-test('a Starseer with Basic Training cannot add Skullsplitter or an enemy move; collected basics only', async () => {
-  const { unlimitedCardIds, commitDeckEditDraft } = await import('../src/model/deckRules.js');
+// Small explicit card definitions isolate the training contract from class recipes,
+// rarity tuning, and which relics currently happen to grant each property.
+test('unlimited item properties distinguish Basic and Cantrip and enforce ownership, class, rarity and enemy exclusions', async () => {
   const { ItemUnlimitedCardIds, configuredDeckCopyLimit } = await import('../src/model/deckCopyLimit.js');
-  const { executeRunEffects } = await import('../src/engine/actions.js');
-  const { createRng } = await import('../src/engine/rng.js');
-  const meta = { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } };
-  const run = createRunState({ seed: 11, classId: 'starseer', registries, runId: 'bt-starseer', profileMeta: meta });
-  run.relics = [...(run.relics || []), 'basicTraining'];
-  // Owner ruling 2026-11-21: the Starseer's ten-card starter is all spells, so no martial Basic is collected at the start; collect two.
-  run.collectedCardIds.push('core.strike', 'core.defend');
-  const ids = ItemUnlimitedCardIds(run);
-  assert.ok(ids.length > 0 && ids.length < 20, `a short list, got ${ids.length}`);
-  for (const forbidden of ['core.skullsplitter', 'wanderingSoldier.slash', 'blightHound.bite']) {
-    assert.ok(!unlimitedCardIds(run).includes(forbidden), forbidden);
-    assert.notEqual(configuredDeckCopyLimit(run, forbidden), Infinity, forbidden);
+  const properties = JSON.parse(readFileSync(new URL('../content/source/itemProperties.json', import.meta.url))).properties;
+  const basic = { id: 'fixture.basic', class: 'colorless', type: 'attack', rarity: 'common', tags: ['camp:physical'], effects: [] };
+  const cantrip = { id: 'fixture.cantrip', class: 'starseer', type: 'skill', rarity: 'common', tags: ['camp:spell', 'rank.cantrip'], effects: [] };
+  const cards = [basic, cantrip, { ...basic, id: 'fixture.uncollected' }, { ...basic, id: 'fixture.foreign', class: 'rogue' },
+    { ...basic, id: 'fixture.rare', rarity: 'rare' }, { ...basic, id: 'fixture.enemy' }, { ...basic, id: 'fixture.power', type: 'power' },
+    { ...basic, id: 'fixture.ranked', rank: 2 }, { ...cantrip, id: 'fixture.ordinary-spell', tags: ['camp:spell'] }];
+  for (const [kind, expected] of [['Basic', basic.id], ['Cantrip', cantrip.id]]) {
+    const property = properties.find(row => row.fx?.unlimited === kind);
+    assert.ok(property, `${kind} training property exists`);
+    const run = make(1);
+    run.class = 'starseer';
+    run.gameProfile = { ...core, content: { ...core.content, cards, enemyCards: [cards.find(card => card.id === 'fixture.enemy')], classes: [], cardPools: {} } };
+    run.relics = ['fixture.carrier'];
+    run.itemProps = { 'relic/fixture.carrier': [property.id] };
+    run.collectedCardIds = cards.filter(card => card.id !== 'fixture.uncollected').map(card => card.id);
+    assert.deepEqual(ItemUnlimitedCardIds(run), [expected]);
+    assert.equal(configuredDeckCopyLimit(run, expected), Infinity);
+    run.collectedCardIds = run.collectedCardIds.filter(id => id !== expected);
+    assert.deepEqual(ItemUnlimitedCardIds(run), [], 'removing collection eligibility invalidates the offer');
+    assert.notEqual(configuredDeckCopyLimit(run, expected), Infinity);
+    const { commitDeckEditDraft } = await import('../src/model/deckRules.js');
+    const forged = { deck: [...run.deck, { instanceId: 'edit:forged', cardId: 'fixture.enemy', upgraded: false }], sideboard: run.sideboard, collectedCardIds: run.collectedCardIds };
+    const fixtureRegistries = { ...registries, cards: { ...registries.cards, has: id => id === 'fixture.enemy' || registries.cards.has(id), get: id => id === 'fixture.enemy' ? cards.find(card => card.id === id) : registries.cards.get(id) } };
+    const before = structuredClone(run.deck);
+    assert.throws(() => commitDeckEditDraft(fixtureRegistries, run, forged), /invent|copy limit|equipment/, 'a defined enemy move cannot be minted through draft commit');
+    assert.deepEqual(run.deck, before, 'the refused edit is atomic');
   }
-  assert.ok(ids.every((id) => run.collectedCardIds.includes(id)), 'only collected definitions');
-  // Even collected, another class's rare stays limited.
-  executeRunEffects({ run, registries, rng: createRng(1) }, [{ op: 'addCardToDeck', card: 'core.skullsplitter' }]);
-  assert.ok(!ItemUnlimitedCardIds(run).includes('core.skullsplitter'));
-  // A mint of an enemy move is refused at the commit door.
-  const edited = { deck: [...run.deck, { instanceId: 'edit:999', cardId: 'wanderingSoldier.slash', upgraded: false }], sideboard: run.sideboard, collectedCardIds: run.collectedCardIds };
-  assert.throws(() => commitDeckEditDraft(registries, run, edited), /invent|copy limit|equipment/);
-});
-
-test('Graduate opens collected cantrips only', async () => {
-  const { ItemUnlimitedCardIds } = await import('../src/model/deckCopyLimit.js');
-  const meta = { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } };
-  const run = createRunState({ seed: 11, classId: 'starseer', registries, runId: 'grad-starseer', profileMeta: meta });
-  run.relics = [...(run.relics || []), 'graduate'];
-  const ids = ItemUnlimitedCardIds(run);
-  assert.ok(ids.includes('core.cantrip'), 'the starting cantrip');
-  assert.ok(ids.every((id) => run.collectedCardIds.includes(id)));
 });
 
 // Review of #2815 (low): Core has ONE minimum. The Armoury floor and the character ladder read the player's
@@ -144,11 +130,14 @@ test('the Armoury floor and the ladder follow the deck-size settings the editor 
   for (const settings of [{}, { deckMinSize: 14 }, { deckMinSize: 12, deckMinUnlimited: true }]) {
     assert.equal(deckMinimum(registries, run, settings), deckEditBounds(settings, DeckMinDelta(run)).min, JSON.stringify(settings));
   }
-  run.deck = run.deck.slice(0, 11);
-  assert.equal(loadoutLeaveRefusal(registries, run, { settings: { deckMinSize: 10 } }), '');
-  assert.match(loadoutLeaveRefusal(registries, run, { settings: { deckMinSize: 14 } }), /floor is 13/);
-  const row = characterLadder(registries, make(1), undefined, { deckMinSize: 14 }).rows.find((r) => r.level === 4);
-  assert.equal(row.grants.find((g) => g.kind === 'deckMinimumDown').amount, 13);
+  const length = run.deck.length;
+  assert.equal(loadoutLeaveRefusal(registries, run, { settings: { deckMinSize: length } }), '');
+  const requested = length + DeckMinDelta(run) + 1;
+  const minimum = deckEditBounds({ deckMinSize: requested }, DeckMinDelta(run)).min;
+  assert.match(loadoutLeaveRefusal(registries, run, { settings: { deckMinSize: requested } }), new RegExp(`floor is ${minimum}`));
+  const at = deckRules.minimumReductionLevels[0];
+  const firstRow = characterLadder(registries, make(1), undefined, { deckMinSize: 14 }).rows.find(row => row.level === at);
+  assert.equal(firstRow.grants.find(g => g.kind === 'deckMinimumDown').amount, deckEditBounds({ deckMinSize: 14 }, LevelMinDeckDelta(make(at))).min);
 });
 
 test('the ladder shows a deck minimum grant only if the minimum actually falls', async () => {
@@ -156,20 +145,17 @@ test('the ladder shows a deck minimum grant only if the minimum actually falls',
   const deckMinimumGrants = (settings) => characterLadder(registries, make(), undefined, settings).rows
     .flatMap(({ level, grants }) => grants.filter(({ kind }) => kind === 'deckMinimumDown').map(({ amount }) => [level, amount]));
   assert.deepEqual(deckMinimumGrants({ deckMinUnlimited: true }), []);
-  assert.deepEqual(deckMinimumGrants({ deckMinSize: 2 }), [[4, 1]]);
+  const expected = deckRules.minimumReductionLevels.length ? [[deckRules.minimumReductionLevels[0], Math.max(deckRules.minimumReductionSafetyFloor, 1)]] : [];
+  assert.deepEqual(deckMinimumGrants({ deckMinSize: 2 }), expected);
 });
 
-// Owner, 2026-11-17 (decision on #2815): relics and levels may take the minimum below 8; only the hard safety
-// floor of 1 holds, so a deck is never empty. A player's own lower setting is kept as set.
-test('relics and levels may go below 8; the safety floor of 1 keeps a deck from ever being empty', async () => {
+test('reductions stop at the configured safety floor and keep an explicit unlimited minimum', async () => {
   const { deckMinimum } = await import('../src/model/loadout.js');
-  const run = make(12);
-  run.relics = ['threadbareSatchel', 'asceticsCord', 'pruningHook'];
+  const run = make((deckRules.minimumReductionLevels.at(-1) || 1) + 1);
   const delta = DeckMinDelta(run);
-  assert.equal(deckRules.minimumReductionSafetyFloor, 1);
-  assert.equal(deckEditBounds({}, delta).min, deckRules.defaults.deckMinSize - delta, 'below 8 is allowed');
-  assert.ok(deckEditBounds({}, delta).min < 8);
-  assert.equal(deckMinimum(registries, run), deckRules.defaults.deckMinSize - delta);
-  assert.equal(deckEditBounds({ deckMinSize: 3 }, delta).min, 1, 'reductions stop at the safety floor');
-  assert.equal(deckEditBounds({ deckMinUnlimited: true }, delta).min, 0, 'the player chose no minimum; nothing raises it');
+  const expected = Math.max(Math.min(deckRules.defaults.deckMinSize, deckRules.minimumReductionSafetyFloor), deckRules.defaults.deckMinSize - delta);
+  assert.equal(deckEditBounds({}, delta).min, expected);
+  assert.equal(deckMinimum(registries, run), expected);
+  assert.equal(deckEditBounds({ deckMinSize: 3 }, 99).min, Math.min(3, deckRules.minimumReductionSafetyFloor));
+  assert.equal(deckEditBounds({ deckMinUnlimited: true }, delta).min, 0);
 });

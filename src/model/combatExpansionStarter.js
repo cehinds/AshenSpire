@@ -1,11 +1,11 @@
-import { resolveCard } from './registries.js';
+import * as Registries from './registries.js';
 import { combatProfileFor } from './combatCardProfile.js';
 import { applyCombatExpansionMartial } from '../content/combatExpansionMartial.js';
-import { orderStartingDeck, stampDeck } from './loadout.js';
+import * as Loadout from './loadout.js';
 
 const REQUIRED = { attack: 'strike', smash: 'bashingBlow', counter: 'guardCounter' };
 const isFiller = card => !card.grantSource && ['attack', 'guard'].includes(card.equipmentRole);
-const profileOf = (registries, instance) => combatProfileFor(applyCombatExpansionMartial(resolveCard(registries, instance)));
+const profileOf = (registries, instance) => combatProfileFor(applyCombatExpansionMartial(Registries.resolveCard(registries, instance)));
 
 /** Creation only, after equipment composition. Never called by save migration. */
 export function ensureExpandedStarterCoverage(registries, run) {
@@ -38,7 +38,7 @@ export function ensureExpandedStarterCoverage(registries, run) {
     run.deck.splice(fallback, 1);
   }
   run.equipmentAttackSlotCount = run.deck.filter(card => card.equipmentRole === 'attack').length;
-  stampDeck(registries, run);
-  orderStartingDeck(registries, run);
+  Loadout.stampDeck(registries, run);
+  Loadout.orderStartingDeck(registries, run);
   return added;
 }

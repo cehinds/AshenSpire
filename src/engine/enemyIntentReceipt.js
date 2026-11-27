@@ -8,6 +8,7 @@ import { evaluate } from '../model/formulas.js';
 import { enemyMoveDamage } from '../model/state.js';
 import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 import * as IntentProjection from './enemyIntentProjection.js';
+import { EnemyMoveOf } from '../model/enemyMoveSet.js';
 
 // Live playback can use the Poise prediction calculated at the action boundary.
 // Only the existing receipt fields belong in event logs and saved reactions.
@@ -19,7 +20,7 @@ export function captureEnemyIntent(ctx, enemy, action = null) {
   if (ctx.players instanceof Map) return null;
   const moveId = action?.meta?.moveId || enemy.intent?.moveId;
   if (!moveId || !enemy.actorIntentRevealed) return null;
-  const authored = ctx.registries.enemies.get(enemy.enemyId)?.moves?.[moveId];
+  const authored = EnemyMoveOf(ctx.registries, enemy, moveId);
   if (!authored) return null;
   const move = Tactics.expandedEnemyMove(enemy, authored, moveId, ctx);
   const carrier = action?.card || Tactics.enemyMoveCarrier(enemy, authored, moveId, ctx);

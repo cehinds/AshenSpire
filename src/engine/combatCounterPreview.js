@@ -20,6 +20,7 @@ import {
 } from './counterRule.js';
 import { counterStackCount } from './guardStacks.js';
 import { FixCoreCounterStacks } from '../model/fixCoreMechanics.js';
+import { EnemyMoveOf } from '../model/enemyMoveSet.js';
 
 /** Forecasts a Counter from a revealed attack, using its committed move on detached combatants. */
 export function CounterPreviewAgainst(ctx, enemy, intent, card = null, projected = null, baseHp = 0)
@@ -55,7 +56,7 @@ export function CounterPreviewAgainst(ctx, enemy, intent, card = null, projected
     }
     const move = expandedEnemyMove(
         enemy,
-        ctx.registries.enemies.get(enemy.enemyId).moves[intent.moveId] || {},
+        EnemyMoveOf(ctx.registries, enemy, intent.moveId) || {},
         intent.moveId,
         ctx,
     );

@@ -20,6 +20,9 @@ import {
   setActiveDeckList,
   assignDeckToClass,
 } from './customDecks.js';
+import { deckCatalogOptions, resolveStudioDeck } from './deckCatalog.js';
+import { initFocusedRebalanceUi } from './focusedRebalanceUi.js';
+import { removeCardsAndReferences } from './cardSelection.js';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const BUILTIN_CLASSES = Object.freeze(['reaver', 'starseer', 'rogue', 'herald', 'colorless']);
@@ -53,6 +56,16 @@ export function initStudioToolsModals(ctx) {
 
   let rebalTarget = 'cards'; // 'cards' | 'items'
   let genTarget = 'cards';   // 'cards' | 'items'
+  let balanceSelection = new Set();
+  let balanceItemSelection = new Set();
+  let focusedRebalanceUi = null;
+  const READ_ONLY_DECK_MESSAGE = 'Class lists are read only. Copy the list to a custom deck before adding members or changing its assignment.';
+  const writableDeck = id => {
+    const view = resolveStudioDeck(state, id);
+    if (!view) { toast('This deck no longer exists. Choose a current custom deck.'); return null; }
+    if (view.readOnly) { toast(READ_ONLY_DECK_MESSAGE); return null; }
+    return state.customDecks.find(deck => deck.id === id) || null;
+  };
 
   const allClassOptions = () => {
     const out = BUILTIN_CLASSES.map((id) => ({ id, name: id[0].toUpperCase() + id.slice(1), custom: false }));
@@ -91,13 +104,33 @@ export function initStudioToolsModals(ctx) {
       sel.innerHTML = '';
       sel.append(new Option(noneLabel, id === 'filter-deck' ? 'all' : ''));
       for (const d of state.customDecks || []) {
+        if (resolveStudioDeck(state, d.id)?.readOnly) continue;
         const tag = d.isActiveDeckList ? ' ★ Active' : (d.assignedClassId ? ` · ${d.assignedClassId}` : '');
         sel.append(new Option(`${d.name} (${d.cardIds.length}c/${d.itemKeys.length}i)${tag}`, d.id));
       }
       if ([...sel.options].some((o) => o.value === prev)) sel.value = prev;
     };
     fillDecks('gen-deck', '(None — studio pool only)');
-    fillDecks('filter-deck', 'All Decks');
+    for (const id of ['filter-deck', 'filter-item-deck']) {
+      const select = document.getElementById(id);
+      if (!select) continue;
+      const previous = select.value;
+      select.replaceChildren();
+      const groups = new Map();
+      for (const row of deckCatalogOptions(state)) {
+        const option = new Option(row.value === 'all' ? (id === 'filter-item-deck' ? 'All items' : 'All cards') : row.label, row.value);
+        if (!row.group) select.append(option);
+        else {
+          if (!groups.has(row.group)) { const group = document.createElement('optgroup'); group.label = row.group; groups.set(row.group, group); select.append(group); }
+          groups.get(row.group).append(option);
+        }
+      }
+      const actions = document.createElement('optgroup'); actions.label = 'Actions';
+      actions.append(new Option('Manage decks…', '__manage__')); select.append(actions);
+      select.value = [...select.options].some(option => option.value === previous) ? previous : 'all';
+      if (select.value === '__manage__') select.value = 'all';
+      select.dataset.previousDeckValue = select.value;
+    }
   }
 
   // -------------------------------------------------------------------------
@@ -218,6 +251,9 @@ export function initStudioToolsModals(ctx) {
     const prev = sel.value;
     sel.innerHTML = '';
     if (rebalTarget === 'cards') {
+      const current = state.cards.find(card => card.id === state.selectedCardId);
+      if (current) sel.append(new Option(`Current card: ${current.name}`, 'current'));
+      if (balanceSelection.size) sel.append(new Option(`Selected cards (${balanceSelection.size})`, 'selected'));
       sel.append(new Option(`All Cards (${state.cards.length})`, 'all'));
       sel.append(new Option(`Current Filtered View (${getFilteredCards().length})`, 'filtered'));
       const activeDeck = (state.customDecks || []).find((d) => d.isActiveDeckList);
@@ -231,7 +267,10 @@ export function initStudioToolsModals(ctx) {
         sel.append(new Option(`Custom Deck: ${d.name} (${d.cardIds.length})`, `deck:${d.id}`));
       }
     } else {
+      const current = state.items.find(item => item.key === state.selectedItemKey);
+      if (current) sel.append(new Option(`Current item: ${current.name}`, 'current'));
       sel.append(new Option(`All Items (${state.items.length})`, 'all'));
+      if (balanceItemSelection.size) sel.append(new Option(`Selected items (${balanceItemSelection.size})`, 'selected'));
       sel.append(new Option(`Current Filtered View (${getFilteredItems().length})`, 'filtered'));
       sel.append(new Option(`Weapons (${state.items.filter((i) => i.kind === 'weapon').length})`, 'kind:weapon'));
       sel.append(new Option(`Armours (${state.items.filter((i) => i.kind === 'armour').length})`, 'kind:armour'));
@@ -246,6 +285,8 @@ export function initStudioToolsModals(ctx) {
   function scopedEntriesForRebalance() {
     const scope = document.getElementById('rebal-scope')?.value || 'all';
     if (rebalTarget === 'cards') {
+      if (scope === 'current') return state.cards.filter(card => card.id === state.selectedCardId);
+      if (scope === 'selected') return state.cards.filter(card => balanceSelection.has(card.id));
       if (scope === 'filtered') return getFilteredCards();
       if (scope.startsWith('class:')) {
         const cls = scope.slice(6);
@@ -258,6 +299,8 @@ export function initStudioToolsModals(ctx) {
       }
       return [...state.cards];
     }
+    if (scope === 'current') return state.items.filter(item => item.key === state.selectedItemKey);
+    if (scope === 'selected') return state.items.filter(item => balanceItemSelection.has(item.key));
     if (scope === 'filtered') return getFilteredItems();
     if (scope.startsWith('kind:')) {
       const kind = scope.slice(5);
@@ -314,8 +357,18 @@ export function initStudioToolsModals(ctx) {
   }
 
   function updateRebalancePreview() {
+    const selectedScope = ['selected', 'current'].includes(document.getElementById('rebal-scope').value);
+    document.getElementById('rebal-count').disabled = selectedScope;
+    document.getElementById('rebal-gen-shortage').disabled = selectedScope;
+    document.getElementById('rebal-trim-surplus').disabled = selectedScope;
+    if (selectedScope) {
+      document.getElementById('rebal-count').value = String(scopedEntriesForRebalance().length);
+      document.getElementById('rebal-gen-shortage').checked = false;
+      document.getElementById('rebal-trim-surplus').checked = false;
+    }
     const cfg = readRebalanceForm();
     const scoped = scopedEntriesForRebalance();
+    if (selectedScope) Object.assign(cfg, { targetCount: scoped.length, generateShortage: false, trimSurplus: false });
     const unit = cfg.mode === 'flat' ? '(#)' : '(%)';
     document.getElementById('rebal-rank-unit').textContent = unit;
     document.getElementById('rebal-rarity-unit').textContent = unit;
@@ -345,29 +398,66 @@ export function initStudioToolsModals(ctx) {
 
   function setRebalanceTarget(target) {
     rebalTarget = target === 'items' ? 'items' : 'cards';
-    document.getElementById('rebalance-modal-title').textContent = rebalTarget === 'cards' ? 'Auto-Balance Cards' : 'Auto-Balance Items';
+    document.getElementById('rebalance-modal-title').textContent = rebalTarget === 'cards' ? 'Rebalance power: Cards' : 'Rebalance power: Items';
     document.getElementById('rebal-target-cards').classList.toggle('is-active', rebalTarget === 'cards');
     document.getElementById('rebal-target-items').classList.toggle('is-active', rebalTarget === 'items');
     document.getElementById('rebal-rar-boss-wrap').classList.toggle('hidden', rebalTarget !== 'items');
     populateRebalanceScopes();
     loadRebalanceDefaults();
+    focusedRebalanceUi?.reset();
   }
 
   function openRebalanceModal(target = 'cards') {
+    balanceSelection = new Set();
+    balanceItemSelection = new Set();
     setRebalanceTarget(target);
-    document.getElementById('rebalance-modal').showModal();
+    document.getElementById('rebal-scope').value = 'all';
+    updateRebalancePreview(); focusedRebalanceUi.open();
   }
 
-  function applyRebalance() {
+  function openBalanceSelection(ids) {
+    balanceItemSelection = new Set();
+    const present = new Set(state.cards.map(card => card.id));
+    balanceSelection = new Set(ids.filter(id => present.has(id)));
+    if (!balanceSelection.size) { toast('Select cards to rebalance power first.'); return; }
+    setRebalanceTarget('cards');
+    document.getElementById('rebal-scope').value = 'selected';
+    document.getElementById('rebal-count').value = String(balanceSelection.size);
+    updateRebalancePreview();
+    focusedRebalanceUi.open();
+  }
+
+  function openBalanceItems(keys) {
+    balanceSelection = new Set();
+    const present = new Set(state.items.map(item => item.key));
+    balanceItemSelection = new Set(keys.filter(key => present.has(key)));
+    if (!balanceItemSelection.size) { toast('Select an item to rebalance power first.'); return; }
+    setRebalanceTarget('items');
+    document.getElementById('rebal-scope').value = 'selected';
+    document.getElementById('rebal-count').value = String(balanceItemSelection.size);
+    updateRebalancePreview();
+    focusedRebalanceUi.open();
+  }
+
+  function applyPoolRebalance() {
+    // Generation/trimming is an explicit Advanced pool operation; selected scopes always use staged editing.
+    if (!document.getElementById('rebal-pool-mode')?.checked || ['selected', 'current'].includes(document.getElementById('rebal-scope').value)) return;
     const cfg = readRebalanceForm();
     const scope = document.getElementById('rebal-scope').value || 'all';
     const scoped = scopedEntriesForRebalance();
+    if (scope === 'selected') Object.assign(cfg, { targetCount: scoped.length, generateShortage: false, trimSurplus: false });
     if (!scoped.length && !cfg.generateShortage) {
-      toast('No entries in scope to rebalance.');
+      toast('No entries in scope to rebalance power.');
       return;
     }
+    let deckTarget = scope.startsWith('deck:') ? (state.customDecks || []).find((d) => d.id === scope.slice(5)) : null;
+    if (scope.startsWith('deck:')) {
+      const view = resolveStudioDeck(state, scope.slice(5));
+      if (!view) { toast('This deck no longer exists. Choose a current scope.'); return; }
+      const slots = BuildTargetSlots(ResolveQuotaCounts(cfg.rankQuotas, cfg.targetCount, cfg.mode), ResolveQuotaCounts(cfg.rarityQuotas, cfg.targetCount, cfg.mode));
+      if (view.readOnly && cfg.generateShortage && slots.length > scoped.length) { toast(READ_ONLY_DECK_MESSAGE); return; }
+    }
     pushHistory();
-    const deckTarget = scope.startsWith('deck:') ? (state.customDecks || []).find((d) => d.id === scope.slice(5)) : null;
 
     if (rebalTarget === 'cards') {
       const defaultClass = scope.startsWith('class:') ? scope.slice(6) : (deckTarget?.assignedClassId || scoped[0]?.class || 'colorless');
@@ -377,22 +467,28 @@ export function initStudioToolsModals(ctx) {
         defaultClass,
         faceOf: (def) => deriveFaceFromDef(def),
       });
-      const updatedMap = new Map(res.updated.map((c) => [c.id, normalizeStudioCard(c)]));
-      const removedSet = new Set(res.removedIds);
+      const selectedScope = scope === 'selected' ? new Set(scoped.map(card => card.id)) : null;
+      const updatedMap = new Map(res.updated.filter(card => !selectedScope || selectedScope.has(card.id)).map((c) => {
+        const normalized = normalizeStudioCard(c);
+        ctx.prepareSubclassEdit?.(normalized);
+        return [c.id, normalized];
+      }));
+      // Quota trimming explicitly authorizes these IDs (including Core cards),
+      // and must remove their references from every list, not only this scope.
+      Object.assign(state, removeCardsAndReferences(state, res.removedIds).nextState);
+      deckTarget = scope.startsWith('deck:') ? (state.customDecks || []).find((d) => d.id === scope.slice(5)) : null;
       state.cards = state.cards
-        .filter((c) => !removedSet.has(c.id))
         .map((c) => updatedMap.get(c.id) || c);
       for (const gen of res.created) {
         const norm = normalizeStudioCard(gen);
         state.cards.unshift(norm);
         if (deckTarget && !deckTarget.cardIds.includes(norm.id)) deckTarget.cardIds.push(norm.id);
       }
-      if (deckTarget && removedSet.size) deckTarget.cardIds = deckTarget.cardIds.filter((id) => !removedSet.has(id));
       studioCardOverrides.clear();
       syncAllViews();
       saveDraft({ autoName: false });
       document.getElementById('rebalance-modal').close();
-      toast(`Rebalanced ${res.report.tunedCount} cards${res.report.createdCount ? ` (+${res.report.createdCount} generated)` : ''}${res.report.removedCount ? ` (-${res.report.removedCount} trimmed)` : ''}`);
+      toast(`Rebalanced power for ${res.report.tunedCount} cards${res.report.createdCount ? ` (+${res.report.createdCount} generated)` : ''}${res.report.removedCount ? ` (-${res.report.removedCount} trimmed)` : ''}`);
     } else {
       const defaultKind = scope.startsWith('kind:') ? scope.slice(5) : 'weapon';
       const res = AutoBalanceItems(scoped, {
@@ -414,7 +510,7 @@ export function initStudioToolsModals(ctx) {
       syncAllViews();
       saveDraft({ autoName: false });
       document.getElementById('rebalance-modal').close();
-      toast(`Rebalanced ${res.report.tunedCount} items${res.report.createdCount ? ` (+${res.report.createdCount} generated)` : ''}${res.report.removedCount ? ` (-${res.report.removedCount} trimmed)` : ''}`);
+      toast(`Rebalanced power for ${res.report.tunedCount} items${res.report.createdCount ? ` (+${res.report.createdCount} generated)` : ''}${res.report.removedCount ? ` (-${res.report.removedCount} trimmed)` : ''}`);
     }
   }
 
@@ -441,7 +537,8 @@ export function initStudioToolsModals(ctx) {
     const count = Math.max(1, Math.min(100, Math.round(Number(document.getElementById('gen-count').value) || 5)));
     const seed = document.getElementById('gen-seed').value.trim() || String(Date.now().toString(36));
     const deckId = document.getElementById('gen-deck').value;
-    const deck = deckId ? (state.customDecks || []).find((d) => d.id === deckId) : null;
+    const deck = deckId ? writableDeck(deckId) : null;
+    if (deckId && !deck) return;
     const rankVal = document.getElementById('gen-rank').value;
     const rank = rankVal === 'auto' ? 'auto' : Number(rankVal);
     const aimMaxCp = document.getElementById('gen-aim-max').checked;
@@ -553,6 +650,7 @@ export function initStudioToolsModals(ctx) {
       } else {
         const classes = allClassOptions();
         for (const deck of state.customDecks) {
+          const readOnly = !!resolveStudioDeck(state, deck.id)?.readOnly;
           const row = document.createElement('div');
           row.className = 'deck-row-card' + (deck.isActiveDeckList ? ' is-active' : '');
           const clsOptions = `<option value="">Unassigned</option>` + classes.map((c) => `<option value="${esc(c.id)}"${deck.assignedClassId === c.id ? ' selected' : ''}>${esc(c.name)}</option>`).join('');
@@ -562,12 +660,13 @@ export function initStudioToolsModals(ctx) {
               <span class="studio-muted">${deck.cardIds.length} cards · ${deck.itemKeys.length} items</span>
             </div>
             <div class="deck-row-actions">
-              <select data-assign-deck="${esc(deck.id)}" aria-label="Assign deck to class">${clsOptions}</select>
+              <select data-assign-deck="${esc(deck.id)}" aria-label="Assign deck to class"${readOnly ? ' disabled' : ''}>${clsOptions}</select>
               <button type="button" class="s-btn s-btn-sm" data-active-deck="${esc(deck.id)}">${deck.isActiveDeckList ? 'Clear Active' : 'Set Active List'}</button>
-              <button type="button" class="s-btn s-btn-sm" data-add-selected="${esc(deck.id)}" title="Add the currently selected card &amp; item to this deck">+ Add Selected</button>
+              <button type="button" class="s-btn s-btn-sm" data-add-selected="${esc(deck.id)}" title="${readOnly ? esc(READ_ONLY_DECK_MESSAGE) : 'Add the currently selected card &amp; item to this deck'}"${readOnly ? ' disabled' : ''}>+ Add Selected</button>
               <button type="button" class="s-btn s-btn-sm" data-export-deck="${esc(deck.id)}">Export JSON</button>
-              <button type="button" class="s-btn s-btn-sm" data-del-deck="${esc(deck.id)}">Delete</button>
+              <button type="button" class="s-btn s-btn-sm" data-del-deck="${esc(deck.id)}"${readOnly ? ' disabled' : ''}>Delete</button>
             </div>
+            ${readOnly ? `<p class="studio-muted">${esc(READ_ONLY_DECK_MESSAGE)}</p>` : ''}
           `;
           deckList.appendChild(row);
         }
@@ -583,12 +682,14 @@ export function initStudioToolsModals(ctx) {
   // -------------------------------------------------------------------------
   // Wire Events
   // -------------------------------------------------------------------------
+  focusedRebalanceUi = initFocusedRebalanceUi({ ...ctx, getTarget: () => rebalTarget,
+    scopedEntries: scopedEntriesForRebalance, refreshLegacy: updateRebalancePreview, applyPool: applyPoolRebalance });
   document.getElementById('btn-auto-balance-cards')?.addEventListener('click', () => openRebalanceModal('cards'));
   document.getElementById('btn-auto-balance-items')?.addEventListener('click', () => openRebalanceModal('items'));
   document.getElementById('rebal-target-cards')?.addEventListener('click', () => setRebalanceTarget('cards'));
   document.getElementById('rebal-target-items')?.addEventListener('click', () => setRebalanceTarget('items'));
-  document.getElementById('btn-rebal-defaults')?.addEventListener('click', loadRebalanceDefaults);
-  document.getElementById('btn-rebal-apply')?.addEventListener('click', applyRebalance);
+  document.getElementById('btn-rebal-defaults')?.addEventListener('click', () => { loadRebalanceDefaults(); focusedRebalanceUi.reset({ defaults: true }); });
+  document.getElementById('btn-rebal-apply')?.addEventListener('click', focusedRebalanceUi.apply);
   document.getElementById('btn-rebal-export-json')?.addEventListener('click', () => {
     const entries = scopedEntriesForRebalance();
     const bundle = buildStudioBundle({
@@ -635,7 +736,6 @@ export function initStudioToolsModals(ctx) {
   document.getElementById('btn-gen-run')?.addEventListener('click', runBatchGenerate);
 
   document.getElementById('btn-custom-decks')?.addEventListener('click', openDecksModal);
-  document.getElementById('btn-custom-decks-items')?.addEventListener('click', openDecksModal);
   document.getElementById('btn-create-class')?.addEventListener('click', () => {
     const name = document.getElementById('new-class-name').value.trim();
     if (!name) { toast('Enter a class name first.'); return; }
@@ -706,6 +806,7 @@ export function initStudioToolsModals(ctx) {
   document.getElementById('custom-decks-list')?.addEventListener('change', (e) => {
     const sel = e.target.closest('[data-assign-deck]');
     if (!sel) return;
+    if (!writableDeck(sel.dataset.assignDeck)) { renderDecksModal(); return; }
     pushHistory();
     const res = assignDeckToClass(state.customDecks, state.customClasses, sel.dataset.assignDeck, sel.value || null);
     state.customDecks = res.customDecks;
@@ -736,7 +837,7 @@ export function initStudioToolsModals(ctx) {
     }
     const addBtn = e.target.closest('[data-add-selected]');
     if (addBtn) {
-      const deck = state.customDecks.find((d) => d.id === addBtn.dataset.addSelected);
+      const deck = writableDeck(addBtn.dataset.addSelected);
       if (!deck) return;
       pushHistory();
       const added = [];
@@ -768,6 +869,7 @@ export function initStudioToolsModals(ctx) {
     const delBtn = e.target.closest('[data-del-deck]');
     if (delBtn) {
       const did = delBtn.dataset.delDeck;
+      if (!writableDeck(did)) return;
       pushHistory();
       state.customDecks = state.customDecks.filter((d) => d.id !== did);
       state.customClasses = state.customClasses.map((c) => (c.deckId === did ? { ...c, deckId: null } : c));
@@ -786,9 +888,22 @@ export function initStudioToolsModals(ctx) {
   document.getElementById('btn-decks-save-repo')?.addEventListener('click', () => saveBundleToRepo(currentBundle('Score Studio Decks & Lists')));
   wireFileLoadInput('input-decks-load-json');
 
-  document.getElementById('filter-deck')?.addEventListener('change', () => {
-    ctx.renderCardsGrid();
-  });
+  for (const [id, context] of [['filter-deck', 'cards'], ['filter-item-deck', 'items']]) {
+    const select = document.getElementById(id);
+    select?.addEventListener('focus', () => { if (select.value !== '__manage__') select.dataset.previousDeckValue = select.value; });
+    select?.addEventListener('change', () => {
+      if (select.value === '__manage__') {
+        const previous = select.dataset.previousDeckValue;
+        const restored = [...select.options].some(option => option.value === previous && previous !== '__manage__') ? previous : 'all';
+        select.value = restored;
+        ctx.onDeckFilterChange?.({ context, id: restored, manage: true });
+        return;
+      }
+      select.dataset.previousDeckValue = select.value;
+      if (context === 'items') ctx.renderItemsGrid?.(); else ctx.renderCardsGrid?.();
+      ctx.onDeckFilterChange?.({ context, id: select.value });
+    });
+  }
 
-  return { populateDeckAndClassDropdowns, renderDecksModal };
+  return { populateDeckAndClassDropdowns, renderDecksModal, openDecksModal, openBalanceSelection, openBalanceItems };
 }

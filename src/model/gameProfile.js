@@ -2,22 +2,22 @@ import { ProjectRetreatRuleFace } from './retreatRuleFaces.js';
 // Immutable per-run configuration snapshots. No mutable active-profile singleton.
 import { gameProfileCatalog, gameProfileAuthors } from '../content/generated/gameProfiles.js';
 import { resolveGameAuthor, freezeGameData, dataClone, GameConfigError } from '../../engine/kernel/gameConfig.js';
-import { markVerifiedProfile, validateVerifiedProfile } from './verifiedProfiles.js';
+import { MarkCanonicalVerifiedProfile, validateVerifiedProfile } from './verifiedProfiles.js';
 import { SUPPORTED_CORE } from './retiredProfile.js';
 import { coreEvasionCompatibleRuntime } from './coreEvasionCompatibility.js';
 import { applyUpgradeSteps, upgradeCount, upgradeStepsOf, ApplyDrawbackSteps } from './cardUpgrade.js';
 import { cardRank, rankedEffectsCapped } from './cardRank.js';
 import { applyRamp, playsEverOf } from './cardRamp.js';
 import { ProjectEnemyContent } from './enemyProjection.js';
-import { CardSpellTraditions, SpellTraditionsActive } from './spellTraditions.js';
+import { CardTraditionTags, SpellTraditionsActive } from './spellTraditions.js';
 export { GameConfigError };
 // Catalog profiles are deterministic, so each id is resolved and digested once per process; later
 // resolves return a fresh deep-frozen copy (callers rely on distinct snapshots) instead of re-hashing.
 const resolvedById = new Map();
 const resolveOnce = (key, make) => {
   const first = resolvedById.get(key);
-  if (first) return markVerifiedProfile(freezeGameData(dataClone(first)));
-  const made = markVerifiedProfile(make()); resolvedById.set(key, made); return made;
+  if (first) return MarkCanonicalVerifiedProfile(freezeGameData(dataClone(first)));
+  const made = MarkCanonicalVerifiedProfile(freezeGameData(dataClone(make()))); resolvedById.set(key, made); return made;
 };
 export function resolveGameProfile(idOrAuthor = 'default') {
   if (typeof idOrAuthor === 'string') {
@@ -37,7 +37,12 @@ export function gameContent(subject,key) { return subjectProfile(subject)?.conte
 // The one "is this the Core game" predicate: a profile, or a run/registries carrying one, authored on the supported Core.
 export function isCoreProfile(subject) { return subjectProfile(subject)?.author?.core === SUPPORTED_CORE; }
 // `rampless` leaves a ramp unapplied: the registry copy of a card stays plain so resolveCard can ramp it with the instance's plays (SPEC §4.3).
-export function projectGameCard(subject,idOrInstance,{rampless=false}={}) {
+export function projectGameCard(subject,idOrInstance,{rampless=false}={}) {return projectGameCardCore(subject,idOrInstance,{rampless});}
+// Upgrade probes consume this fresh owned definition immediately. The same
+// policy and strict dataClone run for every candidate; only public freezing
+// is deferred, so no alternate formula or resource/rank policy can drift.
+export function ProjectGameCardProbe(subject,idOrInstance) {return projectGameCardCore(subject,idOrInstance,{probe:true});}
+function projectGameCardCore(subject,idOrInstance,{rampless=false,probe=false}={}) {
   if (!gameModule(subject,'cards') || gameModule(subject,'cards').mode === 'legacy') return null;
   const id = typeof idOrInstance === 'string' ? idOrInstance : idOrInstance?.cardId || idOrInstance?.id;
   const def = gameContent(subject,'cards')?.find(card => card.id === id);
@@ -53,7 +58,7 @@ export function projectGameCard(subject,idOrInstance,{rampless=false}={}) {
   let chosen = alternate ? {...dataClone(def),...dataClone(alternate)} : dataClone(def);
   chosen = ProjectRetreatRuleFace(chosen, subject?.gameProfile ? subject : { gameProfile: subjectProfile(subject) });
   if (SpellTraditionsActive({ gameProfile: subject.gameProfile || subject }) && chosen.tags?.includes('camp:spell')) {
-    chosen.tags = [...new Set([...chosen.tags, ...CardSpellTraditions(chosen).map(id => 'tradition:' + id)])];
+    chosen.tags = [...new Set([...chosen.tags, ...CardTraditionTags(chosen)])];
   }
   // An upgraded copy applies def.upgrade once, over the base, exactly as Legacy resolveCard does (ability-grade cards excepted).
   if (typeof idOrInstance === 'object' && upgradeCount(idOrInstance) && !Array.isArray(chosen.gradeProfiles)) chosen = dataClone(applyUpgradeSteps(chosen, upgradeStepsOf(idOrInstance)));
@@ -70,7 +75,7 @@ export function projectGameCard(subject,idOrInstance,{rampless=false}={}) {
   if (chosen.ramp && !rampless) chosen = applyRamp(chosen, chosen.ramp.scope === 'run' ? playsEverOf(idOrInstance) : 0, (chosen.tags || []).filter(tag => !tag.startsWith('classification.')));
   chosen.kindIds = ['classification.' + chosen.type];
   chosen.resourceCosts = {sp:chosen.staminaCost || 0,mp:chosen.manaCost || 0};
-  return freezeGameData(chosen);
+  return probe ? chosen : freezeGameData(chosen);
 }
 function cloneLegacy(value,seen = new Map()) {
   if (!value || typeof value !== 'object') return value;
@@ -139,7 +144,7 @@ export function applyGameProfileToContent(baseBundle,profileOrAuthor = 'default'
     // Existing registry schemas use tags through the tagging relation table.
     const raw=additions.map(({tags,resourceCosts,kindIds,combatEffectsTiming,...def})=>def);
     bundle.cards=[...(bundle.cards||[]).filter(def=>!raw.some(row=>row.id===def.id)),...raw];
-    bundle.equipment = {...bundle.equipment, cardExposure:[...(bundle.equipment?.cardExposure || []).filter(row=>!raw.some(def=>def.id===row.cardId)), ...raw.filter(def => def.effects.some(effect => effect.op === 'damage')).map(def => ({cardId:def.id,damageSchool:def.damageSchool,exposureBuildupPerHit:def.exposureBuildupPerHit}))]};
+    bundle.equipment = {...bundle.equipment, cardExposure:[...(bundle.equipment?.cardExposure || []).filter(row=>!raw.some(def=>def.id===row.cardId)), ...raw.filter(def => [...(def.effects || []), ...(def.upgrade?.effects || [])].some(effect => effect.op === 'damage')).map(def => ({cardId:def.id,damageSchool:def.damageSchool,exposureBuildupPerHit:def.exposureBuildupPerHit}))]};
     bundle.tagging=[...(bundle.tagging||[]).filter(row=>row.family!=='card'||!raw.some(def=>def.id===row.objectId)),...additions.flatMap(def=>(def.tags||[]).map(tagId=>({family:'card',objectId:def.id,tagId})))];
   }
   projectWeaponArtResources(bundle,profile);
@@ -204,8 +209,7 @@ export function applyGameProfileToContent(baseBundle,profileOrAuthor = 'default'
     for (const card of bundle.cards || []) {
       const tags = tagsByCard.get(card.id) || [];
       if (!tags.includes('camp:spell')) continue;
-      for (const id of CardSpellTraditions({ ...card, tags })) {
-        const tagId = 'tradition:' + id;
+      for (const tagId of CardTraditionTags({ ...card, tags })) {
         if (!tags.includes(tagId)) bundle.tagging.push({ family: 'card', objectId: card.id, tagId });
       }
     }

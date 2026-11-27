@@ -1,0 +1,22 @@
+/* Only gallery cells consume these width variables. Inspector previews keep
+   their own sizes and native card aspect ratios. */
+body.studio-body #cards-grid,
+body.studio-body #items-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--gallery-tile-size)), 1fr));
+}
+body.studio-body #cards-grid { --gallery-tile-size: var(--card-tile-width, 185px); }
+body.studio-body #items-grid { --gallery-tile-size: var(--item-tile-width, 185px); }
+body.studio-body #cards-grid.is-single { grid-template-columns: minmax(0, min(100%, var(--gallery-tile-size))); justify-content: center; }
+body.studio-body #cards-grid > *,
+body.studio-body #items-grid > * { min-width: 0; }
+body.studio-body #items-grid .item-grid-tile > div:first-child { min-width: 0; }
+body.studio-body #items-grid :is(.equipment-poker-card, .collectible-poker-card) { width: 100%; max-width: none; }
+body.studio-body #cards-grid .studio-card-meta-row,
+body.studio-body #items-grid .item-tile-meta { flex-wrap: wrap; min-width: 0; }
+body.studio-body #cards-grid .studio-card-meta-row > *,
+body.studio-body #items-grid .item-tile-meta > * { min-width: 0; max-width: 100%; box-sizing: border-box; overflow-wrap: anywhere; }
+body.studio-body :is(#card-zoom-value, #item-zoom-value) { display: inline-block; min-width: 4ch; font-variant-numeric: tabular-nums; }
+@media (max-width: 900px) {
+  body.studio-body #cards-grid { --gallery-tile-size: calc(var(--card-tile-width, 185px) * .864864865); }
+  body.studio-body #items-grid { --gallery-tile-size: calc(var(--item-tile-width, 185px) * .864864865); }
+}

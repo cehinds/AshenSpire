@@ -3,7 +3,7 @@
 // Plain-JS validator descriptors (no libraries). Each schema is a tree of
 // descriptor nodes interpreted by model/validate.js:
 //
-//   { k: 'str' } | { k: 'num', int?: true } | { k: 'bool' } | { k: 'any' }
+//   { k: 'str' } | { k: 'num', int?: true, finite?: true } | { k: 'bool' } | { k: 'any' }
 //   { k: 'enum', values: [...] }
 //   { k: 'arr', of: node, len?: n }
 //   { k: 'map', of: node }                    // { anyKey: node }
@@ -23,6 +23,7 @@
 
 // Effect DSL opcodes (SPEC §3.4).
 import { NODE_TYPES, ANCHOR_KINDS } from './floorplan.js';
+import { ratingIds } from './ratingFormula.js';
 
 /** Presentation schools carried explicitly by equipment-bound card profiles. */
 export const DAMAGE_SCHOOLS = Object.freeze(['physical', 'magic', 'arcane', 'holy', 'fire']);
@@ -672,6 +673,8 @@ const floorAnchor = (extra = {}) => obj({
 });
 
 const costNode = union(int, en('X'));
+// Printed/runtime impact values use the same closed rating keys as their readers.
+const cardRatingValuesSchema = obj(Object.fromEntries(ratingIds.map(id => [id, opt({ ...num, finite: true })])));
 
 // DERIVED FROM MODIFIER_TYPES, never re-typed. `obj` is strict about unknown
 // keys, so this node is what actually refuses a mis-spelled modifier — which is
@@ -795,7 +798,7 @@ export const SFX_LAYER_SCHEMAS = Object.freeze({
 // Optional authored behavior attachments. The shared compiler validates tag
 // registration, attachment eligibility and parameter schemas at the boot door.
 const rampNode = obj({ scope: en('combat', 'run'), stat: en('damage', 'block'), per: int });
-const costGrowthSchema = obj({ stamina: opt(num), mana: opt(num), perUse: opt(num), max: opt(num), perCard: opt(bool), uncapped: opt(bool) });
+const costGrowthSchema = obj({ stamina: opt(num), mana: opt(num), perUse: opt(num), max: opt(num), perCard: opt(bool), scope: opt(en('instance', 'card')), uncapped: opt(bool) });
 const choiceModeSchema = obj({ id: str, name: str, tooltip: opt(str), icon: opt(str), costGrowth: opt(costGrowthSchema) });
 const retreatRuleFaceSchema = obj({ keywords: opt(arr(str)), textTemplate: opt(str), choiceModes: opt(arr(choiceModeSchema)) });
 const mechanicAttachmentFields = {
@@ -880,6 +883,7 @@ export const SCHEMAS = Object.freeze({
     counterPayload: opt(any),
     evade: opt(any),
     traitValues: opt(any),
+    cardRatingValues: opt(cardRatingValuesSchema),
     upcast: opt(any),
     usableWhile: opt(arr(str)),
     projectile: opt(bool),
@@ -913,6 +917,8 @@ export const SCHEMAS = Object.freeze({
     legacyFace: opt(any),
     requirements: opt(any),
     playLimit:opt(int),
+    // Wither N (content/source/mechanics/useLimit.json): each copy exhausts on its Nth play this fight.
+    wither: opt(int),
     burden: opt(obj({skipActions:opt(int),staminaTax:opt(int),manaTax:opt(int),status:opt(ref('statuses')),ranges:opt(arr(str)),cardTypes:opt(arr(str))})),
     costGrowth: opt(costGrowthSchema),
     retreatRuleFaces: opt(obj({ legacy: retreatRuleFaceSchema, current: retreatRuleFaceSchema })),
@@ -947,12 +953,14 @@ export const SCHEMAS = Object.freeze({
         cost: opt(costNode),
         manaCost: opt(int),
         staminaCost: opt(int),
+        cardRatingValues: opt(cardRatingValuesSchema),
         effects: opt(effects),
         keywords: opt(arr(ref('keywords'))),
         textTemplate: opt(str),
         faceTemplate: opt(arr(str)),
         ramp: opt(rampNode),
         contest: opt(str),
+        wither: opt(int),
         // An upgrade may ease a rising cost (playtest 2026-11-17, theme C): `{ stamina: 0, mana: 0 }` stops the growth.
         costGrowth: opt(costGrowthSchema),
       })

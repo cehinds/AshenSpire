@@ -15,6 +15,7 @@
 // property rules its `props` name are passed as `rules` ({tag: {triggers, passives}}).
 import { GetActiveScoring } from './activeScoring.js';
 import { scoring as shippedScoring } from '../content/generated/scoring.js';
+import { EffectiveCostGrowth, EffectiveWitherLimit, MechanicRule } from './combatMechanics.js';
 
 /** Round half away from zero (the simulator's `rnd`). */
 export const Rnd = (x) => (x >= 0 ? Math.floor(x + 0.5) : -Math.floor(-x + 0.5) + 0); // + 0 keeps -0 out
@@ -125,8 +126,18 @@ export function UpgradeTagSurcharge(rule, stacks, positiveScore = 0) {
 }
 
 /** Score a card face: {raw, parts, positive}. `positive` is P, the sum of the positive non-cost parts. */
-export function ScoreCard(c, scoring = GetActiveScoring()) {
-  const S = slimOf(scoring), M = S.model, CM = scoring.cardModel;
+export function ScoreCard(c, scoring = GetActiveScoring(), context = null) {
+  return scorePrepared(c, scoring, slimOf(scoring), context);
+}
+
+/** Compile only for one read-only operation; create a new scorer after edits. */
+export function PrepareCardScorer(scoring = GetActiveScoring()) {
+  const S = slimOf(scoring);
+  return (card, context = null) => scorePrepared(card, scoring, S, context);
+}
+
+function scorePrepared(c, scoring, S, context) {
+  const M = S.model, CM = scoring.cardModel;
   const parts = {};
   const add = (k, v) => { if (v) parts[k] = (parts[k] || 0) + v; };
   // `fx` mirrors only the effect parts (damage, block, statuses ...), so the effect count never mistakes a tag or keyword that
@@ -136,6 +147,10 @@ export function ScoreCard(c, scoring = GetActiveScoring()) {
   const area = c.tags.includes(CM.areaTag) ? M.ENEMIES : 1;
   add('SP', S.costs.sp * c.sp); add('MP', S.costs.mp * c.mp);
   addFx('damage', ew(S, 'damage', c.dmg) * area);
+  const blockBreakRule = MechanicRule('blockBreak', context);
+  if (c.blockBreak && (!blockBreakRule || blockBreakRule.enabled !== false) && S.effects.blockBreak) {
+    addFx('blockBreak', ew(S, 'blockBreak', c.blockBreak) * area);
+  }
   addFx('block', ew(S, 'block', c.blk));
   addFx('poise', ew(S, 'poiseDamage', c.poise) * area);
   for (const [s, n, tgt] of c.statuses) {
@@ -167,6 +182,21 @@ export function ScoreCard(c, scoring = GetActiveScoring()) {
     let v = d.flat ?? P * d.multiplier;
     if (d.min !== undefined) v = d.min < 0 ? Math.min(v, d.min) : Math.max(v, d.min);
     add(k, v);
+  }
+  const witherLimit = !c.kw.includes('exhaust') ? EffectiveWitherLimit(c, context) : null;
+  if (witherLimit && S.keywords.wither && S.keywords.wither.surchargeEnabled !== false) {
+    const d = S.keywords.wither;
+    let v = (d.flat ?? P * d.multiplier) / witherLimit;
+    if (d.min !== undefined) v = d.min < 0 ? Math.min(v, d.min) : Math.max(v, d.min);
+    add('wither', v);
+  }
+  const growth = EffectiveCostGrowth(c, context);
+  if (growth && S.keywords.costGrowth && S.keywords.costGrowth.surchargeEnabled !== false) {
+    const d = S.keywords.costGrowth;
+    const stepSize = (growth.stamina || 0) + (growth.mana || 0);
+    let v = d.flat !== undefined ? d.flat * stepSize : P * d.multiplier;
+    if (d.min !== undefined) v = d.min < 0 ? Math.min(v, d.min) : Math.max(v, d.min);
+    add('costGrowth', v);
   }
   // Stacking upgrade tags (Efficient, Improved, ExtraEffect, DrawbackEase, IdentityShift)
   const UT = scoring.upgradeTags;
