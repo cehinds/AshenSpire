@@ -364,7 +364,7 @@ test('outside Properties the column beside the card holds the view fields only w
     requests.push([view, cardId]);
     if (!draws) return false;
     const row = dom.document.createElement('div'); row.className = 'context-row'; row.textContent = `${view}:${cardId}`;
-    container.append(row);
+    container.replaceChildren(row);
     return true;
   };
   const { api, doc, state } = fixture(dom, new Map(), { renderContextFields }, { scoreSummary: true });

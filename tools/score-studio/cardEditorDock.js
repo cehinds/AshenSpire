@@ -160,10 +160,11 @@ export function initCardEditorDock(ctx) {
     fitCardToFields();
   }
   // Outside Properties the column beside the card holds that view's most-used fields for this card, drawn by
-  // the composition root. Rebuilt from empty on every render, so repeated refreshes never stack rows.
+  // the composition root, which replaces the column's rows on every call (so refreshes never stack them) and
+  // may keep them while one of its own controls is mid-edit. Nothing to show empties and hides the column.
   function placeContextFields() {
     const eligible = !!scoreSummary && view !== 'properties' && context === 'cards' && isValid('cards') && !previewPrefs.collapsed;
-    contextFields.replaceChildren();
+    if (contextFields.dataset.contextView !== view) contextFields.replaceChildren();
     contextFields.dataset.contextView = view;
     contextFields.setAttribute('aria-label', CONTEXT_LABELS[view] || 'Fields for this card');
     contextFields.hidden = !(eligible && ctx.renderContextFields?.(view, contextFields, selectedId('cards')) === true);

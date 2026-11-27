@@ -2700,6 +2700,7 @@ function cardWeightKeys(def) {
 // The Weights view's rows beside the card: the same rows as the main list (staged, synced with their twins).
 function renderCardWeightFields(container, def) {
   const { appliedGroups, groups } = weightGroupsShown();
+  container.replaceChildren();
   for (const key of cardWeightKeys(def)) {
     const split = key.indexOf(':');
     const g = groups.find((group) => group.key === key.slice(0, split));
