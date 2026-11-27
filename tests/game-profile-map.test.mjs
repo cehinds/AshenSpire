@@ -137,7 +137,7 @@ test('branch count never exceeds the distinct bosses of the act or maxBranches',
   const single = setup({ maxBranches: 1 });
   const map = buildActMap(single.reg, createRng(3), single.run.seatOrder[0], 1);
   assert.deepEqual(map.bossIds, ['boss_0']);
-  assert.equal(map.columns, 3);
+  assert.equal(map.columns, single.run.gameProfile.content.routes.branchColumns);
   const act3 = setup();
   let widest = 0;
   for (let seed = 1; seed <= 60; seed++) widest = Math.max(widest, buildActMap(act3.reg, createRng(seed), act3.run.seatOrder[2], 3).bossIds.length);
