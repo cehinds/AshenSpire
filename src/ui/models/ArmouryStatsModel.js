@@ -52,7 +52,10 @@ export function armouryStatsModel({ registries, run, meta = {}, inCombat = false
     // bar — it has no label — but it may be holding drafts, so it is SAID
     // rather than dropped.
     staleTracks: staleSkillTracks(registries, run),
-    equipmentCardsSummary: surface.roles.map((row) => `${row.profile.displayName} x${row.copies}`).join(' · '),
+    equipmentCardsSummary: surface.roles
+      .filter((row) => row.copies > 0)
+      .map((row) => `${row.profile.displayName} x${row.copies}`)
+      .join(' · '),
   };
 }
 

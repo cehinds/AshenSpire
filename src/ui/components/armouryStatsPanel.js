@@ -174,11 +174,13 @@ export function armouryStatsPanel(ctx) {
   if (!onCharacterSheet) progression.addEventListener('click', () => skills.hidden = !skills.hidden);
   const skillSection = el('section', { class: 'character-skill-section' }, model.configuredFoundation ? [] : [progression, skills]);
   box.querySelector('.combatPowerCard').after(skillSection);
-  box.appendChild(informationCard({
-    id: 'equipmentReceiptsCard',
-    label: 'Equipment cards',
-    summary: model.equipmentCardsSummary,
-    body: equipmentReceiptPanel(surface),
-  }));
+  if (model.equipmentCardsSummary) {
+    box.appendChild(informationCard({
+      id: 'equipmentReceiptsCard',
+      label: 'Equipment cards',
+      summary: model.equipmentCardsSummary,
+      body: equipmentReceiptPanel(surface),
+    }));
+  }
   return box;
 }

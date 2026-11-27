@@ -77,7 +77,7 @@ import { traySizeService } from '../services/TraySizeService.js';
 import { clearSelection } from '../components/cardSelection.js';
 import { t, tFull, tTip } from '../strings.js';
 import { RestOpensDeckEditor, ShopOpensDeckEditor } from '../../model/armouryRules.js';
-import { openPileModal } from '../components/piles.js';
+import { DECK_VIEW_MODAL_KIND, openPileModal } from '../components/piles.js';
 import { runClassIdentity } from '../../model/classCard.js';
 import { attuneSigil, unattuneSigil, attunedSigilIds, attuneMaxOf, sigilRuleText } from '../../model/sigils.js';
 import {
@@ -687,6 +687,7 @@ export function mountEquipment(host, {
     equippedTagColor: customEquippedTagColor,
   }));
   host.appendChild(wrap);
+  hideTooltip();
 
   // One teardown home for the listener this mount owns outside its subtree.
   // The 2026-08-23 disclosure correction removed the hold grips and their
@@ -1795,7 +1796,18 @@ export function mountEquipment(host, {
             notice = inCombat ? 'Deck editing is unavailable during combat.' : deckLocationHint || 'Deck editing is unavailable with the current settings.';
             draw();
             // Read-only look at the deck (the combat pile viewer); nothing in it can change the deck.
-            if (readOnlyDeck) openPileModal(registries, t('armoury.hub.viewDeck'), run.deck || [], { deckView: true });
+            if (readOnlyDeck)
+            {
+                openPileModal(
+                    registries,
+                    t('armoury.hub.viewDeck'),
+                    run.deck || [],
+                    {
+                        kind: DECK_VIEW_MODAL_KIND,
+                        rules: run,
+                    },
+                );
+            }
           }
           return;
         }

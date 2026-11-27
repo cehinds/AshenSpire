@@ -3,6 +3,7 @@ import { UI_COMPONENTS, markUiComponent } from './uiComponents.js';
 import { modalHead, modalFooter, el as buildElement, prose, stampModalSize } from '../kit/index.js';
 import { registerModal, topModal } from '../modalState.js';
 import { ModalModelFor } from '../models/ModalModel.js';
+import { hideTooltip } from './tooltip.js';
 
 export const CONFIRMATION_COMMIT_EVENT = 'ashenspire:confirmation-commit';
 export const CONFIRMATION_INPUT_SHIELD_MS = 600;
@@ -314,6 +315,7 @@ export function OpenConfirmationModal({
     alternate = null,
 } = {})
 {
+    hideTooltip();
     CloseConfirmationModal();
 
     const isDanger = tone === TONE_DANGER;
