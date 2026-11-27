@@ -338,31 +338,21 @@ test('repeated refresh, view and context changes build the header once and add n
   assert.deepEqual([edit, navEditor, doc.getElementById('customization-view')].map(listenerCount), before);
 }));
 
-test('card name collapses the preview and the drag bar sizes it; both are view state only', () => withKitDom(dom => {
+test('card name collapses the preview; there is no resize bar and only collapsed state persists', () => withKitDom(dom => {
   const stored = new Map();
   const first = fixture(dom, stored);
   const name = first.doc.getElementById('customization-entity-name');
   const body = first.doc.querySelector('.customization-preview-body');
-  const resizer = first.doc.querySelector('.customization-preview-resizer');
   assert.equal(name.tagName, 'BUTTON', 'the whole name bar is the toggle');
   assert.equal(name.getAttribute('aria-expanded'), 'true');
+  assert.equal(first.doc.querySelector('.customization-preview-resizer'), null, 'no resize bar');
   name.click();
   assert.equal(body.hidden, true, 'clicking the name collapses the preview');
   assert.equal(name.getAttribute('aria-expanded'), 'false');
-  name.click();
-  assert.equal(body.hidden, false, 'clicking it again expands it');
-  resizer.dispatchEvent(Object.assign(new dom.Event('keydown', { bubbles: true }), { key: 'End' }));
-  assert.equal(body.dataset.sized, 'true');
-  assert.equal(resizer.getAttribute('aria-valuenow'), '640');
-  resizer.dispatchEvent(Object.assign(new dom.Event('keydown', { bubbles: true }), { key: 'Enter' }));
-  assert.equal(body.dataset.sized, undefined, 'Enter returns to auto size');
-  resizer.dispatchEvent(Object.assign(new dom.Event('keydown', { bubbles: true }), { key: 'Home' }));
-  name.click();
-  assert.deepEqual(JSON.parse(stored.get('ashenspire:scoreStudioEntityPreview:v1')).height, 90);
+  assert.deepEqual(JSON.parse(stored.get('ashenspire:scoreStudioEntityPreview:v1')), { collapsed: true });
   const again = fixture(dom, stored);
-  const againBody = again.doc.querySelector('.customization-preview-body');
-  assert.equal(againBody.hidden, true, 'collapsed state survives a reload');
-  assert.equal(againBody.parentNode.id, 'customization-entity');
-  assert.equal(again.doc.getElementById('customization-preview-undock'), null, 'no Undock preview button');
+  assert.equal(again.doc.querySelector('.customization-preview-body').hidden, true, 'collapsed state survives a reload');
+  again.doc.getElementById('customization-entity-name').click();
+  assert.equal(again.doc.querySelector('.customization-preview-body').hidden, false, 'clicking again expands it');
   assert.equal(again.doc.querySelectorAll('.customization-preview-body').length, 1);
 }));

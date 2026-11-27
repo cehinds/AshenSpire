@@ -68,24 +68,9 @@ body.studio-body .customization-entity-preview[hidden] { display: none !importan
 body.studio-body .customization-preview-body { display: flex; flex-direction: column; min-width: 0; }
 /* Auto size: the card follows the window height, so short screens get a smaller card and no scroll bar. */
 body.studio-body .customization-preview-body .inspector-card-preview { width: clamp(60px, calc((50dvh - 140px) * 2 / 3), var(--inspector-card-width, 165px)); }
-/* Dragged size sets the card only: the section is as tall as the card or the fields, whichever is taller,
-   so the fields are never clipped or scrolled. */
-body.studio-body .customization-preview-body[data-sized] .inspector-card-preview { width: max(60px, calc((var(--entity-preview-h) - 22px) * 2 / 3)); }
 /* The card never takes the room the fields need; past that it stops growing. */
 body.studio-body .customization-entity .inspector-preview-wrap { container-type: inline-size; }
 body.studio-body .customization-entity .inspector-card-preview { max-width: max(60px, calc(100cqw - 230px)); }
-body.studio-body .customization-preview-resizer {
-  position: relative; flex: 0 0 auto; height: 10px; margin-top: 2px; cursor: ns-resize; border-radius: 4px; touch-action: none;
-}
-body.studio-body .customization-preview-resizer::after {
-  content: ''; position: absolute; left: 50%; top: 4px; width: 40px; height: 3px; margin-left: -20px;
-  border-radius: 2px; background: var(--st-border);
-}
-body.studio-body .customization-preview-resizer:hover::after,
-body.studio-body .customization-preview-resizer.is-dragging::after { background: var(--st-accent); }
-body.studio-body .customization-preview-resizer:focus,
-body.studio-body .customization-preview-resizer:focus-visible { outline: none; }
-body.studio-body .customization-preview-resizer:focus-visible::after { background: var(--st-accent); height: 4px; top: 3px; width: 56px; margin-left: -28px; box-shadow: 0 0 0 2px rgb(106 166 255 / .35); }
 body.studio-body .customization-scope { margin: 0; color: var(--st-muted); font-size: 12px; overflow-wrap: anywhere; }
 body.studio-body .customization-entity-preview { min-width: 0; }
 body.studio-body .customization-entity-preview > [hidden] { display: none !important; }
@@ -95,7 +80,6 @@ body.studio-body #studio-customization-pane[data-scope="global"] .customization-
 body.studio-body #studio-customization-pane[data-scope="deck"] .customization-entity { border-left-color: var(--st-good); }
 /* Outside Properties the preview is compact so the shared and global editors keep their room. */
 body.studio-body #studio-customization-pane:not([data-scope="card"]) .inspector-preview-wrap { padding: 6px; }
-body.studio-body #studio-customization-pane:not([data-scope="card"]) .customization-preview-body:not([data-sized]) .inspector-card-preview { width: auto; height: min(220px, 40dvh); }
 body.studio-body #studio-customization-pane:not([data-scope="card"]) .subclass-upgrade-summary { display: none; }
 body.studio-body #studio-customization-pane:not([data-scope="card"]) .item-preview-host { max-height: 220px; overflow: hidden; }
 body.studio-body #studio-customization-pane:not([data-scope="card"]) .item-preview-host .equipment-poker-card { width: 150px; }
@@ -248,3 +232,6 @@ body.studio-body .customization-card-menu-button.s-btn {
 body.studio-body .customization-card-menu-button.s-btn:hover,
 body.studio-body .customization-card-menu-button.s-btn[aria-expanded="true"] { color: var(--st-text); background: var(--st-surface-2); border-color: var(--st-border); }
 body.studio-body .customization-card-menu-button.s-btn:focus-visible { color: var(--st-text); border-color: var(--st-accent); outline: none; }
+
+/* Beside the fields the card is exactly as tall as they are, keeping its 2:3 shape. */
+body.studio-body .customization-preview-body[data-fit="fields"] .inspector-card-preview { width: max(60px, calc(var(--entity-card-h) * 2 / 3)); }

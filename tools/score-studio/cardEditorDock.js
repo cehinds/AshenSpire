@@ -71,55 +71,26 @@ export function initCardEditorDock(ctx) {
   const previewSlot = doc.createElement('div'); previewSlot.id = 'customization-entity-preview'; previewSlot.className = 'customization-entity-preview';
   const previews = { cards: properties.cards.querySelector('.inspector-preview-wrap'), items: properties.items?.querySelector('#item-preview-host') || null };
   for (const node of Object.values(previews)) if (node) { rememberHome(node); previewSlot.append(node); }
-  // Preview state is view state only: collapsed, and its dragged height (null = auto size).
-  let previewPrefs = { collapsed: false, height: null };
+  // Preview state is view state only: whether it is collapsed.
+  let previewPrefs = { collapsed: false };
   try {
     const saved = JSON.parse(storage?.getItem(PREVIEW_KEY) || '{}');
-    previewPrefs = { collapsed: !!(saved.collapsed ?? saved.hidden), height: Number.isFinite(saved.height) ? saved.height : null };
+    previewPrefs = { collapsed: !!(saved.collapsed ?? saved.hidden) };
   } catch { /* Optional persistence. */ }
   const savePreviewPrefs = () => {
-    const { collapsed, height } = previewPrefs;
-    try { storage?.setItem(PREVIEW_KEY, JSON.stringify({ collapsed, height })); } catch { /* Optional persistence. */ }
+    const { collapsed } = previewPrefs;
+    try { storage?.setItem(PREVIEW_KEY, JSON.stringify({ collapsed })); } catch { /* Optional persistence. */ }
   };
-  const PREVIEW_MIN_H = 90, PREVIEW_MAX_H = 640;
-  // Drag the bar under the preview to set its height; the card scales to fit. Double-click returns to auto size.
-  const previewResizer = doc.createElement('div'); previewResizer.className = 'customization-preview-resizer';
-  previewResizer.tabIndex = 0; previewResizer.setAttribute('role', 'separator'); previewResizer.setAttribute('aria-orientation', 'horizontal');
-  previewResizer.setAttribute('aria-label', 'Resize preview'); previewResizer.setAttribute('aria-controls', previewSlot.id);
-  previewResizer.setAttribute('aria-valuemin', String(PREVIEW_MIN_H)); previewResizer.setAttribute('aria-valuemax', String(PREVIEW_MAX_H));
-  previewResizer.title = 'Drag to resize the preview. Double-click for auto size.';
   const previewBody = doc.createElement('div'); previewBody.className = 'customization-preview-body';
-  previewBody.append(previewSlot, previewResizer);
-  function applyPreviewHeight(value, save = true) {
-    const height = value == null ? null : Math.round(Math.max(PREVIEW_MIN_H, Math.min(PREVIEW_MAX_H, Number(value))));
-    previewPrefs.height = height;
-    if (height == null) { previewBody.style.removeProperty('--entity-preview-h'); delete previewBody.dataset.sized; }
-    else { previewBody.style.setProperty('--entity-preview-h', `${height}px`); previewBody.dataset.sized = 'true'; }
-    const shown = Math.round(height ?? previewSlot.getBoundingClientRect?.().height ?? 0);
-    previewResizer.setAttribute('aria-valuenow', String(shown));
-    previewResizer.setAttribute('aria-valuetext', height == null ? `Auto size, ${shown} pixels` : `${height} pixels`);
-    if (save) savePreviewPrefs();
-    ctx.onPreviewResize?.();
+  previewBody.append(previewSlot);
+  // The card is as tall as the fields beside it (2:3, never stretched), so the section needs no scroll bar.
+  function fitCardToFields() {
+    const height = quickFieldsShown() ? Math.round(quick.getBoundingClientRect().height) : 0;
+    if (height > 0) { previewBody.style.setProperty('--entity-card-h', `${height}px`); previewBody.dataset.fit = 'fields'; }
+    else { previewBody.style.removeProperty('--entity-card-h'); delete previewBody.dataset.fit; }
   }
-  let previewDrag = null;
-  previewResizer.addEventListener('pointerdown', event => {
-    // The drag sizes the card, so start from the card's own height (plus the frame's padding).
-    const card = previewSlot.querySelector('.inspector-card-preview:not([hidden])') || previewSlot;
-    previewDrag = { y: event.clientY, h: card.getBoundingClientRect().height + (card === previewSlot ? 0 : 22) };
-    previewResizer.classList.add('is-dragging'); previewResizer.setPointerCapture?.(event.pointerId);
-    previewResizer.focus?.({ preventScroll: true }); event.preventDefault();
-  });
-  previewResizer.addEventListener('pointermove', event => { if (previewDrag) applyPreviewHeight(previewDrag.h + event.clientY - previewDrag.y, false); });
-  const endPreviewDrag = () => { if (!previewDrag) return; previewDrag = null; previewResizer.classList.remove('is-dragging'); savePreviewPrefs(); };
-  previewResizer.addEventListener('pointerup', endPreviewDrag); previewResizer.addEventListener('pointercancel', endPreviewDrag);
-  previewResizer.addEventListener('dblclick', () => applyPreviewHeight(null));
-  previewResizer.addEventListener('keydown', event => {
-    if (event.key === 'Enter' || event.key === 'Escape') { event.preventDefault(); applyPreviewHeight(null); return; }
-    const current = previewPrefs.height ?? previewSlot.getBoundingClientRect().height;
-    const next = { ArrowUp: current - 20, ArrowDown: current + 20, Home: PREVIEW_MIN_H, End: PREVIEW_MAX_H }[event.key];
-    if (next == null) return;
-    event.preventDefault(); applyPreviewHeight(next);
-  });
+  const fieldsObserver = typeof (doc.defaultView || globalThis).ResizeObserver === 'function'
+    ? new (doc.defaultView || globalThis).ResizeObserver(() => fitCardToFields()) : null;
   function setPreviewCollapsed(value) {
     previewPrefs.collapsed = !!value; savePreviewPrefs();
     previewBody.hidden = previewPrefs.collapsed;
@@ -172,6 +143,7 @@ export function initCardEditorDock(ctx) {
     else if (event.key === 'Tab') closeCardMenu(false);
   });
   doc.addEventListener('pointerdown', event => { if (!cardMenu.hidden && !cardMenuWrap.contains(event.target)) closeCardMenu(false); });
+  const quickFieldsShown = () => !quick.hidden && !previewBody.hidden;
   function placeQuickFields() {
     const inHeader = !!scoreSummary && view === 'properties' && context === 'cards' && isValid('cards') && !previewPrefs.collapsed;
     for (const node of quickFields) {
@@ -179,6 +151,7 @@ export function initCardEditorDock(ctx) {
       else { const home = homes.get(node); if (home && home.nextSibling !== node) home.after(node); }
     }
     quick.hidden = !inHeader;
+    fitCardToFields();
   }
   const entityHead = doc.createElement('div'); entityHead.className = 'customization-entity-head';
   entityHead.append(entityHeading);
@@ -463,6 +436,6 @@ export function initCardEditorDock(ctx) {
   // Crossing the breakpoint starts on the library, so focus is never left on a hidden gallery tile.
   narrowMedia?.addEventListener?.('change', () => { panel = 'library'; applyPanel(); });
   setContext('cards'); setDocked(docked); setView(view);
-  setPreviewCollapsed(previewPrefs.collapsed); applyPreviewHeight(previewPrefs.height, false);
+  setPreviewCollapsed(previewPrefs.collapsed); fieldsObserver?.observe(quick); fitCardToFields();
   return { edit: id => edit(id, 'cards'), editItem: id => edit(id, 'items'), decorateTile: (tile, def) => decorate(tile, def, 'cards'), decorateItemTile: (tile, def) => decorate(tile, def, 'items'), open: openModal, refresh, refreshEntity: renderEntity, showProperties, setPanel, getPanel: () => panel, setDocked, setContext, setView, isDocked: () => docked, getView: () => view, element: pane };
 }
