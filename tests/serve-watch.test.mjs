@@ -11,7 +11,7 @@
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, renameSync } from 'node:fs';
+import { existsSync, mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, renameSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { request } from 'node:http';
@@ -274,6 +274,38 @@ test('--watch: an edit saved while a build runs is not dropped (error, then relo
   writeFileSync(join(root, 'content', 'config', 'a.json'), '{"bad":false}\n');
   assert.equal(await error, 'config is bad');
   assert.equal(await reload, 'content/config/a.json');
+  stream.close();
+  child.kill();
+});
+
+test('Score Studio Save files under content/source/studio/ owe no build', () => {
+  for (const rel of ['content/source/studio', 'content/source/studio/cards.json', 'content/source/studio/artLayers.json', 'content/source/studio/templates.json']) {
+    assert.equal(buildToolFor(rel), null, rel);
+    assert.deepEqual(buildToolsFor(rel), [], rel);
+  }
+  assert.equal(buildToolFor('content/source/studioDecks.json'), 'content-build.mjs', 'a sibling name is still game source');
+  assert.equal(buildToolFor('content/source/studio-backup/x.json'), 'content-build.mjs', 'only the exact folder is excluded');
+});
+
+test('--watch: a Studio Save under content/source/studio/ runs no build and sends no reload', async () => {
+  const root = makeTree();
+  const log = join(root, 'build.log');
+  writeFileSync(join(root, 'tools', 'content-build.mjs'),
+    "import { appendFileSync } from 'node:fs';\n" +
+    `appendFileSync(${JSON.stringify(log)}, 'content-build\\n');\n`);
+  const { port, child } = await start(root, ['--watch']);
+  const stream = await events(port);
+  mkdirSync(join(root, 'content', 'source', 'studio'));
+  writeFileSync(join(root, 'content', 'source', 'studio', 'cards.json'), '{}\n');
+  writeFileSync(join(root, 'content', 'source', 'studio', 'artLayers.json'), '{}\n');
+  await new Promise((r) => setTimeout(r, 800));
+  assert.ok(!stream.seen.length, `no event for a Studio Save (got ${JSON.stringify(stream.seen)})`);
+  assert.ok(!existsSync(log), 'content-build did not run');
+  // A real content/source edit still builds and reloads.
+  const reload = stream.next('reload', 3000);
+  writeFileSync(join(root, 'content', 'source', 'cards.json'), '{}\n');
+  assert.equal(await reload, 'content/source/cards.json');
+  assert.equal(readFileSync(log, 'utf8'), 'content-build\n');
   stream.close();
   child.kill();
 });

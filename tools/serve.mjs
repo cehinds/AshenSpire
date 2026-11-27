@@ -104,8 +104,16 @@ const WATCH_SKIP = /(^|\/)(\.|node_modules(\/|$))|~$|\.sw[px]$|\.tmp$/;
 const BUILD_ORDER = ['config-build.mjs', 'tokens-css.mjs', 'hud-layout-css.mjs', 'framework-data-build.mjs', 'content-build.mjs',
   'game-config.mjs build']; // last: it hashes src/** and reads the other generated modules
 
+/**
+ * The Score Studio's own Save files (SS-003). They live under content/source/ but are not
+ * game content: no build reads them, so a Save there owes no build and no page reload.
+ */
+export const STUDIO_SAVE_DIR = 'content/source/studio';
+export const isStudioSavePath = (rel) => rel === STUDIO_SAVE_DIR || rel.startsWith(STUDIO_SAVE_DIR + '/');
+
 /** Which build tool (in tools/) must run before a change under `rel` can be seen. */
 export function buildToolFor(rel) {
+  if (isStudioSavePath(rel)) return null;
   // A per-directory watcher reports a replaced authored tree by its own name,
   // not a descendant filename. That event still owes the tree's builder.
   const jsonTree = tree => rel === tree || (rel.startsWith(tree + '/') && rel.endsWith('.json'));
@@ -258,6 +266,7 @@ function startWatch(root, emit) {
   function changed(rel) {
     rel = rel.split(sep).join('/');
     if (WATCH_SKIP.test(rel)) return;
+    if (isStudioSavePath(rel)) return; // Studio Save files: no build reads them, nothing to reload
     // A build's own output is recognised by name, never by timing, so an edit
     // made during a build (or just after it) is never dropped: it joins
     // `pending` and the loop in flush() runs another round for it.
