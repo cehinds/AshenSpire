@@ -52,6 +52,11 @@ import {
   GalleryKind,
   GALLERIES,
   TileIdAttribute,
+  TileIdDatasetKey,
+  GalleryEntity,
+  PerGallery,
+  ToGalleryKind,
+  FindGalleryEntity,
   createActiveEntities,
   createEditBursts,
   nextInDisplayedOrder,
@@ -85,19 +90,22 @@ const GalleryTileClass = Object.freeze({
   [GalleryKind.Cards]: 'studio-card-tile',
   [GalleryKind.Items]: 'item-grid-tile',
 });
-const CARD_FILTER_SELECT_IDS = Object.freeze([
-  'filter-type',
-  'filter-class',
-  'filter-rank',
-  'filter-shift',
-  'filter-deck',
-]);
-const ITEM_FILTER_SELECT_IDS = Object.freeze([
-  'item-filter-kind',
-  'item-filter-rarity',
-  'item-filter-rank',
-  'filter-item-deck',
-]);
+const GalleryFilterSelectIds = Object.freeze({
+  [GalleryKind.Cards]: Object.freeze([
+    'filter-type',
+    'filter-class',
+    'filter-rank',
+    'filter-shift',
+    'filter-deck',
+  ]),
+  [GalleryKind.Items]: Object.freeze([
+    'item-filter-kind',
+    'item-filter-rarity',
+    'item-filter-rank',
+    'filter-item-deck',
+  ]),
+});
+const ITEM_INSPECT_LEVEL = 'inspect';
 const FILTER_ALL = 'all';
 const SELECTED_TILE_CLASS = 'is-selected';
 const STUDIO_TAB_SELECTOR = '.studio-tab';
@@ -1539,10 +1547,7 @@ function renderCardsGrid() {
   const grid = document.getElementById('cards-grid');
   grid.classList.toggle('is-single', state.viewMode === 'single');
   const filtered = getFilteredCards();
-  displayedIds[GalleryKind.Cards] = filtered.map((def) => def.id);
-  // The rebuild destroys the tiles, so keep focus and scroll.
-  const focused = captureTileFocus(grid, TileIdAttribute[GalleryKind.Cards]);
-  const scrollTop = grid.scrollTop;
+  const galleryView = beginGalleryRender(GalleryKind.Cards, grid, filtered.map((def) => def.id));
 
   grid.innerHTML = '';
   grid.appendChild(createAddCardTile({ onAdd: () => document.getElementById('btn-new-card').click() }));
@@ -1574,17 +1579,7 @@ function renderCardsGrid() {
     trackCardsArtLoading(grid);
   }
   computeShiftCount();
-  if (grid.scrollTop !== scrollTop)
-  {
-    grid.scrollTop = scrollTop;
-  }
-  restoreTileFocus(
-    grid,
-    TileIdAttribute[GalleryKind.Cards],
-    focused,
-    document.getElementById(GallerySearchId[GalleryKind.Cards]),
-  );
-  consumeReveal(GalleryKind.Cards);
+  finishGalleryRender(GalleryKind.Cards, grid, galleryView);
 }
 
 // selectStudioCard and selectStudioItem are the only writers of the active card and item.
@@ -1613,30 +1608,62 @@ function saveWorkingContext()
   });
 }
 // Each gallery's ids in displayed order, as of its last render.
-const displayedIds = {
-  [GalleryKind.Cards]: null,
-  [GalleryKind.Items]: null,
-};
+const displayedIds = PerGallery(null);
 
 function isHiddenByFilters(kind, id)
 {
   return Boolean(id) && Array.isArray(displayedIds[kind]) && !displayedIds[kind].includes(id);
 }
 
+// Each gallery's own renderers. Function declarations are hoisted, so they can be named here.
+const GalleryView = Object.freeze({
+  [GalleryKind.Cards]: Object.freeze({
+    renderGrid: renderCardsGrid,
+    renderInspector: renderInspector,
+    renderPreview: (card, host) => renderCardWithLayers(card, host),
+    optionLabel: card => card.name || card.id,
+    updateFilterCount: updateFilterCount,
+  }),
+  [GalleryKind.Items]: Object.freeze({
+    renderGrid: renderItemsGrid,
+    renderInspector: renderItemInspector,
+    renderPreview: (item, host) => renderItemCardPreview(item, host, ITEM_INSPECT_LEVEL),
+    optionLabel: item => `[${item.kind[0].toUpperCase() + item.kind.slice(1)}] ${item.name || item.id}`,
+    updateFilterCount: updateItemFilterCount,
+  }),
+});
+
 function clearGalleryFilters(kind)
 {
-  if (kind === GalleryKind.Items)
-  {
-    resetItemFilters();
-    renderItemsGrid();
-  }
-  else
-  {
-    resetCardFilters();
-    renderCardsGrid();
-  }
+  resetGalleryFilters(kind);
+  GalleryView[kind].renderGrid();
 }
 const pendingReveal = new Set();
+
+// The rebuild destroys the tiles, so keep focus and scroll.
+function beginGalleryRender(kind, grid, ids)
+{
+  displayedIds[kind] = ids;
+  return {
+    focused: captureTileFocus(grid, TileIdAttribute[kind]),
+    scrollTop: grid.scrollTop,
+  };
+}
+
+function finishGalleryRender(kind, grid, { focused, scrollTop })
+{
+  if (grid.scrollTop !== scrollTop)
+  {
+    grid.scrollTop = scrollTop;
+  }
+  restoreTileFocus(
+    grid,
+    TileIdAttribute[kind],
+    focused,
+    document.getElementById(GallerySearchId[kind]),
+  );
+  consumeReveal(kind);
+}
 
 function galleryTileSelector(kind, id)
 {
@@ -1668,34 +1695,53 @@ function consumeReveal(kind)
   revealActiveTile(kind);
 }
 
-function selectStudioCard(id, { render = true, reveal = false } = {})
+function markActiveTile(kind, activeId)
 {
-  const { id: activeId } = activeEntities.set(GalleryKind.Cards, id);
+  const datasetKey = TileIdDatasetKey[kind];
+  for (const tile of document.querySelectorAll(`.${GalleryTileClass[kind]}`))
+  {
+    tile.classList.toggle(SELECTED_TILE_CLASS, tile.dataset[datasetKey] === activeId);
+  }
+}
+
+// Without render, a reveal waits for the next gallery render.
+function selectGalleryEntity(kind, id, { render = true, reveal = false } = {})
+{
+  const { id: activeId } = activeEntities.set(kind, id);
   if (!render)
   {
     if (reveal)
     {
-      pendingReveal.add(GalleryKind.Cards);
+      pendingReveal.add(kind);
     }
     return activeId;
   }
-  for (const tile of document.querySelectorAll(`.${GalleryTileClass[GalleryKind.Cards]}`))
-  {
-    tile.classList.toggle(SELECTED_TILE_CLASS, tile.dataset.cardId === activeId);
-  }
-  renderInspector();
+  markActiveTile(kind, activeId);
+  GalleryView[kind].renderInspector();
   renderArtTab();
   deckListPanelUi?.refresh();
   cardEditorDockUi?.refresh();
   if (reveal)
   {
-    revealActiveTile(GalleryKind.Cards);
+    revealActiveTile(kind);
   }
-  if (activeId && isNarrowLayout() && !cardEditorDockUi)
+  return activeId;
+}
+
+function selectStudioCard(id, options = {})
+{
+  const activeId = selectGalleryEntity(GalleryKind.Cards, id, options);
+  const rendered = options.render !== false;
+  if (rendered && activeId && isNarrowLayout() && !cardEditorDockUi)
   {
     openInspectorSheet();
   }
   return activeId;
+}
+
+function selectStudioItem(key, options = {})
+{
+  return selectGalleryEntity(GalleryKind.Items, key, options);
 }
 
 // ---------------------------------------------------------------------------
@@ -3352,9 +3398,7 @@ function renderItemsGrid() {
 
   const countEl = document.getElementById('items-count');
   if (countEl) countEl.textContent = `${filtered.length} / ${state.items.length} items`;
-  displayedIds[GalleryKind.Items] = filtered.map(({ entry }) => entry.key);
-  const focused = captureTileFocus(grid, TileIdAttribute[GalleryKind.Items]);
-  const scrollTop = grid.scrollTop;
+  const galleryView = beginGalleryRender(GalleryKind.Items, grid, filtered.map(({ entry }) => entry.key));
 
   grid.innerHTML = '';
   for (const { entry, sc } of filtered) {
@@ -3384,47 +3428,11 @@ function renderItemsGrid() {
   }
   cardEditorDockUi?.refresh();
   setItemsLoading(false);
-  if (grid.scrollTop !== scrollTop)
-  {
-    grid.scrollTop = scrollTop;
-  }
-  restoreTileFocus(
-    grid,
-    TileIdAttribute[GalleryKind.Items],
-    focused,
-    document.getElementById(GallerySearchId[GalleryKind.Items]),
-  );
-  consumeReveal(GalleryKind.Items);
-}
-
-function selectStudioItem(key, { render = true, reveal = false } = {})
-{
-  const { id: activeKey } = activeEntities.set(GalleryKind.Items, key);
-  if (!render)
-  {
-    if (reveal)
-    {
-      pendingReveal.add(GalleryKind.Items);
-    }
-    return activeKey;
-  }
-  for (const tile of document.querySelectorAll(`.${GalleryTileClass[GalleryKind.Items]}`))
-  {
-    tile.classList.toggle(SELECTED_TILE_CLASS, tile.dataset.itemKey === activeKey);
-  }
-  renderItemInspector();
-  renderArtTab();
-  deckListPanelUi?.refresh();
-  cardEditorDockUi?.refresh();
-  if (reveal)
-  {
-    revealActiveTile(GalleryKind.Items);
-  }
-  return activeKey;
+  finishGalleryRender(GalleryKind.Items, grid, galleryView);
 }
 
 function renderItemInspector() {
-  const entry = state.items.find((item) => item.key === state.selectedItemKey);
+  const entry = FindGalleryEntity(state, GalleryKind.Items, state.selectedItemKey);
   if (!entry) {
     // No active item: the pane shows its empty state rather than the first item.
     document.getElementById('item-preview-host')?.replaceChildren();
@@ -3661,29 +3669,15 @@ function renderArtPreviewOnly()
 {
   const sel = document.getElementById('art-preview-card-select');
   const host = document.getElementById('art-live-preview');
-  if (state.artTarget === GalleryKind.Items)
+  const kind = ToGalleryKind(state.artTarget);
+  const entity = FindGalleryEntity(state, kind, sel.value);
+  if (entity)
   {
-    const item = state.items.find((entry) => entry.key === sel.value);
-    if (item)
-    {
-      renderItemCardPreview(item, host, 'inspect');
-    }
-    else
-    {
-      host.replaceChildren();
-    }
+    GalleryView[kind].renderPreview(entity, host);
   }
   else
   {
-    const previewDef = state.cards.find((card) => card.id === sel.value);
-    if (previewDef)
-    {
-      renderCardWithLayers(previewDef, host);
-    }
-    else
-    {
-      host.replaceChildren();
-    }
+    host.replaceChildren();
   }
 }
 
@@ -3705,12 +3699,9 @@ function renderArtTab() {
   // The picker follows the gallery's active card or item.
   const cardSel = document.getElementById('art-preview-card-select');
   cardSel.innerHTML = '';
-  const pickerKind = isItems
-    ? GalleryKind.Items
-    : GalleryKind.Cards;
-  const options = isItems
-    ? state.items.map((item) => [item.key, `[${item.kind[0].toUpperCase() + item.kind.slice(1)}] ${item.name || item.id}`])
-    : state.cards.map((card) => [card.id, card.name || card.id]);
+  const pickerKind = ToGalleryKind(state.artTarget);
+  const pickerEntities = GalleryEntity[pickerKind];
+  const options = pickerEntities.list(state).map((entity) => [pickerEntities.idOf(entity), GalleryView[pickerKind].optionLabel(entity)]);
   const activeId = activeEntities.get(pickerKind);
   if (!activeId)
   {
@@ -4309,10 +4300,7 @@ function showGallery(kind)
 }
 
 // Each gallery keeps its own place: the grid scrolls on desktop, the page on narrow screens.
-const galleryScroll = {
-  [GalleryKind.Cards]: null,
-  [GalleryKind.Items]: null,
-};
+const galleryScroll = PerGallery(null);
 
 function galleryGrid(kind)
 {
@@ -4651,24 +4639,14 @@ function updateFilterCount() {
 }
 
 // The caller re-renders the gallery.
-function resetCardFilters()
+function resetGalleryFilters(kind)
 {
-  document.getElementById(GallerySearchId[GalleryKind.Cards]).value = '';
-  for (const filterId of CARD_FILTER_SELECT_IDS)
+  document.getElementById(GallerySearchId[kind]).value = '';
+  for (const filterId of GalleryFilterSelectIds[kind])
   {
     document.getElementById(filterId).value = FILTER_ALL;
   }
-  updateFilterCount();
-}
-
-function resetItemFilters()
-{
-  document.getElementById(GallerySearchId[GalleryKind.Items]).value = '';
-  for (const filterId of ITEM_FILTER_SELECT_IDS)
-  {
-    document.getElementById(filterId).value = FILTER_ALL;
-  }
-  updateItemFilterCount();
+  GalleryView[kind].updateFilterCount();
 }
 
 function updateItemFilterCount() {
@@ -4858,7 +4836,7 @@ function wireEvents() {
       textTemplate: 'New card', _custom: true, _edited: true, _autoName: false, _autoText: false, _newDraft: true,
     });
     state.cards.unshift(card);
-    resetCardFilters();
+    resetGalleryFilters(GalleryKind.Cards);
     document.querySelector('.studio-tab[data-tab="cards"]').click();
     cardEditorDockUi?.setView('properties');
     renderCardsGrid();
@@ -5317,9 +5295,7 @@ function wireEvents() {
   // The Design target is the gallery context, so it switches the gallery too.
   document.querySelectorAll('[data-art-target]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      const kind = btn.dataset.artTarget === GalleryKind.Items
-        ? GalleryKind.Items
-        : GalleryKind.Cards;
+      const kind = ToGalleryKind(btn.dataset.artTarget);
       if (kind !== activeGallery)
       {
         showGallery(kind);

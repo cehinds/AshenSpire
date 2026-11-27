@@ -15,13 +15,27 @@ export const TileIdAttribute = Object.freeze({
   [GalleryKind.Items]: 'item-key',
 });
 
+// The dataset key for each tile id attribute.
+export const TileIdDatasetKey = Object.freeze({
+  [GalleryKind.Cards]: 'cardId',
+  [GalleryKind.Items]: 'itemKey',
+});
+
+// How each gallery's entities are listed and identified.
+export const GalleryEntity = Object.freeze({
+  [GalleryKind.Cards]: Object.freeze({
+    list: state => state.cards || [],
+    idOf: card => card.id,
+  }),
+  [GalleryKind.Items]: Object.freeze({
+    list: state => state.items || [],
+    idOf: item => item.key,
+  }),
+});
+
 const SelectedField = Object.freeze({
   [GalleryKind.Cards]: 'selectedCardId',
   [GalleryKind.Items]: 'selectedItemKey',
-});
-const EntityExists = Object.freeze({
-  [GalleryKind.Cards]: (state, id) => (state.cards || []).some(card => card.id === id),
-  [GalleryKind.Items]: (state, key) => (state.items || []).some(item => item.key === key),
 });
 
 const DEFAULT_BURST_DELAY_MS = 1000;
@@ -31,19 +45,36 @@ const TABINDEX_ATTRIBUTE = 'tabindex';
 const FOCUSABLE_DESCENDANT_SELECTOR = 'button, [tabindex]';
 const CLASS_NAME_SEPARATOR = /\s+/;
 
+// One value per gallery kind, for per-gallery bookkeeping.
+export function PerGallery(value)
+{
+  return Object.fromEntries(GALLERIES.map(kind => [kind, value]));
+}
+
+export function ToGalleryKind(value)
+{
+  return value === GalleryKind.Items
+    ? GalleryKind.Items
+    : GalleryKind.Cards;
+}
+
+export function FindGalleryEntity(state, kind, id)
+{
+  const { list, idOf } = GalleryEntity[kind];
+  return list(state).find(entity => idOf(entity) === id);
+}
+
 function isKnownEntity(state, kind, id)
 {
-  return id !== null && id !== undefined && EntityExists[kind](state, id);
+  const { list, idOf } = GalleryEntity[kind];
+  return id !== null && id !== undefined && list(state).some(entity => idOf(entity) === id);
 }
 
 /** The one writer of the active card and item. A missing id gives null, never the first entity.
  * onChange runs once per real change. */
 export function createActiveEntities({ state, onChange } = {})
 {
-  const committed = {
-    [GalleryKind.Cards]: undefined,
-    [GalleryKind.Items]: undefined,
-  };
+  const committed = PerGallery(undefined);
   function set(kind, id)
   {
     const field = SelectedField[kind];

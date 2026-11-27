@@ -17,11 +17,8 @@ const SCOPE_TEXT = {
   weights: () => 'Global scoring · changes rescore every card',
   decks: () => 'Deck membership · changes only the chosen deck',
 };
+// The filter notice and its Clear button use the same name for id and class.
 export const FilterNoteId = Object.freeze({
-  Note: 'customization-filter-note',
-  Clear: 'customization-filter-clear',
-});
-const FilterNoteClass = Object.freeze({
   Note: 'customization-filter-note',
   Clear: 'customization-filter-clear',
 });
@@ -194,7 +191,7 @@ export function initCardEditorDock(ctx) {
   // When filters hide the active entity, one line says so and offers to clear them.
   const filterNote = doc.createElement('p');
   filterNote.id = FilterNoteId.Note;
-  filterNote.className = FilterNoteClass.Note;
+  filterNote.className = FilterNoteId.Note;
   filterNote.hidden = true;
   const filterNoteText = doc.createElement('span');
   filterNoteText.textContent = FilterNoteCopy.Text;
@@ -206,7 +203,7 @@ export function initCardEditorDock(ctx) {
     ctx.clearFilters?.(context);
     showLibrary(context);
   }
-  const clearFilters = button(FilterNoteCopy.ClearLabel, clearFiltersAndShowLibrary, FilterNoteClass.Clear);
+  const clearFilters = button(FilterNoteCopy.ClearLabel, clearFiltersAndShowLibrary, FilterNoteId.Clear);
   clearFilters.id = FilterNoteId.Clear;
   clearFilters.setAttribute('aria-label', FilterNoteCopy.ClearAriaLabel);
   filterNote.append(filterNoteText, filterNoteSeparator, clearFilters);

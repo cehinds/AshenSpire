@@ -278,9 +278,10 @@ test('every writer of the active card and item goes through the two setters', ()
   }
   const studio = source('studio.js');
   assert.equal(studio.match(/state\.artTarget\s*=(?!=)/g)?.length, 1, 'artTarget is set in one place, with activeGallery and the dock context');
-  assert.match(body(studio, 'selectStudioCard'), /activeEntities\.set\(GalleryKind\.Cards,/);
-  assert.match(body(studio, 'selectStudioItem'), /activeEntities\.set\(GalleryKind\.Items,/);
-  for (const name of ['selectStudioCard', 'selectStudioItem'])
+  assert.match(body(studio, 'selectStudioCard'), /selectGalleryEntity\(GalleryKind\.Cards,/);
+  assert.match(body(studio, 'selectStudioItem'), /selectGalleryEntity\(GalleryKind\.Items,/);
+  assert.match(body(studio, 'selectGalleryEntity'), /activeEntities\.set\(kind,/);
+  for (const name of ['selectStudioCard', 'selectStudioItem', 'selectGalleryEntity'])
   {
     assert.doesNotMatch(body(studio, name), /syncAllViews/, `${name} never rebuilds every view`);
   }
