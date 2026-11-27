@@ -189,9 +189,6 @@ const COMPATIBLE_HOST_RUNTIMES = new Set([
   'sha256:0c4e9eae226108858dcb937000b0992a33b778f650bb3e3e17a1c369ba51a0b3',
   // Same rules compiled from the repository's canonical LF kernel bytes.
   'sha256:c77d4f30494cb821fc66b9b9ef19b91fbb2c699633fe0137b72ab89d261ec831',
-  // 7c32f9ef4bc compiles spell-category/stamping changes and the stance reader repoint;
-  // archived profiles retain their explicit tradition tags, rules and integrity digest.
-  'sha256:eff6f5c38dcdba3c78d012bf55c8baf6fe703f664bc3f3416244b15d1fa07216',
   // Enemy level scaling (spCap in engine/kernel/gameConfig.js) moves the host runtime; prior saves keep their own rules.
   'sha256:659730689c3f0675a28b5ecbf6ef6c2bcbefa32b77c4794a5a5f9c14f0b8f07d',
 ]);
