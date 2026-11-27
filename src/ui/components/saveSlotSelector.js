@@ -394,32 +394,48 @@ export function openSaveSlotSelector({
         pointerOnly: true,
         hintHost: slotButton,
         onTap: () => activateSlot(slot),
-        onConfirm: (startEvent) => {
+        onConfirm: (startEvent) =>
+        {
           hideTooltip();
-          if (inlineReview) {
+          // armHold completes while the pointer is still down. Wait for the
+          // same pointer to release so the trailing touch click never hits the
+          // newly mounted map or confirmation veil underneath.
+          const pointerId = startEvent?.pointerId;
+          if (!Number.isInteger(pointerId))
+          {
             requestLoad(slot, 'hold');
             return;
           }
-
-          // armHold completes while the pointer is still down. Opening the
-          // Quick Menu confirmation at that instant lets the trailing touch
-          // release hit-test the new veil and cancel it. Retain this selector
-          // as the input owner until the same pointer ends, then cross the
-          // navigation boundary on the next task after its click is swallowed.
-          const pointerId = startEvent?.pointerId;
-          if (!Number.isInteger(pointerId)) return;
-          const clear = () => {
+          const clear = () =>
+          {
             slotButton.removeEventListener('pointerup', release);
             slotButton.removeEventListener('pointercancel', cancel);
-            if (clearPendingRelease === clear) clearPendingRelease = null;
+            if (clearPendingRelease === clear)
+            {
+              clearPendingRelease = null;
+            }
           };
-          const release = (endEvent) => {
-            if (endEvent.pointerId !== pointerId) return;
+          const release = (endEvent) =>
+          {
+            if (endEvent.pointerId !== pointerId)
+            {
+              return;
+            }
             clear();
-            setTimeout(() => { if (!closed) requestLoad(slot, 'hold'); }, 0);
+            setTimeout(() =>
+            {
+              if (!closed)
+              {
+                requestLoad(slot, 'hold');
+              }
+            }, 0);
           };
-          const cancel = (endEvent) => {
-            if (endEvent.pointerId === pointerId) clear();
+          const cancel = (endEvent) =>
+          {
+            if (endEvent.pointerId === pointerId)
+            {
+              clear();
+            }
           };
           clearPendingRelease?.();
           clearPendingRelease = clear;
