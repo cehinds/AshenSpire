@@ -168,7 +168,8 @@ try {
   const sentence = await page.evaluate(() => {
     document.querySelector('.studio-tab[data-tab="weights"]').click();
     const row = document.querySelector('.weight-row input.weight-per[aria-label="damage per"]').closest('.weight-row');
-    const order = [...row.querySelectorAll('.weight-sentence input:not([type="checkbox"])')].map((el) => el.className);
+    const sentenceInputs = row.querySelectorAll('.weight-sentence input:not([type="checkbox"])');
+    const order = [...sentenceInputs].map((el) => el.className);
     const words = [...row.querySelectorAll('.weight-sentence > :not(.weight-reset-btn)')].map((el) => (el.matches('.weight-words') ? el.textContent : `[${el.querySelector('input')?.className || el.className}]`)).filter(Boolean).join(' ');
     const weight = row.querySelector('input.weight-input');
     const per = row.querySelector('input.weight-per');
