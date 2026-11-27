@@ -125,8 +125,12 @@ export function ProjectCardMechanicalValues(def, { registries, rules, projection
     // be trusted; on a miss the already-owned result is used directly below.
     probeSource = needsNativeNormalization(authored) ? structuredClone(authored) : authored;
     if (profile?.content) {
-      const subject = { gameProfile: { ...profile, content: { ...profile.content, cards: [probeSource], resourceVariants: {} } } };
-      probeCard = Profile.ProjectGameCardProbe(subject, probeSource.id);
+      // One subject per scoped context (same profile); only its single card
+      // slot changes, and it is cleared again so no candidate is retained.
+      const subject = scoped.probeSubject ||= { gameProfile: { ...profile, content: { ...profile.content, cards: [null], resourceVariants: {} } } };
+      const slot = subject.gameProfile.content.cards;
+      slot[0] = probeSource;
+      try { probeCard = Profile.ProjectGameCardProbe(subject, probeSource.id); } finally { slot[0] = null; }
     }
     probeCard ||= structuredClone(probeSource);
   }
