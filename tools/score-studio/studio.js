@@ -1948,6 +1948,7 @@ function cardMenuActions() {
   };
   return [
     { label: 'Duplicate', run: () => document.getElementById('btn-duplicate-card').click() },
+    { label: 'Save as template…', hint: 'Keep this card's mechanics to start new cards from', run: () => cardTemplatesUi?.openSaveAsTemplate(def.id) },
     { label: 'Delete', enabled: added, hint: added ? '' : 'Only cards you added can be deleted', run: () => document.getElementById('btn-delete-card').click() },
     { label: 'Reset to default', enabled: inGame && !!def._edited && !def._custom, hint: inGame ? (def._edited ? '' : 'No edits to reset') : 'Not a game card', run: () => document.getElementById('btn-reset-card').click() },
     { separator: true },
@@ -4164,6 +4165,7 @@ function syncAllViews() {
   renderArtTab();
   subclassCatalogUi?.refresh();
   deckListPanelUi?.refresh();
+  cardTemplatesUi?.refresh();
   // The sandbox hand's rank badges follow undo, redo, slot loads, imports and Revert too.
   if (state.sandbox.combat) renderSandbox();
 }
@@ -5389,7 +5391,9 @@ async function boot() {
   }
 
   // Templates load before the draft is restored over them (the in-memory store until SS-003's Save path).
-  cardTemplatesUi = initCardTemplatesUi({ state, checkCard: templateCardProblem });
+  cardTemplatesUi = initCardTemplatesUi({ state, checkCard: templateCardProblem, pushHistory, saveDraft, toast,
+    artLayerIdsFor: def => matchingCustomLayers(def).map(layer => layer.id),
+  });
 
   await loadFromRepo(state.repoPath);
   state.coreCardIds = state.cards.map((c) => c.id);

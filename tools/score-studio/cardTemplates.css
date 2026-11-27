@@ -1,0 +1,7 @@
+/* Card templates (SS-004): Save as template, the Add card picker and Tools > Card templates. Dense, one line per entry. */
+body.studio-body .card-template-dialog { width: min(420px, calc(100vw - 24px)); padding: var(--studio-gap-4, 16px); }
+body.studio-body .card-template-dialog h3 { font-size: 15px; }
+body.studio-body .card-template-dialog p { margin: 0 0 var(--studio-gap-2, 8px); }
+body.studio-body .card-template-field { display: grid; gap: var(--studio-gap-1, 4px); margin-block: var(--studio-gap-2, 8px); }
+body.studio-body .card-template-field input { width: 100%; min-width: 0; box-sizing: border-box; }
+body.studio-body .card-template-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--studio-gap-2, 8px); margin-top: var(--studio-gap-2, 8px); }
