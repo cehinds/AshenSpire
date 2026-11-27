@@ -248,7 +248,9 @@ function scorePrepared(c, scoring, S, context) {
   }
   // scoring.drawbackCount: weight per drawback CARD_LIMITS counts (ops, keywords, debuffs on self).
   const DC = scoring.drawbackCount;
-  if (DC && DC.surchargeEnabled !== false && DC.weight) add('drawback count', CountSurcharge(DC, P, CountFaceDrawbacks(c).length));
+  if (DC && DC.surchargeEnabled !== false && DC.weight) {
+    add('drawback count', CountSurcharge(DC, P, CountFaceDrawbacks(c).length));
+  }
   // Owner 2026-11-23 (scoring.categories): each category the card belongs to adds its weight, or with `multiplier` on
   // scales the positive score by it (1 = no change).
   const CAT = scoring.categories;

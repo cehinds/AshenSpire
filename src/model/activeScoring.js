@@ -45,7 +45,9 @@ export function ValidateScoringConfig(obj) {
   }
   for (const countRule of ['effectCount', 'drawbackCount']) {
     const rule = obj[countRule];
-    if (rule && typeof rule === 'object' && 'multiplier' in rule && typeof rule.multiplier !== 'boolean') {
+    const badMultiplier = rule && typeof rule === 'object' && 'multiplier' in rule
+      && typeof rule.multiplier !== 'boolean';
+    if (badMultiplier) {
       errors.push(`${countRule}.multiplier must be true or false.`);
     }
   }
