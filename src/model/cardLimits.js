@@ -22,6 +22,12 @@ export const DEFAULT_CARD_LIMIT_RULES = Object.freeze({
     text: CARD_LIMITS.text,
 });
 
+/** A null or missing cap in CARD_LIMITS means no limit. */
+function hasLimit(limit)
+{
+    return Number.isFinite(limit);
+}
+
 function listOf(value)
 {
     return Array.isArray(value)
@@ -57,7 +63,7 @@ function effectsProblem(
     rules,
 )
 {
-    if (count <= rules.maxEffects)
+    if (!hasLimit(rules.maxEffects) || count <= rules.maxEffects)
     {
         return null;
     }
@@ -74,7 +80,7 @@ function drawbacksProblem(
     rules,
 )
 {
-    if (drawbacks.length <= rules.maxDrawbacks)
+    if (!hasLimit(rules.maxDrawbacks) || drawbacks.length <= rules.maxDrawbacks)
     {
         return null;
     }
@@ -129,6 +135,23 @@ export function CountCardParts(card, rules = DEFAULT_CARD_LIMIT_RULES)
             ...fromKeywords,
         ],
     };
+}
+
+/** Drawbacks on a scored face (fields loseHp, discard, kw, statuses as [id, stacks, target]). */
+export function CountFaceDrawbacks(face, rules = DEFAULT_CARD_LIMIT_RULES)
+{
+    const fromOps = Object.keys(rules.drawbackOps).filter((op) => face[op] > 0);
+    const fromKeywords = listOf(face.kw)
+        .filter((keyword) => isDrawbackKeyword(keyword, rules));
+    const fromStatuses = listOf(face.statuses)
+        .filter(([status, , target]) => target === SELF_TARGET
+            && rules.selfDebuffStatuses.includes(status))
+        .map(([status]) => FillTemplate(rules.text.selfDebuff, { status }));
+    return [
+        ...fromOps,
+        ...fromStatuses,
+        ...fromKeywords,
+    ];
 }
 
 /** Every card over a limit, as plain sentences; the upgraded face is checked too. */

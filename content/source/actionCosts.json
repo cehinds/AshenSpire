@@ -8,8 +8,8 @@
     "sweep": 2
   },
   "CARD_LIMITS": {
-    "maxEffects": 4,
-    "maxDrawbacks": 2,
+    "maxEffects": null,
+    "maxDrawbacks": null,
     "cardFiles": [
       "games/ashenspire/packs/core/cards.json",
       "games/ashenspire/packs/core/enemyCards.json"
@@ -21,7 +21,8 @@
       "upgradedFace": " upgraded",
       "selfDebuff": "{status} on self",
       "listJoiner": ", ",
-      "ok": "card-limits: ok (max {effects} effects, {drawbacks} drawbacks)",
+      "ok": "card-limits: ok (effect limit: {effects}, drawback limit: {drawbacks})",
+      "noLimit": "no limit",
       "failLine": "FAIL {file}: {problem}",
       "advice": "Edit those cards, or raise the limit in content/source/actionCosts.json (CARD_LIMITS)."
     },
