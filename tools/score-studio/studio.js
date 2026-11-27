@@ -48,7 +48,10 @@ import { filterMembership, deckCatalogOptions, resolveStudioDeck } from './deckC
 import { initGalleryZoom } from './galleryZoom.js';
 import { focusedEffectOptions } from './focusedRebalance.js';
 import { createAddCardTile, CaptureCardTilePositions, animateCardInsertion } from './addCardTile.js';
-import { OpenContentEditor } from './contentEditor/contentEditor.js';
+import {
+  OpenContentEditor,
+  SaveShownContentEditor,
+} from './contentEditor/contentEditor.js';
 import { InitStudioSaveUi, StudioSaveMenuLabel } from './studioSaveUi.js';
 import {
   GalleryKind,
@@ -111,6 +114,7 @@ function CountRuleRow(state, R, id, label)
 
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
 const saveShortcutKey = 's';
+const contentPanelId = 'tab-content';
 const fileMenu = 'file';
 const fileMenuHeadingId = 'menu-file';
 const studioSaveMenuId = 'menu-studio-save';
@@ -4818,6 +4822,10 @@ function setupShortcuts() {
     if (key === saveShortcutKey && !e.altKey)
     {
       e.preventDefault();
+      if (SaveShownContentEditor(document.getElementById(contentPanelId)))
+      {
+        return;
+      }
       studioSaveUi?.save();
       return;
     }
@@ -5002,7 +5010,7 @@ function wireEvents() {
         saveWorkingContext();
       }
       if (tab === 'sandbox' && !state.sandbox.combat) startSandboxCombat();
-      if (tab === 'content') OpenContentEditor(document.getElementById('tab-content'));
+      if (tab === 'content') OpenContentEditor(document.getElementById(contentPanelId));
       if (tab === 'art') renderArtTab();
       if (tab === 'effects') {
         if (!effectsFrame.hasAttribute('src')) effectsFrame.src = effectsFrame.dataset.src;

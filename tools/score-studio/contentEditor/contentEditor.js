@@ -16,6 +16,9 @@ const LISTBOX_ROLE = 'listbox';
 const STYLESHEET_REL = 'stylesheet';
 // This class cannot come from config: the config itself may be what failed to load.
 const OPEN_ERROR_CLASS = 'ce-open-error';
+const SHOWN_PANEL_CLASS = 'is-active';
+
+let openEditor = null;
 
 function loadStylesheet(href)
 {
@@ -263,6 +266,7 @@ export async function OpenContentEditor(panel)
         loadStylesheet(new URL(config.ui.stylesheet, config.folderUrl).href);
         panel.replaceChildren();
         const editor = new ContentEditor(panel, config);
+        openEditor = editor;
         await editor.ShowSection(config.sections[0].id);
     }
     catch (error)
@@ -270,4 +274,16 @@ export async function OpenContentEditor(panel)
         delete panel.dataset[OPENED_FLAG];
         showOpenError(panel, error);
     }
+}
+
+/** Saves the Game content editor when its panel is showing; false leaves the key to the caller. */
+export function SaveShownContentEditor(panel)
+{
+    const shown = panel?.classList.contains(SHOWN_PANEL_CLASS);
+    if (!openEditor || !shown)
+    {
+        return false;
+    }
+    openEditor.Save();
+    return true;
 }
