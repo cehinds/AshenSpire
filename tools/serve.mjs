@@ -60,7 +60,11 @@ import {
   saveStudioScoring,
   saveStudioSubclassCatalog,
 } from './score-studio-save.mjs';
-import { StudioSaveDir, StudioSaveEndpoint, StudioSaveMaxBytes } from './score-studio/studioSaveFiles.js';
+import {
+  StudioSaveDir,
+  StudioSaveEndpoint,
+  StudioSaveMaxBytes,
+} from './score-studio/studioSaveFiles.js';
 import { artPath, packTreeOf, HIGH_TREE } from './art-source.mjs';
 import { authoringRoot, compositeSourcePath, isAuthoringFile } from './art-authoring.mjs';
 import { existsSync, readdirSync, statSync, watch as fsWatch } from 'node:fs';
@@ -114,21 +118,48 @@ const WATCH_SKIP = /(^|\/)(\.|node_modules(\/|$))|~$|\.sw[px]$|\.tmp$/;
 const BUILD_ORDER = ['config-build.mjs', 'tokens-css.mjs', 'hud-layout-css.mjs', 'framework-data-build.mjs', 'content-build.mjs',
   'game-config.mjs build']; // last: it hashes src/** and reads the other generated modules
 
-/**
- * The Score Studio's own Save files (SS-003). They live under content/source/ but are not
- * game content: no build reads them, so a Save there owes no build and no page reload.
- */
-export { StudioSaveDir };
-const STUDIO_SAVE_DIR_PREFIX = `${StudioSaveDir}/`;
+const studioSaveDirPrefix = `${StudioSaveDir}/`;
+const httpOk = 200;
+const httpBadRequest = 400;
+const largeStudioPayloadPaths = Object.freeze([
+  '/__studio/custom-decks',
+  '/__studio/subclass-catalog',
+]);
+const largeStudioPayloadBytes = 4 * 1024 * 1024;
+const studioPayloadBytes = 1048576;
+const studioApiPaths = Object.freeze([
+  '/__studio/config',
+  '/__studio/scoring',
+  '/__studio/art-layers',
+  '/__studio/item-art-layers',
+  '/__studio/custom-decks',
+  '/__studio/subclass-catalog',
+  StudioSaveEndpoint,
+]);
 
-export function isStudioSavePath(relativePath)
+function studioPayloadLimit(urlPath)
 {
-  return relativePath === StudioSaveDir || relativePath.startsWith(STUDIO_SAVE_DIR_PREFIX);
+  if (urlPath === StudioSaveEndpoint)
+  {
+    return StudioSaveMaxBytes;
+  }
+  return largeStudioPayloadPaths.includes(urlPath)
+    ? largeStudioPayloadBytes
+    : studioPayloadBytes;
+}
+
+// The Studio's own Save files live under content/source/ but are not game content:
+// no build reads them, so a Save there owes no build and no page reload.
+export { StudioSaveDir };
+
+export function IsStudioSavePath(relativePath)
+{
+  return relativePath === StudioSaveDir || relativePath.startsWith(studioSaveDirPrefix);
 }
 
 /** Which build tool (in tools/) must run before a change under `rel` can be seen. */
 export function buildToolFor(rel) {
-  if (isStudioSavePath(rel))
+  if (IsStudioSavePath(rel))
   {
     return null;
   }
@@ -284,9 +315,10 @@ function startWatch(root, emit) {
   function changed(rel) {
     rel = rel.split(sep).join('/');
     if (WATCH_SKIP.test(rel)) return;
-    if (isStudioSavePath(rel))
+    // Studio Save files: no build reads them, nothing to reload.
+    if (IsStudioSavePath(rel))
     {
-      return; // Studio Save files: no build reads them, nothing to reload
+      return;
     }
     // A build's own output is recognised by name, never by timing, so an edit
     // made during a build (or just after it) is never dropped: it joins
@@ -478,7 +510,8 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, editorWrite =
         } catch (error) { reply(400, { ok: false, error: error.message }); }
         return;
       }
-      if (urlPath === '/__studio/config' || urlPath === '/__studio/scoring' || urlPath === '/__studio/art-layers' || urlPath === '/__studio/item-art-layers' || urlPath === '/__studio/custom-decks' || urlPath === '/__studio/subclass-catalog' || urlPath === StudioSaveEndpoint) {
+      if (studioApiPaths.includes(urlPath))
+      {
         const remote = req.socket.remoteAddress || '';
         const local = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(remote);
         const host = req.headers.host || '';
@@ -500,11 +533,11 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, editorWrite =
         {
           try
           {
-            reply(200, { ok: true, ...ReadStudioSave(rootResolved) });
+            reply(httpOk, { ok: true, ...ReadStudioSave(rootResolved) });
           }
           catch (error)
           {
-            reply(400, { ok: false, error: error.message });
+            reply(httpBadRequest, { ok: false, error: error.message });
           }
           return;
         }
@@ -513,11 +546,7 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, editorWrite =
           reply(403, { ok: false, error: 'Save must come from the local Score Studio.' }); return;
         }
         try {
-          const maxBytes = urlPath === StudioSaveEndpoint
-            ? StudioSaveMaxBytes
-            : ['/__studio/custom-decks', '/__studio/subclass-catalog'].includes(urlPath)
-              ? 4 * 1024 * 1024
-              : 1048576;
+          const maxBytes = studioPayloadLimit(urlPath);
           const chunks = []; let size = 0;
           for await (const chunk of req) {
             size += chunk.length;
@@ -527,7 +556,7 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, editorWrite =
           const body = JSON.parse(Buffer.concat(chunks).toString('utf8'));
           if (urlPath === StudioSaveEndpoint)
           {
-            reply(200, { ok: true, ...SaveStudioSave(rootResolved, body) });
+            reply(httpOk, { ok: true, ...SaveStudioSave(rootResolved, body) });
           }
           else if (urlPath === '/__studio/subclass-catalog') {
             reply(200, { ok: true, ...saveStudioSubclassCatalog(rootResolved, body) });
@@ -540,7 +569,11 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, editorWrite =
           } else {
             reply(200, { ok: true, ...saveStudioArtLayers(rootResolved, body) });
           }
-        } catch (error) { reply(error.statusCode || 400, { ok: false, error: error.message }); }
+        }
+        catch (error)
+        {
+          reply(error.statusCode || httpBadRequest, { ok: false, error: error.message });
+        }
         return;
       }
       const rel = normalize(urlPath).replace(/^([/\\]|\.\.([/\\]|$))+/, '').split(sep).join('/');
