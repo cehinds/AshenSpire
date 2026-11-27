@@ -12,11 +12,11 @@
 # 2026-10-11 (owner): a pull request into `dev` is gated by fast checks only
 # (about five minutes or less), and the heavy suites run on push to `test` and
 # `release` in ci.yml, which now holds every job that was once also here.
-#   pull_request into dev    — `core` and the eight `discovered` shards, which
+#   pull_request into dev    — `core` only (owner, 2026-11-27: heavier tests left dev).
+#   push to dev              — `core`, so the merged tree is read at once.
+#   push to review           — `core` and the eight `discovered` shards, which
 #                              leave out SLOW_DISCOVERED (--no-slow).
-#   push to dev              — the same as a pull request, so the merged tree
-#                              is read at once: two PRs each green alone can
-#                              break together.
+#   alternative/**/dev lines — `core` and the discovered shards, as before.
 #   workflow_dispatch        — the same jobs, on any ref.
 # Pushes to `test` and `release` do not run this file any more. ci.yml's
 # test-stage jobs retain all checks through exhaustive partitions:
@@ -71,9 +71,9 @@ name: tests
 
 on:
   pull_request:
-    branches: [dev, 'alternative/**/dev'] # fast core + discovered shards (--no-slow)
+    branches: [dev, 'alternative/**/dev'] # core only into dev; discovered shards on alternative lines
   push:
-    branches: [dev, 'alternative/**/dev'] # core + discovered shards on dev; see the header
+    branches: [dev, review, 'alternative/**/dev'] # core on dev; core + discovered shards on review
   workflow_dispatch:
 
 concurrency:
@@ -171,6 +171,8 @@ jobs:
 
   discovered:
     name: discovered tests (${{ matrix.shard }})
+    # Owner 2026-11-27: the heavy shards moved from dev to review; alternative lines keep them.
+    if: github.ref_name == 'review' || github.event_name == 'workflow_dispatch' || contains(github.base_ref || github.ref_name, 'alternative/')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
