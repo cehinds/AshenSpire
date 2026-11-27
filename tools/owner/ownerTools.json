@@ -34,15 +34,22 @@
       ]
     },
     {
-      "label": "Build content tables",
-      "args": [
-        "tools/content-build.mjs"
-      ]
-    },
-    {
       "label": "Build interface config",
       "args": [
         "tools/config-build.mjs"
+      ]
+    },
+    {
+      "label": "Build token styles",
+      "args": [
+        "tools/tokens-css.mjs",
+        "--write"
+      ]
+    },
+    {
+      "label": "Build content tables",
+      "args": [
+        "tools/content-build.mjs"
       ]
     },
     {
@@ -62,16 +69,23 @@
       ]
     },
     {
-      "label": "Check content tables",
+      "label": "Check interface config",
       "args": [
-        "tools/content-build.mjs",
+        "tools/config-build.mjs",
         "--check"
       ]
     },
     {
-      "label": "Check interface config",
+      "label": "Check token styles",
       "args": [
-        "tools/config-build.mjs",
+        "tools/tokens-css.mjs",
+        "--check"
+      ]
+    },
+    {
+      "label": "Check content tables",
+      "args": [
+        "tools/content-build.mjs",
         "--check"
       ]
     },
