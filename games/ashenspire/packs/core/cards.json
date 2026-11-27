@@ -107,7 +107,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 12
+        "amount": 8,
+        "breakBlock": 8
       }
     ],
     "tags": [
@@ -115,7 +116,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage.",
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
@@ -166,7 +167,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 32
+        "amount": 24,
+        "breakBlock": 24
       }
     ],
     "tags": [
@@ -175,7 +177,7 @@
       "classification.attack",
       "extractable"
     ],
-    "textTemplate": "Deal {damage} damage.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage.",
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
@@ -302,6 +304,13 @@
     "upgrade": {
       "cost": 2,
       "staminaCost": 2
+    },
+    "wither": 3,
+    "costGrowth": {
+      "stamina": 1,
+      "perUse": 1,
+      "max": 3,
+      "scope": "card"
     }
   },
   {
@@ -642,6 +651,13 @@
     "upgrade": {
       "cost": 3,
       "staminaCost": 3
+    },
+    "wither": 3,
+    "costGrowth": {
+      "stamina": 1,
+      "perUse": 1,
+      "max": 3,
+      "scope": "card"
     }
   },
   {
@@ -741,6 +757,13 @@
           "stacks": 1
         }
       ]
+    },
+    "wither": 3,
+    "costGrowth": {
+      "stamina": 1,
+      "perUse": 1,
+      "max": 3,
+      "scope": "card"
     }
   },
   {
@@ -1343,7 +1366,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 10
+        "amount": 7,
+        "breakBlock": 7
       },
       {
         "op": "poiseDamage",
@@ -1362,13 +1386,14 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Apply {vulnerable} Vulnerable.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage and {poiseDamage} Poise damage. Apply {vulnerable} Vulnerable.",
     "upgrade": {
       "effects": [
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 13
+          "amount": 9,
+          "breakBlock": 9
         },
         {
           "op": "poiseDamage",
@@ -1403,7 +1428,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 8
+        "amount": 5,
+        "breakBlock": 5
       },
       {
         "op": "poiseDamage",
@@ -1422,13 +1448,14 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Apply {bleed} Bleed.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage and {poiseDamage} Poise damage. Apply {bleed} Bleed.",
     "upgrade": {
       "effects": [
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 10
+          "amount": 7,
+          "breakBlock": 7
         },
         {
           "op": "poiseDamage",
@@ -1565,7 +1592,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 8
+        "amount": 5,
+        "breakBlock": 5
       },
       {
         "op": "poiseDamage",
@@ -1579,13 +1607,14 @@
       "classification.attack",
       "lifecycle.exhaust"
     ],
-    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Exhaust.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage and {poiseDamage} Poise damage. Exhaust.",
     "upgrade": {
       "effects": [
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 10
+          "amount": 7,
+          "breakBlock": 7
         },
         {
           "op": "poiseDamage",
@@ -1614,7 +1643,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 16
+        "amount": 11,
+        "breakBlock": 11
       },
       {
         "op": "poiseDamage",
@@ -1633,13 +1663,14 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Apply {vulnerable} Vulnerable.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage and {poiseDamage} Poise damage. Apply {vulnerable} Vulnerable.",
     "upgrade": {
       "effects": [
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 20
+          "amount": 13,
+          "breakBlock": 13
         },
         {
           "op": "poiseDamage",
@@ -2542,7 +2573,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 14
+        "amount": 9,
+        "breakBlock": 9
       },
       {
         "op": "poiseDamage",
@@ -2561,13 +2593,14 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Apply {vulnerable} Vulnerable.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage and {poiseDamage} Poise damage. Apply {vulnerable} Vulnerable.",
     "upgrade": {
       "effects": [
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 18
+          "amount": 12,
+          "breakBlock": 12
         },
         {
           "op": "poiseDamage",

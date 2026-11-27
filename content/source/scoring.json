@@ -66,7 +66,7 @@
       "why": "Pays only on Break; a third of HP damage."
     },
     "blockBreak": {
-      "weight": 3,
+      "weight": 0.75,
       "per": 1,
       "basis": "flat Block removed before damage",
       "projection": "guardInteraction -> blockBreak (content/source/mechanics/guardInteraction.json); does not hit Ward or unblocked HP",

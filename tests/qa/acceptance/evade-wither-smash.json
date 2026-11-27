@@ -1,0 +1,32 @@
+{
+  "request": "Evade is too strong; Retreat should be Ethereal and cost more each use; Smash should deal flat Block damage.",
+  "viewports": [
+    { "name": "desktop", "width": 1280, "height": 800 },
+    { "name": "phone", "width": 390, "height": 844 }
+  ],
+  "scenes": [
+    {
+      "name": "combat-hand",
+      "url": "?shot=combat&shotSeed=4&shotCards=core.evade,core.smash,evasiveGuard",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [
+        { "wait": { "ms": 300 } }
+      ],
+      "success": [
+        { "kind": "count", "label": "Hand holds the three posed cards", "selector": ".hand .card", "eq": 3 },
+        { "kind": "text", "label": "The Evade card shows Wither 3", "selector": ".hand .card[data-card-id=\"core.evade\"]", "includes": "Wither 3" },
+        { "kind": "text", "label": "The Evade card shows the rising cost line", "selector": ".hand .card[data-card-id=\"core.evade\"]", "includes": "each time you play this card this fight" },
+        { "kind": "text", "label": "Smash shows Break 8 Block", "selector": ".hand .card[data-card-id=\"core.smash\"]", "includes": "Break 8 Block" },
+        { "kind": "text", "label": "Evasive Guard shows Wither 3", "selector": ".hand .card[data-card-id=\"evasiveGuard\"]", "includes": "Wither 3" },
+        { "kind": "within", "label": "The Evade card's text stays inside its card", "selector": ".hand .card[data-card-id=\"core.evade\"] [data-card-binding=\"rules\"]", "container": ".hand .card[data-card-id=\"core.evade\"]" },
+        { "kind": "within", "label": "Smash's text stays inside its card", "selector": ".hand .card[data-card-id=\"core.smash\"] [data-card-binding=\"rules\"]", "container": ".hand .card[data-card-id=\"core.smash\"]" },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["navigator\.vibrate"] }
+      ],
+      "failure": [
+        { "kind": "count", "label": "Hand is empty", "selector": ".hand .card", "eq": 0 },
+        { "kind": "text", "label": "Smash still promises a share of the target's Block", "selector": ".hand .card[data-card-id=\"core.smash\"]", "includes": "of their Block" }
+      ]
+    }
+  ]
+}

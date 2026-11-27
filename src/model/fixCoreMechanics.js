@@ -113,9 +113,11 @@ export function FixCoreBrokenRules(ctx) {
   // Owner, 2026-11-18: a break also applies `breakStatusStacks` stacks each of Staggered, Vulnerable, Weak and Frail until the owner's next turn starts (0 or absent: none).
   return poise?.breakRule === 'broken' ? { damageMultiplier: poise.brokenDamageMultiplier ?? FIXCORE_BROKEN_DAMAGE_MULTIPLIER, statusStacks: poise.breakStatusStacks ?? 0 } : null;
 }
-// Owner, 2026-10-19: a Smash against a defensive stance deals damageMultiplier x its normal damage plus blockFraction of the target's Block,
-// and costs the target's Poise poiseFraction of that total (instead of the 25% Poise absorption). Missing blocks keep these defaults.
-export const FIXCORE_SMASH_VS_DEFENSIVE_DEFAULTS = Object.freeze({ damageMultiplier: 1.25, blockFraction: 0.25, poiseFraction: 0.5 });
+// Owner, 2026-10-19: a Smash against a defensive stance deals damageMultiplier x its normal damage and costs the target's Poise poiseFraction of
+// that total (instead of the 25% Poise absorption). Missing blocks keep these defaults. Owner, 2026-11-20: the share of the target's Block
+// (`blockFraction`) is gone; a Smash card's damage effect breaks a flat amount of Block instead (`breakBlock`). A saved fight's rules may still
+// carry `blockFraction`; it is accepted and ignored.
+export const FIXCORE_SMASH_VS_DEFENSIVE_DEFAULTS = Object.freeze({ damageMultiplier: 1.25, poiseFraction: 0.5 });
 export const fixCoreSmashVsDefensiveRules = rules => ({ ...FIXCORE_SMASH_VS_DEFENSIVE_DEFAULTS, ...(rules?.smashVsDefensive || {}) });
 // Owner, 2026-10-26: a pierce hit lets floor(blockBypassFraction x its damage) past Block. Missing blocks keep this default.
 // Owner, 2026-11-18: `builtInElements` carry Pierce without a tag (Lightning); `skinStatus` is the status whose stacks each cut a Pierce hit's bypass by 1 (Stone Skin);
@@ -300,8 +302,9 @@ export function validateFixCoreRules(rules) {
   validateBands(rules.bands);
   const smash = rules.smashVsDefensive;
   if (smash !== undefined && (typeof smash !== 'object' || smash === null || Object.keys(smash).some(key => !['damageMultiplier','defendDamageMultiplier','blockFraction','poiseFraction'].includes(key))
-    || ![smash.damageMultiplier,smash.blockFraction,smash.poiseFraction].every(v => typeof v === 'number' && Number.isFinite(v)) || smash.damageMultiplier < 1 || smash.blockFraction < 0 || smash.poiseFraction < 0
-    || (smash.defendDamageMultiplier !== undefined && (typeof smash.defendDamageMultiplier !== 'number' || !Number.isFinite(smash.defendDamageMultiplier) || smash.defendDamageMultiplier < 1)))) throw new Error('FixCore smashVsDefensive requires {damageMultiplier>=1, optional defendDamageMultiplier>=1, blockFraction>=0, poiseFraction>=0}');
+    || ![smash.damageMultiplier,smash.poiseFraction].every(v => typeof v === 'number' && Number.isFinite(v)) || smash.damageMultiplier < 1 || smash.poiseFraction < 0
+    || (smash.blockFraction !== undefined && (typeof smash.blockFraction !== 'number' || !Number.isFinite(smash.blockFraction) || smash.blockFraction < 0))
+    || (smash.defendDamageMultiplier !== undefined && (typeof smash.defendDamageMultiplier !== 'number' || !Number.isFinite(smash.defendDamageMultiplier) || smash.defendDamageMultiplier < 1)))) throw new Error('FixCore smashVsDefensive requires {damageMultiplier>=1, optional defendDamageMultiplier>=1, poiseFraction>=0}');
   if (rules.elements !== undefined && (typeof rules.elements !== 'object' || rules.elements === null || rules.elements.version !== 1)) throw new Error('FixCore elements requires {version:1}');
   for(const key of Object.keys(rules)) if(!known.has(key)) throw new Error(`FixCore unknown configuration field ${key}`);
   for (const tag of rules.defaultTags || []) if (!behaviorTags.has(tag)) throw new Error(`FixCore unknown behavior tag ${tag}`);

@@ -188,6 +188,8 @@ function openFight(api, enemyId, encounterId, profileId, contentVersion) {
   delete combat.fixCoreRules?.bands;
   // This scenario pins an actual pre-override combat, not today's new-fight defaults.
   if (profileId === 'historical') delete combat.fixCoreRules?.smashVsDefensive?.defendDamageMultiplier;
+  // Archived/historical JS01 captures predate dropping smashVsDefensive.blockFraction (2026-11-20); restore it in the snapshot so the immutable capture stays exact.
+  if (!controlled && combat.fixCoreRules?.smashVsDefensive) combat.fixCoreRules.smashVsDefensive.blockFraction = 0.25;
   if (controlled) {
     for (const enemy of combat.enemies) {
       const pool = fixtures[enemy.enemyId].spPool;

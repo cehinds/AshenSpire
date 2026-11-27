@@ -113,12 +113,12 @@ test('controlled Smash modes apply multiplier, flat scale and break stages indep
     receipts[mode] = profileDamageReceipt(c, c.player, enemy, 20, carrier, { forecast: true });
   }
   assert.equal(receipts.multiplier.blockBrokenFlat, undefined);
-  assert.equal(receipts.multiplier.hpLoss, 35, '20*2 + half of10 held Block -10 absorbed');
+  assert.equal(receipts.multiplier.hpLoss, 30, '20*2 - 10 absorbed');
   assert.equal(receipts.flatBreak.blockBrokenFlat, 10);
   assert.equal(receipts.flatBreak.hpLoss, 10, '20*.5 with ten Block destroyed before absorption');
   assert.equal(receipts.both.blockBrokenFlat, 10);
-  assert.equal(receipts.both.hpLoss, 45, 'multiplier and held-Block bonus plus flat break');
-  assert.ok(receipts.flatBreak.damageReceipt.hits[0].sources.some(row => row.id === 'flat-block-break'));
+  assert.equal(receipts.both.hpLoss, 40, 'multiplier plus flat break');
+  assert.ok(receipts.flatBreak.damageReceipt.hits[0].sources.some(row => row.id === 'break-block'));
   assert.deepEqual(enemy, before);
 });
 

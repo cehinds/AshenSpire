@@ -62,9 +62,17 @@
         "damageSchool": {
           "type": "string",
           "required": false
+        },
+        "breakBlock": {
+          "type": "integer",
+          "required": false
+        },
+        "breakPoise": {
+          "type": "integer",
+          "required": false
         }
       },
-      "description": "Deals amount damage to each target, hits times (default 1). Block absorbs first, then hp.",
+      "description": "Deals amount damage to each target, hits times (default 1). Block absorbs first, then hp. breakBlock / breakPoise first remove that much Block / Poise from each target the first hit lands on.",
       "reference": "portable",
       "legacy": {
         "file": "src/engine/actions.js",

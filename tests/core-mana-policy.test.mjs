@@ -216,14 +216,16 @@ test('core Reaver Mana grows by one with each earned Wisdom, independent of Inte
 });
 
 // Owner ruling 2026-11-21 (starter budget): Sundering Art is Unranked, so it prints 32 (was 3x Smash = 36).
-test('core Smash is twice its same-rank Strike for one extra SP; Sundering Art is a 2 SP + 1 MP Smash printing 32', () =>
+test('core Smash deals 2/3 of 2x Strike and breaks that Block; Sundering Art is a 2 SP + 1 MP Smash', () =>
 {
     const strike = resolveCard(registries, { cardId: 'core.strike' });
     const smash = resolveCard(registries, { cardId: 'core.smash' });
     const art = resolveCard(registries, { cardId: 'core.reaverSpecial' });
     assert.deepEqual([strike.effects[0].amount, strike.staminaCost, strike.manaCost], [6, 1, 0]);
-    assert.deepEqual([smash.effects[0].amount, smash.staminaCost, smash.manaCost], [12, 2, 0]);
-    assert.deepEqual([art.effects[0].amount, art.staminaCost, art.manaCost], [32, 2, 1]);
+    const smashHit = smash.effects[0];
+    const artHit = art.effects[0];
+    assert.deepEqual([smashHit.amount, smashHit.breakBlock, smash.staminaCost, smash.manaCost], [8, 8, 2, 0]);
+    assert.deepEqual([artHit.amount, artHit.breakBlock, art.staminaCost, art.manaCost], [24, 24, 2, 1]);
     assert.ok(smash.tags.includes('maneuver:smash') && art.tags.includes('maneuver:smash'));
 });
 
