@@ -278,6 +278,17 @@ function bundledStartingDecks(html, { restoreCycle = false } = {}) {
     const opening = validator < 0 ? -1 : script.indexOf('\n', validator);
     if (opening < 0) return { ok: false, why: 'validator factory not found' };
     script = script.slice(0, opening + 1) + 'require("src/model/state.js");\n' + script.slice(opening + 1);
+    // State now defers reads from that partial facade. Restore its old captured
+    // binding as well, so this plant still exercises the original failure.
+    const stateStart = script.indexOf('"src/model/state.js": function');
+    const stateEnd = script.indexOf('\n},\n"', stateStart);
+    if (stateStart < 0 || stateEnd < 0) return { ok: false, why: 'state factory not found' };
+    const stateBody = script.slice(stateStart, stateEnd);
+    const liveLoadout = 'const Loadout = require("src/model/loadout.js");';
+    if (!stateBody.includes(liveLoadout) || !stateBody.includes('Loadout.createLoadout(')) return { ok: false, why: 'deferred loadout read not found' };
+    const captured = stateBody.replace('Loadout.createLoadout(', 'createLoadout(')
+      .replace(liveLoadout, liveLoadout + '\nconst createLoadout = Loadout.createLoadout;');
+    script = script.slice(0, stateStart) + captured + script.slice(stateEnd);
   }
   const entry = '  require("src/main.js");\n})();';
   if (!script.endsWith(entry + '\n') && !script.trimEnd().endsWith(entry)) return { ok: false, why: 'runtime entry not found' };
@@ -364,7 +375,8 @@ if (process.argv.includes('--model-runtime-only')) {
   check('pack: each pinned index is written beside it', !!pin && Object.values(pin.packs).every((p) => existsSync(resolve(dir, 'build', p.index))));
   check('pack: its edition is its default tier', /const EDITION = 'light';/.test(html));
   check('pack: it inlines no art (ASSET_MAP stays empty)', /ASSET_MAP = \{\}/.test(html) && !/"assets\/[^"]+":\s*"data:image\/webp/.test(html));
-  check('pack: the HTML is code, not media (under 16 MB)', html.length > 500000 && html.length < 16_000_000, `${html.length} bytes`);
+  const htmlBytes = Buffer.byteLength(html, 'utf8');
+  check('pack: the HTML is code, not media (under 16 MB)', htmlBytes > 500000 && htmlBytes < 16_000_000, `${htmlBytes} bytes`);
   const mobile = build(dir, ['--mobile']);
   check('pack: --mobile is refused by name (the edition is retired)', mobile.status === 2 && /--mobile is retired/.test(mobile.out), `exit ${mobile.status}: ${mobile.out.slice(0, 200)}`);
   rmSync(dir, { recursive: true, force: true });

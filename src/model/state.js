@@ -1,6 +1,7 @@
 import { ValidLevelRewardRules } from './classLevelBonus.js';
 import { gameProfileEffectiveAttributes } from './gameProfileGear.js';
-import { validateVerifiedProfile as validateResolvedGameProfile } from './verifiedProfiles.js';
+import { validateVerifiedProfile as validateResolvedGameProfile, IsCanonicalVerifiedProfile } from './verifiedProfiles.js';
+import * as GameConfig from '../../engine/kernel/gameConfig.js';
 import { gameModule, gameContent } from './gameProfile.js';
 import { configuredModule } from './profileModule.js';
 import { upgradeStepsProblems } from './cardUpgrade.js';
@@ -15,6 +16,17 @@ import { advancedConfigSnapshot, coreAdvancedConfigSnapshot } from './advancedCo
 import { reactionRulesSnapshot, reactionRulesProblems } from '../content/combatCardTraits.js';
 import { snapshotRangePolicy, rangePolicyProblems, RANGE_POLICY_DEFAULTS } from './combatEngagement.js';
 import { fixCoreMechanics } from '../content/generated/fixCoreMechanics.js';
+
+// Only the separate canonical brand plus deep freeze authorizes this copy.
+// Normalization already established finite, acyclic plain data; preserve -0,
+// array holes and every value while creating a fresh graph for the run.
+function copyCanonical(value) {
+  if (!value || typeof value !== 'object') return value;
+  if (Array.isArray(value)) return value.map(copyCanonical);
+  const copy = {};
+  for (const key of Object.keys(value)) copy[key] = copyCanonical(value[key]);
+  return copy;
+}
 // src/model/state.js — run/combat state factories + (de)serialization (SPEC §3.3, §3.12)
 //
 // State stores INSTANCE data referencing definitions by id only:
@@ -27,7 +39,9 @@ import { fixCoreMechanics } from '../content/generated/fixCoreMechanics.js';
 // Headless: no document/window/localStorage/timers.
 
 import { bindTurnStamina } from './turnStamina.js';
-import { createLoadout, runMods, stampDeck, startingDeckRefs, orderStartingDeck, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRequirementReceipt, reconcileGrantedCards, EQUIPMENT_POOL_FIELDS } from './loadout.js';
+// The classic loader can reach state while the loadout facade is initializing.
+// Read its exports when a run is created/restored, after that cycle settles.
+import * as Loadout from './loadout.js';
 import { chargeKindForFlask, createFlaskCharges, flaskCapacity } from './gracerefill.js';
 import { syncFlaskGrowth } from './flaskgrowth.js';
 import { classAttributePreset, creationModeSnapshot, defaultCreationModeId, normalizeRunAttributes } from './attributes.js';
@@ -255,7 +269,7 @@ export function createRunState({
   // what createLoadout always chose. The loadout row is the persisted home;
   // no new run field, because run.loadout.sets.armor[0] already IS the record.
   const startingArmour = resolveStartingArmour(registries, classId, startingArmourId, profileMeta);
-  const loadout = createLoadout(registries, classId, startingKit, startingArmour);
+  const loadout = Loadout.createLoadout(registries, classId, startingKit, startingArmour);
   // A class's baseline kit is part of its birth contract, not an equipment
   // choice made after creation. Alternate kits still pass the requirement
   // gate; the baseline remains usable when a save-safe mode retunes attributes.
@@ -264,7 +278,7 @@ export function createRunState({
     : Object.entries({ rightHand: startingKit.rightHand, leftHand: startingKit.leftHand })) {
     if (!itemId) continue;
     const piece = (registries.equipment.armaments || []).find((row) => row.id === itemId);
-    const receipt = equipmentRequirementReceipt(registries, piece, attributes);
+    const receipt = Loadout.equipmentRequirementReceipt(registries, piece, attributes);
     if (!receipt.ok) {
       const failed = receipt.failures[0];
       throw new Error(`${startingKit.id}.${slotId}: ${itemId} requires ${failed.attributeId} ${failed.required} (got ${failed.actual})`);
@@ -272,11 +286,14 @@ export function createRunState({
   }
   // Equipment can carry pool bonuses, so the active set is resolved before the
   // run fills HP, Mana, and Stamina at the derived-stat door below.
-  const startingRunMods = runMods(registries, loadout, classId);
-  const equipmentPoolBonuses = Object.fromEntries(EQUIPMENT_POOL_FIELDS.map((field) => [field, startingRunMods[field]]));
+  const startingRunMods = Loadout.runMods(registries, loadout, classId);
+  const equipmentPoolBonuses = Object.fromEntries(Loadout.EQUIPMENT_POOL_FIELDS.map((field) => [field, startingRunMods[field]]));
   const oldMaxHp = classDef.maxHp + equipmentPoolBonuses.maxHp;
   const run = {
-    ...(gameProfile ? { gameProfile: structuredClone(gameProfile), runId: runId || globalThis.crypto.randomUUID() } : {}),
+    // Only normalized factories prove canonical JSON's domain. Raw verified
+    // snapshots may retain metadata, so every other input keeps native cloning.
+    ...(gameProfile ? { gameProfile: IsCanonicalVerifiedProfile(gameProfile) && Object.isFrozen(gameProfile)
+      ? copyCanonical(gameProfile) : structuredClone(gameProfile), runId: runId || globalThis.crypto.randomUUID() } : {}),
     combatExpansionVersion,
     ...(combatExpansionVersion === 2 && gameModule(profileSubject, 'effects')?.fixCoreVersion === 1
       ? { rangePolicy: snapshotRangePolicy(gameProfile.fixCoreRules?.range ?? fixCoreMechanics.range, profileMeta.settings || {}) } : {}),
@@ -339,7 +356,7 @@ export function createRunState({
     smithingStonesRefined: 0, // refined Smithing Stones (SPEC §15.3)
     itemUpgradeLevels: {},
     smithingRewardClaims: [],
-    deck: configured ? [] : startingDeckRefs(registries, loadout, classId).map((ref) => ({ ...createCardInstance(ref.cardId, false, idGen), ...ref })),
+    deck: configured ? [] : Loadout.startingDeckRefs(registries, loadout, classId).map((ref) => ({ ...createCardInstance(ref.cardId, false, idGen), ...ref })),
     sideboard: [], // owned cards the deck editor took out of the deck (SPEC §14.1)
     // SPEC §14.3: owned sigils not installed anywhere, and the sigil slots cut
     // into items ({ [itemRef]: (sigilId|null)[] }, keyed like itemMounts).
@@ -415,7 +432,7 @@ export function createRunState({
   });
   // Starting choices must see package and weapon grants, because those cards
   // count toward copy limits and distinct-family eligibility.
-  reconcileGrantedCards(registries, run);
+  Loadout.reconcileGrantedCards(registries, run);
   // Starter families keep their weak action-only face even when their reward
   // catalogue defaults to an advanced Mana-costing profile.
   if (run.progressionRulesVersion === 1) for (const inst of run.deck) if (registries.cards.get(inst.cardId).gradeProfiles) inst.abilityRank = 0;
@@ -425,17 +442,17 @@ export function createRunState({
   // Stamp only after every opening card exists. Starting ability grades own
   // their carrier fields too; adding them after this door left the initial
   // instance on its legacy buildup until a later restamp changed its rules.
-  stampDeck(registries, run);
+  Loadout.stampDeck(registries, run);
   // ORDERED ONCE, HERE. stampDeck has just reconciled the package grants and
   // weapon arts onto the deck, so this is the first moment the whole opening
   // deck exists — and "bound cards are dealt first, in sourceOrder" is a
   // statement about the deck a run BEGINS with, not about later arrivals.
-  orderStartingDeck(registries, run);
+  Loadout.orderStartingDeck(registries, run);
   if (!configured) ensureExpandedStarterCoverage(registries, run);
   initializeGameProfileRun(registries, run, { profileMeta });
   // Core: the authored deck exists now; add what the worn gear's grantedCards lend (owner 2026-10-19).
   if (configured) {
-    reconcileGrantedCards(registries, run);
+    Loadout.reconcileGrantedCards(registries, run);
     const starterArtRank = gameContent(run, 'starterDeck')?.weaponArtRank;
     if (starterArtRank === 1 && gameModule(run, 'progression')?.cardRanks === true) {
       for (const card of run.deck) {
@@ -506,10 +523,10 @@ function derivedStatContext(run, registries, snapshot, derivedStatOptions) {
   const effectiveDerivedStatOptions = { ...derivedStatOptions, modeModifiers };
   const existing = snapshot || run.derivedStatRuleSnapshot;
   const classDef = registries.classes.get(run.class);
-  const liveEquipmentMods = run.loadout ? runMods(registries, run.loadout, run.class, run) : null;
+  const liveEquipmentMods = run.loadout ? Loadout.runMods(registries, run.loadout, run.class, run) : null;
   run.equipmentProfileRuleSnapshot = run.equipmentProfileRuleSnapshot
-    ? restoreEquipmentProfileRuleSnapshot(run.equipmentProfileRuleSnapshot, registries)
-    : createEquipmentProfileRuleSnapshot(registries, effectiveDerivedStatOptions);
+    ? Loadout.restoreEquipmentProfileRuleSnapshot(run.equipmentProfileRuleSnapshot, registries)
+    : Loadout.createEquipmentProfileRuleSnapshot(registries, effectiveDerivedStatOptions);
   const currentRuleset = registries.derivedStatRules.rulesetVersion;
   // Ruleset 3 was the first fully persisted, host-owned snapshot. Preserve it
   // exactly across later balance tables; versions 1/2 remain migration inputs.
@@ -527,10 +544,10 @@ function inferEquipmentPools(run, ctx) {
   // run's own immutable rule snapshot. A later content edit therefore cannot
   // rebalance or archive a climb merely because its active piece gained a mod.
   if (!run.equipmentPoolBonuses) {
-    const inferred = Object.fromEntries(EQUIPMENT_POOL_FIELDS.map((field) => [field, liveEquipmentMods ? liveEquipmentMods[field] : 0]));
+    const inferred = Object.fromEntries(Loadout.EQUIPMENT_POOL_FIELDS.map((field) => [field, liveEquipmentMods ? liveEquipmentMods[field] : 0]));
     if (restoredExisting) {
       const statFor = { maxHp: 'hp', maxMana: 'mana', maxStamina: 'stamina' };
-      for (const maxField of EQUIPMENT_POOL_FIELDS) {
+      for (const maxField of Loadout.EQUIPMENT_POOL_FIELDS) {
         const persistedMax = run[maxField];
         const adjustment = maxField === 'maxHp' ? run.maxHpAdjustment : 0;
         if (!Number.isFinite(persistedMax) || !Number.isInteger(adjustment)) continue;
@@ -548,7 +565,7 @@ function inferEquipmentPools(run, ctx) {
       why: 'absent in the save: inferred once from persisted maxima and the run-owned derived-stat snapshot, so live equipment content cannot rewrite the climb',
     });
   }
-  for (const field of EQUIPMENT_POOL_FIELDS) {
+  for (const field of Loadout.EQUIPMENT_POOL_FIELDS) {
     if (!Number.isInteger(run.equipmentPoolBonuses[field])) {
       throw new Error(`Persisted equipmentPoolBonuses.${field} must be an integer`);
     }

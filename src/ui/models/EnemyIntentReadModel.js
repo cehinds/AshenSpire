@@ -5,7 +5,7 @@ import { enemyMoveCards } from '../../model/enemyMoveCards.js';
 import { projectCombatIntent } from './CombatIntentProjectionModel.js';
 import { ChargingWhen, intentDamageRead } from './CombatIntentModel.js';
 import { t } from '../strings.js';
-import { enemyMoveOf } from '../../model/enemyMoveSet.js';
+import { EnemyMoveOf } from '../../model/enemyMoveSet.js';
 
 const words = value => String(value || '').replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/[_-]/g, ' ').replace(/^./, c => c.toUpperCase());
 
@@ -22,7 +22,7 @@ export function enemyIntentRead(combat, enemy, { preview = projectCombatIntent(c
   if (!row) {
     // One move only, the instance's own (a level-card move) or its row's: the tooltip never walks the move set.
     const def = combat.registries.enemies.get(enemy.enemyId);
-    const move = enemyMoveOf(combat.registries, enemy, moveId);
+    const move = EnemyMoveOf(combat.registries, enemy, moveId);
     if (move) {
       // previewIntent already materializes this public payload. Reuse it when
       // present; callers with a public move-only read resolve that one move.

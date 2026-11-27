@@ -33,7 +33,7 @@ function entriesFor(list, enemyId)
  * The first `count` level cards of an enemy: the top LEVEL_CARD_TOP entries in hash order for `seedKey`, then the
  * rest in list order. `list` is the whole level-card map or one enemy's array. Never repeats an entry.
  */
-export function levelCardsFor(list, enemyId, count, seedKey)
+export function LevelCardsFor(list, enemyId, count, seedKey)
 {
     const entries = entriesFor(list, enemyId);
     const take = Math.max(0, Math.min(Number.isSafeInteger(count) ? count : 0, entries.length));
@@ -45,7 +45,7 @@ export function levelCardsFor(list, enemyId, count, seedKey)
 }
 
 /** The level-card move id for an entry: "level." plus the part of its id after ".level." (else the whole id). */
-export function levelMoveId(entry)
+export function LevelMoveId(entry)
 {
     const marker = '.level.';
     const at = entry.id.indexOf(marker);
@@ -53,10 +53,10 @@ export function levelMoveId(entry)
 }
 
 /** { moveId: move } for picked entries, each move a fresh copy. */
-export function levelCardMoves(entries)
+export function LevelCardMoves(entries)
 {
     return Object.fromEntries((entries || []).map(entry => [
-        levelMoveId(entry),
+        LevelMoveId(entry),
         {
             ...entry.move,
             ...(entry.move.effects ? { effects: entry.move.effects.map(effect => ({ ...effect })) } : {}),

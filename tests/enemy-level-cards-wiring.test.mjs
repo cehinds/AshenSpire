@@ -17,8 +17,8 @@ import { createRng } from '../src/engine/rng.js';
 import { dispatch } from '../src/engine/combat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { moveSp, enemyMoveQuote } from '../src/engine/combatRoundsAdapter.js';
-import { levelCardsFor, levelMoveId } from '../src/model/enemyLevelCards.js';
-import { enemyDefinitionOf, enemyMoveOf } from '../src/model/enemyMoveSet.js';
+import { LevelCardsFor, LevelMoveId } from '../src/model/enemyLevelCards.js';
+import { EnemyDefinitionOf, EnemyMoveOf } from '../src/model/enemyMoveSet.js';
 import { enemyMoveCards } from '../src/model/enemyMoveCards.js';
 
 const plain = value => JSON.parse(JSON.stringify(value));
@@ -48,10 +48,10 @@ test('an act-1 minion has 0, 1 and 2 level moves on floors 2, 5 and 8', () => {
   assert.deepEqual([low, mid, high].map(enemy => levelIds(enemy).length), [0, 1, 2]);
   assert.equal(low.extraMoves, undefined, 'a step-0 enemy carries no overlay');
   for (const enemy of [mid, high]) {
-    const picked = levelCardsFor(lists, 'wanderingSoldier', enemy.levelStep, `77/${enemy.id}`);
-    assert.deepEqual(levelIds(enemy), picked.map(levelMoveId));
+    const picked = LevelCardsFor(lists, 'wanderingSoldier', enemy.levelStep, `77/${enemy.id}`);
+    assert.deepEqual(levelIds(enemy), picked.map(LevelMoveId));
     for (const entry of picked) {
-      const move = enemy.extraMoves[levelMoveId(entry)];
+      const move = enemy.extraMoves[LevelMoveId(entry)];
       assert.equal(move.name, entry.name);
       assert.equal(move.sp, 2);
       assert.equal(move.levelCard, entry.id);
@@ -73,7 +73,7 @@ test('picks are deterministic per seed and follow the instance', () => {
   for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
     const a = fight(core, 'wanderingSoldier', 1, 8, seed).enemies[0], b = fight(core, 'wanderingSoldier', 1, 8, seed).enemies[0];
     assert.deepEqual(plain(a.extraMoves), plain(b.extraMoves), `seed ${seed}`);
-    assert.deepEqual(levelIds(a), levelCardsFor(lists, 'wanderingSoldier', 2, `${seed}/e1`).map(levelMoveId));
+    assert.deepEqual(levelIds(a), LevelCardsFor(lists, 'wanderingSoldier', 2, `${seed}/e1`).map(LevelMoveId));
     seen.add(levelIds(a).join(','));
   }
   assert.ok(seen.size > 1, 'different seeds can give different cards');
@@ -86,7 +86,7 @@ test('level moves cost 2 SP and show under the card name', () => {
     assert.equal(moveSp(move, { enemy, moveId, combat }), 2, moveId);
     assert.equal(enemyMoveQuote(move, { enemy, moveId, combat }).sp, 2, moveId);
   }
-  const cards = enemyMoveCards(enemyDefinitionOf(core, enemy), { enemy, registries: core });
+  const cards = enemyMoveCards(EnemyDefinitionOf(core, enemy), { enemy, registries: core });
   for (const move of Object.values(enemy.extraMoves)) assert.ok(cards.some(card => card.name === move.name), move.name);
 });
 
@@ -103,7 +103,7 @@ test('an enemy chooses and resolves a level move, and the registry definition is
   assert.ok(combat.eventLog.some(event => event.type === 'enemyMoveEnded' && event.moveId === used), 'and resolved');
   assert.deepEqual(plain(def), before, 'the shared definition is untouched');
   assert.ok(!Object.keys(def.moves).some(id => id.startsWith('level.')));
-  assert.equal(enemyMoveOf(core, { enemyId: 'wanderingSoldier' }, used), undefined, 'another instance does not see it');
+  assert.equal(EnemyMoveOf(core, { enemyId: 'wanderingSoldier' }, used), undefined, 'another instance does not see it');
 });
 
 test('a mid-fight save and restore keeps the level moves and plays on the same', () => {
@@ -112,7 +112,7 @@ test('a mid-fight save and restore keeps the level moves and plays on the same',
   const snapshot = plain(serializeCombatSnapshot(combat));
   const restored = restoreCombatSnapshot({ registries: core, rng: createRng(77, combat.rng.getCounters()), snapshot, expectedGameProfile: core.gameProfile });
   assert.deepEqual(plain(restored.enemies[0].extraMoves), plain(combat.enemies[0].extraMoves));
-  assert.deepEqual(Object.keys(enemyDefinitionOf(core, restored.enemies[0]).moves), Object.keys(enemyDefinitionOf(core, combat.enemies[0]).moves));
+  assert.deepEqual(Object.keys(EnemyDefinitionOf(core, restored.enemies[0]).moves), Object.keys(EnemyDefinitionOf(core, combat.enemies[0]).moves));
   const liveStart = combat.eventLog.length, restoredStart = restored.eventLog.length;
   for (let turn = 0; turn < 4; turn++) { endTurn(combat); endTurn(restored); }
   assert.deepEqual(plain(restored.enemies[0].performedMoves), plain(combat.enemies[0].performedMoves));
@@ -141,7 +141,7 @@ test('an older snapshot without enemyLevelScaling gets no level moves', () => {
   for (const [id, act, floor] of [['wanderingSoldier', 1, 8], ['stitchedKing', 2, 10]]) {
     const enemy = fight(old, id, act, floor).enemies[0];
     assert.equal(enemy.extraMoves, undefined, id);
-    assert.equal(enemyDefinitionOf(old, enemy), old.enemies.get(id), `${id} reads the registry row itself`);
+    assert.equal(EnemyDefinitionOf(old, enemy), old.enemies.get(id), `${id} reads the registry row itself`);
   }
   const historical = coreRegistries(validateGameProfileSnapshot(JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/dev-profile-73ef.json.gz', import.meta.url))))));
   assert.equal(fight(historical, 'wanderingSoldier', 1, 8).enemies[0].extraMoves, undefined, 'historical profile');

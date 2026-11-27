@@ -1,7 +1,7 @@
 import { combatProfileFor } from '../../model/combatCardProfile.js';
 import { ownerItemRef } from '../../model/cardMounts.js';
 import { t } from '../strings.js';
-import { enemyEventMoveOf } from '../../model/enemyMoveSet.js';
+import { EnemyEventMoveOf } from '../../model/enemyMoveSet.js';
 
 const moveLabel = id => typeof id === 'string' ? id.replace(/([a-z\d])([A-Z])/g, '$1 $2').replace(/[_-]+/g, ' ').replace(/^./, letter => letter.toUpperCase()) : null;
 
@@ -12,7 +12,7 @@ export function combatActionIdentity(beat, registries, enemyFor = () => null) {
   if (!event) return null;
   const card = event.cardId && registries.cards.has(event.cardId) ? registries.cards.get(event.cardId) : null;
   const enemyId = event.enemyId || enemyFor(event.sourceId)?.enemyId;
-  const move = event.moveId && registries.enemies.has(enemyId) ? enemyEventMoveOf(registries, { enemy: enemyFor(event.sourceId), enemyId, moveId: event.moveId }) || null : null;
+  const move = event.moveId && registries.enemies.has(enemyId) ? EnemyEventMoveOf(registries, { enemy: enemyFor(event.sourceId), enemyId, moveId: event.moveId }) || null : null;
   const carrier = card || move;
   const maneuver = beat.kind === 'counter' ? 'counter' : event.combatProfile?.maneuver || (carrier && combatProfileFor(carrier).maneuver);
   const type = ['attack', 'smash', 'defend', 'counter', 'sweep', 'evade'].includes(maneuver)

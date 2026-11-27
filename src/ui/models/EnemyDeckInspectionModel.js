@@ -4,13 +4,13 @@ import { t } from '../strings.js';
 import { gameContent } from '../../model/gameProfile.js';
 import { enemyActionEffectText } from '../../model/enemyMoveCards.js';
 import { enemyMoveSp } from '../../engine/combatRoundsAdapter.js';
-import { enemyDefinitionOf } from '../../model/enemyMoveSet.js';
+import { EnemyDefinitionOf } from '../../model/enemyMoveSet.js';
 
 export function enemyDeckInspection(combat, enemy, moves, preview) {
   const authored = gameContent(combat, 'enemies')?.find(row => row.id === enemy.enemyId);
   if (!authored) return null;
   const definitions = new Map((gameContent(combat, 'enemyCards') || []).map(card => [card.id, card]));
-  const runtime = enemyDefinitionOf(combat.registries, enemy);
+  const runtime = EnemyDefinitionOf(combat.registries, enemy);
   const lastMoveId = enemy.performedMoves?.at(-1);
   const copies = new Map();
   for (const cardId of authored.defaultDeck || []) copies.set(cardId, (copies.get(cardId) || 0) + 1);

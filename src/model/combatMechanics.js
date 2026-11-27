@@ -4,6 +4,15 @@
 
 import { combatMechanics as GENERATED_MECHANICS } from '../content/generated/combatMechanics.js';
 
+function assertMechanicKeys(value, path, seen = new WeakSet()) {
+  if (!value || typeof value !== 'object' || seen.has(value)) return;
+  seen.add(value);
+  for (const [key, child] of Object.entries(value)) {
+    if (key === '__proto__') throw new Error(path + ': unsupported own __proto__ key');
+    assertMechanicKeys(child, path + '.' + key, seen);
+  }
+}
+
 const cloneValue = (value) => (value && typeof value === 'object' ? structuredClone(value) : value);
 
 /**
@@ -15,6 +24,7 @@ const cloneValue = (value) => (value && typeof value === 'object' ? structuredCl
  * Refuses unknown parents and inheritance cycles by name.
  */
 export function ResolveMechanicsTable(rawEntries = {}) {
+  assertMechanicKeys(rawEntries, 'mechanics');
   const authored = {};
   const parents = {};
   for (const [id, entry] of Object.entries(rawEntries || {})) {
@@ -33,7 +43,7 @@ export function ResolveMechanicsTable(rawEntries = {}) {
   const visiting = new Set();
 
   const resolveOne = (id) => {
-    if (resolved[id]) return resolved[id];
+    if (Object.hasOwn(resolved, id)) return resolved[id];
     if (visiting.has(id)) throw new Error(`mechanics/${id}: inheritance cycle detected`);
     const entry = authored[id];
     const parentId = parents[id];
@@ -50,7 +60,7 @@ export function ResolveMechanicsTable(rawEntries = {}) {
     if (parentResolved) {
       for (const [key, value] of Object.entries(parentResolved)) {
         out[key] = cloneValue(value);
-        from[key] = parentInherited?.[key] || parentId;
+        from[key] = parentInherited && Object.hasOwn(parentInherited, key) ? parentInherited[key] : parentId;
       }
     }
     for (const [key, value] of Object.entries(entry)) {
@@ -75,7 +85,7 @@ export function CombatMechanicsOf(ctx = null) {
 /** Effective resolved row for `id` (or null if absent). */
 export function MechanicRule(id, ctx = null) {
   const table = CombatMechanicsOf(ctx);
-  return table?.resolved?.[id] || null;
+  return table?.resolved && Object.hasOwn(table.resolved, id) ? table.resolved[id] : null;
 }
 
 /** True when a card carries an active Wither limit under the current combat mechanics table. */
@@ -87,13 +97,13 @@ export function EffectiveWitherLimit(def, ctx = null) {
 }
 
 /** Effective costGrowth config for a card, inheriting defaults from `costGrowth` / `costGrowth.shared`. */
-export function EffectiveCostGrowth(def, ctx = null) {
+export function EffectiveCostGrowth(def, ctx = null, ruleId = 'costGrowth') {
   if (!def?.costGrowth) return null;
-  const parentRule = MechanicRule('costGrowth', ctx);
-  if (parentRule && parentRule.enabled === false) return null;
+  const parentRule = MechanicRule(ruleId, ctx) || (ruleId !== 'costGrowth' ? MechanicRule('costGrowth', ctx) : null);
   const raw = def.costGrowth;
   const isShared = raw.perCard === true || raw.scope === 'card' || (raw.scope === undefined && raw.perCard === undefined && parentRule?.scope === 'card');
-  const baseRule = isShared ? (MechanicRule('costGrowth.shared', ctx) || parentRule) : parentRule;
+  const baseRule = isShared ? (MechanicRule(ruleId + '.shared', ctx) || parentRule) : parentRule;
+  if (baseRule && baseRule.enabled === false) return null;
   const stamina = raw.stamina ?? baseRule?.stamina ?? 0;
   const mana = raw.mana ?? baseRule?.mana ?? 0;
   if (!(stamina > 0) && !(mana > 0)) return null;
@@ -117,7 +127,8 @@ export function EffectiveCostGrowth(def, ctx = null) {
 export function EffectivePierceRules(fixCoreRulesObj = null, ctx = null) {
   const rule = MechanicRule('pierce', ctx);
   if (rule && rule.enabled === false) return null;
-  if (fixCoreRulesObj) return { enabled: true, mode: rule?.mode || 'bypass', ...(fixCoreRulesObj.pierce || {}) };
+  if (fixCoreRulesObj) return { enabled: true, mode: rule?.mode || 'bypass', ...(fixCoreRulesObj.pierce || {}),
+    ...((ctx?.combatMechanics || ctx?.gameProfile?.combatMechanics) ? rule : {}) };
   return { ...(rule || {}) };
 }
 
@@ -137,6 +148,7 @@ export function EffectiveSmashGuardRules(fixCoreRulesObj = null, ctx = null) {
       enabled: true,
       mode: rule?.mode || 'multiplier',
       ...(fixCoreRulesObj.smashVsDefensive || {}),
+      ...((ctx?.combatMechanics || ctx?.gameProfile?.combatMechanics) ? rule : {}),
       flatBreak: resolvedFlat,
     };
   }

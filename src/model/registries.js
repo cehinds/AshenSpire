@@ -25,8 +25,10 @@ import { shops as shippedShops } from '../content/shops.js';
 import { sigils as shippedSigils } from '../content/sigils.js';
 import { consumables as shippedConsumables } from '../content/consumables.js';
 import { companions as shippedCompanions } from '../content/companions.js';
-import { cloneShops } from './shopKinds.js';
-import { applyCardMods } from './loadout.js';
+// These facades can still be initializing when the classic loader reaches us.
+// Resolve their exports at the operation, rather than capturing partial values.
+import * as ShopKinds from './shopKinds.js';
+import * as Loadout from './loadout.js';
 import { deriveStat, resolveDerivedStatRules } from './derivedStats.js';
 import { resolveRelicModifiers } from './relicModifiers.js';
 import { applyItemCardUpgradeRows, itemUpgradeRows, resolveUpgradedRelic } from './itemUpgrades.js';
@@ -272,7 +274,7 @@ export function createRegistries(contentBundle) {
   if ([1, 2].includes(bundle.breakMeterVersion)) registries.breakMeterVersion = bundle.breakMeterVersion;
   // The shop kinds and their offerings (SPEC §14.2), as configured for this
   // run; a bundle without them reads the shipped table.
-  registries.shops = deepFreeze(cloneShops(bundle.shops || shippedShops));
+  registries.shops = deepFreeze(ShopKinds.cloneShops(bundle.shops || shippedShops));
   // Sigils (SPEC §14.3): what the market's sigil shelf sells into `run.sigils`.
   // A bundle without them reads the shipped collection.
   // A sigil is a tagged collection (SPEC §14.4): its property rows are
@@ -696,7 +698,7 @@ function resolveCardAuthored(registries, instanceOrRef, breakMeterVersion = inst
   if (mods && mods.length) {
     const eq = registries.equipment || {};
     result = deepFreeze(
-      applyCardMods(result, mods, {
+      Loadout.applyCardMods(result, mods, {
         modFields: eq.modFields || {},
         limits: (registries.balance.equipment || {}).limits || {},
       })

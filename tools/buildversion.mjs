@@ -350,6 +350,10 @@ export function catalogVersionScanText(file, text) {
   const projection = {
     'src/content/generated/gameProfiles.js': ['gameProfileCatalog', '', '{'],
     'src/content/generated/tagging.js': ['tagging', '', '['],
+    'src/content/generated/nodes.js': ['nodes', '', '['],
+    'src/content/generated/uiStrings.js': ['uiStrings', '', '['],
+    'src/content/generated/scoring.js': ['scoring', '', '{'],
+    'src/content/generated/sharedOutfitArt.js': ['sharedOutfitArt', '', '{'],
     'src/config/generated/ui.js': ['uiConfig', 'deepFreeze(', '{'],
     'src/content/reviewedCardArt.generated.js': ['reviewedCardArtCatalog', '', '{'],
     'src/content/changelog.generated.js': ['GENERATED_CHANGELOG', 'Object.freeze(', '['],
@@ -359,6 +363,10 @@ export function catalogVersionScanText(file, text) {
   const declaration = new RegExp('^export const ' + name + '\\s*=\\s*', 'm').exec(text);
   if (!declaration) return text;
   const expressionStart = declaration.index + declaration[0].length;
+  // Note-bearing content data stays an ordinary withNotes(...) literal, so
+  // the full original JavaScript remains visible to both version scans.
+  if (['tagging', 'nodes', 'uiStrings', 'scoring', 'sharedOutfitArt'].includes(name)
+    && text.startsWith(`withNotes(${opening}`, expressionStart)) return text;
   if (!text.startsWith(wrapper, expressionStart)) throw new Error('Unrecognized generated catalog wrapper');
   const start = expressionStart + wrapper.length;
   if (!text.startsWith('decodeCatalogJSON(', start)) {

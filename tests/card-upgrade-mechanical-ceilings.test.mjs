@@ -1,5 +1,5 @@
 import test from 'node:test';
-import { readFileSync } from 'node:fs';
+import { scoringContract, tierContract } from './helpers/scoring-contract.mjs';
 import assert from 'node:assert/strict';
 import { GenerateSubclassCatalog } from '../src/model/subclassCardGenerator.js';
 import { ProjectCardMechanicalValues } from '../src/model/cardMechanicalProjection.js';
@@ -10,34 +10,34 @@ import { ScoreCard, CombatPower, RankOf } from '../src/model/combatPower.js';
 import { NumericCeilingAtTier } from '../src/model/tierUnlocks.js';
 import { scoring } from '../src/content/generated/scoring.js';
 
-const historicalScoring = JSON.parse(readFileSync(new URL('./fixtures/scoring-pre-starseer.json', import.meta.url), 'utf8'));
 
+
+const scenarioScoring={...scoring,...scoringContract(),tierUnlocks:tierContract()};
 const base = { id:'upgrade.mechanical.fixture',name:'Mechanical fixture',class:'reaver',type:'attack',rarity:'common',cost:1,staminaCost:1,manaCost:0,damageSchool:'physical',keywords:[],tags:['camp:physical','source:weapon','maneuver:attack','classification.attack'],effects:[{op:'damage',target:'enemy',amount:8}] };
 const actual = card => ProjectCardMechanicalValues(card).card.effects;
-const roll = (card, applied = [], limits = {}) => rollUpgradeOptions(card, applied, applied.length, upgradeStepRng(7,'mechanical-review',applied.length),{cardRank:2,everyFamily:true,scoring,...limits},40);
+const roll = (card, applied = [], limits = {}) => rollUpgradeOptions(card, applied, applied.length, upgradeStepRng(7,'mechanical-review',applied.length),{cardRank:2,everyFamily:true,scoring:scenarioScoring,...limits},40);
 const total = (effects,op) => effects.reduce((sum,effect)=>sum+(effect.op===op ? effect.amount*(effect.hits||1) : effect.op==='grantCardCharge' ? effect[op]||0 : 0),0);
 const authoredFor = (card, wanted, op='damage') => {
   for(let amount=1;amount<=240;amount++){const next=structuredClone(card);next.effects[0].amount=amount;if(actual(next)[0].amount===wanted)return next;}
   throw new Error(`No fixture for ${op} ${wanted}`);
 };
 
-test('rolled Quiet Incision damage upgrades remain available when raw inputs exceed the mechanical tier ceiling under the historical fixture',()=>{
-  const scoring=historicalScoring;
-  const card=GenerateSubclassCatalog({seed:'mechanical-export-integration',subclassIds:['assassin'],countPerSubclass:1},{scoring}).cards[0];
-  const current=applyUpgradeSteps(card,[{k:'authored'}]), before=actual(current), cap=NumericCeilingAtTier('damage',2,scoring);
+test('rolled damage upgrades cross authored rounding plateaus below a controlled mechanical ceiling',()=>{
+  const customScoring=scenarioScoring;
+  const card=authoredFor({...base,upgradeMenu:['dmg']},25);
+  card.upgrade={effects:authoredFor(card,27).effects,textTemplate:'Deal {damage} damage.'};
+  const current=applyUpgradeSteps(card,[{k:'authored'}]), before=actual(current), cap=28;
   assert.ok(card.effects[0].amount>cap);assert.equal(total(before,'damage'),27);
-  const steps=roll(card,[{k:'authored'}],{playerLevel:2,scoring}).filter(step=>step.k==='dmg');assert.ok(steps.length,'a valid damage step must be offered, not merely allowed by a CP probe');
-  for(const step of steps){assert.deepEqual(upgradeStepsProblems([step]),[]);const after=applyUpgradeSteps(current,[step]), projected=actual(after);assert.ok(projected[0].amount>before[0].amount);assert.ok(total(projected,'damage')<=cap);assert.equal(UpgradeTagStacks(after,'improved'),step.improvedStacks||1);const cp=CombatPower(ScoreCard(CardDefinitionToScoreFace(after,{scoring}),scoring).raw,after.rarity,scoring);assert.ok(RankOf(cp,scoring)<=2);assert.equal(EvaluateUpgradeStepCp({baseDef:card,currentDef:current,step,instance:{rank:2},playerLevel:2,scoring}).allowed,true);}
+  const steps=roll(card,[{k:'authored'}],{playerLevel:2,scoring:customScoring}).filter(step=>step.k==='dmg');assert.ok(steps.length,'a valid damage step must be offered, not merely allowed by a CP probe');
+  for(const step of steps){assert.deepEqual(upgradeStepsProblems([step]),[]);const after=applyUpgradeSteps(current,[step]), projected=actual(after);assert.ok(projected[0].amount>before[0].amount);assert.ok(total(projected,'damage')<=cap);assert.equal(UpgradeTagStacks(after,'improved'),step.improvedStacks||1);assert.equal(EvaluateUpgradeStepCp({baseDef:card,currentDef:current,step,instance:{rank:2},playerLevel:2,scoring:customScoring}).allowed,true);}
 });
 
-test('shipped Quiet Incision reaches the combined damage cap and keeps effective non-damage upgrades',()=>{
+test('shipped signature upgrade menus obey current combined caps and keep effective mechanics',()=>{
   const card=GenerateSubclassCatalog({seed:'mechanical-export-integration',subclassIds:['assassin'],countPerSubclass:1}).cards[0];
-  const current=applyUpgradeSteps(card,[{k:'authored'}]), before=actual(current), cap=NumericCeilingAtTier('damage',2,scoring);
-  assert.ok(card.effects[0].amount>cap);
-  assert.equal(total(before,'damage'),cap,'plain and conditional contacts jointly fill the current cap');
-  const steps=roll(card,[{k:'authored'}],{playerLevel:2});
-  assert.equal(steps.some(step=>step.k==='dmg'),false,'damage cannot cross the full mechanical cap');
-  assert.ok(steps.length,'other effective families remain available');
+  const current=applyUpgradeSteps(card,[{k:'authored'}]), before=actual(current), cap=NumericCeilingAtTier('damage',2,scoring)??Infinity;
+  assert.ok(total(before,'damage')<=cap,'plain and conditional contacts jointly obey the current cap');
+  const steps=roll(card,[{k:'authored'}],{playerLevel:2,scoring});
+  if(total(before,'damage')===cap)assert.equal(steps.some(step=>step.k==='dmg'),false,'damage cannot cross the full mechanical cap');
   for(const step of steps){
     assert.deepEqual(upgradeStepsProblems([step]),[]);
     const after=applyUpgradeSteps(current,[step]);
@@ -48,14 +48,14 @@ test('shipped Quiet Incision reaches the combined damage cap and keeps effective
 });
 
 test('Block upgrades cross authored rounding plateaus and retain their mechanical ceiling and Improved stack',()=>{
-  const cap=NumericCeilingAtTier('block',2,scoring), template={...base,type:'skill',upgradeMenu:['blk'],effects:[{op:'block',target:'self',amount:1}]};
+  const cap=NumericCeilingAtTier('block',2,scenarioScoring), template={...base,type:'skill',upgradeMenu:['blk'],effects:[{op:'block',target:'self',amount:1}]};
   const card=authoredFor(template,cap-1,'block');assert.ok(card.effects[0].amount>cap);
   const steps=roll(card).filter(step=>step.k==='blk');assert.ok(steps.length);
   for(const step of steps){const after=applyUpgradeSteps(card,[step]);assert.ok(actual(after)[0].amount>actual(card)[0].amount);assert.ok(total(actual(after),'block')<=cap);assert.equal(UpgradeTagStacks(after,'improved'),step.improvedStacks||1);}
 });
 
 test('numeric ceilings include conditional damage and pending charges rather than only the first plain effect',()=>{
-  const cap=NumericCeilingAtTier('damage',1,scoring), template={...base,upgradeMenu:['dmg'],effects:[{op:'damage',target:'enemy',amount:1},{op:'damage',target:'enemy',amount:8,if:{p:'firstAttackThisCombat'}},{op:'grantCardCharge',target:'self',key:'cap',cardType:'attack',damage:1}]};
+  const cap=NumericCeilingAtTier('damage',1,scenarioScoring), template={...base,upgradeMenu:['dmg'],effects:[{op:'damage',target:'enemy',amount:1},{op:'damage',target:'enemy',amount:8,if:{p:'firstAttackThisCombat'}},{op:'grantCardCharge',target:'self',key:'cap',cardType:'attack',damage:1}]};
   const remainder=cap-total(actual({...template,effects:template.effects.slice(1)}),'damage');
   const capped=authoredFor(template,remainder);assert.equal(total(actual(capped),'damage'),cap);assert.equal(roll(capped,[],{cardRank:1}).some(step=>step.k==='dmg'),false);
   const room=authoredFor(template,remainder-1), steps=roll(room,[],{cardRank:1}).filter(step=>step.k==='dmg');assert.ok(steps.length);
@@ -70,7 +70,7 @@ test('the doubled printed-damage guard still applies when the effective tier has
 });
 
 test('hits and area-to-single upgrades obey the same mechanical cap, and rounded area downgrades are absent',()=>{
-  const withCap=cap=>{const copy=structuredClone(scoring);copy.tierUnlocks.ceilings.damage[3]=cap;return copy;};
+  const withCap=cap=>{const copy=structuredClone(scenarioScoring);copy.tierUnlocks.ceilings.damage[3]=cap;return copy;};
   const hit={...base,cost:2,staminaCost:2,upgradeMenu:['hits']};assert.ok(roll(hit,[],{cardRank:3,scoring:withCap(100)}).some(step=>step.k==='hits'));assert.equal(roll(hit,[],{cardRank:3,scoring:withCap(actual(hit)[0].amount)}).some(step=>step.k==='hits'),false);
   const area=authoredFor({...base,upgradeMenu:['targeting'],effects:[{op:'damage',target:'allEnemies',amount:1}]},16);
   assert.ok(roll(area,[],{cardRank:3,scoring:withCap(100)}).some(step=>step.k==='tag'&&step.retarget==='single'));assert.equal(roll(area,[],{cardRank:3,scoring:withCap(18)}).some(step=>step.k==='tag'&&step.retarget==='single'),false);

@@ -7,7 +7,16 @@ export function catalogJSONExpression(value) {
   const token = /"(?:[^"\\]|\\.)*"/g;
   const counts = new Map();
   for (const [string] of text.matchAll(token)) counts.set(string, (counts.get(string) || 0) + 1);
-  const strings = [...counts].filter(([string, count]) => (string.length - 5) * count > string.length + 4).map(([string]) => string);
+  // Frequent tokens get the shortest indices. Measure the escaping inside the
+  // payload's text string as well as each dictionary entry: even short keys
+  // such as "id" can profit because their quotes otherwise need escaping.
+  const ranked = [...counts].sort((a, b) => b[1] - a[1]);
+  const strings = [];
+  for (const [string, count] of ranked) {
+    const dictionaryCost = JSON.stringify(string).length;
+    const markerCost = String(strings.length).length + 2;
+    if ((dictionaryCost - 2 - markerCost) * count > dictionaryCost + 1) strings.push(string);
+  }
   const indices = new Map(strings.map((string, index) => [string, index]));
   const packed = text.replace(token, string => indices.has(string) ? `~${indices.get(string)}~` : string);
   const expression = `decodeCatalogJSON(${JSON.stringify({ text: packed, strings })})`;
