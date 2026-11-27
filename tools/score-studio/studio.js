@@ -73,6 +73,7 @@ import {
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
 const saveShortcutKey = 's';
 const fileMenu = 'file';
+const fileMenuHeadingId = 'menu-file';
 const studioSaveMenuId = 'menu-studio-save';
 const studioSaveShortcutAria = 'Control+S';
 const ariaKeyShortcutsAttribute = 'aria-keyshortcuts';
@@ -4640,7 +4641,9 @@ function setupStudioMenubar() {
     studioSaveLabel,
     () =>
     {
+      // Focus goes back to the File heading, as Escape and the other menu commands do.
       closeMenus();
+      document.getElementById(fileMenuHeadingId).focus();
       studioSaveUi.save();
     },
   );

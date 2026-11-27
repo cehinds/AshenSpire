@@ -557,6 +557,22 @@ try {
   });
   assert.match(schoolNote, /10 martial cards became magic to fit the school counts/, 'Preview reports martial cards made magic');
 
+  // 12. At 390 x 844, keyboard only: File, Enter, Enter saves and focus returns to the File heading.
+  const focusedId = () => page.evaluate(() => document.activeElement?.id);
+  await page.setViewportSize({
+    width: 390,
+    height: 844,
+  });
+  await page.locator('#menu-file').focus();
+  await page.keyboard.press('Enter');
+  assert.equal(await focusedId(), 'menu-studio-save', 'Enter on File focuses Save');
+  await page.keyboard.press('Enter');
+  assert.equal(await focusedId(), 'menu-file', 'after File > Save focus is back on File');
+  await page.setViewportSize({
+    width: 1280,
+    height: 800,
+  });
+
   assert.deepEqual(pageErrors, [], 'no uncaught errors while editing');
   await page.evaluate((key) => localStorage.removeItem(key), DRAFT_KEY);
   await page.close();
