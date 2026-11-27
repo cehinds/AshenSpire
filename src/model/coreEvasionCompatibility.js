@@ -193,8 +193,8 @@ const COMPATIBLE_HOST_RUNTIMES = new Set([
   'sha256:c77d4f30494cb821fc66b9b9ef19b91fbb2c699633fe0137b72ab89d261ec831',
   // Enemy level scaling (spCap in engine/kernel/gameConfig.js) moves the host runtime; prior saves keep their own rules.
   'sha256:659730689c3f0675a28b5ecbf6ef6c2bcbefa32b77c4794a5a5f9c14f0b8f07d',
-  // Owner hotfix 2026-11-26 (spellCosts: manaSurcharge 0, Prepared SP floor 1 and Mana cut) moves the host runtime; prior saves keep their own rules.
-  'sha256:84058a4a9051824c5676d3a100b6135e6fef8429381d553e1fff0cd108b5962c',
+  // Owner hotfix 2026-11-26 (spellCosts: manaSurcharge 0, Prepared SP floor 1; the Prepared Mana cut is gear-only) moves the host runtime; prior saves keep their own rules.
+  'sha256:defbcd659c0fe2899a69d503916d8d739116d9928b8156c5985764b83efa755f',
 ]);
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return COMPATIBLE_HOST_RUNTIMES.has(currentRuntime)

@@ -132,7 +132,7 @@ test('current deck and pile Mana faces share final gear pricing with quotes, pay
         assert.equal(preparedRules.filter(row => !wornWeaponIds.includes(row.source)).length, robe, `${label}: the robe is a separate Prepared source`);
         const base = classId === 'starseer' && printedMana > 0 ? Math.max(0, printedMana - 1) : printedMana; // Starseer is a Graduate; Reaver is not.
         const chainCut = cardId === 'core.cantrip' ? 1 : 0; // a mirrored cantrip takes the successive-Spell cut, and with no cost minimum (owner 2026-11-22) it may reach 0 for a non-Graduate too
-        const preparedCut = 1; // the spell rule's Prepared Mana cut (owner, 2026-11-26)
+        const preparedCut = 0; // Prepared itself takes no Mana; staff, robe and other gear tags own the Prepared Mana cut (owner, 2026-11-26)
         assert.equal(pile.mana, Math.max(0, base - preparedCut - robe - focus - chainCut), `${label}: Prepared, one Focus plus independent robe`);
         assert.deepEqual(serializeCombatSnapshot(combat), snapshot, `${label}: faces and quotes are pure`);
         const restored = restoreCombatSnapshot({ registries: currentReg, snapshot, rng: createRng(5, counters), expectedGameProfile: combat.gameProfile });

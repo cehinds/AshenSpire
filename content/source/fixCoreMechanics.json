@@ -126,7 +126,7 @@
     "manaOnlyTag": "cost.manaOnly",
     "preparedStaminaDiscount": 1,
     "preparedStaminaMinimum": 1,
-    "preparedManaDiscount": 1,
+    "preparedManaDiscount": 0,
     "focusManaDiscount": 1
   },
   "elementFlux": {

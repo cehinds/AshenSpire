@@ -9,7 +9,7 @@ import { fixCoreMechanics as shipped } from '../src/content/generated/fixCoreMec
 import { validateFixCoreRules } from '../src/model/fixCoreMechanics.js';
 
 test('shipped data holds the approved spell cost and flux numbers and the validator guards them', () => {
-  assert.deepEqual(shipped.spellCosts, { version: 1, manaSurcharge: 0, staminaSurcharge: 0, cantripTag: 'rank.cantrip', manaOnlyTag: 'cost.manaOnly', preparedStaminaDiscount: 1, preparedStaminaMinimum: 1, preparedManaDiscount: 1, focusManaDiscount: 1 });
+  assert.deepEqual(shipped.spellCosts, { version: 1, manaSurcharge: 0, staminaSurcharge: 0, cantripTag: 'rank.cantrip', manaOnlyTag: 'cost.manaOnly', preparedStaminaDiscount: 1, preparedStaminaMinimum: 1, preparedManaDiscount: 0, focusManaDiscount: 1 });
   assert.deepEqual(shipped.elementFlux, { version: 1, multiplier: 1.25 });
   assert.doesNotThrow(() => validateFixCoreRules(shipped));
   const { spellCosts, elementFlux, ...saved } = shipped;
@@ -67,7 +67,7 @@ function costsIn({ hand, stance, id, legacy = false, savedSurcharge = false }) {
   return { costs: cardPlayCosts(combat, card.instanceId), preview: previewCard(combat, card.instanceId), combat };
 }
 // The rule written out on top of the price the fight charged before the ruling (its stance cuts, such as a Graduate's same-stance Mana cut, are unchanged):
-// Current rules (owner, 2026-11-26): no surcharges; Prepared takes Stamina to max(SP - 1, 1) without raising a price at or under 1, and takes 1 Mana.
+// Current rules (owner, 2026-11-26): no surcharges; Prepared takes Stamina to max(SP - 1, 1) without raising a price at or under 1 and takes no Mana (gear tags own Prepared Mana cuts).
 // A fight saved before 2026-11-23: Mana +1; Stamina +1 unless a cantrip (or X-cost); Prepared -1 Stamina floored at 0; no Prepared Mana cut.
 // Both: a Focus item -1 Mana; Mana floors at 0. `before` is the same card priced with the rule off.
 function expected(card, before, { prepared, focus, saved }) {
@@ -75,7 +75,7 @@ function expected(card, before, { prepared, focus, saved }) {
   const stamina = before.stamina + (saved && !cantrip && !manaOnly ? 1 : 0);
   const staminaFloor = saved ? 0 : 1;
   const preparedStamina = prepared && stamina > staminaFloor ? Math.max(staminaFloor, stamina - 1) : stamina;
-  const manaChange = saved ? 1 : (prepared ? -1 : 0);
+  const manaChange = saved ? 1 : 0;
   return { stamina: x ? null : preparedStamina, mana: Math.max(0, before.mana + manaChange - (focus ? 1 : 0)) };
 }
 
@@ -98,12 +98,12 @@ test('cost table over every shipped Core 2 spell and cantrip: base, Prepared, Fo
 });
 
 test('literal prices preserve current Arcane Sweep zero SP and the cantrip/Focus/Prepared cuts', () => {
-  // Printed Mana is paid Mana (owner, 2026-11-26). Prepared keeps a 0 or 1 SP price and takes 1 MP; the Graduate's own Prepared cut floors at 0 (owner 2026-11-22).
+  // Printed Mana is paid Mana (owner, 2026-11-26). Prepared keeps a 0 or 1 SP price and takes no MP; the Graduate's own Prepared cut floors at 0 (owner 2026-11-22).
   for (const [id, base, prepared, focus, both] of [
-    ['core.cometLance', [0, 1], [0, 0], [0, 0], [0, 0]], // 0 SP stays 0 in Prepared
-    ['core.cantrip', [1, 1], [1, 0], [1, 0], [1, 0]], // Arcane Spark prints 1 MP (owner 2026-11-22); 1 SP stays 1 in Prepared
+    ['core.cometLance', [0, 1], [0, 0], [0, 0], [0, 0]], // 0 SP stays 0 in Prepared; a casting spell matches Prepared, so the Graduate same-stance cut takes its MP
+    ['core.cantrip', [1, 1], [1, 0], [1, 0], [1, 0]], // Arcane Spark prints 1 MP (owner 2026-11-22); 1 SP stays 1 in Prepared; casting, so the Graduate same-stance cut takes its MP
     ['core.manaSurge', [1, 0], [1, 0], [1, 0], [1, 0]],
-    ['core.meteor', [2, 2], [1, 0], [2, 1], [1, 0]], // 2 SP drops to the floor of 1 in Prepared
+    ['core.meteor', [2, 2], [1, 1], [2, 1], [1, 0]], // 2 SP drops to the floor of 1 in Prepared; Mana cuts come from the Graduate same-stance cut and the Focus, not Prepared
   ]) {
     for (const [hand, stance, want] of [['greatsword', null, base], ['greatsword', PREPARED, prepared], ['boneSceptre', null, focus], ['boneSceptre', PREPARED, both]]) {
       const { costs } = costsIn({ hand, stance, id });

@@ -7,7 +7,7 @@
 //   every spell but a cantrip      +staminaSurcharge Stamina     (0 since owner 2026-11-23; a cantrip stays at its own Stamina; an X-cost spell already spends all it has)
 //   a spell with the `manaOnlyTag`  pays 0 Stamina               (owner, 2026-11-15: "spells that cost 0 sp but 2 to 3 mp"; its printed Stamina is 0 and it takes no surcharge; Prepared has nothing to cut)
 //   the player is in Prepared      -preparedStaminaDiscount Stamina on every spell (cantrips included), never below preparedStaminaMinimum (owner 2026-11-26: 1)
-//                                  and never raising a price already at or under it; -preparedManaDiscount Mana (owner 2026-11-26: 1), floored at 0
+//                                  and never raising a price already at or under it; -preparedManaDiscount Mana (owner 2026-11-26: 0, gear tags own it), floored at 0
 // Owner, 2026-11-26 (Star Seer hotfix): manaSurcharge is 0 so the printed Mana (creation, deck, reward faces) is the Mana combat charges.
 //   a Focus item is equipped       old saved profiles: -focusManaDiscount Mana in any stance; current gear: its data rule applies only in Prepared
 //   current gear Mana modifiers    apply after the surcharge, once, with only the final result floored at 0
@@ -68,7 +68,7 @@ export function SpellCostAdjust(ctx, def, price) {
   // Gear-pass Focus is the Prepared-only data rule, applied at the same final door as other gear Mana changes.
   const focus = !GearTypeEffectsEnabled(ctx) && FocusHeld(ctx.registries, ctx.loadout, ctx.player?.classId);
   const inPrepared = inPreparedStance(ctx.player);
-  // Owner, 2026-11-26: Prepared takes preparedManaDiscount Mana off a spell, floored at 0 (absent in fights saved before the ruling).
+  // Owner, 2026-11-26: Prepared may take preparedManaDiscount Mana off a spell (shipped 0: gear tags own the Prepared Mana cut; absent in older fights).
   const preparedMana = inPrepared ? (rules.preparedManaDiscount ?? 0) : 0;
   const mana = GearManaCost(def, price.mana + rules.manaSurcharge - preparedMana - (focus ? rules.focusManaDiscount : 0));
   const surcharge = def.cost === 'X' || IsCantrip(rules, def) || IsManaOnly(rules, def) ? 0 : rules.staminaSurcharge;
