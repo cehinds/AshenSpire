@@ -41,7 +41,8 @@
     "game.lock.json",
     "_reference.json",
     "_reference.md",
-    "enemyLevelCards.json"
+    "enemyLevelCards.json",
+    "build.summary.json"
   ],
   "neverCommit": [
     "buildordinal.json",
@@ -61,7 +62,8 @@
     "game.lock.json",
     "_reference.json",
     "_reference.md",
-    "enemyLevelCards.json"
+    "enemyLevelCards.json",
+    "build.summary.json"
   ],
   "rebuiltContentFiles": [
     "games/ashenspire/packs/core/characters.json"
@@ -105,6 +107,12 @@
       "args": [
         "tools/game-config.mjs",
         "build"
+      ]
+    },
+    {
+      "label": "Build game summary",
+      "args": [
+        "tools/build-game.mjs"
       ]
     },
     {
@@ -180,6 +188,13 @@
       "args": [
         "tools/game-config.mjs",
         "check"
+      ]
+    },
+    {
+      "label": "Check game summary",
+      "args": [
+        "tools/build-game.mjs",
+        "--check"
       ]
     },
     {

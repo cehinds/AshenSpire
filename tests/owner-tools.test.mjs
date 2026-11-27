@@ -1,7 +1,14 @@
-// The owner's play, check, ship and sync commands: change wording, branch names and path rules.
+// Owner commands: change wording, branch names and path rules. Every expected string is built
+// from ownerDiff.json, ownerText.json and ownerTools.json, so retuning them needs no test edit.
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { DescribeFileChange } from '../tools/owner/contentDiff.mjs';
+import {
+    FormatText,
+    OWNER_DIFF,
+    OWNER_TEXT,
+    OWNER_TOOLS,
+} from '../tools/owner/ownerConfig.mjs';
 import { BranchNameFor } from '../tools/owner/shipText.mjs';
 import {
     IsDerivedPath,
@@ -10,9 +17,10 @@ import {
     SameText,
 } from '../tools/owner/ownerPaths.mjs';
 
-const ENEMY_PATH = 'games/ashenspire/packs/core/enemies/ashGolem.json';
-const CARDS_PATH = 'games/ashenspire/packs/core/cards.json';
-const WEAPONS_PATH = 'content/source/weapons.csv';
+const ENEMY_PATH = `${OWNER_TOOLS.editableRoots[2]}packs/core/enemies/ashGolem.json`;
+const CARDS_PATH = `${OWNER_TOOLS.editableRoots[2]}packs/core/cards.json`;
+const WEAPONS_PATH = `${OWNER_TOOLS.editableRoots[0]}weapons${OWNER_DIFF.csv.extension}`;
+const JOIN = OWNER_DIFF.segmentJoiner;
 
 function asText(value)
 {
@@ -23,76 +31,96 @@ function asText(value)
     );
 }
 
-test('a raised enemy number reads as one plain subject', () =>
+function expected(key, values)
 {
-    const before = {
-        id: 'ashGolem',
-        name: 'Ash Golem',
-        stats: {
-            hp: 40,
-        },
-    };
-    const after = {
-        ...before,
-        stats: {
-            hp: 48,
-        },
-    };
-    const described = DescribeFileChange(
-        ENEMY_PATH,
+    return FormatText(OWNER_DIFF.phrases[key], {
+        arrow: OWNER_DIFF.arrow,
+        ...values,
+    });
+}
+
+function describeJson(path, before, after)
+{
+    return DescribeFileChange(
+        path,
         asText(before),
         asText(after),
     );
-    assert.equal(described.subject, 'Raise Ash Golem hp 40→48');
-    assert.deepEqual(described.lines, ['Raise Ash Golem hp 40→48']);
+}
+
+function golem(stats)
+{
+    return {
+        id: 'ashGolem',
+        name: 'Ash Golem',
+        stats,
+    };
+}
+
+test('a raised enemy number reads as one plain subject', () =>
+{
+    const described = describeJson(
+        ENEMY_PATH,
+        golem({ hp: 40 }),
+        golem({ hp: 48 }),
+    );
+    const line = expected('raise', {
+        where: ['Ash Golem', 'hp'].join(JOIN),
+        before: 40,
+        after: 48,
+    });
+    assert.equal(described.subject, line);
+    assert.deepEqual(described.lines, [line]);
 });
 
 test('card list edits name each card by its name and its effect op', () =>
 {
-    const before = [
-        {
-            id: 'core.strike',
-            name: 'Strike',
-            effects: [
-                {
-                    op: 'damage',
-                    amount: 6,
-                },
-            ],
-        },
-    ];
-    const after = [
-        {
-            ...before[0],
-            effects: [
-                {
-                    op: 'damage',
-                    amount: 5,
-                },
-            ],
-        },
-        {
-            id: 'core.jab',
-            name: 'Jab',
-        },
-    ];
-    const described = DescribeFileChange(
-        CARDS_PATH,
-        asText(before),
-        asText(after),
-    );
-    assert.equal(described.subject, 'Edit 2 entries in cards');
+    const strike = {
+        id: 'core.strike',
+        name: 'Strike',
+        effects: [
+            {
+                op: 'damage',
+                amount: 6,
+            },
+        ],
+    };
+    const weaker = {
+        ...strike,
+        effects: [
+            {
+                op: 'damage',
+                amount: 5,
+            },
+        ],
+    };
+    const jab = {
+        id: 'core.jab',
+        name: 'Jab',
+    };
+    const described = describeJson(CARDS_PATH, [strike], [
+        weaker,
+        jab,
+    ]);
+    const lower = expected('lower', {
+        where: ['Strike', 'damage', 'amount'].join(JOIN),
+        before: 6,
+        after: 5,
+    });
+    assert.equal(described.subject, expected('editMany', {
+        count: 2,
+        file: 'cards',
+    }));
     assert.deepEqual(described.lines, [
-        'Lower Strike damage amount 6→5',
-        'Add Jab',
+        lower,
+        expected('add', { where: 'Jab' }),
     ]);
 });
 
 test('a list of plain values reports what was added and removed', () =>
 {
     const before = {
-        id: 'ashGolem',
-        name: 'Ash Golem',
+        ...golem({}),
         deck: [
             'card:a',
             'card:b',
@@ -105,24 +133,34 @@ test('a list of plain values reports what was added and removed', () =>
             'card:c',
         ],
     };
-    const described = DescribeFileChange(
+    const parts = [
+        expected('listAdd', { items: 'card:c' }),
+        expected('listRemove', { items: 'card:b' }),
+    ].join(OWNER_DIFF.partJoiner);
+    const described = describeJson(
         ENEMY_PATH,
-        asText(before),
-        asText(after),
+        before,
+        after,
     );
-    assert.equal(described.subject, 'Ash Golem deck: add card:c; remove card:b');
+    assert.equal(described.subject, expected('list', {
+        entity: 'Ash Golem',
+        field: 'deck',
+        parts,
+    }));
 });
 
 test('CSV rows are matched by id and numeric cells compare as numbers', () =>
 {
-    const before = 'id,name,dropWeight\nsword,Sword,10\n';
-    const after = 'id,name,dropWeight\nsword,Sword,12\n';
     const described = DescribeFileChange(
         WEAPONS_PATH,
-        before,
-        after,
+        'id,name,dropWeight\nsword,Sword,10\n',
+        'id,name,dropWeight\nsword,Sword,12\n',
     );
-    assert.equal(described.subject, 'Raise Sword dropWeight 10→12');
+    assert.equal(described.subject, expected('raise', {
+        where: ['Sword', 'dropWeight'].join(JOIN),
+        before: 10,
+        after: 12,
+    }));
 });
 
 test('a new file and a long subject are handled', () =>
@@ -132,80 +170,71 @@ test('a new file and a long subject are handled', () =>
         null,
         '[]',
     );
-    assert.equal(added.subject, 'Add cards');
-    const before = {
-        id: 'x',
-        name: 'A very long enemy name that keeps going and going',
-        stats: {
-            poiseMaximumWithAVeryLongFieldName: 1,
-        },
-    };
-    const after = {
-        ...before,
-        stats: {
-            poiseMaximumWithAVeryLongFieldName: 2,
-        },
-    };
-    const long = DescribeFileChange(
+    assert.equal(added.subject, expected('add', { where: 'cards' }));
+    const longName = 'x'.repeat(OWNER_DIFF.subjectLimit);
+    const long = describeJson(
         ENEMY_PATH,
-        asText(before),
-        asText(after),
+        golem({ [longName]: 1 }),
+        golem({ [longName]: 2 }),
     );
-    assert.ok(long.subject.length <= 72);
-    assert.ok(long.subject.endsWith('...'));
+    assert.ok(long.subject.length <= OWNER_DIFF.subjectLimit);
+    assert.ok(long.subject.endsWith(OWNER_DIFF.ellipsis));
 });
 
-test('branch names are CamelCase under feature/Owner', () =>
+test('branch names are CamelCase under the configured prefix', () =>
 {
-    assert.equal(BranchNameFor('tougher ash golem!'), 'feature/OwnerTougherAshGolem');
-    assert.equal(BranchNameFor(''), 'feature/OwnerContent');
+    const prefix = OWNER_TOOLS.git.branchPrefix;
+    assert.equal(BranchNameFor('tougher ash golem!'), `${prefix}TougherAshGolem`);
+    assert.equal(BranchNameFor(''), `${prefix}${OWNER_TEXT.branch.defaultTitleWord}`);
 });
 
-test('path rules keep generated files and built HTML out of owner commits', () =>
+test('path rules follow ownerTools.json', () =>
 {
-    assert.ok(IsEditableContentPath(CARDS_PATH));
-    assert.ok(IsEditableContentPath(WEAPONS_PATH));
-    assert.ok(!IsEditableContentPath('games/ashenspire/game.lock.json'));
-    assert.ok(!IsEditableContentPath('games/ashenspire/packs/core/enemies/_reference.json'));
-    assert.ok(!IsEditableContentPath('src/content/generated/cards.js'));
-    assert.ok(!IsEditableContentPath('games/ashenspire/derived/characters.json'));
-    assert.ok(IsDerivedPath('games/ashenspire/derived/characters.json'));
-    assert.ok(IsNeverCommitPath('buildordinal.json'));
-    assert.ok(IsNeverCommitPath('dist/AshenSpire.html'));
-    assert.ok(IsDerivedPath('src/content/generated/cards.js'));
-    assert.ok(IsDerivedPath('games/ashenspire/game.lock.json'));
+    const generatedFolder = OWNER_TOOLS.generatedFolders[0];
+    OWNER_TOOLS.editableRoots.forEach((root) =>
+    {
+        assert.ok(IsEditableContentPath(`${root}example.json`));
+    });
+    OWNER_TOOLS.generatedNames.forEach((name) =>
+    {
+        assert.ok(!IsEditableContentPath(`${OWNER_TOOLS.editableRoots[2]}${name}`));
+    });
+    assert.ok(!IsEditableContentPath(`${generatedFolder}characters.json`));
+    assert.ok(IsDerivedPath(`${generatedFolder}characters.json`));
+    OWNER_TOOLS.neverCommit.forEach((rule) => assert.ok(IsNeverCommitPath(`dist/x${rule}`)));
+    OWNER_TOOLS.generatedLocations.forEach((location) => assert.ok(IsDerivedPath(location)));
     assert.ok(!IsDerivedPath('src/engine/combat.js'));
 });
 
 test('duplicate entries are compared by position, not merged', () =>
 {
+    const strike = {
+        card: 'core.strike',
+        copies: 1,
+    };
     const before = {
         id: 'deck',
         name: 'Deck',
-        cards: [
-            {
-                card: 'core.strike',
-                copies: 1,
-            },
-        ],
+        cards: [strike],
     };
     const after = {
         ...before,
         cards: [
-            ...before.cards,
-            {
-                card: 'core.strike',
-                copies: 1,
-            },
+            strike,
+            strike,
         ],
     };
-    const described = DescribeFileChange(
+    const described = describeJson(
         CARDS_PATH,
-        asText(before),
-        asText(after),
+        before,
+        after,
     );
+    const prefix = expected('set', {
+        where: ['Deck', 'cards', 'core.strike'].join(JOIN),
+        after: '',
+    });
     assert.equal(described.lines.length, 1);
-    assert.match(described.lines[0], /^Set Deck cards core\.strike to /);
+    assert.ok(described.lines[0].startsWith(prefix));
 });
 
 test('the same number written differently is a change, not a raise or lower', () =>
@@ -215,7 +244,11 @@ test('the same number written differently is a change, not a raise or lower', ()
         'id,name,scale\nsword,Sword,1\n',
         'id,name,scale\nsword,Sword,1.0\n',
     );
-    assert.equal(described.subject, 'Change Sword scale 1→1.0');
+    assert.equal(described.subject, expected('change', {
+        where: ['Sword', 'scale'].join(JOIN),
+        before: '1',
+        after: '1.0',
+    }));
 });
 
 test('text comparison ignores Windows line endings', () =>
