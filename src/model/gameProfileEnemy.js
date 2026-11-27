@@ -1,5 +1,6 @@
 import { characterSettings,resolveEnemyAttributes,enemyItemBonuses,enemyPools,enemyLevel,enemyAttributeTotal,enemyEffectiveLevel,enemyScalingHpFactor } from '../../engine/kernel/gameConfig.js';
 import { fixCoreEnabled } from './fixCoreMechanics.js';
+import { EnemyHpOverride } from './enemyHpOverride.js';
 import { LevelCardsFor, LevelCardMoves, LevelMoveId } from './enemyLevelCards.js';
 // Project only the configured enemy's actual held gear. The source catalog is
 // the pinned profile, and the kernel resolves the same points as player gear.
@@ -24,6 +25,8 @@ export function gameProfileEnemyRatings(ctx,enemy,{actLevelled=false,levelStep=n
   const bonus=enemyItemBonuses(definition,content,ctx.gameProfile.modules.gear);
   const attributes=Object.fromEntries(Object.entries(allocated).map(([id,value])=>[id,enemyAttributeTotal(definition,settings,id,value,bonus)]));
   const pools=enemyPools({...definition,resolvedAttributes:allocated},settings,level,bonus);
+  // An authored HP override replaces the level row's HP; the fight's multipliers still apply.
+  const levelMaxHp=EnemyHpOverride(definition) ?? pools.hp;
   const attributeBonuses=Object.fromEntries(Object.keys(allocated).map(id=>[id,bonus[id] || 0]));
   return {attributes,ownAttributes:allocated,attributeBonuses,level,maxStamina:pools.sp,stamina:pools.sp,maxMana:pools.mp,mana:pools.mp,baseEvasionBonus:bonus.evasion || 0,basePrecisionBonus:bonus.precision || 0,
     // Owner, 2026-11-18: AR and DR are not stats. An enemy's physical damage channel is its STR and its Block channel its DEX (the
@@ -32,7 +35,7 @@ export function gameProfileEnemyRatings(ctx,enemy,{actLevelled=false,levelStep=n
     ratings:{ar:(attributes.strength || 0)+gearStep.ar,dr:(attributes.dexterity || 0)+gearStep.dr,pr:0,
       poise:(enemy.ratings?.poise || 0)+(bonus.poise || 0),ward:(enemy.ratings?.ward || 0)+(bonus.ward || 0)},
     // Its HP is the characters module's HP row at that level instead of the authored range (effectiveLevelHp).
-    ...(levelHp ? {effectiveMaxHp:pools.hp} : {}),
+    ...(levelHp ? {effectiveMaxHp:levelMaxHp} : {}),
     ...(scaling && !levelHp && enemyScalingHpFactor(definition,settings,step)!==1 ? {hpStepScale:enemyScalingHpFactor(definition,settings,step)} : {}),
     // The floor step, for the level-card wiring (owner, 2026-11-20); absent on profiles without the table.
     // Either HP is then scaled by its tier (enemies.hpScaleByTier, #2820 review balance pass).
