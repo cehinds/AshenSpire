@@ -43,11 +43,12 @@ test('the fresh Studio list includes configured custom cards once and restores a
   assert.equal(cards.filter(card => card.id === smash).length, 1);
   assert.equal(cards.some(card => card.id === placeholder || card.id === legacy.id || card.id === excludedLegacy), false);
   const state = { cards };
-  const restoreStart = source.indexOf('for (const draftCard of draftCards)');
-  const restoreEnd = source.indexOf('\n      syncAllViews();', restoreStart);
+  const restoreStart = source.indexOf('function mergeStudioCards(');
+  const restoreEnd = source.indexOf('\n}', restoreStart) + 2;
   assert.ok(restoreStart > 0 && restoreEnd > restoreStart);
   const edited = { ...cards.find(card => card.id === smash), name: 'Edited Arcane Smash' };
-  new Function('state', 'draftCards', source.slice(restoreStart, restoreEnd))(state, [edited]);
+  const mergeSource = source.slice(restoreStart, restoreEnd) + '\nmergeStudioCards(draftCards, []);';
+  new Function('state', 'draftCards', mergeSource)(state, [edited]);
   assert.equal(state.cards.filter(card => card.id === smash).length, 1);
   assert.equal(state.cards.find(card => card.id === smash).name, edited.name);
   assert.ok(filterMembership(state, 'class:starseer').has(smash));
