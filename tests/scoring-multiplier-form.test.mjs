@@ -3,6 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { BaseFace, ScoreCard } from '../src/model/combatPower.js';
+import { ValidateScoringConfig } from '../src/model/activeScoring.js';
 import { scoringContract } from './helpers/scoring-contract.mjs';
 
 const face = (o = {}) => ({ ...BaseFace(), sp: 2, mp: 0, dmg: 12, blk: 6, ...o });
@@ -85,3 +86,16 @@ test('multiplier form: multiplier parts read P only, never each other', () => {
   assert.equal(scored.parts.strength, 4 * 0.25 * 2);
 });
 
+test('scoring validation: multiplier on a cost, effect or status must be a boolean', () => {
+  const ok = scoringContract();
+  Object.assign(ok, { keywords: {}, rank: ok.rank, rarity: ok.rarity, tags: {} });
+  ok.costs.sp.multiplier = true;
+  ok.effects.block.multiplier = false;
+  ok.statuses.venom.multiplier = true;
+  assert.deepEqual(ValidateScoringConfig(ok), []);
+  for (const [section, key, value] of [['costs', 'sp', 1], ['effects', 'damage', 'yes'], ['statuses', 'strength', null]]) {
+    const bad = structuredClone(ok);
+    bad[section][key].multiplier = value;
+    assert.deepEqual(ValidateScoringConfig(bad), [`${section}.${key}.multiplier must be true or false.`]);
+  }
+});
