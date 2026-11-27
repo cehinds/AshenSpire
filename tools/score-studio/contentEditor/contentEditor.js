@@ -1,17 +1,19 @@
-// The Score Studio "Game content" tab: pick a section, edit entries, Save, Revert or Check.
+// The Score Studio "Game content" tab: pick a section, edit entries, then Save, Revert or Check.
 // Every word, class name, route and size comes from the JSON files contentConfig.js loads.
+import { FillTemplate } from '../../../src/model/textTemplate.js';
+import { CheckOutput } from './checkOutput.js';
 import { ContentApi } from './contentApi.js';
 import { LoadContentConfig } from './contentConfig.js';
 import { ContentSection } from './contentSection.js';
 import { ContentStore } from './contentStore.js';
-import { Button, El, TextInput } from './dom.js';
+import { El, TextInput } from './dom.js';
+import { EditorToolbar } from './editorToolbar.js';
 import { CreateFieldRenderers } from './fieldRenderers.js';
-import { FillTemplate } from '../../../src/model/textTemplate.js';
 
 const OPENED_FLAG = 'contentEditorOpened';
 const LISTBOX_ROLE = 'listbox';
 const STYLESHEET_REL = 'stylesheet';
-// The config may be what failed to load, so this one class name cannot come from it.
+// This class cannot come from config: the config itself may be what failed to load.
 const OPEN_ERROR_CLASS = 'ce-open-error';
 
 function loadStylesheet(href)
@@ -23,6 +25,11 @@ function loadStylesheet(href)
         },
     });
     document.head.append(link);
+}
+
+function showOpenError(panel, error)
+{
+    panel.replaceChildren(El('p', { className: OPEN_ERROR_CLASS, text: error.message }));
 }
 
 class ContentEditor
@@ -37,6 +44,13 @@ class ContentEditor
         this.renderers = CreateFieldRenderers(this.ui);
         const api = new ContentApi(config.api);
         this.store = new ContentStore(api, this.ui.sizes.jsonIndent, () => this.ShowDirty());
+        this.toolbar = new EditorToolbar({
+            ui: this.ui,
+            sections: config.sections,
+            onSection: (sectionId) => this.ShowSection(sectionId),
+            onAction: (action) => this[action](),
+        });
+        this.checkOutput = new CheckOutput(this.ui);
         this.BuildPanes();
         panel.append(this.Layout());
         window.addEventListener('beforeunload', (event) => this.WarnUnsaved(event));
@@ -45,22 +59,18 @@ class ContentEditor
     BuildPanes()
     {
         const classes = this.classes;
-        this.status = El('span', { className: classes.status });
-        this.dirtyPill = El('span', { className: classes.dirtyPill, text: this.text.notSaved });
-        this.dirtyPill.hidden = true;
         const filter = (text) => this.current?.Filter(text);
         this.search = TextInput('', filter, { className: classes.search });
         this.search.placeholder = this.text.search;
-        this.checkOutput = El('div', { className: classes.check });
-        this.checkOutput.hidden = true;
         const form = El('div', { className: classes.form });
-        const listAttributes = {
-            role: LISTBOX_ROLE,
-        };
-        this.panes = {
-            list: El('div', { className: classes.list, attributes: listAttributes }),
+        const scrollerChildren = [
+            this.checkOutput.element,
             form,
-            scroller: El('div', { className: classes.formPane }, [this.checkOutput, form]),
+        ];
+        this.panes = {
+            list: El('div', { className: classes.list, attributes: { role: LISTBOX_ROLE } }),
+            form,
+            scroller: El('div', { className: classes.formPane }, scrollerChildren),
             suggestions: El('div', { attributes: { hidden: '' } }),
         };
     }
@@ -76,44 +86,15 @@ class ContentEditor
             this.panes.scroller,
         ]);
         return El('div', { className: this.classes.root }, [
-            this.Toolbar(),
+            this.toolbar.element,
             body,
             this.panes.suggestions,
         ]);
     }
 
-    ToolbarButton(spec)
-    {
-        const className = this.classes[spec.className];
-        return Button(spec.text, className, () => this[spec.action](), spec.title);
-    }
-
-    Toolbar()
-    {
-        const sectionOptions = this.config.sections.map((section) =>
-        {
-            return El('option', { text: section.label, attributes: { value: section.id } });
-        });
-        this.sectionSelect = El('select', {
-            className: this.classes.sectionSelect,
-            on: {
-                change: () => this.ShowSection(this.sectionSelect.value),
-            },
-        }, sectionOptions);
-        const pairs = this.ui.buttons.map((spec) => [spec.action, this.ToolbarButton(spec)]);
-        this.buttons = new Map(pairs);
-        return El('div', { className: this.classes.toolbar }, [
-            this.sectionSelect,
-            this.dirtyPill,
-            this.status,
-            ...this.buttons.values(),
-        ]);
-    }
-
     SetStatus(text, isError = false)
     {
-        this.status.textContent = text;
-        this.status.classList.toggle(this.classes.error, isError);
+        this.toolbar.SetStatus(text, isError);
     }
 
     async Run(task)
@@ -142,9 +123,7 @@ class ContentEditor
 
     ShowDirty()
     {
-        const dirty = this.store.DirtyPaths();
-        this.dirtyPill.hidden = dirty.length === 0;
-        this.dirtyPill.title = this.ShortNames(dirty);
+        this.toolbar.ShowUnsaved(this.ShortNames(this.store.DirtyPaths()));
     }
 
     WarnUnsaved(event)
@@ -175,7 +154,7 @@ class ContentEditor
     ShowSection(sectionId)
     {
         this.current = this.SectionFor(sectionId);
-        this.sectionSelect.value = sectionId;
+        this.toolbar.ShowSection(sectionId);
         this.search.value = this.current.filterText;
         return this.Run(async () =>
         {
@@ -231,58 +210,28 @@ class ContentEditor
         });
     }
 
-    CheckLine(line)
-    {
-        const { failPrefix, passPrefix } = this.ui.checkLines;
-        const className = line.startsWith(failPrefix)
-            ? this.classes.checkFail
-            : line.startsWith(passPrefix)
-                ? this.classes.checkPass
-                : '';
-        return El('div', { className, text: line });
-    }
-
-    ShowCheck(result)
-    {
-        const lines = result.lines.filter(Boolean).map((line) => this.CheckLine(line));
-        this.checkOutput.replaceChildren(...lines);
-        this.checkOutput.hidden = false;
-        const message = result.ok
-            ? this.text.passed
-            : this.text.failed;
-        this.SetStatus(message, !result.ok);
-    }
-
-    SetBusy(isBusy)
-    {
-        for (const action of this.ui.disabledDuringCheck)
-        {
-            this.buttons.get(action).disabled = isBusy;
-        }
-    }
-
     Check()
     {
         return this.Run(async () =>
         {
-            this.SetBusy(true);
+            this.toolbar.SetDisabled(this.ui.disabledDuringCheck, true);
             this.SetStatus(this.text.checking);
             try
             {
-                this.ShowCheck(await this.store.api.RunCheck());
+                const result = await this.store.api.RunCheck();
+                this.checkOutput.Show(result);
+                const message = result.ok
+                    ? this.text.passed
+                    : this.text.failed;
+                this.SetStatus(message, !result.ok);
                 await this.ReloadFromDisk();
             }
             finally
             {
-                this.SetBusy(false);
+                this.toolbar.SetDisabled(this.ui.disabledDuringCheck, false);
             }
         });
     }
-}
-
-function showOpenError(panel, error)
-{
-    panel.replaceChildren(El('p', { className: OPEN_ERROR_CLASS, text: error.message }));
 }
 
 /** Builds the Game content tab the first time it is shown; a failed open retries next time. */

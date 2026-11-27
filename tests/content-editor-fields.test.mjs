@@ -1,5 +1,5 @@
-// The Score Studio content editor's pure helpers.
-// Field paths, input parsing and writes that keep a file's layout.
+// The content editor helpers: field paths, input parsing, templates, layout-keeping writes.
+// writes. The indent and locked keys come from the editor's JSON config.
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
@@ -10,15 +10,18 @@ import {
     SetFieldValue,
 } from '../tools/score-studio/contentEditor/fieldPaths.js';
 import { ResolveSections } from '../tools/score-studio/contentEditor/contentConfig.js';
-import { FormatJsonLike, TopLevelItems } from '../tools/score-studio/contentEditor/jsonText.js';
+import { TopLevelItems } from '../tools/score-studio/contentEditor/jsonScan.js';
+import { FormatJsonLike } from '../tools/score-studio/contentEditor/jsonText.js';
 import {
     WithLockedKeys,
     WithoutLockedKeys,
 } from '../tools/score-studio/contentEditor/lockedKeys.js';
 import { FillTemplate } from '../src/model/textTemplate.js';
+import { EDITOR_CONFIG, UI_CONFIG } from './helpers/content-editor-config.mjs';
 
-const JSON_INDENT = 2;
-const LOCKED = ['derived'];
+const JSON_INDENT = UI_CONFIG.sizes.jsonIndent;
+const LOCKED = ResolveSections(EDITOR_CONFIG).find((section) => section.lockedKeys).lockedKeys;
+const LOCKED_KEY = LOCKED[0];
 
 function huskBrute()
 {
@@ -31,7 +34,7 @@ function huskBrute()
             },
             poiseMax: 5,
         },
-        derived: {
+        [LOCKED_KEY]: {
             tier: 'minion',
         },
     };
@@ -49,7 +52,7 @@ test('a dot path reads nested values, the entry itself, and missing parts', () =
 test('setting an existing field keeps every key in its place', () =>
 {
     const enemy = SetFieldValue(huskBrute(), 'stats.poiseMax', 6);
-    assert.deepEqual(Object.keys(enemy), ['id', 'stats', 'derived']);
+    assert.deepEqual(Object.keys(enemy), ['id', 'stats', LOCKED_KEY]);
     assert.deepEqual(Object.keys(enemy.stats), ['levelProfile', 'poiseMax']);
     assert.equal(enemy.stats.poiseMax, 6);
 });
@@ -228,12 +231,12 @@ test('the JSON view hides locked keys and an edit puts them back in place', () =
     const edited = {
         ...visible,
         name: 'Husk Brute',
-        derived: {
+        [LOCKED_KEY]: {
             tier: 'boss',
         },
     };
     const merged = WithLockedKeys(enemy, edited, LOCKED);
-    assert.deepEqual(Object.keys(merged), ['id', 'stats', 'derived', 'name']);
-    assert.deepEqual(merged.derived, enemy.derived);
+    assert.deepEqual(Object.keys(merged), ['id', 'stats', LOCKED_KEY, 'name']);
+    assert.deepEqual(merged[LOCKED_KEY], enemy[LOCKED_KEY]);
     assert.deepEqual(WithLockedKeys(enemy, [1, 2], LOCKED), [1, 2]);
 });

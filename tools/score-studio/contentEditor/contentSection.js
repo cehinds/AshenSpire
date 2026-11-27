@@ -1,28 +1,14 @@
 // One configured section: its entry list on the left and the selected entry's form on the right.
 import { RenderCardLimits } from './cardLimitsBadge.js';
 import { LoadEntries } from './contentEntries.js';
-import { DataList, El } from './dom.js';
+import { El } from './dom.js';
 import { EntryList } from './entryList.js';
 import { CloneJson, GetFieldValue, SetFieldValue } from './fieldPaths.js';
 import { RenderField } from './fieldRenderers.js';
 import { WithLockedKeys, WithoutLockedKeys } from './lockedKeys.js';
+import { SuggestionLists } from './suggestionLists.js';
 
 const CHECKBOX_TYPE = 'checkbox';
-const LIST_ID_JOIN = '-';
-
-function suggestFiles(fields)
-{
-    return fields.flatMap((field) =>
-    {
-        const own = field.suggest?.file
-            ? [field.suggest.file]
-            : [];
-        return [
-            ...own,
-            ...suggestFiles(field.fields || []),
-        ];
-    });
-}
 
 export class ContentSection
 {
@@ -39,7 +25,12 @@ export class ContentSection
         this.entries = [];
         this.selected = null;
         this.showJson = false;
-        this.listIds = new Map();
+        this.suggestions = new SuggestionLists({
+            host: panes.suggestions,
+            store,
+            prefix: ui.suggestListPrefix,
+            sectionId: config.id,
+        });
         this.list = new EntryList({
             host: panes.list,
             section: config,
@@ -58,9 +49,7 @@ export class ContentSection
     {
         const selectedKey = this.selected?.key;
         this.entries = await LoadEntries(this.config, this.fieldSets, this.store);
-        const fields = this.entries.flatMap((entry) => entry.fields);
-        const files = [...new Set(suggestFiles(fields))];
-        await Promise.all(files.map((file) => this.store.Load(file)));
+        await this.suggestions.LoadFor(this.entries.flatMap((entry) => entry.fields));
         const previous = this.entries.find((entry) => entry.key === selectedKey);
         this.selected = previous || this.entries[0] || null;
         this.list.Render(this.entries, this.selected);
@@ -79,43 +68,12 @@ export class ContentSection
         this.RenderForm();
     }
 
-    ListId(suggest)
-    {
-        const cacheKey = JSON.stringify(suggest);
-        if (!this.listIds.has(cacheKey))
-        {
-            const idParts = [
-                this.ui.suggestListPrefix,
-                this.config.id,
-                this.listIds.size,
-            ];
-            const id = idParts.join(LIST_ID_JOIN);
-            this.listIds.set(cacheKey, id);
-            this.panes.suggestions.append(DataList(id, this.SuggestOptions(suggest)));
-        }
-        return this.listIds.get(cacheKey);
-    }
-
-    SuggestOptions(suggest)
-    {
-        if (!suggest.file)
-        {
-            return suggest.options || [];
-        }
-        const prefix = suggest.prefix || '';
-        const items = this.store.Root(suggest.file);
-        const list = Array.isArray(items)
-            ? items
-            : [];
-        return list.map((item) => `${prefix}${item.id}`);
-    }
-
     FieldContext(onChange)
     {
         return {
             onChange,
             refresh: () => this.RenderForm(),
-            listId: (suggest) => this.ListId(suggest),
+            listId: (suggest) => this.suggestions.ListId(suggest),
         };
     }
 

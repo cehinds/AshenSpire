@@ -1,14 +1,12 @@
-// Calls the /__content/ API that `npm run play` serves.
-// Routes and messages come from contentApi.json.
+// Calls the /__content/ API that `npm run play` serves; routes come from contentApi.json.
+import { TextHash } from './textHash.js';
+
 const JSON_HEADERS = {
     'Content-Type': 'application/json',
 };
 const METHOD_PUT = 'PUT';
 const METHOD_POST = 'POST';
 const EMPTY_BODY = '{}';
-const HEX_RADIX = 16;
-const HEX_BYTE_WIDTH = 2;
-const ZERO = '0';
 
 export class ContentApi
 {
@@ -55,12 +53,9 @@ export class ContentApi
     }
 
     /** The hash the server compares against, of the text a file was opened from. */
-    async Hash(text)
+    Hash(text)
     {
-        const bytes = new TextEncoder().encode(text);
-        const digest = new Uint8Array(await crypto.subtle.digest(this.hashAlgorithm, bytes));
-        const toHex = (byte) => byte.toString(HEX_RADIX).padStart(HEX_BYTE_WIDTH, ZERO);
-        return [...digest].map(toHex).join('');
+        return TextHash(text, this.hashAlgorithm);
     }
 
     /** Writes one repo file; refused with `stale` when the file changed since `baseText`. */
