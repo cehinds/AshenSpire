@@ -252,7 +252,8 @@ function walkFindsBreak(plan, rules, context)
 
 function guaranteeRules(routes, shape, types)
 {
-  const shopFirst = shape.guaranteedShopDepths.first;
+  // A branch exists from firstBranchDepth on; the shared opening holds no branch shop.
+  const shopFirst = Math.max(shape.guaranteedShopDepths.first, shape.firstBranchDepth);
   const shopLast = Math.min(shape.guaranteedShopDepths.last, routes.prebossNodes);
   return {
     count: routes.prebossNodes,

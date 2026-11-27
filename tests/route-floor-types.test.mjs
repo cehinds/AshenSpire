@@ -515,6 +515,36 @@ test('the largest route the schema allows resolves with pins in bounded time and
   assert.deepEqual(profile.modules.routes.floorTypes, floorTypes);
 });
 
+// Guaranteed shop depths that start on the shared opening, depth 1 (PR #3025 follow-up).
+function OpeningShopRoute(config)
+{
+  const firstBranch = config.shape.firstBranchDepth;
+  const shopLast = firstBranch + config.shape.narrowDepthsBeforeBoss;
+  const restFloors = config.settings.restFloors.filter(depth => depth > shopLast);
+  return {
+    route: {
+      prebossNodes: config.count,
+      restFloors,
+      restsPerAct: restFloors.length,
+      firstFloor: null,
+      startRestFromAct: null,
+      restGap: null,
+      routeShape: { guaranteedShopDepths: { first: 1, last: shopLast } },
+    },
+    branchShopDepths: DepthRange(firstBranch, shopLast),
+  };
+}
+
+test('a shop pinned on the shared opening does not stand in for a branch shop', () =>
+{
+  const config = RouteConfig();
+  const { route, branchShopDepths } = OpeningShopRoute(config);
+  const openingShop = { 1: SHOP_ROOM };
+  assert.doesNotThrow(() => SetupCore({ ...route, floorTypes: openingShop }));
+  const floorTypes = { ...openingShop, ...PinAll(branchShopDepths, config.plain) };
+  RefusedWith({ ...route, floorTypes }, SHOP_REFUSAL);
+});
+
 function InvalidTables(config)
 {
   const {
