@@ -59,9 +59,13 @@ function slimOf(full) {
     costs: Object.fromEntries(Object.entries(full.costs).map(([k, v]) => [k, v.weight])),
     effects: Object.fromEntries(Object.entries(full.effects).map(([k, v]) => [k, [v.weight, v.per]])),
     statuses: Object.fromEntries(Object.entries(full.statuses).map(([k, v]) => [k, [v.weight, v.target]])),
+    // Owner 2026-11-27: a cost, effect or status with `multiplier: true` scores P x weight x units instead of weight x units.
+    multiplied: { costs: multipliedKeys(full.costs), effects: multipliedKeys(full.effects), statuses: multipliedKeys(full.statuses) },
     decayOne: new Set(full.cardModel.decayOneStatuses),
   };
 }
+
+const multipliedKeys = (section) => new Set(Object.entries(section || {}).filter(([, v]) => v && v.multiplier === true).map(([k]) => k));
 
 const triOf = (S, n) => { let s = 0; for (let t = 0; t < S.model.R; t++) s += Math.max(n - t, 0); return s; };
 const ew = (S, k, amt) => S.effects[k][0] * amt / S.effects[k][1];
@@ -144,26 +148,41 @@ function scorePrepared(c, scoring, S, context) {
   // happens to share a part key with a status (a `venom` tag and the Venom status) for, or hides it from, an effect.
   const fx = {};
   const addFx = (k, v) => { add(k, v); if (v) fx[k] = (fx[k] || 0) + v; };
+  // Multiplier-form costs, effects and statuses wait for P: [part key, weight, units, is an effect part].
+  const deferred = [];
+  const cost = (part, k, units) => {
+    if (S.multiplied.costs.has(k)) deferred.push([part, S.costs[k], units, false]);
+    else add(part, S.costs[k] * units);
+  };
+  const effect = (part, k, amt, scale = 1) => {
+    if (S.multiplied.effects.has(k)) deferred.push([part, S.effects[k][0], amt / S.effects[k][1] * scale, true]);
+    else addFx(part, ew(S, k, amt) * scale);
+  };
   const area = c.tags.includes(CM.areaTag) ? M.ENEMIES : 1;
-  add('SP', S.costs.sp * c.sp); add('MP', S.costs.mp * c.mp);
-  addFx('damage', ew(S, 'damage', c.dmg) * area);
+  cost('SP', 'sp', c.sp); cost('MP', 'mp', c.mp);
+  effect('damage', 'damage', c.dmg, area);
   const blockBreakRule = MechanicRule('blockBreak', context);
   if (c.blockBreak && (!blockBreakRule || blockBreakRule.enabled !== false) && S.effects.blockBreak) {
-    addFx('blockBreak', ew(S, 'blockBreak', c.blockBreak) * area);
+    effect('blockBreak', 'blockBreak', c.blockBreak, area);
   }
-  addFx('block', ew(S, 'block', c.blk));
-  addFx('poise', ew(S, 'poiseDamage', c.poise) * area);
+  effect('block', 'block', c.blk);
+  effect('poise', 'poiseDamage', c.poise, area);
   for (const [s, n, tgt] of c.statuses) {
     const st = S.statuses[s]; if (!st) continue;
     const self = tgt === 'self', good = (st[1] === 'self') === self;
     const exact = exactStatus(S, s, n);
-    const v = exact !== null ? exact : st[0] * (S.decayOne.has(s) ? Math.min(n, M.R) : n);
-    addFx(s, v * (good ? 1 : -1) * (self ? 1 : area));
+    const scale = (good ? 1 : -1) * (self ? 1 : area);
+    // Units: the formula value for a formula status (its flat form ignores the weight), else the stacks counted.
+    if (S.multiplied.statuses.has(s)) deferred.push([s, st[0], (exact !== null ? exact : (S.decayOne.has(s) ? Math.min(n, M.R) : n)) * scale, true]);
+    else {
+      const v = exact !== null ? exact : st[0] * (S.decayOne.has(s) ? Math.min(n, M.R) : n);
+      addFx(s, v * scale);
+    }
   }
-  addFx('draw', ew(S, 'draw', c.draw)); addFx('heal', ew(S, 'heal', c.heal)); addFx('HP cost', ew(S, 'loseHp', c.loseHp));
-  addFx('discard', ew(S, 'discard', c.discard)); addFx('SP restore', ew(S, 'restoreStamina', c.restoreSp)); addFx('MP restore', ew(S, 'restoreMana', c.restoreMp));
-  addFx('cleanse', ew(S, 'removeStatus', c.cleanse)); addFx('counter', ew(S, 'counterStack', c.counter)); addFx('reflect', ew(S, 'applyReflect', c.reflect));
-  addFx('pull', ew(S, 'pullEnemy', c.pull)); addFx('move', ew(S, 'moveEngagement', c.move));
+  effect('draw', 'draw', c.draw); effect('heal', 'heal', c.heal); effect('HP cost', 'loseHp', c.loseHp);
+  effect('discard', 'discard', c.discard); effect('SP restore', 'restoreStamina', c.restoreSp); effect('MP restore', 'restoreMana', c.restoreMp);
+  effect('cleanse', 'removeStatus', c.cleanse); effect('counter', 'counterStack', c.counter); effect('reflect', 'applyReflect', c.reflect);
+  effect('pull', 'pullEnemy', c.pull); effect('move', 'moveEngagement', c.move);
   const U = CM.utility;
   addFx('utility', c.holdOne * U.holdOne + c.boost * U.boost + c.cull * U.cull + c.shuffle * U.shuffle + c.attr * U.attr);
   for (const t of c.tags) {
@@ -172,6 +191,8 @@ function scorePrepared(c, scoring, S, context) {
   }
   if (c.tags.includes(CM.honedTag) && S.tags[CM.honedTag]?.surchargeEnabled !== false) add(CM.honedTag, S.tags[CM.honedTag].perN);
   const P = Object.entries(parts).filter(([k, v]) => k !== 'SP' && k !== 'MP' && v > 0).reduce((s, [, v]) => s + v, 0);
+  // Multiplier-form entries scale with P and never feed it (as categories do): a -0.1 SP weight takes 10% of P per SP.
+  for (const [part, weight, units, isEffect] of deferred) (isEffect ? addFx : add)(part, P * weight * units);
   for (const t of c.tags) { const w = S.tags[t]; if (w && w.surchargeEnabled !== false && w.pMultiplier) add(t, P * w.pMultiplier); }
   // Counterstrike as a multiplier scales P; set flat (weight, no multiplier) it scored in the tag loop above.
   const cs = S.tags[CM.counterstrikeTag];
