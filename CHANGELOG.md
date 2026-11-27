@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-27
 
-- **More reliable Smith and equipment checks** ([#3018](https://github.com/cehinds/AshenSpire/pull/3018), `0.7.5.169`). Smith screen checks use an explicit eligible scenario, while equipment tests follow current item availability and use controlled values for mechanics, so authored balance changes do not leave stale expectations.
+- **More reliable Smith and equipment checks** ([#3018](https://github.com/cehinds/AshenSpire/pull/3018), `0.7.5.171`). Smith screen checks use an explicit eligible scenario, while equipment tests follow current item availability and use controlled values for mechanics, so authored balance changes do not leave stale expectations.
+- **Behind the scenes: mana-only mechanic notes refreshed** ([#3031](https://github.com/cehinds/AshenSpire/pull/3031), `0.7.5.171`). Generated mechanic notes now name the spell cost rules as the mana-only reader. Nothing you play changes.
 - **Opening shop pins no longer cover every branch** ([#3033](https://github.com/cehinds/AshenSpire/pull/3033), `0.7.5.169`). A shop pinned on floor 1 now counts only where a branch exists, as the map builder does. Core maps are unchanged.
 - **Pin a map floor's room type** ([#3025](https://github.com/cehinds/AshenSpire/pull/3025), `0.7.5.167`). Core routes can now set floorTypes, such as floor 4 always a shop. Without it, maps are unchanged.
 - **Card limits and drawback cost** ([#3030](https://github.com/cehinds/AshenSpire/pull/3030), `0.7.5.165`). Card effect and drawback caps are set in actionCosts.json; none means no limit. Drawbacks can cost Combat Power, flat or as a multiplier, off by default.
