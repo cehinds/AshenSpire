@@ -1,6 +1,5 @@
-# .github/workflows/tests.yml — every test in the repository, on every push to
-# `test` and `release`; core and discovery shards also on every PR into dev and every
-# push to dev.
+# .github/workflows/tests.yml — the core suite on every PR into dev and push to dev;
+# core and the discovered shards on every push to review.
 #
 # WHY THIS FILE EXISTS. ci.yml holds the whole suite but was dispatch-only
 # from 2026-08-01 (cost: a 3-OS matrix, macOS at 10x). dev-preview.yml runs on
@@ -17,7 +16,7 @@
 #   push to review           — `core` and the eight `discovered` shards, which
 #                              leave out SLOW_DISCOVERED (--no-slow).
 #   alternative/**/dev lines — `core` and the discovered shards, as before.
-#   workflow_dispatch        — the same jobs, on any ref.
+#   workflow_dispatch        — core everywhere; shards except on feature/chore/fix refs.
 # Pushes to `test` and `release` do not run this file any more. ci.yml's
 # test-stage jobs retain all checks through exhaustive partitions:
 #   tests.yml core                 -> ci.yml test
