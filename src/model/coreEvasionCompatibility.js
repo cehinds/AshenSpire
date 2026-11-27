@@ -46,12 +46,14 @@ const PREVIOUS_RUNTIMES = new Set([
   // Dev c5c5ec4a before #3002: no enemyLevelScaling table or enemy level-card lists.
   'sha256:eff6f5c38dcdba3c78d012bf55c8baf6fe703f664bc3f3416244b15d1fa07216',
   // Dev before routes.floorTypes (2026-11-27): no floorTypes key; its maps draw as before.
-  'sha256:659730689c3f0675a28b5ecbf6ef6c2bcbefa32b77c4794a5a5f9c14f0b8f07d',
+  'sha256:defbcd659c0fe2899a69d503916d8d739116d9928b8156c5985764b83efa755f',
   'sha256:0c4e9eae226108858dcb937000b0992a33b778f650bb3e3e17a1c369ba51a0b3',
   'sha256:b49503d593056a588d5ae9a25ac214fc801c7b7eaea22093d601f76afe9d27f8',
   'sha256:d2993c77a6e8a5ff16dc1b5edf11d30cb924d790e7875af0452a4e8f0183ef63',
   'sha256:5311c2f843c0f42ef94e4b8ab0f4050400fdbc383c4c2395ef14bb563453801d',
   'sha256:777939d6ee4065a02491fcd7ff21fc2d9f44271a0d7f10ec3b2435d1786a72cd',
+  // Star Seer hotfix 2026-11-26 (spellCosts.manaSurcharge 0, preparedStaminaMinimum, preparedManaDiscount): runs saved on the enemy-level-scaling runtime keep their rules.
+  'sha256:659730689c3f0675a28b5ecbf6ef6c2bcbefa32b77c4794a5a5f9c14f0b8f07d',
   'sha256:d243637be191cbe2c2580420f88bf2f5a672caa4a17e0c8c0eeca7685b75cf7d',
   'sha256:e316635810ab4101030e92e5d2169d0659ce1536caf82f1333f33b854ca4a6c3',
   'sha256:0805e9ad9ee6882390661bd96cc146d4645da893d78d3bec82c2563640b5323f',
@@ -193,8 +195,10 @@ const COMPATIBLE_HOST_RUNTIMES = new Set([
   'sha256:c77d4f30494cb821fc66b9b9ef19b91fbb2c699633fe0137b72ab89d261ec831',
   // Enemy level scaling (spCap in engine/kernel/gameConfig.js) moves the host runtime; prior saves keep their own rules.
   'sha256:659730689c3f0675a28b5ecbf6ef6c2bcbefa32b77c4794a5a5f9c14f0b8f07d',
+  // Owner hotfix 2026-11-26 (spellCosts: manaSurcharge 0, Prepared SP floor 1; the Prepared Mana cut is gear-only) moves the host runtime; prior saves keep their own rules.
+  'sha256:defbcd659c0fe2899a69d503916d8d739116d9928b8156c5985764b83efa755f',
   // routes.floorTypes and routeShape (engine/kernel/route*.js) move the host runtime.
-  'sha256:253cf6400fee87eae5910ce88c6bbf8de82906dbb0b2345fd54503062a4eeaa6',
+  'sha256:8f63605633f32cae32238f59c53430097ac38350d7a8fce5dbb7dcabb715aca1',
 ]);
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return COMPATIBLE_HOST_RUNTIMES.has(currentRuntime)

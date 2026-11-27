@@ -35,6 +35,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 ## 2026-11-27
 
 - **Pin a map floor's room type** ([#3025](https://github.com/cehinds/AshenSpire/pull/3025), `0.7.5.151`). Core routes can now set floorTypes, such as floor 4 always a shop. Without it, maps are unchanged.
+- **Initiate gear** ([#3026](https://github.com/cehinds/AshenSpire/pull/3026), `0.7.5.151`). In Prepared stance an Initiate cuts 1 Mana off matching spells, one cut per spell. the Starseer's starting robe carries Arcane Initiate and the Herald's Divine Initiate; Dusk Chime carries a Decay Initiate; staffs and robes no longer cut every spell.
 - **Game rules belong in config** ([#3028](https://github.com/cehinds/AshenSpire/pull/3028), `0.7.5.151`). `CODE-STYLE.md` now asks for rules, numbers and player text in config files instead of code. No game changes.
 
 - **Set an enemy's HP directly** ([#3024](https://github.com/cehinds/AshenSpire/pull/3024), `0.7.5.149`). An enemy sheet can now set stats.hp, which replaces the HP its level and attributes give. Act and tier scaling still apply on top.
