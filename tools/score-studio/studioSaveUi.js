@@ -161,16 +161,20 @@ class StudioSaveUi
   }
 
   // A draft made from other saved content than the files hold now asks one question first.
+  // The answer is stored with the draft at once, so the next load does not ask again.
   async reconcileDraft(draft)
   {
     if (!this.#draftNeedsChoice(draft))
     {
       return;
     }
-    if (await ChooseDraftOrSavedFile() === StudioSaveChoice.UseSaved)
+    const chooseDraftOrSaved = this.#deps.chooseDraftOrSaved ?? ChooseDraftOrSavedFile;
+    if (await chooseDraftOrSaved() === StudioSaveChoice.UseSaved)
     {
       this.#putSavedFilesIntoDraft(draft);
     }
+    draft.studioSaveRevision = this.#controller.revision();
+    this.#deps.storeDraft(draft);
   }
 
   // With a draft, the files it carries (cards, art layers) come from the draft.
@@ -286,12 +290,12 @@ class StudioSaveUi
 }
 
 // deps: state, editedCards, removedCoreIds, mergeStudioCards, isLocalServer, isTextEntry,
-// flushDraft, writeDraftNow, refreshDirtyStatus, toast, download and clone.
+// flushDraft, writeDraftNow, storeDraft, refreshDirtyStatus, toast, download and clone.
 export function InitStudioSaveUi(deps)
 {
   const controller = CreateStudioSave({
     isLocalServer: deps.isLocalServer,
-    fetchJson,
+    fetchJson: deps.fetchJson ?? fetchJson,
     download: deps.download,
   });
   registerCardsFile(deps);

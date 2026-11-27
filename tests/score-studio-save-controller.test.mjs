@@ -7,9 +7,13 @@ import {
   ClearStudioSaveFiles,
   CreateStudioSave,
   RegisterStudioSaveFile,
+  StudioSaveChoice,
   StudioSaveResult,
   StudioSaveStatus,
 } from '../tools/score-studio/studioSave.js';
+import {
+  InitStudioSaveUi,
+} from '../tools/score-studio/studioSaveUi.js';
 import {
   StudioCardTemplatesKind,
   StudioSaveDownloadKind,
@@ -416,3 +420,87 @@ test('studio save: a loaded file whose kind is not the registered kind is refuse
     /has kind "ashenspire.studioCardTemplates", expected "ashenspire.studioCards"/;
   await assert.rejects(controller.load(), kindMismatch);
 });
+
+// The Studio side with a fake server, a fake draft store and a choice that counts its asks.
+function setupSaveUi({ savedFiles, choice, storage, asked })
+{
+  ClearStudioSaveFiles();
+  const emptyLayers = {
+    layers: [],
+  };
+  const { fetchJson } = createFakeServer(savedFiles, httpOk);
+  return InitStudioSaveUi({
+    state: {
+      artLayers: emptyLayers,
+      itemArtLayers: emptyLayers,
+      repoArtLayers: emptyLayers,
+      repoItemArtLayers: emptyLayers,
+    },
+    editedCards: () => [],
+    removedCoreIds: () => [],
+    mergeStudioCards: () => undefined,
+    isLocalServer: true,
+    clone: structuredClone,
+    toast: () => undefined,
+    fetchJson,
+    chooseDraftOrSaved: async () =>
+    {
+      asked.count += 1;
+      return choice;
+    },
+    storeDraft: (draft) =>
+    {
+      storage.draft = JSON.stringify(draft);
+    },
+  });
+}
+
+test('studio save: once Keep my draft or Use the saved file is chosen, the next load asks nothing',
+  async () =>
+  {
+    const savedCardsData = {
+      cards: [qaCard],
+      removedCardIds: [],
+    };
+    const savedFiles = {
+      cards: savedDocument(cardsName, savedCardsData),
+    };
+    const draftCard = {
+      ...qaCard,
+      name: 'Draft edit',
+    };
+    const expectedCards = {
+      [StudioSaveChoice.KeepDraft]: [draftCard],
+      [StudioSaveChoice.UseSaved]: [qaCard],
+    };
+    for (const choice of Object.values(StudioSaveChoice))
+    {
+      const storage = {
+        draft: null,
+      };
+      const asked = {
+        count: 0,
+      };
+      const options = {
+        savedFiles,
+        choice,
+        storage,
+        asked,
+      };
+      const firstUi = setupSaveUi(options);
+      await firstUi.loadSavedFiles();
+      await firstUi.reconcileDraft({
+        customCards: [draftCard],
+        removedCardIds: [],
+        studioSaveRevision: revisionTwo,
+      });
+      assert.equal(asked.count, 1, `${choice}: the first load asks once`);
+      const storedDraft = JSON.parse(storage.draft);
+      assert.equal(storedDraft.studioSaveRevision, revisionOne);
+      assert.deepEqual(storedDraft.customCards, expectedCards[choice]);
+      const secondUi = setupSaveUi(options);
+      await secondUi.loadSavedFiles();
+      await secondUi.reconcileDraft(storedDraft);
+      assert.equal(asked.count, 1, `${choice}: the second load asks nothing`);
+    }
+  });

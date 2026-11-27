@@ -644,6 +644,19 @@ function flushDraft() {
   if (draftPending) writeDraftNow();
 }
 
+// Stores a draft object as it is, such as one settled by the draft-or-saved choice.
+function storeDraft(draft)
+{
+  try
+  {
+    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+  }
+  catch
+  {
+    state.draftStorageFailed = true;
+  }
+}
+
 function restoreSnapshot(snapStr) {
   const snap = JSON.parse(snapStr);
   state.scoring = snap.scoring;
@@ -5723,6 +5736,7 @@ async function boot() {
     isTextEntry,
     flushDraft,
     writeDraftNow,
+    storeDraft,
     refreshDirtyStatus,
     toast,
     download: downloadJsonFile,
