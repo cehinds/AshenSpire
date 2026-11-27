@@ -38,11 +38,13 @@ export class OpenFileStore
         return this.read;
     }
 
+    /** Parses before committing, so a malformed file stays unloaded and the next Load retries. */
     Reset(text)
     {
+        const value = JSON.parse(text);
         this.loaded = true;
         this.text = text;
-        this.value = JSON.parse(text);
+        this.value = value;
         this.savedShape = JSON.stringify(this.value);
         this.Refresh();
     }

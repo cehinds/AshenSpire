@@ -181,3 +181,19 @@ test('Revert drops unsaved edits, but keeps one typed while the file was being r
     assert.equal(store.Root(PATH).maxBranches, 8);
     assert.deepEqual(store.DirtyPaths(), [PATH]);
 });
+
+test('a file that fails to parse stays unloaded, so the next Load reads it again', async () =>
+{
+    const replies = [
+        '{ not json',
+        asText(ORIGINAL),
+    ];
+    const api = {
+        reads: 0,
+        ReadFile: async () => replies[api.reads++],
+    };
+    const store = new ContentStore(api, INDENT, () => {});
+    await assert.rejects(store.Load(PATH), SyntaxError);
+    assert.deepEqual(await store.Load(PATH), ORIGINAL);
+    assert.equal(api.reads, replies.length);
+});
