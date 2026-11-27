@@ -12,5 +12,19 @@
   "minimumThreatFloor": 3,
   "mapMode": "fog",
   "firstFloor": null,
-  "startNodeRefills": true
+  "startNodeRefills": true,
+  "routeShape": {
+    "placedTypes": [
+      "rest",
+      "boss"
+    ],
+    "firstBranchDepth": 2,
+    "earliestFullDepth": 3,
+    "fullDepthsBeforeBoss": 3,
+    "narrowDepthsBeforeBoss": 2,
+    "guaranteedShopDepths": {
+      "first": 4,
+      "last": 8
+    }
+  }
 }

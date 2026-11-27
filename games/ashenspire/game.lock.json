@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:7b26879c6318862787d6718b033bed097faf98a3f8fc2f2c2dd5c5321695a6be",
+      "hash": "sha256:a0d32e65f49bc12b4859e58cc57e559bb0436cebbea4045205e2c7b709508833",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -472,7 +472,7 @@
           "path": "engine/modules/routes/defaults.json",
           "id": "routes",
           "version": "1.0.0",
-          "hash": "sha256:91e86ded40dd66a20bca2efc9b10ccca8b55cf9b2a2676402d08653c88da5e9a"
+          "hash": "sha256:87cfbc1fa469915030535b54d5daabd24e681f65d1716f8b7cae61f042c886c3"
         },
         {
           "path": "engine/modules/routes/module.json",
@@ -484,7 +484,7 @@
           "path": "engine/modules/routes/settings.schema.json",
           "id": "routes",
           "version": "1.0.0",
-          "hash": "sha256:27f671868f334a4d0f641a4d447b3b113ba18101ed619b09e66a52d56ebee41f"
+          "hash": "sha256:b15f22e4cc9cadd10bc40931c9c3c1ceb4bac6a40fecd52e95c83af764d3f52c"
         },
         {
           "path": "engine/modules/shops/defaults.json",
@@ -732,7 +732,7 @@
       "runtimeHash": "sha256:c97b38f60d66e732136836059088c1851c4d9177230b7ec19a3f349abc3266e1"
     },
     "core": {
-      "hash": "sha256:7b26879c6318862787d6718b033bed097faf98a3f8fc2f2c2dd5c5321695a6be",
+      "hash": "sha256:a0d32e65f49bc12b4859e58cc57e559bb0436cebbea4045205e2c7b709508833",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -1202,7 +1202,7 @@
           "path": "engine/modules/routes/defaults.json",
           "id": "routes",
           "version": "1.0.0",
-          "hash": "sha256:91e86ded40dd66a20bca2efc9b10ccca8b55cf9b2a2676402d08653c88da5e9a"
+          "hash": "sha256:87cfbc1fa469915030535b54d5daabd24e681f65d1716f8b7cae61f042c886c3"
         },
         {
           "path": "engine/modules/routes/module.json",
@@ -1214,7 +1214,7 @@
           "path": "engine/modules/routes/settings.schema.json",
           "id": "routes",
           "version": "1.0.0",
-          "hash": "sha256:27f671868f334a4d0f641a4d447b3b113ba18101ed619b09e66a52d56ebee41f"
+          "hash": "sha256:b15f22e4cc9cadd10bc40931c9c3c1ceb4bac6a40fecd52e95c83af764d3f52c"
         },
         {
           "path": "engine/modules/shops/defaults.json",

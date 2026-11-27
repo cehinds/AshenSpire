@@ -79,6 +79,73 @@
       ],
       "description": "Depth to room type, like { \"4\": \"shop\" }: every node on that depth is that type, in every act. The depth is a whole number from 1 to prebossNodes and never a depth a rest can land on; the type is one of the route's types, never rest or boss; an elite needs minimumThreatFloor. Empty or null pins nothing."
     },
+    "routeShape": {
+      "type": "object",
+      "properties": {
+        "placedTypes": {
+          "const": [
+            "rest",
+            "boss"
+          ],
+          "description": "Room types the map builder places itself (rests from restFloors, the boss last). floorTypes cannot pin them. Fixed."
+        },
+        "firstBranchDepth": {
+          "const": 2,
+          "description": "First depth of each branch's own lanes; depth 1 is the shared start node. Fixed."
+        },
+        "earliestFullDepth": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 20,
+          "description": "Earliest depth by which every lane of a branch is open."
+        },
+        "fullDepthsBeforeBoss": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 20,
+          "description": "Every lane of a branch is open by this many depths before the boss (or earliestFullDepth, if later)."
+        },
+        "narrowDepthsBeforeBoss": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 20,
+          "description": "A wide branch may close one lane within this many depths before the boss."
+        },
+        "guaranteedShopDepths": {
+          "type": "object",
+          "properties": {
+            "first": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20,
+              "description": "First depth of the guaranteed shop."
+            },
+            "last": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20,
+              "description": "Last depth of the guaranteed shop."
+            }
+          },
+          "required": [
+            "first",
+            "last"
+          ],
+          "additionalProperties": false,
+          "description": "Depths that hold each branch's guaranteed shop (shopsPerBranch)."
+        }
+      },
+      "required": [
+        "placedTypes",
+        "firstBranchDepth",
+        "earliestFullDepth",
+        "fullDepthsBeforeBoss",
+        "narrowDepthsBeforeBoss",
+        "guaranteedShopDepths"
+      ],
+      "additionalProperties": false,
+      "description": "Branch-shape numbers the branched map builder and the floorTypes checks share. Defaults keep today's maps."
+    },
     "shopShare": {
       "type": "number",
       "minimum": 0,
