@@ -1,0 +1,695 @@
+{
+  "schema": "ashenspire.studio.bundle.v1",
+  "name": "StarSeerUncommonList",
+  "exportedAt": "2026-11-26T06:56:14.058Z",
+  "cards": [
+    {
+      "id": "custom.card_mwx2mb6p",
+      "name": "Ward",
+      "class": "starseer",
+      "rarity": "common",
+      "type": "skill",
+      "icon": "skill",
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 1,
+      "costRule": "fixed",
+      "damageSchool": "physical",
+      "effects": [
+        {
+          "op": "block",
+          "target": "self",
+          "amount": 11
+        },
+        {
+          "op": "applyStatus",
+          "status": "ward",
+          "stacks": 1,
+          "target": "self"
+        }
+      ],
+      "keywords": [],
+      "tags": [
+        "targeting.self",
+        "maneuver:defend",
+        "camp:physical",
+        "classification.skill"
+      ],
+      "textTemplate": "Gain {block} Block. Gain {ward} Ward.",
+      "_custom": true,
+      "_edited": true,
+      "_autoName": false,
+      "kindIds": [
+        "classification.skill"
+      ],
+      "_autoText": true
+    },
+    {
+      "id": "custom.copy_mwx6hh79",
+      "name": "Arcane Bolt",
+      "class": "starseer",
+      "rarity": "common",
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 1,
+      "costRule": "fixed",
+      "type": "attack",
+      "icon": "attack",
+      "keywords": [],
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 37
+        }
+      ],
+      "textTemplate": "Deal {damage} damage.",
+      "upgrade": {
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 20
+          },
+          {
+            "op": "draw",
+            "amount": 1
+          }
+        ],
+        "cardRatingValues": {
+          "ward": 4
+        }
+      },
+      "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+      "damageSchool": "magic",
+      "exposureBuildupPerHit": 5,
+      "cardRatingValues": {
+        "ward": 4
+      },
+      "tags": [
+        "camp:spell",
+        "source:spell",
+        "maneuver:casting",
+        "school:force",
+        "tradition:arcane",
+        "range:reach",
+        "classification.attack"
+      ],
+      "kindIds": [
+        "classification.attack"
+      ],
+      "_edited": true,
+      "_autoName": true,
+      "_custom": true
+    },
+    {
+      "id": "custom.copy_mwx6xoww",
+      "name": "Arcane Smash",
+      "class": "starseer",
+      "rarity": "common",
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 1,
+      "costRule": "fixed",
+      "type": "attack",
+      "icon": "attack",
+      "keywords": [],
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 29
+        },
+        {
+          "op": "poiseDamage",
+          "target": "enemy",
+          "amount": 2
+        }
+      ],
+      "textTemplate": "Deal {damage} damage. Deal {poiseDamage} Poise damage.",
+      "upgrade": {
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 20
+          },
+          {
+            "op": "draw",
+            "amount": 1
+          }
+        ],
+        "cardRatingValues": {
+          "ward": 4
+        }
+      },
+      "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+      "damageSchool": "magic",
+      "exposureBuildupPerHit": 5,
+      "cardRatingValues": {
+        "ward": 4
+      },
+      "tags": [
+        "camp:spell",
+        "source:spell",
+        "school:force",
+        "tradition:arcane",
+        "maneuver:smash",
+        "classification.attack"
+      ],
+      "kindIds": [
+        "classification.attack"
+      ],
+      "_edited": true,
+      "_autoName": true,
+      "_custom": true
+    },
+    {
+      "id": "core.arcaneSiphon",
+      "name": "Mana Rite",
+      "class": "starseer",
+      "rarity": "common",
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 0,
+      "costRule": "fixed",
+      "type": "skill",
+      "icon": "attack",
+      "keywords": [],
+      "effects": [
+        {
+          "op": "restoreMana",
+          "target": "self",
+          "amount": 1
+        }
+      ],
+      "textTemplate": "Gain 1 MP.",
+      "upgrade": {
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 20
+          },
+          {
+            "op": "restoreMana",
+            "target": "self",
+            "amount": 2
+          }
+        ],
+        "cardRatingValues": {
+          "ward": 4
+        }
+      },
+      "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+      "damageSchool": "magic",
+      "exposureBuildupPerHit": 5,
+      "cardRatingValues": {
+        "ward": 4
+      },
+      "tags": [
+        "targeting:single",
+        "targeting.enemy",
+        "camp:spell",
+        "classification.skill"
+      ],
+      "kindIds": [
+        "classification.skill"
+      ],
+      "_edited": true,
+      "_autoName": false
+    },
+    {
+      "id": "core.astralBolt",
+      "name": "Arcane Strike",
+      "class": "starseer",
+      "rarity": "common",
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0,
+      "costRule": "fixed",
+      "type": "attack",
+      "icon": "attack",
+      "keywords": [],
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 17
+        }
+      ],
+      "textTemplate": "Deal {damage} damage.",
+      "upgrade": {
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 20
+          },
+          {
+            "op": "draw",
+            "amount": 1
+          }
+        ],
+        "cardRatingValues": {
+          "ward": 4
+        }
+      },
+      "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+      "damageSchool": "magic",
+      "exposureBuildupPerHit": 5,
+      "cardRatingValues": {
+        "ward": 4
+      },
+      "tags": [
+        "school:force",
+        "tradition:arcane",
+        "camp:spell",
+        "source:spell",
+        "maneuver:attack",
+        "classification.attack"
+      ],
+      "kindIds": [
+        "classification.attack"
+      ],
+      "_edited": true,
+      "_autoName": false
+    },
+    {
+      "id": "core.cometLance",
+      "name": "Arcane Sweep",
+      "class": "starseer",
+      "rarity": "common",
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 1,
+      "costRule": "fixed",
+      "type": "attack",
+      "icon": "attack",
+      "keywords": [],
+      "effects": [
+        {
+          "op": "damage",
+          "target": "allEnemies",
+          "amount": 13
+        }
+      ],
+      "textTemplate": "Deal {damage} damage to ALL enemies.",
+      "upgrade": {
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 32
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 6
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "chill",
+            "stacks": 2
+          }
+        ]
+      },
+      "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+      "damageSchool": "magic",
+      "exposureBuildupPerHit": 6,
+      "tags": [
+        "camp:spell",
+        "source:spell",
+        "damage:arcane",
+        "targeting:area",
+        "targeting.allEnemies",
+        "school:force",
+        "maneuver:sweep",
+        "classification.attack"
+      ],
+      "kindIds": [
+        "classification.attack"
+      ],
+      "_edited": true,
+      "_autoText": true,
+      "_autoName": true
+    },
+    {
+      "id": "core.eclipse",
+      "name": "Eclipse",
+      "class": "starseer",
+      "rarity": "common",
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 2,
+      "costRule": "fixed",
+      "type": "attack",
+      "icon": "attack",
+      "keywords": [],
+      "effects": [
+        {
+          "op": "damage",
+          "target": "allEnemies",
+          "amount": 11
+        },
+        {
+          "op": "applyStatus",
+          "target": "allEnemies",
+          "status": "weak",
+          "stacks": 2
+        }
+      ],
+      "textTemplate": "Deal {damage} damage to ALL enemies. Apply {weak} Weak to ALL enemies.",
+      "upgrade": {
+        "effects": [
+          {
+            "op": "damage",
+            "target": "allEnemies",
+            "amount": 18
+          },
+          {
+            "op": "applyStatus",
+            "target": "allEnemies",
+            "status": "weak",
+            "stacks": 3
+          }
+        ],
+        "cardRatingValues": {
+          "ward": 5
+        }
+      },
+      "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+      "damageSchool": "magic",
+      "exposureBuildupPerHit": 6,
+      "cardRatingValues": {
+        "ward": 5
+      },
+      "tags": [
+        "camp:spell",
+        "source:spell",
+        "maneuver:casting",
+        "targeting:area",
+        "school:illusion",
+        "tradition:arcane",
+        "classification.attack"
+      ],
+      "kindIds": [
+        "classification.attack"
+      ],
+      "_edited": true
+    },
+    {
+      "id": "core.glacialSpike",
+      "name": "Chilling Wave",
+      "class": "starseer",
+      "rarity": "common",
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 2,
+      "costRule": "fixed",
+      "type": "attack",
+      "icon": "attack",
+      "keywords": [],
+      "effects": [
+        {
+          "op": "applyStatus",
+          "status": "chill",
+          "stacks": 5,
+          "target": "allEnemies"
+        },
+        {
+          "op": "damage",
+          "target": "allEnemies",
+          "amount": 17
+        }
+      ],
+      "textTemplate": "Apply {chill} Chill to ALL enemies. Deal {damage} damage to ALL enemies.",
+      "upgrade": {
+        "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Apply {chill} Chill.",
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 22
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 6
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "chill",
+            "stacks": 3
+          }
+        ]
+      },
+      "flavor": "One needle of the deep winter, thrown by a hand that stayed warm.",
+      "damageSchool": "magic",
+      "exposureBuildupPerHit": 6,
+      "tags": [
+        "maneuver:casting",
+        "school:frost",
+        "cost.manaOnly",
+        "camp:spell",
+        "source:spell",
+        "targeting:area",
+        "targeting.allEnemies",
+        "classification.attack"
+      ],
+      "kindIds": [
+        "classification.attack"
+      ],
+      "_edited": true,
+      "_autoName": false
+    },
+    {
+      "id": "core.meteor",
+      "name": "Meteor",
+      "class": "starseer",
+      "rarity": "uncommon",
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 2,
+      "costRule": "fixed",
+      "type": "attack",
+      "icon": "attack",
+      "keywords": [],
+      "effects": [
+        {
+          "op": "damage",
+          "target": "allEnemies",
+          "amount": 37
+        },
+        {
+          "op": "applyStatus",
+          "target": "allEnemies",
+          "status": "burn",
+          "stacks": 2
+        }
+      ],
+      "textTemplate": "Deal {damage} damage to ALL enemies. Apply {burn} Burn to ALL enemies.",
+      "upgrade": {
+        "textTemplate": "Deal {damage} damage. Apply {burn} Burn. Exhaust.",
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 76
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "burn",
+            "stacks": 3
+          }
+        ],
+        "cardRatingValues": {
+          "ward": 7
+        }
+      },
+      "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+      "damageSchool": "magic",
+      "exposureBuildupPerHit": 10,
+      "cardRatingValues": {
+        "ward": 7
+      },
+      "tags": [
+        "camp:spell",
+        "source:spell",
+        "maneuver:casting",
+        "school:fire",
+        "tradition:arcane",
+        "tradition:divine",
+        "targeting:area",
+        "targeting.allEnemies",
+        "range:reach",
+        "classification.attack"
+      ],
+      "kindIds": [
+        "classification.attack"
+      ],
+      "_edited": true
+    },
+    {
+      "id": "core.pyreLash",
+      "name": "Pyre Lash",
+      "class": "starseer",
+      "rarity": "uncommon",
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 1,
+      "costRule": "fixed",
+      "type": "attack",
+      "icon": "attack",
+      "keywords": [
+        "exhaust"
+      ],
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 69
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "burn",
+          "stacks": 4
+        }
+      ],
+      "textTemplate": "Deal {damage} damage. Apply {burn} Burn. Exhaust.",
+      "upgrade": {
+        "textTemplate": "Deal {damage} damage. Apply {burn} Burn. Exhaust.",
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 29
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "burn",
+            "stacks": 3
+          }
+        ],
+        "cardRatingValues": {
+          "ward": 1
+        }
+      },
+      "flavor": "A whip of pyre-smoke, drawn from the Spire's lowest hearth.\nIt costs no breath, only the Mana the flame was promised.",
+      "damageSchool": "magic",
+      "exposureBuildupPerHit": 6,
+      "cardRatingValues": {
+        "ward": 1
+      },
+      "tags": [
+        "camp:spell",
+        "source:spell",
+        "maneuver:casting",
+        "school:fire",
+        "cost.manaOnly",
+        "tradition:arcane",
+        "tradition:divine",
+        "classification.attack"
+      ],
+      "kindIds": [
+        "classification.attack"
+      ],
+      "_edited": true
+    },
+    {
+      "id": "core.searingRay",
+      "name": "Searing Ray",
+      "class": "starseer",
+      "rarity": "uncommon",
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1,
+      "costRule": "fixed",
+      "type": "attack",
+      "icon": "attack",
+      "keywords": [],
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 18
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "burn",
+          "stacks": 3
+        }
+      ],
+      "textTemplate": "Deal {damage} damage. Apply {burn} Burn.",
+      "upgrade": {
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 26
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "burn",
+            "stacks": 3
+          }
+        ],
+        "cardRatingValues": {
+          "ward": 3
+        }
+      },
+      "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+      "damageSchool": "magic",
+      "exposureBuildupPerHit": 5,
+      "cardRatingValues": {
+        "ward": 3
+      },
+      "tags": [
+        "camp:spell",
+        "source:spell",
+        "maneuver:casting",
+        "school:fire",
+        "tradition:arcane",
+        "tradition:divine",
+        "range:reach",
+        "classification.attack"
+      ],
+      "kindIds": [
+        "classification.attack"
+      ],
+      "_edited": true
+    }
+  ],
+  "items": [],
+  "customClasses": [],
+  "customDecks": [
+    {
+      "id": "deck_starseeruncommonlist",
+      "name": "StarSeerUncommonList",
+      "assignedClassId": "starseer",
+      "isActiveDeckList": true,
+      "cardIds": [
+        "custom.card_mwx2mb6p",
+        "custom.copy_mwx6hh79",
+        "custom.copy_mwx6xoww",
+        "core.arcaneSiphon",
+        "core.astralBolt",
+        "core.cometLance",
+        "core.eclipse",
+        "core.glacialSpike",
+        "core.meteor",
+        "core.pyreLash",
+        "core.searingRay"
+      ],
+      "itemKeys": [],
+      "notes": ""
+    }
+  ]
+}

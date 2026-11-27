@@ -3749,7 +3749,8 @@
       "zeroCost": 0.4,
       "blockCard": 0.75,
       "spell": 0.8,
-      "healSpell": 0.45
+      "healSpell": 0.45,
+      "schoolSpell": 0.8
     },
     "conditionFactor": 0.65,
     "gearFields": {
@@ -3887,6 +3888,11 @@
         "label": "Card MP cost",
         "weight": -15,
         "why": "Changes MP cost on matching spells."
+      },
+      "cardInitiate": {
+        "label": "Initiate (Prepared MP cost)",
+        "weight": -10,
+        "why": "Changes MP cost on matching spells in Prepared stance only; one Initiate cut per spell."
       },
       "cardAddDex": {
         "label": "DEX to damage",

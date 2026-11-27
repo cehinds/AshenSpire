@@ -1674,8 +1674,8 @@ function resolvedCardPriceReceipt(combat,def,choice=null) {
  }
  // Focus (owner, 2026-11-01): in the Prepared stance a held Focus armament takes Mana off a magic card's final price, floored at 0, so the face badge,
  // affordability checks, the bot and the payment all read the same number.
- // Owner, 2026-11-15 (W25-F): a fight with `spellCosts` rules prices every spell through engine/spellCosts.js instead (+1 Mana, +1 Stamina unless a cantrip,
- // Prepared -1 Stamina; old saved gear keeps Focus in any stance). Current gear applies its Prepared-only Focus and robe rules once at the final Mana price.
+ // Owner, 2026-11-15 (W25-F): a fight with `spellCosts` rules prices every spell through engine/spellCosts.js instead (owner 2026-11-26: printed price, no surcharges;
+ // Prepared max(SP - 1, 1) and MP - 1; old saved gear keeps Focus in any stance). Current gear applies its Prepared-only Focus and robe rules once at the final Mana price.
  if(SpellCostRules(combat)) {
   const paid=SpellCostAdjust(combat,def,{stamina:result.paid.stamina,mana:result.paid.mana}),shown=SpellCostAdjust(combat,def,{stamina:result.display.stamina,mana:result.display.mana});
   result.paid={...result.paid,mana:paid.mana,stamina:paid.stamina,...(def.cost==='X' ? {} : {energy:paid.stamina})};

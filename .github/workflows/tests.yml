@@ -1,6 +1,5 @@
-# .github/workflows/tests.yml — every test in the repository, on every push to
-# `test` and `release`; core and discovery shards also on every PR into dev and every
-# push to dev.
+# .github/workflows/tests.yml — the core suite on every PR into dev and push to dev;
+# core and the discovered shards on every push to review.
 #
 # WHY THIS FILE EXISTS. ci.yml holds the whole suite but was dispatch-only
 # from 2026-08-01 (cost: a 3-OS matrix, macOS at 10x). dev-preview.yml runs on
@@ -12,12 +11,12 @@
 # 2026-10-11 (owner): a pull request into `dev` is gated by fast checks only
 # (about five minutes or less), and the heavy suites run on push to `test` and
 # `release` in ci.yml, which now holds every job that was once also here.
-#   pull_request into dev    — `core` and the eight `discovered` shards, which
+#   pull_request into dev    — `core` only (owner, 2026-11-27: heavier tests left dev).
+#   push to dev              — `core`, so the merged tree is read at once.
+#   push to review           — `core` and the eight `discovered` shards, which
 #                              leave out SLOW_DISCOVERED (--no-slow).
-#   push to dev              — the same as a pull request, so the merged tree
-#                              is read at once: two PRs each green alone can
-#                              break together.
-#   workflow_dispatch        — the same jobs, on any ref.
+#   alternative/**/dev lines — `core` and the discovered shards, as before.
+#   workflow_dispatch        — core everywhere; shards except on feature/chore/fix refs.
 # Pushes to `test` and `release` do not run this file any more. ci.yml's
 # test-stage jobs retain all checks through exhaustive partitions:
 #   tests.yml core                 -> ci.yml test
@@ -71,9 +70,9 @@ name: tests
 
 on:
   pull_request:
-    branches: [dev, 'alternative/**/dev'] # fast core + discovered shards (--no-slow)
+    branches: [dev, 'alternative/**/dev'] # core only into dev; discovered shards on alternative lines
   push:
-    branches: [dev, 'alternative/**/dev'] # core + discovered shards on dev; see the header
+    branches: [dev, review, 'alternative/**/dev'] # core on dev; core + discovered shards on review
   workflow_dispatch:
 
 concurrency:
@@ -171,6 +170,15 @@ jobs:
 
   discovered:
     name: discovered tests (${{ matrix.shard }})
+    # Owner 2026-11-27: the heavy shards moved from dev to review; alternative lines keep them.
+    # A dispatch on a PR branch (pr-restamp) is a dev PR, so it stays core-only.
+    if: >-
+      github.ref_name == 'review'
+      || contains(github.base_ref || github.ref_name, 'alternative/')
+      || (github.event_name == 'workflow_dispatch'
+        && !startsWith(github.ref_name, 'feature/')
+        && !startsWith(github.ref_name, 'chore/')
+        && !startsWith(github.ref_name, 'fix/'))
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
