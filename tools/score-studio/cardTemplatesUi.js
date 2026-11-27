@@ -2,10 +2,14 @@
 // template, the Add card picker and Tools > Card templates. The data rules live in cardTemplates.js.
 import {
   CARD_TEMPLATES_PATH,
+  CARD_TEMPLATES_FILE_NAME,
   TEMPLATE_NAME_LIMIT,
   TemplateFile,
   ParseTemplateFile,
   SaveCardAsTemplate,
+  RenameTemplate,
+  DeleteTemplate,
+  MergeImportedTemplates,
   GroupTemplatesByType,
   MissingArtLayerIds,
   createMemoryTemplateStore,
@@ -22,6 +26,16 @@ const EVENT_CLICK = 'click';
 const EVENT_SUBMIT = 'submit';
 const EVENT_CLOSE = 'close';
 const EVENT_KEYDOWN = 'keydown';
+const EVENT_CHANGE = 'change';
+const EVENT_CANCEL = 'cancel';
+const KEY_ESCAPE = 'Escape';
+
+const MODE_LIST = 'list';
+const MODE_RENAME = 'rename';
+const MODE_DELETE = 'delete';
+const ACTION_RENAME = 'rename';
+const ACTION_DELETE = 'delete';
+const ACTION_CANCEL = 'cancel';
 
 const LIST_KEYS = Object.freeze([
   'ArrowDown',
@@ -42,10 +56,16 @@ const CLASS_NAME = 'card-template-name';
 const CLASS_NOTE = 'card-template-note';
 const CLASS_GROUP_LABEL = 'card-template-group-label';
 const CLASS_EMPTY = 'card-template-empty';
+const CLASS_MANAGER = 'card-template-manager';
+const CLASS_ROW = 'card-template-row';
+const CLASS_ROW_ACTION = 's-btn card-template-row-action';
+const CLASS_ROW_PROMPT = 'card-template-row-prompt';
+const CLASS_RENAME_INPUT = 'card-template-rename-input';
 
 const ID_SAVE_TITLE = 'card-template-save-title';
 const ID_REPLACE_TITLE = 'card-template-replace-title';
 const ID_PICKER_TITLE = 'card-template-picker-title';
+const ID_MANAGER_TITLE = 'card-template-manager-title';
 
 const ATTR_LABELLED_BY = 'aria-labelledby';
 const SELECTOR_CANCEL = '[data-template-cancel]';
@@ -59,6 +79,16 @@ const SELECTOR_CHOICES = '[data-template-choices]';
 const SELECTOR_CHOICE = '[data-template-choice]';
 const SELECTOR_BLANK_CHOICE = `[data-template-choice="${BLANK_CHOICE}"]`;
 const SELECTOR_ADD_CARD_BUTTON = '.studio-add-card-button';
+const SELECTOR_LIST = '[data-template-list]';
+const SELECTOR_ROW_ID = '[data-template-id]';
+const SELECTOR_ROW_ACTION = '[data-template-action]';
+const SELECTOR_RENAME_FORM = '[data-template-rename-form]';
+const SELECTOR_RENAME_INPUT = '[data-template-rename-input]';
+const SELECTOR_IMPORT_INPUT = '[data-template-import-input]';
+const SELECTOR_IMPORT = '[data-template-import]';
+const SELECTOR_EXPORT = '[data-template-export]';
+const SELECTOR_CLOSE = '[data-template-close]';
+const rowActionSelector = (id, action) => `[data-template-id="${CSS.escape(id)}"] [data-template-action="${action}"]`;
 
 const clone = value => structuredClone(value);
 const escapeHtml = text => String(text ?? '').replace(/[&<>"']/g, character => ({
@@ -124,7 +154,8 @@ function wireArrowKeys(container, selector)
 
 /**
  * ctx: { state, checkCard(card) -> problem text or '', pushHistory, saveDraft, toast, artLayerIdsFor(card),
- * artLayers() -> the card art layers, createBlankCard(), createCardFromTemplate(template) }.
+ * artLayers() -> the card art layers, createBlankCard(), createCardFromTemplate(template),
+ * downloadJsonFile(name, data) }.
  * Templates live in `state.templates` (so Undo, the snapshot and the local draft cover them);
  * `state.savedTemplates` is the last stored copy.
  */
@@ -398,12 +429,229 @@ export function initCardTemplatesUi(ctx)
     dialog.querySelector(SELECTOR_BLANK_CHOICE).focus();
   }
 
+  // Tools > Card templates…: the list by card type, Rename and Delete on each row, Import and Export JSON.
+  let manager = null;
+  let managerMode = MODE_LIST;
+  let managerTargetId = null;
+  function managerElement()
+  {
+    if (manager)
+    {
+      return manager;
+    }
+    manager = makeDialog(CLASS_MANAGER, ID_MANAGER_TITLE, `
+      <h3 id="${ID_MANAGER_TITLE}">Card templates</h3>
+      <div class="card-template-list" data-template-list></div>
+      <p class="card-json-error" role="alert" data-template-error></p>
+      <div class="card-template-actions">
+        <input type="file" accept=".json,application/json" hidden data-template-import-input />
+        <button type="button" class="s-btn" data-template-import>Import JSON…</button>
+        <button type="button" class="s-btn" data-template-export>Export JSON</button>
+        <button type="button" class="s-btn s-btn-primary" data-template-close>Close</button>
+      </div>`);
+    const list = manager.querySelector(SELECTOR_LIST);
+    list.addEventListener(EVENT_CLICK, event => runRowAction(event.target.closest(SELECTOR_ROW_ACTION)));
+    list.addEventListener(EVENT_SUBMIT, event =>
+    {
+      event.preventDefault();
+      submitRename();
+    });
+    // Escape leaves a rename or a delete question first; only then does it close the dialog.
+    manager.addEventListener(EVENT_CANCEL, event =>
+    {
+      if (managerMode === MODE_LIST)
+      {
+        return;
+      }
+      event.preventDefault();
+      leaveRowMode();
+    });
+    const importInput = manager.querySelector(SELECTOR_IMPORT_INPUT);
+    manager.querySelector(SELECTOR_IMPORT).addEventListener(EVENT_CLICK, () => importInput.click());
+    importInput.addEventListener(EVENT_CHANGE, async () =>
+    {
+      const file = importInput.files?.[0];
+      importInput.value = '';
+      if (file)
+      {
+        importTemplates(await file.text());
+      }
+    });
+    manager.querySelector(SELECTOR_EXPORT).addEventListener(EVENT_CLICK, () => ctx.downloadJsonFile(CARD_TEMPLATES_FILE_NAME, TemplateFile(state.templates)));
+    manager.querySelector(SELECTOR_CLOSE).addEventListener(EVENT_CLICK, () => manager.close());
+    return manager;
+  }
+
+  function rowHtml(template, layers)
+  {
+    const id = escapeHtml(template.id);
+    const name = escapeHtml(template.name);
+    if (managerTargetId === template.id && managerMode === MODE_RENAME)
+    {
+      return `<form class="${CLASS_ROW}" data-template-id="${id}" data-template-rename-form>`
+        + `<input class="${CLASS_RENAME_INPUT}" data-template-rename-input maxlength="${TEMPLATE_NAME_LIMIT}" value="${name}" aria-label="New name for ${name}" autocomplete="off" spellcheck="false" />`
+        + `<button type="submit" class="${CLASS_ROW_ACTION} s-btn-primary">Save</button>`
+        + `<button type="button" class="${CLASS_ROW_ACTION}" data-template-action="${ACTION_CANCEL}">Cancel</button></form>`;
+    }
+    if (managerTargetId === template.id && managerMode === MODE_DELETE)
+    {
+      return `<div class="${CLASS_ROW}" data-template-id="${id}"><span class="${CLASS_ROW_PROMPT}">Delete template ${name}?</span>`
+        + `<button type="button" class="${CLASS_ROW_ACTION} is-danger" data-template-action="${ACTION_DELETE}">Delete</button>`
+        + `<button type="button" class="${CLASS_ROW_ACTION}" data-template-action="${ACTION_CANCEL}">Cancel</button></div>`;
+    }
+    const missing = MissingArtLayerIds(template, layers);
+    const note = missing.length ? `<span class="${CLASS_NOTE}">layers gone</span>` : '';
+    return `<div class="${CLASS_ROW}" data-template-id="${id}">`
+      + `<span class="${CLASS_NAME}" title="${escapeHtml(templateDetails(template, missing))}">${name}</span>${note}`
+      + `<button type="button" class="${CLASS_ROW_ACTION}" data-template-action="${ACTION_RENAME}" aria-label="Rename ${name}">Rename</button>`
+      + `<button type="button" class="${CLASS_ROW_ACTION}" data-template-action="${ACTION_DELETE}" aria-label="Delete ${name}">Delete</button></div>`;
+  }
+
+  function renderManagerList()
+  {
+    const layers = ctx.artLayers();
+    const groups = GroupTemplatesByType(state.templates);
+    if (managerTargetId && !state.templates.some(template => template.id === managerTargetId))
+    {
+      managerMode = MODE_LIST;
+      managerTargetId = null;
+    }
+    const rows = [];
+    for (const group of groups)
+    {
+      rows.push(`<div class="${CLASS_GROUP_LABEL}">${escapeHtml(typeLabel(group.type))}</div>`);
+      for (const template of group.templates)
+      {
+        rows.push(rowHtml(template, layers));
+      }
+    }
+    if (!groups.length)
+    {
+      rows.push(`<p class="studio-muted ${CLASS_EMPTY}">No templates yet. Use Save as template… in a card's ⋮ menu, or Import JSON.</p>`);
+    }
+    manager.querySelector(SELECTOR_LIST).innerHTML = rows.join('');
+  }
+
+  function setRowMode(mode, id, focusSelector)
+  {
+    managerMode = mode;
+    managerTargetId = id;
+    renderManagerList();
+    const target = manager.querySelector(focusSelector);
+    target?.focus();
+    if (mode === MODE_RENAME)
+    {
+      target?.select();
+    }
+  }
+
+  function leaveRowMode()
+  {
+    const id = managerTargetId;
+    const action = managerMode === MODE_DELETE ? ACTION_DELETE : ACTION_RENAME;
+    setRowMode(MODE_LIST, null, id ? rowActionSelector(id, action) : SELECTOR_CLOSE);
+  }
+
+  function runRowAction(button)
+  {
+    if (!button)
+    {
+      return;
+    }
+    const id = button.closest(SELECTOR_ROW_ID).dataset.templateId;
+    const action = button.dataset.templateAction;
+    manager.querySelector(SELECTOR_ERROR).textContent = '';
+    if (action === ACTION_CANCEL)
+    {
+      leaveRowMode();
+    }
+    else if (action === ACTION_RENAME)
+    {
+      setRowMode(MODE_RENAME, id, SELECTOR_RENAME_INPUT);
+    }
+    else if (action === ACTION_DELETE && managerMode === MODE_DELETE && managerTargetId === id)
+    {
+      deleteTemplate(id);
+    }
+    else if (action === ACTION_DELETE)
+    {
+      setRowMode(MODE_DELETE, id, rowActionSelector(id, ACTION_CANCEL));
+    }
+  }
+
+  function submitRename()
+  {
+    const form = manager.querySelector(SELECTOR_RENAME_FORM);
+    if (!form)
+    {
+      return;
+    }
+    const id = form.dataset.templateId;
+    const result = RenameTemplate(state.templates, id, form.querySelector(SELECTOR_RENAME_INPUT).value);
+    if (result.problem)
+    {
+      manager.querySelector(SELECTOR_ERROR).textContent = result.problem;
+      return;
+    }
+    managerMode = MODE_LIST;
+    commitTemplates(result.templates);
+    manager.querySelector(rowActionSelector(id, ACTION_RENAME))?.focus();
+    ctx.toast(`Renamed template to "${state.templates.find(template => template.id === id)?.name}"`);
+  }
+
+  function deleteTemplate(id)
+  {
+    const removed = state.templates.find(template => template.id === id);
+    managerMode = MODE_LIST;
+    managerTargetId = null;
+    commitTemplates(DeleteTemplate(state.templates, id));
+    const nextFocus = manager.querySelector(`${SELECTOR_LIST} ${SELECTOR_ROW_ACTION}`) || manager.querySelector(SELECTOR_IMPORT);
+    nextFocus.focus();
+    ctx.toast(`Deleted template "${removed?.name}". Undo brings it back.`);
+  }
+
+  // The whole file is checked before anything changes; a broken file names its first problem.
+  function importTemplates(text)
+  {
+    const error = manager.querySelector(SELECTOR_ERROR);
+    const parsed = ParseTemplateFile(text, { checkCard: ctx.checkCard });
+    if (parsed.problem)
+    {
+      error.textContent = `Not imported: ${parsed.problem}`;
+      return;
+    }
+    error.textContent = '';
+    if (!parsed.templates.length)
+    {
+      ctx.toast('The file has no templates');
+      return;
+    }
+    const merged = MergeImportedTemplates(state.templates, parsed.templates);
+    commitTemplates(merged.templates);
+    ctx.toast(`Imported ${merged.added.length} template${merged.added.length === 1 ? '' : 's'}`);
+  }
+
+  function openManager()
+  {
+    const dialog = managerElement();
+    managerMode = MODE_LIST;
+    managerTargetId = null;
+    dialog.querySelector(SELECTOR_ERROR).textContent = '';
+    renderManagerList();
+    dialog.showModal();
+    (dialog.querySelector(`${SELECTOR_LIST} ${SELECTOR_ROW_ACTION}`) || dialog.querySelector(SELECTOR_IMPORT)).focus();
+  }
+
   // Redraws whatever template views are open (after Undo, Redo, imports and saves).
   function refresh()
   {
     if (picker?.open)
     {
       renderPickerChoices();
+    }
+    if (manager?.open)
+    {
+      renderManagerList();
     }
   }
 
@@ -416,6 +664,7 @@ export function initCardTemplatesUi(ctx)
     revert,
     openSaveAsTemplate,
     openPicker,
+    openManager,
     refresh,
   };
 }

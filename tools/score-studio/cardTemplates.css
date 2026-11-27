@@ -18,3 +18,10 @@ body.studio-body .card-template-name { flex: 1 1 auto; min-width: 0; overflow: h
 body.studio-body .card-template-note { flex: none; font-size: 11px; color: var(--st-warn, #e0b050); }
 body.studio-body .card-template-group-label { margin: 6px 8px 1px; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--st-muted); }
 body.studio-body .card-template-empty { margin: 6px 8px 0; font-size: 12px; }
+body.studio-body .card-template-row { display: flex; align-items: center; gap: var(--studio-gap-1, 4px); min-width: 0; padding: 2px 8px; border-radius: 5px; font-size: 13px; }
+body.studio-body .card-template-row:hover,
+body.studio-body .card-template-row:focus-within { background: var(--st-surface-2); }
+body.studio-body .card-template-row-prompt { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body.studio-body .card-template-row-action.s-btn { flex: none; min-height: 0; padding: 1px 8px; font-size: 12px; }
+body.studio-body .card-template-rename-input { flex: 1 1 auto; min-width: 0; box-sizing: border-box; font: inherit; }
+body.studio-body .card-template-row-action.is-danger { color: var(--st-bad); border-color: var(--st-bad); }

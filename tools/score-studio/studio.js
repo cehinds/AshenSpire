@@ -1938,6 +1938,7 @@ function renderScoreSummary(def, sc) {
 const RARITY_ORDER = Object.freeze(['starter', 'common', 'uncommon', 'rare', 'boss']);
 
 const CARDS_GRID_ID = 'cards-grid';
+const CARD_TEMPLATES_MENU_ID = 'menu-card-templates';
 const CARD_SEARCH_ID = 'card-search';
 const CARDS_TAB_SELECTOR = '.studio-tab[data-tab="cards"]';
 const PROPERTIES_VIEW = 'properties';
@@ -4438,6 +4439,7 @@ function setupStudioMenubar() {
   command('tools', 'menu-balance-selected', 'Rebalance power for selected cards…', () => cardSelectionUi?.balanceSelected());
   move('tools', 'btn-generate-cards', 'Generate card pool…'); move('tools', 'btn-subclass-lists', 'Generate subclass lists…');
   move('tools', 'btn-batch-generate-cards', 'Batch generate cards…'); move('tools', 'btn-auto-balance-cards', 'Rebalance power for cards…');
+  command('tools', CARD_TEMPLATES_MENU_ID, 'Card templates…', () => cardTemplatesUi?.openManager());
   group('tools', 'Items'); move('tools', 'btn-batch-generate-items', 'Batch generate items…'); move('tools', 'btn-auto-balance-items', 'Rebalance power for items…');
   group('tools', 'Lists'); move('tools', 'btn-open-decks', 'Deck lists…'); move('tools', 'btn-custom-decks', 'Manage decks and classes…');
   for (const [id, text] of [['menu-add-selected-deck', 'Add selected cards to a deck…'], ['menu-remove-selected-deck', 'Remove selected cards from a deck…']]) command('tools', id, text, () => {
@@ -5479,6 +5481,7 @@ async function boot() {
     artLayers: () => state.artLayers.layers || [],
     createBlankCard,
     createCardFromTemplate,
+    downloadJsonFile,
   });
 
   await loadFromRepo(state.repoPath);
