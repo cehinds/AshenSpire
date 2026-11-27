@@ -147,7 +147,7 @@ export function ActUpgradeSchedule(runSeed, mapGraph, { actNumber = 1, scoring =
   const act = Number.isInteger(actNumber) && actNumber >= 1 ? actNumber : 1;
   const nodes = {};
   const rawNodes = mapGraph?.nodes && typeof mapGraph.nodes === 'object' ? Object.values(mapGraph.nodes) : [];
-  const sorted = [...rawNodes].sort((a, b) => String(a?.id || '').localeCompare(String(b?.id || '')));
+  const sorted = sortedActNodes(rawNodes);
   for (const node of sorted) {
     if (!node || !node.id || !(node.type in NODE_TYPE_TO_VENDOR)) continue;
     const nodeKey = `${act}:${node.id}`;
@@ -160,6 +160,27 @@ export function ActUpgradeSchedule(runSeed, mapGraph, { actNumber = 1, scoring =
     nodes: Object.freeze(nodes),
     forNode: (nodeId) => nodes[`${act}:${nodeId}`] || null,
   });
+}
+
+// Generated node IDs have a host-independent machine order. Any other shape
+// keeps the original whole-list comparator, without reading ID getters early.
+function sortedActNodes(rawNodes) {
+  const entries = [];
+  for (const node of rawNodes) {
+    const id = node && typeof node === 'object' && Object.getPrototypeOf(node) === Object.prototype
+      ? Object.getOwnPropertyDescriptor(node, 'id') : null;
+    if (!id || !Object.hasOwn(id, 'value') || typeof id.value !== 'string'
+      || !/^(?:n[1-9][0-9]*_(?:0|[1-9][0-9]*)|boss(?:_(?:0|[1-9][0-9]*))?)(?![\s\S])/.test(id.value)) {
+      return [...rawNodes].sort((a, b) => String(a?.id || '').localeCompare(String(b?.id || '')));
+    }
+    entries.push({ node, parts: id.value.split('_') });
+  }
+  return entries.sort((a, b) => {
+    for (let i = 0; i < Math.min(a.parts.length, b.parts.length); i += 1) {
+      if (a.parts[i] !== b.parts[i]) return a.parts[i] < b.parts[i] ? -1 : 1;
+    }
+    return a.parts.length - b.parts.length;
+  }).map(entry => entry.node);
 }
 
 const DEFAULT_RARE_RANK_BOOST_CHANCE = 0.1;
@@ -238,7 +259,7 @@ export function ActRewardSchedule(runSeed, mapGraph, { actNumber = 1, countRange
   const act = Number.isInteger(actNumber) && actNumber >= 1 ? actNumber : 1;
   const nodes = {};
   const rawNodes = mapGraph?.nodes && typeof mapGraph.nodes === 'object' ? Object.values(mapGraph.nodes) : [];
-  const sorted = [...rawNodes].sort((a, b) => String(a?.id || '').localeCompare(String(b?.id || '')));
+  const sorted = sortedActNodes(rawNodes);
   for (const node of sorted) {
     if (!node || !node.id || !(node.type in REWARD_NODE_META)) continue;
     const nodeKey = `${act}:${node.id}`;
