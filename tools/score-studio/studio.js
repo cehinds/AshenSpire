@@ -48,7 +48,7 @@ import { filterMembership, deckCatalogOptions, resolveStudioDeck } from './deckC
 import { initGalleryZoom } from './galleryZoom.js';
 import { focusedEffectOptions } from './focusedRebalance.js';
 import { createAddCardTile, CaptureCardTilePositions, animateCardInsertion } from './addCardTile.js';
-import { GALLERIES, createActiveEntities, createEditBursts, nextInDisplayedOrder, resolveWorkingContext, captureTileFocus, restoreTileFocus } from './workingContext.js';
+import { GALLERIES, createActiveEntities, createEditBursts, nextInDisplayedOrder, readWorkingContext, writeWorkingContext, resolveWorkingContext, captureTileFocus, restoreTileFocus } from './workingContext.js';
 
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
 const AB_STORAGE_KEY = 'ashenspire:scoreStudioAB:v1';
@@ -1532,7 +1532,15 @@ function renderCardsGrid() {
 // selectStudioCard and selectStudioItem are the only writers of state.selectedCardId and
 // state.selectedItemKey. An id that is gone gives the empty state, never the first card.
 // Filters never call them. Content changes reconcile through them in syncAllViews.
-const activeEntities = createActiveEntities({ state, onChange: () => editBursts.endAll() });
+const activeEntities = createActiveEntities({ state, onChange: () => { editBursts.endAll(); saveWorkingContext(); } });
+
+// Reload restore: the gallery and the active card and item, under their own key (never in the draft, snapshots
+// or bundles). The customization view keeps the dock's own key. Writes start once boot has restored them.
+let workingContextReady = false;
+function saveWorkingContext() {
+  if (!workingContextReady) return;
+  writeWorkingContext(localStorage, { gallery: activeGallery, cardId: state.selectedCardId, itemKey: state.selectedItemKey });
+}
 // The ids each gallery shows, in displayed order, as of its last render (null before the first).
 const displayedIds = { cards: null, items: null };
 
@@ -4611,6 +4619,7 @@ function wireEvents() {
         deckListPanelUi?.refresh();
         // Returning to a gallery puts it back where it was, with its active tile in view.
         if (previousTab !== tab) restoreGalleryScroll(tab);
+        saveWorkingContext();
       }
       if (tab === 'sandbox' && !state.sandbox.combat) startSandboxCombat();
       if (tab === 'art') renderArtTab();
@@ -5503,14 +5512,19 @@ async function boot() {
   restoreWorkingContext();
 }
 
-// After boot: the active card and item, or the existing default (first card and item) when there is none.
+// After boot: the stored gallery, card and item, or the existing default (first card and item) for a stored id
+// that is gone. Restoring takes no activation.
 function restoreWorkingContext() {
-  const { cardId, itemKey } = resolveWorkingContext(null, state, {
+  const { gallery, cardId, itemKey } = resolveWorkingContext(readWorkingContext(localStorage), state, {
+    gallery: activeGallery,
     cardId: state.selectedCardId ?? state.cards[0]?.id,
     itemKey: state.selectedItemKey ?? state.items[0]?.key,
   });
   selectStudioItem(itemKey);
-  selectStudioCard(cardId, { reveal: true });
+  selectStudioCard(cardId);
+  if (gallery !== activeGallery) showGallery(gallery); else revealActiveTile(gallery);
+  workingContextReady = true;
+  saveWorkingContext();
 }
 
 boot()
