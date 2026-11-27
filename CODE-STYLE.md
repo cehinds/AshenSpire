@@ -12,11 +12,13 @@ config, so the owner can change the game without reading code, and in time from 
 - **Code only implements:** it reads config and behaves the same for every entry.
 - **Where values go:**
   - Tunables: `content/source/balance<Name>.json`, read as `balance.<name>` from
-    `src/content/balance.js`. Every number carries its own `$note`; strings and lists carry none.
+    `src/content/balance.js` (small shared scalars sit at the top level from `balanceCore.json`).
+    Every number carries its own `$note`; strings and lists carry none.
   - Player-facing text: a row in `content/source/uiStrings.csv`, never a literal in code.
   - A Core game's own content: its pack under `games/ashenspire/packs/core/`.
 - **Configured values must apply:** read `registries.balance.<name>` from the registries the caller
-  holds, falling back to the authored `balance.<name>`. An Advanced row that nothing reads is a bug.
+  holds; use the authored `balance.<name>` only when no registries are given. Bad values still fail
+  loudly. An Advanced row that nothing reads is a bug.
 - **Variants extend a base** and hold only their tweaks; a new option is a config edit, not new code.
 - **Engine internals stay in code:** caches, internal record ids, and result codes callers check.
 - **Every change:** move the values the touched code uses into config, and prove the output is
@@ -34,8 +36,6 @@ config, so the owner can change the game without reading code, and in time from 
 - **File order:** imports, constants, private helpers, exports, with a blank line between groups.
 
 ```js
-export const MaxCachedProjections = 512;
-
 export function ReferenceClassId(definition, scoreReference)
 {
   if (scoreReference.classes.includes(definition?.class))
@@ -75,5 +75,5 @@ export function ReferenceClassId(definition, scoreReference)
 
 - Clean up only the files the change touches.
 - A style cleanup never changes behaviour; prove it with the same output before and after.
-- The pinned dprint formatter in `tools/code-quality` applies the layout to files enrolled in its
-  `policy.json`.
+- The pinned dprint formatter in `tools/code-quality` applies the layout, with its own 4-space indent,
+  to files enrolled in its `policy.json`.
