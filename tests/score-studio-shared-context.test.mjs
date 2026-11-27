@@ -288,7 +288,8 @@ test('every writer of the active card and item goes through the two setters', ()
   }
   assert.match(body(studio, 'syncAllViews'), /activeEntities\.reconcile\(\)/, 'content changes reconcile through the setters');
   // The Design picker and target route through the setter and the gallery tabs.
-  assert.match(studio, /art-preview-card-select'\)\.addEventListener\('change'[\s\S]{0,200}selectStudio(Item|Card)\(event\.target\.value/);
+  assert.match(studio, /const ART_PREVIEW_SELECT_ID = 'art-preview-card-select';/);
+  assert.match(studio, /getElementById\(ART_PREVIEW_SELECT_ID\)\.addEventListener\(CHANGE_EVENT[\s\S]{0,200}selectStudio(Item|Card)\(event\.target\.value/);
   assert.match(studio, /data-art-target[\s\S]{0,300}showGallery\(kind\)/);
   assert.match(source('studioToolsModal.js'), /ctx\.selectCard\(state\.cards\[0\]\.id/);
   assert.match(source('studioToolsModal.js'), /ctx\.selectItem\(state\.items\[0\]\.key/);

@@ -8,6 +8,7 @@ import { scoring as shippedScoring } from '../../src/content/generated/scoring.j
 const clone = value => structuredClone(value);
 const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 const DECK_PREFIX = 'subclass-list.';
+const SUBCLASS_REPLACE_ID = 'subclass-replace';
 const CARD_STUDIO_FIELDS = new Set(['face', 'scoringOverride', 'kindIds', 'cardRatingValues']);
 const errorSummary = errors => errors.slice(0, 3).join(' ') + (errors.length > 3 ? ` (${errors.length - 3} more validation errors.)` : '');
 
@@ -206,7 +207,7 @@ export function initSubclassCatalogUi(ctx) {
   }
 
   function apply(catalog) {
-    const { selectedCardId, ...next } = mergeSubclassCatalog(state, catalog, { replace: el('subclass-replace').checked, normalize: normalizeStudioCard });
+    const { selectedCardId, ...next } = mergeSubclassCatalog(state, catalog, { replace: el(SUBCLASS_REPLACE_ID).checked, normalize: normalizeStudioCard });
     pushHistory();
     Object.assign(state, next);
     ctx.selectCard(selectedCardId, { render: false, reveal: true });

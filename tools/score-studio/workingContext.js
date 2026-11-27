@@ -39,7 +39,7 @@ const SelectedField = Object.freeze({
 });
 
 const DEFAULT_BURST_DELAY_MS = 1000;
-const DATA_ATTRIBUTE_PREFIX = 'data-';
+export const DATA_ATTRIBUTE_PREFIX = 'data-';
 const CLASS_SELECTOR_PREFIX = '.';
 const TABINDEX_ATTRIBUTE = 'tabindex';
 const FOCUSABLE_DESCENDANT_SELECTOR = 'button, [tabindex]';

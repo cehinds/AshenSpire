@@ -57,6 +57,7 @@ import {
   PerGallery,
   ToGalleryKind,
   FindGalleryEntity,
+  DATA_ATTRIBUTE_PREFIX,
   createActiveEntities,
   createEditBursts,
   nextInDisplayedOrder,
@@ -110,6 +111,12 @@ const FILTER_ALL = 'all';
 const SELECTED_TILE_CLASS = 'is-selected';
 const STUDIO_TAB_SELECTOR = '.studio-tab';
 const ACTIVE_STUDIO_TAB_SELECTOR = '.studio-tab.is-active';
+const STUDIO_TAB_DATA_ATTRIBUTE = 'data-tab';
+const ART_PREVIEW_SELECT_ID = 'art-preview-card-select';
+const ART_LIVE_PREVIEW_ID = 'art-live-preview';
+// The picker's placeholder value when no card or item is active.
+const NO_ENTITY_OPTION_VALUE = '';
+const CHANGE_EVENT = 'change';
 const REVEAL_SCROLL_OPTIONS = Object.freeze({ block: 'nearest' });
 const NoActiveEntityOption = Object.freeze({
   [GalleryKind.Cards]: 'No card selected',
@@ -1667,7 +1674,7 @@ function finishGalleryRender(kind, grid, { focused, scrollTop })
 
 function galleryTileSelector(kind, id)
 {
-  return `.${GalleryTileClass[kind]}[data-${TileIdAttribute[kind]}="${CSS.escape(id)}"]`;
+  return `.${GalleryTileClass[kind]}[${DATA_ATTRIBUTE_PREFIX}${TileIdAttribute[kind]}="${CSS.escape(id)}"]`;
 }
 
 function activeTile(kind)
@@ -3667,8 +3674,8 @@ function showArtLayerInList(idx) {
 
 function renderArtPreviewOnly()
 {
-  const sel = document.getElementById('art-preview-card-select');
-  const host = document.getElementById('art-live-preview');
+  const sel = document.getElementById(ART_PREVIEW_SELECT_ID);
+  const host = document.getElementById(ART_LIVE_PREVIEW_ID);
   const kind = ToGalleryKind(state.artTarget);
   const entity = FindGalleryEntity(state, kind, sel.value);
   if (entity)
@@ -3697,7 +3704,7 @@ function renderArtTab() {
   }
 
   // The picker follows the gallery's active card or item.
-  const cardSel = document.getElementById('art-preview-card-select');
+  const cardSel = document.getElementById(ART_PREVIEW_SELECT_ID);
   cardSel.innerHTML = '';
   const pickerKind = ToGalleryKind(state.artTarget);
   const pickerEntities = GalleryEntity[pickerKind];
@@ -3705,13 +3712,13 @@ function renderArtTab() {
   const activeId = activeEntities.get(pickerKind);
   if (!activeId)
   {
-    cardSel.appendChild(new Option(NoActiveEntityOption[pickerKind], ''));
+    cardSel.appendChild(new Option(NoActiveEntityOption[pickerKind], NO_ENTITY_OPTION_VALUE));
   }
   for (const [value, text] of options)
   {
     cardSel.appendChild(new Option(text, value));
   }
-  cardSel.value = activeId || '';
+  cardSel.value = activeId || NO_ENTITY_OPTION_VALUE;
   renderArtPreviewOnly();
 
   const layersObj = activeArtLayersObj();
@@ -4295,7 +4302,7 @@ function showGallery(kind)
 {
   if (kind !== activeGallery)
   {
-    document.querySelector(`${STUDIO_TAB_SELECTOR}[data-tab="${kind}"]`)?.click();
+    document.querySelector(`${STUDIO_TAB_SELECTOR}[${STUDIO_TAB_DATA_ATTRIBUTE}="${kind}"]`)?.click();
   }
 }
 
@@ -5324,7 +5331,7 @@ function wireEvents() {
     if (state.artTarget === 'items') { renderItemsGrid(); renderItemInspector(); }
     saveDraft();
   });
-  document.getElementById('art-preview-card-select').addEventListener('change', (event) => {
+  document.getElementById(ART_PREVIEW_SELECT_ID).addEventListener(CHANGE_EVENT, (event) => {
     if (!event.target.value)
     {
       return;
