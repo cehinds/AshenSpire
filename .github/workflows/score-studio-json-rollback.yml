@@ -18,9 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      PLAYWRIGHT_MODULE: ${{ runner.temp }}/score-studio-json-playwright/node_modules/playwright-core
       CHROME: /usr/bin/google-chrome
-      TMPDIR: ${{ runner.temp }}
     steps:
       - uses: actions/checkout@v5
       - uses: ./.github/actions/setup-node
@@ -34,6 +32,9 @@ jobs:
           "$CHROME" --version
       - name: Run the six real-page cases and capture screenshots
         shell: bash
+        env:
+          PLAYWRIGHT_MODULE: ${{ runner.temp }}/score-studio-json-playwright/node_modules/playwright-core
+          TMPDIR: ${{ runner.temp }}
         run: |
           set -o pipefail
           node tests/score-studio-json-rollback.browser.mjs 2>&1 | tee "$RUNNER_TEMP/score-studio-json-rollback.log"
