@@ -15,7 +15,24 @@ args = argparse.ArgumentParser()
 args.add_argument('--cache', type=Path, required=True)
 opts = args.parse_args()
 data = json.loads((HERE / 'visual-inputs.json').read_text())
+BASELINE = '49eca254d795d06266aa23941cb2b31fe77b27bf'
+RELEASE = 'ashenspire-hd-assets-v30'
+# Snapshot retained evidence before any regeneration. Candidate hashes not in
+# the wider measurement inventory must still match this retained input receipt.
+retained = json.loads((HERE / 'image-manifest.json').read_text())
+raster_index = json.loads((HERE.parent / 'measurements' / 'raster-hashes.json').read_text())
+if data.get('source') != BASELINE or data.get('art') != RELEASE:
+    raise ValueError('Unexpected visual-inputs source/art identity; refusing output overwrite')
+if retained.get('sourceCommit') != BASELINE or retained.get('artTag') != RELEASE:
+    raise ValueError('Unexpected retained visual baseline; refusing output overwrite')
+if raster_index.get('baseline') != BASELINE or raster_index.get('release') != RELEASE:
+    raise ValueError('Unexpected measurement raster baseline; refusing output overwrite')
+if opts.cache.name != RELEASE:
+    raise ValueError(f'Cache directory must identify {RELEASE}, not {opts.cache.name}')
 records = {}
+loaded = {}
+HURT_ALTERNATIVES = ['assets/animations/unarmed-magic/starseer/HURT.webp','assets/animations/unarmed/starseer/HURT.webp',
+                     'assets/animations/greatsword-outfits/starseer/HURT.webp','assets/painted-outfits/starseer/hit.webp']
 font_path = Path('C:/Windows/Fonts/consola.ttf')
 FONT = ImageFont.truetype(str(font_path), 13) if font_path.exists() else ImageFont.load_default()
 TITLE = ImageFont.truetype(str(font_path), 19) if font_path.exists() else FONT
@@ -23,15 +40,29 @@ INK = (232, 235, 240, 255)
 MUTED = (169, 183, 199, 255)
 
 def image_for(path):
+    if path in loaded:
+        return loaded[path]
     candidates = [opts.cache / tier / path for tier in ('common', 'high')]
     found = next((p for p in candidates if p.exists()), None)
     if not found:
         raise FileNotFoundError(path)
+    resolved = found.relative_to(opts.cache).as_posix()
+    observed_hash = hashlib.sha256(found.read_bytes()).hexdigest()
+    matches = [x for x in raster_index['assets'].get(path, [])
+               if x.get('exists') and x['pack']+'/'+x['path'] == resolved]
+    expected_hash = matches[0]['sha256'] if matches else None
+    if expected_hash is None:
+        candidate = retained['inputAssets'].get(path)
+        if candidate and candidate['resolvedPack'] == resolved:
+            expected_hash = candidate['sha256']
+    if not expected_hash or observed_hash != expected_hash:
+        raise ValueError(f'Pinned raster mismatch: {resolved}; refusing output overwrite')
     image = Image.open(found).convert('RGBA')
     alpha = image.getchannel('A').point(lambda x: 255 if x >= 128 else 0)
-    records[path] = {'resolvedPack': found.relative_to(opts.cache).as_posix(),
+    records[path] = {'resolvedPack': resolved,
                      'rasterSize': list(image.size), 'alpha128Bounds': alpha.getbbox(),
-                     'sha256': hashlib.sha256(found.read_bytes()).hexdigest()}
+                     'sha256': observed_hash}
+    loaded[path] = image
     return image
 
 def placement(cls, name, mode='current'):
@@ -110,6 +141,17 @@ def write_sheet(filename, title, subtitle, cells, columns=3, s=.68, pw=560):
         draw.text((x+12,y+446),f'source raster {img.width}x{img.height}; floor=480',font=FONT,fill=MUTED)
     out.convert('RGB').save(HERE/filename,optimize=True)
 
+# Preflight EVERY asset before the first PNG or manifest can be overwritten.
+# A corrupt/mis-pinned later frame must not leave a partly regenerated baseline.
+required = []
+for cls, c in data['classes'].items():
+    required.extend(c['poses'][n]['path'] for n in ['ready','offensive','defensive','casting','counter','sweep','smash'])
+    required.append(c['hurt']['file'])
+required.extend(data['classes']['reaver']['poses'][n]['path'] for n in ['pilot-sweep-windup','pilot-sweep-contact','pilot-sweep-finish'])
+required.extend(HURT_ALTERNATIVES)
+for path in dict.fromkeys(required):
+    image_for(path)
+
 for cls in data['classes']:
     write_sheet(f'{cls}-selected-before.png', f'{cls.title()}: selected identity audit',
                 'Static current-registration reconstruction, NOT a gameplay screenshot; effects/timing omitted.',
@@ -129,8 +171,7 @@ write_sheet('reaver-sweep-authored-reference.png', 'Reaver authored logical plac
 
 # Existing pinned alternatives, at the same source raster pixel scale. These
 # are candidate inspection references, never implied to be selected in combat.
-alts=['assets/animations/unarmed-magic/starseer/HURT.webp','assets/animations/unarmed/starseer/HURT.webp',
-      'assets/animations/greatsword-outfits/starseer/HURT.webp','assets/painted-outfits/starseer/hit.webp']
+alts=HURT_ALTERNATIVES
 out=Image.new('RGBA',(1180,730),(24,30,39,255));d=ImageDraw.Draw(out)
 d.text((18,14),'Starseer existing HURT candidates — none establishes a matching hooded staff reaction',font=TITLE,fill=INK)
 d.text((18,43),'Pinned v30 inputs at one common 0.72 source-pixel scale; no per-image fit. NOT runtime scale.',font=FONT,fill=MUTED)
@@ -149,4 +190,4 @@ out.convert('RGB').save(HERE/'starseer-existing-hurt-candidates.png',optimize=Tr
 manifest={'sourceCommit':data['source'],'artTag':data['art'],'kind':'before-only static diagnostic reconstruction; not gameplay capture',
           'inputAssets':records,'outputImages':{p.name:{'sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'bytes':p.stat().st_size} for p in sorted(HERE.glob('*.png'))}}
 (HERE/'image-manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
-print(f'Wrote {len(manifest["outputImages"])} sheets using {len(records)} pinned assets.')
+print(f'Verified all {len(records)} pinned raster hashes before output; wrote {len(manifest["outputImages"])} sheets.')

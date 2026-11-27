@@ -1,0 +1,681 @@
+{
+  "sourceBaseline": "49eca254d795d06266aa23941cb2b31fe77b27bf",
+  "artTag": "ashenspire-hd-assets-v30",
+  "capturedAt": "2026-11-27T06:14:04.284Z",
+  "kind": "Before-only diagnostic posed states, not a playthrough",
+  "browser": "158.0.4370.33",
+  "clockMethod": "Production stage methods with synthetic performance.now/RAF; each sampled stage RAF queue is frozen before advancing another stage. No production code or source pixels changed.",
+  "captures": [
+    {
+      "file": "runtime-reaver-1280-before.png",
+      "bytes": 115179,
+      "sha256": "8ce9314793a044de59ede76851341456aeb57024b755594bc367ba7c09926ff2",
+      "url": "http://localhost:8338/docs/planning/player-sprite-cleanup-2026-11-26/verification/runtime-baseline.html?case=reaver",
+      "viewport": [
+        1280,
+        800
+      ],
+      "reducedMotion": false,
+      "effects": "off",
+      "sharedDiagnosticZoom": 0.52,
+      "profile": "reaver-greatsword-pilot",
+      "receipts": [
+        {
+          "label": "Reaver · ready",
+          "classId": "reaver",
+          "kind": "ready",
+          "pose": "ready",
+          "stance": null,
+          "src": "http://localhost:8338/assets-display/alternative/card-reaver-ready.webp",
+          "sourceRaster": [
+            256,
+            256
+          ],
+          "drawCanvas": [
+            211,
+            97,
+            512,
+            512
+          ],
+          "body": {
+            "headY": 300,
+            "feetY": 561,
+            "source": "authored"
+          },
+          "canvas": [
+            932,
+            625
+          ],
+          "stageCss": [
+            93.12060546875,
+            98.79998779296875
+          ],
+          "canvasCss": [
+            352.79559326171875,
+            236.583740234375
+          ],
+          "presentation": {
+            "rest": "idle",
+            "pose": "ready",
+            "stance": null,
+            "elapsed": 0,
+            "resources": [],
+            "savedAt": 1795760045704
+          },
+          "assetId": "assets-display/alternative/card-reaver-ready.webp",
+          "loadedImageHttpStatus": 200,
+          "loadedByteSha256": "2bacbe2b5f1ee3fc418a0f6754fefd6d50e8db861b3e1fb764c103c18de88e17",
+          "cacheByteSha256": "2bacbe2b5f1ee3fc418a0f6754fefd6d50e8db861b3e1fb764c103c18de88e17",
+          "cachePath": "C:\\Users\\const\\.codex\\worktrees\\sprite-cleanup-plan\\AshenSpire\\.art-cache\\ashenspire-hd-assets-v30\\common\\assets-display\\alternative\\card-reaver-ready.webp",
+          "loadedBytesMatchCache": true,
+          "loadedBytesMatchRetainedBaseline": true,
+          "pack": "common"
+        },
+        {
+          "label": "Reaver · held Sweep",
+          "classId": "reaver",
+          "kind": "held",
+          "pose": "stance-sweep",
+          "stance": "sweep",
+          "src": "http://localhost:8338/assets-display/alternative/reaver-greatsword-pilot-sweep.webp",
+          "sourceRaster": [
+            1024,
+            1024
+          ],
+          "drawCanvas": [
+            73.60869565217394,
+            -13.199999999999932,
+            774.6782608695652,
+            774.6782608695652
+          ],
+          "body": {
+            "headY": 300,
+            "feetY": 561,
+            "source": "authored"
+          },
+          "canvas": [
+            932,
+            625
+          ],
+          "stageCss": [
+            93.12060546875,
+            98.79998779296875
+          ],
+          "canvasCss": [
+            352.79559326171875,
+            236.583740234375
+          ],
+          "presentation": {
+            "rest": "idle",
+            "pose": "stance-sweep",
+            "stance": "sweep",
+            "elapsed": 0,
+            "resources": [],
+            "savedAt": 1795760045858
+          },
+          "assetId": "assets-display/alternative/reaver-greatsword-pilot-sweep.webp",
+          "loadedImageHttpStatus": 200,
+          "loadedByteSha256": "81d348d0382b9a99c1f72d5d23dab4975bbe648b3db979d8f725fc250d02db7c",
+          "cacheByteSha256": "81d348d0382b9a99c1f72d5d23dab4975bbe648b3db979d8f725fc250d02db7c",
+          "cachePath": "C:\\Users\\const\\.codex\\worktrees\\sprite-cleanup-plan\\AshenSpire\\.art-cache\\ashenspire-hd-assets-v30\\common\\assets-display\\alternative\\reaver-greatsword-pilot-sweep.webp",
+          "loadedBytesMatchCache": true,
+          "loadedBytesMatchRetainedBaseline": true,
+          "pack": "common"
+        },
+        {
+          "label": "Reaver · Sweep contact (270 / 600ms)",
+          "classId": "reaver",
+          "kind": "contact",
+          "pose": "pilot-sweep-contact",
+          "stance": "sweep",
+          "src": "http://localhost:8338/assets-display/alternative/reaver-greatsword-pilot-sweep-contact.webp",
+          "sourceRaster": [
+            1024,
+            1024
+          ],
+          "drawCanvas": [
+            -53,
+            -173,
+            1024,
+            1024
+          ],
+          "body": null,
+          "canvas": [
+            932,
+            625
+          ],
+          "stageCss": [
+            93.12060546875,
+            98.79998779296875
+          ],
+          "canvasCss": [
+            352.7955322265625,
+            236.583740234375
+          ],
+          "presentation": {
+            "rest": "idle",
+            "pose": "pilot-sweep-contact",
+            "stance": "sweep",
+            "action": "sweep",
+            "elapsed": 270,
+            "duration": 600,
+            "resources": [],
+            "savedAt": 1795760046012
+          },
+          "assetId": "assets-display/alternative/reaver-greatsword-pilot-sweep-contact.webp",
+          "loadedImageHttpStatus": 200,
+          "loadedByteSha256": "2f57d14e2f17a7366977829957514d0a97f64adf91cb24c26ede51a25e56bbb2",
+          "cacheByteSha256": "2f57d14e2f17a7366977829957514d0a97f64adf91cb24c26ede51a25e56bbb2",
+          "cachePath": "C:\\Users\\const\\.codex\\worktrees\\sprite-cleanup-plan\\AshenSpire\\.art-cache\\ashenspire-hd-assets-v30\\common\\assets-display\\alternative\\reaver-greatsword-pilot-sweep-contact.webp",
+          "loadedBytesMatchCache": true,
+          "loadedBytesMatchRetainedBaseline": true,
+          "pack": "common"
+        }
+      ]
+    },
+    {
+      "file": "runtime-starseer-1280-before.png",
+      "bytes": 59575,
+      "sha256": "1a5e0ae333f461a48eb20ad1a1ccd91a33703f74e7397bf033356de7d4dda9ec",
+      "url": "http://localhost:8338/docs/planning/player-sprite-cleanup-2026-11-26/verification/runtime-baseline.html?case=starseer",
+      "viewport": [
+        1280,
+        800
+      ],
+      "reducedMotion": false,
+      "effects": "off",
+      "sharedDiagnosticZoom": 0.52,
+      "profile": "class-smash-starseer",
+      "receipts": [
+        {
+          "label": "Starseer · ready",
+          "classId": "starseer",
+          "kind": "ready",
+          "pose": "ready",
+          "stance": null,
+          "src": "http://localhost:8338/assets-display/alternative/card-starseer-ready.webp",
+          "sourceRaster": [
+            256,
+            256
+          ],
+          "drawCanvas": [
+            127.99999999999994,
+            53.349785407725165,
+            512.0000000000001,
+            512.0000000000001
+          ],
+          "body": {
+            "headY": 223.34978540772522,
+            "feetY": 517.3497854077252,
+            "source": "authored"
+          },
+          "canvas": [
+            768,
+            581
+          ],
+          "stageCss": [
+            69.184326171875,
+            98.79998779296875
+          ],
+          "canvasCss": [
+            239.36248779296875,
+            181.07373046875
+          ],
+          "presentation": {
+            "rest": "idle",
+            "pose": "ready",
+            "stance": null,
+            "elapsed": 0,
+            "resources": [],
+            "savedAt": 1795760046618
+          },
+          "assetId": "assets-display/alternative/card-starseer-ready.webp",
+          "loadedImageHttpStatus": 200,
+          "loadedByteSha256": "33f34a784254ca1494d793c3d9c806f63f96620ae002359d82ac1246c3c7972c",
+          "cacheByteSha256": "33f34a784254ca1494d793c3d9c806f63f96620ae002359d82ac1246c3c7972c",
+          "cachePath": "C:\\Users\\const\\.codex\\worktrees\\sprite-cleanup-plan\\AshenSpire\\.art-cache\\ashenspire-hd-assets-v30\\common\\assets-display\\alternative\\card-starseer-ready.webp",
+          "loadedBytesMatchCache": true,
+          "loadedBytesMatchRetainedBaseline": true,
+          "pack": "common"
+        },
+        {
+          "label": "Starseer · taking hit (100 / 600ms)",
+          "classId": "starseer",
+          "kind": "hurt",
+          "pose": "ready",
+          "stance": null,
+          "src": "http://localhost:8338/assets/animations/unarmed-magic/starseer/HURT.webp",
+          "sourceRaster": [
+            512,
+            512
+          ],
+          "drawCanvas": [
+            166.17543209876544,
+            125.34978540772528,
+            416,
+            416
+          ],
+          "body": null,
+          "canvas": [
+            768,
+            581
+          ],
+          "stageCss": [
+            69.184326171875,
+            98.79998779296875
+          ],
+          "canvasCss": [
+            239.36248779296875,
+            181.07373046875
+          ],
+          "presentation": {
+            "rest": "idle",
+            "pose": "ready",
+            "stance": null,
+            "elapsed": 0,
+            "resources": [],
+            "savedAt": 1795760046780
+          },
+          "assetId": "assets/animations/unarmed-magic/starseer/HURT.webp",
+          "loadedImageHttpStatus": 200,
+          "loadedByteSha256": "6014d268d24694129335242764f28a91e12ed04668b411e8195e1cf33b2c90f0",
+          "cacheByteSha256": "6014d268d24694129335242764f28a91e12ed04668b411e8195e1cf33b2c90f0",
+          "cachePath": "C:\\Users\\const\\.codex\\worktrees\\sprite-cleanup-plan\\AshenSpire\\.art-cache\\ashenspire-hd-assets-v30\\high\\assets\\animations\\unarmed-magic\\starseer\\HURT.webp",
+          "loadedBytesMatchCache": true,
+          "loadedBytesMatchRetainedBaseline": true,
+          "pack": "high"
+        },
+        {
+          "label": "Starseer · returned to ready",
+          "classId": "starseer",
+          "kind": "return",
+          "pose": "ready",
+          "stance": null,
+          "src": "http://localhost:8338/assets-display/alternative/card-starseer-ready.webp",
+          "sourceRaster": [
+            256,
+            256
+          ],
+          "drawCanvas": [
+            127.99999999999994,
+            53.349785407725165,
+            512.0000000000001,
+            512.0000000000001
+          ],
+          "body": {
+            "headY": 223.34978540772522,
+            "feetY": 517.3497854077252,
+            "source": "authored"
+          },
+          "canvas": [
+            768,
+            581
+          ],
+          "stageCss": [
+            69.184326171875,
+            98.79998779296875
+          ],
+          "canvasCss": [
+            239.36248779296875,
+            181.07373046875
+          ],
+          "presentation": {
+            "rest": "idle",
+            "pose": "ready",
+            "stance": null,
+            "elapsed": 0,
+            "resources": [],
+            "savedAt": 1795760046933
+          },
+          "assetId": "assets-display/alternative/card-starseer-ready.webp",
+          "loadedImageHttpStatus": 200,
+          "loadedByteSha256": "33f34a784254ca1494d793c3d9c806f63f96620ae002359d82ac1246c3c7972c",
+          "cacheByteSha256": "33f34a784254ca1494d793c3d9c806f63f96620ae002359d82ac1246c3c7972c",
+          "cachePath": "C:\\Users\\const\\.codex\\worktrees\\sprite-cleanup-plan\\AshenSpire\\.art-cache\\ashenspire-hd-assets-v30\\common\\assets-display\\alternative\\card-starseer-ready.webp",
+          "loadedBytesMatchCache": true,
+          "loadedBytesMatchRetainedBaseline": true,
+          "pack": "common"
+        }
+      ]
+    },
+    {
+      "file": "runtime-reaver-390-before.png",
+      "bytes": 121286,
+      "sha256": "e8cb34b185e9161238dfc8021387345bba8585e8a28fc17b863763408d0cb0b8",
+      "url": "http://localhost:8338/docs/planning/player-sprite-cleanup-2026-11-26/verification/runtime-baseline.html?case=reaver",
+      "viewport": [
+        390,
+        844
+      ],
+      "reducedMotion": false,
+      "effects": "off",
+      "sharedDiagnosticZoom": 0.52,
+      "profile": "reaver-greatsword-pilot",
+      "receipts": [
+        {
+          "label": "Reaver · ready",
+          "classId": "reaver",
+          "kind": "ready",
+          "pose": "ready",
+          "stance": null,
+          "src": "http://localhost:8338/assets-display/alternative/card-reaver-ready.webp",
+          "sourceRaster": [
+            256,
+            256
+          ],
+          "drawCanvas": [
+            211,
+            97,
+            512,
+            512
+          ],
+          "body": {
+            "headY": 300,
+            "feetY": 561,
+            "source": "authored"
+          },
+          "canvas": [
+            932,
+            625
+          ],
+          "stageCss": [
+            93.12062072753906,
+            98.79998779296875
+          ],
+          "canvasCss": [
+            352.79559326171875,
+            236.583740234375
+          ],
+          "presentation": {
+            "rest": "idle",
+            "pose": "ready",
+            "stance": null,
+            "elapsed": 0,
+            "resources": [],
+            "savedAt": 1795760047530
+          },
+          "assetId": "assets-display/alternative/card-reaver-ready.webp",
+          "loadedImageHttpStatus": 200,
+          "loadedByteSha256": "2bacbe2b5f1ee3fc418a0f6754fefd6d50e8db861b3e1fb764c103c18de88e17",
+          "cacheByteSha256": "2bacbe2b5f1ee3fc418a0f6754fefd6d50e8db861b3e1fb764c103c18de88e17",
+          "cachePath": "C:\\Users\\const\\.codex\\worktrees\\sprite-cleanup-plan\\AshenSpire\\.art-cache\\ashenspire-hd-assets-v30\\common\\assets-display\\alternative\\card-reaver-ready.webp",
+          "loadedBytesMatchCache": true,
+          "loadedBytesMatchRetainedBaseline": true,
+          "pack": "common"
+        },
+        {
+          "label": "Reaver · held Sweep",
+          "classId": "reaver",
+          "kind": "held",
+          "pose": "stance-sweep",
+          "stance": "sweep",
+          "src": "http://localhost:8338/assets-display/alternative/reaver-greatsword-pilot-sweep.webp",
+          "sourceRaster": [
+            1024,
+            1024
+          ],
+          "drawCanvas": [
+            73.60869565217394,
+            -13.199999999999932,
+            774.6782608695652,
+            774.6782608695652
+          ],
+          "body": {
+            "headY": 300,
+            "feetY": 561,
+            "source": "authored"
+          },
+          "canvas": [
+            932,
+            625
+          ],
+          "stageCss": [
+            93.12062072753906,
+            98.800048828125
+          ],
+          "canvasCss": [
+            352.79559326171875,
+            236.58380126953125
+          ],
+          "presentation": {
+            "rest": "idle",
+            "pose": "stance-sweep",
+            "stance": "sweep",
+            "elapsed": 0,
+            "resources": [],
+            "savedAt": 1795760047682
+          },
+          "assetId": "assets-display/alternative/reaver-greatsword-pilot-sweep.webp",
+          "loadedImageHttpStatus": 200,
+          "loadedByteSha256": "81d348d0382b9a99c1f72d5d23dab4975bbe648b3db979d8f725fc250d02db7c",
+          "cacheByteSha256": "81d348d0382b9a99c1f72d5d23dab4975bbe648b3db979d8f725fc250d02db7c",
+          "cachePath": "C:\\Users\\const\\.codex\\worktrees\\sprite-cleanup-plan\\AshenSpire\\.art-cache\\ashenspire-hd-assets-v30\\common\\assets-display\\alternative\\reaver-greatsword-pilot-sweep.webp",
+          "loadedBytesMatchCache": true,
+          "loadedBytesMatchRetainedBaseline": true,
+          "pack": "common"
+        },
+        {
+          "label": "Reaver · Sweep contact (270 / 600ms)",
+          "classId": "reaver",
+          "kind": "contact",
+          "pose": "pilot-sweep-contact",
+          "stance": "sweep",
+          "src": "http://localhost:8338/assets-display/alternative/reaver-greatsword-pilot-sweep-contact.webp",
+          "sourceRaster": [
+            1024,
+            1024
+          ],
+          "drawCanvas": [
+            -53,
+            -173,
+            1024,
+            1024
+          ],
+          "body": null,
+          "canvas": [
+            932,
+            625
+          ],
+          "stageCss": [
+            93.12062072753906,
+            98.800048828125
+          ],
+          "canvasCss": [
+            352.79559326171875,
+            236.583740234375
+          ],
+          "presentation": {
+            "rest": "idle",
+            "pose": "pilot-sweep-contact",
+            "stance": "sweep",
+            "action": "sweep",
+            "elapsed": 270,
+            "duration": 600,
+            "resources": [],
+            "savedAt": 1795760047835
+          },
+          "assetId": "assets-display/alternative/reaver-greatsword-pilot-sweep-contact.webp",
+          "loadedImageHttpStatus": 200,
+          "loadedByteSha256": "2f57d14e2f17a7366977829957514d0a97f64adf91cb24c26ede51a25e56bbb2",
+          "cacheByteSha256": "2f57d14e2f17a7366977829957514d0a97f64adf91cb24c26ede51a25e56bbb2",
+          "cachePath": "C:\\Users\\const\\.codex\\worktrees\\sprite-cleanup-plan\\AshenSpire\\.art-cache\\ashenspire-hd-assets-v30\\common\\assets-display\\alternative\\reaver-greatsword-pilot-sweep-contact.webp",
+          "loadedBytesMatchCache": true,
+          "loadedBytesMatchRetainedBaseline": true,
+          "pack": "common"
+        }
+      ]
+    },
+    {
+      "file": "runtime-starseer-390-before.png",
+      "bytes": 76740,
+      "sha256": "2e7a35fa5b01a71589f2cc36114b3c60134067971483c710da111c87c59a63f6",
+      "url": "http://localhost:8338/docs/planning/player-sprite-cleanup-2026-11-26/verification/runtime-baseline.html?case=starseer",
+      "viewport": [
+        390,
+        844
+      ],
+      "reducedMotion": false,
+      "effects": "off",
+      "sharedDiagnosticZoom": 0.52,
+      "profile": "class-smash-starseer",
+      "receipts": [
+        {
+          "label": "Starseer · ready",
+          "classId": "starseer",
+          "kind": "ready",
+          "pose": "ready",
+          "stance": null,
+          "src": "http://localhost:8338/assets-display/alternative/card-starseer-ready.webp",
+          "sourceRaster": [
+            256,
+            256
+          ],
+          "drawCanvas": [
+            127.99999999999994,
+            53.349785407725165,
+            512.0000000000001,
+            512.0000000000001
+          ],
+          "body": {
+            "headY": 223.34978540772522,
+            "feetY": 517.3497854077252,
+            "source": "authored"
+          },
+          "canvas": [
+            768,
+            581
+          ],
+          "stageCss": [
+            69.18437194824219,
+            98.79998779296875
+          ],
+          "canvasCss": [
+            239.36248779296875,
+            181.07373046875
+          ],
+          "presentation": {
+            "rest": "idle",
+            "pose": "ready",
+            "stance": null,
+            "elapsed": 0,
+            "resources": [],
+            "savedAt": 1795760048571
+          },
+          "assetId": "assets-display/alternative/card-starseer-ready.webp",
+          "loadedImageHttpStatus": 200,
+          "loadedByteSha256": "33f34a784254ca1494d793c3d9c806f63f96620ae002359d82ac1246c3c7972c",
+          "cacheByteSha256": "33f34a784254ca1494d793c3d9c806f63f96620ae002359d82ac1246c3c7972c",
+          "cachePath": "C:\\Users\\const\\.codex\\worktrees\\sprite-cleanup-plan\\AshenSpire\\.art-cache\\ashenspire-hd-assets-v30\\common\\assets-display\\alternative\\card-starseer-ready.webp",
+          "loadedBytesMatchCache": true,
+          "loadedBytesMatchRetainedBaseline": true,
+          "pack": "common"
+        },
+        {
+          "label": "Starseer · taking hit (100 / 600ms)",
+          "classId": "starseer",
+          "kind": "hurt",
+          "pose": "ready",
+          "stance": null,
+          "src": "http://localhost:8338/assets/animations/unarmed-magic/starseer/HURT.webp",
+          "sourceRaster": [
+            512,
+            512
+          ],
+          "drawCanvas": [
+            166.17543209876544,
+            125.34978540772528,
+            416,
+            416
+          ],
+          "body": null,
+          "canvas": [
+            768,
+            581
+          ],
+          "stageCss": [
+            69.18437194824219,
+            98.800048828125
+          ],
+          "canvasCss": [
+            239.36248779296875,
+            181.07373046875
+          ],
+          "presentation": {
+            "rest": "idle",
+            "pose": "ready",
+            "stance": null,
+            "elapsed": 0,
+            "resources": [],
+            "savedAt": 1795760048724
+          },
+          "assetId": "assets/animations/unarmed-magic/starseer/HURT.webp",
+          "loadedImageHttpStatus": 200,
+          "loadedByteSha256": "6014d268d24694129335242764f28a91e12ed04668b411e8195e1cf33b2c90f0",
+          "cacheByteSha256": "6014d268d24694129335242764f28a91e12ed04668b411e8195e1cf33b2c90f0",
+          "cachePath": "C:\\Users\\const\\.codex\\worktrees\\sprite-cleanup-plan\\AshenSpire\\.art-cache\\ashenspire-hd-assets-v30\\high\\assets\\animations\\unarmed-magic\\starseer\\HURT.webp",
+          "loadedBytesMatchCache": true,
+          "loadedBytesMatchRetainedBaseline": true,
+          "pack": "high"
+        },
+        {
+          "label": "Starseer · returned to ready",
+          "classId": "starseer",
+          "kind": "return",
+          "pose": "ready",
+          "stance": null,
+          "src": "http://localhost:8338/assets-display/alternative/card-starseer-ready.webp",
+          "sourceRaster": [
+            256,
+            256
+          ],
+          "drawCanvas": [
+            127.99999999999994,
+            53.349785407725165,
+            512.0000000000001,
+            512.0000000000001
+          ],
+          "body": {
+            "headY": 223.34978540772522,
+            "feetY": 517.3497854077252,
+            "source": "authored"
+          },
+          "canvas": [
+            768,
+            581
+          ],
+          "stageCss": [
+            69.18437194824219,
+            98.800048828125
+          ],
+          "canvasCss": [
+            239.36248779296875,
+            181.07373046875
+          ],
+          "presentation": {
+            "rest": "idle",
+            "pose": "ready",
+            "stance": null,
+            "elapsed": 0,
+            "resources": [],
+            "savedAt": 1795760048882
+          },
+          "assetId": "assets-display/alternative/card-starseer-ready.webp",
+          "loadedImageHttpStatus": 200,
+          "loadedByteSha256": "33f34a784254ca1494d793c3d9c806f63f96620ae002359d82ac1246c3c7972c",
+          "cacheByteSha256": "33f34a784254ca1494d793c3d9c806f63f96620ae002359d82ac1246c3c7972c",
+          "cachePath": "C:\\Users\\const\\.codex\\worktrees\\sprite-cleanup-plan\\AshenSpire\\.art-cache\\ashenspire-hd-assets-v30\\common\\assets-display\\alternative\\card-starseer-ready.webp",
+          "loadedBytesMatchCache": true,
+          "loadedBytesMatchRetainedBaseline": true,
+          "pack": "common"
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "fullGamePriorAttempt": {
+    "attempted": true,
+    "result": "production stage-readiness selector timeout after15000ms",
+    "interpretation": "capture limitation; not diagnosed game failure",
+    "lastRun": "CAPTURE_FULL_GAME=0"
+  }
+}

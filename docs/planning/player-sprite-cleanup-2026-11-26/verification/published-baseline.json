@@ -1,0 +1,44 @@
+[
+  {
+    "channel": "test",
+    "observedAt": "2026-11-27T06:10:18.463Z",
+    "url": "https://cehinds.github.io/AshenSpire/test/latest/",
+    "status": 200,
+    "badgeStatus": 200,
+    "publishedBuild": "0.7.5.134",
+    "byteLength": 15946167,
+    "htmlSha256": "c73ffce6f63ab3efec057381fb7a1ad0ac826bfc0e8f59186c3d56c5d12316d7",
+    "lastModified": "Fri, 27 Nov 2026 05:56:07 GMT",
+    "etag": "W/\"6b091b77-f351b7\"",
+    "markers": {
+      "SOURCE": "const SOURCE = '4fc712b163';",
+      "ORDINAL": "const ORDINAL = '134';",
+      "DATE": "const BUILT = '2026-11-27';",
+      "EDITION": "const EDITION = 'high';"
+    },
+    "embeddedArtTag": null,
+    "owningGameGitCommit": null,
+    "provenanceNote": "SOURCE is a content digest, not a Git SHA. Unrelated sourceCommit fields inside art catalogs do not identify the game commit. Art pack release tag not found in game HTML when embeddedArtTag is null."
+  },
+  {
+    "channel": "dev",
+    "observedAt": "2026-11-27T06:10:18.463Z",
+    "url": "https://cehinds.github.io/AshenSpire/dev/latest/",
+    "status": 200,
+    "badgeStatus": 200,
+    "publishedBuild": "0.7.5.141",
+    "byteLength": 15949785,
+    "htmlSha256": "11b253d52e2a04112a3f6c0fc5d7e88aa979bd21fce2c6d5b7fa4ab7c7c0672d",
+    "lastModified": "Fri, 27 Nov 2026 05:56:07 GMT",
+    "etag": "W/\"6b091b77-f35fd9\"",
+    "markers": {
+      "SOURCE": "const SOURCE = '815d2ca479';",
+      "ORDINAL": "const ORDINAL = '141';",
+      "DATE": "const BUILT = '2026-11-27';",
+      "EDITION": "const EDITION = 'light';"
+    },
+    "embeddedArtTag": null,
+    "owningGameGitCommit": null,
+    "provenanceNote": "SOURCE is a content digest, not a Git SHA. Unrelated sourceCommit fields inside art catalogs do not identify the game commit. Art pack release tag not found in game HTML when embeddedArtTag is null."
+  }
+]

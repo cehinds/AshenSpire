@@ -12,6 +12,16 @@ node docs/planning/player-sprite-cleanup-2026-11-26/measurements/audit.mjs --cac
 
 Requires the existing Node runtime and Python with Pillow; `--python <executable>` selects another installed Python. The script reads the pinned cache, imports existing pure catalogs/models, checks 23 owning source files against the named Git baseline after CRLF normalization, and writes only sibling audit evidence. It never writes game code, source artwork or the cache, and never invokes an exporter or a Git mutation.
 
+The retained `raster-hashes.json` is fixed evidence anchored in planning commit **`94f46215e72`**. Before any output overwrite, the audit checks the retained snapshot against that commit, checks its source/release labels, and compares **all 330 measured physical pack/path SHA-256 values** with it, including base catalog images that declare no export hash. Missing, altered, additional or mislabeled inputs fail the run. A different cache directory is accepted only when all measured bytes match this fixed v30 snapshot; its name alone grants no baseline identity. The audit never refreshes or overwrites the retained raster snapshot. Restore a missing/changed snapshot from the planning commit rather than regenerating it from an arbitrary cache.
+
+The guard can be checked without touching cache or evidence files:
+
+```powershell
+node docs/planning/player-sprite-cleanup-2026-11-26/measurements/audit.mjs --selftest-snapshot-guard
+```
+
+Verification passed: the identical 330-file snapshot is accepted; six manipulated in-memory fixtures are rejected (changed expected hash, missing measurement, missing raster, different source baseline, different release, unexpected path). No selftest files are written. A normal audit rerun also passed with the retained v30 cache. The archive ZIPs were **not** rehashed: the commit anchors observed file-level evidence, not independent archive or source-master verification.
+
 - [inventory.csv](inventory.csv): 184 pose/alias/hurt/defeated rows, including declared canvas/raster metadata, actual decoded raster sizes and hashes, alpha bounds, semantic landmarks, calibration factors, draw rectangles, sequence/held roles and source provenance where cataloged.
 - [action-mappings.json](action-mappings.json): assembled sequences, held paths, conditional Reaver target reactions, profile selection, separate hurt/defeated sources and dynamic origin policy.
 - [summary.json](summary.json): class references, padding, counts and missing-landmark paths.

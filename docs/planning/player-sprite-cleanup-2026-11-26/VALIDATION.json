@@ -1,0 +1,20 @@
+{
+  "baseline": "49eca254d795d06266aa23941cb2b31fe77b27bf",
+  "kind": "Planning evidence integrity, not implementation acceptance",
+  "checkedAt": "2026-11-27T06:18:32.036Z",
+  "localLinksChecked": 81,
+  "imageHashesChecked": 12,
+  "loadedImageReceiptsChecked": 12,
+  "compactJsonFilesChecked": 9,
+  "measuredCounts": {
+    "rows": 184,
+    "uniqueFramePaths": 157,
+    "uniqueAvailableFramePaths": 117,
+    "assetIdentifiers": 298,
+    "rasterFiles": 330,
+    "missingRasterFiles": 0,
+    "catalogHashMismatches": 0
+  },
+  "errors": [],
+  "pass": true
+}

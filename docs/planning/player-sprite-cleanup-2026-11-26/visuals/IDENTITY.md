@@ -131,11 +131,38 @@ selected paths and 29 semantic landmark records. It includes source metadata
 and provenance pointers carried by catalogs; metadata is not proof of original
 master integrity.
 
+The collector first verifies all 23 owning source/catalog files in the retained
+[source-hashes receipt](../measurements/source-hashes.json) against both the
+actual Git blobs at `49eca254d795d06266aa23941cb2b31fe77b27bf` and the local source
+bytes, ignoring CRLF line-ending differences. Verification completes **before
+dynamic imports or output writes**. Thus a later source change cannot silently
+produce a new input snapshot carrying this old baseline label.
+
 [image-manifest.json](image-manifest.json) records each of the 38 input files'
 resolved pack, native raster dimensions, observed SHA-256, alpha≥128 bounds,
 and hashes/sizes of the eight output PNGs. These are actual cache-byte hashes,
 not inferred source-master hashes. Alpha measurements describe raster extents,
 not anatomy. No source image bytes were edited or replaced.
+
+Before writing any PNG or manifest, the reference builder validates the input,
+retained manifest, and measurement index baseline/art identities, requires the
+cache directory to identify `ashenspire-hd-assets-v30`, and preflights all 38
+actual raster SHA-256 hashes. It uses the retained
+[raster-hashes receipt](../measurements/raster-hashes.json) by resolved pack/path.
+The three extra existing-candidate paths outside that inventory use the
+**previously retained** image-manifest input hashes, snapshotted at process start.
+A missing, changed, or mis-pinned input fails before any output overwrite. The
+guard does not establish original master provenance or archive integrity beyond
+the retained file evidence; it prevents mislabeled regeneration from other bytes.
+
+Guard verification after independent review: the collector passed all 23 source
+checks; the builder passed all 38 raster checks; all eight PNGs remained
+byte-identical to their retained versions (`git diff` showed no PNG/manifest/input
+changes). A negative test copied only the first ready raster into an isolated
+temporary `ashenspire-hd-assets-v30` cache, flipped one byte, and invoked the
+builder. It failed with `Pinned raster mismatch` before decoding or output
+writes. Before/after hashes confirmed all eight canonical PNGs and both input/
+image manifests were untouched. Canonical cache and source files were not edited.
 
 The reference builder mirrors static local registration with shared floor480
 and center384 coordinates. Uniform canvas padding is omitted because it shifts
@@ -159,6 +186,7 @@ in sharpness are visible but do not by themselves prove an anatomical error.
 - [x] Produce matched before-only Starseer hit and Reaver Sweep references.
 - [x] Produce four class identity contact sheets with common scale and floor.
 - [x] Record asset input hashes, raster/alpha dimensions, and output hashes.
+- [x] Guard regeneration against source drift and wrong cache bytes; prove rejection with a corrupted temporary input.
 - [x] Inspect all eight generated images; correct clipped reach and overlapping labels.
 - [x] Inspect the four pinned existing Starseer hurt candidates.
 - [x] Separate observed design changes from uncertain anatomy/equipment intent.

@@ -9,6 +9,63 @@ import { execFileSync } from 'node:child_process';
 const out = dirname(fileURLToPath(import.meta.url));
 const root = resolve(out, '../../../..');
 const baseline = '49eca254d795d06266aa23941cb2b31fe77b27bf';
+const release = 'ashenspire-hd-assets-v30';
+const snapshotAnchor = '94f46215e72';
+const snapshotRelative = 'docs/planning/player-sprite-cleanup-2026-11-26/measurements/raster-hashes.json';
+const snapshotBytes = readFileSync(join(out,'raster-hashes.json'),'utf8');
+const anchoredSnapshot = execFileSync('git', ['-c',`safe.directory=${root}`,'show',`${snapshotAnchor}:${snapshotRelative}`], {cwd:root,encoding:'utf8'});
+if (snapshotBytes.replaceAll('\r\n','\n') !== anchoredSnapshot.replaceAll('\r\n','\n'))
+  throw Error(`Retained raster snapshot changed; restore the evidence from planning commit ${snapshotAnchor} before rerunning.`);
+const expectedSnapshot = JSON.parse(snapshotBytes);
+
+// Compare physical pack/path identities, including catalog entries without an
+// export hash. The checked-in snapshot is fixed evidence, never refreshed here.
+function verifyRasterSnapshot(expected, actual) {
+  for(const [label,snapshot] of [['retained',expected],['measured',actual]]) {
+    if(snapshot.baseline!==baseline || snapshot.release!==release)
+      throw Error(`${label} raster snapshot baseline/release mismatch`);
+  }
+  const flatten = (snapshot,label) => {
+    const indexed=new Map();
+    for(const entries of Object.values(snapshot.assets || {})) for(const r of entries) {
+      const key=`${r.pack}/${r.path}`;
+      if(!r.exists || !/^[a-f0-9]{64}$/.test(r.sha256 || ''))
+        throw Error(`${label} raster missing or invalid: ${key}`);
+      if(indexed.has(key)) throw Error(`${label} duplicate raster identity: ${key}`);
+      indexed.set(key,r.sha256);
+    }
+    return indexed;
+  };
+  const expectedFiles=flatten(expected,'retained'), actualFiles=flatten(actual,'measured');
+  if(expectedFiles.size!==330) throw Error('Retained raster snapshot must contain the original 330 physical files');
+  for(const [key,hash] of expectedFiles) {
+    if(!actualFiles.has(key)) throw Error(`Measured raster missing from pinned snapshot coverage: ${key}`);
+    if(actualFiles.get(key)!==hash) throw Error(`Measured raster SHA-256 differs from retained v30 snapshot: ${key}`);
+  }
+  for(const key of actualFiles.keys()) if(!expectedFiles.has(key))
+    throw Error(`Measured raster has no retained v30 snapshot identity: ${key}`);
+  return expectedFiles.size;
+}
+if(process.argv.includes('--selftest-snapshot-guard')) {
+  const clone = () => structuredClone(expectedSnapshot);
+  const first = snapshot => Object.values(snapshot.assets)[0][0];
+  const checked=verifyRasterSnapshot(expectedSnapshot,expectedSnapshot);
+  const cases=[
+    ['manipulated expected hash',() => {const e=clone();first(e).sha256='0'.repeat(64);return[e,clone()];}],
+    ['missing measured file',() => {const a=clone();Object.values(a.assets)[0].shift();return[clone(),a];}],
+    ['missing physical raster',() => {const a=clone();first(a).exists=false;return[clone(),a];}],
+    ['different source baseline',() => {const a=clone();a.baseline='different';return[clone(),a];}],
+    ['different art release',() => {const a=clone();a.release='ashenspire-hd-assets-v29';return[clone(),a];}],
+    ['unexpected physical path',() => {const a=clone();first(a).path+='-unexpected';return[clone(),a];}],
+  ];
+  for(const [name,fixture] of cases) {
+    let rejected=false;
+    try {verifyRasterSnapshot(...fixture());} catch {rejected=true;}
+    if(!rejected) throw Error(`Snapshot guard failed to reject ${name}`);
+  }
+  console.log(`PASS retained snapshot ${snapshotAnchor}: ${checked} identical files accepted; ${cases.length} manipulated in-memory fixtures rejected; no files written.`);
+  process.exit(0);
+}
 const arg = name => { const i = process.argv.indexOf(name); return i < 0 ? null : process.argv[i + 1]; };
 const cache = resolve(arg('--cache') || 'C:/repos/AshenSpire/.art-cache/ashenspire-hd-assets-v30');
 const python = arg('--python') || 'python';
@@ -151,6 +208,8 @@ for p in json.load(sys.stdin):
     result[p]=entries
 print(json.dumps(result,separators=(',',':')))`;
 const rasters = JSON.parse(execFileSync(python, ['-c',pythonCode,cache], {input:JSON.stringify([...sourcePaths].sort()),encoding:'utf8',maxBuffer:8*1024*1024}));
+const verifiedRasters=verifyRasterSnapshot(expectedSnapshot,{baseline,release:pin.tag,assets:rasters});
+console.log(`PASS retained v30 raster snapshot: ${verifiedRasters} physical pack/path SHA-256 values match planning commit ${snapshotAnchor}.`);
 const csvColumns = ['classId','key','path','lite','roles','selection','rasterDeclared','mobileRasterDeclared','actualRasters',
   'drawSize','drawOffset','catalogBounds','stageBounds','bodyRaster','referenceBodyStage','authoredSpanStage','normalizationFactor',
   'heldPlacement','actionPlacement','normalizedSpanStage','cssPixelsPerStageUnit','cssDrawSizeHeld','cssDrawSizeAction',
@@ -181,10 +240,11 @@ json('summary.json',{baseline,artRelease:pin.repo+'/'+pin.tag,cache,defaultComba
   missingRasters:missing,hashMismatches});
 json('action-mappings.json',{baseline,classes:mappings});
 json('source-hashes.json',{baseline,files:sourceHashes});
-// Dedupe physical rasters for compact provenance evidence; CSV retains per-role details.
-json('raster-hashes.json',{baseline,release:pin.tag,assets:rasters});
+// raster-hashes.json is the immutable comparison snapshot from snapshotAnchor.
+// Never replace it with the files supplied to --cache, even on a matching run.
 console.log(JSON.stringify({counts:{rows:rows.length,uniqueFramePaths:uniqueFrames.length,available:available.length,
   rasters:Object.values(rasters).flat().filter(r=>r.exists).length,missing:missing.length,hashMismatches:hashMismatches.length},
-  classes:summaries,outputs:['inventory.csv','summary.json','action-mappings.json','source-hashes.json','raster-hashes.json']},null,2));
+  classes:summaries,outputs:['inventory.csv','summary.json','action-mappings.json','source-hashes.json'],
+  retainedSnapshot:{path:'raster-hashes.json',planningCommit:snapshotAnchor,verifiedFiles:verifiedRasters}},null,2));
 for(const name of ['summary.json','action-mappings.json','source-hashes.json','raster-hashes.json'])
   console.log(`${name}: ${statSync(join(out,name)).size} bytes`);
