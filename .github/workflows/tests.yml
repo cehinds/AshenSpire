@@ -145,7 +145,7 @@ jobs:
           # secret. The real fix is the owner's: delete the ART_REPO_TOKEN secret, or
           # move it into a GitHub Environment limited to dev, test, release and main
           # (docs/EXTERNAL-ASSETS-PLAN.md, step 11).
-          ART_REPO_TOKEN: ${{ github.event_name != 'pull_request' && contains(fromJSON('["refs/heads/dev","refs/heads/test","refs/heads/release","refs/heads/main"]'), github.ref) && secrets.ART_REPO_TOKEN || '' }}
+          ART_REPO_TOKEN: ${{ github.event_name != 'pull_request' && contains(fromJSON('["refs/heads/dev","refs/heads/review","refs/heads/test","refs/heads/release","refs/heads/main"]'), github.ref) && secrets.ART_REPO_TOKEN || '' }}
         with:
           packs: ${{ env.ART_PACKS }}
 
@@ -172,7 +172,14 @@ jobs:
   discovered:
     name: discovered tests (${{ matrix.shard }})
     # Owner 2026-11-27: the heavy shards moved from dev to review; alternative lines keep them.
-    if: github.ref_name == 'review' || github.event_name == 'workflow_dispatch' || contains(github.base_ref || github.ref_name, 'alternative/')
+    # A dispatch on a PR branch (pr-restamp) is a dev PR, so it stays core-only.
+    if: >-
+      github.ref_name == 'review'
+      || contains(github.base_ref || github.ref_name, 'alternative/')
+      || (github.event_name == 'workflow_dispatch'
+        && !startsWith(github.ref_name, 'feature/')
+        && !startsWith(github.ref_name, 'chore/')
+        && !startsWith(github.ref_name, 'fix/'))
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -219,7 +226,7 @@ jobs:
           # secret. The real fix is the owner's: delete the ART_REPO_TOKEN secret, or
           # move it into a GitHub Environment limited to dev, test, release and main
           # (docs/EXTERNAL-ASSETS-PLAN.md, step 11).
-          ART_REPO_TOKEN: ${{ github.event_name != 'pull_request' && contains(fromJSON('["refs/heads/dev","refs/heads/test","refs/heads/release","refs/heads/main"]'), github.ref) && secrets.ART_REPO_TOKEN || '' }}
+          ART_REPO_TOKEN: ${{ github.event_name != 'pull_request' && contains(fromJSON('["refs/heads/dev","refs/heads/review","refs/heads/test","refs/heads/release","refs/heads/main"]'), github.ref) && secrets.ART_REPO_TOKEN || '' }}
         with:
           packs: ${{ env.ART_PACKS }}
 
