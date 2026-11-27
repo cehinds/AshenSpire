@@ -220,11 +220,24 @@ export function initCardEditorDock(ctx) {
     showLibrary(context);
   }
 
-  const clearFilters = button(FilterNoteCopy.ClearLabel, clearFiltersAndShowLibrary, FilterNoteId.Clear);
+  const clearFilters = button(
+    FilterNoteCopy.ClearLabel,
+    clearFiltersAndShowLibrary,
+    FilterNoteId.Clear,
+  );
   clearFilters.id = FilterNoteId.Clear;
   clearFilters.setAttribute(FilterNoteAria.LabelAttribute, FilterNoteCopy.ClearAriaLabel);
-  filterNote.append(filterNoteText, filterNoteSeparator, clearFilters);
-  entity.append(entityHead, filterNote, scope, previewBody);
+  filterNote.append(
+    filterNoteText,
+    filterNoteSeparator,
+    clearFilters,
+  );
+  entity.append(
+    entityHead,
+    filterNote,
+    scope,
+    previewBody,
+  );
   const content = doc.createElement('div'); content.id = 'customization-content';
   const slots = Object.fromEntries(VIEWS.map(id => {
     const slot = doc.createElement('div'); slot.className = 'customization-view'; slot.dataset.customizationView = id; content.append(slot); return [id, slot];

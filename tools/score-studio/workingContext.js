@@ -76,13 +76,21 @@ export function ToGalleryKind(value)
     : GalleryKind.Cards;
 }
 
-export function FindGalleryEntity(state, kind, id)
+export function FindGalleryEntity(
+  state,
+  kind,
+  id,
+)
 {
   const { list, idOf } = GalleryEntity[kind];
   return list(state).find(entity => idOf(entity) === id);
 }
 
-function isKnownEntity(state, kind, id)
+function isKnownEntity(
+  state,
+  kind,
+  id,
+)
 {
   const { list, idOf } = GalleryEntity[kind];
   const hasId = id !== null && id !== undefined;
@@ -102,7 +110,11 @@ export function CreateActiveEntities({ state, onChange } = {})
     {
       throw new Error(`Unknown entity kind '${kind}'`);
     }
-    const next = isKnownEntity(state, kind, id)
+    const next = isKnownEntity(
+      state,
+      kind,
+      id,
+    )
       ? id
       : null;
     const changed = next !== committed[kind];
@@ -126,11 +138,19 @@ export function CreateActiveEntities({ state, onChange } = {})
     return state[selectedField[kind]] ?? null;
   }
 
-  return { set, reconcile, get };
+  return {
+    set,
+    reconcile,
+    get,
+  };
 }
 
 /** The next entity in displayed order, else the previous one. A hidden one uses the full order. */
-export function NextInDisplayedOrder(displayedIds, removedId, fullOrder = displayedIds)
+export function NextInDisplayedOrder(
+  displayedIds,
+  removedId,
+  fullOrder = displayedIds,
+)
 {
   const isDisplayed = (displayedIds || []).includes(removedId);
   const order = isDisplayed
@@ -191,7 +211,11 @@ export function CreateEditBursts({
     return openBursts.size;
   }
 
-  return { create, endAll, openCount };
+  return {
+    create,
+    endAll,
+    openCount,
+  };
 }
 
 export function ReadWorkingContext(storage)
@@ -215,7 +239,14 @@ export function ReadWorkingContext(storage)
   }
 }
 
-export function WriteWorkingContext(storage, { gallery, cardId, itemKey })
+export function WriteWorkingContext(
+  storage,
+  {
+    gallery,
+    cardId,
+    itemKey,
+  },
+)
 {
   const record = {
     gallery,
@@ -233,13 +264,29 @@ export function WriteWorkingContext(storage, { gallery, cardId, itemKey })
 }
 
 /** Reload restore: a stored id that is gone falls back to the existing default. */
-export function ResolveWorkingContext(saved, state, defaults = {})
+export function ResolveWorkingContext(
+  saved,
+  state,
+  defaults = {},
+)
 {
-  function pick(kind, stored, fallback)
+  function pick(
+    kind,
+    stored,
+    fallback,
+  )
   {
-    return isKnownEntity(state, kind, stored)
+    return isKnownEntity(
+      state,
+      kind,
+      stored,
+    )
       ? stored
-      : isKnownEntity(state, kind, fallback)
+      : isKnownEntity(
+        state,
+        kind,
+        fallback,
+      )
         ? fallback
         : null;
   }
@@ -251,8 +298,16 @@ export function ResolveWorkingContext(saved, state, defaults = {})
       : GalleryKind.Cards;
   return {
     gallery,
-    cardId: pick(GalleryKind.Cards, saved?.cardId, defaults.cardId),
-    itemKey: pick(GalleryKind.Items, saved?.itemKey, defaults.itemKey),
+    cardId: pick(
+      GalleryKind.Cards,
+      saved?.cardId,
+      defaults.cardId,
+    ),
+    itemKey: pick(
+      GalleryKind.Items,
+      saved?.itemKey,
+      defaults.itemKey,
+    ),
   };
 }
 
@@ -277,7 +332,11 @@ function focusedPart(element)
 }
 
 /** Before a gallery re-render: which tile (by stable id) and which part of it had focus. */
-export function CaptureTileFocus(grid, attribute, doc = globalThis.document)
+export function CaptureTileFocus(
+  grid,
+  attribute,
+  doc = globalThis.document,
+)
 {
   const focused = doc?.activeElement;
   if (!grid || !focused || focused === grid || !grid.contains(focused))
@@ -302,7 +361,11 @@ function isFocusableTile(tile)
   return tile.tabIndex >= 0 || tile.getAttribute(tileFocusSelectors.tabindexAttribute) !== null;
 }
 
-function focusTarget(tile, part, fallback)
+function focusTarget(
+  tile,
+  part,
+  fallback,
+)
 {
   const partNode = tile && part
     ? tile.querySelector(part)
@@ -339,7 +402,11 @@ export function RestoreTileFocus(
   const idAttribute = tileIdAttributeName(attribute);
   const tiles = [...grid.querySelectorAll(tileIdSelector(attribute))];
   const tile = tiles.find(node => node.getAttribute(idAttribute) === captured.id);
-  const target = focusTarget(tile, captured.part, fallback);
+  const target = focusTarget(
+    tile,
+    captured.part,
+    fallback,
+  );
   target?.focus?.({ preventScroll: true });
   return target;
 }

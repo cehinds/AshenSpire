@@ -208,10 +208,14 @@ export function initSubclassCatalogUi(ctx) {
   }
 
   function apply(catalog) {
-    const { selectedCardId, ...next } = mergeSubclassCatalog(state, catalog, {
-      replace: el(SUBCLASS_REPLACE_ID).checked,
-      normalize: normalizeStudioCard,
-    });
+    const { selectedCardId, ...next } = mergeSubclassCatalog(
+      state,
+      catalog,
+      {
+        replace: el(SUBCLASS_REPLACE_ID).checked,
+        normalize: normalizeStudioCard,
+      },
+    );
     pushHistory();
     Object.assign(state, next);
     ctx.selectCard(selectedCardId, SelectionOptions.DeferredReveal);
