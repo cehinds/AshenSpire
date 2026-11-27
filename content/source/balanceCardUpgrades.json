@@ -24,13 +24,15 @@
     "blacksmithFewerChoicesChance": 0.5,
     "basicChoicesWithoutRun": 2,
     "rankedChoicesWithoutRun": 3,
+    "maxChoices": 3,
     "$note": {
       "maxCandidates": "Most rolled steps an upgrade offer searches through for distinct options.",
       "blacksmithFewerChoices": "Options a Blacksmith offers on its smaller roll.",
       "blacksmithMoreChoices": "Options a Blacksmith offers on its larger roll.",
       "blacksmithFewerChoicesChance": "Chance, from 0 to 1, that a Blacksmith offers its smaller number of options.",
       "basicChoicesWithoutRun": "Options a Basic card offers when there is no run to roll from.",
-      "rankedChoicesWithoutRun": "Options a ranked card offers when there is no run to roll from."
+      "rankedChoicesWithoutRun": "Options a ranked card offers when there is no run to roll from.",
+      "maxChoices": "Most options any upgrade offer shows; larger choice counts are cut to this."
     }
   },
   "rest": {
