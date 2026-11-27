@@ -220,9 +220,9 @@ test('the scope line names what each view changes and labels the pane scope', ()
   const pane = doc.getElementById('studio-customization-pane'), scope = doc.getElementById('customization-scope');
   const expected = {
     properties: ['card', 'Selected card · edits change only Alpha'],
-    design: ['shared', 'Shared art layers · rules apply to every matching card. Preview: Alpha'],
-    weights: ['global', 'Global scoring · changes rescore every card. Preview: Alpha'],
-    decks: ['deck', 'Deck membership · changes only the chosen deck. Preview: Alpha'],
+    design: ['shared', 'Shared art layers · rules apply to every matching card'],
+    weights: ['global', 'Global scoring · changes rescore every card'],
+    decks: ['deck', 'Deck membership · changes only the chosen deck'],
   };
   for (const [view, [kind, text]] of Object.entries(expected)) {
     api.setView(view);

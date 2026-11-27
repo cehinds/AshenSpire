@@ -271,3 +271,25 @@ body.studio-body .customization-context-fields .deck-context-template { flex: 0 
 body.studio-body .customization-context-fields .deck-context-remove { flex: 0 0 auto; min-height: 0; padding: 0 6px; line-height: 20px; }
 body.studio-body .customization-context-fields .deck-context-empty { margin: 0; font-size: 12px; }
 body.studio-body .customization-context-fields .deck-context-add { width: 100%; min-width: 0; height: 28px; background: var(--st-surface-2); color: var(--st-text); border: 1px solid var(--st-border); border-radius: 4px; }
+/* One line per entry beside the card (owner, 2026-11-27): SP and MP share a line; each other weight is
+   name, value, short unit and small toggles; each art layer is name, show, opacity and Edit. */
+body.studio-body .customization-context-fields[data-context-view="weights"] { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3px 8px; align-content: start; }
+body.studio-body .customization-context-fields[data-context-view="weights"] .weight-row.is-compact { grid-column: 1 / -1; display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; padding: 2px 4px; }
+body.studio-body .customization-context-fields[data-context-view="weights"] .weight-row.is-compact[data-weight-key^="costs:"] { grid-column: auto; }
+body.studio-body .customization-context-fields .weight-row.is-compact > :first-child { flex: 1 1 auto; min-width: 0; }
+body.studio-body .customization-context-fields .weight-row.is-compact .weight-sentence { display: inline-flex; flex: 0 1 auto; flex-wrap: nowrap; align-items: center; gap: 4px; min-width: 0; }
+body.studio-body .customization-context-fields .weight-row.is-compact .weight-words:is([data-part="before"], [data-part="after"]),
+body.studio-body .customization-context-fields .weight-row.is-compact .weight-example { display: none; }
+body.studio-body .customization-context-fields .weight-row.is-compact .weight-words[data-part="mid"] { max-width: 64px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body.studio-body .customization-context-fields .weight-row.is-compact[data-weight-key^="costs:"] .weight-words[data-part="mid"] { display: none; }
+body.studio-body .customization-context-fields .weight-row.is-compact :is(.weight-mult-label, .weight-surcharge-label) { display: inline-flex; align-items: center; gap: 2px; font-size: 0; }
+body.studio-body .customization-context-fields .weight-row.is-compact .weight-mult-label::after { content: '\00D7'; font-size: 12px; color: var(--st-muted); }
+body.studio-body .customization-context-fields .weight-row.is-compact .weight-surcharge-label::after { content: 'S'; font-size: 11px; color: var(--st-muted); }
+body.studio-body .customization-context-fields .weight-row.is-compact .weight-reset-btn.is-clean { visibility: hidden; }
+body.studio-body .customization-context-fields .weight-row.is-compact .weight-reset-btn { padding: 0 2px; min-height: 0; font-size: 11px; }
+body.studio-body .customization-context-fields .art-context-row { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; }
+body.studio-body .customization-context-fields .art-context-name { flex: 1 1 auto; }
+body.studio-body .customization-context-fields .art-context-show { font-size: 0; }
+body.studio-body .customization-context-fields .art-context-opacity { flex: 0 0 72px; grid-column: auto; gap: 2px; }
+body.studio-body .customization-context-fields .art-context-opacity .opacity-val { display: none; }
+body.studio-body .customization-context-fields .art-context-opacity .opacity-val { flex: 0 0 28px; }

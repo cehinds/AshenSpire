@@ -2761,6 +2761,7 @@ function renderCardDeckFields(container, def) {
 function renderContextFields(view, container, cardId) {
   const def = state.cards.find((card) => card.id === cardId);
   if (!def) return false;
+  container.dataset.contextView = view;
   if (view === 'weights') return renderCardWeightFields(container, def);
   if (view === 'design') return renderCardArtFields(container, def);
   if (view === 'decks') return renderCardDeckFields(container, def);

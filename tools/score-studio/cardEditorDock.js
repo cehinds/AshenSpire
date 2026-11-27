@@ -13,9 +13,9 @@ const CONTEXT_LABELS = { design: 'Art layers on this card', weights: 'Weights fo
 const VIEW_SCOPES = { properties: 'card', design: 'shared', weights: 'global', decks: 'deck' };
 const SCOPE_TEXT = {
   properties: (noun, name) => `Selected ${noun} · edits change only ${name}`,
-  design: (noun, name) => `Shared art layers · rules apply to every matching card. Preview: ${name}`,
-  weights: (noun, name) => `Global scoring · changes rescore every card. Preview: ${name}`,
-  decks: (noun, name) => `Deck membership · changes only the chosen deck. Preview: ${name}`,
+  design: () => 'Shared art layers · rules apply to every matching card',
+  weights: () => 'Global scoring · changes rescore every card',
+  decks: () => 'Deck membership · changes only the chosen deck',
 };
 
 export function initCardEditorDock(ctx) {
