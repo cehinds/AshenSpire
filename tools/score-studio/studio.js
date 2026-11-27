@@ -859,6 +859,7 @@ function syncAutoNames({ render = true } = {}) {
     document.getElementById('inspector-sheet-title').textContent = selected.name;
     renderCardWithLayers(selected, document.getElementById('inspector-card-preview'));
     renderNameHint(selected);
+    cardEditorDockUi?.refreshEntity?.();
   }
   return renamed;
 }

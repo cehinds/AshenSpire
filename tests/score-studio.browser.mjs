@@ -397,9 +397,15 @@ try {
     document.querySelector('.studio-card-tile[data-card-id="core.acidSplash"]').click();
     document.getElementById('btn-duplicate-card').click();
     await new Promise((resolve) => setTimeout(resolve, 300));
-    return { name: document.getElementById('edit-name').value, hint: document.getElementById('name-hint').textContent, autoName: document.getElementById('toggle-auto-name').checked };
+    return {
+      name: document.getElementById('edit-name').value,
+      banner: document.querySelector('.customization-entity-name-text').textContent,
+      hint: document.getElementById('name-hint').textContent,
+      autoName: document.getElementById('toggle-auto-name').checked,
+    };
   });
   assert.ok(duplicateName.autoName, 'a duplicate starts with Auto-name on');
+  assert.equal(duplicateName.banner, duplicateName.name, 'the banner shows the auto-named duplicate');
   assert.doesNotMatch(duplicateName.name, /\(Copy\)/, `the duplicate's auto name has no "(Copy)" (${duplicateName.name})`);
   assert.ok(duplicateName.hint.startsWith(`Convention: ${duplicateName.name} `), `the duplicate takes its convention name (${duplicateName.hint})`);
 
