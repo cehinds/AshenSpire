@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-27
 
+- **Weights can multiply with a card's strength** ([#3013](https://github.com/cehinds/AshenSpire/pull/3013), `0.7.5.135`). Cost, effect, status, multi-effect and tag weights can each switch to a multiply form that scales with the card's positive score, so stronger cards pay more per SP. Every switch is off, so no card's CP or rank changes.
 - **Faster card checks** ([#3009](https://github.com/cehinds/AshenSpire/pull/3009), `0.7.5.134`). Avoid unused authored tag lookups when cards already have resolved tags, while preserving card identity and validation.
 
 ## 2026-11-26
