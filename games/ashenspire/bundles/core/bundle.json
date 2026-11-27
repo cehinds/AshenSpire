@@ -238,6 +238,7 @@
         "minimumThreatFloor": "minimumThreatFloor",
         "mapMode": "mapMode",
         "firstFloor": "firstFloor",
+        "floorTypes": "floorTypes",
         "shopShare": "shopShare",
         "requirePrebossRest": "requirePrebossRest",
         "maxBranches": "maxBranches",

@@ -66,6 +66,19 @@
       ],
       "description": "Node type every lane on depth 1 is forced to; null leaves depth 1 to the ordinary draw. It must be one of the route's alternatives, and depth 1 cannot also be a rest depth."
     },
+    "floorTypes": {
+      "anyOf": [
+        {
+          "type": "object"
+        },
+        {
+          "enum": [
+            null
+          ]
+        }
+      ],
+      "description": "Depth to room type, like { \"4\": \"shop\" }: every node on that depth is that type, in every act. The depth is a whole number from 1 to prebossNodes and never a depth a rest can land on; the type is one of the route's types, never rest or boss; an elite needs minimumThreatFloor. Empty or null pins nothing."
+    },
     "shopShare": {
       "type": "number",
       "minimum": 0,
