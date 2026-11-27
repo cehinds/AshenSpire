@@ -122,7 +122,10 @@ export function openPileModal(
     const list = config.shuffleForDisplay
         ? shuffleCards(cards)
         : [...cards];
-    const done = buildCloseButton(config);
+    const showFooterClose = config.showFooterClose !== false;
+    const done = showFooterClose
+        ? buildCloseButton(config)
+        : null;
     const cardWord = list.length === 1
         ? 'card'
         : 'cards';
@@ -150,7 +153,10 @@ export function openPileModal(
         primary: done,
         footSize: config.footSize,
     });
-    done.addEventListener('click', shell.close);
+    if (done)
+    {
+        done.addEventListener('click', shell.close);
+    }
     return shell.veil;
 }
 

@@ -121,6 +121,7 @@
       "eyebrowKey": "piles.eyebrow",
       "emptyTextKey": "piles.empty",
       "closeLabelKey": "common.close",
+      "showFooterClose": true,
       "shuffleForDisplay": false,
       "smallCards": true,
       "inspectReadOnly": true
@@ -128,7 +129,8 @@
     "deckView": {
       "extends": "pileViewer",
       "className": "pile-modal deck-view-modal",
-      "eyebrowKey": ""
+      "eyebrowKey": "",
+      "showFooterClose": false
     },
     "drawPile": {
       "extends": "pileViewer",

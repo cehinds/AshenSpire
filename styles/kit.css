@@ -503,7 +503,7 @@ button.modal-close { position: relative; padding: 0; background: transparent; bo
 .modal-head, .as-head {
   display: flex; align-items: center; justify-content: space-between; gap: var(--modal-head-gap, 1.2rem);
   flex: 0 0 auto;
-  padding: var(--modal-inset);
+  padding: 0.45rem var(--modal-inset);
   border-bottom: 1px solid var(--line);
 }
 .modal-head-id, .as-head-id { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
@@ -516,7 +516,7 @@ button.modal-close { position: relative; padding: 0; background: transparent; bo
 .modal-foot, .as-foot {
   display: flex; align-items: center; justify-content: space-between; gap: var(--modal-foot-gap, 1.2rem);
   flex: 0 0 auto;
-  padding: var(--modal-inset);
+  padding: 0.45rem var(--modal-inset);
   border-top: 1px solid var(--line);
 }
 .as-foot-note, .modal-foot-note { flex: 1 12 27rem; min-width: 0; container-type: inline-size; color: var(--muted); font-size: 1.23rem; }
@@ -1496,7 +1496,10 @@ input[type="range"] { min-height: var(--tap-floor); }
 .armoury[data-pane="inventory"] .armoury-inventory.as-tray[data-collapsed="0"] > .as-pane { flex: 1 1 auto; }
 /* A PHONE STACKS the two panes and turns the splitter on its side. */
 .armoury[data-responsive="phone"] .armoury-body { gap: 0.7rem; padding: 0.7rem; }
-.armoury[data-pane="inventory"][data-responsive="phone"] .armoury-content { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, var(--armoury-armaments-pane-width, 0.6fr)) 0.55rem minmax(0, var(--armoury-inventory-pane-width, 0.4fr)); }
+.armoury[data-pane="inventory"][data-responsive="phone"] .armoury-content {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto 0.55rem minmax(0, 1fr);
+}
 .armoury[data-pane="inventory"][data-responsive="phone"] .armoury-body { grid-column: 1; grid-row: 1; }
 .armoury[data-pane="inventory"][data-responsive="phone"] .armoury-pane-splitter { grid-column: 1; grid-row: 2; }
 .armoury[data-pane="inventory"][data-responsive="phone"] .armoury-inventory { grid-column: 1; grid-row: 3; border-top: 1px solid var(--line); }
@@ -1506,8 +1509,48 @@ input[type="range"] { min-height: var(--tap-floor); }
 /* THE CHARACTER PANE: LabelStack summary, the figure in an ArtWell, the
    numbers in fold-open DetailCards. In the Character view the numbers stand
    beside the figure; elsewhere they stack under it. */
-.armoury-character { display: grid; grid-template-rows: auto minmax(8rem, var(--armoury-sprite-ratio, 0.38fr)) minmax(0, var(--armoury-stats-ratio, 0.62fr)); gap: 0.9rem; min-width: 0; min-height: 100%; }
-.armoury-character > .character-summary { align-self: start; }
+.armoury-character {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 0.7rem;
+  min-width: 0;
+  min-height: 0;
+}
+
+.armoury-character > .character-summary {
+  align-self: start;
+}
+
+.character-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.character-title-row > .as-title-s {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.character-title-row > .character-level-action {
+  flex: 0 0 auto;
+  width: auto;
+  padding-inline: 0.8rem;
+}
+
+.armoury[data-responsive="phone"] {
+  height: auto;
+  max-height: 100%;
+}
+
+.armoury-sprite-pane[hidden] {
+  display: none;
+}
 .armoury[data-pane="character"] .armoury-character { grid-template-columns: minmax(0, var(--armoury-summary-pane-ratio, 0.4fr)) minmax(0, var(--armoury-stats-pane-ratio, 0.6fr)); grid-template-rows: auto minmax(0, 1fr); gap: 1rem 1.4rem; }
 .armoury[data-pane="character"] .character-summary { grid-column: 1; grid-row: 1; }
 .armoury[data-pane="character"] .armoury-sprite-pane { grid-column: 1; grid-row: 2; }
@@ -1540,7 +1583,12 @@ details.armoury-position-card > summary { list-style: none; }
 details.armoury-position-card > summary::-webkit-details-marker { display: none; }
 details.armoury-position-card[open] > summary { border-radius: var(--r-3) var(--r-3) 0 0; }
 details.armoury-position-card > .as-detailcard { border-radius: 0 0 var(--r-3) var(--r-3); border-top: 0; }
-.armoury-position-card .r-trail { flex-direction: column; align-items: flex-end; gap: 0.5rem; }
+.armoury-position-card .r-trail {
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.4rem;
+}
 .armoury-position-card .r-trail > .as-btn.armoury-position-action { padding-inline: 1rem; font-size: 1.2rem; }
 .armoury-position-grid-groups { display: grid; gap: 1.2rem; }
 .armoury-position-grid-group { display: grid; gap: 0.6rem; min-width: 0; }
@@ -4832,10 +4880,40 @@ p.inspection-lore-line .lore-identity { white-space:normal; overflow:visible; te
   padding-top: var(--modal-grid-pad-top, 64px); row-gap: var(--modal-grid-row-gap, 64px);
 }
 /* Read-only deck inspection keeps only a tiny clearance for the cost pennants. */
-.deck-view-modal .pile-body { padding-top: 0; }
+.deck-view-modal .pile-body {
+  padding-top: 0;
+}
+
 .deck-view-modal .pile-body .as-cardgrid {
-  --modal-grid-pad-top: calc(16px / var(--ui-zoom, 1)); --modal-grid-row-gap: 32px;
-  column-gap: calc(9px / var(--ui-zoom, 1));
+  --modal-grid-pad-top: 6px;
+  --modal-grid-row-gap: 8px;
+  gap: 8px;
+  padding: 6px;
+}
+
+.deck-view-modal .modal-foot {
+  display: none;
+}
+
+.reward-inline-confirm {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 0.6rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r-3);
+  background: var(--panel);
+}
+
+.reward-inline-confirm[hidden] {
+  display: none;
+}
+
+.reward-inline-confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
 }
 .reward-door .reward-row.reward-choice-grid { row-gap: 12px; }
 /* Reward-card status stack, top to bottom: Information, NEW, card.
