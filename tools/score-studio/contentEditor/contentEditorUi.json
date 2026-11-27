@@ -18,7 +18,8 @@
     "remove": "×",
     "removeTitle": "Remove this line",
     "cardLimits": "Effects {effects}/{maxEffects} · Drawbacks {drawbacks}/{maxDrawbacks}",
-    "listSeparator": ", "
+    "listSeparator": ", ",
+    "messageSeparator": " "
   },
   "buttons": [
     {
@@ -48,6 +49,13 @@
     "path": "",
     "label": "JSON",
     "type": "json"
+  },
+  "disabledDuringCheck": [
+    "Save",
+    "Check"
+  ],
+  "timing": {
+    "reloadAfterSaveMs": 1500
   },
   "newMapKey": "new",
   "suggestListPrefix": "ce-suggest-",

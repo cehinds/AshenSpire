@@ -11,6 +11,8 @@ import { FillTemplate } from './textTemplate.js';
 const OPENED_FLAG = 'contentEditorOpened';
 const LISTBOX_ROLE = 'listbox';
 const STYLESHEET_REL = 'stylesheet';
+// The config may be what failed to load, so this one class name cannot come from it.
+const OPEN_ERROR_CLASS = 'ce-open-error';
 
 function loadStylesheet(href)
 {
@@ -183,12 +185,38 @@ class ContentEditor
         });
     }
 
+    /** Rereads open files a build may have rewritten, then redraws the section if any changed. */
+    async ReloadFromDisk()
+    {
+        const changed = await this.store.ReloadClean();
+        if (changed.length > 0)
+        {
+            await this.current.Open();
+        }
+    }
+
+    ScheduleReload()
+    {
+        clearTimeout(this.reloadTimer);
+        this.reloadTimer = setTimeout(() =>
+        {
+            this.Run(() => this.ReloadFromDisk());
+        }, this.ui.timing.reloadAfterSaveMs);
+    }
+
     Save()
     {
         return this.Run(async () =>
         {
-            const saved = await this.store.SaveAll();
+            const { saved, refused } = await this.store.SaveAll();
+            if (refused.length > 0)
+            {
+                await this.current.Open();
+                this.SetStatus(refused.join(this.text.messageSeparator), true);
+                return;
+            }
             this.SetStatus(this.FilesMessage(this.text.saved, this.text.nothingToSave, saved));
+            this.ScheduleReload();
         });
     }
 
@@ -225,26 +253,39 @@ class ContentEditor
         this.SetStatus(message, !result.ok);
     }
 
+    SetBusy(isBusy)
+    {
+        for (const action of this.ui.disabledDuringCheck)
+        {
+            this.buttons.get(action).disabled = isBusy;
+        }
+    }
+
     Check()
     {
-        const checkButton = this.buttons.get(this.Check.name);
         return this.Run(async () =>
         {
-            checkButton.disabled = true;
+            this.SetBusy(true);
             this.SetStatus(this.text.checking);
             try
             {
                 this.ShowCheck(await this.store.api.RunCheck());
+                await this.ReloadFromDisk();
             }
             finally
             {
-                checkButton.disabled = false;
+                this.SetBusy(false);
             }
         });
     }
 }
 
-/** Builds the Game content tab inside `panel` the first time it is shown. */
+function showOpenError(panel, error)
+{
+    panel.replaceChildren(El('p', { className: OPEN_ERROR_CLASS, text: error.message }));
+}
+
+/** Builds the Game content tab the first time it is shown; a failed open retries next time. */
 export async function OpenContentEditor(panel)
 {
     if (panel.dataset[OPENED_FLAG])
@@ -252,8 +293,17 @@ export async function OpenContentEditor(panel)
         return;
     }
     panel.dataset[OPENED_FLAG] = String(true);
-    const config = await LoadContentConfig();
-    loadStylesheet(new URL(config.ui.stylesheet, config.folderUrl).href);
-    const editor = new ContentEditor(panel, config);
-    await editor.ShowSection(config.sections[0].id);
+    try
+    {
+        const config = await LoadContentConfig();
+        loadStylesheet(new URL(config.ui.stylesheet, config.folderUrl).href);
+        panel.replaceChildren();
+        const editor = new ContentEditor(panel, config);
+        await editor.ShowSection(config.sections[0].id);
+    }
+    catch (error)
+    {
+        delete panel.dataset[OPENED_FLAG];
+        showOpenError(panel, error);
+    }
 }

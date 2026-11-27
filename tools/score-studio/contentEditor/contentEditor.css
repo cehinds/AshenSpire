@@ -159,3 +159,4 @@ body.studio-body .ce-check {
 }
 body.studio-body .ce-check .is-pass { color: var(--st-muted); }
 body.studio-body .ce-check .is-fail { color: var(--st-bad); font-weight: 700; }
+body.studio-body .ce-open-error { padding: var(--studio-gap-4); color: var(--st-bad); }

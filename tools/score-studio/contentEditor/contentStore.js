@@ -77,20 +77,68 @@ export class ContentStore
             .map(([path]) => path);
     }
 
-    /** Writes every changed file; unchanged entries keep their exact text. */
+    /** Saves one file; a stale refusal reloads it from disk and returns the server's words. */
+    async SaveFile(path)
+    {
+        const file = this.files.get(path);
+        const text = FormatJsonLike(file.text, file.value, this.indent);
+        try
+        {
+            await this.api.SaveFile(path, text, file.text);
+            file.MarkSaved(text);
+            return null;
+        }
+        catch (error)
+        {
+            if (!error.stale)
+            {
+                throw error;
+            }
+            file.Reset(await this.api.ReadFile(path));
+            return error.message;
+        }
+    }
+
+    /** Writes every changed file: { saved, refused } where refused holds plain messages. */
     async SaveAll()
     {
         const saved = [];
+        const refused = [];
         for (const path of this.DirtyPaths())
         {
-            const file = this.files.get(path);
-            const text = FormatJsonLike(file.text, file.value, this.indent);
-            await this.api.SaveFile(path, text);
-            file.MarkSaved(text);
+            const problem = await this.SaveFile(path);
+            if (problem)
+            {
+                refused.push(problem);
+                continue;
+            }
             saved.push(path);
         }
         this.onChange();
-        return saved;
+        return {
+            saved,
+            refused,
+        };
+    }
+
+    /** Rereads every open file without unsaved edits; returns the paths whose text changed. */
+    async ReloadClean()
+    {
+        const clean = [...this.files.entries()].filter(([, file]) => !file.dirty);
+        const texts = await Promise.all(clean.map(([path]) => this.api.ReadFile(path)));
+        const changed = [];
+        clean.forEach(([path, file], index) =>
+        {
+            // An edit typed while the files were being read wins over the reload.
+            if (file.dirty || texts[index] === file.text)
+            {
+                return;
+            }
+            file.Reset(texts[index]);
+            changed.push(path);
+        });
+        this.onChange();
+        return changed;
     }
 
     /** Reloads every changed file from disk, dropping unsaved edits. */

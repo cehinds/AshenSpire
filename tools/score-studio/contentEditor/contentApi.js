@@ -6,12 +6,16 @@ const JSON_HEADERS = {
 const METHOD_PUT = 'PUT';
 const METHOD_POST = 'POST';
 const EMPTY_BODY = '{}';
+const HEX_RADIX = 16;
+const HEX_BYTE_WIDTH = 2;
+const ZERO = '0';
 
 export class ContentApi
 {
     constructor(apiConfig)
     {
         this.routes = apiConfig.routes;
+        this.hashAlgorithm = apiConfig.hash.web;
         this.noServer = apiConfig.messages.noServer;
     }
 
@@ -29,7 +33,9 @@ export class ContentApi
         const body = await response.json().catch(() => ({ error: this.noServer }));
         if (!response.ok)
         {
-            throw new Error(body.error || this.noServer);
+            const error = new Error(body.error || this.noServer);
+            error.stale = Boolean(body.stale);
+            throw error;
         }
         return body;
     }
@@ -48,13 +54,23 @@ export class ContentApi
         return body.files;
     }
 
-    /** Writes one repo file; the server checks the path and the JSON. */
-    SaveFile(path, text)
+    /** The hash the server compares against, of the text a file was opened from. */
+    async Hash(text)
     {
+        const bytes = new TextEncoder().encode(text);
+        const digest = new Uint8Array(await crypto.subtle.digest(this.hashAlgorithm, bytes));
+        const toHex = (byte) => byte.toString(HEX_RADIX).padStart(HEX_BYTE_WIDTH, ZERO);
+        return [...digest].map(toHex).join('');
+    }
+
+    /** Writes one repo file; refused with `stale` when the file changed since `baseText`. */
+    async SaveFile(path, text, baseText)
+    {
+        const baseHash = await this.Hash(baseText);
         return this.Request(this.routes.file, {
             method: METHOD_PUT,
             headers: JSON_HEADERS,
-            body: JSON.stringify({ path, text }),
+            body: JSON.stringify({ path, text, baseHash }),
         });
     }
 
