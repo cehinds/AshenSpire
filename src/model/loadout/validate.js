@@ -60,7 +60,10 @@ function gearModProblems(id, raw) {
   return out;
 }
 
-/** An item property's `fx.gearMods` (itemProperties.json) are card rules only: registered gear-scope fields, selectors and conditions. */
+/**
+ * An item property's `fx.gearMods` (itemProperties.json) are card rules only:
+ * registered gear-scope fields, selectors and conditions.
+ */
 function propertyGearModProblems(fields)
 {
   const problems = [];

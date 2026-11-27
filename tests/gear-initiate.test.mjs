@@ -1,5 +1,5 @@
-// Initiate tags (owner 2026-11-26/27): in Prepared stance a matching spell costs 1 less Mana, floored at 0, and a spell takes
-// one Initiate cut however many pieces carry one. Tradition Initiates name Arcane or Divine spells; school Initiates one school.
+// Initiate tags (owner 2026-11-26/27): in Prepared a matching spell costs 1 less Mana (floor 0),
+// one cut per spell. Tradition Initiates name Arcane or Divine spells; school Initiates one school.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
@@ -96,7 +96,8 @@ test('an Initiate mod reads Prepared stance and is marked as an Initiate', () =>
       arg: 'prepared',
     },
   ]);
-  assert.equal(GearModText(registries, FIRE_INITIATE), 'Fire spells in Prepared stance: Initiate, -1 MP cost');
+  const text = 'Fire spells in Prepared stance: Initiate, -1 MP cost';
+  assert.equal(GearModText(registries, FIRE_INITIATE), text);
 });
 
 test('a school Initiate cuts only its own school, and only in Prepared stance', () =>
@@ -106,7 +107,13 @@ test('a school Initiate cuts only its own school, and only in Prepared stance', 
   assert.equal(manaPaid(rules, spell('frost')), PRINTED_MANA, 'another school');
   assert.equal(manaPaid(rules, spell(null)), PRINTED_MANA, 'a schoolless spell');
   assert.equal(manaPaid(rules, spell('fire'), IDLE), PRINTED_MANA, 'outside Prepared');
-  assert.equal(GearSelectorMatches('schoolSpell', 'fire', { tags: ['camp:physical', 'school:fire'] }), false, 'spells only');
+  const physical = {
+    tags: [
+      'camp:physical',
+      'school:fire',
+    ],
+  };
+  assert.equal(GearSelectorMatches('schoolSpell', 'fire', physical), false, 'spells only');
 });
 
 test('a tradition Initiate cuts its tradition and Shared spells, and needs spell traditions', () =>
@@ -126,10 +133,11 @@ test('a tradition Initiate cuts its tradition and Shared spells, and needs spell
       },
     },
   };
-  assert.deepEqual(rulesFor([[ARCANE_INITIATE]], legacy), [], 'no traditions, no tradition Initiate');
+  const legacyRules = rulesFor([[ARCANE_INITIATE]], legacy);
+  assert.deepEqual(legacyRules, [], 'no traditions, no tradition Initiate');
 });
 
-test('a spell takes one Initiate cut however many pieces carry one; other Mana changes still add; the price floors at 0', () =>
+test('one Initiate cut per spell; other Mana changes still add; the price floors at 0', () =>
 {
   const stacked = rulesFor([
     [FIRE_INITIATE],
@@ -139,14 +147,16 @@ test('a spell takes one Initiate cut however many pieces carry one; other Mana c
     ],
   ]);
   const fire = ApplyGearCardRules(stacked, spell('fire'), PREPARED);
-  assert.ok(fire.gearManaRules.filter(rule => rule.initiate).length >= 2, 'several Initiates match');
+  const matching = fire.gearManaRules.filter(rule => rule.initiate);
+  assert.ok(matching.length >= 2, 'several Initiates match');
   assert.equal(GearManaCost(fire, PRINTED_MANA), PRINTED_MANA - 1, 'one cut');
   const withPlain = rulesFor([
     [FIRE_INITIATE],
     [PLAIN_MANA_CUT],
   ]);
-  assert.equal(manaPaid(withPlain, spell('fire')), PRINTED_MANA - 2, 'a non-Initiate Mana change adds on top');
-  assert.equal(GearManaCost(ApplyGearCardRules(stacked, spell('fire'), PREPARED), 0), 0, 'never below 0');
+  const plainPaid = manaPaid(withPlain, spell('fire'));
+  assert.equal(plainPaid, PRINTED_MANA - 2, 'a non-Initiate Mana change adds on top');
+  assert.equal(GearManaCost(fire, 0), 0, 'never below 0');
 });
 
 test('a relic carries gear rules through its item properties', () =>
@@ -161,7 +171,8 @@ test('a relic carries gear rules through its item properties', () =>
   const fromFight = GearRelicPieces({ player: { relicIds: ['initiateProbeRelic'] } }, relicRows);
   assert.deepEqual(fromRun, fromFight, 'a run and a fight read the same relics');
   assert.deepEqual(fromRun[0].mods, [FIRE_INITIATE]);
-  assert.deepEqual(GearRelicPieces({ relics: ['initiateProbeRelic'] }, [{ id: 'initiateProbeRelic' }]), [], 'no properties, no piece');
+  const bare = GearRelicPieces({ relics: ['initiateProbeRelic'] }, [{ id: 'initiateProbeRelic' }]);
+  assert.deepEqual(bare, [], 'no properties, no piece');
 });
 
 test('the Starseer and Herald starting robes carry the Arcane and Divine Initiates', () =>
@@ -175,7 +186,8 @@ test('the Starseer and Herald starting robes carry the Arcane and Divine Initiat
       sets: { armor: ['default'] },
       active: {},
     };
-    const initiates = GearSummary(registries, loadout, classId, TRADITIONS_ON).cardRules.filter(rule => rule.initiate);
+    const summary = GearSummary(registries, loadout, classId, TRADITIONS_ON);
+    const initiates = summary.cardRules.filter(rule => rule.initiate);
     assert.deepEqual(initiates.map(rule => rule.selector), [selector], classId);
   }
 });
@@ -188,6 +200,7 @@ test('every Initiate property names a registered gear mod, and the equipment tab
   {
     assert.equal(row.fx.gearMods.length, 1, row.id);
   }
-  const problems = validateEquipment(registries).filter(problem => /itemProperties|Initiate|schoolSpell/.test(problem));
+  const relevant = /itemProperties|Initiate|schoolSpell/;
+  const problems = validateEquipment(registries).filter(problem => relevant.test(problem));
   assert.deepEqual(problems, []);
 });

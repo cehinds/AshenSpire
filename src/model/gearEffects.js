@@ -23,7 +23,8 @@ import { ITEM_PROPERTIES } from '../content/itemProperties.js';
 import { relics as RELICS } from '../content/relics.js';
 
 const TARGET_CONDS = new Set(['target']);
-// An Initiate mod (owner 2026-11-26) always reads Prepared stance, and a spell takes at most one Initiate cut.
+// An Initiate mod (owner 2026-11-26) always reads Prepared stance;
+// a spell takes at most one Initiate cut.
 const INITIATE_FIELD = 'cardInitiate';
 const INITIATE_STANCE = 'prepared';
 const STANCE_COND = 'stance';
@@ -87,10 +88,14 @@ function heldRelicIds(subject)
     : [];
 }
 
-/** The gear mod strings an item property carries (`fx.gearMods`, content/source/itemProperties.json). */
-const propertyGearMods = propertyId => ITEM_PROPERTIES.find(row => row.id === propertyId)?.fx?.gearMods || [];
+/** The gear mod strings an item property carries (`fx.gearMods`, itemProperties.json). */
+function propertyGearMods(propertyId)
+{
+  const property = ITEM_PROPERTIES.find(row => row.id === propertyId);
+  return property?.fx?.gearMods || [];
+}
 
-/** Each held relic whose properties carry gear mods, as a worn piece with no type row, so its rules fold like gear. */
+/** Each held relic whose properties carry gear mods, as a worn piece with no type row (it folds like gear). */
 export function GearRelicPieces(subject, relicRows = RELICS)
 {
   const pieces = [];
@@ -422,10 +427,13 @@ export function GearModText(registries, raw) {
   const modConds = initiate
     ? initiateConds(mod.conds)
     : mod.conds;
-  const conds = modConds.map(cond => (COND_WORDS[cond.name] || (() => cond.name))(cond.arg || '')).join(', ');
+  const condWords = cond => (COND_WORDS[cond.name] || (() => cond.name))(cond.arg || '');
+  const conds = modConds.map(condWords).join(', ');
   const where = mod.selector === 'self' ? '' : mod.selector === 'start' ? 'Start of turn' : mod.selector === 'end' ? 'End of turn'
     : selectorWords(mod);
-  const what = initiate ? `${spec.label}, ${sign} MP cost` : spec.apply === 'cardStat' && ['cardReach', 'cardRetain', 'cardEscalate'].includes(mod.field) ? spec.label : spec.apply === 'hitStatus' ? `apply ${mod.value} ${spec.label.replace(' on hit', '')}`
+  const what = initiate
+    ? `${spec.label}, ${sign} MP cost`
+    : spec.apply === 'cardStat' && ['cardReach', 'cardRetain', 'cardEscalate'].includes(mod.field) ? spec.label : spec.apply === 'hitStatus' ? `apply ${mod.value} ${spec.label.replace(' on hit', '')}`
     : spec.apply === 'hitRemove' ? `remove ${mod.value} Retreat` : spec.apply === 'resist' ? spec.label : spec.apply === 'flag' && mod.value === 1 ? spec.label : `${sign} ${spec.label}`;
   const head = [where, conds].filter(Boolean).join(' ');
   const text = head ? `${head}: ${what}` : what;
@@ -441,7 +449,7 @@ export const GearConditionState = (entity, weaponType = null) => ({
   holding: { counter: entity?.counterStacks || 0, evade: entity?.statuses?.evade?.stacks || 0 },
 });
 
-/** The one Initiate cut a spell takes: the largest of those that match, however many pieces carry one. */
+/** The one Initiate cut a spell takes: the largest that matches, however many pieces carry one. */
 function strongestInitiate(rules)
 {
   const initiates = rules.filter(rule => rule.initiate);
@@ -458,7 +466,8 @@ function strongestInitiate(rules)
 }
 
 /**
- * Gear Mana changes apply once to the final price, after surcharges; authored prices stay intact and only the result floors.
+ * Gear Mana changes apply once to the final price, after surcharges; authored prices stay intact
+ * and only the result floors.
  * Every non-Initiate change applies, then at most one Initiate cut.
  */
 export function GearManaCost(def, price)
