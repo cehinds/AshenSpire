@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-27
 
-- **Steadier timing checks and a lighter Blacksmith picker** ([#3016](https://github.com/cehinds/AshenSpire/pull/3016), `0.7.5.145`). Timing checks skip a one-time test-machine disk wait, and the Blacksmith opens with less work.
+- **Steadier timing checks and a lighter Blacksmith picker** ([#3016](https://github.com/cehinds/AshenSpire/pull/3016), `0.7.5.145`). Timing checks skip a one-time test-machine disk wait. The Blacksmith opens faster, and card upgrade rules now live in config.
 
 - **A code style guide** ([#3020](https://github.com/cehinds/AshenSpire/pull/3020), `0.7.5.145`). `CODE-STYLE.md` sets how all new and changed code looks. No game changes.
 
