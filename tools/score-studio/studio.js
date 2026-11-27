@@ -1932,7 +1932,7 @@ const RARITY_ORDER = Object.freeze(['starter', 'common', 'uncommon', 'rare', 'bo
 function cardMenuActions() {
   const def = selectedCardDef();
   if (!def) return [];
-  const added = isAddedCard(def), inGame = !!registries.cards.get(def.id);
+  const added = isAddedCard(def), inGame = registries.cards.has(def.id);
   const openDecks = () => {
     cardSelectionUi?.select([def.id], { replace: true });
     setCustomizationView('decks');
@@ -1989,6 +1989,7 @@ function cardJsonProblem(card) {
   }
   if (card.tags !== undefined && (!Array.isArray(card.tags) || card.tags.some((tag) => typeof tag !== 'string'))) return '"tags" must be a list of text.';
   if (card.name !== undefined && typeof card.name !== 'string') return '"name" must be text.';
+  if (card.textTemplate !== undefined && typeof card.textTemplate !== 'string') return '"textTemplate" must be text.';
   return '';
 }
 
@@ -2003,7 +2004,8 @@ function applyCardJson() {
   // Dry run on a copy first: the live card is only touched by JSON that scores.
   try { scoreCardEntry(normalizeStudioCard(clone(next))); } catch (err) { error.textContent = `Not a valid card: ${err.message}`; return; }
   if (state.selectedCardId !== id) selectStudioCard(id);
-  const index = state.cards.findIndex((card) => card.id === id), before = clone(state.cards[index]), history = state.undoStack.length;
+  const index = state.cards.findIndex((card) => card.id === id), before = clone(state.cards[index]);
+  const history = { undo: [...state.undoStack], redo: [...state.redoStack] };
   // An explicit name or text in the JSON wins, exactly like typing in the Name or Text field:
   // it switches that generation off instead of being overwritten by it.
   const nameChanged = (next.name ?? '') !== (before.name ?? ''), textChanged = (next.textTemplate ?? '') !== (before.textTemplate ?? '');
@@ -2023,10 +2025,14 @@ function applyCardJson() {
     }, { autoName: !nameChanged, autoText: !textChanged });
   } catch (err) {
     // Roll back everything the edit touched: all cards, the history entry, the Auto-text setting and the views.
-    restoreSnapshot(snapshot);
-    if (state.undoStack.length > history) { state.undoStack.length = history; updateUndoButtons(); }
-    const autoTextToggle = document.getElementById('toggle-auto-text');
-    if (autoTextToggle && autoTextBefore !== undefined && autoTextToggle.checked !== autoTextBefore) { autoTextToggle.checked = autoTextBefore; writeStoredJson(AUTO_TEXT_KEY, autoTextBefore); }
+    try { restoreSnapshot(snapshot); } catch { /* Snapshot data is restored before the views; retain the original apply error. */ }
+    finally {
+      state.undoStack = history.undo;
+      state.redoStack = history.redo;
+      const autoTextToggle = document.getElementById('toggle-auto-text');
+      if (autoTextToggle && autoTextBefore !== undefined && autoTextToggle.checked !== autoTextBefore) { autoTextToggle.checked = autoTextBefore; writeStoredJson(AUTO_TEXT_KEY, autoTextBefore); }
+      updateUndoButtons();
+    }
     error.textContent = `Not applied: ${err.message}`;
     return;
   }
@@ -2036,7 +2042,7 @@ function applyCardJson() {
 
 // The card as it ships in the game, scored with the game's weights; null for cards the game does not have.
 function inGameScore(def) {
-  const original = registries.cards.get(def.id);
+  const original = registries.cards.has(def.id) ? registries.cards.get(def.id) : null;
   if (!original) return null;
   const sc = scoreCardEntry(clone(original), state.repoScoring);
   return { cp: sc.cp, rank: sc.rank, rarity: original.rarity || sc.rarity };

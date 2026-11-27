@@ -220,7 +220,7 @@ export function nextUpgradeOptions(run, instance, base, registries, count = 1, {
     }
     return picked;
   };
-  let pool = roll(combos ? MAX_CANDIDATES : Math.min(MAX_CANDIDATES, target + 2));
+  let pool = roll(combos ? MAX_CANDIDATES : Math.min(MAX_CANDIDATES, target));
   let picked = pickDistinct(pool);
   if (picked.length < target && pool.length < MAX_CANDIDATES) {
     pool = roll(MAX_CANDIDATES);

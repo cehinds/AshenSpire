@@ -1,0 +1,50 @@
+name: Score Studio JSON rollback
+
+on:
+  pull_request:
+    branches: [dev, 'alternative/**/dev']
+    paths:
+      - 'tools/score-studio/studio.js'
+      - 'tests/score-studio-json-rollback.browser.mjs'
+      - '.github/workflows/score-studio-json-rollback.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    name: JSON rollback and custom-card browser contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CHROME: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup-node
+      - name: Install the same Playwright driver used by the local regression
+        shell: bash
+        run: npm install --prefix "$RUNNER_TEMP/score-studio-json-playwright" --no-save --no-package-lock --ignore-scripts --no-audit --no-fund playwright-core@1.56.1
+      - name: Verify the installed Chrome executable
+        shell: bash
+        run: |
+          test -x "$CHROME"
+          "$CHROME" --version
+      - name: Run the six real-page cases and capture screenshots
+        shell: bash
+        env:
+          PLAYWRIGHT_MODULE: ${{ runner.temp }}/score-studio-json-playwright/node_modules/playwright-core
+          TMPDIR: ${{ runner.temp }}
+        run: |
+          set -o pipefail
+          node tests/score-studio-json-rollback.browser.mjs 2>&1 | tee "$RUNNER_TEMP/score-studio-json-rollback.log"
+      - name: Preserve browser screenshots and the complete test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: score-studio-json-rollback-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/score-studio-json-rollback-*/**
+            ${{ runner.temp }}/score-studio-json-rollback.log
+          if-no-files-found: warn
+          retention-days: 14
