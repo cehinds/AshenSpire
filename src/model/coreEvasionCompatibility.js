@@ -50,6 +50,8 @@ const PREVIOUS_RUNTIMES = new Set([
   'sha256:d2993c77a6e8a5ff16dc1b5edf11d30cb924d790e7875af0452a4e8f0183ef63',
   'sha256:5311c2f843c0f42ef94e4b8ab0f4050400fdbc383c4c2395ef14bb563453801d',
   'sha256:777939d6ee4065a02491fcd7ff21fc2d9f44271a0d7f10ec3b2435d1786a72cd',
+  // Star Seer hotfix 2026-11-26 (spellCosts.manaSurcharge 0, preparedStaminaMinimum, preparedManaDiscount): runs saved on the enemy-level-scaling runtime keep their rules.
+  'sha256:659730689c3f0675a28b5ecbf6ef6c2bcbefa32b77c4794a5a5f9c14f0b8f07d',
   'sha256:d243637be191cbe2c2580420f88bf2f5a672caa4a17e0c8c0eeca7685b75cf7d',
   'sha256:e316635810ab4101030e92e5d2169d0659ce1536caf82f1333f33b854ca4a6c3',
   'sha256:0805e9ad9ee6882390661bd96cc146d4645da893d78d3bec82c2563640b5323f',
@@ -191,6 +193,8 @@ const COMPATIBLE_HOST_RUNTIMES = new Set([
   'sha256:c77d4f30494cb821fc66b9b9ef19b91fbb2c699633fe0137b72ab89d261ec831',
   // Enemy level scaling (spCap in engine/kernel/gameConfig.js) moves the host runtime; prior saves keep their own rules.
   'sha256:659730689c3f0675a28b5ecbf6ef6c2bcbefa32b77c4794a5a5f9c14f0b8f07d',
+  // Owner hotfix 2026-11-26 (spellCosts: manaSurcharge 0, Prepared SP floor 1 and Mana cut) moves the host runtime; prior saves keep their own rules.
+  'sha256:84058a4a9051824c5676d3a100b6135e6fef8429381d553e1fff0cd108b5962c',
 ]);
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return COMPATIBLE_HOST_RUNTIMES.has(currentRuntime)
