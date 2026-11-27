@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-27
 
+- **Score Studio stories for one active card, Studio Save and card templates** ([#3012](https://github.com/cehinds/AshenSpire/pull/3012), `0.7.5.135`). Planning documents for the next three Score Studio features, each with acceptance criteria and a ready-to-use implementation prompt. No game or tool changes.
+
 - **Faster card checks** ([#3009](https://github.com/cehinds/AshenSpire/pull/3009), `0.7.5.134`). Avoid unused authored tag lookups when cards already have resolved tags, while preserving card identity and validation.
 
 ## 2026-11-26
