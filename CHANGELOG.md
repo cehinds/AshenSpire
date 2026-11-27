@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-27
 
-- **Faster card checks** ([#3009](https://github.com/cehinds/AshenSpire/pull/3009), `0.7.5.132`). Avoid unused authored tag lookups when cards already have resolved tags, while preserving card identity and validation.
+- **Faster card checks** ([#3009](https://github.com/cehinds/AshenSpire/pull/3009), `0.7.5.134`). Avoid unused authored tag lookups when cards already have resolved tags, while preserving card identity and validation.
 
 ## 2026-11-26
 
