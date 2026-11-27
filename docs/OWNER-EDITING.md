@@ -28,6 +28,22 @@ Four commands. Run them in a terminal opened in the repo folder (`C:\repos\Ashen
 5. Open the link it prints. When the checks on GitHub are green, press **Merge pull request** (merge commit).
 6. `npm run sync` again. Your shipped edits are cleared; anything not shipped is kept, with a backup copy in `.owner-backup/`.
 
+## Edit with forms (Score Studio)
+
+1. Run `npm run play`.
+2. Open http://localhost:8080/tools/score-studio/ and choose **View > Game content**.
+3. Pick a section: Starting decks, Card pools, Cards, Enemies, Enemy cards, Relics or Map rules.
+4. Pick an entry on the left, change a field on the right.
+   - **JSON** shows the whole entry as text, for anything without a field.
+   - Cards show "Effects 2 · Drawbacks 1", red if over a limit you set.
+5. **Save** writes the file; the game tab reloads by itself.
+   - **Revert** reloads the file from disk.
+   - **Check** runs every check and shows any FAIL lines.
+   - If the file changed on disk since you opened it, Save refuses and reloads it. Make your edit again.
+6. Ship as usual: `npm run ship -- "Short title"`.
+
+The sections, fields and words come from `tools/score-studio/contentEditor/*.json`.
+
 ## Where things live
 
 All paths are from the repo folder. `core` means `games/ashenspire/packs/core/`.
