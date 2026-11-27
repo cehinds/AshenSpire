@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-27
 
+- **Class-tailored rewards, shops, Defend Block, and branching maps** ([#3039](https://github.com/cehinds/AshenSpire/pull/3039), `0.7.5.183`). Rewards and shops now filter cards and weapons to class-compatible pools controlled in JSON and Score Studio, and Defend now grants Block again. Act maps also branch more often using new route tuning knobs.
 - **Tighter modal spacing and inline reward confirm** ([#3037](https://github.com/cehinds/AshenSpire/pull/3037), `0.7.5.183`). Modal headers, footers, Settings, Armoury, Character, Merchant, Shrine, and View Deck now trim wasted space on phones. Card rewards confirm inline instead of opening a second modal.
 - **Card readability and cleaner combat backdrop** ([#3036](https://github.com/cehinds/AshenSpire/pull/3036), `0.7.5.181`). Card body text now uses light parchment ink for contrast on dark card faces, the ghost "Card" placeholder over the player is gone, and missing combat backdrop art no longer stretches broken-image shapes across the board.
 - **Starseer playtest fixes** ([#3035](https://github.com/cehinds/AshenSpire/pull/3035), `0.7.5.179`). View Deck now matches combat damage and returns to the map on close. Treasure chests grant relics, tooltips close over modals, dev notes hide outside dev builds, and phone maps keep their bottom bar.
