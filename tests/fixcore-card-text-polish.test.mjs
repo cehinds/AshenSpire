@@ -29,7 +29,7 @@ test('no Core card face or plain text has a period followed by a comma', () => {
 
 test('Sundering Art reads the Smash rule then the Entry grant with a single comma', () => {
   const face = faceOf(core.cards.get('core.reaverSpecial'), oldFight);
-  assert.match(face, /half of the total breaks Poise, Entry: /);
+  assert.match(face, /breaks Poise for half of the total, Entry: /);
   assert.doesNotMatch(face, /Poise\.,/);
   assert.doesNotMatch(faceOf(core.cards.get('core.reaverSpecial')), /Entry: /, 'the shipped rules roll no hit, so no Entry Precision line');
 });

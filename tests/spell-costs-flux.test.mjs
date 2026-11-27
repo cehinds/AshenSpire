@@ -1,277 +1,834 @@
-// Owner, 2026-11-15 (W25-F): spells cost 1 more Mana (and 1 more Stamina unless a cantrip); Prepared takes 1 SP off a spell; a Focus item takes 1 MP off;
-// the last spell's element becomes a flux that lifts the next card of that element by x1.25 (each number floored). The numbers live in
-// fixCoreMechanics.json `spellCosts` and `elementFlux`; a fight created before the ruling has neither block and plays today's costs with no flux.
+/**
+ * Spell cost rules (model/spellCostRules.js, engine/spellCosts.js) and the elemental flux
+ * (engine/elementFlux.js). Spell prices are checked against the rule data through the model, so a
+ * change of numbers or toggles in fixCoreMechanics.json `spellCosts` needs no test edit.
+ */
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { fixCoreMechanics as shipped } from '../src/content/generated/fixCoreMechanics.js';
 import { validateFixCoreRules } from '../src/model/fixCoreMechanics.js';
-
-test('shipped data holds the approved spell cost and flux numbers and the validator guards them', () => {
-  assert.deepEqual(shipped.spellCosts, { version: 1, manaSurcharge: 1, staminaSurcharge: 0, cantripTag: 'rank.cantrip', manaOnlyTag: 'cost.manaOnly', preparedStaminaDiscount: 1, focusManaDiscount: 1 });
-  assert.deepEqual(shipped.elementFlux, { version: 1, multiplier: 1.25 });
-  assert.doesNotThrow(() => validateFixCoreRules(shipped));
-  const { spellCosts, elementFlux, ...saved } = shipped;
-  assert.doesNotThrow(() => validateFixCoreRules(saved), 'a block saved before the ruling stays valid');
-  const costs = patch => validateFixCoreRules({ ...shipped, spellCosts: { ...shipped.spellCosts, ...patch } });
-  assert.throws(() => costs({ manaSurcharge: -1 }), /spellCosts/);
-  assert.throws(() => costs({ staminaSurcharge: 0.5 }), /spellCosts/);
-  assert.throws(() => costs({ extra: 1 }), /spellCosts/);
-  assert.throws(() => costs({ manaOnlyTag: '' }), /spellCosts/);
-  const { manaOnlyTag, ...older } = shipped.spellCosts;
-  assert.doesNotThrow(() => validateFixCoreRules({ ...shipped, spellCosts: older }), 'a block saved before the mana-only tag stays valid');
-  assert.throws(() => costs({ version: 2 }), /spellCosts/);
-  const flux = patch => validateFixCoreRules({ ...shipped, elementFlux: { ...shipped.elementFlux, ...patch } });
-  assert.throws(() => flux({ multiplier: 0.5 }), /elementFlux/);
-  assert.throws(() => flux({ extra: 1 }), /elementFlux/);
-});
-
-// ---- Costs (src/engine/spellCosts.js, applied in combat.js resolvedCardPriceReceipt) ----
-import { fight, profile, reg } from './elementFixture.mjs';
-import { cardPlayCosts, previewCard, dispatch } from '../src/engine/combat.js';
+import {
+    ActiveSpellCostRules,
+    ApplySpellCostRules,
+    NormalizeSpellCostRules,
+    SpellCostResource,
+    ValidateSpellCostRules,
+} from '../src/model/spellCostRules.js';
 import { cardManaCategory } from '../src/model/cardManaPolicy.js';
-import { legacyGearRegistries } from './helpers/legacy-gear.mjs';
-const printedCostRegistries = legacyGearRegistries(reg);
-
-const SPELLS = profile.content.cards.filter(card => cardManaCategory(reg, reg.cards.get(card.id)) === 'spell');
-const PREPARED = { maneuver: 'casting', camp: 'spell' };
-const fightCache = new Map();
-// One fight per (hand, stance, rules) is reused for every card: pricing reads the fight and never changes it.
-// savedSurcharge: a fight saved before the owner ruling of 2026-11-23 keeps staminaSurcharge 1 in its own rules snapshot.
-function costsIn({ hand, stance, id, legacy = false, savedSurcharge = false }) {
-  const key = `${hand}|${stance ? 'prepared' : ''}|${legacy}|${savedSurcharge}`;
-  if (!fightCache.has(key)) {
-    // These tables isolate the spellCosts rule against its pre-gear price; live flux/payment fixtures below keep current equipment.
-    const { combat } = fight({ legacy, registries: printedCostRegistries });
-    if (legacy) { delete combat.fixCoreRules.spellCosts; delete combat.fixCoreRules.elementFlux; }
-    if (savedSurcharge) combat.fixCoreRules.spellCosts.staminaSurcharge = 1;
-    combat.loadout.sets.rightHand[0] = hand;
-    if (stance) combat.player.combatStance = { ...stance };
-    fightCache.set(key, combat);
-  }
-  const combat = fightCache.get(key);
-  const card = combat.piles.hand[0];
-  card.cardId = id;
-  return { costs: cardPlayCosts(combat, card.instanceId), preview: previewCard(combat, card.instanceId), combat };
-}
-// The rule written out on top of the price the fight charged before the ruling (its stance cuts, such as a Graduate's same-stance Mana cut, are unchanged):
-// Mana +1; Stamina +surcharge unless a cantrip (or X-cost): 0 since the owner ruling of 2026-11-23, 1 in a fight saved before it; Prepared -1 Stamina;
-// a Focus item -1 Mana; floors at 0. `before` is the same card priced with the rule off.
-function expected(card, before, { prepared, focus, surcharge }) {
-  const cantrip = card.tags.includes('rank.cantrip'), x = card.cost === 'X', manaOnly = card.tags.includes('cost.manaOnly');
-  return { stamina: x ? null : Math.max(0, before.stamina + (cantrip || manaOnly ? 0 : surcharge) - (prepared ? 1 : 0)), mana: Math.max(0, before.mana + 1 - (focus ? 1 : 0)) };
-}
-
-test('cost table over every shipped Core 2 spell and cantrip: base, Prepared, Focus, both (shown = paid)', () => {
-  assert.ok(SPELLS.length >= 60, 'the table covers the whole shipped spell list');
-  assert.ok(SPELLS.some(card => card.tags.includes('rank.cantrip')) && SPELLS.some(card => !card.tags.includes('rank.cantrip')));
-  for (const [surcharge, savedSurcharge] of [[0, false], [1, true]]) for (const card of SPELLS) {
-    for (const [name, hand, stance] of [['base', 'greatsword', null], ['Prepared', 'greatsword', PREPARED], ['Focus', 'boneSceptre', null], ['both', 'boneSceptre', PREPARED]]) {
-      // Before the ruling: no Focus item, so nothing but the stance's own cuts is in this price.
-      const before = costsIn({ hand: 'greatsword', stance, id: card.id, legacy: true }).costs;
-      const want = expected(card, before, { prepared: !!stance, focus: hand === 'boneSceptre', surcharge });
-      const { costs, preview } = costsIn({ hand, stance, id: card.id, savedSurcharge });
-      const label = `${card.id} ${name}${savedSurcharge ? ' (saved before 2026-11-23)' : ''}`;
-      if (want.stamina !== null) assert.equal(costs.stamina, want.stamina, `${label} SP`);
-      assert.equal(costs.mana, want.mana, `${label} MP`);
-      assert.equal(preview.manaCost, costs.mana, `${label}: the preview shows the Mana paid`);
-      assert.equal(costs.energy, costs.stamina, `${label}: Stamina paid is the Action cost`);
-    }
-  }
-});
-
-test('literal prices preserve current Arcane Sweep zero SP and the cantrip/Focus/Prepared cuts', () => {
-  for (const [id, base, prepared, focus, both] of [['core.cometLance', [0, 2], [0, 1], [0, 1], [0, 0]] /* no Stamina surcharge since the owner ruling of 2026-11-23 */, ['core.cantrip', [1, 2], [0, 1], [1, 1], [0, 0]] /* Arcane Spark prints 1 MP (owner 2026-11-22): +1 surcharge; the Graduate's Prepared cut floors at 0 (owner 2026-11-22), like Comet Lance */, ['core.manaSurge', [1, 1], [0, 1], [1, 0], [0, 0]]]) {
-    for (const [hand, stance, want] of [['greatsword', null, base], ['greatsword', PREPARED, prepared], ['boneSceptre', null, focus], ['boneSceptre', PREPARED, both]]) {
-      const { costs } = costsIn({ hand, stance, id });
-      assert.deepEqual([costs.stamina, costs.mana], want, `${id} ${hand} ${stance ? 'Prepared' : 'no stance'}`);
-    }
-  }
-});
-
-test('retaining staminaSurcharge 1 adds one SP to the current unmarked zero-SP Arcane Sweep before Prepared discounts', () => {
-  for (const [hand, stance, want] of [['greatsword', null, [1, 2]], ['greatsword', PREPARED, [0, 1]], ['boneSceptre', null, [1, 1]], ['boneSceptre', PREPARED, [0, 0]]]) {
-    const { costs } = costsIn({ hand, stance, id: 'core.cometLance', savedSurcharge: true });
-    assert.deepEqual([costs.stamina, costs.mana], want, `core.cometLance ${hand} ${stance ? 'Prepared' : 'no stance'}`);
-  }
-});
-
-test('a cantrip after a first spell with a Focus costs 0 SP and 0 MP, and the payment equals the face', () => {
-  const { combat } = fight(); // its own fight: this test plays cards
-  combat.loadout.sets.rightHand[0] = 'boneSceptre';
-  const [first, second] = combat.piles.hand;
-  first.cardId = 'core.cometLance'; second.cardId = 'core.mendingTouch'; // a 0 MP cantrip: Arcane Spark prints 1 MP since the owner ruling of 2026-11-22 (SPEC.md Cantrip and Basic Mana) and a Graduate's stance cut floors at 0 on the player's turn since 2026-11-22
-  const open = cardPlayCosts(combat, second.instanceId);
-  assert.deepEqual([open.stamina, open.mana], [1, 1], 'before the first cast: 1 SP and the 1 MP surcharge; Focus requires Prepared');
-  const [energy, mana] = [combat.player.energy, combat.player.mana];
-  const firstCost = cardPlayCosts(combat, first.instanceId);
-  assert.equal(firstCost.stamina, 0, 'the authored Arcane Sweep spends zero SP');
-  dispatch(combat, { type: 'playCard', cardInstanceId: first.instanceId, targetId: combat.enemies[0].id });
-  assert.equal(energy - combat.player.energy, firstCost.stamina);
-  assert.equal(mana - combat.player.mana, firstCost.mana);
-  assert.ok(['casting', 'prepared'].includes(combat.player.combatStance?.maneuver), 'the first cast enters Prepared');
-  const after = cardPlayCosts(combat, second.instanceId);
-  assert.deepEqual([after.stamina, after.mana], [0, 0]);
-  assert.equal(previewCard(combat, second.instanceId).manaCost, 0);
-  const [e1, m1] = [combat.player.energy, combat.player.mana];
-  dispatch(combat, { type: 'playCard', cardInstanceId: second.instanceId, targetId: combat.player.id });
-  assert.equal(e1 - combat.player.energy, 0, 'paid 0 SP');
-  assert.equal(m1 - combat.player.mana, 0, 'paid 0 MP');
-});
-
-test('a basic attack is no spell: it takes no surcharge and no Prepared cut', () => {
-  const strike = costsIn({ hand: 'greatsword', stance: PREPARED, id: 'core.strike' }).costs, plain = costsIn({ hand: 'greatsword', stance: PREPARED, id: 'core.strike', legacy: true }).costs;
-  assert.deepEqual(strike, plain);
-});
-
-test('a fight saved without the spellCosts block keeps today\'s costs and the Prepared-only Focus rule', () => {
-  for (const card of SPELLS) {
-    const plain = costsIn({ hand: 'greatsword', stance: null, id: card.id, legacy: true }).costs;
-    if (card.cost !== 'X') assert.equal(plain.stamina, card.staminaCost, `${card.id} SP as printed`);
-    assert.equal(plain.mana, card.manaCost, `${card.id} MP as printed`);
-    const focusOff = costsIn({ hand: 'boneSceptre', stance: null, id: card.id, legacy: true }).costs;
-    assert.equal(focusOff.mana, card.manaCost, `${card.id}: old Focus gives nothing outside Prepared`);
-    const prepared = costsIn({ hand: 'greatsword', stance: PREPARED, id: card.id, legacy: true }).costs;
-    const focusOn = costsIn({ hand: 'boneSceptre', stance: PREPARED, id: card.id, legacy: true }).costs;
-    assert.equal(focusOn.mana, Math.max(0, prepared.mana - 1), `${card.id}: old Focus takes 1 Mana off in Prepared`);
-    if (card.cost !== 'X') assert.equal(prepared.stamina, card.staminaCost, `${card.id}: Prepared took no Stamina off before`);
-  }
-});
-
-// ---- Elemental flux (src/engine/elementFlux.js) ----
+import {
+    cardNeedsEnemyTargetNow,
+    cardPlayCosts,
+    dispatch,
+    previewCard,
+} from '../src/engine/combat.js';
+import { candidateState } from '../src/engine/combatRules.js';
+import { PlayConditionMet } from '../src/engine/cardBehavior.js';
+import { resolveCombatCard } from '../src/engine/combatExpansion.js';
 import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
-import { FluxScale, FluxMultiplier, FluxElement } from '../src/engine/elementFlux.js';
+import {
+    ElementFluxRules,
+    FluxElement,
+    FluxMultiplier,
+    FluxScale,
+} from '../src/engine/elementFlux.js';
+import { FluxTip, PlayerFluxView } from '../src/ui/models/StanceBenefitModel.js';
+import { fight, profile, reg } from './elementFixture.mjs';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
+import { legacyGearRegistries } from './helpers/legacy-gear.mjs';
+import {
+    CardSpellCostExceptions,
+    ExpectedSpellPrice,
+    LegacySpellCostBlock,
+    ShippedSpellCostBlock,
+    SpellCostCondition,
+    WithSpellCostRules,
+} from './helpers/spellCostRules.mjs';
 
-const FIRE = { cardId: 'core.cinderDart', instanceId: 'i1', combatProfile: { camp: 'spell', school: 'fire', damageType: 'arcane', magicShare: 1 }, tags: ['school:fire'], magicShare: 1 };
-const FROST = { ...FIRE, combatProfile: { ...FIRE.combatProfile, school: 'frost' }, tags: ['school:frost'] };
-// The printed base is doubled because Core halves card base damage (ceil, effects.baseDamageMultiplier 0.5), so the flux stage meets `base`.
-const quote = (combat, carrier, base) => profileDamageReceipt(combat, combat.player, combat.enemies[0], base * 2, { ...carrier, skipRatingBonus: true }, { roll: 0 });
-const flux = receipt => receipt.damageReceipt.hits[0].sources.find(row => row.id === 'element-flux');
-
-test('a card of the flux element is lifted x1.25 and floored: 10 -> 12, 7 -> 8, 3 -> 3; another element, no flux, a return hit and an old fight are not', () => {
-  const { combat } = fight();
-  combat.player.elementFlux = 'fire';
-  for (const [base, want] of [[10, 12], [7, 8], [3, 3], [20, 25]]) {
-    const stage = flux(quote(combat, FIRE, base));
-    assert.equal(stage.multiplier, 1.25, `the quote lists the flux stage for ${base}`);
-    assert.equal(stage.effective, want, `floor(${base} x 1.25)`);
-  }
-  assert.equal(flux(quote(combat, FROST, 10)), undefined, 'a Frost card is not lifted by Fire flux');
-  assert.equal(flux(quote(combat, { ...FIRE, counterReturnAttack: true }, 10)), undefined, 'a Counter return hit is never lifted');
-  assert.equal(flux(quote(combat, { ...FIRE, cardId: undefined, instanceId: undefined }, 10)), undefined, 'only a played card is lifted (no status tick or enemy move)');
-  delete combat.player.elementFlux;
-  assert.equal(flux(quote(combat, FIRE, 10)), undefined, 'no flux, no lift');
-  const old = fight({ legacy: true });
-  delete old.combat.fixCoreRules.elementFlux; old.combat.player.elementFlux = 'fire';
-  assert.equal(flux(quote(old.combat, FIRE, 10)), undefined, 'a fight created before the ruling has no flux even if the key is set');
-  assert.equal(FluxMultiplier(old.combat, old.combat.player, FIRE), 1);
-  assert.equal(FluxElement(old.combat, old.combat.player), null);
+const ruleCases = JSON.parse(
+    readFileSync(new URL('./fixtures/spell-cost-rule-cases.json', import.meta.url), 'utf8'),
+);
+const printedCostRegistries = legacyGearRegistries(reg);
+const legacyFocusManaDiscount = printedCostRegistries.balance.mana.focusManaDiscount;
+const spellCategory = 'spell';
+const variableCost = 'X';
+const cardPlayedEvent = 'cardPlayed';
+const plainHand = 'greatsword';
+const focusHand = 'boneSceptre';
+const preparedStance = Object.freeze({
+    maneuver: 'casting',
+    camp: 'spell',
 });
+const preparedManeuvers = [
+    'casting',
+    'prepared',
+];
+const deepPool = 30;
+const minimumSpellCount = 60;
+const parityPriceLimit = 3;
+const zeroStaminaSpell = 'core.cometLance';
+const freeCantrip = 'core.mendingTouch';
+const basicAttack = 'core.strike';
+const shippedSpells = profile.content.cards.filter(card =>
+    cardManaCategory(reg, reg.cards.get(card.id)) === spellCategory
+);
+const priceContexts = [
+    {
+        name: 'base',
+        hand: plainHand,
+        stance: null,
+        conditions: [],
+    },
+    {
+        name: 'Prepared',
+        hand: plainHand,
+        stance: preparedStance,
+        conditions: [SpellCostCondition.Prepared],
+    },
+    {
+        name: 'Focus',
+        hand: focusHand,
+        stance: null,
+        conditions: [SpellCostCondition.LegacyFocusHeld],
+    },
+    {
+        name: 'both',
+        hand: focusHand,
+        stance: preparedStance,
+        conditions: [
+            SpellCostCondition.Prepared,
+            SpellCostCondition.LegacyFocusHeld,
+        ],
+    },
+];
+const ruleBlocks = [
+    {
+        name: 'shipped',
+        block: ShippedSpellCostBlock(),
+    },
+    {
+        name: 'every rule on',
+        block: everyRuleEnabled(ShippedSpellCostBlock()),
+    },
+    {
+        name: 'saved version 1',
+        block: LegacySpellCostBlock(),
+    },
+];
+const legacyBlockVariants = [
+    LegacySpellCostBlock(),
+    LegacySpellCostBlock({ staminaSurcharge: 0 }),
+    LegacySpellCostBlock({
+        manaSurcharge: 0,
+        preparedStaminaMinimum: 1,
+        preparedManaDiscount: 1,
+    }),
+    withoutField(LegacySpellCostBlock(), 'manaOnlyTag'),
+];
+const fightCache = new Map();
+const cinderDart = 'core.cinderDart';
+const frostNip = 'core.frostNip';
+const arcaneSpark = 'core.cantrip';
+const fireCarrier = {
+    cardId: cinderDart,
+    instanceId: 'i1',
+    combatProfile: {
+        camp: 'spell',
+        school: 'fire',
+        damageType: 'arcane',
+        magicShare: 1,
+    },
+    tags: ['school:fire'],
+    magicShare: 1,
+};
+const frostCarrier = {
+    ...fireCarrier,
+    combatProfile: {
+        ...fireCarrier.combatProfile,
+        school: 'frost',
+    },
+    tags: ['school:frost'],
+};
+const selfTargetCards = new Set([
+    'core.steadyHands',
+    'core.mendingTouch',
+]);
+const fireElement = 'fire';
+const frostElement = 'frost';
+const fluxFloorExamples = [
+    [10, 12],
+    [7, 8],
+    [3, 3],
+    [20, 25],
+];
+const fluxScaleExamples = [
+    [3, 3],
+    [4, 5],
+    [5, 6],
+    [8, 10],
+    [10, 12],
+];
 
-test('FluxScale floors every number it lifts (Block, healing, status stacks)', () => {
-  const { combat } = fight();
-  combat.player.elementFlux = 'fire';
-  assert.deepEqual([3, 4, 5, 8, 10].map(n => FluxScale(combat, combat.player, FIRE, n)), [3, 5, 6, 10, 12]);
-  assert.deepEqual([3, 4].map(n => FluxScale(combat, combat.player, FROST, n)), [3, 4]);
-  combat.phase = 'enemy';
-  assert.equal(FluxScale(combat, combat.player, FIRE, 4), 4, 'the enemy phase neither reads nor changes the flux');
-});
-
-const SELF = new Set(['core.steadyHands', 'core.mendingTouch']);
-function sequence(ids, { legacy = false, attributes = { strength: 2 } } = {}) {
-  const { combat, enemy } = fight({ attributes });
-  if (legacy) delete combat.fixCoreRules.elementFlux;
-  combat.player.energy = 30; combat.player.mana = 30;
-  const cards = ids.map((cardId, index) => ({ instanceId: `flux-${index}`, cardId, upgraded: false }));
-  combat.piles.hand.unshift(...cards);
-  const rows = [];
-  cards.forEach(card => {
-    const { cardId: id } = card;
-    const target = SELF.has(id) ? undefined : enemy.id;
-    primeAccuracyRolls(combat);
-    const before = { hp: enemy.hp, block: combat.player.block, playerHp: combat.player.hp };
-    const view = previewCard(combat, card.instanceId, target);
-    const face = view.values.find(value => value.op === 'damage')?.faceValue ?? null;
-    const blockFace = view.values.find(value => value.op === 'block')?.value ?? null;
-    const healFace = view.values.find(value => value.op === 'heal')?.value ?? null;
-    dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: target });
-    rows.push({ id, face, blockFace, healFace, lost: before.hp - enemy.hp, block: combat.player.block - before.block, flux: combat.player.elementFlux ?? null });
-  });
-  return { combat, rows };
+function everyRuleEnabled(block)
+{
+    const patches = Object.fromEntries(block.rules.map(rule => [rule.id, { enabled: true }]));
+    return WithSpellCostRules(block, patches);
 }
-const DART = 'core.cinderDart', NIP = 'core.frostNip', ARC = 'core.cantrip', STRIKE = 'core.strike';
 
-test('flux chain: Fire, Fire, Fire lifts the second and third (the first sets it); face = damage dealt', () => {
-  const live = sequence([DART, DART, DART]).rows, control = sequence([DART, DART, DART], { legacy: true }).rows;
-  assert.deepEqual(live.map(row => row.flux), ['fire', 'fire', 'fire'], 'the flux stays while the element repeats');
-  assert.deepEqual(control.map(row => row.flux), [null, null, null], 'an old fight sets none');
-  assert.equal(live[0].face, control[0].face, 'the first cast is never lifted by the flux it creates');
-  for (const index of [1, 2]) {
-    assert.ok(live[index].face > control[index].face, `cast ${index + 1} is lifted`);
-    assert.ok(Math.abs(live[index].face - control[index].face * 1.25) < 1.25 + 1e-9, `cast ${index + 1} is about x1.25: ${live[index].face} vs ${control[index].face}`);
-  }
-  for (const row of live) assert.equal(row.lost, row.face, `${row.id}: shown = dealt`);
+function withoutField(block, field)
+{
+    const copy = { ...block };
+    delete copy[field];
+    return copy;
+}
+
+function patched(object, patch)
+{
+    return {
+        ...object,
+        ...patch,
+    };
+}
+
+function malformedSpellCostBlocks()
+{
+    const block = ShippedSpellCostBlock();
+    const [firstRule] = block.rules;
+    const patchFirst = patch => WithSpellCostRules(block, { [firstRule.id]: patch });
+    const patchTags = patch => patched(block, { tags: patched(block.tags, patch) });
+    return {
+        'unknown version': patched(block, { version: 3 }),
+        'not an object': [],
+        'unknown block key': patched(block, { extra: 1 }),
+        'rules not a list': patched(block, { rules: {} }),
+        'no cantrip tag': patched(block, { tags: { manaOnly: block.tags.manaOnly } }),
+        'unknown tag key': patchTags({ extra: 'x' }),
+        'empty mana-only tag': patchTags({ manaOnly: '' }),
+        'duplicate rule ids': patched(block, { rules: [firstRule, firstRule] }),
+        'unknown rule key': patchFirst({ extra: 1 }),
+        'enabled not boolean': patchFirst({ enabled: 1 }),
+        'fractional change': patchFirst({ change: 0.5 }),
+        'unknown resource': patchFirst({ resource: 'health' }),
+        'unknown condition': patchFirst({ when: 'always' }),
+        'negative minimum': patchFirst({ minimum: -1 }),
+        'keep flag not boolean': patchFirst({ keepAtOrBelowMinimum: 'yes' }),
+        'skip not a list': patchFirst({ skip: 'cantrip' }),
+        'unknown skip id': patchFirst({ skip: ['weapon'] }),
+        'v1 negative surcharge': LegacySpellCostBlock({ manaSurcharge: -1 }),
+        'v1 fractional surcharge': LegacySpellCostBlock({ staminaSurcharge: 0.5 }),
+        'v1 unknown key': LegacySpellCostBlock({ extra: 1 }),
+        'v1 empty mana-only tag': LegacySpellCostBlock({ manaOnlyTag: '' }),
+        'v1 no cantrip tag': withoutField(LegacySpellCostBlock(), 'cantripTag'),
+        'v1 negative Prepared minimum': LegacySpellCostBlock({ preparedStaminaMinimum: -1 }),
+        'v1 fractional Prepared Mana': LegacySpellCostBlock({ preparedManaDiscount: 0.5 }),
+    };
+}
+
+function priceGrid()
+{
+    const values = Array.from({ length: parityPriceLimit + 1 }, (_, value) => value);
+    return values.flatMap(stamina => values.map(mana => ({ stamina, mana })));
+}
+
+function legacyPreparedStamina(block, stamina, prepared)
+{
+    const base = Math.max(0, stamina);
+    const floor = block.preparedStaminaMinimum ?? 0;
+    if (!prepared || base <= floor)
+    {
+        return base;
+    }
+    return Math.max(floor, base - block.preparedStaminaDiscount);
+}
+
+// The version 1 formula as it shipped before the rule list; frozen as the parity reference.
+function legacyFormulaPrice(block, card, conditions, price)
+{
+    const isVariable = card.cost === variableCost;
+    const isManaOnly = !!block.manaOnlyTag && card.tags.includes(block.manaOnlyTag);
+    const skipsSurcharge = isVariable || card.tags.includes(block.cantripTag) || isManaOnly;
+    const prepared = conditions.includes(SpellCostCondition.Prepared);
+    const focus = conditions.includes(SpellCostCondition.LegacyFocusHeld);
+    const preparedMana = prepared
+        ? block.preparedManaDiscount ?? 0
+        : 0;
+    const focusMana = focus
+        ? block.focusManaDiscount
+        : 0;
+    const surcharge = skipsSurcharge
+        ? 0
+        : block.staminaSurcharge;
+    const stamina = isVariable
+        ? price.stamina
+        : legacyPreparedStamina(block, price.stamina + surcharge, prepared);
+    const mana = price.mana + block.manaSurcharge - preparedMana - focusMana;
+    return {
+        stamina,
+        mana: Math.max(0, mana),
+    };
+}
+
+function setSpellCostBlock(combat, block)
+{
+    if (block === null)
+    {
+        delete combat.fixCoreRules.spellCosts;
+        return;
+    }
+    combat.fixCoreRules.spellCosts = structuredClone(block);
+}
+
+// One fight per hand, stance and block serves every card: pricing never changes the fight.
+function pricingFight({ hand, stance, block })
+{
+    const key = JSON.stringify([
+        hand,
+        stance,
+        block,
+    ]);
+    if (fightCache.has(key))
+    {
+        return fightCache.get(key);
+    }
+    const { combat } = fight({ registries: printedCostRegistries });
+    setSpellCostBlock(combat, block);
+    combat.loadout.sets.rightHand[0] = hand;
+    combat.player.energy = deepPool;
+    combat.player.mana = deepPool;
+    if (stance)
+    {
+        combat.player.combatStance = { ...stance };
+    }
+    fightCache.set(key, combat);
+    return combat;
+}
+
+function quoteCard(combat, cardId)
+{
+    const card = combat.piles.hand[0];
+    card.cardId = cardId;
+    return {
+        card,
+        costs: cardPlayCosts(combat, card.instanceId),
+        preview: previewCard(combat, card.instanceId),
+    };
+}
+
+function playTarget(combat, card)
+{
+    return cardNeedsEnemyTargetNow(combat, card.instanceId)
+        ? combat.enemies[0]
+        : null;
+}
+
+// Plays the card on a detached copy of the fight; null when the card cannot be played here.
+function paidPrice(combat, card)
+{
+    const target = playTarget(combat, card);
+    if (!PlayConditionMet(combat, resolveCombatCard(combat, card), target ?? combat.enemies[0]))
+    {
+        return null;
+    }
+    const candidate = candidateState(combat, { detached: true });
+    const result = dispatch(candidate, {
+        type: 'playCard',
+        cardInstanceId: card.instanceId,
+        targetId: target?.id,
+    });
+    const played = result.events.find(event => event.type === cardPlayedEvent);
+    return {
+        stamina: played.staminaSpent,
+        mana: played.manaSpent,
+    };
+}
+
+function expectedQuote(spell, context, block)
+{
+    const beforeFight = pricingFight({
+        hand: plainHand,
+        stance: context.stance,
+        block: null,
+    });
+    return ExpectedSpellPrice({
+        block,
+        conditions: context.conditions,
+        exceptions: CardSpellCostExceptions(block, spell),
+        price: quoteCard(beforeFight, spell.id).costs,
+    });
+}
+
+function assertSpellPriceAgrees(spell, context, ruleBlock)
+{
+    const label = `${spell.id} ${context.name} (${ruleBlock.name})`;
+    const expected = expectedQuote(spell, context, ruleBlock.block);
+    const combat = pricingFight({
+        ...context,
+        block: ruleBlock.block,
+    });
+    const { card, costs, preview } = quoteCard(combat, spell.id);
+    const quoted = {
+        stamina: costs.stamina,
+        mana: costs.mana,
+    };
+    assert.deepEqual(quoted, expected, `${label}: quote follows the rules`);
+    assert.equal(costs.energy, costs.stamina, `${label}: Stamina paid is the Action cost`);
+    assert.deepEqual([preview.staminaCost, preview.manaCost], [quoted.stamina, quoted.mana], label);
+    const paid = paidPrice(combat, card);
+    if (paid)
+    {
+        assert.deepEqual(paid, quoted, `${label}: payment equals the quote`);
+    }
+}
+
+function assertLegacyParity(block, spell)
+{
+    const rules = NormalizeSpellCostRules(block);
+    const exceptions = CardSpellCostExceptions(rules, spell);
+    for (const { conditions } of priceContexts)
+    {
+        for (const price of priceGrid())
+        {
+            const label = `${spell.id} ${conditions.join('+')} ${JSON.stringify(price)}`;
+            const actual = ExpectedSpellPrice({
+                block: rules,
+                conditions,
+                exceptions,
+                price,
+            });
+            assert.deepEqual(actual, legacyFormulaPrice(block, spell, conditions, price), label);
+        }
+    }
+}
+
+function assertPaysQuote(combat, card, target)
+{
+    const quote = cardPlayCosts(combat, card.instanceId);
+    const before = {
+        stamina: combat.player.energy,
+        mana: combat.player.mana,
+    };
+    dispatch(combat, {
+        type: 'playCard',
+        cardInstanceId: card.instanceId,
+        targetId: target?.id,
+    });
+    assert.equal(before.stamina - combat.player.energy, quote.stamina, `${card.cardId} SP`);
+    assert.equal(before.mana - combat.player.mana, quote.mana, `${card.cardId} MP`);
+}
+
+// The printed base is doubled because Core halves card base damage (ceil), so flux meets `base`.
+function fluxQuote(combat, carrier, base)
+{
+    return profileDamageReceipt(
+        combat,
+        combat.player,
+        combat.enemies[0],
+        base * 2,
+        {
+            ...carrier,
+            skipRatingBonus: true,
+        },
+        { roll: 0 },
+    );
+}
+
+function fluxStage(receipt)
+{
+    return receipt.damageReceipt.hits[0].sources.find(row => row.id === 'element-flux');
+}
+
+function previewFaces(combat, card, target)
+{
+    const view = previewCard(combat, card.instanceId, target);
+    const faceOf = op => view.values.find(value => value.op === op);
+    return {
+        face: faceOf('damage')?.faceValue ?? null,
+        blockFace: faceOf('block')?.value ?? null,
+        healFace: faceOf('heal')?.value ?? null,
+    };
+}
+
+function playSequenceCard(combat, enemy, card)
+{
+    const target = selfTargetCards.has(card.cardId)
+        ? undefined
+        : enemy.id;
+    primeAccuracyRolls(combat);
+    const before = {
+        hp: enemy.hp,
+        block: combat.player.block,
+    };
+    const faces = previewFaces(combat, card, target);
+    dispatch(combat, {
+        type: 'playCard',
+        cardInstanceId: card.instanceId,
+        targetId: target,
+    });
+    return {
+        id: card.cardId,
+        ...faces,
+        lost: before.hp - enemy.hp,
+        block: combat.player.block - before.block,
+        flux: combat.player.elementFlux ?? null,
+    };
+}
+
+function sequence(ids, { legacy = false, attributes = { strength: 2 } } = {})
+{
+    const { combat, enemy } = fight({ attributes });
+    if (legacy)
+    {
+        delete combat.fixCoreRules.elementFlux;
+    }
+    combat.player.energy = deepPool;
+    combat.player.mana = deepPool;
+    const cards = ids.map((cardId, index) => ({
+        instanceId: `flux-${index}`,
+        cardId,
+        upgraded: false,
+    }));
+    combat.piles.hand.unshift(...cards);
+    const rows = cards.map(card => playSequenceCard(combat, enemy, card));
+    return { combat, rows };
+}
+
+test('rule mechanism cases price as the fixture says', () =>
+{
+    for (const ruleCase of ruleCases)
+    {
+        const block = {
+            version: 2,
+            tags: shipped.spellCosts.tags,
+            rules: ruleCase.rules,
+        };
+        assert.doesNotThrow(() => ValidateSpellCostRules(block), ruleCase.name);
+        const active = ActiveSpellCostRules(
+            ruleCase.rules,
+            new Set(ruleCase.conditions),
+            new Set(ruleCase.exceptions),
+        );
+        const price = {
+            stamina: ApplySpellCostRules(active, SpellCostResource.Stamina, ruleCase.price.stamina),
+            mana: ApplySpellCostRules(active, SpellCostResource.Mana, ruleCase.price.mana),
+        };
+        assert.deepEqual(price, ruleCase.expected, ruleCase.name);
+    }
 });
 
-test('flux chain: Fire then Frost replaces the flux, a non-element spell clears it, a non-spell leaves it', () => {
-  const live = sequence([DART, NIP, DART, STRIKE, ARC, DART]).rows, control = sequence([DART, NIP, DART, STRIKE, ARC, DART], { legacy: true }).rows;
-  assert.deepEqual(live.map(row => row.flux), ['fire', 'frost', 'fire', 'fire', null, 'fire']);
-  assert.equal(live[1].face, control[1].face, 'Frost after Fire is not lifted (the flux was Fire)');
-  assert.equal(live[2].face, control[2].face, 'Fire after Frost is not lifted (Frost replaced the flux)');
-  assert.equal(live[5].face, control[5].face, 'Fire after a non-element spell is not lifted (it cleared the flux)');
+test('the shipped rules validate and an absent block stays valid', () =>
+{
+    assert.doesNotThrow(() => ValidateSpellCostRules(shipped.spellCosts));
+    assert.doesNotThrow(() => validateFixCoreRules(shipped));
+    const { spellCosts, elementFlux, ...saved } = shipped;
+    assert.doesNotThrow(() => validateFixCoreRules(saved), 'a fight saved before the rules');
+    for (const block of legacyBlockVariants)
+    {
+        assert.doesNotThrow(() => ValidateSpellCostRules(block), JSON.stringify(block));
+    }
 });
 
-test('flux lifts Block and healing too, floored; the face shows the lifted number', () => {
-  const ward = sequence([DART, 'core.cinderWard']), wardControl = sequence([DART, 'core.cinderWard'], { legacy: true });
-  assert.ok(ward.rows[1].block > wardControl.rows[1].block, 'Cinder Ward after Fire gains more Block');
-  assert.equal(ward.rows[1].blockFace, ward.rows[1].block, 'Block face = Block gained');
-  const heal = sequence(['core.steadyHands', 'core.mendingTouch']), healControl = sequence(['core.steadyHands', 'core.mendingTouch'], { legacy: true });
-  assert.deepEqual(heal.rows.map(row => row.flux), ['divine', 'divine']);
-  assert.ok(heal.rows[1].healFace > healControl.rows[1].healFace, 'Mending Touch after Steady Hands heals more');
-  assert.equal(heal.rows[0].healFace, healControl.rows[0].healFace, 'the first cast is not lifted');
+test('malformed spell cost blocks of either version are refused', () =>
+{
+    const malformed = malformedSpellCostBlocks();
+    for (const [name, malformedBlock] of Object.entries(malformed))
+    {
+        assert.throws(() => ValidateSpellCostRules(malformedBlock), /spellCosts/, name);
+        const rules = {
+            ...shipped,
+            spellCosts: malformedBlock,
+        };
+        assert.throws(() => validateFixCoreRules(rules), /spellCosts/, name);
+    }
 });
 
-test('flux ends at the end of the turn and with the fight', () => {
-  const { combat } = sequence([DART, DART]);
-  assert.equal(combat.player.elementFlux, 'fire');
-  dispatch(combat, { type: 'endTurn' });
-  assert.equal(combat.player.elementFlux, undefined, 'the player turn ended');
-  const { combat: other } = sequence([DART]);
-  assert.equal(other.player.elementFlux, 'fire');
-  other.enemies.forEach(enemy => { enemy.hp = 1; });
-  other.piles.hand[0].cardId = DART;
-  primeAccuracyRolls(other);
-  dispatch(other, { type: 'playCard', cardInstanceId: other.piles.hand[0].instanceId, targetId: other.enemies[0].id });
-  assert.equal(other.result, 'victory');
-  assert.equal(other.player.elementFlux, undefined, 'the fight is over: no flux');
+test('a version 1 block prices every shipped spell as the version 1 formula did', () =>
+{
+    for (const block of legacyBlockVariants)
+    {
+        for (const spell of shippedSpells)
+        {
+            assertLegacyParity(block, spell);
+        }
+    }
 });
 
-// ---- The caster's second stance icon (src/ui/models/StanceBenefitModel.js) ----
-import { PlayerFluxView, FluxTip } from '../src/ui/models/StanceBenefitModel.js';
-import { ElementFluxRules } from '../src/engine/elementFlux.js';
-
-test('the second stance icon shows for a caster: the flux element, or the plain magic mark in Prepared; nothing without the rules or a stance', () => {
-  const { combat } = fight(), rules = ElementFluxRules(combat);
-  assert.equal(rules.multiplier, 1.25);
-  assert.deepEqual(PlayerFluxView(rules, { elementFlux: 'fire' }, true), { element: 'fire', multiplier: 1.25 });
-  assert.deepEqual(PlayerFluxView(rules, {}, true), { element: null, multiplier: 1.25 }, 'Prepared with no flux wears the magic mark');
-  assert.deepEqual(PlayerFluxView(rules, { elementFlux: 'frost' }, false), { element: 'frost', multiplier: 1.25 });
-  assert.equal(PlayerFluxView(rules, {}, false), null, 'no stance and no flux: hidden');
-  assert.equal(PlayerFluxView(null, { elementFlux: 'fire' }, true), null, 'a fight without the rule shows none');
-  const old = fight().combat; delete old.fixCoreRules.elementFlux;
-  assert.equal(ElementFluxRules(old), null);
+test('every shipped spell and cantrip: quote, preview and payment follow the rules', () =>
+{
+    const cantripTag = shipped.spellCosts.tags.cantrip;
+    assert.ok(shippedSpells.length >= minimumSpellCount, 'the table covers the shipped spells');
+    assert.ok(shippedSpells.some(spell => spell.tags.includes(cantripTag)));
+    assert.ok(shippedSpells.some(spell => !spell.tags.includes(cantripTag)));
+    for (const ruleBlock of ruleBlocks)
+    {
+        for (const spell of shippedSpells)
+        {
+            for (const context of priceContexts)
+            {
+                assertSpellPriceAgrees(spell, context, ruleBlock);
+            }
+        }
+    }
 });
 
-test('the flux tooltip names the element, the multiplier and the rounding', () => {
-  assert.deepEqual(FluxTip({ element: 'fire', multiplier: 1.25 }).title, 'Fire flux');
-  assert.match(FluxTip({ element: 'fire', multiplier: 1.25 }).body, /Next Fire cards ×1\.25 \(rounded down\)/);
-  assert.match(FluxTip({ element: 'necrotic', multiplier: 1.25 }).title, /Necrotic flux/);
-  assert.equal(FluxTip({ element: null, multiplier: 1.25 }).title, 'Magic');
-  assert.match(FluxTip({ element: null, multiplier: 1.25 }).body, /only the stance bonus/);
+test('after a first cast enters Prepared, a cantrip pays the face the Prepared rules give', () =>
+{
+    const { combat } = fight();
+    combat.loadout.sets.rightHand[0] = focusHand;
+    const block = combat.fixCoreRules.spellCosts;
+    const [first, second] = combat.piles.hand;
+    first.cardId = zeroStaminaSpell;
+    second.cardId = freeCantrip;
+    const authored = id => profile.content.cards.find(card => card.id === id);
+    const open = cardPlayCosts(combat, second.instanceId);
+    assert.equal(open.stamina, authored(freeCantrip).staminaCost, 'before the first cast');
+    const firstCost = cardPlayCosts(combat, first.instanceId);
+    assert.equal(firstCost.stamina, authored(zeroStaminaSpell).staminaCost, 'authored zero SP');
+    assertPaysQuote(combat, first, combat.enemies[0]);
+    assert.ok(preparedManeuvers.includes(combat.player.combatStance?.maneuver), 'now Prepared');
+    const prepared = ExpectedSpellPrice({
+        block,
+        conditions: [SpellCostCondition.Prepared],
+        exceptions: CardSpellCostExceptions(block, authored(freeCantrip)),
+        price: open,
+    });
+    const after = cardPlayCosts(combat, second.instanceId);
+    assert.equal(after.stamina, prepared.stamina, 'the Prepared rules price its Stamina');
+    assert.equal(previewCard(combat, second.instanceId).manaCost, after.mana);
+    assertPaysQuote(combat, second, combat.player);
 });
 
-test('a change of flux is announced once: set, replaced, cleared, and nothing when it did not change', () => {
-  const { combat } = sequence([DART, DART, NIP, ARC]);
-  const events = combat.eventLog.filter(row => row.type === 'elementFluxChanged').map(row => row.element);
-  assert.deepEqual(events, ['fire', 'frost', null]);
+test('a basic attack is no spell: no spell cost rule changes its price', () =>
+{
+    const plain = quoteCard(
+        pricingFight({ hand: plainHand, stance: preparedStance, block: null }),
+        basicAttack,
+    );
+    for (const ruleBlock of ruleBlocks)
+    {
+        const combat = pricingFight({
+            hand: plainHand,
+            stance: preparedStance,
+            block: ruleBlock.block,
+        });
+        assert.deepEqual(quoteCard(combat, basicAttack).costs, plain.costs, ruleBlock.name);
+    }
+});
+
+test('a fight saved without spellCosts keeps printed costs and the Prepared-only Focus rule', () =>
+{
+    const quote = (hand, stance, id) => quoteCard(pricingFight({ hand, stance, block: null }), id);
+    for (const spell of shippedSpells)
+    {
+        const isVariable = spell.cost === variableCost;
+        const plain = quote(plainHand, null, spell.id).costs;
+        const focusOff = quote(focusHand, null, spell.id).costs;
+        const prepared = quote(plainHand, preparedStance, spell.id).costs;
+        const focusOn = quote(focusHand, preparedStance, spell.id).costs;
+        assert.equal(plain.mana, spell.manaCost, `${spell.id} MP as printed`);
+        assert.equal(focusOff.mana, spell.manaCost, `${spell.id}: no Focus cut outside Prepared`);
+        const focusMana = Math.max(0, prepared.mana - legacyFocusManaDiscount);
+        assert.equal(focusOn.mana, focusMana, `${spell.id}: the Focus cut in Prepared`);
+        if (!isVariable)
+        {
+            assert.equal(plain.stamina, spell.staminaCost, `${spell.id} SP as printed`);
+            assert.equal(prepared.stamina, spell.staminaCost, `${spell.id}: Prepared cut no SP`);
+        }
+    }
+});
+
+test('shipped flux rules and the validator guard them', () =>
+{
+    assert.deepEqual(shipped.elementFlux, { version: 1, multiplier: 1.25 });
+    const flux = patch =>
+        validateFixCoreRules({
+            ...shipped,
+            elementFlux: {
+                ...shipped.elementFlux,
+                ...patch,
+            },
+        });
+    assert.throws(() => flux({ multiplier: 0.5 }), /elementFlux/);
+    assert.throws(() => flux({ extra: 1 }), /elementFlux/);
+});
+
+test('a flux card is lifted x1.25 and floored; other elements and old fights are not', () =>
+{
+    const { combat } = fight();
+    combat.player.elementFlux = 'fire';
+    for (const [base, want] of fluxFloorExamples)
+    {
+        const stage = fluxStage(fluxQuote(combat, fireCarrier, base));
+        assert.equal(stage.multiplier, 1.25, `the quote lists the flux stage for ${base}`);
+        assert.equal(stage.effective, want, `floor(${base} x 1.25)`);
+    }
+    const counterReturn = { ...fireCarrier, counterReturnAttack: true };
+    const unplayed = { ...fireCarrier, cardId: undefined, instanceId: undefined };
+    assert.equal(fluxStage(fluxQuote(combat, frostCarrier, 10)), undefined, 'Frost under Fire');
+    assert.equal(fluxStage(fluxQuote(combat, counterReturn, 10)), undefined, 'a Counter return');
+    assert.equal(fluxStage(fluxQuote(combat, unplayed, 10)), undefined, 'only a played card');
+    delete combat.player.elementFlux;
+    assert.equal(fluxStage(fluxQuote(combat, fireCarrier, 10)), undefined, 'no flux, no lift');
+    const old = fight({ legacy: true });
+    delete old.combat.fixCoreRules.elementFlux;
+    old.combat.player.elementFlux = 'fire';
+    assert.equal(fluxStage(fluxQuote(old.combat, fireCarrier, 10)), undefined, 'an old fight');
+    assert.equal(FluxMultiplier(old.combat, old.combat.player, fireCarrier), 1);
+    assert.equal(FluxElement(old.combat, old.combat.player), null);
+});
+
+test('FluxScale floors every number it lifts (Block, healing, status stacks)', () =>
+{
+    const { combat } = fight();
+    combat.player.elementFlux = 'fire';
+    const scale = (carrier, value) => FluxScale(combat, combat.player, carrier, value);
+    for (const [value, lifted] of fluxScaleExamples)
+    {
+        assert.equal(scale(fireCarrier, value), lifted, `Fire flux lifts ${value}`);
+        assert.equal(scale(frostCarrier, value), value, `Frost is not lifted: ${value}`);
+    }
+    combat.phase = 'enemy';
+    assert.equal(scale(fireCarrier, 4), 4, 'the enemy phase neither reads nor changes the flux');
+});
+
+test('flux chain: Fire, Fire, Fire lifts the second and third; face = damage dealt', () =>
+{
+    const ids = [
+        cinderDart,
+        cinderDart,
+        cinderDart,
+    ];
+    const live = sequence(ids).rows;
+    const control = sequence(ids, { legacy: true }).rows;
+    assert.deepEqual(live.map(row => row.flux), ids.map(() => fireElement), 'the flux stays');
+    assert.deepEqual(control.map(row => row.flux), ids.map(() => null), 'an old fight sets none');
+    assert.equal(live[0].face, control[0].face, 'the first cast is not lifted by its own flux');
+    for (const index of [1, 2])
+    {
+        const lifted = control[index].face * 1.25;
+        assert.ok(live[index].face > control[index].face, `cast ${index + 1} is lifted`);
+        assert.ok(
+            Math.abs(live[index].face - lifted) < 1.25 + 1e-9,
+            `cast ${index + 1} is about x1.25: ${live[index].face} vs ${control[index].face}`,
+        );
+    }
+    for (const row of live)
+    {
+        assert.equal(row.lost, row.face, `${row.id}: shown = dealt`);
+    }
+});
+
+test('flux chain: Frost replaces Fire, a non-element spell clears it, a non-spell leaves it', () =>
+{
+    const ids = [
+        cinderDart,
+        frostNip,
+        cinderDart,
+        basicAttack,
+        arcaneSpark,
+        cinderDart,
+    ];
+    const live = sequence(ids).rows;
+    const control = sequence(ids, { legacy: true }).rows;
+    assert.deepEqual(live.map(row => row.flux), [
+        fireElement,
+        frostElement,
+        fireElement,
+        fireElement,
+        null,
+        fireElement,
+    ]);
+    assert.equal(live[1].face, control[1].face, 'Frost after Fire is not lifted');
+    assert.equal(live[2].face, control[2].face, 'Fire after Frost is not lifted');
+    assert.equal(live[5].face, control[5].face, 'Fire after a non-element spell is not lifted');
+});
+
+test('flux lifts Block and healing too, floored; the face shows the lifted number', () =>
+{
+    const wardIds = [
+        cinderDart,
+        'core.cinderWard',
+    ];
+    const healIds = [
+        'core.steadyHands',
+        'core.mendingTouch',
+    ];
+    const ward = sequence(wardIds).rows;
+    const wardControl = sequence(wardIds, { legacy: true }).rows;
+    assert.ok(ward[1].block > wardControl[1].block, 'Cinder Ward after Fire gains more Block');
+    assert.equal(ward[1].blockFace, ward[1].block, 'Block face = Block gained');
+    const heal = sequence(healIds).rows;
+    const healControl = sequence(healIds, { legacy: true }).rows;
+    assert.deepEqual(heal.map(row => row.flux), ['divine', 'divine']);
+    assert.ok(heal[1].healFace > healControl[1].healFace, 'Mending Touch after Steady Hands');
+    assert.equal(heal[0].healFace, healControl[0].healFace, 'the first cast is not lifted');
+});
+
+test('flux ends at the end of the turn and with the fight', () =>
+{
+    const { combat } = sequence([cinderDart, cinderDart]);
+    assert.equal(combat.player.elementFlux, 'fire');
+    dispatch(combat, { type: 'endTurn' });
+    assert.equal(combat.player.elementFlux, undefined, 'the player turn ended');
+    const { combat: other } = sequence([cinderDart]);
+    assert.equal(other.player.elementFlux, 'fire');
+    for (const enemy of other.enemies)
+    {
+        enemy.hp = 1;
+    }
+    other.piles.hand[0].cardId = cinderDart;
+    primeAccuracyRolls(other);
+    dispatch(other, {
+        type: 'playCard',
+        cardInstanceId: other.piles.hand[0].instanceId,
+        targetId: other.enemies[0].id,
+    });
+    assert.equal(other.result, 'victory');
+    assert.equal(other.player.elementFlux, undefined, 'the fight is over: no flux');
+});
+
+test('the second stance icon shows the flux element or the magic mark; hidden without rules', () =>
+{
+    const { combat } = fight();
+    const rules = ElementFluxRules(combat);
+    const fire = { element: 'fire', multiplier: 1.25 };
+    assert.equal(rules.multiplier, 1.25);
+    assert.deepEqual(PlayerFluxView(rules, { elementFlux: 'fire' }, true), fire);
+    assert.deepEqual(PlayerFluxView(rules, {}, true), { ...fire, element: null }, 'magic mark');
+    assert.deepEqual(PlayerFluxView(rules, { elementFlux: 'frost' }, false), {
+        ...fire,
+        element: 'frost',
+    });
+    assert.equal(PlayerFluxView(rules, {}, false), null, 'no stance and no flux: hidden');
+    assert.equal(PlayerFluxView(null, { elementFlux: 'fire' }, true), null, 'no rule: hidden');
+    const old = fight().combat;
+    delete old.fixCoreRules.elementFlux;
+    assert.equal(ElementFluxRules(old), null);
+});
+
+test('the flux tooltip names the element, the multiplier and the rounding', () =>
+{
+    const tip = element => FluxTip({ element, multiplier: 1.25 });
+    assert.deepEqual(tip('fire').title, 'Fire flux');
+    assert.match(tip('fire').body, /Next Fire cards ×1\.25 \(rounded down\)/);
+    assert.match(tip('necrotic').title, /Necrotic flux/);
+    assert.equal(tip(null).title, 'Magic');
+    assert.match(tip(null).body, /only the stance bonus/);
+});
+
+test('a change of flux is announced once: set, replaced, cleared, and not when unchanged', () =>
+{
+    const { combat } = sequence([
+        cinderDart,
+        cinderDart,
+        frostNip,
+        arcaneSpark,
+    ]);
+    const events = combat.eventLog
+        .filter(row => row.type === 'elementFluxChanged')
+        .map(row => row.element);
+    assert.deepEqual(events, [
+        fireElement,
+        frostElement,
+        null,
+    ]);
 });

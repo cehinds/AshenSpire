@@ -113,8 +113,13 @@ export const progressionCards = cardFamilies.map(family => {
     flavor: progressionCardLore[family.id.replace(/^progression-/, '')].join('\n\n'),
     abilityKind: ['starseer', 'herald'].includes(family.classId) ? 'spell' : 'maneuver',
     abilityRank: family.abilityRank, abilityFamily: family.id,
-    effects: base.effects, textTemplate: base.textTemplate, ...(base.faceTemplate ? { faceTemplate: base.faceTemplate } : {}), gradeProfiles,
+    effects: base.effects,
+    textTemplate: base.textTemplate,
+    ...(base.faceTemplate ? { faceTemplate: base.faceTemplate } : {}),
+    gradeProfiles,
     ...base.traits,
+    ...(family.wither ? { wither: family.wither } : {}),
+    ...(family.costGrowth ? { costGrowth: family.costGrowth } : {}),
   };
 });
 

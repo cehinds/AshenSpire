@@ -83,7 +83,6 @@
   "smashVsDefensive": {
     "damageMultiplier": 1.25,
     "defendDamageMultiplier": 1.5,
-    "blockFraction": 0.25,
     "poiseFraction": 0.5
   },
   "stance": {
@@ -119,13 +118,50 @@
     }
   },
   "spellCosts": {
-    "version": 1,
-    "manaSurcharge": 1,
-    "staminaSurcharge": 0,
-    "cantripTag": "rank.cantrip",
-    "manaOnlyTag": "cost.manaOnly",
-    "preparedStaminaDiscount": 1,
-    "focusManaDiscount": 1
+    "version": 2,
+    "tags": {
+      "cantrip": "rank.cantrip",
+      "manaOnly": "cost.manaOnly"
+    },
+    "rules": [
+      {
+        "id": "manaSurcharge",
+        "enabled": false,
+        "resource": "mana",
+        "change": 1
+      },
+      {
+        "id": "staminaSurcharge",
+        "enabled": false,
+        "resource": "stamina",
+        "change": 1,
+        "skip": ["cantrip", "manaOnly", "xCost"]
+      },
+      {
+        "id": "preparedStamina",
+        "enabled": true,
+        "resource": "stamina",
+        "change": -1,
+        "when": "prepared",
+        "minimum": 1,
+        "keepAtOrBelowMinimum": true,
+        "skip": ["xCost"]
+      },
+      {
+        "id": "preparedMana",
+        "enabled": false,
+        "resource": "mana",
+        "change": -1,
+        "when": "prepared"
+      },
+      {
+        "id": "legacyFocus",
+        "enabled": true,
+        "resource": "mana",
+        "change": -1,
+        "when": "legacyFocusHeld"
+      }
+    ]
   },
   "elementFlux": {
     "version": 1,

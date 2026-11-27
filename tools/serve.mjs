@@ -50,7 +50,22 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawn, execFile } from 'node:child_process';
 import { sourceDigest, stampSource, readOrdinal, padOrdinal, VERSION_MODULE, RUN_PATH_SERVE } from './buildversion.mjs';
 import { saveFirstStepDefaults } from './prologue-editor-save.mjs';
-import { readStudioConfig, saveStudioScoring, saveStudioArtLayers, saveStudioItemArtLayers, saveStudioDecks, saveStudioSubclassCatalog } from './score-studio-save.mjs';
+import { CONTENT_API_PREFIX, HandleContentRequest } from './content-editor-save.mjs';
+import {
+  readStudioConfig,
+  ReadStudioSave,
+  saveStudioArtLayers,
+  saveStudioDecks,
+  saveStudioItemArtLayers,
+  SaveStudioSave,
+  saveStudioScoring,
+  saveStudioSubclassCatalog,
+} from './score-studio-save.mjs';
+import {
+  StudioSaveDir,
+  StudioSaveEndpoint,
+  StudioSaveMaxBytes,
+} from './score-studio/studioSaveFiles.js';
 import { artPath, packTreeOf, HIGH_TREE } from './art-source.mjs';
 import { authoringRoot, compositeSourcePath, isAuthoringFile } from './art-authoring.mjs';
 import { existsSync, readdirSync, statSync, watch as fsWatch } from 'node:fs';
@@ -101,11 +116,59 @@ const WATCH_DEBOUNCE_MS = 150;
 const WATCH_SKIP = /(^|\/)(\.|node_modules(\/|$))|~$|\.sw[px]$|\.tmp$/;
 
 /** The order builders run in when one batch needs several. */
+const ENEMY_LEVEL_CARDS_TOOL = 'enemy-level-cards.mjs --write';
+const BALANCE_TABLE_TOOLS = ['combat-power-report.mjs', 'level-lists.mjs'];
 const BUILD_ORDER = ['config-build.mjs', 'tokens-css.mjs', 'hud-layout-css.mjs', 'framework-data-build.mjs', 'content-build.mjs',
-  'game-config.mjs build']; // last: it hashes src/** and reads the other generated modules
+  ENEMY_LEVEL_CARDS_TOOL, // reads the Core cards; game-config embeds its JSON
+  'game-config.mjs build', // it hashes src/** and reads the other generated modules
+  ...BALANCE_TABLE_TOOLS]; // item ranks and reward bands read content and game packs
+
+
+const studioSaveDirPrefix = `${StudioSaveDir}/`;
+const httpOk = 200;
+const httpBadRequest = 400;
+const largeStudioPayloadPaths = Object.freeze([
+  '/__studio/custom-decks',
+  '/__studio/subclass-catalog',
+]);
+const largeStudioPayloadBytes = 4 * 1024 * 1024;
+const studioPayloadBytes = 1048576;
+const studioApiPaths = Object.freeze([
+  '/__studio/config',
+  '/__studio/scoring',
+  '/__studio/art-layers',
+  '/__studio/item-art-layers',
+  '/__studio/custom-decks',
+  '/__studio/subclass-catalog',
+  StudioSaveEndpoint,
+]);
+
+function studioPayloadLimit(urlPath)
+{
+  if (urlPath === StudioSaveEndpoint)
+  {
+    return StudioSaveMaxBytes;
+  }
+  return largeStudioPayloadPaths.includes(urlPath)
+    ? largeStudioPayloadBytes
+    : studioPayloadBytes;
+}
+
+// The Studio's own Save files live under content/source/ but are not game content:
+// no build reads them, so a Save there owes no build and no page reload.
+export { StudioSaveDir };
+
+export function IsStudioSavePath(relativePath)
+{
+  return relativePath === StudioSaveDir || relativePath.startsWith(studioSaveDirPrefix);
+}
 
 /** Which build tool (in tools/) must run before a change under `rel` can be seen. */
 export function buildToolFor(rel) {
+  if (IsStudioSavePath(rel))
+  {
+    return null;
+  }
   // A per-directory watcher reports a replaced authored tree by its own name,
   // not a descendant filename. That event still owes the tree's builder.
   const jsonTree = tree => rel === tree || (rel.startsWith(tree + '/') && rel.endsWith('.json'));
@@ -139,8 +202,14 @@ export function buildToolsFor(rel) {
   if (tool === 'config-build.mjs' && TOKENS_JSON_AND_ANCESTORS.includes(rel)) {
     return [tool, 'tokens-css.mjs'];
   }
+  // Enemy level cards read the Core cards and the shared enemy lists; the game packs embed them.
+  if (BALANCE_TABLE_SOURCES.includes(tool)) return [...new Set([tool, ENEMY_LEVEL_CARDS_TOOL, 'game-config.mjs build', ...BALANCE_TABLE_TOOLS])];
   return tool ? [tool] : [];
 }
+// Content and game-pack edits move item ranks and reward bands, so their tables are rebuilt too
+// (skipped where a trimmed root, such as a test fixture, has no such tool).
+const FOLLOW_ON_TOOLS = [ENEMY_LEVEL_CARDS_TOOL, 'game-config.mjs build', ...BALANCE_TABLE_TOOLS];
+const BALANCE_TABLE_SOURCES = ['content-build.mjs', 'game-config.mjs build'];
 const TOKENS_JSON_AND_ANCESTORS = ['content/config', 'content/config/ui', 'content/config/ui/tokens.json'];
 
 /** Last 20 lines of a tool's output, for the error banner. */
@@ -242,7 +311,7 @@ function startWatch(root, emit) {
         // module, so config-build must finish first. A builder an earlier
         // failure skipped stays owed until a round runs it.
         const wanted = new Set([...owed, ...batch.flatMap(buildToolsFor)]);
-        const tools = BUILD_ORDER.filter((tool) => wanted.has(tool));
+        const tools = BUILD_ORDER.filter((tool) => wanted.has(tool) && (!FOLLOW_ON_TOOLS.includes(tool) || existsSync(join(root, 'tools', tool.split(' ')[0]))));
         let failure = null, at = 0;
         for (; at < tools.length; at++) {
           failure = await runBuild(root, tools[at]);
@@ -258,12 +327,18 @@ function startWatch(root, emit) {
   function changed(rel) {
     rel = rel.split(sep).join('/');
     if (WATCH_SKIP.test(rel)) return;
+    // Studio Save files: no build reads them, nothing to reload.
+    if (IsStudioSavePath(rel))
+    {
+      return;
+    }
     // A build's own output is recognised by name, never by timing, so an edit
     // made during a build (or just after it) is never dropped: it joins
     // `pending` and the loop in flush() runs another round for it.
     if (/(^|\/)generated\//.test(rel) || /\.generated\.(js|css)$/.test(rel)) return;
     if (rel.startsWith('src/framework/data/')) return; // framework-data-build / content-build output
     if (rel.endsWith('/game.lock.json')) return; // game-config build rewrites it, under the watched games/
+    if (rel.endsWith('/enemyLevelCards.json')) return; // enemy-level-cards --write rewrites it
     pending.add(rel);
     clearTimeout(timer);
     timer = setTimeout(flush, WATCH_DEBOUNCE_MS);
@@ -362,6 +437,11 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, editorWrite =
         res.end(JSON.stringify(ok ? { root: rootResolved } : { error: 'Local requests only.' }));
         return;
       }
+      if (urlPath.startsWith(CONTENT_API_PREFIX))
+      {
+        await HandleContentRequest(req, res, { root: rootResolved, editorWrite });
+        return;
+      }
       // Direct edits to the master JSON become native card data on refresh.
       if(editorWrite&&urlPath==='/src/content/cardComponents.generated.js'){
         const {refreshCardLayout}=await import('./card-layout-save.mjs');
@@ -448,7 +528,8 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, editorWrite =
         } catch (error) { reply(400, { ok: false, error: error.message }); }
         return;
       }
-      if (urlPath === '/__studio/config' || urlPath === '/__studio/scoring' || urlPath === '/__studio/art-layers' || urlPath === '/__studio/item-art-layers' || urlPath === '/__studio/custom-decks' || urlPath === '/__studio/subclass-catalog') {
+      if (studioApiPaths.includes(urlPath))
+      {
         const remote = req.socket.remoteAddress || '';
         const local = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(remote);
         const host = req.headers.host || '';
@@ -466,12 +547,24 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, editorWrite =
           } catch (error) { reply(400, { ok: false, error: error.message }); }
           return;
         }
+        if (urlPath === StudioSaveEndpoint && req.method === 'GET')
+        {
+          try
+          {
+            reply(httpOk, { ok: true, ...ReadStudioSave(rootResolved) });
+          }
+          catch (error)
+          {
+            reply(httpBadRequest, { ok: false, error: error.message });
+          }
+          return;
+        }
         if (!editorWrite) { reply(403, { ok: false, error: 'Score Studio repo writes require --editor-write (launch via `npm run studio`).' }); return; }
         if (req.method !== 'POST' || req.headers.origin !== `http://${host}` || !String(req.headers['content-type']).startsWith('application/json')) {
           reply(403, { ok: false, error: 'Save must come from the local Score Studio.' }); return;
         }
         try {
-          const maxBytes = ['/__studio/custom-decks', '/__studio/subclass-catalog'].includes(urlPath) ? 4 * 1024 * 1024 : 1048576;
+          const maxBytes = studioPayloadLimit(urlPath);
           const chunks = []; let size = 0;
           for await (const chunk of req) {
             size += chunk.length;
@@ -479,7 +572,11 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, editorWrite =
             chunks.push(chunk);
           }
           const body = JSON.parse(Buffer.concat(chunks).toString('utf8'));
-          if (urlPath === '/__studio/subclass-catalog') {
+          if (urlPath === StudioSaveEndpoint)
+          {
+            reply(httpOk, { ok: true, ...SaveStudioSave(rootResolved, body) });
+          }
+          else if (urlPath === '/__studio/subclass-catalog') {
             reply(200, { ok: true, ...saveStudioSubclassCatalog(rootResolved, body) });
           } else if (urlPath === '/__studio/scoring') {
             reply(200, { ok: true, ...saveStudioScoring(rootResolved, body) });
@@ -490,7 +587,11 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, editorWrite =
           } else {
             reply(200, { ok: true, ...saveStudioArtLayers(rootResolved, body) });
           }
-        } catch (error) { reply(400, { ok: false, error: error.message }); }
+        }
+        catch (error)
+        {
+          reply(error.statusCode || httpBadRequest, { ok: false, error: error.message });
+        }
         return;
       }
       const rel = normalize(urlPath).replace(/^([/\\]|\.\.([/\\]|$))+/, '').split(sep).join('/');

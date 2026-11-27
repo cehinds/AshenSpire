@@ -66,7 +66,7 @@
       "why": "Pays only on Break; a third of HP damage."
     },
     "blockBreak": {
-      "weight": 3,
+      "weight": 0.75,
       "per": 1,
       "basis": "flat Block removed before damage",
       "projection": "guardInteraction -> blockBreak (content/source/mechanics/guardInteraction.json); does not hit Ward or unblocked HP",
@@ -416,6 +416,13 @@
     "rule": "Owner 2026-11-21: + weight for each distinct real effect type on a card that scores > 0, beyond the first. Real effects: damage, Block, each status, draw, heal, restores, cleanse, counter, reflect, pull, move, utility. Not counted: SP/MP costs, tag bonuses, keywords, multipliers, and riders (Poise counts only on a card that deals no damage).",
     "why": "A card that does several different things is worth more than its parts: it fits more turns and more decks.",
     "surchargeEnabled": true
+  },
+  "drawbackCount": {
+    "weight": -5,
+    "multiplier": false,
+    "surchargeEnabled": false,
+    "rule": "Each drawback a card has (CARD_LIMITS drawbacks: drawback ops, drawback keywords, debuffs on self) adds weight. With multiplier on, each adds P x weight.",
+    "why": "Drawbacks make a card weaker; turn this on to price them in Combat Power."
   },
   "categories": {
     "rule": "Owner 2026-11-23: each category a card belongs to (Martial, Magic, Hybrid when it is both, and its card type) adds weight to the raw score; with multiplier on, the positive score is scaled by weight instead (1 = no change).",
@@ -3742,7 +3749,8 @@
       "zeroCost": 0.4,
       "blockCard": 0.75,
       "spell": 0.8,
-      "healSpell": 0.45
+      "healSpell": 0.45,
+      "schoolSpell": 0.8
     },
     "conditionFactor": 0.65,
     "gearFields": {
@@ -3880,6 +3888,11 @@
         "label": "Card MP cost",
         "weight": -15,
         "why": "Changes MP cost on matching spells."
+      },
+      "cardInitiate": {
+        "label": "Initiate (Prepared MP cost)",
+        "weight": -10,
+        "why": "Changes MP cost on matching spells in Prepared stance only; one Initiate cut per spell."
       },
       "cardAddDex": {
         "label": "DEX to damage",

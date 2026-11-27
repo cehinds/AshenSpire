@@ -45,11 +45,23 @@ const PREVIOUS_RUNTIMES = new Set([
   'sha256:c77d4f30494cb821fc66b9b9ef19b91fbb2c699633fe0137b72ab89d261ec831',
   // Dev c5c5ec4a before #3002: no enemyLevelScaling table or enemy level-card lists.
   'sha256:eff6f5c38dcdba3c78d012bf55c8baf6fe703f664bc3f3416244b15d1fa07216',
+  // Dev before routes.floorTypes (2026-11-27): no floorTypes key; its maps draw as before.
+  'sha256:c7da2b47b69f593f6d2a0c9fc71b0cf9c2b8721e96f1760308c41da69b24a555',
+  // Runs saved on the opening-shop kernel.
+  'sha256:d0f8af2b50a2496a9519d285db2529c6c2cf4ace1fdea3bfabd14ad60220ed5a',
+  // Dev's regenerated cost.manaOnly runtime, before the breakBlock/breakPoise op args.
+  'sha256:6b8f59041c8006334a8bdee13165b5275e4d0890b5d1c920adfd2cd9c3374058',
+  'sha256:defbcd659c0fe2899a69d503916d8d739116d9928b8156c5985764b83efa755f',
+  'sha256:7ef8a89a96d4efcbc91d9af13cc735b66f9f741e66ad096d8faf9f8b979e7f28',
   'sha256:0c4e9eae226108858dcb937000b0992a33b778f650bb3e3e17a1c369ba51a0b3',
   'sha256:b49503d593056a588d5ae9a25ac214fc801c7b7eaea22093d601f76afe9d27f8',
   'sha256:d2993c77a6e8a5ff16dc1b5edf11d30cb924d790e7875af0452a4e8f0183ef63',
   'sha256:5311c2f843c0f42ef94e4b8ab0f4050400fdbc383c4c2395ef14bb563453801d',
   'sha256:777939d6ee4065a02491fcd7ff21fc2d9f44271a0d7f10ec3b2435d1786a72cd',
+  // Runs saved before the spell cost rule list keep their rules.
+  'sha256:659730689c3f0675a28b5ecbf6ef6c2bcbefa32b77c4794a5a5f9c14f0b8f07d',
+  // Runs saved after the Initiate tags shipped (spellCosts version 1 with the Prepared keys).
+  'sha256:defbcd659c0fe2899a69d503916d8d739116d9928b8156c5985764b83efa755f',
   'sha256:d243637be191cbe2c2580420f88bf2f5a672caa4a17e0c8c0eeca7685b75cf7d',
   'sha256:e316635810ab4101030e92e5d2169d0659ce1536caf82f1333f33b854ca4a6c3',
   'sha256:0805e9ad9ee6882390661bd96cc146d4645da893d78d3bec82c2563640b5323f',
@@ -191,6 +203,24 @@ const COMPATIBLE_HOST_RUNTIMES = new Set([
   'sha256:c77d4f30494cb821fc66b9b9ef19b91fbb2c699633fe0137b72ab89d261ec831',
   // Enemy level scaling (spCap in engine/kernel/gameConfig.js) moves the host runtime; prior saves keep their own rules.
   'sha256:659730689c3f0675a28b5ecbf6ef6c2bcbefa32b77c4794a5a5f9c14f0b8f07d',
+  // Runs saved after the Initiate tags shipped (spellCosts version 1 with the Prepared keys).
+  'sha256:defbcd659c0fe2899a69d503916d8d739116d9928b8156c5985764b83efa755f',
+  // Spell cost rule list (spellCosts version 2).
+  'sha256:7ef8a89a96d4efcbc91d9af13cc735b66f9f741e66ad096d8faf9f8b979e7f28',
+  // routes.floorTypes and routeShape (engine/kernel/route*.js) move the host runtime.
+  'sha256:c7da2b47b69f593f6d2a0c9fc71b0cf9c2b8721e96f1760308c41da69b24a555',
+  // A shop pinned on the shared opening no longer covers a branch shop (routeGuarantees.js).
+  'sha256:d0f8af2b50a2496a9519d285db2529c6c2cf4ace1fdea3bfabd14ad60220ed5a',
+  // The regenerated cost.manaOnly mechanic manifest.
+  'sha256:6b8f59041c8006334a8bdee13165b5275e4d0890b5d1c920adfd2cd9c3374058',
+  // Flat breakBlock/breakPoise damage op fields (engine/runtime/ops.json) move the host runtime; prior saves keep their own rules.
+  'sha256:a8dd5f6ad6b903aade4671ac2532fed89ef5a38e80be5420077593e7d3032024',
+  // breakBlock/breakPoise op fields merged onto the spell-cost hotfix move the host runtime.
+  'sha256:b79156d5e2888a9529e849fcde159356e98de4375fd22a29e7dac77ee52a9f80',
+  // breakBlock/breakPoise op fields merged onto the spell cost rule list move the host runtime.
+  'sha256:26b1b0c446b58265c9a7c6264f824e0455cef63f7ea8ee5f937aac06049ad85e',
+  // breakBlock/breakPoise op fields merged onto the cost.manaOnly manifest move the host runtime.
+  'sha256:86b335d2ec3ae5b290afd68343bf41686eb9e8f67e15a5eee6ec1f4b2420a21c',
 ]);
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return COMPATIBLE_HOST_RUNTIMES.has(currentRuntime)

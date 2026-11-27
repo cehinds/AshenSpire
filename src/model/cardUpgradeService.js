@@ -2,6 +2,7 @@
 // planCardUpgrade reads the run and writes nothing, so a preview equals the
 // commit: the roll is the stateless mulberry32(hash(run.seed, instanceId, stepIndex)).
 import { canUpgrade, nextUpgradeStep, nextUpgradeOptions, RestUpgradeRule } from './cardUpgradeLimits.js';
+import { CardUpgradeRules } from './cardUpgradeRules.js';
 import { upgradeStepsOf, paidUpgradeCount, MAX_CARD_UPGRADES } from './cardUpgrade.js';
 import { playsEverOf } from './cardRamp.js';
 import { VisibleCardRank } from './cardRank.js';
@@ -11,7 +12,6 @@ import { resolveCard } from './registries.js';
 import { projectGameCard } from './gameProfile.js';
 import * as MechanicalProjection from './cardMechanicalProjection.js';
 
-const MAX_CHOICES = 3;
 const MAX_PLAN_CACHE_PER_RUN = 256;
 const planCacheByRun = new WeakMap();
 
@@ -99,7 +99,10 @@ export function PlanCardUpgradeBatch(run, registries, requests = []) {
 
 function planCardUpgradeInOperation(run, registries, instanceId, { choices = 1, combos = false, vendor = '' } = {}, operation = null) {
   const instance = findInstance(run, instanceId);
-  const count = Number.isInteger(choices) && choices > 1 ? Math.min(choices, MAX_CHOICES) : 1;
+  const maxChoices = CardUpgradeRules(registries).offers.maxChoices;
+  const count = Number.isInteger(choices) && choices > 1
+    ? Math.min(choices, maxChoices)
+    : 1;
   const activeScoring = GetActiveScoring();
   let runMap = null;
   let cacheKey = '';
@@ -147,7 +150,7 @@ function planCardUpgradeInOperation(run, registries, instanceId, { choices = 1, 
 /** The quote a rest-site Upgrade Card shows for an instance: 1 option up to the third upgrade, 2 (some with two effects) from the fourth. */
 export function PlanRestCardUpgrade(run, registries, instanceId) {
   const instance = findInstance(run, instanceId);
-  return planCardUpgrade(run, registries, instanceId, instance ? RestUpgradeRule(instance) : {});
+  return planCardUpgrade(run, registries, instanceId, instance ? RestUpgradeRule(instance, registries) : {});
 }
 
 /**

@@ -14,6 +14,7 @@
 // An item is {kind, id, name, rarity, base, mods: [[key, n]], props: [tag], tags, poise, range, attackBase, magicShare, guardBase, art}; the
 // property rules its `props` name are passed as `rules` ({tag: {triggers, passives}}).
 import { GetActiveScoring } from './activeScoring.js';
+import { CountFaceDrawbacks } from './cardLimits.js';
 import { scoring as shippedScoring } from '../content/generated/scoring.js';
 import { EffectiveCostGrowth, EffectiveWitherLimit, MechanicRule } from './combatMechanics.js';
 
@@ -129,6 +130,11 @@ export function UpgradeTagSurcharge(rule, stacks, positiveScore = 0) {
   return rule.escalate === 'linear' ? base * n : base * Math.pow(2, n - 1);
 }
 
+/** A count rule's CP: weight per counted item, or P x weight per item with `multiplier: true`. */
+export function CountSurcharge(rule, positive, count) {
+  return rule.multiplier === true ? positive * rule.weight * count : rule.weight * count;
+}
+
 /** Score a card face: {raw, parts, positive}. `positive` is P, the sum of the positive non-cost parts. */
 export function ScoreCard(c, scoring = GetActiveScoring(), context = null) {
   return scorePrepared(c, scoring, slimOf(scoring), context);
@@ -238,8 +244,12 @@ function scorePrepared(c, scoring, S, context) {
     const riders = new Set(EC.riders || []);
     const n = Object.entries(fx).filter(([k, v]) => v > 0 && !notEffect.has(k) && !(riders.has(k) && fx.damage > 0)).length;
     const extra = Math.max(0, n - (EC.skipFirst ? 1 : 0));
-    // With `multiplier: true` each extra effect adds P x weight (owner, 2026-11-27).
-    add('effect count', EC.multiplier === true ? P * EC.weight * extra : EC.weight * extra);
+    add('effect count', CountSurcharge(EC, P, extra));
+  }
+  // scoring.drawbackCount: weight per drawback CARD_LIMITS counts (ops, keywords, debuffs on self).
+  const DC = scoring.drawbackCount;
+  if (DC && DC.surchargeEnabled !== false && DC.weight) {
+    add('drawback count', CountSurcharge(DC, P, CountFaceDrawbacks(c).length));
   }
   // Owner 2026-11-23 (scoring.categories): each category the card belongs to adds its weight, or with `multiplier` on
   // scales the positive score by it (1 = no change).

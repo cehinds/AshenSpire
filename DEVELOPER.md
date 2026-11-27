@@ -59,7 +59,7 @@ Authoring tools (Pose Studio, Workbench, editor, UI Studio) live on the `tools-a
 short names: `npm start` (launch), `npm run build:standalone` (`launch.mjs --build-only`; not named `build`, so a hosting platform that auto-runs a `build` script does nothing here),
 `npm run serve`, `npm test` (the fast core lane) and `npm run test:all` (the full `tests/run-node.mjs` merge gate), the checks
 `npm run validate:ui|validate:maps|validate:config|build:game|plantsites|receipts`,
-`npm run test:pr` (the PR gate's two test lanes in `tests.yml`: the core lane, then every discovered test but the slow ones, unsharded, each under `tools/verdict.mjs`; it stops at the first red lane and does not run the gate's receipt-order checks, `node tools/about-changelog.mjs --check-order --pending auto`, or the other PR workflows), and `npm run art:fetch`. Each is the `node tools/...` command it names. Every
+`npm run test:pr` (`tests.yml`'s two test lanes: the core lane, which gates a PR into `dev`, then every discovered test but the slow ones, run on `review`, unsharded, each under `tools/verdict.mjs`; it stops at the first red lane and does not run the gate's receipt-order checks, `node tools/about-changelog.mjs --check-order --pending auto`, or the other PR workflows), and `npm run art:fetch`. Each is the `node tools/...` command it names. Every
 tool, what it does and who calls it: [tools/README.md](tools/README.md).
 
 **`styles/tokens.generated.css` is generated** from the design tokens in
@@ -148,7 +148,7 @@ Any workflow can be started by hand on any branch (Actions → *Run workflow*).
 | `build-stamp.yml` → stamp: rebuild the merged tree, re-point the landed receipts, commit `buildordinal.json`, `CHANGELOG.md` and the generated module as `[build-stamp]`, then dispatch `dev-preview` for that commit | — | yes (push to `dev` only; not on a pull request) | — | — |
 | `pr-restamp.yml` → re-stamp: after a successful `build-stamp` on `dev`, merge `dev` into each conflicting open PR into `dev` with `tools/pr-restamp.mjs`, push that merge, dispatch its checks; or comment once when a person must merge | — | yes (after a stamp on `dev`; also dispatch) | — | — |
 | `tests.yml` → core: engine suite, each tool's verdict, CHANGELOG order (no browser) | — | yes | — | — |
-| `tests.yml` → discovered tests, six shards, `--no-slow` (`SLOW_DISCOVERED` in `tests/run-node-lanes.mjs`; this includes `tests/readme-sync.test.mjs`) | — | yes | — | — |
+| `tests.yml` → discovered tests, eight shards, `--no-slow` (`SLOW_DISCOVERED` in `tests/run-node-lanes.mjs`; this includes `tests/readme-sync.test.mjs`); runs on push to `review` only (owner, 2026-11-27), no column here | — | — | — | — |
 | `quick-start.yml` → Quick start input budget; ordered Core2 stages retain four 500 ms waits and half-rate sprites. `tools/click-impact-probe.mjs` reports raw latency and gates median contact/first-number overhead at 400/750 ms after declared waits, the active authored clip and receipt-derived hit-stop. Requires a real hostile contact and at least three numeric readouts; optional reactions use the real Back control. | — | yes | yes | only when release differs from test |
 | `ci.yml` → stage decision (`stage`): a push to `test` is the functional stage; a push to `release` is polish, and also functional when its tree differs from `test` | — | — | yes | yes |
 | `ci.yml` → tests (ubuntu, windows, macOS): engine suite and tool verdicts | — | — | yes | yes, if the tree differs from `test` |
@@ -573,7 +573,7 @@ than `.github`) and hands them to one `node --test`. A new test file needs no
 registration. A file that must not be spawned there goes in its `NOT_SPAWNED`
 map with the reason. A file that spawns full simulation runs goes in
 `SLOW_DISCOVERED` (`tests/run-node-lanes.mjs`), also with its reason: the
-discovered shards on a pull request into `dev` pass `--no-slow`, and
+discovered shards on a push to `review` pass `--no-slow`, and
 `ci.yml` runs the complete corpus on every push to `test`: Linux/macOS keep
 all files in `test-discovered`; Windows uses `--no-slow` there and runs each
 `SLOW_DISCOVERED` file once in the `test-discovered-slow-windows` matrix. The
@@ -584,9 +584,9 @@ default author in `games/ashenspire/game.json` uses the Current preset's core.
 The configured Core build reports an explicit skip before spawning its
 300-seed report. Manual `node tools/balance.mjs` remains available; shared
 runsim checks, report/parser contracts and simulation unit tests stay active.
-`.github/workflows/tests.yml` runs the core suite and the
-six discovered shards as Linux jobs on a pull request into `dev` and on a push
-to `dev`; the slow files, the tools' self-tests and the bundler's parse-gate
+`.github/workflows/tests.yml` runs the core suite as a Linux job on a pull
+request into `dev` and on a push to `dev`, and the core suite plus the eight
+discovered shards on a push to `review`; the slow files, the tools' self-tests and the bundler's parse-gate
 fixtures (`node tools/bundle.test.mjs`, several minutes) run in `ci.yml` on a
 push to `test` (see *Which checks gate a pull request* above).
 
@@ -1654,7 +1654,7 @@ Every Core enemy has a character sheet, `games/ashenspire/packs/core/enemies/<en
 unique key and equals the enemy's `id`). The sheets are the source of truth for the `character.enemy` rows of
 `characters.json`; do not hand-edit those rows.
 
-- **Stats:** `stats` (attributes, attributePriority, levelProfile, poiseMax, spFloor). `derived` is generated; edits are ignored.
+- **Stats:** `stats` (attributes, attributePriority, levelProfile, poiseMax, spFloor, mpFloor, hp). `hp` is optional: a whole number of 1 or more that replaces the attribute and level HP (row field `hpOverride`); Custom Climb `hpMult`, the floor step and `hpScaleByTier` still apply on top. `derived` is generated; edits are ignored.
 - **Equipment:** `equipment` (gear by slot) and `relics`, each `{ "slot", "ref" }`.
 - **Deck:** `deck` is the current deck, one reference per copy (repeat a ref for more copies). `reserve` is the cards it gains mid-fight (`enemy.unlockCards`); each reserve card must also be listed in a `behaviour.phases[].unlockCards` (and the reverse), or `--check` fails, because only a phase brings a reserve card into play. `ai` holds the planner hints per card.
 - **Everything else:** `behaviour` (weaknesses, range fields, phases, firstCard, arcaneExposure, blighted, presentation). Unknown keys anywhere else (top level, `stats`) are rejected by `--check`. Unknown fields under `behaviour` pass straight through to the row, so new enemy fields (for example `element`, `startStatuses`) live there. `keyOrder` only keeps the row's key order stable; leave it.

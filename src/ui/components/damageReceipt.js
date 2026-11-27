@@ -4,6 +4,31 @@ import { ActivateOnKey } from '../selection.js';
 
 const number = value => Number.isFinite(value) ? String(Number(value.toFixed(4))) : '?';
 
+const SUBTRACT_OPERATION = 'subtract';
+const PLUS_SIGN = '+';
+const MINUS_SIGN = '−';
+
+// A subtract source removes its amount, so it prints as a minus whatever its sign.
+function signedSourceAmount(source, format)
+{
+  const isNegative = source.operation === SUBTRACT_OPERATION || source.amount < 0;
+  const sign = isNegative
+    ? MINUS_SIGN
+    : PLUS_SIGN;
+  return `${sign}${format(Math.abs(source.amount))}`;
+}
+
+// Break sources already print on the reductions line of the per-hit summary.
+const isSummarySource = source => source.operation !== SUBTRACT_OPERATION;
+
+const REDUCTION_DISPLAY_SPECS = Object.freeze([
+  ['blockBroken', 'Break Block'],
+  ['poiseBroken', 'Break Poise'],
+  ['wardReduced', 'Ward'],
+  ['poiseReduced', null],
+  ['blocked', 'Block'],
+]);
+
 /** Presentation only: every quantity and named source comes from the engine receipt. */
 export function damageReceiptLines(receipt) {
   if (!Array.isArray(receipt?.hits)) return [];
@@ -11,15 +36,17 @@ export function damageReceiptLines(receipt) {
   for (const [index, hit] of receipt.hits.entries()) {
     lines.push(`${t('combat.receipt.hitLabel')} ${index + 1}: ${number(hit.incoming)} incoming → ${number(hit.hpLoss)} HP damage`);
     if (Number.isFinite(hit.physical) && Number.isFinite(hit.magical)) lines.push(`Components: ${number(hit.physical)} physical + ${number(hit.magical)} magical`);
-    for (const source of hit.sources || []) {
+    for (const source of (hit.sources || []).filter(isSummarySource)) {
       const operation = source.operation === 'multiply' || Number.isFinite(source.multiplier)
         ? `×${number(source.multiplier ?? source.amount)}`
-        : `${source.amount >= 0 ? '+' : '−'}${number(Math.abs(source.amount))}`;
+        : signedSourceAmount(source, number);
       lines.push(`${source.label || source.id}: ${operation}${source.stage ? ` (${source.stage})` : ''}`);
     }
-    const reductions = [['wardReduced', 'Ward'], ['poiseReduced', null], ['blocked', 'Block']]
+    const reductions = REDUCTION_DISPLAY_SPECS
       .filter(([key]) => Number.isFinite(hit[key]) && hit[key] > 0)
-      .map(([key, label]) => label ? `${label} −${number(hit[key])}` : t('combat.receipt.poiseAbsorbed', { n: number(hit[key]) }));
+      .map(([key, label]) => label
+        ? `${label} −${number(hit[key])}`
+        : t('combat.receipt.poiseAbsorbed', { n: number(hit[key]) }));
     if (hit.poiseDamage > 0) reductions.push(t('combat.receipt.poiseDamage', { n: number(hit.poiseDamage) }));
     if (reductions.length) lines.push(reductions.join('; '));
     lines.push(`Final HP damage: ${number(hit.hpLoss)}${hit.rounding ? ` (${hit.rounding})` : ''}`);
@@ -61,7 +88,9 @@ function damageDetailTopics(hits) {
       const operation = source.operation === 'multiply' || Number.isFinite(source.multiplier)
         ? `×${detailNumber(source.multiplier ?? source.amount)}`
         : source.operation === 'set' ? `=${detailNumber(source.amount)}`
-          : Number.isFinite(source.amount) ? `${source.amount >= 0 ? '+' : '−'}${detailNumber(Math.abs(source.amount))}` : '?';
+          : Number.isFinite(source.amount)
+            ? signedSourceAmount(source, detailNumber)
+            : '?';
       return `${source.label || source.id || 'Source'}: ${operation}`;
     });
     // Sources are an ordered operation sequence. Share only complete matching

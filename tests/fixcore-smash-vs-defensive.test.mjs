@@ -1,6 +1,7 @@
 // Owner ruling 2026-10-23: a Smash against a defensive stance (one the Smash beats: Defend or Prepared) deals
-// 1.5 x normal damage against Defend, 1.25 x against Prepared, plus floor(0.25 x the target's Block); Poise loses
-// floor(0.5 x that total) (capped at the Poise it holds) instead of the 25% absorption.
+// 1.5 x normal damage against Defend, 1.25 x against Prepared; Poise loses floor(0.5 x that total) (capped at the Poise
+// it holds) instead of the 25% absorption. Owner, 2026-11-20: the old bonus of a quarter of the target's Block is gone
+// (a Smash card breaks a flat amount of Block instead, tests/smash-break.test.mjs); a saved `blockFraction` is ignored.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -40,8 +41,9 @@ function live({ stance = 'defend', block = 10, poise = 20, vulnerable = 0 } = {}
 const hit = (combat, target, amount, carrier = smash) => { primeAccuracyRolls(combat); applyAttackDamage(combat, combat.player, target, amount, [], carrier); return combat.eventLog.filter(row => row.type === 'damageDealt').at(-1); };
 
 test('shipped Defend override is separate from the historical shared Smash default', () => {
-  assert.deepEqual(shipped.smashVsDefensive, { damageMultiplier: 1.25, defendDamageMultiplier: 1.5, blockFraction: 0.25, poiseFraction: 0.5 });
-  assert.deepEqual(fixCoreSmashVsDefensiveRules({}), { damageMultiplier: 1.25, blockFraction: 0.25, poiseFraction: 0.5 }, 'old saves keep the historical shared default');
+  assert.deepEqual(shipped.smashVsDefensive, { damageMultiplier: 1.25, defendDamageMultiplier: 1.5, poiseFraction: 0.5 });
+  assert.deepEqual(fixCoreSmashVsDefensiveRules({}), { damageMultiplier: 1.25, poiseFraction: 0.5 }, 'old saves keep the historical shared default');
+  assert.doesNotThrow(() => validateFixCoreRules({ ...shipped, smashVsDefensive: { ...shipped.smashVsDefensive, blockFraction: 0.25 } }), 'a saved blockFraction still loads');
   assert.throws(() => validateFixCoreRules({ ...shipped, smashVsDefensive: { ...shipped.smashVsDefensive, damageMultiplier: 0.5 } }), /smashVsDefensive/);
   assert.throws(() => validateFixCoreRules({ ...shipped, smashVsDefensive: { ...shipped.smashVsDefensive, extra: 1 } }), /smashVsDefensive/);
   for (const field of ['damageMultiplier', 'defendDamageMultiplier', 'blockFraction', 'poiseFraction'])
@@ -49,27 +51,27 @@ test('shipped Defend override is separate from the historical shared Smash defau
       assert.throws(() => validateFixCoreRules({ ...shipped, smashVsDefensive: { ...shipped.smashVsDefensive, [field]: bad } }), /smashVsDefensive/, `${field}=${String(bad)}`);
 });
 
-test('Defend worked example: Smash 12 becomes 18 + 2 Block bonus = 20, Block takes 10, HP loses 10 and Poise loses 10', () => {
+test('Defend worked example: Smash 12 becomes 18, Block takes 10, HP loses 8 and Poise loses 9', () => {
   const { combat, target } = live();
   const event = hit(combat, target, 12);
-  assert.equal(event.amount, 20, '1.5 x 12 + 2');
+  assert.equal(event.amount, 18, '1.5 x 12, no Block bonus');
   assert.equal(event.blocked, 10);
-  assert.equal(500 - target.hp, 10, 'the 25% Poise absorption does not apply to this hit');
+  assert.equal(500 - target.hp, 8, 'the 25% Poise absorption does not apply to this hit');
   assert.equal(target.block, 0);
-  assert.equal(20 - target.persistentPoise.value, 10);
+  assert.equal(20 - target.persistentPoise.value, 9);
   // Poise is damage rather than absorption, so the HP receipt and the log keep the same routing.
   assert.equal(event.poiseAbsorbed, 0);
   assert.equal(event.poiseMitigated, 0);
-  assert.equal(event.poiseDamage, 10);
+  assert.equal(event.poiseDamage, 9);
   assert.equal(event.damageReceipt.hits[0].poiseReduced, 0);
-  assert.equal(event.damageReceipt.hits[0].poiseDamage, 10);
+  assert.equal(event.damageReceipt.hits[0].poiseDamage, 9);
   const line = combatLogEntries([event], { registries: reg, players: [combat.player], enemies: combat.enemies }).map(row => row.text).join(' ');
-  assert.match(line, /Poise damage 10 \(20 → 10\)/);
+  assert.match(line, /Poise damage 9 \(20 → 11\)/);
   assert.doesNotMatch(line, /Poise absorbed/);
   assert.match(line, /Block absorbed 10/);
-  assert.match(line, /10 HP dealt/);
+  assert.match(line, /8 HP dealt/);
   const receiptText = damageReceiptLines(event.damageReceipt).join('\n');
-  assert.match(receiptText, /Poise damage 10/);
+  assert.match(receiptText, /Poise damage 9/);
   assert.doesNotMatch(receiptText, /Poise absorbed/);
 });
 
@@ -77,9 +79,9 @@ test('the preview matches live resolution (same function)', () => {
   const { combat, target } = live();
   const preview = previewDamageHits(combat, combat.player, target, 12, [], smash, 1);
   const receipt = preview.damageReceipt.hits[0];
-  assert.equal(receipt.incoming, 20);
+  assert.equal(receipt.incoming, 18);
   assert.equal(receipt.blocked, 10);
-  assert.equal(preview.hpLoss, 10);
+  assert.equal(preview.hpLoss, 8);
   const event = hit(combat, target, 12);
   assert.equal(500 - target.hp, preview.hpLoss);
   assert.equal(event.blocked, receipt.blocked);
@@ -87,9 +89,9 @@ test('the preview matches live resolution (same function)', () => {
 
 test('Prepared is a defensive stance for Smash too; Attack and neutral stances are not', () => {
   const prepared = live({ stance: 'prepared' }); hit(prepared.combat, prepared.target, 12);
-  assert.equal(20 - prepared.target.persistentPoise.value, 8);
+  assert.equal(20 - prepared.target.persistentPoise.value, 7, 'floor(0.5 x 15)');
   const plain = live({ stance: 'attack' }); hit(plain.combat, plain.target, 12);
-  assert.notEqual(20 - plain.target.persistentPoise.value, 8, 'normal Poise absorption path');
+  assert.notEqual(20 - plain.target.persistentPoise.value, 7, 'normal Poise absorption path');
   const none = live({ stance: null }); hit(none.combat, none.target, 12);
   assert.equal(none.target.block, 0);
   assert.ok(500 - none.target.hp <= 12, 'no defensive-stance bonus without a defensive stance');
@@ -101,10 +103,10 @@ test('only Smash gets the bonus: an Attack into a defending target is unchanged'
   assert.ok(20 - target.persistentPoise.value < 5, 'Poise takes only the 25% absorption');
 });
 
-test('Vulnerable stays before the Defend bonus: 12 x 1.25 x 1.5, floored, plus 2 Block bonus = 24', () => {
+test('Vulnerable stays before the Defend bonus: 12 x 1.25 x 1.5, floored = 22', () => {
   const { combat, target } = live({ vulnerable: 1 }); const event = hit(combat, target, 12);
-  assert.equal(event.amount, 24);
-  assert.equal(20 - target.persistentPoise.value, 12, 'floor(0.5 x 24)');
+  assert.equal(event.amount, 22);
+  assert.equal(20 - target.persistentPoise.value, 11, 'floor(0.5 x 22)');
 });
 
 test('Poise loss is capped at the Poise held; a break staggers once', () => {
@@ -114,7 +116,7 @@ test('Poise loss is capped at the Poise held; a break staggers once', () => {
   assert.equal(combat.eventLog.filter(row => row.type === 'poiseBroken').length, 1);
 });
 
-test('a bonus from zero Block is zero: Smash 12 vs Defend with 0 Block = 18', () => {
+test('Smash 12 vs Defend with 0 Block = 18', () => {
   const { combat, target } = live({ block: 0 }); const event = hit(combat, target, 12);
   assert.equal(event.amount, 18);
   assert.equal(500 - target.hp, 18);
@@ -155,7 +157,7 @@ test('missing saved-rule block and absent Defend override keep historical shared
     combat.fixCoreRules = rules;
     const preview = previewDamageHits(combat, combat.player, target, 12, [], smash);
     const event = hit(combat, target, 12);
-    assert.equal(event.amount, Math.floor(12 * (savedMultiplier ?? 1.25)) + 2);
+    assert.equal(event.amount, Math.floor(12 * (savedMultiplier ?? 1.25)));
     assert.equal(500 - target.hp, preview.hpLoss);
     assert.deepEqual(rules, before, 'loading and resolving do not rewrite saved tuning');
   }
@@ -177,10 +179,10 @@ test('a saved Defend override wins over shared custom tuning without changing Pr
       combat.fixCoreRules = { ...combat.fixCoreRules, smashVsDefensive: { ...shipped.smashVsDefensive, damageMultiplier: shared } };
       const multiplier = stance === 'defend' ? 1.5 : shared;
       const quote = profileDamageReceipt(combat, combat.player, target, 12, smash);
-      assert.equal(quote.rawHit, Math.floor(12 * multiplier), `${shared}/${stance}: raw hit excludes the Block bonus`);
+      assert.equal(quote.rawHit, Math.floor(12 * multiplier), `${shared}/${stance}: raw hit`);
       const preview = previewDamageHits(combat, combat.player, target, 12, [], smash);
       const event = hit(combat, target, 12);
-      assert.equal(event.amount, Math.floor(12 * multiplier) + 2, `${shared}/${stance}: total`);
+      assert.equal(event.amount, Math.floor(12 * multiplier), `${shared}/${stance}: total`);
       assert.equal(500 - target.hp, preview.hpLoss, `${shared}/${stance}: quote equals HP lost`);
     }
   }
@@ -191,11 +193,11 @@ test('Prepared melee weakness and the shared Smash matchup never multiply each o
   combat.fixCoreRules = { ...combat.fixCoreRules, stanceBenefits: { version: 1, prepared: { meleeDamageTakenMultiplier: 1.25 } } };
   const quote = profileDamageReceipt(combat, combat.player, target, 12, smash);
   assert.equal(quote.rawHit, 15);
-  assert.equal(quote.amount, 17);
+  assert.equal(quote.amount, 15);
   const preview = previewDamageHits(combat, combat.player, target, 12, [], smash);
   hit(combat, target, 12);
   assert.equal(500 - target.hp, preview.hpLoss);
-  assert.equal(preview.hpLoss, 7);
+  assert.equal(preview.hpLoss, 5);
 });
 
 test('Counter still reduces Smash exactly once while rawHit stays before defensive mitigation', () => {

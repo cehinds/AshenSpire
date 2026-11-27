@@ -11,14 +11,43 @@
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, renameSync } from 'node:fs';
+import {
+  existsSync,
+  mkdtempSync,
+  mkdirSync,
+  writeFileSync,
+  readFileSync,
+  rmSync,
+  renameSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { request } from 'node:http';
 import { fileURLToPath } from 'node:url';
-import { buildToolFor, buildToolsFor, reloadLabel } from '../tools/serve.mjs';
+import {
+  buildToolFor,
+  buildToolsFor,
+  reloadLabel,
+  StudioSaveDir,
+} from '../tools/serve.mjs';
 
 const SERVE = fileURLToPath(new URL('../tools/serve.mjs', import.meta.url));
+const studioSaveFileNames = Object.freeze([
+  'cards.json',
+  'artLayers.json',
+  'templates.json',
+]);
+const contentBuildTool = 'content-build.mjs';
+const buildLogLine = 'content-build';
+const buildLogName = 'build.log';
+const toolsFolder = 'tools';
+const gameSourceFile = 'content/source/cards.json';
+const pathSeparator = '/';
+const emptyJson = '{}\n';
+const reloadEvent = 'reload';
+const textEncoding = 'utf8';
+const quietWindowMs = 800;
+const reloadWaitMs = 3000;
 const INDEX = '<!doctype html>\n<html><head><meta charset="utf-8"><title>t</title></head>\n<body><p>hello</p></body></html>\n';
 const cleanups = [];
 after(() => { for (const fn of cleanups.reverse()) { try { fn(); } catch { /* already gone */ } } });
@@ -60,6 +89,10 @@ test('a change to ui/tokens.json (or a replaced content/config) owes config-buil
   assert.deepEqual(buildToolsFor('styles/tokens.generated.css'), [], 'the file tokens-css writes does not owe it');
   assert.deepEqual(buildToolsFor('content/hud-layout/tablet.json'), ['hud-layout-css.mjs']);
   assert.deepEqual(buildToolsFor('src/main.js'), []);
+  const balanceTables = ['combat-power-report.mjs', 'level-lists.mjs'];
+  const packChain = ['enemy-level-cards.mjs --write', 'game-config.mjs build'];
+  assert.deepEqual(buildToolsFor('content/source/weapons.csv'), ['content-build.mjs', ...packChain, ...balanceTables], 'content edits refresh level cards, packs, ranks and bands');
+  assert.deepEqual(buildToolsFor('games/ashenspire/packs/core/cards.json'), ['game-config.mjs build', 'enemy-level-cards.mjs --write', ...balanceTables]);
 });
 
 function makeTree() {
@@ -278,6 +311,75 @@ test('--watch: an edit saved while a build runs is not dropped (error, then relo
   child.kill();
 });
 
+test('Score Studio Save files under content/source/studio/ owe no build', () =>
+{
+  const studioPaths = [
+    StudioSaveDir,
+    ...studioSaveFileNames.map((fileName) => `${StudioSaveDir}/${fileName}`),
+  ];
+  for (const studioPath of studioPaths)
+  {
+    assert.equal(
+      buildToolFor(studioPath),
+      null,
+      studioPath,
+    );
+    assert.deepEqual(
+      buildToolsFor(studioPath),
+      [],
+      studioPath,
+    );
+  }
+  assert.equal(
+    buildToolFor('content/source/studioDecks.json'),
+    contentBuildTool,
+    'a sibling name is still game source',
+  );
+  assert.equal(
+    buildToolFor(`${StudioSaveDir}-backup/notes.json`),
+    contentBuildTool,
+    'only the exact folder is excluded',
+  );
+});
+
+// A stand-in content-build that appends one line to the build log each time it runs.
+function writeLoggingContentBuild(root, buildLogPath)
+{
+  const toolPath = join(
+    root,
+    toolsFolder,
+    contentBuildTool,
+  );
+  const toolSource = "import { appendFileSync } from 'node:fs';\n"
+    + `appendFileSync(${JSON.stringify(buildLogPath)}, '${buildLogLine}\\n');\n`;
+  writeFileSync(toolPath, toolSource);
+}
+
+test('--watch: a Studio Save under content/source/studio/ runs no build and sends no reload', async () =>
+{
+  const root = makeTree();
+  const buildLogPath = join(root, buildLogName);
+  const studioDir = join(root, ...StudioSaveDir.split(pathSeparator));
+  writeLoggingContentBuild(root, buildLogPath);
+  const { port, child } = await start(root, ['--watch']);
+  const stream = await events(port);
+  mkdirSync(studioDir);
+  for (const fileName of studioSaveFileNames)
+  {
+    writeFileSync(join(studioDir, fileName), emptyJson);
+  }
+  await new Promise((resume) => setTimeout(resume, quietWindowMs));
+  const seenEvents = JSON.stringify(stream.seen);
+  assert.ok(!stream.seen.length, `no event for a Studio Save (got ${seenEvents})`);
+  assert.ok(!existsSync(buildLogPath), 'content-build did not run');
+  const reload = stream.next(reloadEvent, reloadWaitMs);
+  writeFileSync(join(root, ...gameSourceFile.split(pathSeparator)), emptyJson);
+  assert.equal(await reload, gameSourceFile);
+  assert.equal(readFileSync(buildLogPath, textEncoding), `${buildLogLine}\n`);
+  stream.close();
+  child.kill();
+});
+
 test('--watch: a content/hud-layout change runs hud-layout-css, reloads, and ignores its generated CSS', async () => {
   const root = makeTree();
   mkdirSync(join(root, 'content', 'hud-layout'), { recursive: true });
@@ -395,7 +497,8 @@ test('--watch: a builder an earlier failure skipped runs in the next round, and 
   const reload = stream.next('reload', 3000);
   writeFileSync(join(root, 'content', 'config', 'a.json'), '{"fixed":1}\n');
   await reload;
-  assert.deepEqual(readFileSync(log, 'utf8').trim().split('\n'), ['config-build', 'config-build', 'content-build']);
+  // A content edit also rebuilds the game packs, which embed content-derived tables.
+  assert.deepEqual(readFileSync(log, 'utf8').trim().split('\n'), ['config-build', 'config-build', 'content-build', 'game-config']);
   const reload2 = stream.next('reload', 3000);
   writeFileSync(join(root, 'engine', 'kernel', 'kernel.json'), '{}\n');
   await reload2;

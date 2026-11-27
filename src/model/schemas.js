@@ -569,7 +569,7 @@ export const EFFECT_SPECS = Object.freeze({
   // `tags` scopes the hit for tag-scoped vulnerability (frost/insanity
   // exposure): values must exist in the card-tag registry (one vocabulary,
   // two carriers — card chips for display, effect tags for combat).
-  damage: { allowed: ['hits', 'tags', 'attack'], required: ['amount'], refs: {} },
+  damage: { allowed: ['hits', 'tags', 'attack', 'breakBlock', 'breakPoise', 'blockBreak'], required: ['amount'], refs: {} },
   block: { allowed: [], required: ['amount'], refs: {} },
   // `amount` plus the card's Block rating bonus (engine/actions.js
   // computeMeterGuardGain), held as entity.poiseGuard / entity.wardGuard.

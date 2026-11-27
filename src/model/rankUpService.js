@@ -31,14 +31,18 @@ export const InstanceRank = (card) => (Number.isInteger(card?.rank) && card.rank
  */
 export const RankUpNeedsFullUpgrades = (run) => CardRanksOn(run) && gameModule(run, 'progression')?.rankUpNeedsFullUpgrades !== false;
 const sentence = (id) => uiStrings.find((row) => row.id === id)?.short || id;
-/** RankUpBlock(run, card) -> '' when the card may rank up now, else the short reason it may not (the rule above). */
-export function RankUpBlock(run, card) {
-  return RankUpNeedsFullUpgrades(run) && paidUpgradeCount(card) < UpgradeSlots(run, card) ? sentence('rankUp.needsFull') : '';
+/** '' when the card may rank up now, else the short reason it may not (the rule above). */
+export function RankUpBlock(run, card, registries = null)
+{
+  const needsMore = RankUpNeedsFullUpgrades(run) && paidUpgradeCount(card) < UpgradeSlots(run, card, registries);
+  return needsMore
+    ? sentence('rankUp.needsFull')
+    : '';
 }
 /** The candidates that may rank up now: RankUpCandidates less those the full-upgrade rule holds back (shown, but disabled). */
 /** The reason a door's rank-up waits when every candidate is held back by the full-upgrade rule. */
 export const RankUpReadyReason = () => sentence('rankUp.noneReady');
-export const RankUpReady = (registries, run) => RankUpCandidates(registries, run).filter((card) => !RankUpBlock(run, card));
+export const RankUpReady = (registries, run) => RankUpCandidates(registries, run).filter((card) => !RankUpBlock(run, card, registries));
 /** Cards bound to equipment are raised through their item, never directly. */
 export const EquipmentBound = (card) => !!card && (!!card.sourceArmamentId || !!card.grantedBy || card.equipmentRole === 'granted' || card.equipmentRole === 'weaponArt');
 const ownedCards = (run) => [...(run?.deck || []), ...(run?.sideboard || [])].filter(Boolean);
@@ -57,7 +61,7 @@ export function RankUpCandidates(registries, run) {
 export function RaiseCardRank(registries, run, instanceId) {
   const card = RankUpCandidates(registries, run).find((row) => row.instanceId === instanceId);
   if (!card) throw new Error('That card cannot be ranked up.');
-  const blocked = RankUpBlock(run, card);
+  const blocked = RankUpBlock(run, card, registries);
   if (blocked) throw new Error(blocked);
   card.rank = OwnCardRank(card) + 1; // owner 2026-11-23: an unranked card becomes Rank 1, so each rank-up opens one slot
   return { instanceId: card.instanceId, rank: card.rank };

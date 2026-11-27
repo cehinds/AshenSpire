@@ -1020,6 +1020,8 @@ Compiled to `src/content/generated/derivedStatRules.js`; `src/content/derivedSta
 
 `content/source/actionCosts.json` is one object whose keys are the export names of `src/content/actionCosts.js`; content-build compiles it to `src/content/generated/actionCosts.js`. The module re-exports each key frozen at the depth the old hand-written constants had (a freeze is code, not data) and derives `TWO_COST_EFFECT_MULTIPLIER` from `COST_BUDGET.twoCostMultiplier`. These are the comments that lived in the old `actionCosts.js`, in file order (JSON has no comments); each comment block is indented as text, and a trailing comment on a row appears as a bullet. docs/alternative-combat-rounds/COST-WEIGHTS.md gives the reason for every weight.
 
+`CARD_LIMITS` sets optional caps on effects and drawbacks per card (`null` = no limit). Drawbacks are `DRAWBACK_OPS` (gated by `drawbackOpRequires`), the `DRAWBACK_KEYWORD_TAGS` keywords, and an `applyStatus` on self whose status is in `selfDebuffStatuses`. `node tools/card-limits.mjs --check` (part of `npm run check`) names every card over a cap in `cardFiles`; upgraded faces count too.
+
 
     src/content/actionCosts.js — the action-cost tunables (owner decisions, 2026-10-12).
 

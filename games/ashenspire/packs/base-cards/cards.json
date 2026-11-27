@@ -1262,6 +1262,8 @@
         "name": "Sidestep",
         "class": "colorless",
         "rarity": "common",
+        "wither": 3,
+        "costGrowth": { "stamina": 1, "perUse": 1, "max": 3, "scope": "card" },
         "cost": 1,
         "costRule": "fixed",
         "staminaCost": 1,
@@ -1277,6 +1279,7 @@
           }
         ],
         "textTemplate": "Gain {base.evade} Evade. Exhaust.",
+        "faceTemplate": ["Gain {base.evade} Evade, +1 SP/play.", "Max +3."],
         "icon": "shield",
         "flavor": "Footwork of the weald's narrow river crossings.\n\nBridge keepers taught travelers to turn sideways when a laden cart passed. During the fighting, the movement became a way to let steel pass just as closely. It requires little ground, and leaves little room for doubt.\n\nThe river took those who stepped twice."
       },
@@ -4557,7 +4560,7 @@
             "amount": 8
           }
         ],
-        "textTemplate": "Deal {damage} damage. Costs 1 more Stamina each play (up to +3).",
+        "textTemplate": "Deal {damage} damage.",
         "icon": "attack",
         "flavor": "An exacting stroke of the Citadel's formal duels.\n\nA duelist was expected to end the matter before fatigue spoiled the prescribed line. Those forced to repeat it found the weapon heavier on each return. The body paid for an elegance that the watching Court rarely questioned.\n\nA perfect motion does not become easier.",
         "damageSchool": "physical",
@@ -7856,8 +7859,8 @@
           "textTemplate": "Gain {block} Block; keep it {base.retain-block} turn.",
           "faceTemplate": ["Gain {block} Block.", "Keep it {base.retain-block} turn."]
         },
-        "textTemplate": "Gain {block} Block; keep it {base.retain-block} turn. Costs 1 more Stamina each play (up to +2).",
-        "faceTemplate": ["Gain {block} lasting Block.", "+1 Stamina each play."],
+        "textTemplate": "Gain {block} Block; keep it {base.retain-block} turn.",
+        "faceTemplate": ["Gain {block} lasting Block.", "+1 Stamina each play.", "Max +2."],
         "icon": "shield",
         "flavor": "A settled guard of the Citadel's long watches.\n\nThe bridge guards learned to hold their shields through the quiet between assaults without letting the shoulders slacken. Their stance preserved work already done instead of demanding it anew. The practice remained useful when the bridges became a frozen road.\n\nThe pause does not belong to the attacker."
       },
@@ -8653,10 +8656,11 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 12
+            "amount": 8,
+            "breakBlock": 8
           }
         ],
-        "textTemplate": "Deal {damage} damage.",
+        "textTemplate": "Break {breakBlock} Block. Deal {damage} damage.",
         "icon": "attack",
         "damageSchool": "physical",
         "exposureBuildupPerHit": 0,
