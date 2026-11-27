@@ -308,8 +308,8 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
     const entries = quote ? owned : owned.filter(({ instance }) => instance && registries.cards.has(instance.cardId));
     // Blacksmith: 2 or 3 options. Rest: 1 up to the third upgrade, then 2, some with two effects.
     const ruleFor = (instance) => blacksmith
-      ? { choices: upgradeChoiceCount(registries.cards.get(instance.cardId), instance, { blacksmith, run }), combos: false, vendor: 'blacksmith' }
-      : RestUpgradeRule(instance);
+      ? { choices: upgradeChoiceCount(registries.cards.get(instance.cardId), instance, { blacksmith, run, registries }), combos: false, vendor: 'blacksmith' }
+      : RestUpgradeRule(instance, registries);
     const plans = quote ? null : PlanCardUpgradeBatch(run, registries,
       entries.map(({ instance }) => ({ ...ruleFor(instance), instanceId: instance.instanceId })));
     let planIndex = 0;

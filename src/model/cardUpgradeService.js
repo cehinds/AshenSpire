@@ -147,7 +147,7 @@ function planCardUpgradeInOperation(run, registries, instanceId, { choices = 1, 
 /** The quote a rest-site Upgrade Card shows for an instance: 1 option up to the third upgrade, 2 (some with two effects) from the fourth. */
 export function PlanRestCardUpgrade(run, registries, instanceId) {
   const instance = findInstance(run, instanceId);
-  return planCardUpgrade(run, registries, instanceId, instance ? RestUpgradeRule(instance) : {});
+  return planCardUpgrade(run, registries, instanceId, instance ? RestUpgradeRule(instance, registries) : {});
 }
 
 /**

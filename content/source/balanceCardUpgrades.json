@@ -4,9 +4,9 @@
     "aboveVisibleRank": 1,
     "stonesAfterFree": 1,
     "$note": {
-      "basicFreeUpgrades": "Free upgrades a Basic card gets; other cards get one per rank.",
+      "basicFreeUpgrades": "Free upgrades a Basic card gets; every other card gets one per rank.",
       "aboveVisibleRank": "Upgrade slots a card has beyond the rank its face shows.",
-      "stonesAfterFree": "Smithing Stones each upgrade costs once the free ones are used."
+      "stonesAfterFree": "Smithing Stones each upgrade costs once the card's free upgrades are used."
     }
   },
   "basicRule": {
@@ -15,12 +15,7 @@
       "source:spell",
       "camp:spell"
     ],
-    "rarity": "common",
-    "$note": {
-      "cantripTag": "A card with this tag, or an upgrade step adding it, is always Basic.",
-      "spellTags": "A card with any of these tags is never Basic unless it is a cantrip.",
-      "rarity": "The rarity a non-spell card needs to be Basic."
-    }
+    "rarity": "common"
   },
   "offers": {
     "maxCandidates": 20,
@@ -30,10 +25,12 @@
     "basicChoicesWithoutRun": 2,
     "rankedChoicesWithoutRun": 3,
     "$note": {
-      "maxCandidates": "Most rolled steps an offer searches for distinct options.",
-      "blacksmithFewerChoicesChance": "Chance a Blacksmith offers the fewer choices instead of the more.",
-      "basicChoicesWithoutRun": "Choices on a Basic card when there is no run to roll from.",
-      "rankedChoicesWithoutRun": "Choices on a ranked card when there is no run to roll from."
+      "maxCandidates": "Most rolled steps an upgrade offer searches through for distinct options.",
+      "blacksmithFewerChoices": "Options a Blacksmith offers on its smaller roll.",
+      "blacksmithMoreChoices": "Options a Blacksmith offers on its larger roll.",
+      "blacksmithFewerChoicesChance": "Chance, from 0 to 1, that a Blacksmith offers its smaller number of options.",
+      "basicChoicesWithoutRun": "Options a Basic card offers when there is no run to roll from.",
+      "rankedChoicesWithoutRun": "Options a ranked card offers when there is no run to roll from."
     }
   },
   "rest": {
@@ -42,9 +39,10 @@
     "laterChoices": 2,
     "twoEffectChance": 0.2,
     "$note": {
-      "singleOptionUpTo": "Upgrades up to this number offer one single-effect option at a rest site.",
-      "laterChoices": "Options offered for later upgrades, each of which may carry two effects.",
-      "twoEffectChance": "Chance an option gets a second effect of another family."
+      "singleOptionUpTo": "Upgrade numbers up to this one offer a single one-effect option at a rest site.",
+      "earlyChoices": "Options a rest site offers for a card's early upgrades.",
+      "laterChoices": "Options a rest site offers for later upgrades, each of which may carry two effects.",
+      "twoEffectChance": "Chance, from 0 to 1, that a later rest-site option gains a second effect of another family."
     }
   },
   "authoredFamilies": {
@@ -78,23 +76,6 @@
         "restoreStamina",
         "restoreMana"
       ]
-    },
-    "$note": {
-      "fallback": "The family an authored upgrade claims when no other family matches.",
-      "opsByFamily": "The effect ops each family reads when it judges an authored upgrade."
-    }
-  },
-  "refusals": {
-    "missing": "That card is not in the deck.",
-    "armament": "{name} is upgraded with its armament.",
-    "slots": "{name} has {slots} upgrade {slotWord} (rank + 1); raise its rank for more.",
-    "slotWord": "slot",
-    "slotsWord": "slots",
-    "cap": "{name} is already at {cap} upgrades.",
-    "maxed": "{name} is fully upgraded.",
-    "stones": "Needs {cost} Smithing Stone; you have {stones}.",
-    "$note": {
-      "slots": "{slotWord} is slotWord for one slot, else slotsWord."
     }
   },
   "scoreReference": {
@@ -110,10 +91,7 @@
     "physicalSchool": "physical",
     "seed": 31,
     "$note": {
-      "classes": "Classes a card's neutral score reference may use as its own.",
-      "magicClass": "Reference class for a classless spell or non-physical card.",
-      "martialClass": "Reference class for any other classless card.",
-      "seed": "Seed of the neutral reference run."
+      "seed": "Seed of the neutral reference run that card scores are measured against."
     }
   }
 }

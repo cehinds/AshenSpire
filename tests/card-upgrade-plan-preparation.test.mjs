@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { balance } from '../src/content/balance.js';
+import { CardUpgradeRules } from '../src/model/cardUpgradeRules.js';
 import { runInNewContext } from 'node:vm';
 import { cards, fresh, registries as baseRegistries, withScoring } from './helpers/drawback-contract.mjs';
 import { planCardUpgrade, ClearCardUpgradePlanCache } from '../src/model/cardUpgradeService.js';
@@ -145,7 +145,7 @@ const limitsSource = readFileSync(new URL('../src/model/cardUpgradeLimits.js', i
 function offerAssembly(pool) {
   const calls = [];
   const api = runInNewContext(`${limitsSource}\n;({ nextUpgradeOptions });`, {
-    balance,
+    CardUpgradeRules,
     upgradeStepsOf, applyUpgradeSteps, mulberry32, GetActiveScoring,
     cardRank: () => 1, VisibleCardRank: () => 1, EffectiveTier: () => 1,
     NodeScheduleKey: () => '', OfferSalted: (_run, id) => id,
