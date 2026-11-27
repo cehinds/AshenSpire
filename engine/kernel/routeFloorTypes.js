@@ -10,6 +10,11 @@ const SHAPE_PROBLEM = 'floorTypes must map a depth to a room type, like { "4": "
 const EARLIEST_FULL_DEPTH = 3;
 const FULL_DEPTHS_BEFORE_BOSS = 3;
 const NARROW_DEPTHS_BEFORE_BOSS = 2;
+const SHOP_TYPE = 'shop';
+// Depth 1 is the shared start node; each branch's own lanes begin on depth 2.
+const FIRST_BRANCH_DEPTH = 2;
+// shopsPerBranch puts each branch's guaranteed shop on a depth in this range.
+export const GUARANTEED_SHOP_DEPTHS = Object.freeze({ first: 4, last: 8 });
 
 function isPlainObject(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -81,6 +86,24 @@ function laneEliteProblem(context, pinned) {
     + ' or pin it to elite';
 }
 
+// shopsPerBranch gives every branch one shop on a free depth of GUARANTEED_SHOP_DEPTHS. Pins
+// must leave one free there, or pin a shop on a branch depth; a branch has a lane on each.
+function branchShopProblem(context, pinned) {
+  const { routes, types, restDepths } = context;
+  if (routes.maxBranches == null || !(routes.shopsPerBranch > 0)) return null;
+  if (!types.pinnable.includes(SHOP_TYPE)) return null;
+  const last = Math.min(GUARANTEED_SHOP_DEPTHS.last, routes.prebossNodes);
+  const range = depthRange(GUARANTEED_SHOP_DEPTHS.first, last);
+  const open = range.filter(depth => !restDepths.has(depth));
+  const free = open.filter(depth => !pinned.has(depth));
+  const pinnedShop = [...pinned].some(([depth, type]) =>
+    type === SHOP_TYPE && depth >= FIRST_BRANCH_DEPTH);
+  if (!open.length || free.length || pinnedShop) return null;
+  const choices = open.join(', ');
+  return `floorTypes leaves a branch no floor for its shop. Keep one of depths ${choices} unpinned`
+    + ' or pin it to shop';
+}
+
 // The depth by which every lane of a branch is open.
 export function BranchFullDepth(prebossNodes) {
   return Math.max(EARLIEST_FULL_DEPTH, prebossNodes - FULL_DEPTHS_BEFORE_BOSS);
@@ -100,10 +123,12 @@ export function RouteFloorTypeProblems(routes, routeContent) {
     if (problem !== null) problems.push(problem);
   }
   if (problems.length) return problems;
-  const laneProblem = laneEliteProblem(context, PinnedFloorTypes(floorTypes));
-  return laneProblem === null
-    ? []
-    : [laneProblem];
+  const pinned = PinnedFloorTypes(floorTypes);
+  const slotProblems = [
+    laneEliteProblem(context, pinned),
+    branchShopProblem(context, pinned),
+  ];
+  return slotProblems.filter(problem => problem !== null);
 }
 
 // The pinned depths as a Map of depth number to room type; empty when floorTypes is absent.

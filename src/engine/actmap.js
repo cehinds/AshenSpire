@@ -32,6 +32,7 @@ import {
   RouteFloorTypeProblems,
   PinnedFloorTypes,
   BranchFullDepth,
+  GUARANTEED_SHOP_DEPTHS,
 } from '../../engine/kernel/routeFloorTypes.js';
 
 /**
@@ -390,8 +391,13 @@ function buildBranchedActMap(registries, rng, seat, tier, ctx) {
     const slots = [];
     // A branch that crosses a pinned shop depth (floorTypes) already holds its shop.
     if (hasPinnedDepth(pinnedFloors, SHOP_NODE, floor => branchAt(k, floor))) continue;
-    for (let floor = 4; floor <= Math.min(8, count); floor++) if (!restSet.has(floor) && !pinnedFloors.has(floor)) for (let lane = 0; lane < lanes; lane++) {
-      if (laneAt(k, floor, lane) && !guaranteed.has(`${floor}:${k * lanes + lane}`)) slots.push(`${floor}:${k * lanes + lane}`);
+    const lastShopDepth = Math.min(GUARANTEED_SHOP_DEPTHS.last, count);
+    for (let floor = GUARANTEED_SHOP_DEPTHS.first; floor <= lastShopDepth; floor++) {
+      if (restSet.has(floor) || pinnedFloors.has(floor)) continue;
+      for (let lane = 0; lane < lanes; lane++) {
+        const slot = `${floor}:${k * lanes + lane}`;
+        if (laneAt(k, floor, lane) && !guaranteed.has(slot)) slots.push(slot);
+      }
     }
     if (slots.length) guaranteedShop.add(rng.pick('map', slots));
   }

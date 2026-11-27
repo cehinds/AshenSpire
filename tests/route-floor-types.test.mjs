@@ -36,6 +36,9 @@ const FLOOR_TYPES_PATH = '$/modules/routes/floorTypes';
 // Core lanes are all open on depths 8 and 9; pinning both away leaves a lane no elite floor.
 const NO_LANE_ELITE = { 3: 'shop', 4: 'event', 8: 'fight', 9: 'fight', 10: 'fight' };
 const ONE_FREE_ELITE_FLOOR = { 3: 'shop', 4: 'event', 8: 'fight', 10: 'fight' };
+// Core guaranteed shops sit on depth 4 or 8 (5 to 7 can be rests); pinning both away leaves none.
+const NO_BRANCH_SHOP = { 4: 'event', 8: 'fight' };
+const ONE_FREE_SHOP_FLOOR = { 4: 'event' };
 const LANE_ID = /^n(\d+)_(\d+)$/;
 // Core maps of seeds 3 and 7 (acts 1 and 3) rolled before floorTypes existed (dev 72a5ca42565).
 // A retune of routes.json or the boss roster moves them: reprint with PRINT_GOLDEN=1.
@@ -151,6 +154,25 @@ test('every lane keeps its elite when pins leave it one free floor', () =>
   const refusal = /leaves a lane no floor for its elite\. Keep one of depths 8, 9 unpinned/;
   const isLaneError = error => error.path === FLOOR_TYPES_PATH && refusal.test(error.message);
   assert.throws(() => SetupCore({ floorTypes: NO_LANE_ELITE }), isLaneError);
+});
+
+test('every branch keeps its shop when pins leave it one free floor', () =>
+{
+  const core = SetupCore({ floorTypes: ONE_FREE_SHOP_FLOOR });
+  for (const seed of SEEDS) for (const act of ACTS)
+  {
+    const { map } = BuildMap(core, seed, act);
+    const shopBranches = new Set(Object.values(map.nodes)
+      .filter(node => node.actualType === 'shop')
+      .map(node => node.branch));
+    map.bossIds.forEach((bossId, branch) =>
+    {
+      assert.ok(shopBranches.has(branch), `seed ${seed} act ${act} branch ${branch} has a shop`);
+    });
+  }
+  const refusal = /leaves a branch no floor for its shop\. Keep one of depths 4, 8 unpinned/;
+  const isShopError = error => error.path === FLOOR_TYPES_PATH && refusal.test(error.message);
+  assert.throws(() => SetupCore({ floorTypes: NO_BRANCH_SHOP }), isShopError);
 });
 
 const INVALID = [
