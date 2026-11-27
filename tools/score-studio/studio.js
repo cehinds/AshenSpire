@@ -49,6 +49,7 @@ import { initGalleryZoom } from './galleryZoom.js';
 import { focusedEffectOptions } from './focusedRebalance.js';
 import { createAddCardTile, CaptureCardTilePositions, animateCardInsertion } from './addCardTile.js';
 import { initCardTemplatesUi } from './cardTemplatesUi.js';
+import { CardFromTemplate, FreshCardId } from './cardTemplates.js';
 
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
 const AB_STORAGE_KEY = 'ashenspire:scoreStudioAB:v1';
@@ -1935,6 +1936,47 @@ function renderScoreSummary(def, sc) {
 }
 
 const RARITY_ORDER = Object.freeze(['starter', 'common', 'uncommon', 'rare', 'boss']);
+
+// Adds a card at the top of the gallery as the active card, with the filters cleared so it is in view.
+// One Undo step. `build(id)` makes the card from a fresh id (New's id loop over every card).
+function insertNewCard(build, { autoName = false, message }) {
+  const grid = document.getElementById('cards-grid');
+  const before = CaptureCardTilePositions(grid);
+  pushHistory();
+  const id = FreshCardId(state.cards);
+  const card = build(id);
+  state.cards.unshift(card);
+  state.selectedCardId = id;
+  document.getElementById('card-search').value = '';
+  for (const key of ['filter-type', 'filter-class', 'filter-rank', 'filter-shift', 'filter-deck']) document.getElementById(key).value = 'all';
+  updateFilterCount();
+  document.querySelector('.studio-tab[data-tab="cards"]').click();
+  cardEditorDockUi?.setView('properties');
+  renderCardsGrid();
+  renderInspector();
+  animateCardInsertion(grid, id, { before });
+  saveDraft({ autoName });
+  toast(message);
+}
+
+// Blank: the card New has always made.
+function createBlankCard() {
+  insertNewCard(id => normalizeStudioCard({
+    id, name: 'New card', class: 'colorless', rarity: 'common', type: 'skill', icon: 'skill',
+    cost: 1, staminaCost: 1, manaCost: 0, costRule: 'fixed', damageSchool: 'physical',
+    effects: [], keywords: [], tags: ['camp:physical', 'classification.skill', 'targeting.self'],
+    textTemplate: 'New card', _custom: true, _edited: true, _autoName: false, _autoText: false, _newDraft: true,
+  }), { autoName: false, message: 'Added a new card. Edit its properties to begin.' });
+}
+
+// A copy of a template's mechanics with a fresh id, a generated name and automatic text; no link to the template.
+function createCardFromTemplate(template) {
+  insertNewCard(id => {
+    const card = CardFromTemplate(template, { id, normalize: normalizeStudioCard, textFor: textFromEffects });
+    card.name = autoNameFor(card);
+    return card;
+  }, { autoName: true, message: `Added a card from "${template.name}"` });
+}
 
 // The card options menu beside the card. Each item runs the handler the rest of the Studio already uses.
 function cardMenuActions() {
@@ -4600,31 +4642,8 @@ function wireEvents() {
   document.getElementById('view-single').addEventListener('click', () => { state.viewMode = 'single'; document.getElementById('view-single').classList.add('is-active'); document.getElementById('view-grid').classList.remove('is-active'); renderCardsGrid(); });
 
   // New / Duplicate / Reset / Delete card (the last three live in Card Basics' ⋯ menu)
-  document.getElementById('btn-new-card').addEventListener('click', () => {
-    const grid = document.getElementById('cards-grid');
-    const before = CaptureCardTilePositions(grid);
-    pushHistory();
-    let id = `custom.card_${Date.now().toString(36)}`;
-    while (state.cards.some(card => card.id === id)) id += '_new';
-    const card = normalizeStudioCard({
-      id, name: 'New card', class: 'colorless', rarity: 'common', type: 'skill', icon: 'skill',
-      cost: 1, staminaCost: 1, manaCost: 0, costRule: 'fixed', damageSchool: 'physical',
-      effects: [], keywords: [], tags: ['camp:physical', 'classification.skill', 'targeting.self'],
-      textTemplate: 'New card', _custom: true, _edited: true, _autoName: false, _autoText: false, _newDraft: true,
-    });
-    state.cards.unshift(card);
-    state.selectedCardId = id;
-    document.getElementById('card-search').value = '';
-    for (const key of ['filter-type', 'filter-class', 'filter-rank', 'filter-shift', 'filter-deck']) document.getElementById(key).value = 'all';
-    updateFilterCount();
-    document.querySelector('.studio-tab[data-tab="cards"]').click();
-    cardEditorDockUi?.setView('properties');
-    renderCardsGrid();
-    renderInspector();
-    animateCardInsertion(grid, id, { before });
-    saveDraft({ autoName: false });
-    toast('Added a new card. Edit its properties to begin.');
-  });
+  // New card and the Add card tile open the picker: Blank (today's New) first, then card templates.
+  document.getElementById('btn-new-card').addEventListener('click', () => cardTemplatesUi.openPicker());
 
   document.getElementById('btn-duplicate-card').addEventListener('click', () => {
     const src = selectedCardDef();
@@ -5393,6 +5412,8 @@ async function boot() {
   // Templates load before the draft is restored over them (the in-memory store until SS-003's Save path).
   cardTemplatesUi = initCardTemplatesUi({ state, checkCard: templateCardProblem, pushHistory, saveDraft, toast,
     artLayerIdsFor: def => matchingCustomLayers(def).map(layer => layer.id),
+    artLayers: () => state.artLayers.layers || [],
+    createBlankCard, createCardFromTemplate,
   });
 
   await loadFromRepo(state.repoPath);

@@ -6,10 +6,40 @@ import {
   TemplateFile,
   ParseTemplateFile,
   SaveCardAsTemplate,
+  GroupTemplatesByType,
+  MissingArtLayerIds,
   createMemoryTemplateStore,
 } from './cardTemplates.js';
 
 const clone = value => structuredClone(value);
+const esc = text => String(text ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const typeLabel = type => (type ? type[0].toUpperCase() + type.slice(1) : 'Other');
+
+// The one-line summary shown on hover: type, costs, rarity and effects.
+function templateDetails(template, missing = [])
+{
+  const card = template.card || {};
+  const costs = [`${card.staminaCost ?? card.cost ?? 0} SP`];
+  if (card.manaCost) costs.push(`${card.manaCost} MP`);
+  const effects = (card.effects || []).map(effect => effect.op).join(', ') || 'no effects';
+  const lines = [`${typeLabel(template.cardType)} · ${costs.join(' ')} · ${card.rarity || 'common'} · ${effects}`];
+  if (missing.length) lines.push(`Art layers no longer there: ${missing.join(', ')}`);
+  return lines.join('\n');
+}
+
+// Up and Down move between the buttons of a list; Home and End jump to its ends.
+function wireArrowKeys(container, selector)
+{
+  container.addEventListener('keydown', event => {
+    if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
+    const nodes = [...container.querySelectorAll(selector)].filter(node => !node.disabled && node.getClientRects().length);
+    const index = nodes.indexOf(document.activeElement);
+    if (index < 0) return;
+    event.preventDefault();
+    const next = event.key === 'Home' ? nodes[0] : event.key === 'End' ? nodes.at(-1) : nodes[(index + (event.key === 'ArrowUp' ? -1 : 1) + nodes.length) % nodes.length];
+    next?.focus();
+  });
+}
 
 function makeDialog(className, titleId, html)
 {
@@ -22,7 +52,8 @@ function makeDialog(className, titleId, html)
 }
 
 /**
- * ctx: { state, checkCard(card) -> problem text or '', pushHistory, saveDraft, toast, artLayerIdsFor(card) }.
+ * ctx: { state, checkCard(card) -> problem text or '', pushHistory, saveDraft, toast, artLayerIdsFor(card),
+ * artLayers() -> the card art layers, createBlankCard(), createCardFromTemplate(template) }.
  * Templates live in `state.templates` (so Undo, the snapshot and the local draft cover them);
  * `state.savedTemplates` is the last stored copy.
  */
@@ -168,10 +199,72 @@ export function initCardTemplatesUi(ctx)
     saveDialog.setAttribute('aria-labelledby', 'card-template-save-title');
   }
 
+  // ---------------------------------------------------------------------------
+  // The Add card picker: Blank first (today's New), then templates grouped by card type.
+  // ---------------------------------------------------------------------------
+  let picker = null, pickerOpener = null, pickerChosen = false;
+  function pickerElement()
+  {
+    if (picker) return picker;
+    picker = makeDialog('card-template-picker', 'card-template-picker-title', `
+      <h3 id="card-template-picker-title">Add card</h3>
+      <div class="card-template-choices" data-template-choices></div>
+      <div class="card-template-actions"><button type="button" class="s-btn" data-template-cancel>Cancel</button></div>`);
+    picker.querySelector('[data-template-cancel]').addEventListener('click', () => picker.close());
+    picker.querySelector('[data-template-choices]').addEventListener('click', event => {
+      const choice = event.target.closest('[data-template-choice]');
+      if (!choice) return;
+      const id = choice.dataset.templateChoice;
+      const template = id === 'blank' ? null : state.templates.find(entry => entry.id === id);
+      if (id !== 'blank' && !template) return;
+      pickerChosen = true;
+      picker.close();
+      if (template) ctx.createCardFromTemplate(clone(template)); else ctx.createBlankCard();
+    });
+    wireArrowKeys(picker.querySelector('[data-template-choices]'), '[data-template-choice]');
+    // Escape or Cancel: nothing is made, and focus goes back to Add card.
+    picker.addEventListener('close', () => {
+      if (pickerChosen) return;
+      const opener = pickerOpener?.isConnected && pickerOpener.getClientRects().length ? pickerOpener : document.querySelector('.studio-add-card-button');
+      opener?.focus();
+    });
+    return picker;
+  }
+
+  function renderPickerChoices()
+  {
+    const layers = ctx.artLayers();
+    const groups = GroupTemplatesByType(state.templates);
+    const rows = ['<button type="button" class="card-template-choice is-blank" data-template-choice="blank" title="A blank Skill with New card defaults">Blank</button>'];
+    for (const group of groups)
+    {
+      rows.push(`<div class="card-template-group-label">${esc(typeLabel(group.type))}</div>`);
+      for (const template of group.templates)
+      {
+        const missing = MissingArtLayerIds(template, layers);
+        rows.push(`<button type="button" class="card-template-choice" data-template-choice="${esc(template.id)}" title="${esc(templateDetails(template, missing))}">`
+          + `<span class="card-template-name">${esc(template.name)}</span>${missing.length ? '<span class="card-template-note">layers gone</span>' : ''}</button>`);
+      }
+    }
+    if (!groups.length) rows.push('<p class="studio-muted card-template-empty">No templates yet. Use Save as template… in a card\'s ⋮ menu.</p>');
+    picker.querySelector('[data-template-choices]').innerHTML = rows.join('');
+  }
+
+  function openPicker()
+  {
+    const dialog = pickerElement();
+    pickerOpener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    pickerChosen = false;
+    renderPickerChoices();
+    dialog.showModal();
+    dialog.querySelector('[data-template-choice="blank"]').focus();
+  }
+
   // Redraws whatever template views are open (after Undo, Redo, imports and saves).
   function refresh()
   {
+    if (picker?.open) renderPickerChoices();
   }
 
-  return { connectStore, markSaved, saveFile, changed, restoreDraft, revert, openSaveAsTemplate, refresh };
+  return { connectStore, markSaved, saveFile, changed, restoreDraft, revert, openSaveAsTemplate, openPicker, refresh };
 }

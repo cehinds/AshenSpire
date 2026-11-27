@@ -356,7 +356,9 @@ try {
   // 7. A blank draft starts as the owner's Skill named/texted "New card", with Auto-name off.
   //    Explicitly enabling Auto-name then follows the convention when a status is added, and fits the title box.
   const autoName = await page.evaluate(async () => {
+    // New card opens the Add card picker; Blank is its first choice and makes today's New card.
     document.getElementById('btn-new-card').click();
+    document.querySelector('[data-template-choice="blank"]').click();
     await new Promise((resolve) => setTimeout(resolve, 300));
     const defaults = {
       name: document.getElementById('edit-name').value,
