@@ -54,6 +54,8 @@ const PREVIOUS_RUNTIMES = new Set([
   'sha256:659730689c3f0675a28b5ecbf6ef6c2bcbefa32b77c4794a5a5f9c14f0b8f07d',
   // Runs saved after the Initiate tags shipped (spellCosts version 1 with the Prepared keys).
   'sha256:defbcd659c0fe2899a69d503916d8d739116d9928b8156c5985764b83efa755f',
+  // Runs saved on the spell cost rule list.
+  'sha256:7ef8a89a96d4efcbc91d9af13cc735b66f9f741e66ad096d8faf9f8b979e7f28',
   'sha256:d243637be191cbe2c2580420f88bf2f5a672caa4a17e0c8c0eeca7685b75cf7d',
   'sha256:e316635810ab4101030e92e5d2169d0659ce1536caf82f1333f33b854ca4a6c3',
   'sha256:0805e9ad9ee6882390661bd96cc146d4645da893d78d3bec82c2563640b5323f',
@@ -199,6 +201,8 @@ const COMPATIBLE_HOST_RUNTIMES = new Set([
   'sha256:defbcd659c0fe2899a69d503916d8d739116d9928b8156c5985764b83efa755f',
   // Spell cost rule list (spellCosts version 2).
   'sha256:7ef8a89a96d4efcbc91d9af13cc735b66f9f741e66ad096d8faf9f8b979e7f28',
+  // The regenerated cost.manaOnly mechanic manifest.
+  'sha256:2f8d5ba86475f335716d18b3be902d818ce66f1273ae691924ec82d247200816',
 ]);
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return COMPATIBLE_HOST_RUNTIMES.has(currentRuntime)
