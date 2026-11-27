@@ -239,12 +239,6 @@ body.studio-body .customization-preview-body[data-fit="fields"] .inspector-card-
 /* Outside Properties: the view's most-used fields for this card, compact beside the card. */
 body.studio-body .customization-context-fields { display: flex; flex-direction: column; gap: 2px; min-width: 0; font-size: 12px; }
 body.studio-body .customization-context-fields[hidden] { display: none !important; }
-body.studio-body .customization-context-fields .weight-row.is-compact { flex-wrap: wrap; gap: 2px 4px; margin: 0; padding: 2px 4px; border-bottom: 0; border-radius: 4px; }
-body.studio-body .customization-context-fields .weight-row.is-compact > :first-child { flex: 1 1 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
-body.studio-body .customization-context-fields .weight-row.is-compact .weight-sentence { gap: 2px 4px; font-size: 11px; color: var(--st-muted); }
-body.studio-body .customization-context-fields .weight-row.is-compact input.weight-input { width: 52px; padding: 1px 4px; }
-body.studio-body .customization-context-fields .weight-row.is-compact .weight-per-label input:not([type="checkbox"]) { width: 44px; padding: 1px 4px; }
-body.studio-body .customization-context-fields .weight-row.is-compact .weight-per-label select { width: 60px; padding: 1px 2px; }
 /* Design: the art layers on this card, each with Show, Edit and its opacity. */
 body.studio-body .customization-context-fields .art-context-list { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 body.studio-body .customization-context-fields .art-context-row {
@@ -273,23 +267,37 @@ body.studio-body .customization-context-fields .deck-context-empty { margin: 0; 
 body.studio-body .customization-context-fields .deck-context-add { width: 100%; min-width: 0; height: 28px; background: var(--st-surface-2); color: var(--st-text); border: 1px solid var(--st-border); border-radius: 4px; }
 /* One line per entry beside the card (owner, 2026-11-27): SP and MP share a line; each other weight is
    name, value, short unit and small toggles; each art layer is name, show, opacity and Edit. */
-body.studio-body .customization-context-fields[data-context-view="weights"] { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3px 8px; align-content: start; }
-body.studio-body .customization-context-fields[data-context-view="weights"] .weight-row.is-compact { grid-column: 1 / -1; display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; padding: 2px 4px; }
-body.studio-body .customization-context-fields[data-context-view="weights"] .weight-row.is-compact[data-weight-key^="costs:"] { grid-column: auto; }
-body.studio-body .customization-context-fields .weight-row.is-compact > :first-child { flex: 1 1 auto; min-width: 0; }
-body.studio-body .customization-context-fields .weight-row.is-compact .weight-sentence { display: inline-flex; flex: 0 1 auto; flex-wrap: nowrap; align-items: center; gap: 4px; min-width: 0; }
-body.studio-body .customization-context-fields .weight-row.is-compact .weight-words:is([data-part="before"], [data-part="after"]),
-body.studio-body .customization-context-fields .weight-row.is-compact .weight-example { display: none; }
-body.studio-body .customization-context-fields .weight-row.is-compact .weight-words[data-part="mid"] { max-width: 64px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-body.studio-body .customization-context-fields .weight-row.is-compact[data-weight-key^="costs:"] .weight-words[data-part="mid"] { display: none; }
-body.studio-body .customization-context-fields .weight-row.is-compact :is(.weight-mult-label, .weight-surcharge-label) { display: inline-flex; align-items: center; gap: 2px; font-size: 0; }
-body.studio-body .customization-context-fields .weight-row.is-compact .weight-mult-label::after { content: '\00D7'; font-size: 12px; color: var(--st-muted); }
-body.studio-body .customization-context-fields .weight-row.is-compact .weight-surcharge-label::after { content: 'S'; font-size: 11px; color: var(--st-muted); }
-body.studio-body .customization-context-fields .weight-row.is-compact .weight-reset-btn.is-clean { visibility: hidden; }
-body.studio-body .customization-context-fields .weight-row.is-compact .weight-reset-btn { padding: 0 2px; min-height: 0; font-size: 11px; }
 body.studio-body .customization-context-fields .art-context-row { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; }
 body.studio-body .customization-context-fields .art-context-name { flex: 1 1 auto; }
 body.studio-body .customization-context-fields .art-context-show { font-size: 0; }
 body.studio-body .customization-context-fields .art-context-opacity { flex: 0 0 72px; grid-column: auto; gap: 2px; }
 body.studio-body .customization-context-fields .art-context-opacity .opacity-val { display: none; }
 body.studio-body .customization-context-fields .art-context-opacity .opacity-val { flex: 0 0 28px; }
+
+/* Weights beside the card: uniform rows (owner, 2026-11-27). Name left, controls right in fixed columns:
+   value | per | multiply | surcharge | reset. The sentence and worked example are on hover. */
+body.studio-body .customization-context-fields[data-context-view="weights"] { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 10px; align-content: start; }
+body.studio-body .customization-context-fields .weight-row.is-compact { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 6px; margin: 0; padding: 2px 4px; border: 0; border-radius: 4px; }
+body.studio-body .customization-context-fields .weight-row.is-compact[data-weight-key^="costs:"] { grid-column: auto; }
+body.studio-body .customization-context-fields .weight-row.is-compact > :first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; font-weight: 600; cursor: help; }
+body.studio-body .customization-context-fields .weight-row.is-compact .weight-sentence { display: grid; grid-template-columns: 50px 34px 16px 16px 14px; align-items: center; column-gap: 3px; justify-items: end; font-size: 11px; color: var(--st-muted); }
+body.studio-body .customization-context-fields .weight-row.is-compact[data-weight-key^="costs:"] .weight-sentence { grid-template-columns: 50px 14px; }
+body.studio-body .customization-context-fields .weight-row.is-compact :is(.weight-words, .weight-example) { display: none; }
+body.studio-body .customization-context-fields .weight-row.is-compact .weight-sentence > * { grid-row: 1; }
+body.studio-body .customization-context-fields .weight-row.is-compact input.weight-input { grid-column: 1; width: 50px; padding: 1px 4px; text-align: right; }
+body.studio-body .customization-context-fields .weight-row.is-compact .weight-per-label:not(.weight-mult-label):not(.weight-surcharge-label) { grid-column: 2; display: inline-flex; align-items: center; gap: 1px; }
+body.studio-body .customization-context-fields .weight-row.is-compact .weight-per-label:not(.weight-mult-label):not(.weight-surcharge-label)::before { content: "/"; }
+body.studio-body .customization-context-fields .weight-row.is-compact .weight-per { width: 28px; padding: 1px 2px; text-align: right; }
+body.studio-body .customization-context-fields .weight-row.is-compact select.weight-per { width: 34px; }
+body.studio-body .customization-context-fields .weight-row.is-compact .weight-mult-label { grid-column: 3; }
+body.studio-body .customization-context-fields .weight-row.is-compact .weight-surcharge-label { grid-column: 4; }
+body.studio-body .customization-context-fields .weight-row.is-compact :is(.weight-mult-label, .weight-surcharge-label) { display: inline-flex; align-items: center; font-size: 0; }
+body.studio-body .customization-context-fields .weight-row.is-compact :is(.weight-mult-label, .weight-surcharge-label) input { margin: 0; }
+body.studio-body .customization-context-fields .weight-row.is-compact .weight-reset-btn { grid-column: 5; padding: 0; min-height: 0; font-size: 11px; }
+body.studio-body .customization-context-fields .weight-row.is-compact[data-weight-key^="costs:"] .weight-reset-btn { grid-column: 2; }
+body.studio-body .customization-context-fields .weight-row.is-compact .weight-reset-btn.is-clean { visibility: hidden; }
+/* Header line over the toggles so the narrow columns stay readable. */
+body.studio-body .customization-context-fields[data-context-view="weights"]::after { content: ""; }
+body.studio-body .customization-context-fields .weight-context-head { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 6px; padding: 2px 4px 0; }
+body.studio-body .customization-context-fields .weight-context-head .weight-sentence { display: grid; grid-template-columns: 50px 34px 16px 16px 14px; column-gap: 3px; justify-items: center; font-size: 10px; font-weight: 700; color: var(--st-muted); }
+body.studio-body .customization-context-fields .weight-context-head .weight-sentence > span[title] { cursor: help; }

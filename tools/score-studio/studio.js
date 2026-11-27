@@ -2581,6 +2581,8 @@ function buildWeightRow(g, r, appliedGroups, { compact = false } = {}) {
     const now = weightSentence(g.key, r.id, scoring, r.label);
     for (const part of row.querySelectorAll('.weight-sentence > .weight-words')) part.textContent = now[part.dataset.part];
     if (exampleEl) exampleEl.textContent = weightExample(g.key, r.id, scoring, r.label);
+    // Compact rows beside the card keep only the value on the line; the full sentence and example are on hover.
+    if (compact) row.firstElementChild.title = [`${r.label}: ${now.before} ${row.querySelector('.weight-input')?.value ?? ''} ${now.mid} ${now.after}`.replace(/\s+/g, ' ').trim(), weightExample(g.key, r.id, scoring, r.label)].filter(Boolean).join('\n');
   };
   showExample();
   input.addEventListener('input', () => showExample(typedScoring()));
@@ -2707,9 +2709,21 @@ function renderCardWeightFields(container, def) {
     const split = key.indexOf(':');
     const g = groups.find((group) => group.key === key.slice(0, split));
     const r = g && weightEntryIn(groups, g.key, key.slice(split + 1));
-    if (r) container.append(buildWeightRow(g, r, appliedGroups, { compact: true }));
+    if (!r) continue;
+    // One small header over the toggle columns, before the first row that is not a cost.
+    if (g.key !== 'costs' && !container.querySelector('.weight-context-head')) container.append(weightContextHead());
+    container.append(buildWeightRow(g, r, appliedGroups, { compact: true }));
   }
   return container.children.length > 0;
+}
+
+function weightContextHead() {
+  const head = document.createElement('div');
+  head.className = 'weight-context-head'; head.setAttribute('aria-hidden', 'true');
+  head.innerHTML = '<span></span><span class="weight-sentence"><span></span><span></span>'
+    + '<span title="Multiply instead: use the value as a multiplier of the card\'s positive score">×</span>'
+    + '<span title="Surcharge: apply this CP surcharge">S</span><span></span></span>';
+  return head;
 }
 
 // The Deck lists view's rows beside the card: every deck holding it (custom decks and the read-only class and
