@@ -513,7 +513,11 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, editorWrite =
           reply(403, { ok: false, error: 'Save must come from the local Score Studio.' }); return;
         }
         try {
-          const maxBytes = urlPath === STUDIO_SAVE_ENDPOINT ? STUDIO_SAVE_MAX_BYTES : ['/__studio/custom-decks', '/__studio/subclass-catalog'].includes(urlPath) ? 4 * 1024 * 1024 : 1048576;
+          const maxBytes = urlPath === STUDIO_SAVE_ENDPOINT
+            ? STUDIO_SAVE_MAX_BYTES
+            : ['/__studio/custom-decks', '/__studio/subclass-catalog'].includes(urlPath)
+              ? 4 * 1024 * 1024
+              : 1048576;
           const chunks = []; let size = 0;
           for await (const chunk of req) {
             size += chunk.length;

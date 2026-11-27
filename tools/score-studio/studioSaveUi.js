@@ -93,11 +93,10 @@ export function initStudioSaveUi(deps)
       cardArtLayers: state.artLayers,
       itemArtLayers: state.itemArtLayers,
     }),
-    apply: (data) =>
-    {
-      state.artLayers = clone(data.cardArtLayers);
-      state.itemArtLayers = clone(data.itemArtLayers);
-    },
+    apply: (data) => Object.assign(state, clone({
+      artLayers: data.cardArtLayers,
+      itemArtLayers: data.itemArtLayers,
+    })),
   });
 
   function paintPill(pill, { text, title, dirty })
@@ -167,10 +166,12 @@ export function initStudioSaveUi(deps)
       cardArtLayers: state.repoArtLayers,
       itemArtLayers: state.repoItemArtLayers,
     };
-    draft.customCards = clone(savedCards.cards);
-    draft.removedCardIds = clone(savedCards.removedCardIds);
-    draft.artLayers = clone(savedArt.cardArtLayers);
-    draft.itemArtLayers = clone(savedArt.itemArtLayers);
+    Object.assign(draft, clone({
+      customCards: savedCards.cards,
+      removedCardIds: savedCards.removedCardIds,
+      artLayers: savedArt.cardArtLayers,
+      itemArtLayers: savedArt.itemArtLayers,
+    }));
   }
 
   /** A draft made from other saved content than the files hold now asks one question before it applies. */
@@ -197,7 +198,11 @@ export function initStudioSaveUi(deps)
   function showFailed(pill, message)
   {
     failedUntil = Date.now() + FAILED_PILL_MS;
-    paintPill(pill, { text: STUDIO_SAVE_PILL_TEXT.failed, title: message ?? '', dirty: true });
+    paintPill(pill, {
+      text: STUDIO_SAVE_PILL_TEXT.failed,
+      title: message ?? '',
+      dirty: true,
+    });
     setTimeout(() =>
     {
       failedUntil = 0;

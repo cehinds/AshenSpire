@@ -1122,7 +1122,10 @@ async function selftest() {
       const swept = sweepErrors.length === strayStudioFiles.length
         && strayStudioFiles.every(mentions)
         && !STUDIO_SAVE_FILES.some(mentions);
-      ok(swept, `K14-studio [S2 m5] content/source/studio/: ${STUDIO_SAVE_FILES.join(', ')} pass; ${strayStudioFiles.join(', ')} each red by name${swept ? '' : ` (got ${sweepErrors.length}: ${sweepErrors.join(' | ') || 'none'})`}`);
+      const sweepDetail = swept
+        ? ''
+        : ` (got ${sweepErrors.length}: ${sweepErrors.join(' | ') || 'none'})`;
+      ok(swept, `K14-studio [S2 m5] content/source/studio/: ${STUDIO_SAVE_FILES.join(', ')} pass; ${strayStudioFiles.join(', ')} each red by name${sweepDetail}`);
       const outDir = join(tmp, 'out-studio');
       const compiled = compileDir(join(contentRoot, 'source'), outDir, { write: true });
       const readsStudio = compiled.results.some((row) => row.file.includes(STUDIO_SAVE_FOLDER))

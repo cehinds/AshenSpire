@@ -21,6 +21,9 @@ import {
 } from '../tools/score-studio/studioSaveFiles.js';
 
 const TEMP_PREFIX = 'ashen-studio-save-';
+const STORY_CARDS_KIND = 'ashenspire.studioCards';
+const STORY_ART_LAYERS_KIND = 'ashenspire.studioArtLayers';
+const RETIRED_TEMPLATES_KIND = 'ashenspire.studioTemplates';
 const FIXED_TIME = '2026-11-26T10:00:00.000Z';
 const LATER_TIME = '2026-11-26T11:00:00.000Z';
 const QA_CARD_ID = 'custom.qaSaveCard';
@@ -97,14 +100,14 @@ test('studio save: a first save writes both files with kind, formatVersion and t
     assert.deepEqual(result.written, [STUDIO_SAVE_FILE_NAMES.cards, STUDIO_SAVE_FILE_NAMES.artLayers]);
     assert.equal(result.savedAt, FIXED_TIME);
     const cards = JSON.parse(bytesOf(root, STUDIO_SAVE_FILE_NAMES.cards));
-    assert.equal(cards.kind, 'ashenspire.studioCards');
+    assert.equal(cards.kind, STORY_CARDS_KIND);
     assert.equal(cards.formatVersion, STUDIO_SAVE_FORMAT_VERSION);
     assert.equal(cards.savedAt, FIXED_TIME);
     assert.deepEqual(Object.keys(cards), ['kind', 'formatVersion', 'savedAt', 'cards', 'removedCardIds']);
     assert.equal(cards.cards[0].id, QA_CARD_ID);
     assert.equal(cards.cards[0]._custom, true, 'Studio _ flags are kept, as the draft keeps them');
     const art = JSON.parse(bytesOf(root, STUDIO_SAVE_FILE_NAMES.artLayers));
-    assert.equal(art.kind, 'ashenspire.studioArtLayers');
+    assert.equal(art.kind, STORY_ART_LAYERS_KIND);
     assert.deepEqual(art.cardArtLayers, CARD_ART_LAYERS);
     assert.deepEqual(readdirSync(studioDirOf(root)).sort(), ['artLayers.json', 'cards.json'], 'no temp file is left');
     assert.notEqual(result.revision, empty.revision);
@@ -154,7 +157,7 @@ test('studio save: a path, an unknown file, extra keys and bad shapes are refuse
       { revision, files: {} },
       { revision, files: { [STUDIO_SAVE_FILE_NAMES.cards]: { ...cardsDocument(), path: 'package.json' } } },
       { revision, files: { [STUDIO_SAVE_FILE_NAMES.cards]: { ...cardsDocument(), selectedCardId: QA_CARD_ID } } },
-      { revision, files: { [STUDIO_SAVE_FILE_NAMES.cards]: { ...cardsDocument(), kind: 'ashenspire.studioArtLayers' } } },
+      { revision, files: { [STUDIO_SAVE_FILE_NAMES.cards]: { ...cardsDocument(), kind: STORY_ART_LAYERS_KIND } } },
       { revision, files: { [STUDIO_SAVE_FILE_NAMES.cards]: { ...cardsDocument(), formatVersion: 2 } } },
       { revision, files: { [STUDIO_SAVE_FILE_NAMES.cards]: { ...cardsDocument(), cards: [{ name: 'no id' }] } } },
       { revision, files: { [STUDIO_SAVE_FILE_NAMES.cards]: { ...cardsDocument(), removedCardIds: [7] } } },
@@ -390,7 +393,7 @@ test('studio save: templates.json is saved in its own shape, kind and no savedAt
     assert.deepEqual(document, { kind: STUDIO_CARD_TEMPLATES_KIND, formatVersion: STUDIO_SAVE_FORMAT_VERSION, templates });
     const { revision } = readStudioSave(root);
     assert.throws(() => saveStudioSave(root, { revision, files: { templates: { ...document, savedAt: FIXED_TIME } } }, fixedClock), /keys that are not allowed: savedAt/);
-    assert.throws(() => saveStudioSave(root, { revision, files: { templates: { ...document, kind: 'ashenspire.studioTemplates' } } }, fixedClock), /must have kind "ashenspire.studioCardTemplates"/);
+    assert.throws(() => saveStudioSave(root, { revision, files: { templates: { ...document, kind: RETIRED_TEMPLATES_KIND } } }, fixedClock), /must have kind "ashenspire.studioCardTemplates"/);
     saveStudioSave(root, { revision, files: { templates: document } }, fixedClock);
     assert.deepEqual(JSON.parse(bytesOf(root, STUDIO_SAVE_FILE_NAMES.templates)), document);
   });

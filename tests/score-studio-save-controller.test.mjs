@@ -1,6 +1,5 @@
-// tests/score-studio-save-controller.test.mjs — studioSave.js, the browser half of the Studio Save (SS-003):
-// the register hook, load on start, the Draft/Saved status, Undo back to the saved content, web-mode
-// download, and that only the registered data keys are sent (never view state).
+// tests/score-studio-save-controller.test.mjs — studioSave.js (SS-003): the register hook, load on start,
+// Draft/Saved after Save, Undo and Redo, web-mode download, and that no view state is sent.
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -28,6 +27,11 @@ const QA_CARD = { id: 'custom.qaSaveCard', name: 'QA card', _custom: true, _edit
 const HTTP_OK = 200;
 const HTTP_CONFLICT = 409;
 const HTTP_SERVER_ERROR = 500;
+const RETIRED_TEMPLATES_KIND = 'ashenspire.studioTemplates';
+const GAME_SCORING_FILE = Object.freeze({
+  name: 'scoring',
+  path: 'content/source/scoring.json',
+});
 
 /** A Studio-like state, its registrations, and a fake server that records every request. */
 function setup({ isLocalServer = true, savedFiles = {}, postStatus = HTTP_OK } = {})
@@ -86,7 +90,7 @@ test('studio save hook: a file must match STUDIO_SAVE_FILES by name and path', (
 {
   clearStudioSaveFiles();
   const read = () => ({});
-  assert.throws(() => registerStudioSaveFile({ name: 'scoring', path: 'content/source/scoring.json', read }), /Unknown Studio Save file/);
+  assert.throws(() => registerStudioSaveFile({ ...GAME_SCORING_FILE, read }), /Unknown Studio Save file/);
   assert.throws(() => registerStudioSaveFile({ name: STUDIO_SAVE_FILE_NAMES.cards, path: 'package.json', read }), /Unknown Studio Save file/);
   assert.throws(() => registerStudioSaveFile({ name: STUDIO_SAVE_FILE_NAMES.cards, path: STUDIO_SAVE_FILES.cards.path }), /read\(\)/);
   registerStudioSaveFile({ name: STUDIO_SAVE_FILE_NAMES.templates, path: STUDIO_SAVE_FILES.templates.path, read: () => ({ templates: [] }) });
@@ -205,7 +209,7 @@ test('studio save hook: a file carries its own kind; SS-004 templates register w
   assert.throws(() => registerStudioSaveFile({
     name: STUDIO_SAVE_FILE_NAMES.templates,
     path: STUDIO_SAVE_FILES.templates.path,
-    kind: 'ashenspire.studioTemplates',
+    kind: RETIRED_TEMPLATES_KIND,
     read: () => ({ templates }),
   }), /Unknown Studio Save file/);
   registerStudioSaveFile({

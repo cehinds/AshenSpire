@@ -116,6 +116,13 @@ export function createStudioSave({ isLocalServer, fetchJson, download, now = () 
   const changedFiles = () => files().filter((file) => lastSavedJson.get(file.name) !== currentJson(file));
   const pathList = () => files().map((file) => file.path).join(LINE_BREAK);
 
+  function savedHeading()
+  {
+    return lastSavedAt
+      ? `${SAVED_TITLE} ${new Date(lastSavedAt).toLocaleString()}`
+      : SAVED_TITLE;
+  }
+
   function rememberLoaded(file, document)
   {
     if (document.kind !== file.kind)
@@ -217,7 +224,7 @@ export function createStudioSave({ isLocalServer, fetchJson, download, now = () 
       }),
       [STUDIO_SAVE_STATUS.saved]: () => ({
         text: STUDIO_SAVE_PILL_TEXT.saved,
-        title: [[SAVED_TITLE, lastSavedAt && new Date(lastSavedAt).toLocaleString()].filter(Boolean).join(' '), pathList()].join(LINE_BREAK),
+        title: [savedHeading(), pathList()].join(LINE_BREAK),
         dirty: false,
       }),
       [STUDIO_SAVE_STATUS.none]: () => null,
