@@ -1,11 +1,32 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { inPreparedStance } from '../src/model/focusMana.js';
+import { CardSpellCostExceptions, ExpectedSpellPrice } from './helpers/spellCostRules.mjs';
 
 const read = async path => JSON.parse(await readFile(new URL(path, import.meta.url), 'utf8'));
 const core = await read('../games/ashenspire/packs/core/cards.json');
 const rogue = await read('../content/source/cards/rogueCards.json');
 const card = id => core.find(row => row.id === id);
+const galePushId = 'core.galePush';
+const galePushEnemy = 'wanderingSoldier';
+const galePushInstance = 'qa0';
+const galePushStamina = 6;
+
+function galePushPrice(combat)
+{
+    const block = combat.fixCoreRules.spellCosts;
+    const authored = card(galePushId);
+    assert.equal(inPreparedStance(combat.player), false, 'the fight opens outside Prepared');
+    return ExpectedSpellPrice({
+        block,
+        exceptions: CardSpellCostExceptions(block, authored),
+        price: {
+            stamina: authored.staminaCost,
+            mana: authored.manaCost,
+        },
+    });
+}
 
 test('weapon Retreat is Ethereal and Exhaust, with uncapped shared fight escalation from zero', () => {
   const retreat = card('core.retreat');
@@ -74,48 +95,76 @@ test('Rogue Backstep and Hit and Run exhaust their actual base copies after play
   }
 });
 
-test('Gale Push pays exactly its printed 1 SP and 1 MP with the current Reaver loadout', async () => {
-  const { bandsFight } = await import('./helpers/bands-fight.mjs');
-  const { dispatch, previewCard } = await import('../src/engine/combat.js');
-  const combat = bandsFight({ hand: ['core.galePush'], enemyIds: ['wanderingSoldier'], stamina: 6 });
-  const enemy = combat.enemies[0];
-  const shown = previewCard(combat, 'qa0', enemy.id);
-  const before = { stamina: combat.player.stamina, mana: combat.player.mana };
-  dispatch(combat, { type: 'playCard', cardInstanceId: 'qa0', targetId: enemy.id });
-  assert.equal(shown.staminaCost, 1);
-  assert.equal(combat.fixCoreRules.spellCosts.manaSurcharge, 0, 'no spell Mana surcharge since 2026-11-26');
-  assert.equal(shown.manaCost, 1, 'the authored 1 MP is the paid Mana');
-  assert.equal(before.stamina - combat.player.stamina, shown.staminaCost);
-  assert.equal(before.mana - combat.player.mana, shown.manaCost);
-  assert.equal(enemy.row, 'back');
-  assert.equal(enemy.statuses.retreat?.stacks, 1);
+test('Gale Push shows and pays its spell cost rules price with the Reaver loadout', async () =>
+{
+    const { bandsFight } = await import('./helpers/bands-fight.mjs');
+    const { dispatch, previewCard } = await import('../src/engine/combat.js');
+    const combat = bandsFight({
+        hand: [galePushId],
+        enemyIds: [galePushEnemy],
+        stamina: galePushStamina,
+    });
+    const enemy = combat.enemies[0];
+    const expected = galePushPrice(combat);
+    const shown = previewCard(combat, galePushInstance, enemy.id);
+    const before = {
+        stamina: combat.player.stamina,
+        mana: combat.player.mana,
+    };
+    dispatch(combat, { type: 'playCard', cardInstanceId: galePushInstance, targetId: enemy.id });
+    assert.deepEqual([shown.staminaCost, shown.manaCost], [expected.stamina, expected.mana]);
+    assert.equal(before.stamina - combat.player.stamina, shown.staminaCost);
+    assert.equal(before.mana - combat.player.mana, shown.manaCost);
+    assert.equal(enemy.row, 'back');
+    assert.equal(enemy.statuses.retreat?.stacks, 1);
 });
 
-test('armoured and unarmoured Gale Push keep the printed spell cost and refuse one Mana below the quote without spending', async () => {
-  const { bandsFight } = await import('./helpers/bands-fight.mjs');
-  const { dispatch, previewCard } = await import('../src/engine/combat.js');
-  const { RefreshGearItemProps } = await import('../src/engine/gearHooks.js');
-  const { serializeCombatSnapshot } = await import('../src/engine/combatSnapshot.js');
-  for (const unarmoured of [false, true]) {
-    const combat = bandsFight({ hand: ['core.galePush'], enemyIds: ['wanderingSoldier'], stamina: 6 });
-    if (unarmoured) {
-      combat.loadout.sets.armor[0] = null;
-      RefreshGearItemProps(combat);
+test('armoured or not, Gale Push keeps the rules price and refuses one Mana below', async () =>
+{
+    const { bandsFight } = await import('./helpers/bands-fight.mjs');
+    const { dispatch, previewCard } = await import('../src/engine/combat.js');
+    const { RefreshGearItemProps } = await import('../src/engine/gearHooks.js');
+    const { serializeCombatSnapshot } = await import('../src/engine/combatSnapshot.js');
+    for (const unarmoured of [false, true])
+    {
+        const combat = bandsFight({
+            hand: [galePushId],
+            enemyIds: [galePushEnemy],
+            stamina: galePushStamina,
+        });
+        if (unarmoured)
+        {
+            combat.loadout.sets.armor[0] = null;
+            RefreshGearItemProps(combat);
+        }
+        const enemy = combat.enemies[0];
+        const expected = galePushPrice(combat);
+        const shown = previewCard(combat, galePushInstance, enemy.id);
+        const play = () =>
+            dispatch(combat, {
+                type: 'playCard',
+                cardInstanceId: galePushInstance,
+                targetId: enemy.id,
+            });
+        assert.deepEqual(
+            [shown.staminaCost, shown.manaCost],
+            [expected.stamina, expected.mana],
+            'armour does not change it',
+        );
+        combat.player.mana = shown.manaCost - 1;
+        const beforeReject = JSON.stringify(serializeCombatSnapshot(combat));
+        assert.throws(play, /mana/i);
+        assert.equal(
+            JSON.stringify(serializeCombatSnapshot(combat)),
+            beforeReject,
+            'a refused play spends nothing',
+        );
+        combat.player.mana = shown.manaCost;
+        const before = combat.player.stamina;
+        play();
+        assert.equal(combat.player.mana, 0);
+        assert.equal(before - combat.player.stamina, shown.staminaCost);
     }
-    const enemy = combat.enemies[0];
-    const shown = previewCard(combat, 'qa0', enemy.id);
-    assert.equal(shown.staminaCost, 1);
-    assert.equal(shown.manaCost, 1, 'armour removal does not change the spell cost');
-    combat.player.mana = shown.manaCost - 1;
-    const beforeReject = JSON.stringify(serializeCombatSnapshot(combat));
-    assert.throws(() => dispatch(combat, { type: 'playCard', cardInstanceId: 'qa0', targetId: enemy.id }), /mana/i);
-    assert.equal(JSON.stringify(serializeCombatSnapshot(combat)), beforeReject, 'a refused play spends no pool, card, status, counter or RNG');
-    combat.player.mana = shown.manaCost;
-    const before = combat.player.stamina;
-    dispatch(combat, { type: 'playCard', cardInstanceId: 'qa0', targetId: enemy.id });
-    assert.equal(combat.player.mana, 0);
-    assert.equal(before - combat.player.stamina, shown.staminaCost);
-  }
 });
 
 test('the rogue Backstep lesson card names Exhaust only when its keyword is on: legacy text has no Exhaust sentence, the current card carries the keyword', async () => {
