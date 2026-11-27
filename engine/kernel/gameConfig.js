@@ -916,7 +916,14 @@ export function validateResolvedGameProfile(snapshot, supportedRuntimeHash) {
     if (!value.schemas[id]) fail(`$/modules/${id}`, 'missing pinned settings schema');
     validateGameSchema(settings,value.schemas[id],`$/modules/${id}`);
   }
-  verifySettings(value.modules, value.instances); verifyRouteFirstFloor(value.modules, value.content); verifyRouteFloorTypes(value.modules, value.content); verifyRewardGroups(value.modules, value.content); verifyContent(value.content); verifyGearContent(value.content, value.modules.gear); verifyEnemyContent(value.content, value.modules.enemies ? characterSettings(value.modules) : null, value.modules.gear);
+  verifySettings(value.modules, value.instances);
+  verifyRouteFirstFloor(value.modules, value.content);
+  verifyRouteFloorTypes(value.modules, value.content);
+  verifyRewardGroups(value.modules, value.content);
+  verifyContent(value.content);
+  verifyGearContent(value.content, value.modules.gear);
+  const enemySettings = value.modules.enemies ? characterSettings(value.modules) : null;
+  verifyEnemyContent(value.content, enemySettings, value.modules.gear);
   return freezeGameData({...value,hash});
 }
 

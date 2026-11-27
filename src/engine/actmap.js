@@ -188,7 +188,9 @@ export function buildGameProfileActMap(registries, rng, seat, tier, { history = 
   // (a rest floor is a single shared node, not a lane per type).
   if (firstFloor !== null && (!alternatives.includes(firstFloor) || (restFloors.includes(1) && startRestFromAct === null) || (firstFloor === 'elite' && minimumThreatFloor > 1))) throw new Error('Invalid configured firstFloor');
   const floorTypeProblems = RouteFloorTypeProblems(rules, rules);
-  if (floorTypeProblems.length) throw new Error(`Invalid configured floorTypes: ${floorTypeProblems[0]}`);
+  if (floorTypeProblems.length) {
+    throw new Error(`Invalid configured floorTypes: ${floorTypeProblems[0]}`);
+  }
   const pinnedFloors = PinnedFloorTypes(rules.floorTypes);
   const hideUnknown = gameModule(registries, 'routes').hideUnknownNodes;
   // maxBranches (owner, 2026-10-25): present means the act splits into 1..min(maxBranches, distinct bosses) branches after a shared
@@ -209,8 +211,10 @@ export function buildGameProfileActMap(registries, rng, seat, tier, { history = 
       const id = `n${floor}_${lane}`;
       const pinnedType = pinnedTypeAt(floor, firstFloor, pinnedFloors);
       const forced = !rest && pinnedType !== null;
-      // A forced node (firstFloor, floorTypes) is drawn as what it is even when hidden types show as '?'.
-      let actual = rest ? 'rest' : forced ? pinnedType : rng.pick('map', choices);
+      // A forced node (firstFloor, floorTypes) shows its real type even where others show '?'.
+      let actual = pinnedType;
+      if (rest) actual = 'rest';
+      else if (!forced) actual = rng.pick('map', choices);
       // shopShare (owner ruling D9): of the randomly typed nodes (elites stay as drawn), 15% are shops and the rest keep the even
       // event/fight/treasure split. Absent shopShare keeps the old even draw, so older profiles roll the same maps.
       if (!rest && !forced && shopShare != null && alternatives.includes('shop') && actual !== 'elite') {
@@ -380,10 +384,15 @@ function buildBranchedActMap(registries, rng, seat, tier, ctx) {
   const guaranteed = new Set();
   if (alternatives.includes('elite')) for (let k = 0; k < branchCount; k++) for (let lane = 0; lane < lanes; lane++) {
     const floors = [];
-    for (let floor = Math.max(2, minimumThreatFloor); floor <= count; floor++) if (!restSet.has(floor) && !pinnedFloors.has(floor) && laneAt(k, floor, lane)) floors.push(floor);
+    for (let floor = Math.max(2, minimumThreatFloor); floor <= count; floor++) {
+      const free = !restSet.has(floor) && !pinnedFloors.has(floor);
+      if (free && laneAt(k, floor, lane)) floors.push(floor);
+    }
     // A lane that crosses a pinned elite depth (floorTypes) already holds its elite.
     const pinnedElite = hasPinnedDepth(pinnedFloors, ELITE_NODE, floor => laneAt(k, floor, lane));
-    if (floors.length && !pinnedElite) guaranteed.add(`${rng.pick('map', floors)}:${k * lanes + lane}`);
+    if (floors.length && !pinnedElite) {
+      guaranteed.add(`${rng.pick('map', floors)}:${k * lanes + lane}`);
+    }
   }
   // One guaranteed shop slot per branch (shopsPerBranch): a non-rest depth 4-8 where the branch has a lane, never an elite slot.
   const guaranteedShop = new Set();
