@@ -168,6 +168,8 @@ test('path rules keep generated files and built HTML out of owner commits', () =
     assert.ok(!IsEditableContentPath('games/ashenspire/game.lock.json'));
     assert.ok(!IsEditableContentPath('games/ashenspire/packs/core/enemies/_reference.json'));
     assert.ok(!IsEditableContentPath('src/content/generated/cards.js'));
+    assert.ok(!IsEditableContentPath('games/ashenspire/derived/characters.json'));
+    assert.ok(IsDerivedPath('games/ashenspire/derived/characters.json'));
     assert.ok(IsNeverCommitPath('buildordinal.json'));
     assert.ok(IsNeverCommitPath('dist/AshenSpire.html'));
     assert.ok(IsDerivedPath('src/content/generated/cards.js'));
