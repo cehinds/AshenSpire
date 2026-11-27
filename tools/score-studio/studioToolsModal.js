@@ -27,7 +27,7 @@ import { removeCardsAndReferences } from './cardSelection.js';
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const BUILTIN_CLASSES = Object.freeze(['reaver', 'starseer', 'rogue', 'herald', 'colorless']);
 
-function downloadJsonFile(filename, data) {
+export function downloadJsonFile(filename, data) {
   const blob = new Blob([JSON.stringify(data, null, 2) + '\n'], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
