@@ -2,7 +2,8 @@
 
 How work is branched, reviewed, and merged is in
 [CONTRIBUTING.md](CONTRIBUTING.md). Build and test commands are in
-[DEVELOPER.md](DEVELOPER.md); game mechanics are governed by [SPEC.md](SPEC.md).
+[DEVELOPER.md](DEVELOPER.md); game mechanics are governed by [SPEC.md](SPEC.md). Every new or changed line of
+code follows [CODE-STYLE.md](CODE-STYLE.md); pass it into every coder brief.
 
 **Before opening or finishing any pull request, read [A pull request is not
 done until it is merged and promoted](CONTRIBUTING.md#a-pull-request-is-not-done-until-it-is-merged-and-promoted)** — it is

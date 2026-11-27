@@ -34,7 +34,9 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-27
 
-- **Score Studio keeps one active card and item** ([#3019](https://github.com/cehinds/AshenSpire/pull/3019), `0.7.5.143`). Every panel follows the same card, filters never switch it, and reload brings it back.
+- **Score Studio keeps one active card and item** ([#3019](https://github.com/cehinds/AshenSpire/pull/3019), `0.7.5.145`). Every panel follows the same card, filters never switch it, and reload brings it back.
+- **A code style guide** ([#3020](https://github.com/cehinds/AshenSpire/pull/3020), `0.7.5.145`). `CODE-STYLE.md` sets how all new and changed code looks. No game changes.
+
 - **Faster upgrade choices and Act schedules** ([#3014](https://github.com/cehinds/AshenSpire/pull/3014), `0.7.5.143`). Upgrade offers skip unused extra candidates while preserving choices and prices. Generated map nodes use a direct text sort when preparing upgrade and reward schedules, while custom node IDs retain their existing ordering.
 
 - **Safer card JSON edits in Score Studio** ([#3015](https://github.com/cehinds/AshenSpire/pull/3015), `0.7.5.143`). Failed card JSON edits preserve Undo and Redo history, invalid card text is rejected before changes, and custom cards can open their comparison summary and menu.
