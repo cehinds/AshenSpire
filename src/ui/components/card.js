@@ -177,6 +177,8 @@ function fillTemplate(def, tokens, baseTokens, damageSequences = [], wardAsPoise
 // `at` the level it was drawn at, `receipt` what its damage numbers explain.
 const paintedFaces = new WeakMap();
 const receiptRebound = new WeakSet();
+// Base-pack effects whose generated face line (cardFaceText.js) is the whole effect, used when no faceTemplate is authored.
+const GENERATED_BASE_FACE_OPS = Object.freeze(['modifyCards']);
 // A card element's in-place refresher (renderCard fills it): the opts it was built with, replaced.
 const refreshers = new WeakMap();
 // The art <img>'s error handler is bound once, to the image, and reads this: a
@@ -275,7 +277,6 @@ export function renderCard(registries, ref, opts = {}) {
     model.range = opts.range ? combatCardRange(def, opts.maxRange) : null;
     damageWords = model.tags.filter(tag => tag.id.startsWith('damage:')).map(tag => tag.label);
     accessibleLabel = [model.name, model.sigils.displayLabel || ACTION_SIGILS[model.sigils.action].label,
-      model.sigils.traditions?.length === 2 && t('card.tradition.both'),
       model.sigils.mirror && mirrorSigil(model.sigils.mirror).mark.label,
       model.sigils.school && `${SCHOOL_SIGILS[model.sigils.school].label} school`,
       damageWords.length && `Damage: ${damageWords.join(', ')}`,
@@ -386,10 +387,18 @@ export function renderCard(registries, ref, opts = {}) {
   let drawn = levelNow();
   // Every printed surface uses the same compact benefits. A visible tag keeps
   // the exact amount and condition available without repeating it in the body.
-  let faceRules, wardPoise, allFaceLines, faceLines;
+  let faceRules, wardPoise, allFaceLines, faceLines, generatedSummary;
   const deriveFace = () => {
     faceRules = gameModule(registries, 'cards');
     wardPoise = wardReadsAsPoise(registries) ? { preview: opts.preview || null } : null;
+    // A base-pack card with no authored short face says the one its effects generate (cardFaceText.js), so a long
+    // authored rule never leaves a stub such as "Choose a hand card." (owner, 2026-11-17). Only for effects the
+    // face model phrases whole: a base card's other rows carry authored meaning (X targets, scaling) it would drop.
+    const authoredFace = Array.isArray(def.faceTemplate) && def.faceTemplate.length;
+    generatedSummary = baseCardPresentation[def.id] && !authoredFace && def.effects?.length && def.effects.every(effect => GENERATED_BASE_FACE_OPS.includes(effect.op))
+      ? (cardFaceLines(def, opts.preview || null, registries, opts.rules || null, { stanceEntry: false }) || [])
+        .filter(line => !['detail', 'tag'].includes(line.kind)).map(line => ('faceHtml' in line ? line.faceHtml : line.html).replace(/[.,]\s*$/, '')).filter(Boolean)
+      : [];
     const representedEffects = model.sideTags.flatMap(tag => tag.representedEffects || []);
     const representedEntry = model.sideTags.flatMap(tag => tag.representedEntry || []);
     const representedRules = model.sideTags.flatMap(tag => tag.representedRules || []);
@@ -423,9 +432,10 @@ export function renderCard(registries, ref, opts = {}) {
     // An authored short summary (`faceTemplate`) stands in for the Inspect cue; same live tokens, no shared rider clauses.
     const summaryHtml = Array.isArray(def.faceTemplate) && def.faceTemplate.length
       ? def.faceTemplate.map(line => fillTemplate({ id: def.id, type: def.type, tags: def.tags, cardTags: def.cardTags, combatProfile: def.combatProfile, evade: def.evade, textTemplate: line.replace(/\[v2:([^\]]*)\]/g, expanded ? '$1' : '').replace(/,? ?(\{[\w.]+\})×/, ', $1 times'), defenseRulesVersion: def.defenseRulesVersion, minCombatExpansionVersion: def.minCombatExpansionVersion },
-        model.tokens, model.baseTokens, model.damageSequences, null, null).replace(/(<span class="val[^"]*">1<\/span>) cards\b/gi, '$1 card').replace(/[.,]\s*$/, '')) : null;
+        model.tokens, model.baseTokens, model.damageSequences, null, null).replace(/(<span class="val[^"]*">1<\/span>) cards\b/gi, '$1 card').replace(/[.,]\s*$/, ''))
+      : generatedSummary.length ? generatedSummary : null;
     // `roomy` asks for the second, fuller reading (cardFaceBudget.js); the fitter shows it only where it fits at its floor font.
-    const projection = cardFaceProjection(def, { lines: faceLines, authoredHtml: appliedRules, faceHtml: summaryHtml, registries,
+    const projection = cardFaceProjection(def, { lines: faceLines, authoredHtml: appliedRules, faceHtml: summaryHtml, summaryComplete: generatedSummary.length > 0, registries,
       effects: opts.preview?.chargedEffects || def.effects || [], roomy: registries.gameProfile?.foundation?.mode === 'configured' && opts.level !== 'inspect' ? roomyBudgetFor(faceRules) : roomyBudgetFor(null), roomyLines: allFaceLines });
     const clauseHtml = clauses => compactCardRules(clauses.map((line, i) => `<span class="face-line" data-face-kind="${line.kind}"${line.downside || line.kind === 'cost' ? ' data-face-downside="true"' : ''} data-face-clause="${i}">${line.html.replace(/\.$/, '')}.</span>`).join(' '));
     const rulesHtml = clauseHtml(projection.clauses);

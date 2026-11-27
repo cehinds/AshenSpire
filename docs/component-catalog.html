@@ -200,6 +200,16 @@
     <a href="../index.html?shot=map&amp;shotDungeon=BS">Open playable dungeon preview</a>
     <svg viewBox="0 0 480 150" width="480" style="max-width:100%" role="img" aria-label="Entrance divides into two roads, which rejoin at the boss. Scene floor lies below background, actors and interface."><rect width="480" height="150" fill="#1b211a"/><path d="M35 75L105 30L180 45L235 75M35 75L105 120L180 105L235 75" fill="none" stroke="#c9b481" stroke-width="3"/><g fill="#c9b481"><circle cx="35" cy="75" r="9"/><circle cx="105" cy="30" r="9"/><circle cx="105" cy="120" r="9"/><circle cx="180" cy="45" r="9"/><circle cx="180" cy="105" r="9"/><circle cx="235" cy="75" r="12"/></g><g fill="#eee5d3" font-size="12"><text x="280" y="35">Interface</text><text x="280" y="60">Actors</text><text x="280" y="85">Background plate</text><text x="280" y="110">Floor plate</text></g></svg>
   </section>
+  <section id="score-studio-composition" aria-labelledby="score-studio-composition-title">
+    <h2 id="score-studio-composition-title">Score Studio authoring workspace</h2>
+    <p><a href="../tools/score-studio/">Open Score Studio</a> · <a href="SCORE-SUBCLASS-CATALOGS.md">Card-list and editing guide</a>. Compact command menus sit above the Cards/Items gallery. One resizable, dockable customization pane reuses Properties, Design, Weights and Deck lists. Opt-in selection keeps its count inline; staged Rebalance compares real card faces and numeric changes before one explicit Apply.</p>
+    <svg viewBox="0 0 760 145" width="760" style="max-width:100%" role="img" aria-label="Score Studio: command menus above a gallery and customization pane, with a compact staged card comparison">
+      <rect width="760" height="145" rx="8" fill="#171c25"/><path d="M0 28H760M455 28V145" stroke="#455062"/>
+      <g fill="#e4eaf3" font-family="system-ui,sans-serif" font-size="12"><text x="12" y="19">File   Edit   View   Tools   Git   Test</text><text x="670" y="19">Score Studio</text><text x="12" y="48">Select · Search · Cards / Items · Rebalance · Filters</text><text x="470" y="48">Customize: Properties / Design / Weights / Decks</text></g>
+      <g fill="#222c3b" stroke="#64748b"><rect x="12" y="60" width="96" height="73" rx="4"/><rect x="119" y="60" width="96" height="73" rx="4"/><rect x="226" y="60" width="96" height="73" rx="4"/><rect x="470" y="60" width="276" height="73" rx="4"/></g>
+      <g fill="#e4eaf3" font-family="system-ui,sans-serif" font-size="12"><text x="28" y="88">Original</text><text x="28" y="109">3 damage</text><text x="134" y="88">Staged</text><text x="134" y="109">5 damage</text><text x="242" y="88">Changes</text><text x="242" y="109">CP 8 → 9</text><text x="483" y="86">One shared pane · dock / undock</text><text x="483" y="109">Rebalance · Revert · Cancel · Apply</text></g>
+    </svg>
+  </section>
   <header>
     <div><a class="title-link" href="https://github.com/cehinds/AshenSpire/blob/dev/README.md" aria-label="Open the AshenSpire GitHub README"><h1>Ashen<span>Spire</span> component catalog</h1></a><p class="lede">Reusable presentation vocabulary for Map, Combat, Inventory, and future screens. Each card shows the stable component ID, model/factory home, renderer, and reuse surface.</p><nav class="catalog-nav" aria-label="AshenSpire project links"><a href="https://github.com/cehinds/AshenSpire">Repository</a><a href="https://github.com/cehinds/AshenSpire/blob/dev/README.md">README</a><a href="https://github.com/cehinds/AshenSpire/issues">Issues</a><a href="https://github.com/cehinds/AshenSpire/issues/183">Daily Status</a><a href="https://cehinds.github.io/AshenSpire/AshenSpire.html">Preview</a><a href="../art/combat-effects-2026-09-07/sprite-catalog.html">Combat sprites</a><a href="../art/card-effect-refresh-2026-09-09/index.html">Card effect art · before / after</a></nav></div>
     <div class="meta">Library reference<br><a href="COMPONENT-CATALOG.md">Open Markdown catalog</a><br><a href="ASSET-COMPONENTS.md">Open Asset Components</a><br><a href="../src/ui/models/UiComponentId.js">Open ID enum</a></div>
@@ -216,23 +226,22 @@
     <h2 id="recipient-effects-title">Combat recipient effects</h2>
     <p><a href="../tools/recipient-effects-runtime-preview.html">Open the sprite and timing preview</a> · <a href="RECIPIENT-EFFECTS.md">Configuration and art export</a>. <code>RecipientEffectsForEvent</code> selects sprites from confirmed combat results. <code>DecorateRecipientEffects</code> associates actions and recipients, then <code>PlayRecipientEffectLayers</code> plays the clips. Spell circles remain on the caster. Impact and elemental texture play together, and Sweep uses one sprite across its targets.</p>
     <div class="mini mini-stack" style="width:min(100%,452px)">
-      <svg viewBox="0 0 352 96" width="352" style="max-width:100%" role="img" aria-label="A shared battlefield queue plays Enemy A impact and element together, then Enemy B Bind, then Enemy A Weak, with 30 millisecond gaps and no overlap.">
+      <svg viewBox="0 0 352 112" width="352" style="max-width:100%" role="img" aria-label="Casting and movement, attack impacts, defense and reactions, then buffs and statuses. Adjacent categories can overlap.">
         <g fill="currentColor" font-size="11">
-          <text x="3" y="24">Enemy A</text><text x="3" y="60">Enemy B</text>
+          <text x="3" y="19">Casting and movement</text>
+          <text x="3" y="45">Attack impacts</text>
+          <text x="3" y="71">Defense and reactions</text>
+          <text x="3" y="97">Buffs and statuses</text>
         </g>
-        <g fill="#31556b" stroke="#8fbacc">
-          <rect x="62" y="7" width="94" height="28" rx="4"/><rect x="178" y="43" width="72" height="28" rx="4"/>
+        <g stroke-width="1">
+          <rect x="132" y="7" width="60" height="16" rx="3" fill="#31556b" stroke="#8fbacc"/>
+          <rect x="181" y="33" width="63" height="16" rx="3" fill="#77502c" stroke="#dbaa6b"/>
+          <rect x="233" y="59" width="61" height="16" rx="3" fill="#55446c" stroke="#b4a5d0"/>
+          <rect x="283" y="85" width="65" height="16" rx="3" fill="#35544f" stroke="#a0c5af"/>
         </g>
-        <rect x="272" y="7" width="76" height="28" rx="4" fill="#77502c" stroke="#dbaa6b"/>
-        <g fill="#fff4df" font-size="11" text-anchor="middle">
-          <text x="109" y="25">Impact + element</text><text x="214" y="61">Bind</text><text x="310" y="25">Weak</text>
-        </g>
-        <path d="M156 73v4h22v-4 M250 73v4h22v-4" fill="none" stroke="#dbaa6b"/>
-        <text x="167" y="90" text-anchor="middle" fill="currentColor" font-size="10">30 ms gap</text>
-        <text x="261" y="90" text-anchor="middle" fill="currentColor" font-size="10">30 ms gap</text>
       </svg>
     </div>
-    <p>The default battlefield queue shows one clip at a time with a 30 ms gap and zero overlap. Score Studio’s Effects Timing tab opens the same editor as the standalone preview. Preview and save a different scope, cap, gap, overlap or opacity. The clip duration stays fixed. Ward shatter keeps the protected actor's tint and silhouette. Dedicated gain sprites mark Evade and Counter preparation. Missing artwork uses a static debug mark.</p>
+    <p>The default queues allow two active clips per category and per actor, with three across the battlefield. Clips in a category start at least 10 ms apart. The next category can begin 10 ms before the previous one ends when capacity allows. Score Studio's Effects Timing tab previews and saves the order, limits, stagger, transition overlap and opacity. Clip duration stays fixed. Missing artwork uses a static debug mark.</p>
   </section>
   <section class="catalog-footer" aria-labelledby="procedural-art-title">
     <h2 id="procedural-art-title">Procedural card artwork</h2>
@@ -290,6 +299,9 @@
 </aside>
 <script>
 const V = {
+  scoreStudioWorkspace:'<div class="mini mini-stack"><div class="mini-panel" style="width:250px"><small>File · Edit · View · Tools <b style="float:right">Score Studio</b></small><hr><div style="display:grid;grid-template-columns:1.4fr 1fr;gap:8px"><div class="mini-panel">Cards / Items<br><small>Select · Search · Filters<br>Illustrated gallery</small></div><div class="mini-panel">Customize<br><small>Properties<br>Design · Weights<br>Deck lists</small></div></div></div><small>One dockable customization pane</small></div>',
+  scoreStudioSelection:'<div class="mini mini-stack"><div class="mini-row"><div class="mini-panel" style="border-color:#4d7a45">☑ Card A</div><div class="mini-panel" style="border-color:#4d7a45">☑ Card B</div></div><div class="mini-label">Select 2 · exact card IDs</div><small>Commands in Edit / Tools<br>Membership in Deck lists</small></div>',
+  scoreStudioRebalance:'<div class="mini mini-stack"><div class="mini-panel" style="width:250px"><b>Rebalance power</b><br><small>Scope · Rank · Rarity · CP</small><hr><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div class="mini-panel">Original<br><b>3 damage</b><br><small>CP 8</small></div><div class="mini-panel">Staged<br><b>5 damage</b><br><small>CP 9</small></div></div><small>‹ Card 1 / 2 › · ‹ Version 1 ›</small><hr><small>Rebalance · Revert · Cancel · Apply</small></div></div>',
   creationPageHeading:'<div class="mini mini-stack"><div class="mini-label">CHARACTER CREATION</div><div class="mini-title">Prepare your Forsaken</div><div class="mini-label">Live title and description</div></div>',
   creationPartsPanel:'<div class="mini mini-stack" style="width:100%"><div class="mini-panel"><b>Panel heading</b><br>Live content body<br><small>Material · trim · content</small></div></div>',
   creationChoiceTile:'<div class="mini mini-stack"><div class="mini-row"><span class="coin">◆</span><div><div class="mini-title">A choice</div><div class="mini-label">Separate artwork and live text</div></div></div><div class="mini-label">Click changes local selected state</div></div>',
@@ -496,6 +508,11 @@ const V = {
   relicChoiceCard:'<div class="mini"><div class="mini-panel" style="width:220px;height:auto;padding:10px"><b>GOLDEN SPROUT</b><br><span class="mini-label">Heal 3 HP at combat start.</span></div></div>'
 };
 const SEMANTIC_COMPONENTS = [
+ ['score-studio-workspace','Studio draft + cardMechanicalProjection','tools/score-studio/studio.js','tools','Score Studio Cards and Items','Compact File/Edit/View/Tools/Git/Test menus, contextual gallery, native Filters, scoped card selection, and a single customization pane. Gallery size changes preserve inspector scale.','scoreStudioWorkspace'],
+ ['score-studio-card-selection','createCardSelectionMode + exact selected IDs','tools/score-studio/cardSelection.js','tools','Score Studio card gallery and deck membership','Opt-in selection overlays keep card inspection separate; count stays inline. Bulk commands live in menus and never add gallery toolbar rows. Added-card removal cleans deck/catalog references and protects original Core cards.','scoreStudioSelection'],
+ ['score-studio-customization-pane','selected card/item + view and docking state','tools/score-studio/cardEditorDock.js','tools','Properties, Design, Weights and Deck lists','One set of controls moves between a resizable dock and native dialog. Selection changes retain the active view. Explicit Edit opens properties without duplicating inputs or stacking Rebalance dialogs.','scoreStudioWorkspace'],
+ ['score-studio-deck-lists','deckCatalog + current card/item membership','tools/score-studio/deckListPanel.js','tools','Score Studio class templates and custom decks','Compact grouped rows show class/type, counts and member actions. Class views remain read-only; custom deck actions apply only to the current context selection.','scoreStudioSelection'],
+ ['score-studio-rebalance-comparison','RebalanceSession + CardDefinitionToScoreFace + ProjectCardMechanicalValues','tools/score-studio/focusedRebalanceUi.js','tools','Single card/item, selected entries and explicit Advanced pools','Detached before/after game faces share actual-mechanics CP. Compact card/version navigation appears only when useful; mechanical deltas stay visible, metadata folds into Other changes, and the fixed footer owns Rebalance/Revert/Cancel/Apply. Cancel is read-only; Apply commits one undo step.','scoreStudioRebalance'],
  ['combat-upcast-choice','upcastOptions','Selected-card controls + upcastChoice.openUpcastChoice','primitive','Combat','Temporary rank before payment. Default-off: the under-card Upcast button reveals the native inline picker inline. The hand reveals pager-focused faces before selection and selected controls afterward. An overflow-visible fan shifts only the active owner; focus alone leaves the chooser hidden. Page and combat HUD stay still. Enabled: shared modal after target choice. Cancel retains card, rank and target and spends nothing.','combatUpcastChoice'],
  ['combat-status-recovery','recoveryControls + controlGate','combat','primitive','Combat','Synthetic recovery and Stand up controls show per-stack SP cost and affordability only when needed. The standalone Block, Barrier and Ward summary box is removed.','buttons'],
  ['combat-blight-hud','ashenBlightBarHtml','combat','hud','Combat','Positive Ashen Blight fills a wide centered header meter with a broad molten-orange river between textured black basalt banks; zero is hidden. Phones place it below the top controls and above the battlefield.','blightHud'],
@@ -785,6 +802,8 @@ const RENDERED_ARMOURY_COMPONENTS = [
 }));
 const C = [...SEMANTIC_COMPONENTS, ...RENDERED_ARMOURY_COMPONENTS];
 const COMPOSITION = Object.freeze({
+  'score-studio-workspace':['score-studio-card-selection','score-studio-customization-pane','score-studio-deck-lists','score-studio-rebalance-comparison'],
+  'score-studio-rebalance-comparison':['illustrated-card','score-studio-customization-pane'],
   'startup-gate':['startup-ash-field','startup-mark'],
   'art-load-notice':['art-load-notice-retry'],
   'offline-play-modal':['offline-folder-copy'],

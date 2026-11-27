@@ -19,7 +19,7 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
+      "strength": 0,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -35,7 +35,7 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
+      "strength": 0,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -64,9 +64,7 @@
       "heavy",
       "stagger"
     ],
-    "setPoints": {
-      "strength": 3
-    },
+    "setPoints": {},
     "points": {
       "ar": 0,
       "dr": 0,
@@ -77,7 +75,7 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 3,
+      "strength": 0,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -93,7 +91,7 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 3,
+      "strength": 0,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -125,10 +123,7 @@
       "flurry",
       "throw"
     ],
-    "setPoints": {
-      "dexterity": 1,
-      "strength": 1
-    },
+    "setPoints": {},
     "points": {
       "ar": 0,
       "dr": 0,
@@ -139,8 +134,8 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
-      "dexterity": 1,
+      "strength": 0,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -155,8 +150,8 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
-      "dexterity": 1,
+      "strength": 0,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -185,9 +180,7 @@
       "bow",
       "retreat"
     ],
-    "setPoints": {
-      "dexterity": 1
-    },
+    "setPoints": {},
     "points": {
       "ar": 0,
       "dr": 0,
@@ -199,7 +192,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 1,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -215,7 +208,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 1,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -253,8 +246,8 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
-      "dexterity": 1,
+      "strength": 0,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -269,8 +262,8 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
-      "dexterity": 1,
+      "strength": 0,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -312,7 +305,7 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 2,
+      "strength": 0,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -328,7 +321,7 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 2,
+      "strength": 0,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -370,7 +363,7 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 2,
+      "strength": 0,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -386,7 +379,7 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 2,
+      "strength": 0,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -429,7 +422,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 2,
+      "dexterity": 1,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -445,7 +438,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 2,
+      "dexterity": 1,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -486,7 +479,7 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
+      "strength": 0,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -502,7 +495,7 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
+      "strength": 0,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -543,7 +536,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 1,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -559,7 +552,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 1,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -598,7 +591,7 @@
       "precision": 0,
       "strength": 0,
       "dexterity": 0,
-      "constitution": 1,
+      "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
     },
@@ -614,7 +607,7 @@
       "precision": 0,
       "strength": 0,
       "dexterity": 0,
-      "constitution": 1,
+      "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
     },
@@ -645,6 +638,22 @@
     "points": {
       "ar": 0,
       "dr": 0,
+      "poise": 1,
+      "hp": 0,
+      "mp": 0,
+      "sp": 0,
+      "ward": 0,
+      "evasion": 0,
+      "precision": 0,
+      "strength": 0,
+      "dexterity": 0,
+      "constitution": 1,
+      "wisdom": 0,
+      "intelligence": 0
+    },
+    "values": {
+      "ar": 0,
+      "dr": 0,
       "poise": 3,
       "hp": 0,
       "mp": 0,
@@ -654,23 +663,7 @@
       "precision": 0,
       "strength": 0,
       "dexterity": 0,
-      "constitution": 2,
-      "wisdom": 0,
-      "intelligence": 0
-    },
-    "values": {
-      "ar": 0,
-      "dr": 0,
-      "poise": 9,
-      "hp": 0,
-      "mp": 0,
-      "sp": 0,
-      "ward": 0,
-      "evasion": 0,
-      "precision": 0,
-      "strength": 0,
-      "dexterity": 0,
-      "constitution": 2,
+      "constitution": 1,
       "wisdom": 0,
       "intelligence": 0
     },
@@ -708,7 +701,7 @@
       "precision": 0,
       "strength": 0,
       "dexterity": 0,
-      "constitution": 1,
+      "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
     },
@@ -724,7 +717,7 @@
       "precision": 0,
       "strength": 0,
       "dexterity": 0,
-      "constitution": 1,
+      "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
     },
@@ -760,9 +753,9 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
+      "strength": 0,
       "dexterity": 0,
-      "constitution": 1,
+      "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
     },
@@ -776,9 +769,9 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
+      "strength": 0,
       "dexterity": 0,
-      "constitution": 1,
+      "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
     },
@@ -804,9 +797,7 @@
       "lantern",
       "regen"
     ],
-    "setPoints": {
-      "wisdom": 1
-    },
+    "setPoints": {},
     "points": {
       "ar": 0,
       "dr": 0,
@@ -820,7 +811,7 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 1,
+      "wisdom": 0,
       "intelligence": 0
     },
     "values": {
@@ -836,7 +827,7 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 1,
+      "wisdom": 0,
       "intelligence": 0
     },
     "modifiers": [
@@ -878,7 +869,7 @@
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
-      "intelligence": 1
+      "intelligence": 0
     },
     "values": {
       "ar": 0,
@@ -894,7 +885,7 @@
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
-      "intelligence": 1
+      "intelligence": 0
     },
     "modifiers": [
       "strike.burn=+2"
@@ -931,8 +922,8 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
-      "dexterity": 1,
+      "strength": 0,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -947,8 +938,8 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
-      "dexterity": 1,
+      "strength": 0,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -976,9 +967,7 @@
     "tags": [
       "staff"
     ],
-    "setPoints": {
-      "intelligence": 1
-    },
+    "setPoints": {},
     "points": {
       "ar": 0,
       "dr": 0,
@@ -993,7 +982,7 @@
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
-      "intelligence": 1
+      "intelligence": 0
     },
     "values": {
       "ar": 0,
@@ -1009,7 +998,7 @@
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
-      "intelligence": 1
+      "intelligence": 0
     },
     "modifiers": [],
     "pool": {
@@ -1033,9 +1022,7 @@
       "staff",
       "frost"
     ],
-    "setPoints": {
-      "intelligence": 1
-    },
+    "setPoints": {},
     "points": {
       "ar": 0,
       "dr": 0,
@@ -1050,7 +1037,7 @@
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
-      "intelligence": 2
+      "intelligence": 0
     },
     "values": {
       "ar": 0,
@@ -1066,7 +1053,7 @@
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
-      "intelligence": 2
+      "intelligence": 0
     },
     "modifiers": [
       "strike.frost=+2"
@@ -1093,10 +1080,7 @@
       "blight",
       "retreat"
     ],
-    "setPoints": {
-      "intelligence": 2,
-      "wisdom": 1
-    },
+    "setPoints": {},
     "points": {
       "ar": 0,
       "dr": 0,
@@ -1110,8 +1094,8 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 1,
-      "intelligence": 2
+      "wisdom": 0,
+      "intelligence": 0
     },
     "values": {
       "ar": 0,
@@ -1126,8 +1110,8 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 1,
-      "intelligence": 2
+      "wisdom": 0,
+      "intelligence": 0
     },
     "modifiers": [
       "strike.blight=+2"
@@ -1170,7 +1154,7 @@
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
-      "intelligence": 2
+      "intelligence": 1
     },
     "values": {
       "ar": 0,
@@ -1186,7 +1170,7 @@
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
-      "intelligence": 2
+      "intelligence": 1
     },
     "modifiers": [],
     "pool": {
@@ -1227,7 +1211,7 @@
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
-      "intelligence": 2
+      "intelligence": 1
     },
     "values": {
       "ar": 0,
@@ -1243,7 +1227,7 @@
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
-      "intelligence": 2
+      "intelligence": 1
     },
     "modifiers": [
       "self.regen=+1"
@@ -1269,9 +1253,7 @@
       "rod",
       "blight"
     ],
-    "setPoints": {
-      "wisdom": 1
-    },
+    "setPoints": {},
     "points": {
       "ar": 0,
       "dr": 0,
@@ -1285,7 +1267,7 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 2,
+      "wisdom": 0,
       "intelligence": 0
     },
     "values": {
@@ -1301,7 +1283,7 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 2,
+      "wisdom": 0,
       "intelligence": 0
     },
     "modifiers": [
@@ -1344,7 +1326,7 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 1,
+      "wisdom": 0,
       "intelligence": 1
     },
     "values": {
@@ -1360,7 +1342,7 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 1,
+      "wisdom": 0,
       "intelligence": 1
     },
     "modifiers": [
@@ -1395,6 +1377,22 @@
     "points": {
       "ar": 0,
       "dr": 0,
+      "poise": 1,
+      "hp": 0,
+      "mp": 0,
+      "sp": 0,
+      "ward": 0,
+      "evasion": 0,
+      "precision": 0,
+      "strength": 0,
+      "dexterity": 0,
+      "constitution": 0,
+      "wisdom": 0,
+      "intelligence": 1
+    },
+    "values": {
+      "ar": 0,
+      "dr": 0,
       "poise": 3,
       "hp": 0,
       "mp": 0,
@@ -1406,23 +1404,7 @@
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
-      "intelligence": 2
-    },
-    "values": {
-      "ar": 0,
-      "dr": 0,
-      "poise": 9,
-      "hp": 0,
-      "mp": 0,
-      "sp": 0,
-      "ward": 0,
-      "evasion": 0,
-      "precision": 0,
-      "strength": 0,
-      "dexterity": 0,
-      "constitution": 0,
-      "wisdom": 0,
-      "intelligence": 2
+      "intelligence": 1
     },
     "modifiers": [
       "strike.poise=+3",
@@ -1460,8 +1442,8 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
-      "dexterity": 1,
+      "strength": 0,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -1476,8 +1458,8 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
-      "dexterity": 1,
+      "strength": 0,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -1518,7 +1500,7 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 2,
+      "strength": 0,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -1534,7 +1516,7 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 2,
+      "strength": 0,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -1581,7 +1563,7 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 2,
+      "wisdom": 1,
       "intelligence": 0
     },
     "values": {
@@ -1597,7 +1579,7 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 2,
+      "wisdom": 1,
       "intelligence": 0
     },
     "modifiers": [
@@ -1623,9 +1605,7 @@
     "tags": [
       "plate"
     ],
-    "setPoints": {
-      "constitution": 1
-    },
+    "setPoints": {},
     "points": {
       "ar": 0,
       "dr": 0,
@@ -1638,7 +1618,7 @@
       "precision": 0,
       "strength": 0,
       "dexterity": 0,
-      "constitution": 1,
+      "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
     },
@@ -1654,7 +1634,7 @@
       "precision": 0,
       "strength": 0,
       "dexterity": 0,
-      "constitution": 1,
+      "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
     },
@@ -1691,8 +1671,8 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 1,
-      "constitution": 1,
+      "dexterity": 0,
+      "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
     },
@@ -1707,8 +1687,8 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 1,
-      "constitution": 1,
+      "dexterity": 0,
+      "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
     },
@@ -1733,9 +1713,7 @@
     "tags": [
       "plate"
     ],
-    "setPoints": {
-      "strength": 1
-    },
+    "setPoints": {},
     "points": {
       "ar": 0,
       "dr": 0,
@@ -1746,9 +1724,9 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
+      "strength": 0,
       "dexterity": 0,
-      "constitution": 1,
+      "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
     },
@@ -1762,9 +1740,9 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
+      "strength": 0,
       "dexterity": 0,
-      "constitution": 1,
+      "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
     },
@@ -1802,8 +1780,8 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 1,
-      "constitution": 1,
+      "dexterity": 0,
+      "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
     },
@@ -1818,8 +1796,8 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 1,
-      "constitution": 1,
+      "dexterity": 0,
+      "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
     },
@@ -1846,9 +1824,7 @@
     "tags": [
       "robes"
     ],
-    "setPoints": {
-      "wisdom": 1
-    },
+    "setPoints": {},
     "points": {
       "ar": 0,
       "dr": 0,
@@ -1862,7 +1838,7 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 1,
+      "wisdom": 0,
       "intelligence": 0
     },
     "values": {
@@ -1878,7 +1854,7 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 1,
+      "wisdom": 0,
       "intelligence": 0
     },
     "modifiers": [],
@@ -1902,9 +1878,7 @@
     "tags": [
       "robes"
     ],
-    "setPoints": {
-      "intelligence": 1
-    },
+    "setPoints": {},
     "points": {
       "ar": 0,
       "dr": 0,
@@ -1918,8 +1892,8 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 1,
-      "intelligence": 1
+      "wisdom": 0,
+      "intelligence": 0
     },
     "values": {
       "ar": 0,
@@ -1934,8 +1908,8 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 1,
-      "intelligence": 1
+      "wisdom": 0,
+      "intelligence": 0
     },
     "modifiers": [],
     "pool": {
@@ -1972,9 +1946,9 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 1,
+      "dexterity": 0,
       "constitution": 0,
-      "wisdom": 1,
+      "wisdom": 0,
       "intelligence": 0
     },
     "values": {
@@ -1988,9 +1962,9 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 1,
+      "dexterity": 0,
       "constitution": 0,
-      "wisdom": 1,
+      "wisdom": 0,
       "intelligence": 0
     },
     "modifiers": [
@@ -2018,9 +1992,7 @@
       "robes",
       "thin"
     ],
-    "setPoints": {
-      "intelligence": 1
-    },
+    "setPoints": {},
     "points": {
       "ar": 0,
       "dr": 0,
@@ -2034,8 +2006,8 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 1,
-      "intelligence": 1
+      "wisdom": 0,
+      "intelligence": 0
     },
     "values": {
       "ar": 0,
@@ -2050,8 +2022,8 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 1,
-      "intelligence": 1
+      "wisdom": 0,
+      "intelligence": 0
     },
     "modifiers": [
       "defend.block=-1"
@@ -2090,7 +2062,7 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 1,
+      "wisdom": 0,
       "intelligence": 0
     },
     "values": {
@@ -2106,7 +2078,7 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 1,
+      "wisdom": 0,
       "intelligence": 0
     },
     "modifiers": [],
@@ -2145,8 +2117,8 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 1,
-      "intelligence": 1
+      "wisdom": 0,
+      "intelligence": 0
     },
     "values": {
       "ar": 0,
@@ -2161,8 +2133,8 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 1,
-      "intelligence": 1
+      "wisdom": 0,
+      "intelligence": 0
     },
     "modifiers": [
       "strike.blight=+2"
@@ -2188,9 +2160,7 @@
       "robes",
       "regen"
     ],
-    "setPoints": {
-      "intelligence": 1
-    },
+    "setPoints": {},
     "points": {
       "ar": 0,
       "dr": 0,
@@ -2204,8 +2174,8 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 1,
-      "intelligence": 1
+      "wisdom": 0,
+      "intelligence": 0
     },
     "values": {
       "ar": 0,
@@ -2220,8 +2190,8 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 1,
-      "intelligence": 1
+      "wisdom": 0,
+      "intelligence": 0
     },
     "modifiers": [
       "self.regen=+1"
@@ -2246,9 +2216,7 @@
     "tags": [
       "robes"
     ],
-    "setPoints": {
-      "constitution": 1
-    },
+    "setPoints": {},
     "points": {
       "ar": 0,
       "dr": 0,
@@ -2261,8 +2229,8 @@
       "precision": 0,
       "strength": 0,
       "dexterity": 0,
-      "constitution": 1,
-      "wisdom": 1,
+      "constitution": 0,
+      "wisdom": 0,
       "intelligence": 0
     },
     "values": {
@@ -2277,8 +2245,8 @@
       "precision": 0,
       "strength": 0,
       "dexterity": 0,
-      "constitution": 1,
-      "wisdom": 1,
+      "constitution": 0,
+      "wisdom": 0,
       "intelligence": 0
     },
     "modifiers": [],
@@ -2315,7 +2283,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 1,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -2331,7 +2299,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 1,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -2370,8 +2338,8 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
-      "dexterity": 1,
+      "strength": 0,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -2386,8 +2354,8 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
-      "dexterity": 1,
+      "strength": 0,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -2427,7 +2395,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 2,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -2443,7 +2411,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 2,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -2472,9 +2440,7 @@
     "tags": [
       "leathers"
     ],
-    "setPoints": {
-      "strength": 1
-    },
+    "setPoints": {},
     "points": {
       "ar": 0,
       "dr": 0,
@@ -2485,8 +2451,8 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
-      "dexterity": 1,
+      "strength": 0,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -2501,8 +2467,8 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
-      "dexterity": 1,
+      "strength": 0,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -2542,7 +2508,7 @@
       "precision": 0,
       "strength": 0,
       "dexterity": 0,
-      "constitution": 2,
+      "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
     },
@@ -2558,7 +2524,7 @@
       "precision": 0,
       "strength": 0,
       "dexterity": 0,
-      "constitution": 2,
+      "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
     },
@@ -2601,8 +2567,8 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 1,
-      "intelligence": 1
+      "wisdom": 0,
+      "intelligence": 0
     },
     "values": {
       "ar": 0,
@@ -2617,8 +2583,8 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 1,
-      "intelligence": 1
+      "wisdom": 0,
+      "intelligence": 0
     },
     "modifiers": [
       "strike.frost=+2",
@@ -2657,8 +2623,8 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
-      "dexterity": 1,
+      "strength": 0,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -2673,8 +2639,8 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
-      "dexterity": 1,
+      "strength": 0,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -2717,7 +2683,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 2,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -2733,7 +2699,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 2,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -2775,7 +2741,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 2,
+      "dexterity": 1,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -2791,7 +2757,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 2,
+      "dexterity": 1,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -2830,8 +2796,8 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
-      "dexterity": 1,
+      "strength": 0,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -2846,8 +2812,8 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
-      "dexterity": 1,
+      "strength": 0,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -2886,7 +2852,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 1,
-      "dexterity": 1,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -2902,7 +2868,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 1,
-      "dexterity": 1,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -2941,7 +2907,7 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
+      "strength": 0,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -2957,7 +2923,7 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
+      "strength": 0,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -2995,8 +2961,8 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
-      "dexterity": 1,
+      "strength": 0,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -3011,8 +2977,8 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
-      "dexterity": 1,
+      "strength": 0,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -3050,7 +3016,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 1,
-      "dexterity": 1,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -3066,7 +3032,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 1,
-      "dexterity": 1,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -3105,7 +3071,7 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 2,
+      "strength": 0,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -3121,7 +3087,7 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 2,
+      "strength": 0,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -3157,14 +3123,14 @@
     "points": {
       "ar": 0,
       "dr": 0,
-      "poise": 3,
+      "poise": 1,
       "hp": 0,
       "mp": 0,
       "sp": 0,
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 2,
+      "strength": 1,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -3173,14 +3139,14 @@
     "values": {
       "ar": 0,
       "dr": 0,
-      "poise": 9,
+      "poise": 3,
       "hp": 0,
       "mp": 0,
       "sp": 0,
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 2,
+      "strength": 1,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -3221,7 +3187,7 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
+      "strength": 0,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -3237,7 +3203,7 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
+      "strength": 0,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -3275,8 +3241,8 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
-      "dexterity": 1,
+      "strength": 0,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -3291,8 +3257,8 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
-      "dexterity": 1,
+      "strength": 0,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -3322,7 +3288,7 @@
     "points": {
       "ar": 0,
       "dr": 0,
-      "poise": 2,
+      "poise": 1,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -3330,7 +3296,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 1,
-      "dexterity": 1,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -3338,7 +3304,7 @@
     "values": {
       "ar": 0,
       "dr": 0,
-      "poise": 6,
+      "poise": 3,
       "hp": 0,
       "mp": 0,
       "sp": 0,
@@ -3346,7 +3312,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 1,
-      "dexterity": 1,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -3384,7 +3350,7 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
+      "strength": 0,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -3400,7 +3366,7 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
+      "strength": 0,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -3442,7 +3408,7 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 2,
+      "strength": 0,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -3458,7 +3424,7 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 2,
+      "strength": 0,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -3493,14 +3459,14 @@
     "points": {
       "ar": 0,
       "dr": 0,
-      "poise": 4,
+      "poise": 1,
       "hp": 0,
       "mp": 0,
       "sp": 0,
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 2,
+      "strength": 1,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -3509,14 +3475,14 @@
     "values": {
       "ar": 0,
       "dr": 0,
-      "poise": 12,
+      "poise": 3,
       "hp": 0,
       "mp": 0,
       "sp": 0,
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 2,
+      "strength": 1,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -3557,7 +3523,7 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 2,
+      "strength": 0,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -3573,7 +3539,7 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 2,
+      "strength": 0,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -3607,14 +3573,14 @@
     "points": {
       "ar": 0,
       "dr": 0,
-      "poise": 4,
+      "poise": 1,
       "hp": 0,
       "mp": 0,
       "sp": 0,
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 2,
+      "strength": 1,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -3623,14 +3589,14 @@
     "values": {
       "ar": 0,
       "dr": 0,
-      "poise": 12,
+      "poise": 3,
       "hp": 0,
       "mp": 0,
       "sp": 0,
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 2,
+      "strength": 1,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -3671,7 +3637,7 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
+      "strength": 0,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -3687,7 +3653,7 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
+      "strength": 0,
       "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
@@ -3728,7 +3694,7 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
+      "strength": 0,
       "dexterity": 1,
       "constitution": 0,
       "wisdom": 0,
@@ -3744,7 +3710,7 @@
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
+      "strength": 0,
       "dexterity": 1,
       "constitution": 0,
       "wisdom": 0,
@@ -3788,7 +3754,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 2,
+      "dexterity": 1,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -3804,7 +3770,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 2,
+      "dexterity": 1,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -3847,7 +3813,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 2,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -3863,7 +3829,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 2,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -3902,7 +3868,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 2,
+      "dexterity": 1,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -3918,7 +3884,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 2,
+      "dexterity": 1,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -3957,7 +3923,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 1,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -3973,7 +3939,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 1,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -4012,7 +3978,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 2,
+      "dexterity": 1,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -4028,7 +3994,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 2,
+      "dexterity": 1,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -4066,7 +4032,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 1,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -4082,7 +4048,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 1,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -4123,7 +4089,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 2,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -4139,7 +4105,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 2,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -4180,7 +4146,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 1,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -4196,7 +4162,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 1,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -4237,7 +4203,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 2,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -4253,7 +4219,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 2,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -4297,8 +4263,8 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 1,
-      "intelligence": 1
+      "wisdom": 0,
+      "intelligence": 0
     },
     "values": {
       "ar": 0,
@@ -4313,8 +4279,8 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 1,
-      "intelligence": 1
+      "wisdom": 0,
+      "intelligence": 0
     },
     "modifiers": [],
     "pool": {
@@ -4347,8 +4313,8 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 1,
-      "constitution": 1,
+      "dexterity": 0,
+      "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
     },
@@ -4363,8 +4329,8 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 1,
-      "constitution": 1,
+      "dexterity": 0,
+      "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
     },
@@ -4400,7 +4366,7 @@
       "precision": 0,
       "strength": 0,
       "dexterity": 0,
-      "constitution": 1,
+      "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
     },
@@ -4416,7 +4382,7 @@
       "precision": 0,
       "strength": 0,
       "dexterity": 0,
-      "constitution": 1,
+      "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
     },
@@ -4455,7 +4421,7 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 2,
+      "wisdom": 0,
       "intelligence": 0
     },
     "values": {
@@ -4471,7 +4437,7 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 2,
+      "wisdom": 0,
       "intelligence": 0
     },
     "modifiers": [
@@ -4507,8 +4473,8 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 1,
-      "constitution": 1,
+      "dexterity": 0,
+      "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
     },
@@ -4523,8 +4489,8 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 1,
-      "constitution": 1,
+      "dexterity": 0,
+      "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
     },
@@ -4553,14 +4519,14 @@
     "points": {
       "ar": 0,
       "dr": 0,
-      "poise": 3,
+      "poise": 1,
       "hp": 0,
       "mp": 0,
       "sp": 0,
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
+      "strength": 0,
       "dexterity": 0,
       "constitution": 1,
       "wisdom": 0,
@@ -4569,14 +4535,14 @@
     "values": {
       "ar": 0,
       "dr": 0,
-      "poise": 9,
+      "poise": 3,
       "hp": 0,
       "mp": 0,
       "sp": 0,
       "ward": 0,
       "evasion": 0,
       "precision": 0,
-      "strength": 1,
+      "strength": 0,
       "dexterity": 0,
       "constitution": 1,
       "wisdom": 0,
@@ -4615,7 +4581,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 1,
+      "dexterity": 0,
       "constitution": 1,
       "wisdom": 0,
       "intelligence": 0
@@ -4631,7 +4597,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 1,
+      "dexterity": 0,
       "constitution": 1,
       "wisdom": 0,
       "intelligence": 0
@@ -4670,7 +4636,7 @@
       "precision": 0,
       "strength": 0,
       "dexterity": 0,
-      "constitution": 1,
+      "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
     },
@@ -4686,7 +4652,7 @@
       "precision": 0,
       "strength": 0,
       "dexterity": 0,
-      "constitution": 1,
+      "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
     },
@@ -4723,7 +4689,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 1,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -4739,7 +4705,7 @@
       "evasion": 0,
       "precision": 0,
       "strength": 0,
-      "dexterity": 1,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
@@ -4779,8 +4745,8 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 1,
-      "intelligence": 1
+      "wisdom": 0,
+      "intelligence": 0
     },
     "values": {
       "ar": 0,
@@ -4795,8 +4761,8 @@
       "strength": 0,
       "dexterity": 0,
       "constitution": 0,
-      "wisdom": 1,
-      "intelligence": 1
+      "wisdom": 0,
+      "intelligence": 0
     },
     "modifiers": [],
     "pool": {

@@ -69,6 +69,8 @@ test('live Core implicit Strike pays its used weapon group; previews and unused 
   const { combat } = live();
   const card = combat.piles.hand.find(card => card.cardId === 'core.strike');
   const before = structuredClone(combat.skillXp);
+  const initialHp = combat.enemies[0].hp;
+  const effectiveStrength = combat.player.attributes.strength;
   if (card) previewCard(combat, card.instanceId, combat.enemies[0].id);
   assert.deepEqual(combat.skillXp, before);
   play(combat, 'core.strike');
@@ -81,8 +83,9 @@ test('live Core implicit Strike pays its used weapon group; previews and unused 
   // Current gear contributes to the actor's effective STR. A non-mitigating
   // stance still takes the weapon's separate Poise damage.
   const [receipt] = hit.damageReceipt.hits;
-  assert.equal(receipt.sources.find(row => row.id === 'ar:0').amount, 6, 'attribution preserves the actor STR damage source');
-  assert.equal(hit.amount, 4);
+  assert.equal(receipt.sources.find(row => row.id === 'ar:0').amount, effectiveStrength, 'attribution preserves the actor STR damage source');
+  assert.ok(hit.amount > 0, 'this successful contact removes HP');
+  assert.equal(hit.amount, initialHp - combat.enemies[0].hp);
   assert.deepEqual([receipt.poiseReduced, receipt.poiseDamage], [0, 3]);
   assert.ok(skillXpReceipt(combat)['item:blade'] > 0);
   assert.equal(skillXpReceipt(combat)['item:shield'], undefined);

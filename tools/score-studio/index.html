@@ -22,22 +22,35 @@
   <link rel="stylesheet" href="styles/combat-symbol-colors.css" />
   <!-- Studio rules are scoped under body.studio-body so the game sheets above cannot restyle the studio chrome. -->
   <link rel="stylesheet" href="tools/score-studio/studio.css" />
+  <link rel="stylesheet" href="tools/score-studio/cardEditorDock.css" />
+  <link rel="stylesheet" href="tools/score-studio/cardSelection.css" />
+  <link rel="stylesheet" href="tools/score-studio/deckListPanel.css" />
+  <link rel="stylesheet" href="tools/score-studio/addCardTile.css" />
+  <link rel="stylesheet" href="tools/score-studio/galleryZoom.css" />
 </head>
 <body class="studio-body">
   <header class="studio-topbar">
     <div class="studio-brand">
+      <span id="draft-status" class="studio-pill is-loading">Loading…</span>
       <span class="studio-title">Score Studio</span>
-      <span id="draft-status" class="studio-pill">Synced with repo</span>
     </div>
-    <nav class="studio-tabs" role="tablist" aria-label="Score Studio workspaces">
-      <button class="studio-tab is-active" data-tab="cards" role="tab" aria-selected="true"><span class="tab-long">Cards &amp; Decks</span><span class="tab-short">Cards</span></button>
-      <button class="studio-tab" data-tab="items" role="tab" aria-selected="false"><span class="tab-long">Items &amp; Relics</span><span class="tab-short">Items</span></button>
-      <button class="studio-tab" data-tab="weights" role="tab" aria-selected="false">Weights <span id="shift-count-badge" class="badge hidden">0</span></button>
-      <button class="studio-tab" data-tab="art" role="tab" aria-selected="false"><span class="tab-long">Art &amp; Layers</span><span class="tab-short">Art</span></button>
+    <nav id="studio-menubar" class="studio-menubar" role="menubar" aria-label="Studio commands">
+      <div class="studio-menu"><button id="menu-file" class="studio-menu-heading" type="button" role="menuitem" aria-haspopup="menu" aria-expanded="false" aria-controls="studio-file-menu">File</button><div id="studio-file-menu" class="studio-menu-panel" role="menu" aria-label="File" hidden></div></div>
+      <div class="studio-menu"><button id="menu-edit" class="studio-menu-heading" type="button" role="menuitem" aria-haspopup="menu" aria-expanded="false" aria-controls="studio-edit-menu">Edit</button><div id="studio-edit-menu" class="studio-menu-panel" role="menu" aria-label="Edit" hidden></div></div>
+      <div class="studio-menu"><button id="menu-view" class="studio-menu-heading" type="button" role="menuitem" aria-haspopup="menu" aria-expanded="false" aria-controls="studio-view-menu">View</button><div id="studio-view-menu" class="studio-menu-panel" role="menu" aria-label="View" hidden></div></div>
+      <div class="studio-menu"><button id="menu-tools" class="studio-menu-heading" type="button" role="menuitem" aria-haspopup="menu" aria-expanded="false" aria-controls="studio-tools-menu">Tools</button><div id="studio-tools-menu" class="studio-menu-panel" role="menu" aria-label="Tools" hidden></div></div>
+      <div class="studio-menu"><button id="menu-git" class="studio-menu-heading" type="button" role="menuitem" aria-haspopup="menu" aria-expanded="false" aria-controls="studio-git-menu">Git</button><div id="studio-git-menu" class="studio-menu-panel" role="menu" aria-label="Git" hidden></div></div>
+      <div class="studio-menu"><button id="menu-test" class="studio-menu-heading" type="button" role="menuitem" aria-haspopup="menu" aria-expanded="false" aria-controls="studio-test-menu">Test</button><div id="studio-test-menu" class="studio-menu-panel" role="menu" aria-label="Test" hidden></div></div>
+    </nav>
+    <nav class="studio-tabs" role="tablist" aria-label="Score Studio workspaces" hidden>
+      <button class="studio-tab is-active" data-tab="cards" role="tab" aria-selected="true"><span class="tab-long">Cards</span><span class="tab-short">Cards</span></button>
+      <button class="studio-tab" data-tab="items" role="tab" aria-selected="false"><span class="tab-long">Items</span><span class="tab-short">Items</span></button>
+      <button class="studio-tab" data-tab="weights" role="tab" aria-selected="false" hidden>Weights <span id="shift-count-badge" class="badge hidden">0</span></button>
+      <button class="studio-tab" data-tab="art" role="tab" aria-selected="false" hidden><span class="tab-long">Art &amp; Layers</span><span class="tab-short">Art</span></button>
       <button id="effects-tab-button" class="studio-tab" data-tab="effects" role="tab" aria-selected="false" aria-controls="tab-effects"><span class="tab-long">Effects Timing</span><span class="tab-short">Effects</span></button>
       <button class="studio-tab" data-tab="sandbox" role="tab" aria-selected="false"><span class="tab-long">Combat Sandbox</span><span class="tab-short">Sandbox</span></button>
     </nav>
-    <div class="studio-actions">
+    <div class="studio-actions" hidden>
       <button id="btn-undo" class="s-btn s-btn-icon" title="Undo (Ctrl+Z)" aria-label="Undo (Ctrl+Z)" disabled>↶</button>
       <button id="btn-redo" class="s-btn s-btn-icon" title="Redo (Ctrl+Y)" aria-label="Redo (Ctrl+Y)" disabled>↷</button>
       <button id="btn-export-repo" class="s-btn s-btn-primary">Export…</button>
@@ -79,12 +92,32 @@
           <div class="filter-bar">
             <div class="filter-row">
               <input id="card-search" type="search" placeholder="Search cards by name, tag, effect" aria-label="Search cards" />
-              <button id="btn-filters" class="s-btn" aria-expanded="false" aria-controls="filter-panel">Filters <span id="filter-count" class="badge hidden">0</span></button>
+              <select id="gallery-type-cards" class="gallery-content-type" aria-label="Content type"><option value="cards">Cards</option><option value="items">Items</option></select>
+              <button id="btn-filters" class="s-btn" aria-haspopup="dialog" aria-controls="card-filters-modal">Filters <span id="filter-count" class="badge hidden">0</span></button>
               <button id="btn-new-card" class="s-btn s-btn-primary">+ New</button>
               <span class="studio-muted pool-label pool-label-row"></span>
             </div>
-            <div class="filter-row names-row">
-              <button id="btn-rename-all" class="s-btn" title="Turn Auto-name on for every card, so each shows its convention name. Nothing reaches the game until Export.">Rename all</button>
+            <div class="filter-row names-row studio-toolbar-parking">
+              <button id="btn-auto-balance-cards" class="s-btn s-btn-primary" type="button" title="Deterministically rebalance cards to hit rank and rarity quotas">Rebalance power…</button>
+              <button id="btn-generate-cards" class="s-btn" type="button" title="Make a pool of cards at exact combat power from the weights and your settings. Nothing reaches the game until Export.">Generate cards…</button>
+              <button id="btn-subclass-lists" class="s-btn" type="button" title="Generate, review, and export the twelve subclass card lists">Subclass lists…</button>
+              <button id="btn-open-decks" class="s-btn" type="button" title="Open your decks and subclass lists">Decks…</button>
+              <div class="studio-menu">
+                <button id="btn-card-tools-menu" class="s-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="card-tools-menu">Tools ▾</button>
+                <div id="card-tools-menu" class="studio-menu-panel" hidden>
+                  <button id="btn-batch-generate-cards" class="menu-item" type="button" title="Batch procedurally generate cards with optional criteria">Batch Generate…</button>
+                  <button id="btn-custom-decks" class="menu-item" type="button" title="Create and manage custom decks, custom classes, and JSON exports">Decks &amp; Classes…</button>
+                </div>
+              </div>
+              <div class="studio-menu">
+                <button id="btn-card-names-menu" class="s-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="card-names-menu">Names ▾</button>
+                <div id="card-names-menu" class="studio-menu-panel" hidden>
+                  <button id="btn-rename-all" class="menu-item" type="button" title="Turn Auto-name on for every card, so each shows its convention name. Nothing reaches the game until Export.">Rename all</button>
+                  <button id="btn-save-names" class="menu-item" type="button" title="Save every card's current name to a JSON file (same file name as last time)">Save names</button>
+                  <button id="btn-save-names-as" class="menu-item" type="button" title="Save every card's current name to a new JSON file you name">Save as…</button>
+                  <label class="menu-item s-file-btn" title="Load card names from a JSON file: they are added to Restore names and given to the cards">Load names…<input id="input-load-names" type="file" accept=".json,application/json" hidden /></label>
+                </div>
+              </div>
               <div class="studio-menu">
                 <button id="btn-restore-names" class="s-btn" title="Put back Default names or a saved set of names" aria-haspopup="true" aria-expanded="false" aria-controls="restore-names-menu">Restore names ▾</button>
                 <div id="restore-names-menu" class="studio-menu-panel restore-names-panel" hidden>
@@ -92,33 +125,34 @@
                   <button id="btn-restore-names-apply" class="s-btn s-btn-primary" type="button" title="Give every card the chosen names and turn Auto-name off">Restore</button>
                 </div>
               </div>
-              <button id="btn-save-names" class="s-btn" type="button" title="Save every card's current name to a JSON file (same file name as last time)">Save names</button>
-              <button id="btn-save-names-as" class="s-btn" type="button" title="Save every card's current name to a new JSON file you name">Save as…</button>
-              <label class="s-btn s-file-btn" title="Load card names from a JSON file: they are added to Restore names and given to the cards">Load names…<input id="input-load-names" type="file" accept=".json,application/json" hidden /></label>
-            </div>
-            <div id="filter-panel" class="filter-panel" hidden>
-              <select id="filter-type" aria-label="Card type"><option value="all">All Types</option></select>
-              <select id="filter-class" aria-label="Class"><option value="all">All Classes</option></select>
-              <select id="filter-rank" aria-label="Rank"><option value="all">All Ranks</option></select>
-              <select id="filter-shift" aria-label="Rank shift">
-                <option value="all">All Cards</option>
-                <option value="shifted">Shifted Only</option>
+              <select id="filter-deck" aria-label="Card deck list" title="Filter and open a deck list">
+                <option value="all">All</option>
               </select>
-              <div class="view-toggle" role="group" aria-label="Gallery view">
-                <button id="view-grid" class="s-btn is-active">Grid</button>
-                <button id="view-single" class="s-btn">Single</button>
-              </div>
-              <label class="scale-control" title="Resize gallery cards">Card size
-                <input id="card-scale-slider" type="range" min="140" max="280" value="185" />
-              </label>
-              <label class="scale-control" title="Resize the inspector's card preview">Preview size
-                <input id="inspector-scale-slider" type="range" min="130" max="260" value="175" />
-              </label>
-              <label class="studio-toggle" title="Show each card's combat-power rank on the art"><input id="toggle-rank-badges" type="checkbox" checked /> Show rank on cards</label>
-              <span class="studio-muted pool-label pool-label-panel"></span>
             </div>
           </div>
-          <div id="cards-grid" class="cards-grid"></div>
+          <div id="cards-art-loading" class="studio-loading-bar" role="status" aria-live="polite" hidden>
+            <span class="studio-loading-spinner studio-loading-spinner-sm" aria-hidden="true"></span>
+            <span id="cards-art-loading-text" class="studio-loading-bar-text">Loading card art…</span>
+            <div class="studio-loading-progress" aria-hidden="true"><div id="cards-art-loading-fill" class="studio-loading-progress-fill"></div></div>
+          </div>
+          <div id="cards-loading" class="studio-loading-state" role="status" aria-live="polite" aria-busy="true">
+            <div class="studio-loading-head">
+              <div class="studio-loading-spinner" aria-hidden="true"></div>
+              <div class="studio-loading-copy">
+                <strong id="cards-loading-title">Loading cards…</strong>
+                <span id="cards-loading-detail" class="studio-muted">Loading studio modules and card pool…</span>
+              </div>
+            </div>
+            <div class="studio-loading-skeletons" aria-hidden="true">
+              <div class="studio-skeleton-tile"><div class="studio-skeleton-stage"></div><div class="studio-skeleton-line"></div><div class="studio-skeleton-line is-short"></div></div>
+              <div class="studio-skeleton-tile"><div class="studio-skeleton-stage"></div><div class="studio-skeleton-line"></div><div class="studio-skeleton-line is-short"></div></div>
+              <div class="studio-skeleton-tile"><div class="studio-skeleton-stage"></div><div class="studio-skeleton-line"></div><div class="studio-skeleton-line is-short"></div></div>
+              <div class="studio-skeleton-tile"><div class="studio-skeleton-stage"></div><div class="studio-skeleton-line"></div><div class="studio-skeleton-line is-short"></div></div>
+              <div class="studio-skeleton-tile"><div class="studio-skeleton-stage"></div><div class="studio-skeleton-line"></div><div class="studio-skeleton-line is-short"></div></div>
+              <div class="studio-skeleton-tile"><div class="studio-skeleton-stage"></div><div class="studio-skeleton-line"></div><div class="studio-skeleton-line is-short"></div></div>
+            </div>
+          </div>
+          <div id="cards-grid" class="cards-grid" hidden></div>
         </div>
 
         <div id="inspector-resizer" class="inspector-resizer" title="Drag to resize the inspector" role="separator" aria-orientation="vertical"></div>
@@ -131,6 +165,7 @@
           <div class="inspector-preview-wrap">
             <div id="inspector-card-preview" class="inspector-card-preview"></div>
             <div id="inspector-score-summary" class="inspector-score-summary"></div>
+            <p id="inspector-upgrade-summary" class="studio-muted subclass-upgrade-summary" hidden></p>
           </div>
 
           <details class="inspector-section" data-section="basics" open>
@@ -274,43 +309,35 @@
           <div class="filter-bar">
             <div class="filter-row">
               <input id="item-filter-search" type="search" placeholder="Search weapons, armours, relics, traits..." />
-              <select id="item-filter-kind" aria-label="Filter by item kind">
-                <option value="all">All Items</option>
-                <option value="weapon">Weapons</option>
-                <option value="armour">Armours</option>
-                <option value="relic">Relics</option>
-              </select>
-              <select id="item-filter-rarity" aria-label="Filter by rarity">
-                <option value="all">All Rarities</option>
-                <option value="starter">Starter</option>
-                <option value="common">Common</option>
-                <option value="uncommon">Uncommon</option>
-                <option value="rare">Rare</option>
-                <option value="boss">Boss</option>
-              </select>
-              <select id="item-filter-rank" aria-label="Filter by rank">
-                <option value="all">All Ranks</option>
-                <option value="0">Unranked (0)</option>
-                <option value="1">Rank 1</option>
-                <option value="2">Rank 2</option>
-                <option value="3">Rank 3</option>
-                <option value="4">Rank 4</option>
-                <option value="5">Rank 5+</option>
-              </select>
-              <select id="item-filter-sort" aria-label="Sort items">
-                <option value="rank-desc">Rank ↓</option>
-                <option value="cp-desc">CP ↓</option>
-                <option value="cp-asc">CP ↑</option>
-                <option value="name">Name A–Z</option>
-              </select>
+              <select id="gallery-type-items" class="gallery-content-type" aria-label="Content type"><option value="cards">Cards</option><option value="items" selected>Items</option></select>
+              <button id="btn-item-filters" class="s-btn" type="button" aria-haspopup="dialog" aria-controls="item-filters-modal">Filters <span id="item-filter-count" class="badge hidden">0</span></button>
+              <select id="filter-item-deck" aria-label="Item deck list" title="Filter and open a deck list"><option value="all">All</option></select>
             </div>
-            <div class="filter-row names-row">
-              <button id="btn-rename-all-items" class="s-btn" type="button" title="Apply convention names to every weapon, armour, and relic in the studio">Rename all</button>
-              <button id="btn-restore-item-names" class="s-btn" type="button" title="Restore the shipped authored item names">Restore names</button>
+            <div class="filter-row names-row studio-toolbar-parking">
+              <button id="btn-auto-balance-items" class="s-btn s-btn-primary" type="button" title="Deterministically rebalance weapons, armours, and relics to hit rank and rarity quotas">Rebalance power…</button>
+              <div class="studio-menu">
+                <button id="btn-item-tools-menu" class="s-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="item-tools-menu">Tools ▾</button>
+                <div id="item-tools-menu" class="studio-menu-panel" hidden>
+                  <button id="btn-batch-generate-items" class="menu-item" type="button" title="Batch procedurally generate weapons, armours, and relics with optional criteria">Batch Generate…</button>
+                  <button id="btn-custom-decks-items" class="menu-item" type="button" title="Manage custom decks, classes, and export/load JSON bundles">Decks &amp; Lists…</button>
+                  <hr class="menu-divider" />
+                  <button id="btn-rename-all-items" class="menu-item" type="button" title="Apply convention names to every weapon, armour, and relic in the studio">Rename all</button>
+                  <button id="btn-restore-item-names" class="menu-item" type="button" title="Restore the shipped authored item names">Restore names</button>
+                </div>
+              </div>
               <span id="items-count" class="studio-muted"></span>
             </div>
           </div>
-          <div id="items-grid" class="cards-grid items-grid"></div>
+          <div id="items-loading" class="studio-loading-state studio-loading-compact" role="status" aria-live="polite" aria-busy="true">
+            <div class="studio-loading-head">
+              <div class="studio-loading-spinner" aria-hidden="true"></div>
+              <div class="studio-loading-copy">
+                <strong id="items-loading-title">Loading items…</strong>
+                <span id="items-loading-detail" class="studio-muted">Preparing weapons, armours, and relics…</span>
+              </div>
+            </div>
+          </div>
+          <div id="items-grid" class="cards-grid items-grid" hidden></div>
         </div>
 
         <div id="item-inspector-resizer" class="inspector-resizer" title="Drag to resize the inspector" role="separator" aria-orientation="vertical"></div>
@@ -328,7 +355,7 @@
           <details class="inspector-section" data-section="item-basics" open>
             <summary class="section-head">
               <h3>Item Basics</h3>
-              <button id="btn-item-autoname" class="s-btn s-btn-sm" type="button" title="Set this item's name to its convention name">Auto-name</button>
+              <button id="btn-item-autoname" class="s-btn s-btn-sm" type="button" title="Set this item's name to its convention name">Generate name</button>
             </summary>
             <div class="form-grid">
               <label class="form-wide">Name
@@ -415,6 +442,7 @@
           <option value="rank">Rank Bands</option>
           <option value="categories">Categories</option>
           <option value="tags">Weighted Tags</option>
+          <option value="upgradeTags">Upgrade Tags &amp; Surcharges</option>
           <option value="items">Equipment &amp; Items</option>
           <option value="gearFields">Gear Traits</option>
           <option value="naming">Naming</option>
@@ -558,6 +586,81 @@
   </dialog>
 
   <!-- RENAME ALL MODAL -->
+  <dialog id="card-filters-modal" class="studio-modal card-filters-modal" aria-labelledby="card-filters-title">
+    <form method="dialog">
+      <h3 id="card-filters-title">Card filters</h3>
+            <div id="filter-panel" class="filter-panel">
+              <select id="filter-type" aria-label="Card type"><option value="all">All Types</option></select>
+              <select id="filter-class" aria-label="Class"><option value="all">All Classes</option></select>
+              <select id="filter-rank" aria-label="Rank"><option value="all">All Ranks</option></select>
+              <select id="filter-shift" aria-label="Rank shift">
+                <option value="all">All Cards</option>
+                <option value="shifted">Shifted Only</option>
+              </select>
+              <div class="view-toggle" role="group" aria-label="Gallery view">
+                <button id="view-grid" type="button" class="s-btn is-active">Grid</button>
+                <button id="view-single" type="button" class="s-btn">Single</button>
+              </div>
+              <label class="scale-control" title="Resize gallery cards">Card size
+                <input id="card-scale-slider" type="range" min="110" max="360" value="185" /><output id="card-zoom-value">100%</output><button id="card-zoom-reset" type="button" class="s-btn s-btn-sm">Reset size</button>
+              </label>
+              <p class="gallery-zoom-help studio-muted">Ctrl/Cmd + wheel over the gallery changes size. Normal scrolling stays unchanged.</p>
+              <label class="scale-control" title="Resize the inspector's card preview">Preview size
+                <input id="inspector-scale-slider" type="range" min="130" max="260" value="175" />
+              </label>
+              <label class="studio-toggle" title="Show each card's combat-power rank on the art"><input id="toggle-rank-badges" type="checkbox" checked /> Show rank on cards</label>
+              <span class="studio-muted pool-label pool-label-panel"></span>
+            </div>
+      <div class="modal-actions"><button id="btn-card-filters-reset" type="button" class="s-btn">Reset filters</button><button value="done" class="s-btn s-btn-primary">Done</button></div>
+    </form>
+  </dialog>
+  <dialog id="item-filters-modal" class="studio-modal item-filters-modal" aria-labelledby="item-filters-title">
+    <form method="dialog">
+      <h3 id="item-filters-title">Item filters</h3>
+      <div class="item-filter-fields">
+              <label>Kind
+                <select id="item-filter-kind" aria-label="Filter by item kind">
+                <option value="all">All Items</option>
+                <option value="weapon">Weapons</option>
+                <option value="armour">Armours</option>
+                <option value="relic">Relics</option>
+              </select>
+              </label>
+              <label>Rarity
+                <select id="item-filter-rarity" aria-label="Filter by rarity">
+                <option value="all">All Rarities</option>
+                <option value="starter">Starter</option>
+                <option value="common">Common</option>
+                <option value="uncommon">Uncommon</option>
+                <option value="rare">Rare</option>
+                <option value="boss">Boss</option>
+              </select>
+              </label>
+              <label>Rank
+                <select id="item-filter-rank" aria-label="Filter by rank">
+                <option value="all">All Ranks</option>
+                <option value="0">Unranked (0)</option>
+                <option value="1">Rank 1</option>
+                <option value="2">Rank 2</option>
+                <option value="3">Rank 3</option>
+                <option value="4">Rank 4</option>
+                <option value="5">Rank 5+</option>
+              </select>
+              </label>
+              <label>Sort
+                <select id="item-filter-sort" aria-label="Sort items">
+                <option value="rank-desc">Rank ↓</option>
+                <option value="cp-desc">CP ↓</option>
+                <option value="cp-asc">CP ↑</option>
+                <option value="name">Name A–Z</option>
+              </select>
+              </label>
+      </div>
+      <label class="scale-control">Item size <input id="item-scale-slider" type="range" min="110" max="360" value="185" /><output id="item-zoom-value">100%</output><button id="item-zoom-reset" type="button" class="s-btn s-btn-sm">Reset size</button></label>
+      <p class="gallery-zoom-help studio-muted">Ctrl/Cmd + wheel over the gallery changes size. Normal scrolling stays unchanged.</p>
+      <div class="modal-actions"><button id="btn-item-filters-reset" type="button" class="s-btn">Reset filters</button><button value="done" class="s-btn s-btn-primary">Done</button></div>
+    </form>
+  </dialog>
   <dialog id="save-names-modal" class="studio-modal">
     <form method="dialog">
       <h3>Save names as</h3>
@@ -571,7 +674,7 @@
   <dialog id="rename-all-modal" class="studio-modal">
     <form method="dialog">
       <h3>Save the current names first?</h3>
-      <p class="studio-muted">Rename all gives every card its convention name. Save the names you have now to get them back later.</p>
+      <p class="studio-muted">Generate names gives every card its convention name. Save the names you have now to get them back later.</p>
       <label class="rename-all-label">Name <input id="rename-all-set-name" type="text" maxlength="60" aria-label="Name for the saved names" /></label>
       <div class="modal-actions">
         <button value="cancel" class="s-btn" title="Keep the names as they are">Cancel</button>
@@ -581,7 +684,51 @@
     </form>
   </dialog>
 
+  <!-- GENERATE CARDS MODAL (owner, 2026-11-24) -->
+  <dialog id="generate-cards-modal" class="studio-modal generate-cards-modal">
+    <form method="dialog">
+      <h3>Generate cards</h3>
+      <p class="studio-muted">Each card lands exactly on its combat power under the current weights. One undo step. Nothing reaches the game until Export.</p>
+      <div id="gen-body" class="gen-body"></div>
+      <div id="gen-preview" class="gen-preview" hidden></div>
+      <div class="modal-actions">
+        <button value="cancel" class="s-btn" title="Close without changing any card">Cancel</button>
+        <button id="btn-gen-defaults" type="button" class="s-btn" title="Put every setting back to the shape of today's Core cards">Defaults</button>
+        <button id="btn-gen-preview" type="button" class="s-btn" title="Show counts and sample names without changing any card">Preview</button>
+        <button id="btn-gen-apply" type="button" class="s-btn s-btn-primary" title="Make the cards now (one undo step)">Generate</button>
+      </div>
+    </form>
+  </dialog>
+
   <!-- ACCEPT NEW RANKS MODAL -->
+  <dialog id="subclass-catalog-modal" class="studio-modal subclass-catalog-modal" aria-labelledby="subclass-catalog-title">
+    <form method="dialog">
+      <div class="subclass-dialog-heading"><h3 id="subclass-catalog-title">Subclass card lists</h3><button class="s-btn" value="close" aria-label="Close subclass lists">Close</button></div>
+      <p class="studio-muted">Build 15 cards for each subclass, with compatible upgrade choices. Existing cards stay in your gallery.</p>
+      <div class="subclass-controls">
+        <label>Class<select id="subclass-class"><option value="all">All classes</option><option value="reaver">Reaver</option><option value="rogue">Rogue</option><option value="starseer">Starseer</option><option value="herald">Herald</option></select></label>
+        <label>Subclass<select id="subclass-style"><option value="all">All subclasses</option></select></label>
+        <label>Rank<select id="subclass-rank"><option value="">Recipe defaults</option><option value="1">Rank 1</option><option value="2">Rank 2</option><option value="3">Rank 3</option><option value="4">Rank 4</option><option value="5">Rank 5</option></select></label>
+        <label>Seed<input id="subclass-seed" type="text" maxlength="80" value="subclasses" /></label>
+      </div>
+      <p id="subclass-count" class="studio-muted"></p>
+      <p id="subclass-score-note" class="studio-muted">Scores estimate conditional and next-card effects. Expand a generated list to review its cards and upgrade choices.</p>
+      <label class="subclass-replace-label"><input id="subclass-replace" type="checkbox" /> Replace cards already in these lists</label>
+      <div class="modal-actions subclass-actions">
+        <button id="btn-subclass-preview" class="s-btn" type="button">Preview</button>
+        <button id="btn-subclass-generate" class="s-btn s-btn-primary" type="button">Generate lists</button>
+      </div>
+      <p id="subclass-status" class="subclass-status" role="status" aria-live="polite"></p>
+      <div id="subclass-preview" class="subclass-preview"></div>
+      <div class="modal-actions subclass-actions">
+        <label class="s-btn s-file-btn">Import catalog JSON<input id="input-subclass-catalog" type="file" accept=".json,application/json" hidden /></label>
+        <button id="btn-subclass-download" class="s-btn" type="button" disabled>Download selected lists</button>
+        <button id="btn-subclass-export" class="s-btn s-btn-primary" type="button" disabled>Export selected lists into game</button>
+      </div>
+      <p class="studio-muted">Downloads and game exports include your current card edits and upgrade choices. Export adds the selected lists to class rewards.</p>
+    </form>
+  </dialog>
+
   <dialog id="ranks-modal" class="studio-modal">
     <form method="dialog">
       <h3>Accept the new ranks in the game?</h3>
@@ -605,6 +752,365 @@
       <div class="modal-actions">
         <button value="cancel" class="s-btn">Keep editing</button>
         <button id="btn-confirm-revert" value="confirm" class="s-btn s-btn-warn">Discard and revert</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- STAGED REBALANCE WORKSPACE (CARDS & ITEMS) -->
+  <dialog id="rebalance-modal" class="studio-modal rebalance-workspace" aria-labelledby="rebalance-modal-title">
+    <form method="dialog" id="rebalance-form">
+      <header class="rebalance-header">
+        <div class="rebalance-heading"><h3 id="rebalance-modal-title">Rebalance power: Cards</h3>
+          <p id="rebal-status" class="studio-muted rebalance-status" role="status" aria-live="polite">Choose settings, then preview changes.</p>
+          <div class="art-target-switch" role="group" aria-label="Rebalance target"><button id="rebal-target-cards" type="button" class="s-btn is-active">Cards</button><button id="rebal-target-items" type="button" class="s-btn">Items</button></div>
+        </div>
+        <div id="rebal-focused" class="rebalance-focused">
+          <label class="rebalance-scope-field">Scope<select id="rebal-scope"></select></label>
+          <label class="rebalance-rank-field">Rank<select id="rebal-target-rank"><option value="keep">Keep current</option><option value="0">Unranked</option><option value="1">Rank 1</option><option value="2">Rank 2</option><option value="3">Rank 3</option><option value="4">Rank 4</option><option value="5">Rank 5</option></select></label>
+          <label class="rebalance-rarity-field">Rarity<select id="rebal-target-rarity"><option value="keep">Keep current</option><option value="common">Common</option><option value="uncommon">Uncommon</option><option value="rare">Rare</option></select></label>
+          <label class="rebalance-cp-field">Target CP<input id="rebal-target-cp" type="number" min="0" step="0.1" placeholder="Automatic" /></label>
+          <label class="studio-check rebalance-naming" title="Generate names for new previews"><input id="rebal-generate-names" type="checkbox" /> Generate names</label>
+        </div>
+      </header>
+      <div class="rebalance-body">
+        <section class="rebalance-preview-area" aria-label="Card comparison">
+          <div id="rebal-navigation" class="rebalance-navigation-toolbar" aria-label="Comparison navigation" hidden>
+            <div id="rebal-card-navigation" class="rebalance-navigation" role="group" aria-label="Cards" hidden><button id="btn-rebal-prev-card" type="button" class="s-btn" aria-label="Previous card" title="Previous card">‹</button><output id="rebal-card-position" aria-live="polite">0 of 0</output><button id="btn-rebal-next-card" type="button" class="s-btn" aria-label="Next card" title="Next card">›</button></div>
+            <div id="rebal-version-navigation" class="rebalance-navigation" role="group" aria-label="Versions" hidden><button id="btn-rebal-prev-variation" type="button" class="s-btn" aria-label="Previous version" title="Previous version">‹</button><output id="rebal-variation-position" aria-live="polite">Original</output><button id="btn-rebal-next-variation" type="button" class="s-btn" aria-label="Next version" title="Next version">›</button></div>
+          </div>
+          <div class="rebalance-comparison">
+            <article class="rebalance-preview"><h4 id="rebal-before-label">Original</h4><div id="rebal-card-before" class="rebalance-card-host"></div><p id="rebal-before-metrics" class="rebalance-preview-metrics"></p></article>
+            <article class="rebalance-preview"><div class="rebalance-after-heading"><h4 id="rebal-after-label">Staged preview</h4><button id="btn-rebal-reroll" type="button" class="s-btn s-btn-sm"><span id="rebal-spinner" class="rebalance-spinner" hidden aria-hidden="true"></span>Reroll</button></div><div id="rebal-card-after" class="rebalance-card-host"></div><p id="rebal-after-metrics" class="rebalance-preview-metrics"></p></article>
+          </div>
+        </section>
+        <aside class="rebalance-options" aria-label="Rebalance options">
+          <details id="rebal-costs-section" class="rebalance-option-group"><summary>Costs</summary><div class="rebalance-costs"><label>SP cost<input id="rebal-sp" type="number" min="0" max="3" placeholder="Automatic" /></label><label>MP cost<input id="rebal-mp" type="number" min="0" max="3" placeholder="Automatic" /></label></div><p class="studio-muted">Enter a value to fix that cost.</p></details>
+          <details id="rebal-effects-section" class="rebalance-option-group"><summary>Effects</summary><label>Effect count<input id="rebal-effect-count" type="number" min="1" max="4" placeholder="Keep current" /></label><p class="studio-muted">Rerolls choose from these preferences; unchecked keeps current effects.</p><div id="rebal-effect-options" class="rebalance-choice-list"><label class="studio-check"><input type="checkbox" data-rebal-effect value="damage" /> Damage</label><label class="studio-check"><input type="checkbox" data-rebal-effect value="block" /> Block</label><label class="studio-check"><input type="checkbox" data-rebal-effect value="poise" /> Poise damage</label><label class="studio-check"><input type="checkbox" data-rebal-effect value="draw" /> Draw</label><label class="studio-check"><input type="checkbox" data-rebal-effect value="heal" /> Heal</label><label class="studio-check"><input type="checkbox" data-rebal-effect value="cleanse" /> Cleanse</label><label class="studio-check"><input type="checkbox" data-rebal-effect value="restoreSp" /> Restore stamina</label><label class="studio-check"><input type="checkbox" data-rebal-effect value="restoreMp" /> Restore mana</label><label class="studio-check"><input type="checkbox" data-rebal-effect value="move" /> Move</label></div></details>
+          <details id="rebal-stances-section" class="rebalance-option-group"><summary>Stances</summary><p class="studio-muted">Leave all unchecked to keep the current form.</p><div id="rebal-stance-options" class="rebalance-choice-list"><label class="studio-check"><input type="checkbox" data-rebal-stance value="attack" /> Attack</label><label class="studio-check"><input type="checkbox" data-rebal-stance value="defend" /> Defend</label><label class="studio-check"><input type="checkbox" data-rebal-stance value="counter" /> Counter</label><label class="studio-check"><input type="checkbox" data-rebal-stance value="evade" /> Evade</label><label class="studio-check"><input type="checkbox" data-rebal-stance value="prepared" /> Prepared</label><label class="studio-check"><input type="checkbox" data-rebal-stance value="smash" /> Smash</label><label class="studio-check"><input type="checkbox" data-rebal-stance value="sweep" /> Sweep</label></div></details>
+          <details id="rebal-advanced" class="rebalance-option-group"><summary>Advanced pool settings</summary><label class="studio-check"><input id="rebal-pool-mode" type="checkbox" /> Use pool quotas and generation</label><p class="studio-muted">Pool mode uses the quotas below. Selected-card previews keep their scope.</p>
+<div class="modal-form-grid">
+        <label>Quota Mode
+          <select id="rebal-mode">
+            <option value="percent">Percentages (%)</option>
+            <option value="flat">Flat Counts (#)</option>
+          </select>
+        </label>
+        <label>Target Count
+          <input id="rebal-count" type="number" min="1" max="500" value="20" />
+        </label>
+        <label>Deterministic Seed
+          <input id="rebal-seed" type="text" value="42" />
+        </label>
+      </div>
+
+      <div class="quota-group">
+        <div class="quota-group-head">
+          <h4>Rank Quotas <span id="rebal-rank-unit" class="studio-muted">(%)</span></h4>
+          <span id="rebal-rank-total" class="studio-muted"></span>
+        </div>
+        <div class="quota-grid quota-grid-6">
+          <label>Unranked (0)<input id="rebal-rank-0" type="number" min="0" max="500" value="5" /></label>
+          <label>Rank 1<input id="rebal-rank-1" type="number" min="0" max="500" value="30" /></label>
+          <label>Rank 2<input id="rebal-rank-2" type="number" min="0" max="500" value="35" /></label>
+          <label>Rank 3<input id="rebal-rank-3" type="number" min="0" max="500" value="20" /></label>
+          <label>Rank 4<input id="rebal-rank-4" type="number" min="0" max="500" value="10" /></label>
+          <label>Rank 5<input id="rebal-rank-5" type="number" min="0" max="500" value="0" /></label>
+        </div>
+      </div>
+
+      <div class="quota-group">
+        <div class="quota-group-head">
+          <h4>Rarity Quotas <span id="rebal-rarity-unit" class="studio-muted">(%)</span></h4>
+          <span id="rebal-rarity-total" class="studio-muted"></span>
+        </div>
+        <div class="quota-grid quota-grid-4">
+          <label>Common<input id="rebal-rar-common" type="number" min="0" max="500" value="55" /></label>
+          <label>Uncommon<input id="rebal-rar-uncommon" type="number" min="0" max="500" value="30" /></label>
+          <label>Rare<input id="rebal-rar-rare" type="number" min="0" max="500" value="15" /></label>
+          <label id="rebal-rar-boss-wrap" class="hidden">Boss<input id="rebal-rar-boss" type="number" min="0" max="500" value="5" /></label>
+        </div>
+      </div>
+
+      <div class="modal-checks-row">
+        <label class="studio-check"><input id="rebal-aim-max" type="checkbox" checked /> Aim closest to max allowed CP</label>
+        <label class="studio-check"><input id="rebal-naming" type="checkbox" /> Apply naming conventions</label>
+        <label class="studio-check"><input id="rebal-gen-shortage" type="checkbox" checked /> Generate missing entries to fill count</label>
+        <label class="studio-check"><input id="rebal-trim-surplus" type="checkbox" /> Trim surplus beyond count</label>
+      </div>
+
+      <div id="rebal-preview-summary" class="export-diff"></div>
+
+        <div class="modal-actions-left">
+          <button id="btn-rebal-defaults" type="button" class="s-btn">Defaults</button>
+          <button id="btn-rebal-export-json" type="button" class="s-btn">Export JSON</button>
+          <label class="s-btn s-file-btn">Load JSON…<input id="input-rebal-load-json" type="file" accept=".json,application/json" hidden /></label>
+          <button id="btn-rebal-save-repo" type="button" class="s-btn" title="Save this list &amp; custom decks bundle to the repository">Save to Repo</button>
+        </div>
+          </details>
+        </aside>
+        <section class="rebalance-summary" aria-labelledby="rebal-changes-title"><h4 id="rebal-changes-title">Changes</h4><label class="studio-check rebalance-compare-original"><input id="rebal-compare-original" type="checkbox" checked /> Compare with original</label><ul id="rebal-diff" class="rebalance-diff" aria-label="Changed fields"></ul><details id="rebal-other-changes" class="rebalance-other-changes" hidden><summary id="rebal-other-summary">Other changes</summary><ul id="rebal-other-diff" class="rebalance-diff"></ul></details></section>
+      </div>
+      <footer class="rebalance-footer"><div class="rebalance-stage-actions"><button id="btn-rebal-preview" type="button" class="s-btn">Rebalance</button><button id="btn-rebal-revert" type="button" class="s-btn" title="Revert current card" aria-label="Revert current card">Revert</button></div><div class="rebalance-commit-actions"><button value="cancel" formnovalidate class="s-btn">Cancel</button><button id="btn-rebal-apply" type="button" class="s-btn s-btn-primary">Apply changes</button></div></footer>
+    </form>
+  </dialog>
+
+  <!-- BATCH PROCEDURAL GENERATOR MODAL (CARDS & ITEMS) -->
+  <dialog id="generate-modal" class="studio-modal studio-modal-wide">
+    <form method="dialog" id="generate-form">
+      <div class="modal-head-row">
+        <h3 id="generate-modal-title">Batch Generate Cards</h3>
+        <div class="art-target-switch" role="group" aria-label="Generator target">
+          <button id="gen-target-cards" type="button" class="s-btn is-active">Cards</button>
+          <button id="gen-target-items" type="button" class="s-btn">Items</button>
+        </div>
+      </div>
+      <p class="studio-muted">Specify any criteria you want; leave anything on Auto to have the deterministic generator fill it in and tune it to the rank's CP target.</p>
+
+      <div class="modal-form-grid">
+        <label>Count
+          <input id="gen-count" type="number" min="1" max="100" value="8" />
+        </label>
+        <label>Seed
+          <input id="gen-seed" type="text" value="1" />
+        </label>
+        <label>Add to Custom Deck
+          <select id="gen-deck">
+            <option value="">(None — studio pool only)</option>
+          </select>
+        </label>
+        <label>Target Rank
+          <select id="gen-rank">
+            <option value="auto">Auto</option>
+            <option value="0">Unranked (0)</option>
+            <option value="1">Rank 1 (1–4 CP)</option>
+            <option value="2">Rank 2 (5–8 CP)</option>
+            <option value="3">Rank 3 (9–12 CP)</option>
+            <option value="4">Rank 4 (13–16 CP)</option>
+            <option value="5">Rank 5 (17–20 CP)</option>
+            <option value="6">Rank 6 (21–24 CP)</option>
+          </select>
+        </label>
+      </div>
+
+      <!-- Card-specific criteria -->
+      <div id="gen-card-fields">
+        <div class="modal-form-grid">
+          <label>Class
+            <select id="gen-card-class">
+              <option value="auto">Auto</option>
+            </select>
+          </label>
+          <label>Rarity
+            <select id="gen-card-rarity">
+              <option value="auto">Auto</option>
+              <option value="common">Common</option>
+              <option value="uncommon">Uncommon</option>
+              <option value="rare">Rare</option>
+            </select>
+          </label>
+          <label>Card Type
+            <select id="gen-card-type">
+              <option value="auto">Auto</option>
+              <option value="attack">Attack</option>
+              <option value="skill">Skill</option>
+            </select>
+          </label>
+          <label>Camp
+            <select id="gen-card-camp">
+              <option value="auto">Auto</option>
+              <option value="physical">Physical (Martial)</option>
+              <option value="spell">Spell (Magic)</option>
+            </select>
+          </label>
+          <label>Magic School
+            <select id="gen-card-school">
+              <option value="auto">Auto</option>
+              <option value="fire">Fire</option>
+              <option value="frost">Frost</option>
+              <option value="lightning">Lightning</option>
+              <option value="decay">Decay</option>
+              <option value="divine">Divine</option>
+              <option value="earth">Earth</option>
+              <option value="force">Force</option>
+              <option value="illusion">Illusion</option>
+              <option value="alteration">Alteration</option>
+            </select>
+          </label>
+          <label>Number of Effects
+            <select id="gen-card-effects">
+              <option value="auto">Auto (1–3)</option>
+              <option value="1">1 Effect</option>
+              <option value="2">2 Effects</option>
+              <option value="3">3 Effects</option>
+              <option value="4">4 Effects</option>
+            </select>
+          </label>
+          <label>Targeting
+            <select id="gen-card-targeting">
+              <option value="auto">Auto</option>
+              <option value="single">Single Target</option>
+              <option value="area">Area (All Enemies)</option>
+            </select>
+          </label>
+        </div>
+        <div class="quota-group">
+          <h4>Stance(s) <span class="studio-muted">(leave unchecked for Auto)</span></h4>
+          <div class="modal-checks-row" id="gen-card-stances">
+            <label class="studio-check"><input type="checkbox" value="attack" /> Attack</label>
+            <label class="studio-check"><input type="checkbox" value="defend" /> Defend</label>
+            <label class="studio-check"><input type="checkbox" value="counter" /> Counter</label>
+            <label class="studio-check"><input type="checkbox" value="evade" /> Evade</label>
+            <label class="studio-check"><input type="checkbox" value="prepared" /> Prepared</label>
+            <label class="studio-check"><input type="checkbox" value="smash" /> Smash</label>
+            <label class="studio-check"><input type="checkbox" value="sweep" /> Sweep</label>
+          </div>
+        </div>
+        <div class="quota-group">
+          <h4>Keywords <span class="studio-muted">(optional)</span></h4>
+          <div class="modal-checks-row" id="gen-card-keywords">
+            <label class="studio-check"><input type="checkbox" value="exhaust" /> Exhaust</label>
+            <label class="studio-check"><input type="checkbox" value="retain" /> Retain</label>
+            <label class="studio-check"><input type="checkbox" value="innate" /> Innate</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Item-specific criteria -->
+      <div id="gen-item-fields" class="hidden">
+        <div class="modal-form-grid">
+          <label>Item Kind
+            <select id="gen-item-kind">
+              <option value="auto">Auto (Mixed)</option>
+              <option value="weapon">Weapon</option>
+              <option value="armour">Armour</option>
+              <option value="relic">Relic</option>
+            </select>
+          </label>
+          <label>Rarity
+            <select id="gen-item-rarity">
+              <option value="auto">Auto</option>
+              <option value="common">Common</option>
+              <option value="uncommon">Uncommon</option>
+              <option value="rare">Rare</option>
+              <option value="boss">Boss</option>
+            </select>
+          </label>
+          <label>Weapon Type
+            <select id="gen-item-weapon-type">
+              <option value="auto">Auto</option>
+            </select>
+          </label>
+          <label>Armour Group
+            <select id="gen-item-armour-group">
+              <option value="auto">Auto</option>
+              <option value="unarmoured">Unarmoured</option>
+              <option value="light">Light</option>
+              <option value="medium">Medium</option>
+              <option value="heavy">Heavy</option>
+            </select>
+          </label>
+          <label>Range (Weapon)
+            <select id="gen-item-range">
+              <option value="auto">Auto</option>
+              <option value="melee">Melee</option>
+              <option value="reach">Reach</option>
+              <option value="ranged">Ranged</option>
+            </select>
+          </label>
+          <label>Element / Theme
+            <select id="gen-item-element">
+              <option value="auto">Auto</option>
+              <option value="none">Physical / Neutral</option>
+              <option value="fire">Fire</option>
+              <option value="frost">Frost</option>
+              <option value="lightning">Lightning</option>
+              <option value="decay">Decay</option>
+              <option value="bleed">Bleed</option>
+              <option value="venom">Venom</option>
+              <option value="divine">Divine</option>
+            </select>
+          </label>
+          <label>Trait Count
+            <select id="gen-item-traits">
+              <option value="auto">Auto</option>
+              <option value="0">0 Traits</option>
+              <option value="1">1 Trait</option>
+              <option value="2">2 Traits</option>
+              <option value="3">3 Traits</option>
+            </select>
+          </label>
+          <label>Relic Mode
+            <select id="gen-item-relic-mode">
+              <option value="auto">Auto</option>
+              <option value="triggered">Triggered</option>
+              <option value="passive">Passive</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-checks-row">
+        <label class="studio-check"><input id="gen-aim-max" type="checkbox" checked /> Aim closest to max allowed CP</label>
+        <label class="studio-check"><input id="gen-naming" type="checkbox" checked /> Apply naming conventions</label>
+      </div>
+
+      <div class="modal-actions">
+        <button value="cancel" class="s-btn">Cancel</button>
+        <button id="btn-gen-run" type="button" class="s-btn s-btn-primary">Generate Batch</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- CUSTOM DECKS & CLASSES MODAL -->
+  <dialog id="decks-modal" class="studio-modal studio-modal-wide">
+    <form method="dialog" id="decks-form">
+      <div class="modal-head-row">
+        <h3>Custom Decks &amp; Classes</h3>
+        <span id="decks-active-badge" class="studio-muted"></span>
+      </div>
+      <p class="studio-muted">Create custom classes and custom decks, assign decks to any class or set one as the active deck list, and export/load bundles as JSON or save to the repo.</p>
+
+      <div class="decks-modal-columns">
+        <div class="decks-col">
+          <h4>Custom Classes</h4>
+          <div class="modal-form-grid">
+            <label>Class Name<input id="new-class-name" type="text" placeholder="e.g. Ashblade" /></label>
+            <label>Max HP<input id="new-class-hp" type="number" min="20" max="200" value="76" /></label>
+            <label>Tint<input id="new-class-tint" type="color" value="#7aa2f7" /></label>
+            <label>Description<input id="new-class-desc" type="text" placeholder="Short role blurb" /></label>
+          </div>
+          <button id="btn-create-class" type="button" class="s-btn">+ Create Class</button>
+          <div id="custom-classes-list" class="decks-list"></div>
+        </div>
+
+        <div class="decks-col">
+          <h4>Custom Decks</h4>
+          <div class="modal-form-grid">
+            <label>Deck Name<input id="new-deck-name" type="text" placeholder="e.g. Burn Control v1" /></label>
+            <label>Assign to Class
+              <select id="new-deck-class">
+                <option value="">(Unassigned)</option>
+              </select>
+            </label>
+          </div>
+          <div class="modal-checks-row">
+            <label class="studio-check"><input id="new-deck-from-filter" type="checkbox" checked /> Populate with current filtered cards</label>
+            <label class="studio-check"><input id="new-deck-set-active" type="checkbox" /> Set as active deck list</label>
+          </div>
+          <button id="btn-create-deck" type="button" class="s-btn s-btn-primary">+ Create Deck</button>
+          <div id="custom-decks-list" class="decks-list"></div>
+        </div>
+      </div>
+
+      <div class="modal-actions modal-actions-split">
+        <div class="modal-actions-left">
+          <button id="btn-decks-export-json" type="button" class="s-btn">Export Bundle JSON</button>
+          <label class="s-btn s-file-btn">Load JSON…<input id="input-decks-load-json" type="file" accept=".json,application/json" hidden /></label>
+          <button id="btn-decks-save-repo" type="button" class="s-btn" title="Save custom decks, classes, and edited lists to content/source/studioDecks.json">Save to Repo</button>
+        </div>
+        <div class="modal-actions-right">
+          <button value="cancel" class="s-btn">Close</button>
+        </div>
       </div>
     </form>
   </dialog>

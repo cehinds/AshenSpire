@@ -27,9 +27,7 @@
       "heavy",
       "stagger"
     ],
-    "points": {
-      "strength": 3
-    },
+    "points": {},
     "source": {
       "file": "content/source/weapons.csv",
       "id": "greatsword"
@@ -48,10 +46,7 @@
       "flurry",
       "throw"
     ],
-    "points": {
-      "dexterity": 1,
-      "strength": 1
-    },
+    "points": {},
     "source": {
       "file": "content/source/weapons.csv",
       "id": "dagger"
@@ -69,9 +64,7 @@
       "bow",
       "retreat"
     ],
-    "points": {
-      "dexterity": 1
-    },
+    "points": {},
     "source": {
       "file": "content/source/weapons.csv",
       "id": "shortbow"
@@ -268,9 +261,7 @@
       "lantern",
       "regen"
     ],
-    "points": {
-      "wisdom": 1
-    },
+    "points": {},
     "source": {
       "file": "content/source/weapons.csv",
       "id": "lantern"
@@ -322,9 +313,7 @@
     "tags": [
       "staff"
     ],
-    "points": {
-      "intelligence": 1
-    },
+    "points": {},
     "source": {
       "file": "content/source/weapons.csv",
       "id": "ashStaff"
@@ -341,9 +330,7 @@
       "staff",
       "frost"
     ],
-    "points": {
-      "intelligence": 1
-    },
+    "points": {},
     "source": {
       "file": "content/source/weapons.csv",
       "id": "starstoneStaff"
@@ -362,10 +349,7 @@
       "blight",
       "retreat"
     ],
-    "points": {
-      "intelligence": 2,
-      "wisdom": 1
-    },
+    "points": {},
     "source": {
       "file": "content/source/weapons.csv",
       "id": "boneSceptre"
@@ -420,9 +404,7 @@
       "rod",
       "blight"
     ],
-    "points": {
-      "wisdom": 1
-    },
+    "points": {},
     "source": {
       "file": "content/source/weapons.csv",
       "id": "blightRod"
@@ -536,9 +518,7 @@
     "tags": [
       "plate"
     ],
-    "points": {
-      "constitution": 1
-    },
+    "points": {},
     "classes": [
       "herald",
       "reaver",
@@ -579,9 +559,7 @@
     "tags": [
       "plate"
     ],
-    "points": {
-      "strength": 1
-    },
+    "points": {},
     "classes": [
       "reaver"
     ],
@@ -620,9 +598,7 @@
     "tags": [
       "robes"
     ],
-    "points": {
-      "wisdom": 1
-    },
+    "points": {},
     "classes": [
       "herald",
       "reaver",
@@ -643,9 +619,7 @@
     "tags": [
       "robes"
     ],
-    "points": {
-      "intelligence": 1
-    },
+    "points": {},
     "classes": [
       "starseer"
     ],
@@ -684,9 +658,7 @@
       "robes",
       "thin"
     ],
-    "points": {
-      "intelligence": 1
-    },
+    "points": {},
     "classes": [
       "starseer"
     ],
@@ -745,9 +717,7 @@
       "robes",
       "regen"
     ],
-    "points": {
-      "intelligence": 1
-    },
+    "points": {},
     "classes": [
       "herald"
     ],
@@ -765,9 +735,7 @@
     "tags": [
       "robes"
     ],
-    "points": {
-      "constitution": 1
-    },
+    "points": {},
     "classes": [
       "herald"
     ],
@@ -845,9 +813,7 @@
     "tags": [
       "leathers"
     ],
-    "points": {
-      "strength": 1
-    },
+    "points": {},
     "classes": [
       "rogue"
     ],

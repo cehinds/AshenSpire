@@ -2,14 +2,18 @@
 //
 // Used by tools/serve.mjs on localhost only. All paths are validated to stay inside the repository root.
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, rmSync, lstatSync, realpathSync } from 'node:fs';
 import { resolve, relative, dirname, sep, isAbsolute } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { ValidateScoringConfig } from '../src/model/activeScoring.js';
+import { ValidateSubclassCatalog, SerializeSubclassCatalog } from '../src/model/subclassCatalogExport.js';
+import { tryAcquire, lockEnv, busyMessage } from './lib/build-lock.mjs';
+import { expansionStatuses } from '../src/content/combatStatusRules.js';
 
 export const DEFAULT_SCORING_PATH = 'content/source/scoring.json';
 export const DEFAULT_ART_LAYERS_PATH = 'content/source/cardArtLayers.json';
 export const DEFAULT_ITEM_ART_LAYERS_PATH = 'content/source/itemArtLayers.json';
+export const DEFAULT_CUSTOM_DECKS_PATH = 'content/source/studioDecks.json';
 
 function resolveRepoPath(rootDir, relPath, fallback) {
   const chosen = typeof relPath === 'string' && relPath.trim() ? relPath.trim() : fallback;
@@ -26,13 +30,15 @@ function resolveRepoPath(rootDir, relPath, fallback) {
   return { target, rel: rel.split(sep).join('/') };
 }
 
-export function readStudioConfig(rootDir, { scoringPath, artLayersPath, itemArtLayersPath } = {}) {
+export function readStudioConfig(rootDir, { scoringPath, artLayersPath, itemArtLayersPath, customDecksPath } = {}) {
   const sc = resolveRepoPath(rootDir, scoringPath, DEFAULT_SCORING_PATH);
   const al = resolveRepoPath(rootDir, artLayersPath, DEFAULT_ART_LAYERS_PATH);
   const il = resolveRepoPath(rootDir, itemArtLayersPath, DEFAULT_ITEM_ART_LAYERS_PATH);
+  const cd = resolveRepoPath(rootDir, customDecksPath, DEFAULT_CUSTOM_DECKS_PATH);
   const scoringExists = existsSync(sc.target);
   const artLayersExists = existsSync(al.target);
   const itemArtLayersExists = existsSync(il.target);
+  const customDecksExists = existsSync(cd.target);
   return {
     scoringPath: sc.rel,
     defaultScoringPath: DEFAULT_SCORING_PATH,
@@ -46,6 +52,10 @@ export function readStudioConfig(rootDir, { scoringPath, artLayersPath, itemArtL
     defaultItemArtLayersPath: DEFAULT_ITEM_ART_LAYERS_PATH,
     itemArtLayersExists,
     itemArtLayers: itemArtLayersExists ? JSON.parse(readFileSync(il.target, 'utf8')) : null,
+    customDecksPath: cd.rel,
+    defaultCustomDecksPath: DEFAULT_CUSTOM_DECKS_PATH,
+    customDecksExists,
+    customDecks: customDecksExists ? JSON.parse(readFileSync(cd.target, 'utf8')) : null,
   };
 }
 
@@ -97,4 +107,161 @@ export function saveStudioItemArtLayers(rootDir, { path: relPath, itemArtLayers,
     rebuilt.push('tools/content-build.mjs');
   }
   return { path: rel, layerCount: itemArtLayers.layers.length, rebuilt };
+}
+
+export function saveStudioDecks(rootDir, { path: relPath, bundle } = {}) {
+  if (!bundle || typeof bundle !== 'object') {
+    throw new Error('Studio deck/list bundle must be a JSON object.');
+  }
+  const { target, rel } = resolveRepoPath(rootDir, relPath, DEFAULT_CUSTOM_DECKS_PATH);
+  mkdirSync(dirname(target), { recursive: true });
+  writeFileSync(target, JSON.stringify(bundle, null, 2) + '\n', 'utf8');
+  return {
+    path: rel,
+    cardCount: Array.isArray(bundle.cards) ? bundle.cards.length : 0,
+    itemCount: Array.isArray(bundle.items) ? bundle.items.length : 0,
+    deckCount: Array.isArray(bundle.customDecks) ? bundle.customDecks.length : 0,
+    classCount: Array.isArray(bundle.customClasses) ? bundle.customClasses.length : 0,
+  };
+}
+
+export const SUBCLASS_CATALOG_PATH = 'content/source/subclassCatalog.json';
+const SUBCLASS_CLASSES = ['reaver', 'rogue', 'starseer', 'herald'];
+const SUBCLASS_BUILD_STEPS = ['tools/content-build.mjs', 'tools/game-config.mjs', 'tools/combat-power-report.mjs', 'tools/level-lists.mjs'];
+
+// Read the tag tree's CSV without interpreting commas inside quoted labels.
+function csvRows(text) {
+  const lines = text.split(/\r?\n/).filter(line => line.trim() && !line.trimStart().startsWith('#'));
+  const cells = line => {
+    const out = []; let value = '', quoted = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"' && line[i + 1] === '"' && quoted) { value += '"'; i++; }
+      else if (ch === '"') quoted = !quoted;
+      else if (ch === ',' && !quoted) { out.push(value); value = ''; }
+      else value += ch;
+    }
+    out.push(value); return out;
+  };
+  const header = cells(lines.shift() || '');
+  return lines.map(line => Object.fromEntries(cells(line).map((value, i) => [header[i], value])));
+}
+
+/** Add a validated catalog to both content pipelines. Every write is rolled back if any builder fails. */
+export function saveStudioSubclassCatalog(rootDir, { catalog, rebuild = true } = {}) {
+  const release = tryAcquire(rootDir, 'Subclass catalog export');
+  if (typeof release !== 'function') throw new Error(busyMessage(release.heldBy));
+  try { return saveSubclassCatalogLocked(rootDir, { catalog, rebuild, env: { ...process.env, ...lockEnv(release) } }); }
+  finally { release(); }
+}
+
+function saveSubclassCatalogLocked(rootDir, { catalog, rebuild, env }) {
+  const root = resolve(rootDir);
+  const realRoot = realpathSync(root);
+  const inside = (base, target) => { const rel = relative(base, target); return !isAbsolute(rel) && rel !== '..' && !rel.startsWith(`..${sep}`); };
+  const pathOf = rel => {
+    const target = resolve(root, rel);
+    if (!inside(root, target)) throw new Error(`Subclass export path escapes the repository: ${rel}`);
+    for (let part = target; part !== root; part = dirname(part)) {
+      // lstat must run before any existence check: existsSync follows a link,
+      // so a dangling link looks absent even though a later write follows it.
+      let stat;
+      try { stat = lstatSync(part); } catch (error) { if (error.code === 'ENOENT') continue; throw error; }
+      if (stat.isSymbolicLink()) throw new Error(`Subclass export refuses symbolic-link path: ${rel}`);
+      if (!inside(realRoot, realpathSync(part))) throw new Error(`Subclass export path resolves outside the repository: ${rel}`);
+    }
+    return target;
+  };
+  const read = rel => readFileSync(pathOf(rel), 'utf8');
+  const json = rel => JSON.parse(read(rel));
+  const initialErrors = ValidateSubclassCatalog(catalog);
+  if (initialErrors.length) throw new Error(`Invalid subclass catalog: ${initialErrors.slice(0, 12).join('; ')}`);
+  const nodes = csvRows(read('content/source/nodes.csv'));
+  const nodeById = new Map(nodes.map(node => [node.id, node]));
+  const familyNodes = csvRows(read('content/source/familyNodes.csv'));
+  const allowedTags = family => {
+    const roots = new Set(familyNodes.filter(row => row.family === family).map(row => row.nodeId));
+    return new Set(nodes.filter(node => {
+      const seen = new Set();
+      for (let id = node.id; id && !seen.has(id); id = nodeById.get(id)?.parentId) { if (roots.has(id)) return true; seen.add(id); }
+      return false;
+    }).map(node => node.id));
+  };
+  const sourcePaths = readdirSync(pathOf('content/source/cards')).filter(name => name.endsWith('.json')).map(name => `content/source/cards/${name}`);
+  const sourceCards = new Map(sourcePaths.map(path => [path, json(path)]));
+  const corePath = 'games/ashenspire/packs/core/cards.json';
+  const coreCards = json(corePath);
+  const classesPath = 'content/source/classes.json', classes = json(classesPath);
+  const allCards = [...sourceCards.values()].flat().concat(coreCards);
+  const registries = {
+    cards: new Set([...allCards, ...catalog.cards].map(card => card.id)), classes: new Set(classes.map(row => row.id)), scripts: new Set(),
+    ...Object.fromEntries(['statuses', 'stances', 'keywords'].map(kind => [kind, new Set(json(`content/source/${kind}.json`).map(row => row.id))])),
+  };
+  // These statuses are joined by src/content/statuses.js, rather than authored in statuses.json.
+  for (const status of expansionStatuses) registries.statuses.add(status.id);
+  const baseStatusesPath = 'games/ashenspire/packs/base-cards/statuses.json';
+  if (existsSync(pathOf(baseStatusesPath))) for (const status of json(baseStatusesPath).statuses || []) registries.statuses.add(status.id);
+  const errors = ValidateSubclassCatalog(catalog, { registries, cardTags: allowedTags('card'), effectTags: allowedTags('effect'), nodeIds: new Set(nodeById.keys()), strictReferences: true });
+  if (errors.length) throw new Error(`Invalid subclass catalog: ${errors.slice(0, 12).join('; ')}`);
+  const previous = existsSync(pathOf(SUBCLASS_CATALOG_PATH)) ? json(SUBCLASS_CATALOG_PATH) : { cards: [], lists: [] };
+  if (previous.cards.length && ValidateSubclassCatalog(previous).length) throw new Error('Existing subclass ownership catalog is invalid; refusing to overwrite content.');
+  const owned = new Map(previous.cards.map(card => [card.id, card]));
+  const incoming = new Map(catalog.cards.map(card => [card.id, card]));
+  for (const card of catalog.cards) {
+    if (allCards.some(row => row.id === card.id) && !owned.has(card.id)) throw new Error(`Card '${card.id}' collides with authored content; no files changed.`);
+    if (owned.has(card.id) && owned.get(card.id).class !== card.class) throw new Error(`Card '${card.id}' cannot change its owning class.`);
+  }
+  const merged = { ...catalog, cards: [...previous.cards.filter(card => !incoming.has(card.id)), ...catalog.cards], lists: [...previous.lists.filter(list => !catalog.lists.some(row => row.id === list.id)), ...catalog.lists.map(list => ({ ...list, cardIds: [...new Set([...(previous.lists.find(old => old.id === list.id)?.cardIds || []), ...list.cardIds])] }))] };
+  if (Array.isArray(previous.metadata) || Array.isArray(catalog.metadata)) merged.metadata = [...(previous.metadata || []).filter(row => !incoming.has(row.cardId)), ...(catalog.metadata || [])];
+  const mergedErrors = ValidateSubclassCatalog(merged);
+  if (mergedErrors.length) throw new Error(`Catalog merge failed: ${mergedErrors.slice(0, 8).join('; ')}`);
+  const writes = new Map();
+  const putJson = (path, value) => writes.set(path, JSON.stringify(value, null, 2) + '\n');
+  // Canonical base content stores card tags in tagging.csv and damage carriers in cardExposure.csv.
+  for (const classId of SUBCLASS_CLASSES) {
+    const path = `content/source/cards/${classId}Cards.json`, old = sourceCards.get(path);
+    if (!Array.isArray(old)) throw new Error(`Missing canonical ${classId} card source`);
+    const additions = catalog.cards.filter(card => card.class === classId).map(({ tags, damageSchool, exposureBuildupPerHit, ...raw }) => raw);
+    if (additions.length) putJson(path, [...old.filter(card => !incoming.has(card.id)), ...additions]);
+  }
+  const keepCsv = (path, keep, additions) => {
+    const text = read(path), eol = text.includes('\r\n') ? '\r\n' : '\n';
+    const lines = text.split(/\r?\n/).filter(line => !line || line.trimStart().startsWith('#') || keep(line.split(',')));
+    while (lines.at(-1) === '') lines.pop();
+    writes.set(path, [...lines, ...additions].join(eol) + eol);
+  };
+  keepCsv('content/source/tagging.csv', cells => !(cells[0] === 'card' && incoming.has(cells[2])), catalog.cards.flatMap(card => card.tags.map(tag => `card,,${card.id},${tag}`)));
+  keepCsv('content/source/cardExposure.csv', cells => !incoming.has(cells[0]), catalog.cards.filter(card => card.effects.some(effect => effect.op === 'damage')).map(card => `${card.id},${card.damageSchool || 'physical'},${card.exposureBuildupPerHit || 0}`));
+  putJson(classesPath, classes.map(row => ({ ...row, cardPool: [...new Set([...(row.cardPool || []), ...catalog.cards.filter(card => card.class === row.id).map(card => card.id)])] })));
+  putJson(corePath, [...coreCards.filter(card => !incoming.has(card.id)), ...catalog.cards]);
+  const variantsPath = 'games/ashenspire/packs/core/resourceVariants.json', variants = json(variantsPath);
+  for (const card of catalog.cards) variants[card.id] = Object.fromEntries([['none', false, false], ['sp', true, false], ['mp', false, true], ['sp,mp', true, true]].map(([key, sp, mp]) => [key, { cost: sp ? card.staminaCost : 0, staminaCost: sp ? card.staminaCost : 0, manaCost: mp ? card.manaCost : 0 }]));
+  putJson(variantsPath, variants);
+  writes.set(SUBCLASS_CATALOG_PATH, SerializeSubclassCatalog(merged));
+  // Builders only write these generated trees and the profile lock. Preserve exact preexisting bytes.
+  const snapshots = new Map();
+  const snapshotFile = rel => snapshots.set(rel, existsSync(pathOf(rel)) ? readFileSync(pathOf(rel)) : null);
+  const generatedTrees = ['src/content/generated', 'src/framework/data'];
+  const filesUnder = rel => {
+    if (!existsSync(pathOf(rel))) return [];
+    return readdirSync(pathOf(rel), { withFileTypes: true }).flatMap(entry => entry.isDirectory() ? filesUnder(`${rel}/${entry.name}`) : [`${rel}/${entry.name}`]);
+  };
+  for (const rel of [...writes.keys(), 'games/ashenspire/game.lock.json', ...generatedTrees.flatMap(filesUnder)]) snapshotFile(rel);
+  const rebuilt = [];
+  try {
+    for (const [rel, text] of writes) { mkdirSync(dirname(pathOf(rel)), { recursive: true }); writeFileSync(pathOf(rel), text, 'utf8'); }
+    if (rebuild) for (const script of SUBCLASS_BUILD_STEPS) {
+      const result = spawnSync(process.execPath, [pathOf(script), ...(script.endsWith('game-config.mjs') ? ['build'] : [])], { cwd: root, env, encoding: 'utf8', windowsHide: true, maxBuffer: 8 * 1024 * 1024 });
+      if (result.status !== 0) throw new Error(`${script} failed: ${(result.stderr || result.stdout || result.error?.message || '').trim().slice(-1200)}`);
+      rebuilt.push(script);
+    }
+  } catch (error) {
+    for (const rel of generatedTrees.flatMap(filesUnder)) if (!snapshots.has(rel)) rmSync(pathOf(rel));
+    for (const [rel, bytes] of snapshots) {
+      if (bytes === null) { if (existsSync(pathOf(rel))) rmSync(pathOf(rel)); }
+      else { mkdirSync(dirname(pathOf(rel)), { recursive: true }); writeFileSync(pathOf(rel), bytes); }
+    }
+    throw new Error(`Subclass export rolled back: ${error.message}`);
+  }
+  return { cardCount: catalog.cards.length, listCount: catalog.lists.length, paths: [...writes.keys()], rebuilt };
 }

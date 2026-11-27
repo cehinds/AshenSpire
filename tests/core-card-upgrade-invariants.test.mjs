@@ -6,6 +6,7 @@ import { projectGameCard, gameContent } from '../src/model/gameProfile.js';
 import { nextUpgradeStep } from '../src/model/cardUpgradeLimits.js';
 import { STACK_CAPS } from '../src/model/cardRank.js';
 import { FlatSteps } from '../src/model/cardUpgrade.js';
+import { ProjectCardMechanicalValues } from '../src/model/cardMechanicalProjection.js';
 
 const subject = { gameProfile: profile };
 const ids = gameContent(subject, 'cards').filter((c) => c.id.startsWith('core.') && registries.cards.has(c.id)).map((c) => c.id);
@@ -23,6 +24,9 @@ test('real Core cards at ranks 1, 3 and 10: caps, the +100% guard, loseHp, cost 
     const unranked = plain;
     // The authored upgrade is the owner's own numbers: the rules bound what is rolled on top of it.
     const authored = base.upgrade ? projectGameCard(subject, { instanceId: 'x', cardId, upgraded: true, upgradeSteps: [{ k: 'authored' }] }) : plain;
+    // This fixture deliberately uses its own side-damage/Block scales. Read
+    // the same neutral bound profile as the upgrade generator and card face.
+    const mechanicalPlain = ProjectCardMechanicalValues(plain,{registries}).card, mechanicalAuthored = ProjectCardMechanicalValues(authored,{registries}).card;
     for (let seed = 1; seed <= 10; seed += 1) {
       const run = { seed, gameProfile: profile };
       const instance = { instanceId: `inst-${cardId}`, cardId, upgraded: false, ...(rank > 1 ? { rank } : {}) };
@@ -37,9 +41,10 @@ test('real Core cards at ranks 1, 3 and 10: caps, the +100% guard, loseHp, cost 
         const where = `${cardId} rank ${rank} seed ${seed} upgrade ${n} (${JSON.stringify(step)})`;
         assert.notEqual(numbers(face), numbers(before), `${where} changed nothing`);
         before = face;
+        const mechanicalFace = ProjectCardMechanicalValues(face,{registries}).card;
         for (const op of ['damage', 'block']) {
-          const b = total(plain, op);
-          if (b && rank === 1) assert.ok(total(face, op) <= Math.max(b * 2, total(authored, op)), `${where}: ${op} ${total(face, op)} > 2 x ${b}`);
+          const b = total(mechanicalPlain, op);
+          if (b && rank === 1) assert.ok(total(mechanicalFace, op) <= Math.max(b * 2, total(mechanicalAuthored, op)), `${where}: mechanical ${op} ${total(mechanicalFace, op)} > 2 x ${b}`);
         }
         assert.ok(sum(face, 'loseHp') <= sum(plain, 'loseHp'), `${where}: loseHp rose`);
         for (const e of face.effects) {
@@ -48,9 +53,7 @@ test('real Core cards at ranks 1, 3 and 10: caps, the +100% guard, loseHp, cost 
           assert.ok(e.stacks <= Math.max(STACK_CAPS[e.status], given), `${where}: ${e.status} ${e.stacks} over its cap`);
         }
         const flat = FlatSteps(instance.upgradeSteps);
-        for (const pool of ['sp', 'mp']) {
-          assert.ok(flat.filter((x) => x.k === 'cost' && x.pool === pool).length <= 1, `${where}: repeated ${pool} cost cut`);
-        }
+        assert.ok(flat.filter((x) => x.k === 'cost').length <= 3, `${where}: cost cuts exceed 3 Efficient stacks`);
         assert.ok(flat.filter((x) => x.k === 'hits').length <= 1, `${where}: hits more than once`);
         const swaps = flat.filter((x) => x.k === 'costSwap');
         assert.ok(swaps.length <= 1, `${where}: cost swap more than once`);

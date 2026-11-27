@@ -51,6 +51,82 @@ export function ValidateScoringConfig(obj) {
       }
     }
   }
+  if (obj.upgradeTags && typeof obj.upgradeTags === 'object') {
+    for (const [id, rule] of Object.entries(obj.upgradeTags)) {
+      if (id[0] === '$' || !rule || typeof rule !== 'object') continue;
+      for (const field of ['base', 'pMultiplier', 'effectMultPerStack']) {
+        if (field in rule && !Number.isFinite(rule[field])) errors.push(`upgradeTags.${id}.${field} must be a finite number.`);
+      }
+    }
+  }
+  if (obj.tierUnlocks !== undefined) {
+    const tu = obj.tierUnlocks;
+    const isPlainObj = (v) => v && typeof v === 'object' && !Array.isArray(v);
+    if (!isPlainObj(tu)) {
+      errors.push('tierUnlocks must be an object when present.');
+    } else {
+      if (tu.enabled !== undefined && typeof tu.enabled !== 'boolean') {
+        errors.push('tierUnlocks.enabled must be a boolean.');
+      }
+      if (tu.zeroCostMinTier !== undefined && (!Number.isFinite(tu.zeroCostMinTier) || tu.zeroCostMinTier < 0)) {
+        errors.push('tierUnlocks.zeroCostMinTier must be a non-negative number.');
+      }
+      if (tu.hybridMinTier !== undefined && (!Number.isFinite(tu.hybridMinTier) || tu.hybridMinTier < 0)) {
+        errors.push('tierUnlocks.hybridMinTier must be a non-negative number.');
+      }
+      if (tu.upgradeRarityMinTier !== undefined && (!Array.isArray(tu.upgradeRarityMinTier) || tu.upgradeRarityMinTier.some((v) => !Number.isFinite(v) || v < 0))) {
+        errors.push('tierUnlocks.upgradeRarityMinTier must be an array of non-negative numbers.');
+      }
+      if (tu.rarityBonus !== undefined) {
+        if (!isPlainObj(tu.rarityBonus)) errors.push('tierUnlocks.rarityBonus must be an object.');
+        else for (const [r, v] of Object.entries(tu.rarityBonus)) {
+          if (!Number.isFinite(v) || v < 0) errors.push(`tierUnlocks.rarityBonus.${r} must be a non-negative finite number.`);
+        }
+      }
+      if (tu.upgrades !== undefined) {
+        if (!isPlainObj(tu.upgrades)) errors.push('tierUnlocks.upgrades must be an object.');
+        else for (const [k, v] of Object.entries(tu.upgrades)) {
+          if (!Number.isFinite(v) || v < 0) errors.push(`tierUnlocks.upgrades.${k} must be a non-negative number.`);
+        }
+      }
+      if (tu.elements !== undefined) {
+        if (!isPlainObj(tu.elements)) errors.push('tierUnlocks.elements must be an object.');
+        else for (const [el, v] of Object.entries(tu.elements)) {
+          if (!Number.isFinite(v) || v < 0) errors.push(`tierUnlocks.elements.${el} must be a non-negative number.`);
+        }
+      }
+      if (tu.upgradeTagStacks !== undefined) {
+        if (!isPlainObj(tu.upgradeTagStacks)) errors.push('tierUnlocks.upgradeTagStacks must be an object.');
+        else for (const [fam, arr] of Object.entries(tu.upgradeTagStacks)) {
+          if (!Array.isArray(arr) || arr.some((v) => !Number.isFinite(v) || v < 0)) {
+            errors.push(`tierUnlocks.upgradeTagStacks.${fam} must be an array of non-negative numbers.`);
+          }
+        }
+      }
+      if (tu.statuses !== undefined) {
+        if (!isPlainObj(tu.statuses)) errors.push('tierUnlocks.statuses must be an object.');
+        else for (const [st, entry] of Object.entries(tu.statuses)) {
+          if (typeof entry === 'number') {
+            if (!Number.isFinite(entry) || entry < 0) errors.push(`tierUnlocks.statuses.${st} must be a non-negative number.`);
+          } else if (!isPlainObj(entry)) {
+            errors.push(`tierUnlocks.statuses.${st} must be a number or object.`);
+          } else {
+            if (entry.minTier !== undefined && (!Number.isFinite(entry.minTier) || entry.minTier < 0)) errors.push(`tierUnlocks.statuses.${st}.minTier must be a non-negative number.`);
+            if (entry.maxStacksBase !== undefined && (!Number.isFinite(entry.maxStacksBase) || entry.maxStacksBase < 1)) errors.push(`tierUnlocks.statuses.${st}.maxStacksBase must be >= 1.`);
+            if (entry.stacksPerExtraTier !== undefined && (!Number.isFinite(entry.stacksPerExtraTier) || entry.stacksPerExtraTier < 0)) errors.push(`tierUnlocks.statuses.${st}.stacksPerExtraTier must be a non-negative number.`);
+          }
+        }
+      }
+      if (tu.ceilings !== undefined) {
+        if (!isPlainObj(tu.ceilings)) errors.push('tierUnlocks.ceilings must be an object.');
+        else for (const [kind, arr] of Object.entries(tu.ceilings)) {
+          if (!Array.isArray(arr) || arr.some((v) => v !== null && (!Number.isFinite(v) || v < 1))) {
+            errors.push(`tierUnlocks.ceilings.${kind} must be an array of positive numbers or null.`);
+          }
+        }
+      }
+    }
+  }
   // naming.card.limit and naming.item.limit are optional (no block, or no maxChars, = no limit): {maxChars: whole number >= 1, keep: name parts, most important first}.
   for (const kind of ['card', 'item']) {
     const limit = obj.naming?.[kind]?.limit;

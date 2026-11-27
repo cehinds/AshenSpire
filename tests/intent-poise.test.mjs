@@ -100,7 +100,13 @@ test('an attack which can miss warns that it may break Poise', () => {
 });
 
 test('Block in front: the forecast spends Block first, as live does', () => {
-  for (const block of [3, 10, 40]) expectMatch(forecastAndPlay(fight([['wanderingSoldier', 'slash']], { block })), `Block ${block}`, { someLoss: block < 19 });
+  const play = block => forecastAndPlay(fight([['wanderingSoldier', 'slash']], { block }));
+  const unblocked = play(0), partial = play(3), full = play(10);
+  expectMatch(unblocked, 'no Block');
+  expectMatch(partial, 'partial Block');
+  expectMatch(full, 'full Block', { someLoss: false });
+  assert.ok(partial[0].live.lost < unblocked[0].live.lost, 'partial Block reduces the live Poise lost');
+  assert.equal(full[0].live.lost, 0, 'full Block absorbs the legacy slash without Poise loss');
 });
 
 test('Defend stance with Block keeps the 1 Poise floor in the forecast', () => {

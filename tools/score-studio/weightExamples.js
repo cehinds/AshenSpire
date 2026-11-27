@@ -1,7 +1,7 @@
 // Plain words and a worked example for each Weights tab row, so every number reads as a sentence:
 // "[1] pts per [3] damage" with "6 damage = 2 pts" under it. The examples use the scorer's own math
 // (src/model/combatPower.js), so they never print a number the scorer would not.
-import { BaseFace, ScoreCard, CombatPower, RankOf, RankName, RankRange } from '../../src/model/combatPower.js';
+import { BaseFace, ScoreCard, CombatPower, RankOf, RankName, RankRange, UpgradeTagSurcharge } from '../../src/model/combatPower.js';
 
 // The thing an effect's "per" counts. Anything not listed falls back to the effect's own label.
 const EFFECT_UNITS = Object.freeze({
@@ -104,6 +104,8 @@ export function weightSentence(groupKey, id, scoring, label)
         : { before: 'adds', mid: 'pts', after: '' };
     case 'tags':
       return tagSentence(scoring.tags?.[id]);
+    case 'upgradeTags':
+      return upgradeTagSentence(id, scoring);
     case 'items':
       return itemParamSentence(id);
     case 'gearFields':
@@ -125,8 +127,17 @@ function itemParamSentence(id)
     case 'range.reach': return { before: 'Reach weapon adds', mid: 'pts', after: '' };
     case 'range.ranged': return { before: 'Ranged weapon adds', mid: 'pts', after: '' };
     case 'conditionFactor': return { before: 'Conditional trait ×', mid: '', after: '' };
+    case 'attributeBudgetCost': return { before: 'Each +1 gear stat costs', mid: 'ratings / Poise budget', after: '' };
     default: return { before: '', mid: 'pts', after: '' };
   }
+}
+
+function upgradeTagSentence(id, scoring)
+{
+  if (id === 'improved.effectMultPerStack') return { before: '×', mid: 'compounding per stack', after: '' };
+  const rule = scoring.upgradeTags?.[id];
+  if (rule?.mode === 'multiplicative') return { before: 'adds', mid: '× positive score (compounding/stack)', after: '' };
+  return { before: 'starts at', mid: 'pts (doubles per stack)', after: '' };
 }
 
 function rankSentence(id)
@@ -173,6 +184,8 @@ export function weightExample(groupKey, id, scoring, label)
       return categoryExample(id, scoring, label);
     case 'tags':
       return tagExample(id, scoring);
+    case 'upgradeTags':
+      return upgradeTagExample(id, scoring);
     case 'items':
       return itemParamExample(id, scoring);
     case 'gearFields':
@@ -209,9 +222,31 @@ function itemParamExample(id, scoring)
       return `Bow / Crossbow = ${signedPts(Number(items.range?.ranged ?? 3))}`;
     case 'conditionFactor':
       return `Trait worth 4 pts with @stance = ${signedPts(4 * (Number(items.conditionFactor ?? 0.65)))}`;
+    case 'attributeBudgetCost':
+      return `+1 flat attribute on armour trims ${num(items.attributeBudgetCost ?? 3)} pts from its Poise / ratings pool`;
     default:
       return '';
   }
+}
+
+function upgradeTagExample(id, scoring)
+{
+  if (id === 'improved.effectMultPerStack')
+  {
+    const m = Math.max(1, Number(scoring.upgradeTags?.improved?.effectMultPerStack) || 1.1);
+    return `Stacks: ×${num(m)} / ×${num(m * m)} / ×${num(m * m * m)} (10 dmg → ${Math.round(10 * m)} / ${Math.round(10 * m * m)} / ${Math.round(10 * m * m * m)})`;
+  }
+  const rule = scoring.upgradeTags?.[id];
+  if (!rule) return '';
+  if (rule.surchargeEnabled === false) return 'Surcharge disabled (0 pts)';
+  const s1 = UpgradeTagSurcharge(rule, 1, EXAMPLE_POSITIVE_SCORE);
+  const s2 = UpgradeTagSurcharge(rule, 2, EXAMPLE_POSITIVE_SCORE);
+  const s3 = UpgradeTagSurcharge(rule, 3, EXAMPLE_POSITIVE_SCORE);
+  if (rule.mode === 'multiplicative')
+  {
+    return `Positive score ${EXAMPLE_POSITIVE_SCORE}: stack 1 ${signedPts(s1)} · stack 2 (+) ${signedPts(s2)} · stack 3 (+2) ${signedPts(s3)}`;
+  }
+  return `Stack 1: ${signedPts(s1)} · Stack 2 (+): ${signedPts(s2)} · Stack 3 (+2): ${signedPts(s3)}`;
 }
 
 function gearFieldExample(id, scoring, label)
@@ -263,6 +298,7 @@ function keywordExample(id, scoring)
 {
   const keyword = scoring.keywords?.[id];
   if (!keyword) return '';
+  if (keyword.surchargeEnabled === false) return 'Surcharge disabled (0 pts)';
   const flat = keyword.flat !== undefined;
   let value = flat ? Number(keyword.flat) || 0 : EXAMPLE_POSITIVE_SCORE * (Number(keyword.multiplier) || 0);
   // ScoreCard holds either form to `min` (at least min, or at most a negative min).
@@ -292,6 +328,7 @@ function rankExample(id, scoring)
       return `Rank ${num(rank.maxRank)} covers CP ${RankRange(rank.maxRank, scoring)}`;
     case 'effectCount':
     {
+      if (scoring.effectCount?.surchargeEnabled === false) return 'Surcharge disabled (0 pts)';
       const extra = Math.max(0, EXAMPLE_EFFECTS - (scoring.effectCount?.skipFirst ? 1 : 0));
       return `${EXAMPLE_EFFECTS} effects = ${pts((Number(scoring.effectCount?.weight) || 0) * extra)}`;
     }
@@ -305,6 +342,7 @@ function categoryExample(id, scoring, label)
 {
   const category = scoring.categories?.[id];
   if (!category) return '';
+  if (category.surchargeEnabled === false) return 'Surcharge disabled (0 pts)';
   const weight = Number(category.weight) || 0;
   if (category.multiplier) return `Positive score ${EXAMPLE_POSITIVE_SCORE}: ${signedPts(EXAMPLE_POSITIVE_SCORE * (weight - 1))}`;
   return `${label || id} card: ${signedPts(weight)}`;
@@ -315,6 +353,7 @@ function tagExample(id, scoring)
 {
   const tag = scoring.tags?.[id];
   if (!tag) return '';
+  if (tag.surchargeEnabled === false) return 'Surcharge disabled (0 pts)';
   switch (tagKind(tag))
   {
     case 'times':

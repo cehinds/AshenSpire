@@ -485,6 +485,7 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
   if (before > 0 && target.block === 0) ctx.emit('blockBroken', { sourceId: source?.id, targetId: target.id });
   if (receipt.hpLoss > 0) ctx.emit('hpLost', { targetId: target.id, amount: receipt.hpLoss, cause: 'attack' });
   ApplyElementReceipt(ctx, source, target, receipt, carrier); // element identity (W25): what a landed hit of its element does
+  if (!receipt.evaded) Matchups.BreakStanceOnHit(ctx, source, target, carrier, { blockBefore: before, incoming: receipt.raw });
   // Poise taken from above zero to zero is a break: the owner takes the Staggered stance (D13).
   const poiseBroke = fixCoreEnabled(ctx) && poiseBefore > 0 && target.persistentPoise?.value === 0 && target.alive && target.hp > 0;
   if (poiseBroke) fixCorePoiseBreak(ctx, source, target, carrier);
@@ -986,6 +987,8 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
     else ctx.emit(type, payload);
   }
   if (hpLoss) ctx.emit('hpLost', { targetId: target.id, amount: hpLoss, cause: 'attack', ...seatOf(ctx, target) });
+  // Owner 2026-11-13: Sweep breaks Counter, Smash breaks Defend; the Smash's damage is the hit before matchup and defense (after any stagger this hit caused, so a stagger is not double-handled).
+  Matchups.BreakStanceOnHit(ctx, source, target, carrier, { blockBefore, incoming: tactical.rawAmounts?.[contactIndex] ?? raw });
   // Independent pressure resolves even when all direct damage met protection.
   if (!carrier.combatReaction) for (const effect of Matchups.matchupRiderEffects(ctx, source, target, carrier, { amount, hpLoss })) {
     if (['applyStatus', 'buildup'].includes(effect.op)) {

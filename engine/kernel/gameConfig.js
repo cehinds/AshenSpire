@@ -260,12 +260,14 @@ function resolveStatPointGear(item, settings, rank) {
   const fill = gearSplit(total - authoredAttributes, Object.fromEntries(chosen));
   const ratingsWeights = gearWeights(item, settings, 'ratings');
   const ratingsSum = Object.values(ratingsWeights).reduce((s, v) => s + Math.max(0, v), 0);
-  const ratingsPool = settings.fillTo === 'none' ? 0 : (settings.poolSizes.ratings[item.rarity] || { min: 0, max: 0 })[settings.fillTo === 'min' ? 'min' : 'max'];
-  // Owner, 2026-11-18: max Poise = 1 + CON + other Poise bonuses. Gear that guards (armour, shields, defensive two-handers) simply ADDS
-  // its Poise; an item whose ratings weights name no Poise (a dagger, a bow, a staff) adds 0 unless it authors some, so `poiseMin`
-  // is the floor only for an item that has a Poise share at all.
+  const rawRatingsPool = settings.fillTo === 'none' ? 0 : (settings.poolSizes.ratings[item.rarity] || { min: 0, max: 0 })[settings.fillTo === 'min' ? 'min' : 'max'];
+  const budgetedAttributes = Number.isInteger(rule.attributeBudgetCost);
+  // An archived profile without an attribute budget cost retains its original Poise floor.
+  const ratingsPool = budgetedAttributes ? Math.max(0, rawRatingsPool - total * rule.attributeBudgetCost) : rawRatingsPool;
   const poiseShare = ratingsSum ? Math.max(0, ratingsWeights.poise || 0) / ratingsSum : 0;
-  const poise = authored.poise || (poiseShare > 0 ? Math.max(rule.poiseMin ?? 0, Math.round(ratingsPool * poiseShare)) : 0);
+  const poiseFloor = budgetedAttributes && total > 0 ? 0 : (rule.poiseMin ?? 0);
+  const poise = authored.poise || (poiseShare > 0 && (!budgetedAttributes || ratingsPool > 0)
+    ? Math.max(poiseFloor, Math.round(ratingsPool * poiseShare)) : 0);
   const points = Object.fromEntries(GEAR_KEYS.map(k => [k, GEAR_ATTRIBUTES.includes(k) ? authored[k] + (fill[k] || 0) : k === 'poise' ? poise : 0]));
   const values = Object.fromEntries(GEAR_KEYS.map(k => [k, points[k] * (settings.pointValues[k] ?? 0)]));
   const modifiers = (item.tags || []).map(t => settings.tags[t]).filter(r => r?.modifier).map(r => `${r.modifier}=${r.amount >= 0 ? '+' : ''}${r.amount}`);
@@ -400,11 +402,17 @@ function enemyAttributeMinimums(row, settings) {
   const floor = settings.attributeFill?.floor ?? 0;
   return Object.fromEntries(ENEMY_ATTRIBUTES.map(id => [id, Math.max(floor, row.attributes?.[id] || 0)]));
 }
+// Attribute caps: the fill's, then the tier's under enemyLevelScaling (owner, 2026-11-20: elite and boss Dex and Wis at most 4),
+// then the row's own. Points a cap holds back spill to the remaining priorities.
+function enemyAttributeCaps(row, settings) {
+  const tier = enemyTierId(row);
+  return { ...settings.attributeFill.caps, ...(tier ? settings.enemyLevelScaling?.attributeCaps?.[tier] || {} : {}), ...(row.attributeCaps || {}) };
+}
 export function resolveEnemyAttributes(row, settings, seed = null) {
   const fill = settings.attributeFill, tier = characterRule(row, settings);
   const budget = enemyAttributeBudget(row, settings);
   const set = enemyAttributeMinimums(row, settings);
-  const out = { ...set }, caps = { ...fill.caps, ...(row.attributeCaps || {}) };
+  const out = { ...set }, caps = enemyAttributeCaps(row, settings);
   let weights = enemyAttributeWeights(row, settings), left = budget - Object.values(set).reduce((a, b) => a + b, 0);
   for (let guard = 0; left > 0 && guard < 10; guard++) {
     const open = Object.fromEntries(Object.entries(weights).filter(([id]) => caps[id] === undefined || out[id] < caps[id]));
@@ -412,6 +420,14 @@ export function resolveEnemyAttributes(row, settings, seed = null) {
     const share = gearSplit(left, open);
     for (const [id, n] of Object.entries(share)) { const room = caps[id] === undefined ? n : Math.min(n, caps[id] - out[id]); out[id] += room; left -= room; }
     weights = open;
+  }
+  // Under enemyLevelScaling, points every weighted priority's cap holds back spill over the attributes with room, the
+  // default priority first, then ENEMY_ATTRIBUTES order, one point each in turn: the total stays the budget while any
+  // attribute has room (#EnemyLevelScaling review, 2026-11-20). Profiles without the table keep their old fill.
+  if (settings.enemyLevelScaling) {
+    const spill = [...new Set([...(fill.defaultPriority || []), ...ENEMY_ATTRIBUTES])].filter(id => ENEMY_ATTRIBUTES.includes(id));
+    for (let room = spill.filter(id => caps[id] === undefined || out[id] < caps[id]); left > 0 && room.length; room = room.filter(id => caps[id] === undefined || out[id] < caps[id]))
+      for (const id of room) { if (left <= 0) break; out[id]++; left--; }
   }
   const v = { points: 0, among: 2, ...(settings.variance || {}), ...(row.variance || {}) };
   if (seed !== null && settings.variance && v.points > 0 && tier.variance) {
@@ -430,7 +446,7 @@ export function enemyAttributeOutcomes(row, settings) {
   const fill = settings.attributeFill, v = { points: 0, among: 2, ...(settings.variance || {}), ...(row.variance || {}) }, base = resolveEnemyAttributes(row, settings);
   const outcomes = [base], minimum = enemyAttributeMinimums(row, settings);
   if (!settings.variance || !v.points || !characterRule(row, settings).variance) return outcomes;
-  const order = (row.attributePriority || fill.defaultPriority).slice(0, v.among), caps = { ...fill.caps, ...(row.attributeCaps || {}) };
+  const order = (row.attributePriority || fill.defaultPriority).slice(0, v.among), caps = enemyAttributeCaps(row, settings);
   // Track unique spreads only: many move orders reach the same spread, and expanding duplicates grows
   // exponentially with variance.points (the schema allows up to 10).
   const seen = new Set([canonicalGameJSON(base)]);
@@ -467,8 +483,12 @@ export function characterRule(row, settings) {
 // Owner, 2026-11-17 (enemies `effectiveLevelByAct`, Core): an elite or boss fights at its tier's level for the act
 // (Core: elites 2 / 4 / 6, bosses 4 / 6 / 8 in Acts 1 / 2 / 3; past the table the last entry holds). null when the
 // tier has no row, so a normal enemy keeps its own level. `row.tier` or its `tier.<id>` tag names the tier.
+// An enemy's tier id: its `tier` field or its `tier.<id>` tag (undefined for players).
+export function enemyTierId(row) {
+  return row?.tier || characterTags(row || {}).find(tag => tag.startsWith('tier.'))?.slice(5);
+}
 export function enemyEffectiveLevel(row, settings, act) {
-  const tier = row?.tier || characterTags(row || {}).find(tag => tag.startsWith('tier.'))?.slice(5);
+  const tier = enemyTierId(row);
   const levels = settings?.effectiveLevelByAct?.[tier];
   if (!Array.isArray(levels) || !levels.length) return null;
   const index = Math.min(levels.length, Math.max(1, Number.isSafeInteger(act) ? act : 1)) - 1;
@@ -478,6 +498,27 @@ export function enemyLevel(row, settings) {
   if (Number.isSafeInteger(row.level)) return Math.max(1, row.level);
   const profile = row.levelProfile || {};
   return Math.max(1, settings.levelFrom === 'levelProfile.max' ? profile.max ?? 1 : profile.min ?? 1);
+}
+// Owner, 2026-11-20 (characters `enemyLevelScaling`, SPEC §17): an enemy's level for one fight from its act, tier and floor step.
+// Step = floor((floor - 1) / floorsPerStep) on floors 1+, at most the tier's last table entry; a boss sits at `bossSteps`.
+// Past the last act the last act's row holds. No table, or no row for the tier: enemyLevel() at step 0.
+export function enemyFightLevel(row, settings, { act = 1, floor = 0 } = {}) {
+  const scaling = settings?.enemyLevelScaling;
+  const tier = enemyTierId(row);
+  const acts = Object.keys(scaling?.levels || {}).length;
+  const actIndex = Math.min(acts, Math.max(1, Number.isSafeInteger(act) ? act : 1));
+  const levels = scaling?.levels?.[`act${actIndex}`]?.[tier];
+  if (levels === undefined) return { level: enemyLevel(row, settings), step: 0 };
+  if (!Array.isArray(levels)) return { level: Math.max(1, levels), step: scaling.bossSteps || 0 };
+  const climbed = Number.isSafeInteger(floor) && floor >= 1 ? Math.floor((floor - 1) / scaling.floorsPerStep) : 0;
+  const step = Math.min(levels.length - 1, climbed);
+  return { level: Math.max(1, levels[step]), step };
+}
+// The HP factor a floor step gives an enemy on its rolled HP: 1 + hpPerStep × step for a tier with a stepped row; 1 for a boss
+// (one level per act, no HP step: its level-row HP and seat tier already scale it) or without the table.
+export function enemyScalingHpFactor(row, settings, step) {
+  const scaling = settings?.enemyLevelScaling, firstAct = Object.values(scaling?.levels || {})[0];
+  return Array.isArray(firstAct?.[enemyTierId(row)]) && step > 0 ? 1 + scaling.hpPerStep * step : 1;
 }
 // Gear and relics grant attribute points only (owner 2026-10-17): `self.<attribute>=+N`,
 // 0-5 points across at most 3 attributes per item. Returns the summed bonus for one enemy.
@@ -527,6 +568,10 @@ export function enemyPools(row, settings, level = enemyLevel(row, settings), bon
   }
   // Authored `spFloor` (owner, 2026-10-25): an enemy whose attribute offset would leave it unable to pay its costliest card keeps that much SP.
   if (Number.isSafeInteger(row.spFloor) && row.spFloor > 0) pools.sp = Math.max(pools.sp, row.spFloor);
+  if (Number.isSafeInteger(row.mpFloor) && row.mpFloor > 0) pools.mp = Math.max(pools.mp, row.mpFloor);
+  // enemyLevelScaling.spCap (owner, 2026-11-20): a tier's SP stops at its cap after gear and relics, so a high-level boss keeps two or three actions.
+  const spCap = settings.enemyLevelScaling?.spCap?.[enemyTierId(row)];
+  if (Number.isSafeInteger(spCap)) pools.sp = Math.min(pools.sp, spCap);
   return pools;
 }
 // What a viewer may see of an enemy: the always-shown fields plus any field one of the viewer's
@@ -601,13 +646,15 @@ export function characterSettings(modules) {
 function deriveCharacterContent(content, modules) {
   // enemies off: the enemy pack data is ignored (enemies/guide.md, Disabled), whatever characters is set to.
   if (!modules.enemies) {
-    delete content.enemyCards; delete content.enemies; delete content.enemyRelics;
+    delete content.enemyCards; delete content.enemies; delete content.enemyRelics; delete content.enemyLevelCards;
     if (!modules.characters && Array.isArray(content.characters)) content.characters = content.characters.filter(c => !c.tags?.includes('character.enemy'));
   }
   // Enemy rows, stats and decks come from the characters module (characters.json); enemies cannot run without it.
   if (modules.enemies && !modules.characters) fail('$/modules/enemies', 'requires the characters module; enable characters or disable enemies');
   if (!modules.characters || !Array.isArray(content.characters)) return;
   const settings = characterSettings(modules);
+  // Level cards (owner, 2026-11-20) ride with characters.enemyLevelScaling: without the table no enemy draws them.
+  if (!settings.enemyLevelScaling) delete content.enemyLevelCards;
   // enemy-relics off: enemies carry no relics.
   if (!settings.equipment) for (const c of content.characters) if (c.tags?.includes('character.enemy')) c.defaultRelics = [];
   if (Array.isArray(content.enemyCards) && !content.enemyCardsMerged) {
@@ -626,6 +673,11 @@ function deriveCharacterContent(content, modules) {
   if (modules.enemies) content.enemies = enemies.map(c => { const row = flat(c); row.defaultDeck = resolveCharacterDeck(c, content, modules.gear, settings.cardPoolRules); row.tier = (c.tags.find(t => t.startsWith('tier.')) || 'tier.minion').slice(5); delete row.presentation; delete row.enemy; return row; })
     // include picks the fielded tiers: rows of a known but unselected tier are dropped; an unknown tier still fails validation.
     .filter(row => !Array.isArray(settings.include) || settings.include.includes(row.tier) || !settings.tagRules?.[`tier.${row.tier}`]);
+  // A level-card list follows its enemy: a dropped tier's lists go with its rows.
+  if (record(content.enemyLevelCards) && Array.isArray(content.enemies)) {
+    const fielded = new Set(content.enemies.map(row => row.id));
+    content.enemyLevelCards = Object.fromEntries(Object.entries(content.enemyLevelCards).filter(([id]) => fielded.has(id)));
+  }
   content.classes = players.map(c => {
     const row = flat(c), gear = Object.fromEntries((c.defaultGear || []).map(g => [g.key, g.id]));
     // Player loadouts slot real items (createLoadout): an unknown gear id would start the run without its cards/stats.
@@ -718,6 +770,22 @@ function verifyEnemyContent(content, settings, gearSettings = null) {
     }
     for (const id of enemyGearIds(row)) if (!gear.has(id)) fail(`${at}/defaultGear`, `unresolved gear '${id}'`);
     for (const id of enemyRelicIds(row)) if (!relics.has(id)) fail(`${at}/defaultRelics`, `unresolved relic '${id}'`);
+  }
+  // Level cards (characters.enemyLevelScaling, owner 2026-11-20): { enemyId: [{ id, name, move }] }, each move an enemy
+  // move that names its own SP; a fight adds the first levelStep of them to that enemy's move set.
+  if (content.enemyLevelCards !== undefined) {
+    const at = '$/content/enemyLevelCards';
+    if (!record(content.enemyLevelCards)) fail(at, 'expected { enemyId: [entries] }');
+    for (const [enemyId, entries] of Object.entries(content.enemyLevelCards)) {
+      if (!ids.has(enemyId)) fail(`${at}/${enemyId}`, 'unknown enemy');
+      if (!Array.isArray(entries)) fail(`${at}/${enemyId}`, 'expected an entry array');
+      const seen = new Set();
+      for (const entry of entries) {
+        if (!record(entry) || typeof entry.id !== 'string' || seen.has(entry.id) || typeof entry.name !== 'string') fail(`${at}/${enemyId}`, 'expected { id, name, move } entries with unique ids');
+        if (!record(entry.move) || typeof entry.move.intent !== 'string' || !Number.isSafeInteger(entry.move.sp) || entry.move.sp < 0) fail(`${at}/${enemyId}/${entry.id}/move`, 'expected an enemy move with an intent and a nonnegative integer sp');
+        seen.add(entry.id);
+      }
+    }
   }
 }
 function verifySettings(modules, instances = {}) {

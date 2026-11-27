@@ -3515,10 +3515,7 @@
         "heavy",
         "stagger"
       ],
-      "range": "melee",
-      "points": {
-        "strength": 3
-      }
+      "range": "melee"
     },
     "gear:dagger": {
       "name": "Dagger",
@@ -3530,11 +3527,7 @@
         "flurry",
         "throw"
       ],
-      "range": "melee",
-      "points": {
-        "dexterity": 1,
-        "strength": 1
-      }
+      "range": "melee"
     },
     "gear:shortbow": {
       "name": "Shortbow",
@@ -3545,10 +3538,7 @@
         "bow",
         "retreat"
       ],
-      "range": "reach",
-      "points": {
-        "dexterity": 1
-      }
+      "range": "reach"
     },
     "gear:katana": {
       "name": "Katana",
@@ -3670,10 +3660,7 @@
         "lantern",
         "regen"
       ],
-      "range": "melee",
-      "points": {
-        "wisdom": 1
-      }
+      "range": "melee"
     },
     "gear:torch": {
       "name": "Torch",
@@ -3705,10 +3692,7 @@
       "tags": [
         "staff"
       ],
-      "range": "reach",
-      "points": {
-        "intelligence": 1
-      }
+      "range": "reach"
     },
     "gear:starstoneStaff": {
       "name": "Starstone Staff",
@@ -3719,10 +3703,7 @@
         "staff",
         "frost"
       ],
-      "range": "reach",
-      "points": {
-        "intelligence": 1
-      }
+      "range": "reach"
     },
     "gear:boneSceptre": {
       "name": "Bone Sceptre",
@@ -3734,11 +3715,7 @@
         "blight",
         "retreat"
       ],
-      "range": "reach",
-      "points": {
-        "intelligence": 2,
-        "wisdom": 1
-      }
+      "range": "reach"
     },
     "gear:emberlightSceptre": {
       "name": "Emberlight Sceptre",
@@ -3777,10 +3754,7 @@
         "rod",
         "blight"
       ],
-      "range": "reach",
-      "points": {
-        "wisdom": 1
-      }
+      "range": "reach"
     },
     "gear:gorefireBrand": {
       "name": "Gorefire Brand",
@@ -3854,10 +3828,7 @@
       "rarity": "common",
       "tags": [
         "plate"
-      ],
-      "points": {
-        "constitution": 1
-      }
+      ]
     },
     "gear:armor.ashenVigil": {
       "name": "Ashen Vigil",
@@ -3875,10 +3846,7 @@
       "rarity": "uncommon",
       "tags": [
         "plate"
-      ],
-      "points": {
-        "strength": 1
-      }
+      ]
     },
     "gear:armor.wardenMail": {
       "name": "Warden Mail",
@@ -3897,10 +3865,7 @@
       "rarity": "common",
       "tags": [
         "robes"
-      ],
-      "points": {
-        "wisdom": 1
-      }
+      ]
     },
     "gear:armor.eclipseHabit": {
       "name": "Eclipse Habit",
@@ -3909,10 +3874,7 @@
       "rarity": "uncommon",
       "tags": [
         "robes"
-      ],
-      "points": {
-        "intelligence": 1
-      }
+      ]
     },
     "gear:armor.starlitSilks": {
       "name": "Starlit Silks",
@@ -3933,10 +3895,7 @@
       "tags": [
         "robes",
         "thin"
-      ],
-      "points": {
-        "intelligence": 1
-      }
+      ]
     },
     "gear:armor.riteVestments": {
       "name": "Rite Vestments",
@@ -3965,10 +3924,7 @@
       "tags": [
         "robes",
         "regen"
-      ],
-      "points": {
-        "intelligence": 1
-      }
+      ]
     },
     "gear:armor.pilgrimWrap": {
       "name": "Pilgrim Wrap",
@@ -3977,10 +3933,7 @@
       "rarity": "uncommon",
       "tags": [
         "robes"
-      ],
-      "points": {
-        "constitution": 1
-      }
+      ]
     },
     "gear:armor.gutterLeathers": {
       "name": "Gutter Leathers",
@@ -4019,10 +3972,7 @@
       "rarity": "uncommon",
       "tags": [
         "leathers"
-      ],
-      "points": {
-        "strength": 1
-      }
+      ]
     },
     "gear:armor.bastionHarness": {
       "name": "Bastion Harness",

@@ -485,6 +485,20 @@
     ],
     "resultOverlapMs": 0,
     "resultQueueScope": "battlefield",
+    "categoryQueues": {
+      "enabled": true,
+      "order": ["castingMovement", "attackImpacts", "defenseReactions", "buffsStatuses"],
+      "staggerMs": 10,
+      "overlapMs": 10,
+      "maxPerCategory": {
+        "castingMovement": 2,
+        "attackImpacts": 2,
+        "defenseReactions": 2,
+        "buffsStatuses": 2
+      },
+      "maxGlobal": 3,
+      "maxPerActor": 2
+    },
     "resultMaxConcurrent": 1,
     "resultGapMs": 30
   },

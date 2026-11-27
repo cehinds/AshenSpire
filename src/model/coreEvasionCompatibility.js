@@ -41,6 +41,14 @@
 // Prepared-only Focus wording and the shared Evade grant source reference move only the runtime artifact identity.
 // The 2026-11-19 deferred Axe Strength grant repoints its generated mechanic reader to finishAbilityPlay; the preceding runtime keeps its own snapshotted rules.
 const PREVIOUS_RUNTIMES = new Set([
+  // Before catalog regeneration 7c32f9ef4bc: keep the exact recorded profile and its tradition tags.
+  'sha256:c77d4f30494cb821fc66b9b9ef19b91fbb2c699633fe0137b72ab89d261ec831',
+  // Dev c5c5ec4a before #3002: no enemyLevelScaling table or enemy level-card lists.
+  'sha256:eff6f5c38dcdba3c78d012bf55c8baf6fe703f664bc3f3416244b15d1fa07216',
+  'sha256:0c4e9eae226108858dcb937000b0992a33b778f650bb3e3e17a1c369ba51a0b3',
+  'sha256:b49503d593056a588d5ae9a25ac214fc801c7b7eaea22093d601f76afe9d27f8',
+  'sha256:d2993c77a6e8a5ff16dc1b5edf11d30cb924d790e7875af0452a4e8f0183ef63',
+  'sha256:5311c2f843c0f42ef94e4b8ab0f4050400fdbc383c4c2395ef14bb563453801d',
   'sha256:777939d6ee4065a02491fcd7ff21fc2d9f44271a0d7f10ec3b2435d1786a72cd',
   'sha256:d243637be191cbe2c2580420f88bf2f5a672caa4a17e0c8c0eeca7685b75cf7d',
   'sha256:e316635810ab4101030e92e5d2169d0659ce1536caf82f1333f33b854ca4a6c3',
@@ -173,9 +181,19 @@ const PREVIOUS_RUNTIMES = new Set([
 // Weapon poise damage & stance-gated Poise reduction (owner ruling: weaponPoiseEnabled in fixCoreMechanics.json) moves the runtime artifact; d24363... joins PREVIOUS_RUNTIMES, and prior saves keep their snapshotted rules.
 // The canonical Wisdom, Intelligence and Recurring registry additions and four reader relocations
 // move the registry fingerprint. A saved fight keeps its original envelope and rules (777939...).
-const FIXED_EVASION_RUNTIME = 'sha256:5311c2f843c0f42ef94e4b8ab0f4050400fdbc383c4c2395ef14bb563453801d';
+const COMPATIBLE_HOST_RUNTIMES = new Set([
+  'sha256:5311c2f843c0f42ef94e4b8ab0f4050400fdbc383c4c2395ef14bb563453801d',
+  // The gear budget honors the pinned Poise floor when an archived profile omits its cost.
+  'sha256:b49503d593056a588d5ae9a25ac214fc801c7b7eaea22093d601f76afe9d27f8',
+  // The enemy Mana floor respects each saved profile's own enemy inputs.
+  'sha256:0c4e9eae226108858dcb937000b0992a33b778f650bb3e3e17a1c369ba51a0b3',
+  // Same rules compiled from the repository's canonical LF kernel bytes.
+  'sha256:c77d4f30494cb821fc66b9b9ef19b91fbb2c699633fe0137b72ab89d261ec831',
+  // Enemy level scaling (spCap in engine/kernel/gameConfig.js) moves the host runtime; prior saves keep their own rules.
+  'sha256:659730689c3f0675a28b5ecbf6ef6c2bcbefa32b77c4794a5a5f9c14f0b8f07d',
+]);
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
-  return currentRuntime === FIXED_EVASION_RUNTIME
+  return COMPATIBLE_HOST_RUNTIMES.has(currentRuntime)
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)
     && profile.lock.runtimeABI === 'ashen.runtime@1'
     && profile.lock.numericPolicy === 'ashen.adapter-numbers@1'

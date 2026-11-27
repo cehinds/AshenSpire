@@ -19,6 +19,7 @@ export function hitAsLayered(event = {}) {
   return Math.max(0, Number(event.amount) || 0) + (Number(event.barrierAbsorbed) || 0) + (Number(event.wardAbsorbed ?? event.wardMitigated) || 0) + poise + magicPoise;
 }
 import { accuracyRollReceipt, contestRollReceipt, dodgeRollReceipt, evadeRollReceipt, critRollReceipt, distanceRollReceipt, perceptionRollReceipt, percentRollReceipt, rollCompactText } from './rollReceipts.js';
+import { EnemyEventMoveOf } from './enemyMoveSet.js';
 
 const word = value => String(value || '').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, letter => letter.toUpperCase());
 const ATTACK_KIND_WORDS = { sweep: 'a Sweep', ranged: 'a ranged attack', spell: 'a spell', area: 'an area attack',
@@ -104,9 +105,11 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
     return `\u0001${index}\u0002`;
   };
   const enemyIdOf = new Map(enemies.map(enemy => [enemy.id, enemy.enemyId]));
+  // The actor's own move set first, so a level-card move (owner, 2026-11-20) reads by its card's name.
   const moveName = (actorId, moveId, enemyId) => {
+    const own = EnemyEventMoveOf(registries, { enemies, instanceId: actorId, enemyId: enemyIdOf.get(actorId) ?? enemyId ?? null, moveId });
     const def = row(registries?.enemies, enemyIdOf.get(actorId)) || row(registries?.enemies, enemyId);
-    return def?.moves?.[moveId]?.name || word(moveId);
+    return own?.name || def?.moves?.[moveId]?.name || word(moveId);
   };
   // The card or move resolving right now, for events that do not name their own.
   let playing = null, moving = null;

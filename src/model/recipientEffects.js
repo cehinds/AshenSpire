@@ -197,7 +197,7 @@ export function RecipientWindupFor(action = {}, event = {}) {
   const base = ResolveRecipientEffect(action, invoker);
   if (base.camp !== 'spell') return null;
   return layerFor(action, invoker, 'spell-circle', {
-    mount: 'actor', phase: 'windup', targetType: 'self', overlay: null,
+    mount: 'actor', phase: 'windup', category: 'castingMovement', targetType: 'self', overlay: null,
     durationMs: SETTINGS.motion.spellWindupMs, opacity: SETTINGS.layering.opacity.spellCircle,
   });
 }
@@ -229,12 +229,12 @@ export function RecipientEffectsForEvent(action = {}, event = {}) {
   const base = ResolveRecipientEffect(action, event);
   const clip = (shape, options) => layerFor(action, event, shape, options);
   const reaction = (shape, options = {}) => clip(shape, { phase: 'reaction', delayMs: SETTINGS.motion.reactionLeadMs,
-    color: PALETTES.physical, palette: 'physical', overlay: null, ...options });
-  const aura = (shape, options = {}) => clip(shape, { phase: 'status', durationMs: SETTINGS.motion.auraMs, ...options });
+    category: 'defenseReactions', color: PALETTES.physical, palette: 'physical', overlay: null, ...options });
+  const aura = (shape, options = {}) => clip(shape, { phase: 'status', category: 'buffsStatuses', durationMs: SETTINGS.motion.auraMs, ...options });
   if (SELF_GAIN_EVENTS.has(type) || ['counterStacksChanged', 'reflectStacksChanged', 'reflectTriggered'].includes(type)) {
     if (!positive(event.amount)) return [];
     const shape = type === 'evadeGained' ? 'evade-gain' : type.startsWith('reflect') ? 'reflect' : 'counter-gain';
-    return [aura(shape, { overlay: null, polarity: 'positive', durationMs: SETTINGS.motion.clipMs, treatment: type === 'reflectTriggered' ? 'reflect' : 'gain' })];
+    return [aura(shape, { category: 'defenseReactions', overlay: null, polarity: 'positive', durationMs: SETTINGS.motion.clipMs, treatment: type === 'reflectTriggered' ? 'reflect' : 'gain' })];
   }
   if (['staminaRecovered', 'manaRestored', 'energyGained'].includes(type) && positive(event.amount)) return [aura('buff', {
     palette: type === 'staminaRecovered' ? 'stamina' : type === 'manaRestored' ? 'mana' : 'skill',
@@ -245,7 +245,7 @@ export function RecipientEffectsForEvent(action = {}, event = {}) {
     if (event.evaded) return [reaction('evade', { delayMs: 0, silhouette: 'evade', treatment: 'avoid' })];
     if (!RecipientEffectForEvent(action, event)) return [];
     const hp = event.hpRemoved ?? event.hpLoss ?? event.damageReceipt?.hpLoss ?? Math.max(0, num(event.amount) - num(event.blocked));
-    const impact = clip(base.shape, { claimsDamage: positive(hp), treatment: positive(hp) ? 'impact' : 'protected-contact',
+    const impact = clip(base.shape, { category: 'attackImpacts', claimsDamage: positive(hp), treatment: positive(hp) ? 'impact' : 'protected-contact',
       opacity: positive(hp) ? SETTINGS.layering.opacity.primary : SETTINGS.layering.opacity.protectedContact,
       delivery: RecipientDeliveryFor(action, event) });
     const clips = [impact];
@@ -274,30 +274,30 @@ export function RecipientEffectsForEvent(action = {}, event = {}) {
     const retreat = tagIds(action).some(tag => ['retreat', 'maneuver:retreat'].includes(tag))
       || (action.effects || []).some(effect => effect.op === 'retreat');
     if (!event.advanced && !retreat) return [];
-    return [clip(event.advanced ? 'advance' : 'retreat', { mount: 'actor', phase: 'movement', overlay: null,
+    return [clip(event.advanced ? 'advance' : 'retreat', { mount: 'actor', phase: 'movement', category: 'castingMovement', overlay: null,
       targetType: 'self', color: PALETTES.physical, durationMs: SETTINGS.motion.movementMs })];
   }
   if (type === 'implicitAdvance' || (type === 'combatEngagementMoved' && ['advance', 'retreat'].includes(event.reason))) {
-    return [clip(event.reason === 'retreat' ? 'retreat' : 'advance', { mount: 'actor', phase: 'movement',
+    return [clip(event.reason === 'retreat' ? 'retreat' : 'advance', { mount: 'actor', phase: 'movement', category: 'castingMovement',
       targetId: sourceOf(action, event), targetIds: [sourceOf(action, event)], targetType: 'self', overlay: null,
       color: PALETTES.physical, durationMs: SETTINGS.motion.movementMs })];
   }
   if ((type === 'persistentWardChanged' && [event.restored, event.missingRecovered].some(positive))
     || (type === 'meterGuardGained' && event.meter === 'ward' && positive(event.amount))
     || (type === 'statusApplied' && event.status === 'ward' && positive(event.stacks))) {
-    return [aura('ward', { silhouette: 'ward', treatment: 'gain', overlay: null })];
+    return [aura('ward', { category: 'defenseReactions', silhouette: 'ward', treatment: 'gain', overlay: null })];
   }
   if (type === 'healed' && positive(event.amount)) {
     // The decorator reuses a preceding confirmed contact when the action has one.
     const primary = ResolveRecipientEffect(action, { ...event, type: 'supportPrimary' });
     return [clip(primary.camp === 'spell' ? 'spell' : 'skill', { ...primary, shape: primary.camp === 'spell' ? 'spell' : 'skill',
-      targetType: base.targetType, phase: 'status', claimsDamage: false, treatment: 'support' }),
-    clip('heal-plus', { phase: 'status', palette: 'healing', color: PALETTES.healing, overlay: null,
+      targetType: base.targetType, phase: 'status', category: 'buffsStatuses', claimsDamage: false, treatment: 'support' }),
+    clip('heal-plus', { phase: 'status', category: 'buffsStatuses', palette: 'healing', color: PALETTES.healing, overlay: null,
       secondary: true, treatment: 'heal' })];
   }
   if ((['blockGained', 'meterGuardGained'].includes(type) && positive(event.amount))
     || (type === 'persistentPoiseChanged' && [event.restored, event.missingRecovered].some(positive))) {
-    return [aura('buff', { overlay: null, anchor: 'card-bottom', sizing: 'card' })];
+    return [aura('buff', { category: 'defenseReactions', overlay: null, anchor: 'card-bottom', sizing: 'card' })];
   }
   let lifecycle = null;
   if (type === 'statusApplied' && positive(event.stacks)) lifecycle = 'apply';
@@ -324,7 +324,7 @@ export function RecipientEffectsForEvent(action = {}, event = {}) {
     durationMs: lifecycle === 'tick' ? SETTINGS.motion.statusTickMs : SETTINGS.motion.clipMs,
     ...(['buff', 'debuff'].includes(shape) ? { anchor: 'card-bottom', sizing: 'card' } : {}) });
   if (!blood) return [primary];
-  return [primary, clip('bleed-drops', { phase: 'status', status, lifecycle, secondary: !clear,
+  return [primary, clip('bleed-drops', { phase: 'status', category: 'buffsStatuses', status, lifecycle, secondary: !clear,
     palette, color: PALETTES[palette], overlay: null, claimsDamage: false,
     overlayTreatment: primary.overlayTreatment, treatment: primary.overlayTreatment,
     scale: clear ? SETTINGS.sizing.statusOverlay[lifecycle] : 1,

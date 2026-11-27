@@ -8,6 +8,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
 import { runMods } from '../src/model/loadout.js';
+import { gameProfileEquipmentReceipt } from '../src/model/gameProfileGear.js';
 const profile = resolveGameAuthor(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json',import.meta.url))),loadGameProfileCatalog());
 const profileContent = applyGameProfileToContent(contentBundle, profile);
 const reg = bindGameProfileRegistries(createRegistries(profileContent), profile);
@@ -25,16 +26,27 @@ const wear = (classId,slot,id,registries = reg) => {
 };
 // Core gear resolves to attribute points (CON, END), which already feed the pools; an item row's own max HP/MP/SP mod must not add again.
 // Owner, 2026-11-20: only where the item's resolved points feed that pool (hp: constitution, mana: wisdom, stamina: dexterity; derivedStatRules.json).
-for (const [slot,id,signature] of [
-  ['leftHand','towerShield','self.maxHp=+10'],
-  ['rightHand','twinblade','self.maxStamina=+1'],
-  ['armor','wayfarerPlate','self.maxHp=+4'],
+for (const [slot,id,signature,feeder] of [
+  ['leftHand','towerShield','self.maxHp=+10','constitution'],
+  ['rightHand','twinblade','self.maxStamina=+1','dexterity'],
+  ['armor','cinderforgedPlate','self.maxHp=+4','constitution'],
 ]) {
   test(`${id}: its legacy pool mod is not counted on top of its resolved points`, () => {
-    const {mods} = wear('reaver',slot,id,withSignature(id, [signature]));
+    const registries = withSignature(id, [signature]);
+    const {run,mods} = wear('reaver',slot,id,registries);
+    const ref = slot === 'armor' ? `armor/reaver/${id}` : `armament/${id}`;
+    const source = gameProfileEquipmentReceipt(registries,run).sources.find(row => row.sourceId === ref);
+    assert.ok(source?.resolved.values[feeder] > 0, `the fixture feeds the pool through ${feeder}`);
     assert.deepEqual([mods.maxHp,mods.maxMana,mods.maxStamina],[0,0,0]);
   });
 }
+test('the current Wayfarer Plate keeps a raw HP line because it grants no base Constitution', () => {
+  const registries = withSignature('wayfarerPlate', ['self.maxHp=+4']);
+  const {run,mods} = wear('reaver','armor','wayfarerPlate',registries);
+  const source = gameProfileEquipmentReceipt(registries,run).sources.find(row => row.sourceId === 'armor/reaver/wayfarerPlate');
+  assert.equal(source?.resolved.values.constitution, 0);
+  assert.deepEqual([mods.maxHp,mods.maxMana,mods.maxStamina],[4,0,0]);
+});
 test('a legacy Bastion max SP penalty still applies through the signature reader', () => {
   const {mods} = wear('reaver','armor','bastion',withSignature('bastion', ['self.maxStamina=-1']));
   assert.deepEqual([mods.maxHp,mods.maxMana,mods.maxStamina],[0,0,-1]);

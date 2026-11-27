@@ -225,6 +225,8 @@ export function itemEntryToFace(entry) {
     art: entry.art,
     props: entry.props || [],
     tags: entry.tags || [],
+    passives: entry.passives || null,
+    triggers: entry.triggers || null,
   };
 }
 

@@ -7,6 +7,10 @@
 //   committed (pendingMove)                -> `resolveOnTurn - combat.turn` turns remain; when none do, it lands this coming enemy phase and
 //                                             is an ordinary attack (null here).
 
+import * as Actions from './actions.js';
+import * as Tactics from './combatCardTactics.js';
+import { configuredCombat } from './gameProfileCombat.js';
+import { EnemyMoveOf } from '../model/enemyMoveSet.js';
 /**
  * EnemyChargingState(combat, enemy) → { moveId, turnsLeft, block } while the enemy's move is charging, else null.
  */
@@ -14,11 +18,16 @@ export function EnemyChargingState(combat, enemy) {
   if (!enemy?.alive || enemy.intent?.kind === 'staggered') return null;
   const pending = enemy.pendingMove;
   const moveId = pending?.moveId ?? (enemy.intent?.delayed ? enemy.intent.moveId : null);
-  const authored = moveId && combat.registries?.enemies?.get(enemy.enemyId)?.moves?.[moveId];
+  const authored = moveId && EnemyMoveOf(combat.registries, enemy, moveId);
   if (!authored?.delay) return null;
   if (pending) {
     const turnsLeft = pending.resolveOnTurn - combat.turn;
     return turnsLeft > 0 ? { moveId, turnsLeft, block: null } : null;
   }
-  return { moveId, turnsLeft: authored.delay.turns ?? 1, block: authored.delay.whileCharging?.block ?? null };
+  const move = Tactics.expandedEnemyMove(enemy, authored, moveId, combat);
+  const base = move.delay.whileCharging?.block ?? null;
+  const block = base != null && configuredCombat(combat)
+    ? Actions.computeBlockGain(combat, enemy, base, Tactics.enemyMoveCarrier(enemy, move, moveId, combat))
+    : base;
+  return { moveId, turnsLeft: move.delay.turns ?? 1, block };
 }

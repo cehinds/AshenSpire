@@ -11,7 +11,7 @@ import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
 const RUN = { seed: 7, level: { level: 10 }, gameProfile: profile, rangePolicy: {} };
 const options = (cardId, steps = []) => {
   const base = registries.cards.get(cardId);
-  const inst = { instanceId: 'k1', cardId, ...(steps.length ? { upgraded: true, upgradeSteps: steps } : { upgraded: false }) };
+  const inst = { instanceId: 'k1', cardId, rank: 1, ...(steps.length ? { upgraded: true, upgradeSteps: steps } : { upgraded: false }) };
   return nextUpgradeOptions(RUN, inst, base, registries, 60, { noAuthored: true, everyFamily: true });
 };
 const counterStep = { k: 'fx', fx: 'counter', n: 1 };

@@ -11,7 +11,8 @@ import { createRng } from '../src/engine/rng.js';
 import { smithingPlan } from '../src/model/smithing.js';
 import { legacyCoreRegistries } from './helpers/legacy-core-profile.mjs';
 import { gameProfileRestModel, gameProfileSmithModel } from '../src/ui/models/GameProfileRestModel.js';
-const profile = resolveGameProfile('core');
+// These service fixtures deliberately enable a Smith tier that changes the target item.
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { gear: { statPoints: { perRank: 1 } } } });
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 // The pre-one-pick Core rest block (arrival heals, every service once, Level Up listed): a run pins its profile, so an old save keeps it.
 // The one-pick Core block is covered by tests/core-rest-one-pick.test.mjs.

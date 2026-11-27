@@ -100,7 +100,7 @@ test('an element step carries the exposure an authored card of that school build
   const run = { seed: 504, level: { level: 5 }, gameProfile: profile };
   const element = [];
   for (let n = 0; n < 200; n += 1) {
-    const instance = { instanceId: `e${n}`, cardId: 'core.strike' };
+    const instance = { instanceId: `e${n}`, cardId: 'core.strike', rank: 2 };
     for (const step of nextUpgradeOptions({ ...run, seed: n }, instance, registries.cards.get('core.strike'), registries, 20, { everyFamily: true })) if (step.damageSchool) element.push(step);
   }
   assert.ok(element.length > 0 && element.every((s) => s.exposureBuildupPerHit === floor), 'every element step names the floor');
@@ -135,7 +135,7 @@ test('an element-stepped Strike with a slashing weapon adds a fire packet to its
   // The step the generator really writes for fire.
   let step = null;
   for (let n = 0; n < 400 && !step; n += 1) {
-    step = nextUpgradeOptions({ seed: n, level: { level: 5 }, gameProfile: profile }, { instanceId: `f${n}`, cardId: 'core.strike' }, registries.cards.get('core.strike'), registries, 20, { everyFamily: true }).find((s) => s.damageSchool === 'fire');
+    step = nextUpgradeOptions({ seed: n, level: { level: 5 }, gameProfile: profile }, { instanceId: `f${n}`, cardId: 'core.strike', rank: 2 }, registries.cards.get('core.strike'), registries, 20, { everyFamily: true }).find((s) => s.damageSchool === 'fire');
   }
   assert.ok(step, 'a fire element step is rolled');
   // Owner, 2026-11-19: the element ADDS a packet; the step stores its size, and the card's magic share is packet / total (a step saved before packets, `magicShare: 1`, still plays whole).

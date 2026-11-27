@@ -15,6 +15,7 @@
 // property rules its `props` name are passed as `rules` ({tag: {triggers, passives}}).
 import { GetActiveScoring } from './activeScoring.js';
 import { scoring as shippedScoring } from '../content/generated/scoring.js';
+import { EffectiveCostGrowth, EffectiveWitherLimit, MechanicRule } from './combatMechanics.js';
 
 /** Round half away from zero (the simulator's `rnd`). */
 export const Rnd = (x) => (x >= 0 ? Math.floor(x + 0.5) : -Math.floor(-x + 0.5) + 0); // + 0 keeps -0 out
@@ -50,16 +51,15 @@ function slimOf(full) {
   for (const [k, v] of Object.entries(full.tags || {})) {
     if (k[0] === '$' || !v || !(v.weight || v.multiplier || v.pMultiplier || v.perN)) continue;
     const o = {};
-    for (const kk of ['weight', 'per', 'multiplier', 'pMultiplier', 'perN']) if (kk in v) o[kk] = v[kk];
+    for (const kk of ['weight', 'per', 'multiplier', 'pMultiplier', 'perN', 'surchargeEnabled']) if (kk in v) o[kk] = v[kk];
     tags[k] = o;
   }
   return {
-    full, model: full.model, tags, rank: full.rank, keywords: full.keywords,
+    full, model: full.model, tags, keywords: full.keywords,
     costs: Object.fromEntries(Object.entries(full.costs).map(([k, v]) => [k, v.weight])),
     effects: Object.fromEntries(Object.entries(full.effects).map(([k, v]) => [k, [v.weight, v.per]])),
     statuses: Object.fromEntries(Object.entries(full.statuses).map(([k, v]) => [k, [v.weight, v.target]])),
     decayOne: new Set(full.cardModel.decayOneStatuses),
-    discount: { ...(full.items?.rarityDiscount || {}), ...full.rarity.discount }, // rarity.discount first; items.rarityDiscount adds boss
   };
 }
 
@@ -78,9 +78,66 @@ function exactStatus(S, id, n) {
   }
 }
 
+export function UpgradeTagFor(family, stacks) {
+  const n = Math.max(0, Math.floor(Number(stacks) || 0));
+  if (n <= 0) return null;
+  if (n === 1) return `upgrade:${family}`;
+  if (n === 2) return `upgrade:${family}+`;
+  return `upgrade:${family}+${n - 1}`;
+}
+
+export function ParseUpgradeTag(tag) {
+  const m = /^upgrade:([a-zA-Z]+)(?:\+(\d*))?$/.exec(String(tag || ''));
+  if (!m) return null;
+  const family = m[1];
+  const plus = tag.includes('+');
+  const stacks = !plus ? 1 : (m[2] ? 1 + Number(m[2]) : 2);
+  return { family, stacks };
+}
+
+export function UpgradeTagLabel(tag) {
+  const parsed = ParseUpgradeTag(tag);
+  if (!parsed) return String(tag || '');
+  const base = parsed.family[0].toUpperCase() + parsed.family.slice(1);
+  if (parsed.stacks === 1) return base;
+  if (parsed.stacks === 2) return `${base}+`;
+  return `${base} +${parsed.stacks - 1}`;
+}
+
+/**
+ * Compute CP surcharge for a stacking upgrade tag (Efficient, Improved, ExtraEffect, DrawbackEase, IdentityShift, GearAttribute).
+ * Supports toggling surcharges off (`surchargeEnabled: false`), flat doubling tiers (`base * 2^(n-1)` or `stacks[n-1]`),
+ * and compounding multiplicative scaling (`positiveScore * ((1 + pMultiplier)^n - 1)`).
+ */
+export function UpgradeTagSurcharge(rule, stacks, positiveScore = 0) {
+  const n = Math.max(0, Math.floor(Number(stacks) || 0));
+  if (!rule || rule.surchargeEnabled === false || n <= 0) return 0;
+  if (rule.mode === 'multiplicative') {
+    const mult = Number.isFinite(rule.pMultiplier) ? rule.pMultiplier : 0.1;
+    return Math.max(0, positiveScore) * (Math.pow(1 + mult, n) - 1);
+  }
+  if (Array.isArray(rule.stacks) && rule.stacks.length) {
+    if (n <= rule.stacks.length && Number.isFinite(rule.stacks[n - 1])) return rule.stacks[n - 1];
+    const last = Number(rule.stacks[rule.stacks.length - 1]) || Number(rule.base) || 0;
+    return last * Math.pow(2, n - rule.stacks.length);
+  }
+  const base = Number(rule.base) || 0;
+  return rule.escalate === 'linear' ? base * n : base * Math.pow(2, n - 1);
+}
+
 /** Score a card face: {raw, parts, positive}. `positive` is P, the sum of the positive non-cost parts. */
-export function ScoreCard(c, scoring = GetActiveScoring()) {
-  const S = slimOf(scoring), M = S.model, CM = scoring.cardModel;
+export function ScoreCard(c, scoring = GetActiveScoring(), context = null) {
+  return scorePrepared(c, scoring, slimOf(scoring), context);
+}
+
+/** Compile only for one read-only operation; create a new scorer after edits. */
+export function PrepareCardScorer(scoring = GetActiveScoring()) {
+  const S = slimOf(scoring);
+  return (card, context = null) => scorePrepared(card, scoring, S, context);
+}
+
+function scorePrepared(c, scoring, S, context) {
+  const M = S.model, CM = scoring.cardModel;
   const parts = {};
   const add = (k, v) => { if (v) parts[k] = (parts[k] || 0) + v; };
   // `fx` mirrors only the effect parts (damage, block, statuses ...), so the effect count never mistakes a tag or keyword that
@@ -90,6 +147,10 @@ export function ScoreCard(c, scoring = GetActiveScoring()) {
   const area = c.tags.includes(CM.areaTag) ? M.ENEMIES : 1;
   add('SP', S.costs.sp * c.sp); add('MP', S.costs.mp * c.mp);
   addFx('damage', ew(S, 'damage', c.dmg) * area);
+  const blockBreakRule = MechanicRule('blockBreak', context);
+  if (c.blockBreak && (!blockBreakRule || blockBreakRule.enabled !== false) && S.effects.blockBreak) {
+    addFx('blockBreak', ew(S, 'blockBreak', c.blockBreak) * area);
+  }
   addFx('block', ew(S, 'block', c.blk));
   addFx('poise', ew(S, 'poiseDamage', c.poise) * area);
   for (const [s, n, tgt] of c.statuses) {
@@ -106,26 +167,51 @@ export function ScoreCard(c, scoring = GetActiveScoring()) {
   const U = CM.utility;
   addFx('utility', c.holdOne * U.holdOne + c.boost * U.boost + c.cull * U.cull + c.shuffle * U.shuffle + c.attr * U.attr);
   for (const t of c.tags) {
-    const w = S.tags[t]; if (!w || !w.weight) continue;
+    const w = S.tags[t]; if (!w || w.surchargeEnabled === false || !w.weight) continue;
     add(t, w.weight * (w.per === 'hit' ? Math.max(1, c.hits) * area : 1));
   }
-  if (c.tags.includes(CM.honedTag)) add(CM.honedTag, S.tags[CM.honedTag].perN);
+  if (c.tags.includes(CM.honedTag) && S.tags[CM.honedTag]?.surchargeEnabled !== false) add(CM.honedTag, S.tags[CM.honedTag].perN);
   const P = Object.entries(parts).filter(([k, v]) => k !== 'SP' && k !== 'MP' && v > 0).reduce((s, [, v]) => s + v, 0);
-  for (const t of c.tags) { const w = S.tags[t]; if (w && w.pMultiplier) add(t, P * w.pMultiplier); }
+  for (const t of c.tags) { const w = S.tags[t]; if (w && w.surchargeEnabled !== false && w.pMultiplier) add(t, P * w.pMultiplier); }
   // Counterstrike as a multiplier scales P; set flat (weight, no multiplier) it scored in the tag loop above.
   const cs = S.tags[CM.counterstrikeTag];
-  if (c.tags.includes(CM.counterstrikeTag) && cs && Number.isFinite(cs.multiplier)) add('counterstrike', P * (cs.multiplier - 1));
+  if (c.tags.includes(CM.counterstrikeTag) && cs && cs.surchargeEnabled !== false && Number.isFinite(cs.multiplier)) add('counterstrike', P * (cs.multiplier - 1));
   if (c.copy) add('copy', P / CM.copyDivisor * c.copy);
   for (const k of c.kw) {
-    const d = S.keywords[k]; if (!d) continue;
+    const d = S.keywords[k]; if (!d || d.surchargeEnabled === false) continue;
     let v = d.flat ?? P * d.multiplier;
     if (d.min !== undefined) v = d.min < 0 ? Math.min(v, d.min) : Math.max(v, d.min);
     add(k, v);
   }
+  const witherLimit = !c.kw.includes('exhaust') ? EffectiveWitherLimit(c, context) : null;
+  if (witherLimit && S.keywords.wither && S.keywords.wither.surchargeEnabled !== false) {
+    const d = S.keywords.wither;
+    let v = (d.flat ?? P * d.multiplier) / witherLimit;
+    if (d.min !== undefined) v = d.min < 0 ? Math.min(v, d.min) : Math.max(v, d.min);
+    add('wither', v);
+  }
+  const growth = EffectiveCostGrowth(c, context);
+  if (growth && S.keywords.costGrowth && S.keywords.costGrowth.surchargeEnabled !== false) {
+    const d = S.keywords.costGrowth;
+    const stepSize = (growth.stamina || 0) + (growth.mana || 0);
+    let v = d.flat !== undefined ? d.flat * stepSize : P * d.multiplier;
+    if (d.min !== undefined) v = d.min < 0 ? Math.min(v, d.min) : Math.max(v, d.min);
+    add('costGrowth', v);
+  }
+  // Stacking upgrade tags (Efficient, Improved, ExtraEffect, DrawbackEase, IdentityShift)
+  const UT = scoring.upgradeTags;
+  if (UT) {
+    for (const t of c.tags) {
+      const parsed = ParseUpgradeTag(t);
+      if (!parsed || !UT[parsed.family]) continue;
+      const surcharge = UpgradeTagSurcharge(UT[parsed.family], parsed.stacks, P);
+      if (surcharge) add(UpgradeTagLabel(t), surcharge);
+    }
+  }
   // Owner 2026-11-21 (scoring.effectCount): + weight per distinct real effect type scoring > 0, beyond the first (skipFirst).
   // Not effects: costs, tag bonuses, keywords, multipliers (only `fx` parts count, so a tag sharing a status's part key cannot hide it); a rider (Poise) counts only on a card with no damage.
   const EC = scoring.effectCount;
-  if (EC && EC.weight) {
+  if (EC && EC.surchargeEnabled !== false && EC.weight) {
     const notEffect = new Set(['SP', 'MP', 'HP cost', 'discard']);
     const riders = new Set(EC.riders || []);
     const n = Object.entries(fx).filter(([k, v]) => v > 0 && !notEffect.has(k) && !(riders.has(k) && fx.damage > 0)).length;
@@ -136,7 +222,7 @@ export function ScoreCard(c, scoring = GetActiveScoring()) {
   const CAT = scoring.categories;
   if (CAT) for (const k of CardCategories(c)) {
     const w = CAT[k];
-    if (!w || !Number.isFinite(w.weight)) continue;
+    if (!w || w.surchargeEnabled === false || !Number.isFinite(w.weight)) continue;
     if (w.multiplier) add(`category:${k}`, P * (w.weight - 1));
     else add(`category:${k}`, w.weight);
   }
@@ -144,20 +230,26 @@ export function ScoreCard(c, scoring = GetActiveScoring()) {
   return { raw, parts, positive: P };
 }
 
+function rarityDiscount(scoring, rarity) {
+  const cards = scoring.rarity.discount, items = scoring.items?.rarityDiscount;
+  if (cards && Object.hasOwn(cards, rarity)) return cards[rarity] || 0;
+  return items && Object.hasOwn(items, rarity) ? items[rarity] || 0 : 0;
+}
+
 /** Combat power: raw score minus the rarity discount (cards and items share one table; boss comes from scoring.items.rarityDiscount). */
 export function CombatPower(raw, rarity, scoring = GetActiveScoring()) {
-  return raw - (slimOf(scoring).discount[rarity] || 0);
+  return raw - rarityDiscount(scoring, rarity);
 }
 
 /** Rank number from combat power: 0 = Unranked, 1..maxRank. */
 export function RankOf(cp, scoring = GetActiveScoring()) {
-  const RK = slimOf(scoring).rank;
+  const RK = scoring.rank;
   return cp <= RK.unrankedMax ? 0 : Math.min(RK.maxRank, Math.ceil(cp / RK.width));
 }
 export const RankName = (k) => (k === 0 ? 'Unranked' : 'Rank ' + k);
 /** The combat-power band of a rank, as text; it matches RankOf (Rank 1 starts just above unrankedMax, every later rank is `width` wide). */
 export function RankRange(k, scoring = GetActiveScoring()) {
-  const RK = slimOf(scoring).rank;
+  const RK = scoring.rank;
   if (k === 0) return `<= ${RK.unrankedMax}`;
   const lo = k === 1 ? RK.unrankedMax + 1 : RK.width * (k - 1) + 1;
   return k === RK.maxRank ? (RK.maxCp ? `${lo}-${RK.maxCp}` : `>= ${lo}`) : `${lo}-${RK.width * k}`;
@@ -174,7 +266,7 @@ export function ApplyScoringOverride(row, override, scoring = GetActiveScoring()
   const rarity = hasRarity ? override.rarity : row.rarity;
   const raw = hasRaw ? override.raw : row.raw;
   const cp = hasCp ? override.cp : CombatPower(raw, rarity, scoring);
-  const rank = hasRank ? Math.max(0, Math.min(slimOf(scoring).rank.maxRank, override.rank)) : RankOf(cp, scoring);
+  const rank = hasRank ? Math.max(0, Math.min(scoring.rank.maxRank, override.rank)) : RankOf(cp, scoring);
   return { ...row, raw, cp, rank, rarity, overridden: true };
 }
 
@@ -276,7 +368,11 @@ export function ScoreItem(it, scoring = GetActiveScoring(), rules = {}) {
   const allMods = [...(it.typeMods || []), ...(it.mods || [])];
   for (const [k, n] of allMods) { const v = ModValue(k, n, scoring); const label = ModLabel(k, scoring); if (v) parts[label] = (parts[label] || 0) + v; }
   for (const t of it.props || []) { const v = PropertyValue(rules[t], scoring); if (v) parts['prop:' + t] = (parts['prop:' + t] || 0) + v; }
-  for (const t of it.tags || []) { if (t.startsWith('range:')) continue; const w = S.tags[t]; if (w && w.weight) parts[t] = w.weight * (w.per === 'hit' ? plays.strike : 1); }
+  if ((it.passives || (it.triggers && it.triggers.length)) && !(it.props && it.props.length)) {
+    const v = PropertyValue({ passives: it.passives || null, triggers: it.triggers || [] }, scoring);
+    if (v) parts['Relic effect'] = (parts['Relic effect'] || 0) + v;
+  }
+  for (const t of it.tags || []) { if (t.startsWith('range:')) continue; const w = S.tags[t]; if (w && w.surchargeEnabled !== false && w.weight) parts[t] = w.weight * (w.per === 'hit' ? plays.strike : 1); }
   if (it.kind === 'weapon') {
     const atkAuth = it.magicShare ? (1 - it.magicShare) * M.AUTH_PHYS + it.magicShare * M.AUTH_SPELL : M.AUTH_PHYS;
     const atk = ((it.attackBase ?? I.kit.unarmedAttack) - I.kit.unarmedAttack) * atkAuth * plays.strike; if (atk) parts['Attack profile'] = atk;
@@ -298,8 +394,19 @@ export function ScoreItem(it, scoring = GetActiveScoring(), rules = {}) {
     const rw = I.range && Number.isFinite(I.range[it.range]) ? I.range[it.range] : (S.tags[rg]?.weight ? S.tags[rg].weight * plays.strike : 0);
     if (rw) parts[rg] = rw;
   }
+  // Flat gear attribute surcharge (configurable flat doubling or multiplicative in scoring.upgradeTags.gearAttribute)
+  const attrRule = scoring.upgradeTags?.gearAttribute;
+  if (attrRule && attrRule.surchargeEnabled !== false && (it.kind === 'weapon' || it.kind === 'armour')) {
+    const STAT_ATTR_RE = /\.stat(Str|Dex|Con|Int|Wis)$/;
+    const totalAttr = (it.mods || []).reduce((sum, [k, n]) => (STAT_ATTR_RE.test(String(k)) && Number(n) > 0 ? sum + Number(n) : sum), 0);
+    if (totalAttr > 0) {
+      const pos = Object.values(parts).filter((v) => v > 0).reduce((s, v) => s + v, 0);
+      const surcharge = UpgradeTagSurcharge(attrRule, totalAttr, pos);
+      if (surcharge) parts['Gear attribute surcharge'] = surcharge;
+    }
+  }
   const raw = Math.round(Object.values(parts).reduce((s, v) => s + v, 0)) + 0;
-  const disc = S.discount[it.rarity] || 0;
+  const disc = rarityDiscount(scoring, it.rarity);
   return { raw, disc, cp: raw - disc, parts };
 }
 

@@ -5,10 +5,24 @@
 // draft (auto-save runs after the edit, not before), and the card face shows what the inspector edits.
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import { mkdtemp } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { scoring } from '../src/content/generated/scoring.js';
+import { configuredCustomCardIds, registries } from '../tools/lib/cardBudgetMeasure.mjs';
 import { serve } from '../tools/serve.mjs';
 const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');
 
-const CORE_POOL_SIZE = 106;
+// Browser plugin not available; use the repository's private Playwright browser.
+const CORE_POOL_IDS = registries.cards.all().filter(card => card && card.id && card.name && !card.ruleTemplate
+  && (card.id.startsWith('core.') || card.id.startsWith('subclass.') || configuredCustomCardIds.has(card.id))).map(card => card.id).sort();
+const CORE_POOL_SIZE = CORE_POOL_IDS.length;
+const NATIVE_CARDS = [
+  { id: 'custom.card_mwx2mb6p', name: 'Ward', sp: '0', mp: '1' },
+  { id: 'custom.copy_mwx6hh79', name: 'Arcane Bolt', sp: '0', mp: '1' },
+  { id: 'custom.copy_mwx6xoww', name: 'Arcane Smash', sp: '0', mp: '1' },
+];
+const evidence = await mkdtemp(join(tmpdir(), 'score-studio-native-'));
 const DRAFT_KEY = 'ashenspire:scoreStudioDraft:v1';
 const DRAFT_SETTLE_MS = 400;
 const STUDIO_PATH = 'tools/score-studio/';
@@ -27,7 +41,31 @@ try {
   // 1. The gallery holds the core pool, and the page raised no errors while booting.
   const tiles = await page.locator('.studio-card-tile').count();
   assert.equal(tiles, CORE_POOL_SIZE, `gallery shows the ${CORE_POOL_SIZE}-card core pool`);
-  assert.deepEqual(pageErrors, [], 'no uncaught errors while the studio boots');
+  assert.deepEqual(await page.locator('.studio-card-tile').evaluateAll(nodes => nodes.map(node => node.dataset.cardId).sort()), CORE_POOL_IDS, 'gallery matches configured Core membership, including native custom IDs');
+  for (const card of NATIVE_CARDS) {
+    const tile = page.locator(`.studio-card-tile[data-card-id="${card.id}"]`);
+    assert.equal(await tile.count(), 1, `native ${card.name} appears exactly once in a fresh session`);
+    await tile.click();
+    assert.equal(await page.locator('#edit-name').inputValue(), card.name);
+    assert.equal(await page.locator('#edit-sp').inputValue(), card.sp);
+    assert.equal(await page.locator('#edit-mp').inputValue(), card.mp);
+  }
+  await page.locator('.studio-card-tile[data-card-id="custom.card_mwx2mb6p"]').click();
+  await page.screenshot({ path: join(evidence, 'native-ward-desktop.png') });
+  // A private draft replacing a shipped native ID must replace that row, never
+  // append a second Ward. This context never opens the user's browser profile.
+  await page.evaluate(({ key, ward, scoring }) => localStorage.setItem(key, JSON.stringify({ scoring, customCards: [{ ...ward, name: 'Restored Ward draft', _edited: true }] })),
+    { key: DRAFT_KEY, ward: registries.cards.get('custom.card_mwx2mb6p'), scoring });
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.locator('.studio-card-tile[data-card-id="custom.card_mwx2mb6p"]').waitFor({ timeout: 120000 });
+  assert.equal(await page.locator('.studio-card-tile').count(), CORE_POOL_SIZE, 'restoring a native draft does not grow the pool');
+  for (const card of NATIVE_CARDS) assert.equal(await page.locator(`.studio-card-tile[data-card-id="${card.id}"]`).count(), 1);
+  await page.locator('.studio-card-tile[data-card-id="custom.card_mwx2mb6p"]').click();
+  assert.equal(await page.locator('#edit-name').inputValue(), 'Restored Ward draft');
+  await page.evaluate(key => localStorage.removeItem(key), DRAFT_KEY);
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(count => document.querySelectorAll('.studio-card-tile').length === count, CORE_POOL_SIZE, { timeout: 120000 });
+  assert.deepEqual(pageErrors, [], 'no uncaught errors while the studio boots or restores a native draft');
 
   // 2. A card face is card-shaped. Without illustrated-cards.css its layers stack in flow and the face runs
   //    over ten times taller than it is wide.
@@ -315,10 +353,24 @@ try {
   assert.equal(featureSearch.kept, featureSearch.second, 'a rebuild keeps the picked feature');
   assert.equal(featureSearch.cleared, featureSearch.all, 'Escape restores the whole list');
 
-  // 7. Auto-name gives the convention name (CardName, trimmed to naming.card.limit): a new card starts with it on, adding
-  //    a status renames it, the name matches the hint's convention name, stays within the limit and fits its title box.
+  // 7. A blank draft starts as the owner's Skill named/texted "New card", with Auto-name off.
+  //    Explicitly enabling Auto-name then follows the convention when a status is added, and fits the title box.
   const autoName = await page.evaluate(async () => {
     document.getElementById('btn-new-card').click();
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    const defaults = {
+      name: document.getElementById('edit-name').value,
+      text: document.getElementById('edit-text').value,
+      type: document.getElementById('edit-type').value,
+      classId: document.getElementById('edit-class').value,
+      rarity: document.getElementById('edit-rarity').value,
+      sp: document.getElementById('edit-sp').value,
+      mp: document.getElementById('edit-mp').value,
+      autoName: document.getElementById('toggle-auto-name').checked,
+    };
+    const toggle = document.getElementById('toggle-auto-name');
+    toggle.checked = true;
+    toggle.dispatchEvent(new Event('change', { bubbles: true }));
     await new Promise((resolve) => setTimeout(resolve, 300));
     const before = document.getElementById('edit-name').value;
     const toggleOn = document.getElementById('toggle-auto-name').checked;
@@ -329,11 +381,12 @@ try {
     await new Promise((resolve) => setTimeout(resolve, 300));
     const title = document.querySelector('#inspector-card-preview [data-card-binding="name"]');
     const hint = document.getElementById('name-hint').textContent;
-    return { before, after: document.getElementById('edit-name').value, hint, toggleOn, scrollWidth: title?.scrollWidth ?? 0, clientWidth: title?.clientWidth ?? 0 };
+    return { defaults, before, after: document.getElementById('edit-name').value, hint, toggleOn, scrollWidth: title?.scrollWidth ?? 0, clientWidth: title?.clientWidth ?? 0 };
   });
   const NAME_LIMIT = 24;
-  assert.ok(autoName.toggleOn, 'a new card starts with Auto-name on');
-  assert.match(autoName.before, /Strike/, `a new martial melee card is a Strike (${autoName.before})`);
+  assert.deepEqual(autoName.defaults, { name: 'New card', text: 'New card', type: 'skill', classId: 'colorless', rarity: 'common', sp: '1', mp: '0', autoName: false }, 'a new blank draft keeps the requested Skill defaults');
+  assert.ok(autoName.toggleOn, 'Auto-name turns on only after the explicit choice');
+  assert.notEqual(autoName.before, 'New card', 'enabling Auto-name immediately applies the convention');
   assert.notEqual(autoName.after, autoName.before, `adding a status renames an auto-named card (${autoName.before} -> ${autoName.after})`);
   assert.ok(autoName.hint.startsWith(`Convention: ${autoName.after} `), `the auto name is the convention name (${autoName.hint})`);
   assert.ok(autoName.after.length <= NAME_LIMIT, `the auto name keeps to the limit (${autoName.after})`);
@@ -420,10 +473,79 @@ try {
   assert.ok(renameAll.restored, 'Restore Default names gives back the authored name');
   assert.ok(renameAll.autoNameOff, 'restored cards have Auto-name off');
 
+  // 11. Generate cards (owner, 2026-11-24): the modal opens on today's Core shape, Preview shows counts and sample
+  //     names, Generate with Replace generated only makes the pool beside the Core cards, and one undo restores the list.
+  const generate = await page.evaluate(async () => {
+    const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    const tiles = () => document.querySelectorAll('.studio-card-tile').length;
+    const modal = document.getElementById('generate-cards-modal');
+    const generated = async () => { document.getElementById('btn-gen-apply').click(); for (let t = 0; modal.open && t < 600; t++) await wait(100); };
+    const before = tiles();
+    document.getElementById('btn-generate-cards').click();
+    const open = modal.open;
+    const untitled = [...modal.querySelectorAll('input, select, button')].filter((el) => !el.closest('[title], [data-tip]')).map((el) => el.id || el.outerHTML.slice(0, 60));
+    const sums = [...modal.querySelectorAll('[data-group] .gen-sum')].map((el) => el.textContent);
+    modal.querySelector('input[name="gen-mode"][value="replaceGenerated"]').checked = true;
+    document.getElementById('btn-gen-preview').click();
+    const preview = document.getElementById('gen-preview');
+    const sampleNames = preview.querySelectorAll('.gen-sample-names li').length;
+    const previewText = preview.textContent;
+    // An off-100 group shows red, and Generate scales it back to 100.
+    const rare = modal.querySelector('[data-pct-rarity="rare"]');
+    rare.value = String(Number(rare.value) + 10);
+    rare.dispatchEvent(new Event('input', { bubbles: true }));
+    const red = modal.querySelector('[data-sum="rarity"]').classList.contains('is-off');
+    await generated();
+    const toastText = document.getElementById('studio-toast').textContent;
+    const after = tiles();
+    const generatedCount = document.querySelectorAll('.studio-card-tile[data-card-id^="gen."]').length;
+    const closed = !modal.open;
+    // Generate again with Replace generated only: the generated cards are rebuilt, not added twice.
+    document.getElementById('btn-generate-cards').click();
+    const remembered = modal.querySelector('[data-sum="rarity"]').textContent;
+    await generated();
+    const again = tiles();
+    document.getElementById('btn-undo').click();
+    await wait(400);
+    document.getElementById('btn-undo').click();
+    await wait(400);
+    return { before, open, untitled, sums, sampleNames, previewText, red, toastText, after, generated: generatedCount, closed, remembered, again, undone: tiles(), genLeft: document.querySelectorAll('.studio-card-tile[data-card-id^="gen."]').length };
+  });
+  assert.ok(generate.open, 'Generate cards opens its modal');
+  assert.deepEqual(generate.untitled, [], 'every control in the modal has a tooltip');
+  assert.ok(generate.sums.length >= 7 && generate.sums.every((t) => t === 'Total 100%'), `the default percent groups add up to 100 (${generate.sums})`);
+  assert.equal(generate.sampleNames, 8, 'Preview shows 8 sample names');
+  assert.match(generate.previewText, new RegExp(CORE_POOL_SIZE + ' cards[\\s\\S]*Rarity:[\\s\\S]*Rank:[\\s\\S]*School:'), 'Preview shows counts by rarity, rank and school');
+  assert.ok(generate.red, 'a group that does not add up to 100 shows its total in red');
+  assert.ok(generate.closed, 'Generate closes the modal');
+  const exactCount = Number(generate.toastText.match(/(\d+) at their exact CP/)?.[1]);
+  assert.ok(exactCount >= 90, `most generated cards show their exact target CP in the studio (${generate.toastText})`);
+  assert.equal(generate.generated, CORE_POOL_SIZE, 'the default generated pool matches current Core membership');
+  assert.equal(generate.after, generate.before + CORE_POOL_SIZE, 'Replace generated only keeps the Core cards');
+  assert.equal(generate.remembered, 'Total 100%', 'the modal reopens on the last (normalised) settings');
+  assert.equal(generate.again, generate.after, 'a second Replace generated only rebuilds the generated cards instead of adding more');
+  assert.equal(generate.undone, generate.before, 'undo puts the card list back');
+  assert.equal(generate.genLeft, 0, 'no generated card is left after undo');
+
+  // 11b. School counts that need more magic cards than the camp counts give turn martial cards magic, and Preview says so.
+  const schoolNote = await page.evaluate(() => {
+    const modal = document.getElementById('generate-cards-modal');
+    document.getElementById('btn-generate-cards').click();
+    for (const el of modal.querySelectorAll('[data-count-school], [data-count-camp]')) el.value = '';
+    modal.querySelector('[data-count-school="fire"]').value = '6';
+    modal.querySelector('[data-count-school="frost"]').value = '4';
+    modal.querySelector('[data-count-camp="martial"]').value = '10';
+    document.getElementById('btn-gen-preview').click();
+    const text = document.getElementById('gen-preview').textContent;
+    modal.close('cancel');
+    return text;
+  });
+  assert.match(schoolNote, /10 martial cards became magic to fit the school counts/, 'Preview reports martial cards made magic');
+
   assert.deepEqual(pageErrors, [], 'no uncaught errors while editing');
   await page.evaluate((key) => localStorage.removeItem(key), DRAFT_KEY);
   await page.close();
-  console.log('score-studio browser: ok');
+  console.log(`score-studio browser: ok; native cards and draft restore evidence: ${evidence}`);
 } finally {
   await browser.close();
   await server.close?.();

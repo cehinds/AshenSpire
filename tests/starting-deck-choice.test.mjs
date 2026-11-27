@@ -10,80 +10,80 @@ import { deckRules } from '../src/content/deckRules.js';
 import { ApplyStartingDeckChoice, StartingDeckChoiceRefusal, StartingDeckSize, StartingPoolCounts, StartingPoolIds } from '../src/model/startingDeckChoice.js';
 import { CreatePreparedRun } from '../src/services/runBirth.js';
 
+// src/content/deckRules.js is the hand-authored source (there is no generated JSON mirror).
 const core = resolveGameProfile('core');
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, core)), core);
 const meta = { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } };
 const make = (classId = 'reaver') => createRunState({ seed: 9, classId, registries, runId: `start-${classId}`, profileMeta: meta });
 
-test('the pool is the five unranked starting cards, as data', () => {
-  assert.deepEqual(StartingPoolIds(make()), [...deckRules.creationPool]);
+const loose = card => !card.grantedBy && !card.equipmentRole;
+const countDeck = run => Object.fromEntries(StartingPoolIds(run).map(id => [id, run.deck.filter(card => loose(card) && card.cardId === id).length]));
+const relaxed = { deckMinUnlimited: true, deckMaxUnlimited: true };
+
+test('the current configured pool and class swaps reach creation', () => {
+  for (const character of core.content.characters.filter(row => row.tags.includes('character.player'))) {
+    const run = make(character.id);
+    const known = new Set(core.content.cards.map(card => card.id));
+    const swaps = deckRules.creationPoolSwaps[character.id] || {};
+    assert.deepEqual(StartingPoolIds(run), deckRules.creationPool.map(id => swaps[id] || id).filter(id => known.has(id)));
+  }
   assert.deepEqual(StartingPoolIds(createRunState({ seed: 9, classId: 'reaver', registries: createRegistries(contentBundle) })), [], 'legacy has no choice');
 });
 
-test('the counts start at the class deck, and a choice rebuilds only the pool cards', () => {
-  const run = make('reaver');
-  const counts = StartingPoolCounts(run);
-  assert.deepEqual(counts, { 'core.strike': 4, 'core.smash': 0, 'core.counter': 0, 'core.defend': 4, 'core.sweep': 0 }); // owner ruling 2026-11-21: four Strikes and four Defends
-  const others = run.deck.filter((card) => !deckRules.creationPool.includes(card.cardId)).map((card) => card.cardId);
-  ApplyStartingDeckChoice(run, { ...counts, 'core.strike': 5, 'core.defend': 4 });
-  assert.equal(run.deck.filter((card) => card.cardId === 'core.strike').length, 5);
-  assert.equal(run.deck.filter((card) => card.cardId === 'core.defend').length, 4);
-  assert.deepEqual(run.deck.filter((card) => !deckRules.creationPool.includes(card.cardId)).map((card) => card.cardId), others, 'class cards stay');
-  assert.equal(new Set(run.deck.map((card) => card.instanceId)).size, run.deck.length, 'unique instance ids');
-});
-
-test('a class may take a pool card it did not start with, and it is collected', () => {
-  const run = make('starseer');
-  assert.equal(StartingPoolCounts(run)['core.defend'], 0);
-  ApplyStartingDeckChoice(run, { ...StartingPoolCounts(run), 'core.defend': 1 });
-  assert.ok(run.deck.some((card) => card.cardId === 'core.defend'));
-  assert.ok(run.collectedCardIds.includes('core.defend'));
-});
-
-// Owner, 2026-11-17 (decision on #2815): casters pick the most basic cantrip, Arcane Spark (core.cantrip), in place of Strike.
-test('Starseer and Herald swap Strike for Arcane Spark; Reaver and Rogue keep Strike', () => {
-  for (const classId of ['starseer', 'herald']) {
-    const pool = StartingPoolIds(make(classId));
-    assert.deepEqual(pool, ['core.cantrip', 'core.smash', 'core.counter', 'core.defend', 'core.sweep'], classId);
-    assert.equal(registries.cards.get('core.cantrip').name, 'Arcane Spark');
+test('the counts reflect the current class deck; choosing copies rebuilds only loose pool cards', () => {
+  for (const classId of Object.keys(core.content.starterDeck.classDecks)) {
+    const run = make(classId), counts = StartingPoolCounts(run), [chosenId] = StartingPoolIds(run);
+    assert.ok(chosenId, `${classId} has a choice pool`);
+    assert.deepEqual(counts, countDeck(run));
+    const pool = StartingPoolIds(run);
+    const others = structuredClone(run.deck.filter(card => !(loose(card) && pool.includes(card.cardId))));
+    const edited = { ...counts, [chosenId]: counts[chosenId] + 1 };
+    ApplyStartingDeckChoice(run, edited, relaxed);
+    assert.deepEqual(StartingPoolCounts(run), edited);
+    assert.deepEqual(run.deck.filter(card => !(loose(card) && pool.includes(card.cardId))), others, 'class cards and equipment grants stay');
+    assert.equal(new Set(run.deck.map(card => card.instanceId)).size, run.deck.length, 'unique instance ids');
+    assert.ok(run.collectedCardIds.includes(chosenId), 'the chosen card is collected');
   }
-  for (const classId of ['reaver', 'rogue']) assert.equal(StartingPoolIds(make(classId))[0], 'core.strike', classId);
-  assert.equal(StartingPoolCounts(make('starseer'))['core.cantrip'], 4, "the Starseer's four starting Arcane Sparks (owner ruling 2026-11-21)");
-  const herald = make('herald');
-  assert.equal(StartingPoolCounts(herald)['core.cantrip'], 4);
-  ApplyStartingDeckChoice(herald, { ...StartingPoolCounts(herald), 'core.cantrip': 5 });
-  assert.equal(herald.deck.filter((card) => card.cardId === 'core.cantrip').length, 5);
-  assert.ok(herald.collectedCardIds.includes('core.cantrip'));
-  assert.match(StartingDeckChoiceRefusal(make('herald'), { 'core.strike': 1 }), /not a starting card choice/, 'a caster cannot take Strike');
 });
 
-test('the deck minimum and maximum still apply', () => {
-  const run = make('reaver');
-  const none = Object.fromEntries(StartingPoolIds(run).map((id) => [id, 0]));
-  assert.match(StartingDeckChoiceRefusal(run, none), /needs at least 10/);
-  assert.throws(() => ApplyStartingDeckChoice(run, none), /needs at least/);
-  assert.equal(StartingDeckChoiceRefusal(run, StartingPoolCounts(run)), '');
-  const big = { ...StartingPoolCounts(run), 'core.strike': 30 };
-  assert.match(StartingDeckChoiceRefusal(run, big, { deckMaxUnlimited: false, deckMaxSize: 20 }), /at most 20/);
-  assert.equal(StartingDeckSize(run, big), run.deck.length + 26, 'thirty Strikes replace the four it starts with');
-  assert.match(StartingDeckChoiceRefusal(run, { 'core.cantrip': 1 }), /not a starting card choice/);
-  assert.match(StartingDeckChoiceRefusal(run, { 'core.strike': -1 }), /whole number/);
+test('a class may collect a pool card absent from its initial deck', () => {
+  const run = make(), [chosenId] = StartingPoolIds(run);
+  run.deck = run.deck.filter(card => !(loose(card) && card.cardId === chosenId));
+  run.collectedCardIds = run.collectedCardIds.filter(id => id !== chosenId);
+  assert.equal(StartingPoolCounts(run)[chosenId], 0);
+  ApplyStartingDeckChoice(run, { ...StartingPoolCounts(run), [chosenId]: 1 }, relaxed);
+  assert.ok(run.deck.some(card => card.cardId === chosenId));
+  assert.ok(run.collectedCardIds.includes(chosenId));
+});
+
+test('explicit minimum, maximum and malformed choices are enforced independently of the starter composition', () => {
+  const run = make(), [chosenId] = StartingPoolIds(run);
+  const none = Object.fromEntries(StartingPoolIds(run).map(id => [id, 0]));
+  const kept = StartingDeckSize(run, none);
+  const settings = { deckMinSize: kept + 1, deckMinUnlimited: false, deckMaxUnlimited: true };
+  assert.match(StartingDeckChoiceRefusal(run, none, settings), /needs at least/);
+  assert.throws(() => ApplyStartingDeckChoice(run, none, settings), /needs at least/);
+  assert.equal(StartingDeckChoiceRefusal(run, StartingPoolCounts(run), relaxed), '');
+  const big = { ...none, [chosenId]: 30 };
+  assert.equal(StartingDeckSize(run, big), kept + 30);
+  assert.match(StartingDeckChoiceRefusal(run, big, { deckMinUnlimited: true, deckMaxUnlimited: false, deckMaxSize: kept + 20 }), /at most/);
+  assert.match(StartingDeckChoiceRefusal(run, { 'test.not-in-pool': 1 }), /not a starting card choice/);
+  for (const invalid of [-1, 1.5, '2']) assert.match(StartingDeckChoiceRefusal(run, { [chosenId]: invalid }), /whole number/);
 });
 
 test('run birth applies the creation choice and keeps it in beginChoices', () => {
-  const startingCards = { 'core.strike': 5, 'core.smash': 1, 'core.counter': 1, 'core.defend': 2, 'core.sweep': 1 };
-  const { run } = CreatePreparedRun({ seed: 9, registries, gameProfile: core, profileMeta: meta, classId: 'reaver', startingCards });
-  assert.equal(run.deck.filter((card) => card.cardId === 'core.strike').length, 5);
+  const initial = make(), [chosenId] = StartingPoolIds(initial);
+  const startingCards = { ...StartingPoolCounts(initial), [chosenId]: StartingPoolCounts(initial)[chosenId] + 1 };
+  const { run } = CreatePreparedRun({ seed: 9, registries, gameProfile: core, profileMeta: meta, classId: initial.class, startingCards });
+  assert.deepEqual(StartingPoolCounts(run), startingCards);
   assert.deepEqual(run.beginChoices.startingCards, startingCards);
 });
 
-// Review of #2815 (low): Run again with deck-size settings that now refuse the saved choice starts the run on
-// the class's own starting cards instead of failing.
-test('run birth falls back to the class starting cards when the settings refuse the saved choice', () => {
-  const startingCards = { 'core.strike': 4, 'core.smash': 0, 'core.counter': 0, 'core.defend': 4, 'core.sweep': 0 };
-  const { run } = CreatePreparedRun({ seed: 9, registries, gameProfile: core, profileMeta: meta, classId: 'reaver', startingCards: { ...startingCards, 'core.strike': 8 },
-    settings: { deckMaxUnlimited: false, deckMaxSize: 12 } });
-  const fresh = make('reaver');
-  assert.deepEqual(run.deck.map((card) => card.cardId), fresh.deck.map((card) => card.cardId));
-  assert.equal(run.beginChoices.startingCards, undefined, 'the refused choice is not carried into the next Run again');
+test('run birth falls back to the class recipe when explicit bounds refuse a saved choice', () => {
+  const fresh = make(), [chosenId] = StartingPoolIds(fresh);
+  const startingCards = { ...StartingPoolCounts(fresh), [chosenId]: fresh.deck.length + 20 };
+  const { run } = CreatePreparedRun({ seed: 9, registries, gameProfile: core, profileMeta: meta, classId: fresh.class, startingCards,
+    settings: { deckMinUnlimited: true, deckMaxUnlimited: false, deckMaxSize: fresh.deck.length } });
+  assert.deepEqual(run.deck.map(card => card.cardId), fresh.deck.map(card => card.cardId));
+  assert.equal(run.beginChoices.startingCards, undefined);
 });

@@ -8,6 +8,7 @@ import { SETTINGS } from '../src/content/recipientEffectSettings.js';
 import { ReadRecipientEffectTiming, ValidateRecipientEffectTiming } from '../src/model/recipientEffectTiming.js';
 
 const timing = ReadRecipientEffectTiming();
+const { categoryQueues, ...legacyTiming } = timing;
 import { haptic } from '../src/ui/haptics.js';
 
 const box = { left: 30, top: 40, width: 60, height: 100 };
@@ -368,7 +369,7 @@ test('only movement chevrons mirror; group sweep and delayed secondary cancel to
     const layer=dom.document.createElement('div'),a=dom.document.createElement('div'),b=dom.document.createElement('div');
     a.box={left:40,top:20,width:60,height:100};b.box={left:140,top:20,width:60,height:100};
     const anchorFor=id=>id==='a'?a:b;
-    PlayRecipientEffectLayers(layer,[{...recipe,shape:'sweep',mount:'group',groupKey:'one-action',targetIds:['a','b'],durationMs:300},{...recipe,shape:'heal-plus',targetId:'a',delayMs:200,durationMs:300}],{anchorFor,forcePlaceholder:true});
+    PlayRecipientEffectLayers(layer,[{...recipe,shape:'sweep',mount:'group',groupKey:'one-action',targetIds:['a','b'],durationMs:300},{...recipe,shape:'heal-plus',targetId:'a',delayMs:200,durationMs:300}],{anchorFor,forcePlaceholder:true,timing:legacyTiming});
     assert.equal(layer.children.length,1);assert.equal(layer.children[0].dataset.shape,'sweep');
     t.mock.timers.tick(300);
     t.mock.timers.tick(timing.gapMs-1);assert.equal(layer.children.length,0);
@@ -426,7 +427,16 @@ test('runtime tint preserves shading, reads royal-blue/opacity config and leaves
 
 
 test('timing exposes the authored defaults and validates panel constraints', () => {
-  assert.deepEqual(timing, { scope: 'battlefield', maxConcurrent: 1, gapMs: 30, overlapMs: 0, opacity: 0.8 });
+  assert.deepEqual(legacyTiming, { scope: 'battlefield', maxConcurrent: 1, gapMs: 30, overlapMs: 0, opacity: 0.8 });
+  assert.deepEqual(categoryQueues, {
+    enabled: true, order: ['castingMovement', 'attackImpacts', 'defenseReactions', 'buffsStatuses'],
+    staggerMs: 10, overlapMs: 10, maxGlobal: 3, maxPerActor: 2,
+    maxPerCategory: { castingMovement: 2, attackImpacts: 2, defenseReactions: 2, buffsStatuses: 2 },
+  });
+  for (const invalid of [{ order: ['attackImpacts'] }, { enabled: 1 }, { staggerMs: 1001 },
+    { overlapMs: 201 }, { maxGlobal: 0 }, { maxPerActor: 13 }, { maxPerCategory: {} }, { unknown: true }]) {
+    assert.throws(() => ValidateRecipientEffectTiming({ ...timing, categoryQueues: { ...categoryQueues, ...invalid } }), RangeError);
+  }
   for (const invalid of [{ scope: 'lane' }, { maxConcurrent: 1.5 }, { maxConcurrent: 5 },
     { gapMs: -1 }, { gapMs: 1001 }, { gapMs: '30' }, { overlapMs: 201 },
     { maxConcurrent: 2, overlapMs: 10 }, { gapMs: 0, overlapMs: 10 }, { opacity: -0.1 }, { opacity: 1.01 }]) {
@@ -443,7 +453,7 @@ test('battlefield queue serializes independent recipients, preserves duration an
   const result = PlanRecipientEffectLayers([onA,
     { ...onA, shape: 'block-hit', phase: 'reaction', delayMs: 60, durationMs: 1 },
     onB, sweep, sweep,
-  ]);
+  ], { timing: legacyTiming });
   const [slash, block, weak, group] = result;
   assert.equal(result.length, 4);
   assert.equal(slash.recipe.overlay, 'fire');
@@ -456,10 +466,10 @@ test('battlefield queue serializes independent recipients, preserves duration an
 });
 
 test('recipient scope separates targets and battlefield overlap enforces a hard concurrency cap', () => {
-  const [slash, weak] = PlanRecipientEffectLayers([onA, onB], { timing: { ...timing, scope: 'recipient' } });
+  const [slash, weak] = PlanRecipientEffectLayers([onA, onB], { timing: { ...legacyTiming, scope: 'recipient' } });
   assert.equal(slash.start, weak.start);
   const clips = PlanRecipientEffectLayers([onA, onB, onA, onB], {
-    timing: { ...timing, maxConcurrent: 2, gapMs: 0, overlapMs: 200 },
+    timing: { ...legacyTiming, maxConcurrent: 2, gapMs: 0, overlapMs: 200 },
   });
   assert.deepEqual(clips.map(clip => clip.start), [0, 100, 300, 400]);
   assert.deepEqual(clips.map(clip => clip.durationMs), [300, 300, 300, 300]);
@@ -471,7 +481,7 @@ test('spell windup, actual delivery duration and impact sequence even on differe
     { ...onA, actionKey, shape: 'spell-circle', phase: 'windup' },
     { ...onB, actionKey, shape: null, phase: 'delivery', delivery: { durationMs: 25 } },
     { ...onB, actionKey, phase: 'contact' },
-  ], { timing: { ...timing, scope: 'recipient' } });
+  ], { timing: { ...legacyTiming, scope: 'recipient' } });
   assert.equal(windup.start, 0);
   assert.equal(delivery.start, windup.end + timing.gapMs);
   assert.equal(delivery.durationMs, 25);
@@ -484,7 +494,7 @@ test('live result windows span separate calls and pending schedules cancel witho
     const layer = dom.document.createElement('div');
     const actor = dom.document.createElement('div');
     actor.box = box;
-    const options = { anchorFor: id => id && actor, forcePlaceholder: true, timing: { ...timing, scope: 'recipient' } };
+    const options = { anchorFor: id => id && actor, forcePlaceholder: true, timing: { ...legacyTiming, scope: 'recipient' } };
     const play = (shape, targetId) => PlayRecipientEffectLayers(layer, [{
       ...recipe, shape, targetId, durationMs: 300,
     }], options);
@@ -521,7 +531,7 @@ test('the battlefield gap remains reserved between separate live calls after the
   withKitDom(dom => {
     const layer = dom.document.createElement('div'), actor = dom.document.createElement('div');
     actor.box = box;
-    const options = { anchorFor: () => actor, forcePlaceholder: true };
+    const options = { anchorFor: () => actor, forcePlaceholder: true, timing: legacyTiming };
     PlayRecipientEffectLayers(layer, [onA], options);
     t.mock.timers.tick(300);
     t.mock.timers.tick(5);
@@ -541,7 +551,7 @@ test('late timer dispatch cannot overlap live clips at the battlefield cap', t =
   withKitDom(dom => {
     const layer = dom.document.createElement('div'), actor = dom.document.createElement('div');
     actor.box = box;
-    const options = { anchorFor: () => actor, forcePlaceholder: true, timing: { ...timing, gapMs: 0 } };
+    const options = { anchorFor: () => actor, forcePlaceholder: true, timing: { ...legacyTiming, gapMs: 0 } };
     PlayRecipientEffectLayers(layer, [onA, onB, { ...onA, shape: 'frail' }], options);
     t.mock.timers.tick(400);
     assert.deepEqual([...layer.children].map(node => node.dataset.shape), ['weak']);
@@ -560,7 +570,7 @@ test('live battlefield cap two allows overlap and then waits for a slot to relea
     const layer = dom.document.createElement('div'), actor = dom.document.createElement('div');
     actor.box = box;
     const options = { anchorFor: () => actor, forcePlaceholder: true,
-      timing: { ...timing, maxConcurrent: 2, gapMs: 0, overlapMs: 200 } };
+      timing: { ...legacyTiming, maxConcurrent: 2, gapMs: 0, overlapMs: 200 } };
     const shapes = () => [...layer.children].map(node => node.dataset.shape);
     PlayRecipientEffectLayers(layer, [onA], options);
     PlayRecipientEffectLayers(layer, [onB], options);
@@ -591,7 +601,7 @@ test('mount time is outside the clip duration and the gap begins at actual teard
       }
       return create(tag);
     };
-    const options = { anchorFor: () => actor, forcePlaceholder: true };
+    const options = { anchorFor: () => actor, forcePlaceholder: true, timing: legacyTiming };
     PlayRecipientEffectLayers(layer, [onA, onB], options);
     t.mock.timers.tick(299);
     assert.equal(layer.children[0].dataset.shape, 'slash');
@@ -604,4 +614,103 @@ test('mount time is outside the clip duration and the gap begins at actual teard
     assert.equal(layer.children[0].dataset.shape, 'weak');
     ClearRecipientEffects(layer);
   });
+});
+
+test('category planning staggers starts, gates category changes, and starts a dependent at the primary last frame', () => {
+  const actionKey = 'one-cast';
+  const [cast, hit, sweep, ward, heal] = PlanRecipientEffectLayers([
+    { ...onA, actionKey, category: 'buffsStatuses', shape: 'heal-plus', afterPrimaryKey: 'hit' },
+    { ...onA, actionKey, category: 'defenseReactions', shape: 'ward-shatter' },
+    { ...onA, actionKey, category: 'attackImpacts', primaryKey: 'hit' },
+    { ...onA, actionKey, category: 'castingMovement', shape: 'spell-circle', targetId: 'caster' },
+    { ...onA, actionKey, category: 'attackImpacts', shape: 'sweep', mount: 'group', targetIds: ['b', 'c'] },
+  ]);
+  assert.deepEqual([cast, hit, sweep, ward, heal].map(clip => clip.recipe.shape),
+    ['spell-circle', 'slash', 'sweep', 'ward-shatter', 'heal-plus']);
+  assert.equal(cast.start, 0);
+  assert.equal(hit.start, cast.end - 10);
+  assert.equal(sweep.start, hit.start + 10);
+  assert.equal(ward.start, sweep.end - 10);
+  assert.equal(heal.start, Math.max(ward.end - 10, hit.start + 200));
+  for (const clip of [cast, hit, sweep, ward, heal]) assert.equal(clip.durationMs, 300);
+});
+
+test('category planner admits a heal at the primary last frame across categories', () => {
+  const [hit, heal] = PlanRecipientEffectLayers([
+    { ...onA, category: 'attackImpacts', primaryKey: 'primary' },
+    { ...onA, category: 'buffsStatuses', shape: 'heal-plus', afterPrimaryKey: 'primary' },
+  ]);
+  assert.equal(heal.start, hit.start + 200);
+});
+
+test('live categories coalesce calls, respect earlier categories and retain a waiting action', t => {
+  t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 1000 });
+  withKitDom(dom => {
+    const layer = dom.document.createElement('div'), actor = dom.document.createElement('div');
+    actor.box = box;
+    const options = { anchorFor: () => actor, forcePlaceholder: true };
+    const shapes = () => [...layer.children].map(node => node.dataset.shape);
+    const play = row => PlayRecipientEffectLayers(layer, [{ ...onA, actionKey: 'one', ...row }], options);
+    play({ phase: 'status', shape: 'bleed-drops', afterPrimaryKey: 'main-hit' });
+    play({ phase: 'reaction', shape: 'ward-shatter' });
+    play({ phase: 'windup', shape: 'spell-circle' });
+    play({ shape: 'spell', camp: 'spell', primaryKey: 'main-hit' });
+    t.mock.timers.tick(0);
+    assert.deepEqual(shapes(), ['spell-circle']);
+    t.mock.timers.tick(290);
+    assert.deepEqual(shapes(), ['spell-circle', 'spell']);
+    t.mock.timers.tick(10);
+    assert.deepEqual(shapes(), ['spell']);
+    t.mock.timers.tick(280);
+    assert.deepEqual(shapes(), ['spell', 'ward-shatter']);
+    t.mock.timers.tick(10);
+    t.mock.timers.tick(280);
+    assert.deepEqual(shapes(), ['ward-shatter', 'bleed-drops']);
+    ClearRecipientEffects(layer);
+    const cancel = play({ shape: 'slash' });
+    cancel();
+    t.mock.timers.tick(500);
+    assert.deepEqual(shapes(), []);
+    play({ actionKey: 'new', shape: 'slash' });
+    t.mock.timers.tick(0);
+    assert.deepEqual(shapes(), ['slash']);
+    ClearRecipientEffects(layer);
+  });
+});
+
+test('live group counts once globally and occupies each actor slot, with no discarded overflow', t => {
+  t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 1000 });
+  withKitDom(dom => {
+    const layer = dom.document.createElement('div'), actor = dom.document.createElement('div');
+    actor.box = box;
+    const options = { anchorFor: () => actor, forcePlaceholder: true };
+    const shapes = () => [...layer.children].map(node => node.dataset.shape);
+    const play = row => PlayRecipientEffectLayers(layer, [{ ...onA, ...row }], options);
+    play({ actionKey: 'sweep', shape: 'sweep', mount: 'group', groupKey: 'sweep-one', targetIds: ['a', 'b', 'b'] });
+    t.mock.timers.tick(0);
+    play({ actionKey: 'extra-a', shape: 'slash' });
+    t.mock.timers.tick(10);
+    play({ actionKey: 'extra-overflow', shape: 'ward-shatter', phase: 'reaction' });
+    play({ actionKey: 'other', shape: 'weak', phase: 'status', targetId: 'c' });
+    play({ actionKey: 'same-category-overflow', shape: 'thrust', targetId: 'd' });
+    t.mock.timers.tick(0);
+    assert.deepEqual(shapes(), ['sweep', 'slash', 'weak']);
+    t.mock.timers.tick(290);
+    assert.deepEqual(shapes(), ['slash', 'weak', 'ward-shatter']);
+    t.mock.timers.tick(10);
+    assert.deepEqual(shapes(), ['ward-shatter', 'thrust']);
+    t.mock.timers.tick(300);
+    assert.deepEqual(shapes(), []);
+    ClearRecipientEffects(layer);
+  });
+});
+
+test('converting a confirmed Reach attack into a delivery reserves the casting category before impact', () => {
+  const impact = { ...onA, range: 'reach', actionKey: 'reach', category: 'attackImpacts', delivery: { durationMs: 100 } };
+  const delivery = { ...impact, phase: 'delivery', impactShape: impact.shape, shape: null };
+  const clips = PlanRecipientEffectLayers([impact, delivery]);
+  assert.deepEqual(clips.map(clip => [clip.category, clip.start, clip.end]), [
+    ['castingMovement', 0, 100],
+    ['attackImpacts', 90, 390],
+  ]);
 });

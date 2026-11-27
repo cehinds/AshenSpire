@@ -6,16 +6,19 @@
     "tier.boss"
   ],
   "stats": {
+    "attributes": {
+      "wisdom": 2
+    },
     "attributePriority": [
-      "strength",
       "wisdom",
+      "strength",
       "intelligence",
       "dexterity",
       "constitution"
     ],
     "levelProfile": {
-      "min": 4,
-      "max": 4
+      "min": 8,
+      "max": 8
     },
     "poiseMax": 9,
     "spFloor": 3
@@ -26,7 +29,7 @@
     "deckSize": 8,
     "reserveSize": 0,
     "distinctCards": 5,
-    "levelRange": "4-4"
+    "levelRange": "8-8"
   },
   "equipment": [
     {

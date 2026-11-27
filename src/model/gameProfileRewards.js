@@ -19,6 +19,7 @@ import { createRng, mulberry32 } from './rng.js';
 import { TierFor, FilterToBand, RankBandForLevel, FilterToRankBand } from './levelLists.js';
 import { ItemRankOf } from './itemRank.js';
 import { upgradeSeed } from './cardUpgradeSteps.js';
+import { NodeRewardSchedule, ActRewardSchedule } from './actSeedSchedule.js';
 import { characterLevel } from './levelup.js';
 import { carriedIds } from './loadout/ownership.js';
 import { ThemedItemPick, ItemIsThemed } from './itemThemePick.js';
@@ -202,6 +203,20 @@ const RARE_RANK_BOOST_CHANCE = 0.1;
 function rollRareRankBoost(run, key) {
   return mulberry32(upgradeSeed(run.seed, `rankBoost:${key}`, 0))() < RARE_RANK_BOOST_CHANCE;
 }
+/** Pre-computes the deterministic reward schedule for every reward-bearing node in an Act map. */
+export function PrecomputeActRewardSchedule(run, mapGraph = run?.mapGraph) {
+  const rules = gameContent(run, 'rewards');
+  const range = rules?.combatOfferCount;
+  const countRange = range && Number.isInteger(range.min) && Number.isInteger(range.max) && range.max >= range.min ? range : null;
+  return ActRewardSchedule(run?.seed ?? 0, mapGraph, { actNumber: run?.actNumber || 1, countRange });
+}
+/** Deterministic seed-driven reward slot blueprint for a specific offerId / nodeKey. */
+export function RewardScheduleForOffer(run, offerId, { source = 'combat', pool = 'normal' } = {}) {
+  const rules = gameContent(run, 'rewards');
+  const range = source === 'combat' ? rules?.combatOfferCount : null;
+  const countRange = range && Number.isInteger(range.min) && Number.isInteger(range.max) && range.max >= range.min ? range : null;
+  return NodeRewardSchedule(run?.seed ?? 0, offerId, { source, pool, countRange, rareBoostChance: RARE_RANK_BOOST_CHANCE });
+}
 /** BandedRewardIds(run, kind, ids, opts) -> ids inside the character-level rank band (with +2 elite, +3 boss, +1 rare). */
 function BandedRewardIds(run,kind,ids,{pool='normal',rareBoost=false}={}) {
   const band=BAND_KIND[kind];
@@ -238,6 +253,7 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
   if(source!=='shop'&&categories.includes('combatCards')&&(!groups.length||groups.some(group=>group.weight>0&&group.categories.includes('combatCards'))))for(const id of reserveStanceCards(registries,run,rng,stream,BandedRewardIds(run,'combatCards',available.combatCards,{pool}),count-options.length)) {
     options.push({kind:'combatCards',id});available.combatCards=available.combatCards.filter(value=>value!==id);
   }
+  const schedule = RewardScheduleForOffer(run, offerId, { source, pool });
   // Ordinary combat draws weighted groups. Shops independently fill each shelf.
   while(options.length<count) {
     const kinds=categories.filter(kind=>(available[kind]||[]).length && (itemsPerCategory===null || (shelfCounts.get(kind)||0)<shelfCap(kind)));
@@ -245,7 +261,8 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
     const kind=itemsPerCategory===null?pickRewardCategory(rng,stream,kinds,groups):kinds[0];
     if(!kind)break;
     let ids=available[kind];
-    const rareBoost = rollRareRankBoost(run, `${offerId}:${options.length}`);
+    const slotIdx = options.length;
+    const rareBoost = slotIdx < schedule.rareBoostSlots.length ? schedule.rareBoostSlots[slotIdx] : rollRareRankBoost(run, `${offerId}:${slotIdx}`);
     ids=BandedRewardIds(run,kind,ids,{pool,rareBoost});
     // Most card rewards are rank 1+; a small authored chance lets a lower-rank card through.
     const rule=gameContent(run,'rewards')?.eligibility?.combatCards;
@@ -266,7 +283,7 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
   // offer, its save and its reload show one card. Level 1 (or no matching track) rolls nothing and moves no stream.
   if(source!=='shop'&&coreCardRanks(run))for(const [index, option] of options.entries()){
     if(option.kind!=='combatCards')continue;
-    const rareBoost = rollRareRankBoost(run, `${offerId}:draft:${index}`);
+    const rareBoost = index < schedule.draftBoostSlots.length ? schedule.draftBoostSlots[index] : rollRareRankBoost(run, `${offerId}:draft:${index}`);
     const maxBand = RankBandForLevel({ level: characterLevel(run), pool, rareBoost }).maxRank;
     const rank=Math.min(maxBand, rollDraftRank(registries,rng,cardTrackLevel(registries,run,registries.cards.get(option.id))));
     if(rank>1)option.rank=rank;

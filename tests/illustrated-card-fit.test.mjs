@@ -97,7 +97,8 @@ test('long rules shrink inside a fixed bay, preserving parchment and artwork geo
   f.fit();
   assert.equal(f.face.dataset.rulesOverflow, 'true', 'unfit copy offers inspection without growing');
   assert.equal(f.layer.clientHeight, 45);
-  assert.ok(parseFloat(f.text.style.fontSize) >= 13);
+  // Owner 2026-11-17: under the 13px floor to hold four lines, never under the 6px hard floor.
+  assert.ok(parseFloat(f.text.style.fontSize) >= 6);
   f.state.chars = 3;
   f.fit();
   assert.equal(parseFloat(f.text.style.fontSize), 15, 'short copy restores preferred font');
@@ -128,19 +129,20 @@ test('a one-liner that needs shrinking to fit shows its rules with no Inspect cu
 
 test('rules that need three lines at 11px shrink until they fit the glance, with every word kept', () => withKitDom(() => {
   invalidateLayoutMetrics();
-  // Wave 2 (sizes): the floor is 13px, so sixty characters that fit only below 13px now keep their words at 13px and offer the cue.
+  // Owner 2026-11-17: the box holds up to four lines, so sixty characters that fit only below the 13px floor go under it
+  // (never under the 6px hard floor) and show whole, with no overflow (Wave 2 had stopped them at 13px with the cue).
   const f = fixture({ chars: 60, width: 180, top: 80, height: 45, full: false });
   f.fit();
   const font = parseFloat(f.text.style.fontSize);
-  assert.equal(font, 13, 'shrinks to the 13px floor and stops there');
-  assert.equal(f.face.dataset.rulesOverflow, 'true', 'it does not fit at the floor, so the face offers inspection');
+  assert.ok(font < 13 && font >= 6, `shrinks under the 13px floor to fit: ${font}`);
+  assert.equal(f.face.dataset.rulesOverflow, 'false', 'every word fits the box');
 }));
 
 test('rules that cannot fit even at the minimum tighten the line height, then clip with an ellipsis', () => withKitDom(() => {
   invalidateLayoutMetrics();
   const f = fixture({ chars: 5000, width: 180, top: 80, height: 45, full: false });
   f.fit();
-  assert.equal(parseFloat(f.text.style.fontSize) >= 13, true);
+  assert.equal(parseFloat(f.text.style.fontSize) >= 6, true, 'never under the 6px hard floor');
   assert.equal(parseFloat(f.text.style.lineHeight) < 1.05, true, 'line height was tightened');
   assert.equal(f.text.style.textOverflow, 'ellipsis');
   assert.equal(f.text.style.overflow, 'hidden');

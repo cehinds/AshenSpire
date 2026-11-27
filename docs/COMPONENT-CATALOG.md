@@ -209,6 +209,11 @@ gameplay definitions and card rules are unchanged.
 
 | Component ID | Model / factory | View or renderer | Reuse | Purpose |
 |---|---|---|---|---|
+| `score-studio-workspace` | Studio draft + `cardMechanicalProjection` | `tools/score-studio/studio.js` | Score Studio Cards and Items | Compact File/Edit/View/Tools/Git/Test menus, contextual gallery, native Filters, scoped card selection, and one customization pane. Gallery size remains independent of inspector scale. |
+| `score-studio-card-selection` | `createCardSelectionMode` + exact selected IDs | `tools/score-studio/cardSelection.js` | Score Studio card gallery and deck membership | Opt-in selection overlays preserve card inspection and keep the count inline. Bulk commands live in menus. Added-card removal cleans deck/catalog references and protects original Core cards. |
+| `score-studio-customization-pane` | Selected card/item + view and docking state | `tools/score-studio/cardEditorDock.js` | Properties, Design, Weights and Deck lists | One set of controls moves between a resizable dock and native dialog. Selection retains the active view; explicit Edit opens properties without duplicating inputs or stacking Rebalance dialogs. |
+| `score-studio-deck-lists` | `deckCatalog` + current card/item membership | `tools/score-studio/deckListPanel.js` | Score Studio class templates and custom decks | Compact grouped rows show class/type, counts and member actions. Class views are read-only; custom deck actions use the current context selection. |
+| `score-studio-rebalance-comparison` | `RebalanceSession` + `CardDefinitionToScoreFace` + `ProjectCardMechanicalValues` | `tools/score-studio/focusedRebalanceUi.js` | Single card/item, selected entries and explicit Advanced pools | Detached before/after game faces share actual-mechanics CP. Card/version navigation appears only when useful; numeric changes stay visible and metadata folds into Other changes. The sticky footer owns Rebalance, Revert, Cancel and Apply. Cancel preserves the draft; Apply creates one undo step. |
 | `player.scenePainting` | `PlayerArtworkModel` | `scenePainting`, `servicePortrait` | Title, rest and services | Painted scenery with independent foreground layers. |
 | `player.engravedIcon` | `engravedGlyphId` | `engravedIcon`, `engravedIconHtml` | Shared controls | Current-color engraved icons with tier-aware masks. Explicit `meter.valueNode` and `chip.keyNode` slots mount icon nodes while ordinary numeric/string values remain text. |
 | `illustrated-card` | `card-layout.json`, generated card objects, `extendedCardArtwork.js`, `combatSigils.js`, `combatCardDamageLabel` | `illustratedCardHtml`, `fitIllustratedCards` | All ability cards | Existing frame, live centered rules and stamina/mana banners. Nine explicit paint levels separate card background, art, heading/footer backdrops, footer trim, banner/panel fills, card/panel trims, icons, text and rank. Positive ranks appear as Rank X centered above the adaptive effect panel; Rank 0 stays hidden. The base frame contains a taller action bay with original stone texture, connected gold braces, and a larger centered inline action symbol and name. The parchment ends directly above it. A dark backdrop covers each full card name and fades into the artwork. Card names have a dark outline and shadow, and side symbols have thick black halos. The right rail shows category first (outlined diamond for Magic, shield for Physical), then damage or effect type, then up to three status effects, with five icons maximum and no filler tags. Known unambiguous stack quantities have small badges. Slashing uses crossed swords, Blunt a hammer, Evasion a boot, Frost a snowflake, Fire a flame, Earth a mountain, Alteration a stone and Piercing a pointed blade. Smash remains a fist and Counter a shield with a diagonal sword. The bottom keeps the primary action sigil and name. Version-2 damage rules show actual written types, including mixed contacts and Counter HP returns; complex rules retain authored text with a short damage-type prefix. School and secondary tags stay in Information. Ordinary effects use at most two whole qualified clauses and three physical lines, including selected and enlarged faces, inside the fixed authored parchment. The zoom-aware 11px readable floor, cached fitting, exact tag values and live previews remain in use. Whole secondary clauses move to Information; if the primary cannot fit, the face says Inspect full effect, or Inspect in the smallest bay with the full accessible instruction. Information displays every authored rule, formula, damage receipt and deduplicated status duration/stacking explanation as visible text. Glance/focus selection retains existing artwork and tag nodes. Canonical card/profile portraits cover the artwork region with lower-action framing; upgrades reuse base artwork. |
@@ -368,6 +373,21 @@ shared-run-hud
 
 Map and Combat mount the same shared HUD model. Combat adds the Battlefield
 Stage, Combatant Frames, Player Hand Tray, and Combat Action Rail.
+
+Score Studio reuses one customization pane across both galleries and its staged
+comparison. The illustrated faces and scoring use the same projected mechanical
+values. See the [editing guide](SCORE-SUBCLASS-CATALOGS.md) and
+[visual composition](component-catalog.html#score-studio-composition).
+
+```text
+score-studio-workspace
+├─ score-studio-card-selection
+├─ score-studio-customization-pane
+├─ score-studio-deck-lists
+└─ score-studio-rebalance-comparison
+   ├─ illustrated-card
+   └─ score-studio-customization-pane
+```
 
 ## Startup and Title components
 

@@ -79,8 +79,8 @@ test('cost table over every shipped Core 2 spell and cantrip: base, Prepared, Fo
   }
 });
 
-test('literal prices: a 1 SP / 1 MP spell is 1/2 plain, 0/1 in Prepared, 1/1 with a Focus, 0/0 with both; a cantrip (Mana Surge is one) is 1/1, 0/1, 1/0, 0/0', () => {
-  for (const [id, base, prepared, focus, both] of [['core.cometLance', [1, 2], [0, 1], [1, 1], [0, 0]] /* no Stamina surcharge since the owner ruling of 2026-11-23 */, ['core.cantrip', [1, 2], [0, 1], [1, 1], [0, 0]] /* Arcane Spark prints 1 MP (owner 2026-11-22): +1 surcharge; the Graduate's Prepared cut floors at 0 (owner 2026-11-22), like Comet Lance */, ['core.manaSurge', [1, 1], [0, 1], [1, 0], [0, 0]]]) {
+test('literal prices preserve current Arcane Sweep zero SP and the cantrip/Focus/Prepared cuts', () => {
+  for (const [id, base, prepared, focus, both] of [['core.cometLance', [0, 2], [0, 1], [0, 1], [0, 0]] /* no Stamina surcharge since the owner ruling of 2026-11-23 */, ['core.cantrip', [1, 2], [0, 1], [1, 1], [0, 0]] /* Arcane Spark prints 1 MP (owner 2026-11-22): +1 surcharge; the Graduate's Prepared cut floors at 0 (owner 2026-11-22), like Comet Lance */, ['core.manaSurge', [1, 1], [0, 1], [1, 0], [0, 0]]]) {
     for (const [hand, stance, want] of [['greatsword', null, base], ['greatsword', PREPARED, prepared], ['boneSceptre', null, focus], ['boneSceptre', PREPARED, both]]) {
       const { costs } = costsIn({ hand, stance, id });
       assert.deepEqual([costs.stamina, costs.mana], want, `${id} ${hand} ${stance ? 'Prepared' : 'no stance'}`);
@@ -88,8 +88,8 @@ test('literal prices: a 1 SP / 1 MP spell is 1/2 plain, 0/1 in Prepared, 1/1 wit
   }
 });
 
-test('literal prices in a fight saved before 2026-11-23 (staminaSurcharge 1): a 1 SP / 1 MP spell is still 2/2 plain, 1/1 in Prepared, 2/1 with a Focus, 1/0 with both', () => {
-  for (const [hand, stance, want] of [['greatsword', null, [2, 2]], ['greatsword', PREPARED, [1, 1]], ['boneSceptre', null, [2, 1]], ['boneSceptre', PREPARED, [1, 0]]]) {
+test('retaining staminaSurcharge 1 adds one SP to the current unmarked zero-SP Arcane Sweep before Prepared discounts', () => {
+  for (const [hand, stance, want] of [['greatsword', null, [1, 2]], ['greatsword', PREPARED, [0, 1]], ['boneSceptre', null, [1, 1]], ['boneSceptre', PREPARED, [0, 0]]]) {
     const { costs } = costsIn({ hand, stance, id: 'core.cometLance', savedSurcharge: true });
     assert.deepEqual([costs.stamina, costs.mana], want, `core.cometLance ${hand} ${stance ? 'Prepared' : 'no stance'}`);
   }
@@ -103,9 +103,11 @@ test('a cantrip after a first spell with a Focus costs 0 SP and 0 MP, and the pa
   const open = cardPlayCosts(combat, second.instanceId);
   assert.deepEqual([open.stamina, open.mana], [1, 1], 'before the first cast: 1 SP and the 1 MP surcharge; Focus requires Prepared');
   const [energy, mana] = [combat.player.energy, combat.player.mana];
+  const firstCost = cardPlayCosts(combat, first.instanceId);
+  assert.equal(firstCost.stamina, 0, 'the authored Arcane Sweep spends zero SP');
   dispatch(combat, { type: 'playCard', cardInstanceId: first.instanceId, targetId: combat.enemies[0].id });
-  assert.ok(energy - combat.player.energy >= 1);
-  assert.ok(mana - combat.player.mana >= 0);
+  assert.equal(energy - combat.player.energy, firstCost.stamina);
+  assert.equal(mana - combat.player.mana, firstCost.mana);
   assert.ok(['casting', 'prepared'].includes(combat.player.combatStance?.maneuver), 'the first cast enters Prepared');
   const after = cardPlayCosts(combat, second.instanceId);
   assert.deepEqual([after.stamina, after.mana], [0, 0]);
@@ -180,10 +182,11 @@ function sequence(ids, { legacy = false, attributes = { strength: 2 } } = {}) {
   const { combat, enemy } = fight({ attributes });
   if (legacy) delete combat.fixCoreRules.elementFlux;
   combat.player.energy = 30; combat.player.mana = 30;
+  const cards = ids.map((cardId, index) => ({ instanceId: `flux-${index}`, cardId, upgraded: false }));
+  combat.piles.hand.unshift(...cards);
   const rows = [];
-  ids.forEach((id, index) => {
-    const card = combat.piles.hand[0];
-    card.cardId = id;
+  cards.forEach(card => {
+    const { cardId: id } = card;
     const target = SELF.has(id) ? undefined : enemy.id;
     primeAccuracyRolls(combat);
     const before = { hp: enemy.hp, block: combat.player.block, playerHp: combat.player.hp };

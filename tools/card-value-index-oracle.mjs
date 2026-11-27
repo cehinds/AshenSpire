@@ -1,11 +1,12 @@
-// Record the independent pre-index implementation against today's content.
+// Record the independent pre-index implementation against compact controlled operands.
 // Never generate parity expectations from the optimized production model.
+// The former live-content baseline is retained as a historical archive. This
+// tool writes only the controlled fixture consumed by today's contract tests.
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { contentBundle } from '../src/content/index.js';
-import { cardValueIndexCases, cardValueOracleOutput } from '../tests/helpers/card-value-index-cases.mjs';
+import { cardValueContract, cardValueIndexCases, cardValueOracleOutput } from '../tests/helpers/card-value-index-cases.mjs';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const baselineCommit = '04adc68513b3f13f2b5c28702edce4ec513202a1';
 const implementation = execFileSync('git', ['show', `${baselineCommit}:src/model/attackCardDamage.js`], { cwd: root, encoding: 'utf8' });
@@ -23,8 +24,8 @@ const correctedImplementation = implementation.replace(oldCall,
     ...source, cost: baseFace.cost, manaCost: baseFace.manaCost, staminaCost: baseFace.staminaCost,
   } : source, configs, references)`);
 const oracle = await import(`data:text/javascript;base64,${Buffer.from(correctedImplementation).toString('base64')}`);
-const baseline = { baselineCommit, baselineImplementation: 'unindexed Dev model with integrated Core/default and base-card content',
-  modelSha256, correction: 'fixed-upgrade-base-resource-budget-v1', correctedModelSha256: digest(correctedImplementation), contentSha256: digest(JSON.stringify(contentBundle)),
+const baseline = { baselineCommit, baselineImplementation: 'unindexed Dev model with compact controlled formula/index operands',
+  modelSha256, correction: 'fixed-upgrade-base-resource-budget-v1', correctedModelSha256: digest(correctedImplementation), fixtureSha256: digest(JSON.stringify(cardValueContract())),
   scope: 'damage configuration, projected card definitions, validation problem rows', cases: {} };
 for (const [name, bundle] of cardValueIndexCases()) {
   baseline.cases[name] = {};
@@ -33,5 +34,5 @@ for (const [name, bundle] of cardValueIndexCases()) {
     catch (error) { baseline.cases[name][method] = { error: error.message, type: error.constructor.name }; }
   }
 }
-writeFileSync(new URL('../tests/fixtures/card-value-tag-index-baseline.json', import.meta.url), JSON.stringify(baseline, null, 2) + '\n');
-console.log(`Recorded ${Object.keys(baseline.cases).length} current-content cases using pinned pre-index model ${modelSha256}`);
+writeFileSync(new URL('../tests/fixtures/card-value-index-controlled.json', import.meta.url), JSON.stringify(baseline, null, 2) + '\n');
+console.log(`Recorded ${Object.keys(baseline.cases).length} controlled cases using pinned pre-index model ${modelSha256}`);

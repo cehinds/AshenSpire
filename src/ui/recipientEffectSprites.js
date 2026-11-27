@@ -2,12 +2,13 @@ import { assetUrl, assetsAreInlined, builtInSource } from './assetmap.js';
 import { reducedMotionRequested } from './motion.js';
 import { SETTINGS } from '../content/recipientEffectSettings.js';
 import { ReadRecipientEffectTiming, ValidateRecipientEffectTiming } from '../model/recipientEffectTiming.js';
+import { NextCategoryQueueEntry, RecipientEffectCategory } from '../model/recipientEffectCategoryQueue.js';
 import { RecipientEffectAtlasEntry } from '../content/recipientEffectAtlas.js';
 import { currentSpriteBodyBounds } from './components/combatSpriteGeometry.js';
 import { stageFor } from './services/PoseAnimator.js';
 
 const active = new WeakMap(), loaded = new Map(), groups = new WeakMap();
-const resultWindows = new WeakMap();
+const resultWindows = new WeakMap(), categoryQueues = new WeakMap();
 const defaultTiming = ReadRecipientEffectTiming();
 const timingFor = timing => timing == null ? defaultTiming : ValidateRecipientEffectTiming(timing);
 const S = SETTINGS.sizing, O = SETTINGS.layering.opacity, M = SETTINGS.motion;
@@ -153,11 +154,11 @@ function register(layer,stop){const set=active.get(layer)||new Set();active.set(
 /** Three-frame flat composition; a cold clip stays the same placeholder to its end. */
 export function PlayRecipientEffect(layer,box,recipe,{size,sourceBox,targetFacing,cardBox,actor,duration=recipe?.durationMs||M.clipMs,resolveAsset=assetUrl,forcePlaceholder=false,onStop,frame=null,timing}={}) {
   if(!layer||!box||!recipe||disabled())return ()=>{};
-  const count=clamp(Math.round(recipe.frameCount||SETTINGS.behavior.frameCount),1,3);
+  const count=frameCount(recipe);
   const ms=clipDuration(recipe, duration);
   const view=RecipientEffectView(recipe,{box,cardBox,targetFacing,size});
   const host=document.createElement('div');host.className='recipient-effect';host.setAttribute('aria-hidden','true');
-  Object.assign(host.dataset,{action:recipe.action||'skill',targetType:recipe.targetType||'target',shape:recipe.shape,phase:recipe.phase||'contact',frame:'1',renderer:'placeholder',facing:view.facing,mirrorX:String(view.base.scaleX),mirrorY:'1',rotation:'0',scaleY:'1',anchor:view.cardAnchored?'card-bottom':'body'});
+  Object.assign(host.dataset,{action:recipe.action||'skill',targetType:recipe.targetType||'target',shape:recipe.shape,category:RecipientEffectCategory(recipe),phase:recipe.phase||'contact',frame:'1',renderer:'placeholder',facing:view.facing,mirrorX:String(view.base.scaleX),mirrorY:'1',rotation:'0',scaleY:'1',anchor:view.cardAnchored?'card-bottom':'body'});
   Object.assign(host.style,{position:'absolute',pointerEvents:'none',zIndex:'4',opacity:String(timingFor(timing).opacity),left:`${view.left}px`,top:`${view.top}px`,width:`${view.width}px`,height:`${view.height}px`,transformOrigin:'bottom center',overflow:view.cardAnchored?'hidden':'visible'});
   const placeholder=document.createElement('img');placeholder.alt='';placeholder.src=`data:image/svg+xml,${encodeURIComponent(RecipientPlaceholderSvg(recipe.action,recipe.targetType))}`;
   const placeholderSize=Math.min(S.fallbackPx,view.width,view.height);
@@ -220,7 +221,7 @@ export function PlayRecipientDelivery(layer,from,to,recipe,{resolveAsset=assetUr
   const sources=sourcesFor({...recipe,shape:recipe.impactShape||'skill'},resolveAsset);
   if(!sources.every(source=>!source.absent&&loaded.get(source.url)?.ready))return ()=>{};
   const c=canvas(layer.clientWidth||layer.offsetWidth||layer.getBoundingClientRect().width,layer.clientHeight||layer.offsetHeight||layer.getBoundingClientRect().height),ctx=context(c);
-  if(!ctx)return ()=>{};c.className='recipient-delivery';Object.assign(c.dataset,{phase:'delivery',style:recipe.camp==='spell'?'spell-link':'weapon-extension',sourceId:recipe.sourceId||'',targetId:recipe.targetId||recipe.targetIds?.join(',')||''});c.setAttribute('aria-hidden','true');Object.assign(c.style,{position:'absolute',inset:'0',pointerEvents:'none',opacity:String(timingFor(timing).opacity)});layer.appendChild(c);
+  if(!ctx)return ()=>{};c.className='recipient-delivery';Object.assign(c.dataset,{phase:'delivery',category:RecipientEffectCategory(recipe),style:recipe.camp==='spell'?'spell-link':'weapon-extension',sourceId:recipe.sourceId||'',targetId:recipe.targetId||recipe.targetIds?.join(',')||''});c.setAttribute('aria-hidden','true');Object.assign(c.style,{position:'absolute',inset:'0',pointerEvents:'none',opacity:String(timingFor(timing).opacity)});layer.appendChild(c);
   const ax=from.left+from.width/2,ay=from.top+from.height/2,bx=to.left+to.width/2,by=to.top+to.height/2;
   const distance=Math.hypot(bx-ax,by-ay),fraction=Math.min(S.deliveryLengthFraction,S.deliveryMaxLengthPx/Math.max(1,distance));
   const sx=bx-(bx-ax)*fraction,sy=by-(by-ay)*fraction;
@@ -241,10 +242,13 @@ export function PlayRecipientDelivery(layer,from,to,recipe,{resolveAsset=assetUr
   return stop;
 }
 
+function frameCount(recipe) {
+  return clamp(Math.round(recipe.frameCount || SETTINGS.behavior.frameCount), 1, 3);
+}
+
 function clipDuration(recipe, duration) {
   if (recipe.phase === 'delivery') return Math.max(0, duration ?? recipe.delivery?.durationMs ?? recipe.durationMs ?? M.reachDeliveryMs);
-  const count = clamp(Math.round(recipe.frameCount || SETTINGS.behavior.frameCount), 1, 3);
-  return Math.max(SETTINGS.behavior.minimumFrameMs * count, Number(duration ?? recipe.durationMs) || M.clipMs);
+  return Math.max(SETTINGS.behavior.minimumFrameMs * frameCount(recipe), Number(duration ?? recipe.durationMs) || M.clipMs);
 }
 
 const preludePhases = new Set(['windup', 'delivery']);
@@ -276,37 +280,194 @@ function earliestStart(entry, previous, timing, now) {
   return start;
 }
 
-/** Lay out presentation clips in receipt order under the selected queue policy. */
+function effectEntries(recipes, { sourceId, targetId, now, seenGroups, windows, duration, sequence }) {
+  const entries = [];
+  const groupKeys = new Set(seenGroups);
+  const implicitAction = Symbol('recipient effect batch');
+  for (const { recipe } of windows) if (recipe.groupKey && recipe.phase !== 'delivery') groupKeys.add(recipe.groupKey);
+  for (const recipe of recipes || []) {
+    const groupKey = recipe.mount === 'group' && recipe.phase !== 'delivery' && recipe.groupKey;
+    if (groupKey && groupKeys.has(groupKey)) continue;
+    if (groupKey) groupKeys.add(groupKey);
+    const ids = [...new Set((recipe.targetIds?.length ? recipe.targetIds
+      : [recipe.targetId || targetId || recipe.sourceId || sourceId]).filter(Boolean))];
+    entries.push({ recipe, ids, result: sequence, durationMs: clipDuration(recipe, duration),
+      category: RecipientEffectCategory(recipe), action: recipe.actionKey ?? implicitAction,
+      readyAt: now + Math.max(0, recipe.delayMs || 0) });
+  }
+  return entries;
+}
+
+function reserveClip(entry, start, now) {
+  const frames = entry.recipe.phase === 'delivery' ? 1 : frameCount(entry.recipe);
+  Object.assign(entry, { start, end: start + entry.durationMs, delayMs: start - now,
+    lastFrameAt: start + entry.durationMs * (frames - 1) / frames });
+}
+
+/** Lay out effect clips under the selected queue policy. */
 export function PlanRecipientEffectLayers(recipes, {
   sourceId, targetId, now = 0, windows = new Set(), seenGroups = new Set(), sequence = true, duration, timing,
 } = {}) {
   const settings = timingFor(timing);
   const planned = [];
   const results = [...windows];
-  const groupKeys = new Set(seenGroups);
-  for (const { recipe } of windows) if (recipe.groupKey && recipe.phase !== 'delivery') groupKeys.add(recipe.groupKey);
-
-  for (const recipe of recipes || []) {
-    const groupKey = recipe.mount === 'group' && recipe.phase !== 'delivery' && recipe.groupKey;
-    if (groupKey && groupKeys.has(groupKey)) continue;
-    if (groupKey) groupKeys.add(groupKey);
-    const ids = (recipe.targetIds?.length ? recipe.targetIds
-      : [recipe.targetId || targetId || recipe.sourceId || sourceId]).filter(Boolean);
-    const durationMs = clipDuration(recipe, duration);
-    const delayStart = now + Math.max(0, recipe.delayMs || 0);
-    const entry = { recipe, ids, result: sequence, durationMs };
-    const start = sequence ? earliestStart(entry, results, settings, delayStart) : delayStart;
-    Object.assign(entry, { start, end: start + durationMs, delayMs: start - now });
+  const entries = effectEntries(recipes, { sourceId, targetId, now, seenGroups, windows, duration, sequence });
+  if (sequence && settings.categoryQueues?.enabled) {
+    while (entries.length) {
+      const next = NextCategoryQueueEntry(entries, results, settings.categoryQueues, now);
+      if (!next) throw new Error('Recipient effect dependencies form a cycle.');
+      const { entry, start } = next;
+      reserveClip(entry, start, now);
+      entries.splice(entries.indexOf(entry), 1);
+      planned.push(entry);
+      results.push(entry);
+    }
+    return planned;
+  }
+  for (const entry of entries) {
+    const start = sequence ? earliestStart(entry, results, settings, entry.readyAt) : entry.readyAt;
+    reserveClip(entry, start, now);
     planned.push(entry);
     if (sequence) results.push(entry);
   }
   return planned;
 }
 
+function mountEffectEntry(layer, entry, { anchorFor, sourceId, options, timing, onStop, stops }) {
+  const { recipe, ids, durationMs } = entry;
+  const actors = ids.map(id => anchorFor(id)).filter(Boolean);
+  if (!actors.length) return null;
+  const actor = actors[0];
+  const boxes = actors.map(node => bodyBox(layer, node));
+  let box = boxes[0];
+  if (recipe.mount === 'group') {
+    if (recipe.phase !== 'delivery' && recipe.groupKey) {
+      const seen = groups.get(layer) || new Set();
+      if (seen.has(recipe.groupKey)) return null;
+      groups.set(layer, seen);
+      seen.add(recipe.groupKey);
+      stops.push(() => seen.delete(recipe.groupKey));
+    }
+    const left = Math.min(...boxes.map(b => b.left)) - S.sweepGroupPaddingPx;
+    const top = Math.min(...boxes.map(b => b.top));
+    box = { left, top, width: Math.max(...boxes.map(b => b.left + b.width)) - left + S.sweepGroupPaddingPx,
+      height: Math.max(...boxes.map(b => b.top + b.height)) - top };
+  }
+  const source = anchorFor(recipe.sourceId || sourceId);
+  const sourceBox = source ? bodyBox(layer, source) : null;
+  const playback = { ...options, duration: durationMs, timing, onStop };
+  if (recipe.phase === 'delivery') return PlayRecipientDelivery(layer, sourceBox, box, recipe, playback);
+
+  const combatant = actor.closest('.combatant');
+  const card = combatant?.querySelector('.combatant-card');
+  const targetFacing = combatant?.classList.contains('enemy') ? 'front' : 'back';
+  return PlayRecipientEffect(layer, box, recipe, { ...playback, actor, sourceBox,
+    targetFacing, cardBox: card ? localBox(layer, card) : null });
+}
+
+function categoryState(layer) {
+  const existing = categoryQueues.get(layer);
+  if (existing) return existing;
+  const state = { pending: [], previous: [], timer: null, closed: false };
+  function clear() {
+    state.closed = true;
+    clearTimeout(state.timer);
+    state.pending.length = 0;
+    state.previous.length = 0;
+    categoryQueues.delete(layer);
+  }
+  const activeSet = register(layer, clear);
+  state.wake = (delay = 0) => {
+    if (state.closed) return;
+    clearTimeout(state.timer);
+    state.timer = setTimeout(pump, delay);
+  };
+  function pump() {
+    const now = Date.now();
+    for (const clip of state.previous) if (clip.finish && clip.end <= now) clip.finish();
+    if (disabled()) {
+      const batches = new Set([...state.pending, ...state.previous].map(clip => clip.cancelBatch));
+      for (const cancel of batches) cancel();
+    }
+    const neededActions = new Set([...state.pending, ...state.previous.filter(clip => clip.finish)].map(clip => clip.action));
+    const stagger = Math.max(0, ...state.pending.map(clip => clip.policy.staggerMs));
+    state.previous = state.previous.filter(clip => clip.finish || neededActions.has(clip.action) || clip.start + stagger > now);
+    if (!state.pending.length) {
+      if (!state.previous.some(clip => clip.finish)) {
+        clear();
+        activeSet.delete(clear);
+      } else {
+        state.wake(Math.max(0, Math.min(...state.previous.filter(clip => clip.finish).map(clip => clip.end)) - now));
+      }
+      return;
+    }
+    const next = NextCategoryQueueEntry(state.pending, state.previous, null, now);
+    if (!next) {
+      // A malformed cyclic recipe set must not strand this layer's future work.
+      const { cancelBatch } = state.pending[0];
+      cancelBatch();
+      return;
+    }
+    if (next.start > now) { state.wake(Math.ceil(next.start - now)); return; }
+    const { entry } = next;
+    state.pending.splice(state.pending.indexOf(entry), 1);
+    state.previous.push(entry);
+    entry.mount();
+    state.wake();
+  }
+  categoryQueues.set(layer, state);
+  return state;
+}
+
+function playCategoryQueue(layer, recipes, { anchorFor, sourceId, targetId, options, timing }) {
+  const state = categoryState(layer);
+  const entries = effectEntries(recipes, { sourceId, targetId, now: Date.now(),
+    seenGroups: groups.get(layer), windows: [...state.pending, ...state.previous.filter(clip => clip.finish)],
+    duration: options.duration, sequence: true });
+  const stops = [];
+  let remaining = entries.length;
+  const cancelBatch = () => {
+    state.pending = state.pending.filter(clip => !entries.includes(clip));
+    for (const clip of entries) clip.finish?.();
+    state.previous = state.previous.filter(clip => !entries.includes(clip));
+    closeBatch();
+    state.wake();
+  };
+  const activeSet = register(layer, cancelBatch);
+  function closeBatch() {
+    for (const cleanup of stops.splice(0)) cleanup();
+    activeSet.delete(cancelBatch);
+  }
+  for (const entry of entries) {
+    Object.assign(entry, { policy: timing.categoryQueues, cancelBatch, mount: () => {
+      const onStop = () => {
+        if (!entry.finish) return;
+        delete entry.finish;
+        entry.end = Date.now();
+        options.onStop?.();
+        if (--remaining === 0) closeBatch();
+        state.wake();
+      };
+      const finish = mountEffectEntry(layer, entry, { anchorFor, sourceId, options, timing, onStop, stops });
+      reserveClip(entry, Date.now(), Date.now());
+      entry.finish = () => { finish?.(); onStop(); };
+      if (!finish) entry.finish();
+    } });
+    state.pending.push(entry);
+  }
+  if (!entries.length) closeBatch();
+  // Calls made together can contribute to one ordered action before its first clip starts.
+  state.wake();
+  return cancelBatch;
+}
+
 /** Schedules presentation independently of combat resolution and actor motion. */
 export function PlayRecipientEffectLayers(layer, recipes, { anchorFor, sourceId, targetId, ...options } = {}) {
   if (!layer || !anchorFor || disabled()) return () => {};
   const timing = timingFor(options.timing);
+  if (options.frame == null && timing.categoryQueues?.enabled) {
+    return playCategoryQueue(layer, recipes, { anchorFor, sourceId, targetId, options, timing });
+  }
   const windows = resultWindows.get(layer) || new Set();
   const schedule = PlanRecipientEffectLayers(recipes, {
     sourceId, targetId, now: Date.now(), windows, seenGroups: groups.get(layer),
@@ -333,7 +494,7 @@ export function PlayRecipientEffectLayers(layer, recipes, { anchorFor, sourceId,
   };
 
   for (const entry of schedule) {
-    const { recipe, ids, delayMs, result, durationMs } = entry;
+    const { delayMs, result, durationMs } = entry;
     if (result) windows.add(entry);
     const play = () => {
       if (cancelled) return;
@@ -357,42 +518,13 @@ export function PlayRecipientEffectLayers(layer, recipes, { anchorFor, sourceId,
           return;
         }
       }
-      const actors = ids.map(id => anchorFor(id)).filter(Boolean);
-      if (!actors.length) { retire(entry); return; }
-      const actor = actors[0];
-      const boxes = actors.map(node => bodyBox(layer, node));
-      let box = boxes[0];
-      if (recipe.mount === 'group') {
-        if (recipe.phase !== 'delivery' && recipe.groupKey) {
-          const seen = groups.get(layer) || new Set();
-          if (seen.has(recipe.groupKey)) { retire(entry); return; }
-          groups.set(layer, seen);
-          seen.add(recipe.groupKey);
-          stops.push(() => seen.delete(recipe.groupKey));
-        }
-        const left = Math.min(...boxes.map(b => b.left)) - S.sweepGroupPaddingPx;
-        const top = Math.min(...boxes.map(b => b.top));
-        box = { left, top, width: Math.max(...boxes.map(b => b.left + b.width)) - left + S.sweepGroupPaddingPx,
-          height: Math.max(...boxes.map(b => b.top + b.height)) - top };
-      }
-      const source = anchorFor(recipe.sourceId || sourceId);
-      const sourceBox = source ? bodyBox(layer, source) : null;
       const onStop = () => {
         entry.end = Date.now();
         delete entry.finish;
         options.onStop?.();
       };
-      const playback = { ...options, duration: durationMs, timing, onStop };
-      let finish;
-      if (recipe.phase === 'delivery') {
-        finish = PlayRecipientDelivery(layer, sourceBox, box, recipe, playback);
-      } else {
-        const combatant = actor.closest('.combatant');
-        const card = combatant?.querySelector('.combatant-card');
-        const targetFacing = combatant?.classList.contains('enemy') ? 'front' : 'back';
-        finish = PlayRecipientEffect(layer, box, recipe, { ...playback, actor, sourceBox,
-          targetFacing, cardBox: card ? localBox(layer, card) : null });
-      }
+      const finish = mountEffectEntry(layer, entry, { anchorFor, sourceId, options, timing, onStop, stops });
+      if (!finish) { retire(entry); return; }
       entry.finish = () => {
         delete entry.finish;
         finish();

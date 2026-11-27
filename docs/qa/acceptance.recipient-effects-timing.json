@@ -1,7 +1,7 @@
 {
-  "request": "go ahead and add the effects timing panel with live preview and save to json. use those settings as the defaults and keep the animation speed the same\n\nonce done integrate into the score tool",
-  "success": "The recipient effects preview opens a usable Timing panel at desktop and phone sizes. It previews changes immediately and shows each result on a timeline. The authored defaults are entire battlefield, one result at a time, a 30 ms gap, 0 ms overlap and 80% opacity. The editor saves timing and opacity to the authoritative JSON, rebuilds the generated UI configuration, and reads them after reload. The live browser checks cover saving, animation playback and the sequence. The fixed sandbox checks cover the visible panel and timeline. Score Studio opens the same editor in its Effects tab, preserves its draft across tabs and pauses playback when you leave it. The browser check verifies Score Studio writes to the same JSON.",
-  "failure": "The panel or timeline is unreachable, the fields do not update the preview immediately, a save fails to update the authored and generated config together, the default sequence overlaps, or edits alter clip durations or frame speed. Score Studio replaces the draft, keeps playback running when the tab is hidden, or loses access to existing workspaces.",
+  "request": "I like these categories. Good job. Also, I'd like effects of the same category to play at the same time with a 10ms offset in a queue and I'd like to limit the amount of an effects that can populate from a category, and the amount of effects that can show up over all. I'd like order to be casting and movement > attack impacts > defense and reactions > buffs and debuffs\n\nalso, I noticed that some effects appeared to play tice, btw",
+  "success": "Effects Timing opens on desktop and phone with the four ordered category queues, individual clip limits, battlefield and actor limits, start stagger, transition overlap and master opacity. The production timeline labels each category. Score Studio opens the same preview and keeps drafts when switching tabs.",
+  "failure": "A category or limit control is missing, the timeline does not show the category labels, or Score Studio cannot open the shared editor. Browser automation separately verifies caps, delays, clip duration, JSON downloads, legacy preview and saved changes.",
   "viewports": [
     {
       "name": "desktop",
@@ -18,7 +18,7 @@
     {
       "name": "effects-timing-panel",
       "url": "/tools/recipient-effects-runtime-preview.html",
-      "ready": "#viewport",
+      "ready": "#result-timeline li",
       "settleMs": 500,
       "success": [
         {
@@ -28,27 +28,37 @@
         },
         {
           "kind": "visible",
-          "label": "Scope selector is visible",
-          "selector": "#timing-scope"
+          "label": "Category queue switch is visible",
+          "selector": "#category-enabled"
         },
         {
           "kind": "visible",
-          "label": "Clip cap is visible",
-          "selector": "#timing-cap"
+          "label": "Category order and per-category limits are visible",
+          "selector": "#timing-categories"
         },
         {
           "kind": "visible",
-          "label": "Gap control is visible",
-          "selector": "#timing-gap"
+          "label": "Same-category stagger is visible",
+          "selector": "#category-stagger"
         },
         {
           "kind": "visible",
-          "label": "Overlap control is visible",
-          "selector": "#timing-overlap"
+          "label": "Category transition overlap is visible",
+          "selector": "#category-overlap"
         },
         {
           "kind": "visible",
-          "label": "Opacity control is visible",
+          "label": "Battlefield limit is visible",
+          "selector": "#category-global"
+        },
+        {
+          "kind": "visible",
+          "label": "Per-actor limit is visible",
+          "selector": "#category-actor"
+        },
+        {
+          "kind": "visible",
+          "label": "Master opacity is visible",
           "selector": "#timing-opacity"
         },
         {
@@ -58,8 +68,30 @@
         },
         {
           "kind": "visible",
-          "label": "Result timeline is visible",
+          "label": "JSON download is visible",
+          "selector": "#download-timing"
+        },
+        {
+          "kind": "visible",
+          "label": "Production timeline is visible",
           "selector": "#result-timeline"
+        },
+        {
+          "kind": "count",
+          "label": "Four category rows are present",
+          "selector": "#timing-categories > li",
+          "eq": 4
+        },
+        {
+          "kind": "text",
+          "label": "Production timeline labels all four categories",
+          "selector": "#result-timeline",
+          "matches": "Casting and movement[\\s\\S]*Attack impacts[\\s\\S]*Defense and reactions[\\s\\S]*Buffs and statuses"
+        },
+        {
+          "kind": "hidden",
+          "label": "Legacy timing is tucked away by default",
+          "selector": "#legacy-timing"
         },
         {
           "kind": "consoleErrors",

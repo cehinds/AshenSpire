@@ -37,6 +37,26 @@ export async function freshBuild(api, repo, built, head) {
     && result.files.every((f) => documentationOnly(f.filename) && (!f.previous_filename || documentationOnly(f.previous_filename)));
 }
 
+function prSummaryBullets(pr) {
+  if (!pr || typeof pr !== 'object') return [];
+  const bullets = [];
+  if (typeof pr.body === 'string') {
+    for (const raw of pr.body.split(/\r?\n/)) {
+      const m = /^\s*[-*]\s+(.+)$/.exec(raw);
+      if (!m) continue;
+      const clean = m[1].replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/`([^`]+)`/g, '$1').replace(/\*\*([^*]+)\*\*/g, '$1').trim();
+      if (!clean || /^\[[ xX]\]/.test(clean) || clean.length < 8) continue;
+      const split = /^([^:—–-]+?)(?:\s*[:—–-]\s+)(.+)$/.exec(clean);
+      bullets.push(split ? { title: split[1].trim(), summary: split[2].trim() } : { title: clean, summary: '' });
+      if (bullets.length >= 4) break;
+    }
+  }
+  if (!bullets.length && typeof pr.title === 'string' && pr.title.trim()) {
+    bullets.push({ title: pr.title.trim(), summary: '', pr: pr.number });
+  }
+  return bullets;
+}
+
 export async function collectFeaturePreviews({ repo, out, api, download, warn = console.warn, maxPreviews = MAX_BRANCH_PREVIEWS }) {
   if (!repo || !out) throw new Error('repo and output directory are required');
   // Listing/API failures propagate: publishing an incomplete inventory would
@@ -55,8 +75,10 @@ export async function collectFeaturePreviews({ repo, out, api, download, warn = 
   // rule, 2026-11-06). Every feature/fix/chore branch used to qualify, so 13 stale
   // ~80 MB previews of long-dead branches took 1 GB of the Pages artifact (run
   // 42174299001). A closed or merged PR's branch drops out on the next publish.
-  const open = new Map((await pages(`repos/${repo}/pulls?state=open&base=dev`))
-    .filter((pr) => pr.head?.repo?.full_name === repo).map((pr) => [pr.head.ref, pr.number]));
+  const openPrs = (await pages(`repos/${repo}/pulls?state=open&base=dev`))
+    .filter((pr) => pr.head?.repo?.full_name === repo);
+  const open = new Map(openPrs.map((pr) => [pr.head.ref, pr.number]));
+  const openChanges = new Map(openPrs.map((pr) => [pr.head.ref, prSummaryBullets(pr)]));
   const branches = (await pages(`repos/${repo}/branches`)).filter((b) => /^(feature|fix|chore)\//i.test(b.name) && open.has(b.name));
   const manifest = join(out, 'previews.json');
   const original = existsSync(manifest) ? JSON.parse(readFileSync(manifest, 'utf8')).previews : [];
@@ -89,8 +111,9 @@ export async function collectFeaturePreviews({ repo, out, api, download, warn = 
       }
       const html = readdirSync(destination).filter((f) => f.endsWith('.html'));
       if (html.length !== 1 || !lstatSync(join(destination, html[0])).isFile() || !lstatSync(join(destination, html[0])).size) throw new Error('expected exactly one non-empty regular HTML file');
+      const prChanges = openChanges.get(branch.name) || [];
       entries = entries.filter((e) => e.branch !== branch.name);
-      entries.push({ branch: branch.name, dir, sha: selected.head_sha, pr: open.get(branch.name), run: selected.id });
+      entries.push({ branch: branch.name, dir, sha: selected.head_sha, pr: open.get(branch.name), run: selected.id, ...(prChanges.length ? { changes: prChanges } : {}) });
     } catch (error) {
       rmSync(destination, { recursive: true, force: true });
       if (error.collectionFailure) throw error;
