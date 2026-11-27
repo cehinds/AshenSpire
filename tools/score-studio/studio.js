@@ -3353,9 +3353,10 @@ function renderCardArtFields(container, def) {
   // While a row's control is in use (focused, or a pointer is down on it) the rows are kept, so an edit's
   // queued gallery refresh never rebuilds the slider under the pointer or takes keyboard focus away.
   const inUse = container.contains(document.activeElement) && document.activeElement.matches('input');
-  if (container.firstChild && container.dataset.cardId === def.id && (artContextHold || inUse)) return true;
-  container.dataset.cardId = def.id;
   const allLayers = state.artLayers.layers || [];
+  // Undo or a reload replaces the layer list: then the rows are rebuilt even while in use, never left on stale layers.
+  if (container.firstChild && container.dataset.cardId === def.id && container.artLayersRef === allLayers && (artContextHold || inUse)) return true;
+  container.dataset.cardId = def.id; container.artLayersRef = allLayers;
   const layers = matchingCustomLayers(def, { includeDisabled: true });
   const list = document.createElement('div');
   list.className = 'art-context-list';
@@ -3380,7 +3381,8 @@ function renderCardArtFields(container, def) {
   list.addEventListener('focusin', () => { historyPushed = false; });
   list.addEventListener('input', (e) => {
     const idx = Number(e.target.dataset.lIdx ?? e.target.dataset.lEnabled);
-    const layer = allLayers[idx];
+    // Read the layer from the current state at edit time, not from the list these rows were built from.
+    const layer = (state.artLayers.layers || [])[idx];
     if (!layer) return;
     if (!historyPushed) { pushHistory(); historyPushed = true; }
     applyArtLayerInput(e.target, layer, false);
