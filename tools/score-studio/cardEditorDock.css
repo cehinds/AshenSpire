@@ -221,9 +221,8 @@ body.studio-body .customization-entity-name :is(.inspector-score-rank, .inspecto
 body.studio-body .customization-entity-name :is(.inspector-score-rank, .inspector-score-rarity).is-down { color: var(--st-good, #4caf50); }
 /* Card options: vertical ellipsis at the top right of the fields beside the card. */
 body.studio-body .customization-entity .customization-quick-fields { position: relative; }
-body.studio-body .customization-quick-fields > .form-wide { padding-right: 34px; }
+body.studio-body .customization-quick-fields > .form-wide { padding-right: 24px; }
 body.studio-body .customization-card-menu-wrap { position: absolute; top: 0; right: 0; }
-body.studio-body .customization-card-menu-button { width: 28px; min-width: 28px; height: 28px; padding: 0; font-size: 18px; line-height: 1; }
 body.studio-body .customization-card-menu { min-width: 190px; z-index: 30; }
 body.studio-body .customization-card-menu[hidden] { display: none; }
 body.studio-body .customization-card-menu .menu-item[disabled] { opacity: .45; cursor: not-allowed; }
@@ -240,3 +239,12 @@ body.studio-body .card-json-dialog p { margin: 0; }
 body.studio-body #card-json-text { min-height: 360px; width: 100%; box-sizing: border-box; resize: vertical; font: 12px/1.45 ui-monospace, Consolas, monospace; color: var(--st-text); background: var(--st-surface-2); border: 1px solid var(--st-border); border-radius: 6px; padding: 8px; }
 body.studio-body .card-json-error { min-height: 1.2em; color: var(--st-bad); font-size: 12px; }
 body.studio-body .card-json-actions { display: flex; justify-content: flex-end; gap: 8px; }
+/* The ellipsis reads as a plain glyph on the label line; it only looks like a button on hover or focus. */
+body.studio-body .customization-card-menu-wrap { top: -1px; right: -4px; }
+body.studio-body .customization-card-menu-button.s-btn {
+  width: 20px; min-width: 20px; height: 20px; min-height: 0; padding: 0; font-size: 16px; line-height: 20px;
+  color: var(--st-muted); background: transparent; border: 1px solid transparent; border-radius: 4px; box-shadow: none;
+}
+body.studio-body .customization-card-menu-button.s-btn:hover,
+body.studio-body .customization-card-menu-button.s-btn[aria-expanded="true"] { color: var(--st-text); background: var(--st-surface-2); border-color: var(--st-border); }
+body.studio-body .customization-card-menu-button.s-btn:focus-visible { color: var(--st-text); border-color: var(--st-accent); outline: none; }
