@@ -15,6 +15,9 @@ import { createRng } from '../src/engine/rng.js';
 import { stampDeck } from '../src/model/loadout.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { createSaveManager,createMemoryStorage,runKey } from '../src/engine/save.js';
+import { SmithProbeAuthor } from '../tools/lib/smith-shot-fixture.mjs';
+import { gameProfileCatalog } from '../src/content/generated/gameProfiles.js';
+import { resolveGameAuthor } from '../engine/kernel/gameConfig.js';
 const profile=resolveGameProfile('core');
 const reg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile);
 const fresh=(registries=reg)=>createRunState({seed:73,classId:'reaver',registries,runId:'unique-run'});
@@ -29,6 +32,37 @@ const freshLegacy=()=>{const run=fresh(smithReg);run.gameProfile.content.rests=s
 // The old fixed rest depths 3, 6, 9 stand for the first, second and last rest depth of the act (Core now rests on one mid depth and the pre-boss depth).
 const restId=(run,floor)=>{const rests=Object.values(run.mapGraph.nodes).filter(n=>n.type==='shrine');const depths=[...new Set(rests.map(n=>n.floor))].sort((x,y)=>x-y);const at=floor===3?0:floor===6?1:depths.length-1;return rests.find(n=>n.floor===depths[Math.min(at,depths.length-1)]).id;};
 const visit=(run,registries=reg)=>{ run.mapGraph=buildActMap(registries,createRng(73),run.seatOrder[0],1);run.mapNodeId=restId(run,3); return beginGameProfileRest(run,'1:'+run.mapNodeId); };
+
+// Arithmetic operands: keep current identities/availability, but deliberately
+// assign the tested armaments' new points to STR. Resolve this tiny catalog
+// overlay normally rather than editing a resolved profile or its hash.
+function smithArithmeticFixture(perRank = 1, { stats = true } = {}) {
+ const mainId=fresh().loadout.sets.rightHand[0];
+ const sourceId=item=>item.source?.id||item.id;
+ const second=profile.content.gear.find(item=>item.kind!=='armor'&&sourceId(item)!==mainId&&reg.equipment.armaments.some(piece=>piece.id===sourceId(item)));
+ assert.ok(mainId&&second,'two current armament identities support the two-hand scenario');
+ const ids=[mainId,sourceId(second)],selected=new Set(ids);
+ const gearModule=gameProfileCatalog.modules.gear;
+ const defaults={...gearModule.defaults};delete defaults.typeEffectsVersion;
+ const packs=Object.fromEntries(Object.entries(gameProfileCatalog.packs).map(([key,pack])=>[key,!pack.content.gear?pack:{...pack,content:{...pack.content,
+  gear:pack.content.gear.map(item=>selected.has(sourceId(item))?{...item,weights:{...item.weights,bonus:{strength:1}}}:item),
+ }}]));
+ const catalog={...gameProfileCatalog,packs,modules:{...gameProfileCatalog.modules,gear:{...gearModule,defaults}}};
+ const author=SmithProbeAuthor();
+ author.modules.gear={...author.modules.gear,maxAttributes:5,
+  statPoints:{...author.modules.gear.statPoints,perRank},
+  pointValues:{ar:0,dr:0,poise:0,hp:0,mp:0,sp:0,ward:0,evasion:0,precision:0,strength:1,dexterity:1,constitution:1,wisdom:1,intelligence:1},
+  weights:{global:{bonus:{strength:1}}}};
+ delete author.modules.gear.typeEffectsVersion;
+ author.modules.equipment={requirementsPolicy:'none',weaponArts:false,upgradeBonuses:{tierBonusSteps:[1,2,3],tierStoneCosts:[1,1,1]}};
+ author.modules.effects={baseDamageMultiplier:1,physicalDamageMultiplier:1,playerDamageMultiplier:1,enemyDamageMultiplier:1,blockGainMultiplier:1,strengthDamageWeight:1,dexterityBlockWeight:1,magicStatWeight:1};
+ if(!stats)author.modules.stats=false;
+ const resolved=resolveGameAuthor(author,catalog);
+ const bound=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,resolved)),resolved);
+ const registries={...bound,equipment:{...bound.equipment,armaments:bound.equipment.armaments.map(piece=>selected.has(piece.id)?{...piece,mods:[],tags:[],itemTypeTags:[]}:piece)}};
+ const run=fresh(registries);run.relics=[];run.itemUpgradePicks={};
+ return {registries,run,ids,profile:resolved};
+}
 
 test('configured class defaults, persistent pins and restamping preserve the authored deck and grants',()=>{
  const run=fresh();
@@ -195,13 +229,16 @@ test('core Smith is a free single-tier service without stones, with paid overrid
 });
 
 
-test('shipped zero-per-rank Core gear does not offer an effectless greatsword Smith upgrade',async()=>{
- const run=fresh();visit(run);
+test('an explicit zero-per-rank profile refuses an effectless owned armament upgrade',async()=>{
+ const {registries:r,run}=smithArithmeticFixture(0);visit(run,r);
  const {smithingPlan}=await import('../src/model/smithing.js');
+ const main=run.loadout.sets.rightHand[run.loadout.active.rightHand||0];
+ assert.ok(r.equipment.armaments.some(piece=>piece.id===main));
+ const itemRef=`armament/${main}`;
  assert.equal(run.gameProfile.modules.gear.statPoints.perRank,0);
- assert.equal(smithingPlan(reg,run).candidates.some(row=>row.itemRef==='armament/greatsword'),false);
+ assert.equal(smithingPlan(r,run).candidates.some(row=>row.itemRef===itemRef),false);
  const before=JSON.stringify(run);
- assert.throws(()=>commitGameProfileRest(reg,run,'smith',{itemRef:'armament/greatsword'}),/not an eligible/);
+ assert.throws(()=>commitGameProfileRest(r,run,'smith',{itemRef}),/not an eligible/);
  assert.equal(JSON.stringify(run),before);
 });
 
@@ -216,13 +253,44 @@ test('configured class cards cannot swap or unequip the fixed run class',async()
 });
 
 
-test('configured equipment requirements default none across six families and four armor categories, legacy override restores gates',async()=>{
- const {equipmentRequirementReceipt,equipPiece,ownership}=await import('../src/model/loadout.js');
- const weaponIds=['straightSword','kiteShield','boneSceptre','shortbow','greatsword','dagger'];
- for(const id of weaponIds){const run=fresh(),piece=reg.equipment.armaments.find(row=>row.id===id);assert.ok(piece,id);assert.equal(equipmentRequirementReceipt(reg,piece,run.attributes).ok,true,id);run.loadout.storage.push(id);assert.equal(equipPiece(reg,run.loadout,'rightHand',0,id,ownership(reg,{loadout:run.loadout}),{inCombat:false,classId:run.class,attributes:run.attributes}),true,id);}
- for(const id of ['nightweave','gutterLeathers','default','wayfarerPlate']){const run=fresh(),piece=reg.equipment.armour.find(row=>row.classId===run.class&&row.id===id);assert.ok(piece,id);assert.equal(equipmentRequirementReceipt(reg,piece,run.attributes).ok,true,id);}
- const run=fresh(),owned=ownership(reg,{loadout:run.loadout}),ctx={inCombat:false,classId:run.class,attributes:run.attributes};assert.equal(equipPiece(reg,run.loadout,'rightHand',0,null,owned,ctx),true);assert.equal(equipPiece(reg,run.loadout,'rightHand',0,'greatsword',ownership(reg,{loadout:run.loadout}),ctx),true);
- const old=resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules:{equipment:{requirementsPolicy:'legacy'}}});const r=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,old)),old),legacy=createRunState({seed:1,classId:'reaver',registries:r});assert.equal(equipmentRequirementReceipt(r,r.equipment.armaments.find(row=>row.id==='greatsword'),legacy.attributes).ok,false);
+test('explicit no-requirements policy covers the current catalog; legacy minima fail closed at a controlled boundary',async()=>{
+ const {equipmentRequirementReceipt,equipPiece,ownership,fitsSlot}=await import('../src/model/loadout.js');
+ const author=SmithProbeAuthor();author.modules.equipment={requirementsPolicy:'none'};
+ const p=resolveGameProfile(author),r=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,p)),p);
+ const definitionSnapshot=JSON.stringify(r.equipment),run=fresh(r);
+ assert.ok(r.equipment.armaments.length&&r.equipment.armour.length);
+ for(const piece of r.equipment.armaments){
+  assert.equal(equipmentRequirementReceipt(r,piece,{}).ok,true,piece.id);
+  const loadout=structuredClone(run.loadout);
+  for(const ids of Object.values(loadout.sets))ids.fill(null);
+  loadout.storage=[piece.id];
+  const slot=r.equipment.slots.find(slot=>fitsSlot(slot,piece));assert.ok(slot,piece.id);
+  assert.equal(equipPiece(r,loadout,slot.id,0,piece.id,ownership(r,{loadout}),{inCombat:false,classId:run.class,attributes:{}}),true,piece.id);
+ }
+ for(const piece of r.equipment.armour)assert.equal(equipmentRequirementReceipt(r,piece,{}).ok,true,`${piece.classId}/${piece.id}`);
+ const main=run.loadout.sets.rightHand[run.loadout.active.rightHand||0],ctx={inCombat:false,classId:run.class,attributes:run.attributes};
+ assert.equal(equipPiece(r,run.loadout,'rightHand',0,null,ownership(r,{loadout:run.loadout}),ctx),true);
+ assert.equal(equipPiece(r,run.loadout,'rightHand',0,main,ownership(r,{loadout:run.loadout}),ctx),true);
+ const legacyAuthor=SmithProbeAuthor();legacyAuthor.modules.equipment={requirementsPolicy:'legacy'};
+ const old=resolveGameProfile(legacyAuthor);
+ const basis=contentBundle.equipment.armaments[0];
+ const input={...contentBundle,equipment:{...contentBundle.equipment,
+  armaments:contentBundle.equipment.armaments.map(piece=>piece.id===basis.id?{...piece,requirements:{attributes:{strength:3}}}:piece),
+  equipmentRequirements:[...contentBundle.equipment.equipmentRequirements.filter(row=>row.itemId!==basis.id),{itemId:basis.id,attributeId:'strength',minimum:3}],
+ }};
+ const inputSnapshot=JSON.stringify(input.equipment);
+ const project=resolved=>bindGameProfileRegistries(createRegistries(applyGameProfileToContent(input,resolved)),resolved);
+ const legacy=project(old),required=legacy.equipment.armaments.find(piece=>piece.id===basis.id);
+ const unrestricted=project(p),cleared=unrestricted.equipment.armaments.find(piece=>piece.id===basis.id);
+ assert.deepEqual(required.requirements.attributes,{strength:3},'legacy policy preserves the controlled input requirement');
+ assert.deepEqual(cleared.requirements.attributes,{},'none policy clears executable requirements');
+ assert.equal(unrestricted.equipment.equipmentRequirements.length,0,'none policy also clears the authored requirement table');
+ assert.equal(equipmentRequirementReceipt(unrestricted,cleared,{}).ok,true);
+ assert.equal(equipmentRequirementReceipt(legacy,required,{strength:2}).ok,false);
+ assert.equal(equipmentRequirementReceipt(legacy,required,{strength:3}).ok,true);
+ assert.equal(equipmentRequirementReceipt(legacy,required,{}).ok,false,'missing attributes fail closed');
+ assert.equal(JSON.stringify(input.equipment),inputSnapshot);
+ assert.equal(JSON.stringify(r.equipment),definitionSnapshot);
 });
 
  // Owner, 2026-11-14: the quote is the HP lost after the target's Poise; the AR bonus is read off the receipt's incoming hit.
@@ -232,37 +300,62 @@ test('Smith tier bonuses share UI combat preview and real damage/block, and disa
  const {createRunCombat}=await import('../src/engine/runCombat.js');
  const {previewCard,dispatch}=await import('../src/engine/combat.js');
  const {smithingPlan}=await import('../src/model/smithing.js');
- // With per-rank points enabled, the greatsword's second tier adds another STR and raises AR by 1.
- const run=fresh(smithReg);run.itemUpgradeLevels={'armament/greatsword':1};visit(run,reg);
- // Leave enough health to measure the full upgraded hit rather than overkill.
- const fight=()=>{const combat=createRunCombat({registries:reg,run,rng:createRng(17),enemyIds:['wanderingSoldier']});combat.enemies[0].hp=combat.enemies[0].maxHp=1000;
- // The 11-card starter may not draw these in five cards; the test needs one of each, so put any missing one in hand.
- for(const cardId of ['core.counter','core.strike'])if(!combat.piles.hand.some(card=>card.cardId===cardId))combat.piles.hand.push({cardId,instanceId:`fx-${cardId}`,upgraded:false});return combat;};
- const before=fight(),beforeRatings=ratingReceipt(reg,run,{}).totals;
- const beforeDefend=before.piles.hand.find(card=>card.cardId==='core.counter'),oldBlock=previewCard(before,beforeDefend.instanceId).values.find(e=>e.op==='block').value;
- const oldDamage=new Map(before.piles.hand.map(card=>[card.cardId,previewCard(before,card.instanceId,before.enemies[0].id).values.find(e=>e.op==='damage')?.damageReceipt?.hits?.[0]?.incoming]));
- commitGameProfileRest(reg,run,'smith',{itemRef:'armament/greatsword'});
- const after=fight();assert.equal(after.player.ratings.ar,beforeRatings.ar+1);assert.deepEqual(after.player.ratings,gameProfileRatingReceipt(reg,run).totals);assert.deepEqual(after.player.ratings,ratingReceipt(reg,run,{}).totals);
- const damaging=after.piles.hand.find(card=>card.cardId==='core.strike'&&(previewCard(after,card.instanceId,after.enemies[0].id).values.find(e=>e.op==='damage')?.damageReceipt?.hits?.[0]?.incoming||0)>(oldDamage.get(card.cardId)||Infinity));assert.ok(damaging,'a real Strike gains damage after the weapon upgrade');
- const preview=previewCard(after,damaging.instanceId,after.enemies[0].id).values.find(e=>e.op==='damage').damageReceipt.totalDamage,hp=after.enemies[0].hp;primeAccuracyRolls(after);dispatch(after,{type:'playCard',cardInstanceId:damaging.instanceId,targetId:after.enemies[0].id});assert.equal(hp-after.enemies[0].hp,preview);
- // Core 2 smiths weapons only (no armour candidate), so the armour DR/Block step of the old Core 1 test is gone.
- run.loadout.sets.rightHand[0]='straightSword';const swapped=gameProfileRatingReceipt(reg,run).totals;delete run.itemUpgradeLevels['armament/greatsword'];assert.equal(swapped.ar,gameProfileRatingReceipt(reg,run).totals.ar,'the greatsword tier bonus does not follow a swapped-in weapon');
- const off=resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules:{stats:false}}),r=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,off)),off),noStats=createRunState({seed:1,classId:'reaver',registries:r});const noUpgrades=gameProfileRatingReceipt(r,noStats).totals.ar;noStats.itemUpgradeLevels={'armament/greatsword':3};assert.equal(gameProfileRatingReceipt(r,noStats).totals.ar,noUpgrades,'with stats off a Smith tier adds no rating');
+ const fixture=smithArithmeticFixture(),run=fixture.run,itemRef=`armament/${fixture.ids[0]}`;
+ const card=(id,effects,maneuver)=>({id,name:id,class:'colorless',rarity:'common',type:maneuver==='defend'?'skill':'attack',kindIds:[`classification.${maneuver==='defend'?'skill':'attack'}`],costRule:'fixed',cost:1,staminaCost:1,manaCost:0,damageSchool:'physical',exposureBuildupPerHit:0,keywords:[],effects,
+  attack:{damageType:'blunt'},tags:['camp:physical',`maneuver:${maneuver}`,'range:melee',`classification.${maneuver==='defend'?'skill':'attack'}`]});
+ const cards=[card('fixture.smith.hit',[{op:'damage',target:'enemy',amount:8}],'attack'),card('fixture.smith.block',[{op:'block',target:'self',amount:5}],'defend')];
+ // This is also the Smith simulator's internal key; its definition is wholly
+ // controlled here, rather than borrowed from today's enemy catalog.
+ const enemy={id:'wanderingSoldier',name:'Fixture target',hp:[1000,1000],poiseMax:0,attributes:{strength:0,dexterity:0,constitution:0,wisdom:0,intelligence:0},spPool:1,firstMove:'idle',moves:{idle:{id:'idle',enemyId:'wanderingSoldier',intent:'block',block:0,sp:1,weight:1,tags:['camp:physical','maneuver:defend']}}};
+ const base=fixture.registries;
+ const r={...base,cards:{...base.cards,has:id=>cards.some(card=>card.id===id)||base.cards.has(id),get:id=>cards.find(card=>card.id===id)||base.cards.get(id)},
+  enemies:{...base.enemies,has:id=>id===enemy.id||base.enemies.has(id),get:id=>id===enemy.id?enemy:base.enemies.get(id)}};
+ run.deck=cards.map((card,index)=>({cardId:card.id,instanceId:`smith.${index}`,upgraded:false}));run.sideboard=[];
+ for(const [slot,ids] of Object.entries(run.loadout.sets))if(slot!=='rightHand')ids.fill(null);
+ visit(run,r);
+ const definitionSnapshot=JSON.stringify({cards,enemy,profile:fixture.profile});
+ const fight=()=>{const combat=createRunCombat({registries:r,run,rng:createRng(17),enemyIds:[enemy.id]});
+  combat.fixCoreRules.accuracy.hitRoll=false;combat.fixCoreRules.stance={...combat.fixCoreRules.stance,effectivenessMultiplier:1,discount:0};delete combat.fixCoreRules.stanceBenefits;
+  for(const entity of [combat.player,...combat.enemies]){entity.statuses={};entity.critRules=[];delete entity.combatStance;delete entity.combatCounter;}
+  const target=combat.enemies[0];target.hp=target.maxHp=1000;target.ratings={ar:0,dr:0,pr:0,poise:0,ward:0};target.persistentPoise={value:0,max:0};target.block=0;delete target.weaknesses;
+  combat.player.stamina=combat.player.energy=100;combat.player.mana=100;
+  for(const pile of Object.values(combat.piles))pile.length=0;combat.piles.hand.push(...structuredClone(run.deck));return combat;};
+ const before=fight(),beforeRatings=ratingReceipt(r,run,{}).totals;
+ const previewHit=combat=>previewCard(combat,'smith.0',combat.enemies[0].id).values.find(effect=>effect.op==='damage').damageReceipt.totalDamage;
+ const previewBlock=combat=>previewCard(combat,'smith.1').values.find(effect=>effect.op==='block').value;
+ const oldDamage=previewHit(before),oldBlock=previewBlock(before);
+ const quote=smithingPlan(r,run,undefined,{free:true}).candidates.find(row=>row.itemRef===itemRef);assert.ok(quote);
+ commitGameProfileRest(r,run,'smith',{itemRef});
+ const after=fight(),expected=gameProfileRatingReceipt(r,run);
+ assert.deepEqual(after.player.ratings,expected.totals);assert.deepEqual(after.player.ratings,ratingReceipt(r,run,{}).totals);
+ assert.ok(after.player.ratings.ar>beforeRatings.ar,'controlled STR allocation reaches the rating receipt');
+ const preview=previewHit(after),hp=after.enemies[0].hp;assert.ok(preview>oldDamage);
+ dispatch(after,{type:'playCard',cardInstanceId:'smith.0',targetId:after.enemies[0].id});assert.equal(hp-after.enemies[0].hp,preview);
+ const blockFight=fight(),shownBlock=previewBlock(blockFight),block=blockFight.player.block;
+ dispatch(blockFight,{type:'playCard',cardInstanceId:'smith.1'});assert.equal(blockFight.player.block-block,shownBlock);
+ assert.equal(shownBlock,oldBlock,'a STR-only tier does not change the controlled Block channel');
+ run.loadout.sets.rightHand[0]=null;const swapped=gameProfileRatingReceipt(r,run).totals;
+ delete run.itemUpgradeLevels[itemRef];assert.deepEqual(swapped,gameProfileRatingReceipt(r,run).totals,'an unequipped tier contributes no global rating');
+ const off=smithArithmeticFixture(1,{stats:false}),noUpgrades=gameProfileRatingReceipt(off.registries,off.run).totals;
+ off.run.itemUpgradeLevels={[`armament/${off.ids[0]}`]:3};assert.deepEqual(gameProfileRatingReceipt(off.registries,off.run).totals,noUpgrades,'stats off suppresses the tier rating');
+ assert.equal(JSON.stringify({cards,enemy,profile:fixture.profile}),definitionSnapshot);
 });
 
 
 test('configured Smith tiers follow the Core 2 tier steps per hand and honor JSON coefficients',async()=>{
- // Core 2 coefficients (real output): tierBonusSteps [1,1,2] give +1/+2/+4 at tiers 1/2/3, one wielded weapon per hand.
- // Owner, 2026-11-17 (gear `statPoints`): each bonus step is statPoints.perRank (1) attribute points on the item, never AR.
  const {gameProfileRatingReceipt}=await import('../src/model/gameProfileRun.js');
  const points=(registries,subject)=>Object.values(gameProfileEffectiveAttributes(registries,subject)).reduce((a,b)=>a+b,0);
- const run=fresh(smithReg),base=points(reg,run),baseAr=gameProfileRatingReceipt(reg,run).totals.ar;
- for(const [level,bonus] of [[1,1],[2,2],[3,4]]){run.itemUpgradeLevels={'armament/greatsword':level};assert.equal(points(reg,run),base+bonus);}
- assert.equal(gameProfileRatingReceipt(reg,run).totals.ar,gameProfileEffectiveAttributes(reg,run).strength,'AR is the effective STR, with no tier AR');
- assert.ok(gameProfileRatingReceipt(reg,run).totals.ar>baseAr,'the tiered greatsword STR raises AR');
- run.itemUpgradeLevels={};run.loadout.sets.leftHand[0]='dagger';const bare=points(reg,run);
- run.itemUpgradeLevels={'armament/greatsword':3,'armament/dagger':2};assert.equal(points(reg,run),bare+4+2,'each hand adds its own tier bonus');
- const custom=resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules:{gear:{statPoints:{perRank:2}}}}),r=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,custom)),custom),other=createRunState({seed:1,classId:'reaver',registries:r});const initial=points(r,other);other.itemUpgradeLevels['armament/greatsword']=1;assert.equal(points(r,other),initial+2);
+ const {run,registries:r,ids}=smithArithmeticFixture(),ref=`armament/${ids[0]}`;
+ for(const [slot,items] of Object.entries(run.loadout.sets))if(slot!=='rightHand')items.fill(null);
+ const base=points(r,run),baseAr=gameProfileRatingReceipt(r,run).totals.ar;
+ // Deliberate tier steps [1,2,3] accumulate to 1/3/6, independent of today's ladder.
+ for(const [level,bonus] of [[1,1],[2,3],[3,6]]){run.itemUpgradeLevels={[ref]:level};assert.equal(points(r,run),base+bonus);}
+ assert.equal(gameProfileRatingReceipt(r,run).totals.ar,gameProfileEffectiveAttributes(r,run).strength,'AR reads the effective STR, not another tier grant');
+ assert.ok(gameProfileRatingReceipt(r,run).totals.ar>baseAr);
+ run.itemUpgradeLevels={};run.loadout.sets.leftHand[0]=ids[1];const bare=points(r,run);
+ run.itemUpgradeLevels={[ref]:3,[`armament/${ids[1]}`]:2};assert.equal(points(r,run),bare+6+3,'each hand contributes its own controlled tier');
+ const other=smithArithmeticFixture(2),initial=points(other.registries,other.run);
+ other.run.itemUpgradeLevels[`armament/${other.ids[0]}`]=1;assert.equal(points(other.registries,other.run),initial+2);
 });
 
 
