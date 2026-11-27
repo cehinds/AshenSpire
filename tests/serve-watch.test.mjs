@@ -16,7 +16,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { request } from 'node:http';
 import { fileURLToPath } from 'node:url';
-import { buildToolFor, buildToolsFor, reloadLabel, STUDIO_SAVE_DIR } from '../tools/serve.mjs';
+import { buildToolFor, buildToolsFor, reloadLabel, StudioSaveDir } from '../tools/serve.mjs';
 
 const SERVE = fileURLToPath(new URL('../tools/serve.mjs', import.meta.url));
 const STUDIO_SAVE_FILE_NAMES = [
@@ -290,8 +290,8 @@ test('--watch: an edit saved while a build runs is not dropped (error, then relo
 test('Score Studio Save files under content/source/studio/ owe no build', () =>
 {
   const studioPaths = [
-    STUDIO_SAVE_DIR,
-    ...STUDIO_SAVE_FILE_NAMES.map((fileName) => `${STUDIO_SAVE_DIR}/${fileName}`),
+    StudioSaveDir,
+    ...STUDIO_SAVE_FILE_NAMES.map((fileName) => `${StudioSaveDir}/${fileName}`),
   ];
   for (const studioPath of studioPaths)
   {
@@ -299,14 +299,14 @@ test('Score Studio Save files under content/source/studio/ owe no build', () =>
     assert.deepEqual(buildToolsFor(studioPath), [], studioPath);
   }
   assert.equal(buildToolFor('content/source/studioDecks.json'), CONTENT_BUILD_TOOL, 'a sibling name is still game source');
-  assert.equal(buildToolFor(`${STUDIO_SAVE_DIR}-backup/notes.json`), CONTENT_BUILD_TOOL, 'only the exact folder is excluded');
+  assert.equal(buildToolFor(`${StudioSaveDir}-backup/notes.json`), CONTENT_BUILD_TOOL, 'only the exact folder is excluded');
 });
 
 test('--watch: a Studio Save under content/source/studio/ runs no build and sends no reload', async () =>
 {
   const root = makeTree();
   const buildLogPath = join(root, 'build.log');
-  const studioDir = join(root, ...STUDIO_SAVE_DIR.split('/'));
+  const studioDir = join(root, ...StudioSaveDir.split('/'));
   const gameSourceFile = 'content/source/cards.json';
   writeFileSync(join(root, 'tools', CONTENT_BUILD_TOOL),
     "import { appendFileSync } from 'node:fs';\n" +

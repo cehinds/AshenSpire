@@ -11,13 +11,13 @@ import {
   STUDIO_SAVE_STATUS,
 } from '../tools/score-studio/studioSave.js';
 import {
-  STUDIO_CARD_TEMPLATES_KIND,
-  STUDIO_SAVE_DOWNLOAD_KIND,
-  STUDIO_SAVE_DOWNLOAD_NAME,
-  STUDIO_SAVE_ENDPOINT,
-  STUDIO_SAVE_FILES,
-  STUDIO_SAVE_FILE_NAMES,
-  studioSaveDocument,
+  StudioCardTemplatesKind,
+  StudioSaveDownloadKind,
+  StudioSaveDownloadName,
+  StudioSaveEndpoint,
+  StudioSaveFiles,
+  StudioSaveFileNames,
+  StudioSaveDocument,
 } from '../tools/score-studio/studioSaveFiles.js';
 
 const REVISION_ONE = 'a'.repeat(64);
@@ -46,25 +46,25 @@ function setup({ isLocalServer = true, savedFiles = {}, postStatus = HTTP_OK } =
     applied: [],
   };
   registerStudioSaveFile({
-    name: STUDIO_SAVE_FILE_NAMES.cards,
-    path: STUDIO_SAVE_FILES.cards.path,
+    name: StudioSaveFileNames.Cards,
+    path: StudioSaveFiles.cards.path,
     read: () => ({ cards: studio.cards, removedCardIds: studio.removedCardIds }),
     apply: (data) =>
     {
       studio.cards = data.cards;
       studio.removedCardIds = data.removedCardIds;
-      studio.applied.push(STUDIO_SAVE_FILE_NAMES.cards);
+      studio.applied.push(StudioSaveFileNames.Cards);
     },
   });
   registerStudioSaveFile({
-    name: STUDIO_SAVE_FILE_NAMES.artLayers,
-    path: STUDIO_SAVE_FILES.artLayers.path,
+    name: StudioSaveFileNames.ArtLayers,
+    path: StudioSaveFiles.artLayers.path,
     read: () => ({ cardArtLayers: studio.cardArtLayers, itemArtLayers: studio.itemArtLayers }),
     apply: (data) =>
     {
       studio.cardArtLayers = data.cardArtLayers;
       studio.itemArtLayers = data.itemArtLayers;
-      studio.applied.push(STUDIO_SAVE_FILE_NAMES.artLayers);
+      studio.applied.push(StudioSaveFileNames.ArtLayers);
     },
   });
   const requests = [];
@@ -86,14 +86,14 @@ function setup({ isLocalServer = true, savedFiles = {}, postStatus = HTTP_OK } =
   return { studio, controller, requests, downloads };
 }
 
-test('studio save hook: a file must match STUDIO_SAVE_FILES by name and path', () =>
+test('studio save hook: a file must match StudioSaveFiles by name and path', () =>
 {
   clearStudioSaveFiles();
   const read = () => ({});
   assert.throws(() => registerStudioSaveFile({ ...GAME_SCORING_FILE, read }), /Unknown Studio Save file/);
-  assert.throws(() => registerStudioSaveFile({ name: STUDIO_SAVE_FILE_NAMES.cards, path: 'package.json', read }), /Unknown Studio Save file/);
-  assert.throws(() => registerStudioSaveFile({ name: STUDIO_SAVE_FILE_NAMES.cards, path: STUDIO_SAVE_FILES.cards.path }), /read\(\)/);
-  registerStudioSaveFile({ name: STUDIO_SAVE_FILE_NAMES.templates, path: STUDIO_SAVE_FILES.templates.path, read: () => ({ templates: [] }) });
+  assert.throws(() => registerStudioSaveFile({ name: StudioSaveFileNames.Cards, path: 'package.json', read }), /Unknown Studio Save file/);
+  assert.throws(() => registerStudioSaveFile({ name: StudioSaveFileNames.Cards, path: StudioSaveFiles.cards.path }), /read\(\)/);
+  registerStudioSaveFile({ name: StudioSaveFileNames.Templates, path: StudioSaveFiles.templates.path, read: () => ({ templates: [] }) });
 });
 
 test('studio save: no file and no edits reads none; an edit reads Draft; Save sends the data keys only', async () =>
@@ -110,7 +110,7 @@ test('studio save: no file and no edits reads none; an edit reads Draft; Save se
   const saved = await controller.save();
   assert.equal(saved.result, STUDIO_SAVE_RESULT.saved);
   const post = requests.find((request) => request.method === 'POST');
-  assert.equal(post.url, STUDIO_SAVE_ENDPOINT);
+  assert.equal(post.url, StudioSaveEndpoint);
   const body = JSON.parse(post.body);
   assert.deepEqual(Object.keys(body), ['revision', 'files']);
   assert.equal(body.revision, REVISION_ONE);
@@ -152,8 +152,8 @@ test('studio save: Save with nothing changed since the last Save sends no reques
 test('studio save: load on start applies the saved files and reads Saved', async () =>
 {
   const savedFiles = {
-    cards: { ...studioSaveDocument(STUDIO_SAVE_FILE_NAMES.cards, { cards: [QA_CARD], removedCardIds: [] }), savedAt: SAVED_AT },
-    artLayers: { ...studioSaveDocument(STUDIO_SAVE_FILE_NAMES.artLayers, { cardArtLayers: { layers: [{ id: 'layer1' }] }, itemArtLayers: { layers: [] } }), savedAt: SAVED_AT },
+    cards: { ...StudioSaveDocument(StudioSaveFileNames.Cards, { cards: [QA_CARD], removedCardIds: [] }), savedAt: SAVED_AT },
+    artLayers: { ...StudioSaveDocument(StudioSaveFileNames.ArtLayers, { cardArtLayers: { layers: [{ id: 'layer1' }] }, itemArtLayers: { layers: [] } }), savedAt: SAVED_AT },
     templates: null,
   };
   const { studio, controller } = setup({ savedFiles });
@@ -164,10 +164,10 @@ test('studio save: load on start applies the saved files and reads Saved', async
   assert.deepEqual(studio.applied, ['cards', 'artLayers']);
   assert.deepEqual(studio.cards, [QA_CARD]);
   assert.equal(controller.status(), STUDIO_SAVE_STATUS.saved);
-  assert.equal(controller.matchesSaved(STUDIO_SAVE_FILE_NAMES.cards, { cards: [QA_CARD], removedCardIds: [] }), true);
-  assert.equal(controller.matchesSaved(STUDIO_SAVE_FILE_NAMES.cards, { cards: [], removedCardIds: [] }), false);
+  assert.equal(controller.matchesSaved(StudioSaveFileNames.Cards, { cards: [QA_CARD], removedCardIds: [] }), true);
+  assert.equal(controller.matchesSaved(StudioSaveFileNames.Cards, { cards: [], removedCardIds: [] }), false);
   studio.applied = [];
-  controller.applyLoaded([STUDIO_SAVE_FILE_NAMES.cards]);
+  controller.applyLoaded([StudioSaveFileNames.Cards]);
   assert.deepEqual(studio.applied, ['artLayers'], 'a file the draft carries is skipped');
 });
 
@@ -196,8 +196,8 @@ test('studio save: web mode downloads one file with both sections and sends no r
   assert.equal((await controller.save()).result, STUDIO_SAVE_RESULT.downloaded);
   assert.equal(requests.length, 0);
   assert.equal(downloads.length, 1);
-  assert.equal(downloads[0].name, STUDIO_SAVE_DOWNLOAD_NAME);
-  assert.equal(downloads[0].value.kind, STUDIO_SAVE_DOWNLOAD_KIND);
+  assert.equal(downloads[0].name, StudioSaveDownloadName);
+  assert.equal(downloads[0].value.kind, StudioSaveDownloadKind);
   assert.deepEqual(Object.keys(downloads[0].value.files), ['cards', 'artLayers']);
   assert.deepEqual(downloads[0].value.files.cards.cards, [QA_CARD]);
 });
@@ -207,14 +207,14 @@ test('studio save hook: a file carries its own kind; SS-004 templates register w
   const templates = [{ id: 'qaTemplate', name: 'QA template' }];
   const { studio, controller, requests } = setup();
   assert.throws(() => registerStudioSaveFile({
-    name: STUDIO_SAVE_FILE_NAMES.templates,
-    path: STUDIO_SAVE_FILES.templates.path,
+    name: StudioSaveFileNames.Templates,
+    path: StudioSaveFiles.templates.path,
     kind: RETIRED_TEMPLATES_KIND,
     read: () => ({ templates }),
   }), /Unknown Studio Save file/);
   registerStudioSaveFile({
-    name: STUDIO_SAVE_FILE_NAMES.templates,
-    path: STUDIO_SAVE_FILES.templates.path,
+    name: StudioSaveFileNames.Templates,
+    path: StudioSaveFiles.templates.path,
     read: () => ({ templates }),
     apply: () => {},
   });
@@ -224,7 +224,7 @@ test('studio save hook: a file carries its own kind; SS-004 templates register w
   await controller.save();
   const body = JSON.parse(requests.find((request) => request.method === 'POST').body);
   assert.deepEqual(body.files.templates, {
-    kind: STUDIO_CARD_TEMPLATES_KIND,
+    kind: StudioCardTemplatesKind,
     formatVersion: 1,
     templates,
   });
@@ -233,7 +233,7 @@ test('studio save hook: a file carries its own kind; SS-004 templates register w
 test('studio save: a loaded file whose kind is not the registered kind is refused', async () =>
 {
   const savedFiles = {
-    cards: { ...studioSaveDocument(STUDIO_SAVE_FILE_NAMES.cards, { cards: [], removedCardIds: [] }), kind: STUDIO_CARD_TEMPLATES_KIND },
+    cards: { ...StudioSaveDocument(StudioSaveFileNames.Cards, { cards: [], removedCardIds: [] }), kind: StudioCardTemplatesKind },
   };
   const { controller } = setup({ savedFiles });
   await assert.rejects(controller.load(), /has kind "ashenspire.studioCardTemplates", expected "ashenspire.studioCards"/);

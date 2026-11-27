@@ -11,10 +11,10 @@ import {
   STUDIO_SAVE_STATUS,
 } from './studioSave.js';
 import {
-  STUDIO_SAVE_DIR,
-  STUDIO_SAVE_DOWNLOAD_NAME,
-  STUDIO_SAVE_FILES,
-  STUDIO_SAVE_FILE_NAMES,
+  StudioSaveDir,
+  StudioSaveDownloadName,
+  StudioSaveFiles,
+  StudioSaveFileNames,
 } from './studioSaveFiles.js';
 
 const DRAFT_STATUS_ID = 'draft-status';
@@ -22,13 +22,13 @@ const DIRTY_CLASS = 'is-dirty';
 const LOADING_CLASS = 'is-loading';
 const FAILED_PILL_MS = 2500;
 const DRAFT_CARRIED_FILES = Object.freeze([
-  STUDIO_SAVE_FILE_NAMES.cards,
-  STUDIO_SAVE_FILE_NAMES.artLayers,
+  StudioSaveFileNames.Cards,
+  StudioSaveFileNames.ArtLayers,
 ]);
 const TOAST_TEXT = Object.freeze({
-  [STUDIO_SAVE_RESULT.saved]: `Saved Studio cards and art to ${STUDIO_SAVE_DIR}/`,
+  [STUDIO_SAVE_RESULT.saved]: `Saved Studio cards and art to ${StudioSaveDir}/`,
   [STUDIO_SAVE_RESULT.unchanged]: 'No Studio changes since the last Save',
-  [STUDIO_SAVE_RESULT.downloaded]: `Downloaded ${STUDIO_SAVE_DOWNLOAD_NAME}`,
+  [STUDIO_SAVE_RESULT.downloaded]: `Downloaded ${StudioSaveDownloadName}`,
   loadFailed: 'Could not read the Studio save files',
 });
 
@@ -78,8 +78,8 @@ export function initStudioSaveUi(deps)
   let failedUntil = 0;
 
   registerStudioSaveFile({
-    name: STUDIO_SAVE_FILE_NAMES.cards,
-    path: STUDIO_SAVE_FILES.cards.path,
+    name: StudioSaveFileNames.Cards,
+    path: StudioSaveFiles.cards.path,
     read: () => ({
       cards: deps.editedCards(),
       removedCardIds: deps.removedCoreIds(),
@@ -87,8 +87,8 @@ export function initStudioSaveUi(deps)
     apply: (data) => deps.mergeStudioCards(clone(data.cards), data.removedCardIds),
   });
   registerStudioSaveFile({
-    name: STUDIO_SAVE_FILE_NAMES.artLayers,
-    path: STUDIO_SAVE_FILES.artLayers.path,
+    name: StudioSaveFileNames.ArtLayers,
+    path: StudioSaveFiles.artLayers.path,
     read: () => ({
       cardArtLayers: state.artLayers,
       itemArtLayers: state.itemArtLayers,
@@ -154,15 +154,15 @@ export function initStudioSaveUi(deps)
     const scope = draftSaveScope(draft);
     const madeFromThisSave = Boolean(draft.studioSaveRevision) && draft.studioSaveRevision === controller.revision();
     const noSaveYet = !draft.studioSaveRevision && !controller.anyOnDisk();
-    const sameContent = controller.matchesSaved(STUDIO_SAVE_FILE_NAMES.cards, scope.cards)
-      && controller.matchesSaved(STUDIO_SAVE_FILE_NAMES.artLayers, scope.artLayers);
+    const sameContent = controller.matchesSaved(StudioSaveFileNames.Cards, scope.cards)
+      && controller.matchesSaved(StudioSaveFileNames.ArtLayers, scope.artLayers);
     return deps.isLocalServer && !madeFromThisSave && !noSaveYet && !sameContent;
   }
 
   function putSavedFilesIntoDraft(draft)
   {
-    const savedCards = controller.loadedFile(STUDIO_SAVE_FILE_NAMES.cards) ?? { cards: [], removedCardIds: [] };
-    const savedArt = controller.loadedFile(STUDIO_SAVE_FILE_NAMES.artLayers) ?? {
+    const savedCards = controller.loadedFile(StudioSaveFileNames.Cards) ?? { cards: [], removedCardIds: [] };
+    const savedArt = controller.loadedFile(StudioSaveFileNames.ArtLayers) ?? {
       cardArtLayers: state.repoArtLayers,
       itemArtLayers: state.repoItemArtLayers,
     };

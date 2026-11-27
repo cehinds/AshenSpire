@@ -1,16 +1,16 @@
 // tools/score-studio/studioSave.js — File > Save for the Studio's own config (SS-003).
 // Hook: registerStudioSaveFile({ name, path, kind, read, apply }) adds a file to Save, load on start, the pill
-// and the web download. name, path and kind match STUDIO_SAVE_FILES; read() gives the data keys, apply(data) takes them.
+// and the web download. name, path and kind match StudioSaveFiles; read() gives the data keys, apply(data) takes them.
 
 import {
-  STUDIO_SAVE_DOWNLOAD_KIND,
-  STUDIO_SAVE_DOWNLOAD_NAME,
-  STUDIO_SAVE_ENDPOINT,
-  STUDIO_SAVE_FILES,
-  STUDIO_SAVE_FORMAT_VERSION,
-  stableJson,
-  studioSaveData,
-  studioSaveDocument,
+  StudioSaveDownloadKind,
+  StudioSaveDownloadName,
+  StudioSaveEndpoint,
+  StudioSaveFiles,
+  StudioSaveFormatVersion,
+  StableJson,
+  StudioSaveData,
+  StudioSaveDocument,
 } from './studioSaveFiles.js';
 
 export const STUDIO_SAVE_STATUS = Object.freeze({
@@ -43,7 +43,7 @@ export const STUDIO_SAVE_PILL_TEXT = Object.freeze({
 
 const DRAFT_TITLE = 'Studio edits are in the local draft only. File > Save (Ctrl+S) writes:';
 const SAVED_TITLE = 'Saved';
-const WEB_TITLE = `No local server: File > Save (Ctrl+S) downloads ${STUDIO_SAVE_DOWNLOAD_NAME}.`;
+const WEB_TITLE = `No local server: File > Save (Ctrl+S) downloads ${StudioSaveDownloadName}.`;
 const CONTENT_TYPE_HEADER = 'Content-Type';
 const JSON_CONTENT_TYPE = 'application/json';
 const POST_METHOD = 'POST';
@@ -65,11 +65,11 @@ const registeredFiles = new Map();
 
 export function registerStudioSaveFile({ name, path, kind, read, apply })
 {
-  const spec = STUDIO_SAVE_FILES[name];
+  const spec = StudioSaveFiles[name];
   const fileKind = kind ?? spec?.kind;
   if (!spec || spec.path !== path || spec.kind !== fileKind)
   {
-    throw new Error(`Unknown Studio Save file "${name}" (${path}, ${fileKind}). Add it to STUDIO_SAVE_FILES first.`);
+    throw new Error(`Unknown Studio Save file "${name}" (${path}, ${fileKind}). Add it to StudioSaveFiles first.`);
   }
   if (typeof read !== 'function')
   {
@@ -112,7 +112,7 @@ export function createStudioSave({ isLocalServer, fetchJson, download, now = () 
   const loadedData = new Map();
 
   const files = () => registeredStudioSaveFiles();
-  const currentJson = (file) => stableJson(file.read());
+  const currentJson = (file) => StableJson(file.read());
   const changedFiles = () => files().filter((file) => lastSavedJson.get(file.name) !== currentJson(file));
   const pathList = () => files().map((file) => file.path).join(LINE_BREAK);
 
@@ -129,9 +129,9 @@ export function createStudioSave({ isLocalServer, fetchJson, download, now = () 
     {
       throw new Error(`${file.path} has kind "${document.kind}", expected "${file.kind}".`);
     }
-    const data = studioSaveData(file.name, document);
+    const data = StudioSaveData(file.name, document);
     loadedData.set(file.name, data);
-    lastSavedJson.set(file.name, stableJson(data));
+    lastSavedJson.set(file.name, StableJson(data));
     onDisk.set(file.name, true);
     lastSavedAt = latestTime(lastSavedAt, document.savedAt);
   }
@@ -142,7 +142,7 @@ export function createStudioSave({ isLocalServer, fetchJson, download, now = () 
     {
       return null;
     }
-    const reply = await fetchJson(STUDIO_SAVE_ENDPOINT, { cache: NO_STORE });
+    const reply = await fetchJson(StudioSaveEndpoint, { cache: NO_STORE });
     if (reply.status !== HTTP_OK || !reply.json?.ok)
     {
       throw new Error(reply.json?.error || `Could not read the Studio save files (${reply.status}).`);
@@ -190,7 +190,7 @@ export function createStudioSave({ isLocalServer, fetchJson, download, now = () 
 
   function matchesSaved(name, data)
   {
-    return lastSavedJson.get(name) === stableJson(data);
+    return lastSavedJson.get(name) === StableJson(data);
   }
 
   function status()
@@ -234,7 +234,7 @@ export function createStudioSave({ isLocalServer, fetchJson, download, now = () 
 
   function documentsToSave(savedAt)
   {
-    return Object.fromEntries(files().map((file) => [file.name, studioSaveDocument(file.name, file.read(), savedAt, file.kind)]));
+    return Object.fromEntries(files().map((file) => [file.name, StudioSaveDocument(file.name, file.read(), savedAt, file.kind)]));
   }
 
   function markSaved(savedAt)
@@ -250,9 +250,9 @@ export function createStudioSave({ isLocalServer, fetchJson, download, now = () 
   function downloadAll()
   {
     const savedAt = now();
-    download(STUDIO_SAVE_DOWNLOAD_NAME, {
-      kind: STUDIO_SAVE_DOWNLOAD_KIND,
-      formatVersion: STUDIO_SAVE_FORMAT_VERSION,
+    download(StudioSaveDownloadName, {
+      kind: StudioSaveDownloadKind,
+      formatVersion: StudioSaveFormatVersion,
       savedAt,
       files: documentsToSave(savedAt),
     });
@@ -263,7 +263,7 @@ export function createStudioSave({ isLocalServer, fetchJson, download, now = () 
   {
     try
     {
-      return await fetchJson(STUDIO_SAVE_ENDPOINT, {
+      return await fetchJson(StudioSaveEndpoint, {
         method: POST_METHOD,
         headers: { [CONTENT_TYPE_HEADER]: JSON_CONTENT_TYPE },
         body: JSON.stringify({ revision, files: documentsToSave(null) }),

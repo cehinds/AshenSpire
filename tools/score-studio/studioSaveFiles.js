@@ -1,70 +1,91 @@
-// tools/score-studio/studioSaveFiles.js — the fixed files the Studio's own Save writes (SS-003).
-// Shared by the browser Studio and tools/score-studio-save.mjs, so both name the same paths, kinds and keys.
+// The fixed files the Studio's own Save writes. The browser Studio and
+// tools/score-studio-save.mjs share them, so both name the same paths, kinds and keys.
 
-export const STUDIO_SAVE_FORMAT_VERSION = 1;
-export const STUDIO_SAVE_DIR = 'content/source/studio';
-export const STUDIO_SAVE_ENDPOINT = '/__studio/studio-save';
-export const STUDIO_SAVE_MAX_BYTES = 4 * 1024 * 1024;
-export const STUDIO_SAVE_DOWNLOAD_NAME = 'ashenspire-studio-save.json';
-export const STUDIO_SAVE_DOWNLOAD_KIND = 'ashenspire.studioSave';
-export const STUDIO_CARDS_KIND = 'ashenspire.studioCards';
-export const STUDIO_ART_LAYERS_KIND = 'ashenspire.studioArtLayers';
-export const STUDIO_CARD_TEMPLATES_KIND = 'ashenspire.studioCardTemplates';
+const bytesPerMebibyte = 1024 * 1024;
+const jsonExtension = '.json';
+const kindKey = 'kind';
+const formatVersionKey = 'formatVersion';
+const savedAtKey = 'savedAt';
 
-const KIND_KEY = 'kind';
-const FORMAT_VERSION_KEY = 'formatVersion';
-const SAVED_AT_KEY = 'savedAt';
+export const StudioSaveFormatVersion = 1;
+export const StudioSaveDir = 'content/source/studio';
+export const StudioSaveEndpoint = '/__studio/studio-save';
+export const StudioSaveMaxBytes = 4 * bytesPerMebibyte;
+export const StudioSaveDownloadName = 'ashenspire-studio-save.json';
+export const StudioSaveDownloadKind = 'ashenspire.studioSave';
+export const StudioCardsKind = 'ashenspire.studioCards';
+export const StudioArtLayersKind = 'ashenspire.studioArtLayers';
+export const StudioCardTemplatesKind = 'ashenspire.studioCardTemplates';
 
-export const STUDIO_SAVE_FILE_NAMES = Object.freeze({
-  cards: 'cards',
-  artLayers: 'artLayers',
-  templates: 'templates',
+export const StudioSaveFileNames = Object.freeze({
+  Cards: 'cards',
+  ArtLayers: 'artLayers',
+  Templates: 'templates',
 });
 
-export const STUDIO_SAVE_FILES = Object.freeze({
-  [STUDIO_SAVE_FILE_NAMES.cards]: Object.freeze({
-    path: `${STUDIO_SAVE_DIR}/cards.json`,
-    kind: STUDIO_CARDS_KIND,
-    dataKeys: Object.freeze(['cards', 'removedCardIds']),
+export const StudioSaveFiles = Object.freeze({
+  [StudioSaveFileNames.Cards]: Object.freeze({
+    path: studioSavePath(StudioSaveFileNames.Cards),
+    kind: StudioCardsKind,
+    dataKeys: Object.freeze([
+      'cards',
+      'removedCardIds',
+    ]),
     stampsSavedAt: true,
   }),
-  [STUDIO_SAVE_FILE_NAMES.artLayers]: Object.freeze({
-    path: `${STUDIO_SAVE_DIR}/artLayers.json`,
-    kind: STUDIO_ART_LAYERS_KIND,
-    dataKeys: Object.freeze(['cardArtLayers', 'itemArtLayers']),
+  [StudioSaveFileNames.ArtLayers]: Object.freeze({
+    path: studioSavePath(StudioSaveFileNames.ArtLayers),
+    kind: StudioArtLayersKind,
+    dataKeys: Object.freeze([
+      'cardArtLayers',
+      'itemArtLayers',
+    ]),
     stampsSavedAt: true,
   }),
-  // SS-004 owns this format: the same shape as template Import and Export, with no savedAt.
-  [STUDIO_SAVE_FILE_NAMES.templates]: Object.freeze({
-    path: `${STUDIO_SAVE_DIR}/templates.json`,
-    kind: STUDIO_CARD_TEMPLATES_KIND,
+  // Templates keep the template Import and Export shape, with no savedAt.
+  [StudioSaveFileNames.Templates]: Object.freeze({
+    path: studioSavePath(StudioSaveFileNames.Templates),
+    kind: StudioCardTemplatesKind,
     dataKeys: Object.freeze(['templates']),
     stampsSavedAt: false,
   }),
 });
 
-/** The header keys a file's document carries before its data keys. */
-export function studioSaveHeaderKeys(name)
+function studioSavePath(fileName)
 {
-  const headerKeys = [KIND_KEY, FORMAT_VERSION_KEY];
-  if (STUDIO_SAVE_FILES[name].stampsSavedAt)
+  return `${StudioSaveDir}/${fileName}${jsonExtension}`;
+}
+
+/** The header keys a file's document carries before its data keys. */
+export function StudioSaveHeaderKeys(name)
+{
+  const headerKeys = [
+    kindKey,
+    formatVersionKey,
+  ];
+  if (StudioSaveFiles[name].stampsSavedAt)
   {
-    headerKeys.push(SAVED_AT_KEY);
+    headerKeys.push(savedAtKey);
   }
   return headerKeys;
 }
 
 /** The file's JSON: the header first, then its data keys in their fixed order. */
-export function studioSaveDocument(name, data, savedAt, kind = STUDIO_SAVE_FILES[name].kind)
+export function StudioSaveDocument(
+  name,
+  data,
+  savedAt,
+  kind = StudioSaveFiles[name].kind,
+)
 {
-  const spec = STUDIO_SAVE_FILES[name];
+  const spec = StudioSaveFiles[name];
   const document = {
-    [KIND_KEY]: kind,
-    [FORMAT_VERSION_KEY]: STUDIO_SAVE_FORMAT_VERSION,
+    [kindKey]: kind,
+    [formatVersionKey]: StudioSaveFormatVersion,
   };
   if (spec.stampsSavedAt)
   {
-    document[SAVED_AT_KEY] = savedAt;
+    document[savedAtKey] = savedAt;
   }
   for (const key of spec.dataKeys)
   {
@@ -74,10 +95,10 @@ export function studioSaveDocument(name, data, savedAt, kind = STUDIO_SAVE_FILES
 }
 
 /** The data keys of a saved document, without its header: what a Save compares and applies. */
-export function studioSaveData(name, document)
+export function StudioSaveData(name, document)
 {
   const data = {};
-  for (const key of STUDIO_SAVE_FILES[name].dataKeys)
+  for (const key of StudioSaveFiles[name].dataKeys)
   {
     data[key] = document[key];
   }
@@ -85,18 +106,18 @@ export function studioSaveData(name, document)
 }
 
 /** JSON with object keys sorted, so equal content compares equal whatever order it was built in. */
-export function stableJson(value)
+export function StableJson(value)
 {
   if (Array.isArray(value))
   {
-    return `[${value.map(stableJson).join(',')}]`;
+    return `[${value.map(StableJson).join(',')}]`;
   }
   if (value && typeof value === 'object')
   {
     const entries = Object.keys(value)
       .filter((key) => value[key] !== undefined)
       .sort()
-      .map((key) => `${JSON.stringify(key)}:${stableJson(value[key])}`);
+      .map((key) => `${JSON.stringify(key)}:${StableJson(value[key])}`);
     return `{${entries.join(',')}}`;
   }
   return JSON.stringify(value ?? null);

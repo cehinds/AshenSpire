@@ -12,13 +12,13 @@ import { expansionStatuses } from '../src/content/combatStatusRules.js';
 import { createHash } from 'node:crypto';
 import { writeFileAtomic } from './lib/write-atomic.mjs';
 import {
-  STUDIO_SAVE_FILES,
-  STUDIO_SAVE_FILE_NAMES,
-  STUDIO_SAVE_FORMAT_VERSION,
-  studioSaveData,
-  studioSaveDocument,
-  studioSaveHeaderKeys,
-  stableJson,
+  StudioSaveFiles,
+  StudioSaveFileNames,
+  StudioSaveFormatVersion,
+  StudioSaveData,
+  StudioSaveDocument,
+  StudioSaveHeaderKeys,
+  StableJson,
 } from './score-studio/studioSaveFiles.js';
 
 export const DEFAULT_SCORING_PATH = 'content/source/scoring.json';
@@ -315,7 +315,7 @@ function saveSubclassCatalogLocked(rootDir, { catalog, rebuild, env }) {
 }
 
 // ---------------------------------------------------------------------------
-// Studio Save (SS-003): the Studio's own config, in the fixed STUDIO_SAVE_FILES only.
+// Studio Save (SS-003): the Studio's own config, in the fixed StudioSaveFiles only.
 // ---------------------------------------------------------------------------
 
 const STUDIO_SAVE_LABEL = 'Studio save';
@@ -392,7 +392,7 @@ function requireLayerSet(value, where)
 }
 
 const STUDIO_SAVE_DATA_CHECKS = Object.freeze({
-  [STUDIO_SAVE_FILE_NAMES.cards]: (data) =>
+  [StudioSaveFileNames.Cards]: (data) =>
   {
     requireArrayOf(data.cards, isCardObject, 'cards must be an array of card objects, each with an id.');
     if (new Set(data.cards.map((card) => card.id)).size !== data.cards.length)
@@ -401,12 +401,12 @@ const STUDIO_SAVE_DATA_CHECKS = Object.freeze({
     }
     requireArrayOf(data.removedCardIds, isNonEmptyString, 'removedCardIds must be an array of card ids.');
   },
-  [STUDIO_SAVE_FILE_NAMES.artLayers]: (data) =>
+  [StudioSaveFileNames.ArtLayers]: (data) =>
   {
     requireLayerSet(data.cardArtLayers, 'cardArtLayers');
     requireLayerSet(data.itemArtLayers, 'itemArtLayers');
   },
-  [STUDIO_SAVE_FILE_NAMES.templates]: (data) =>
+  [StudioSaveFileNames.Templates]: (data) =>
   {
     requireArrayOf(data.templates, isPlainObject, 'templates must be an array of objects.');
   },
@@ -415,35 +415,35 @@ const STUDIO_SAVE_DATA_CHECKS = Object.freeze({
 /** Checks one file's document as the Studio sent it and returns its data keys. */
 function validateStudioSaveDocument(name, document)
 {
-  const spec = STUDIO_SAVE_FILES[name];
-  requireExactKeys(document, [...studioSaveHeaderKeys(name), ...spec.dataKeys], name);
+  const spec = StudioSaveFiles[name];
+  requireExactKeys(document, [...StudioSaveHeaderKeys(name), ...spec.dataKeys], name);
   if (document.kind !== spec.kind)
   {
     refuse(`${name} must have kind "${spec.kind}".`);
   }
-  if (document.formatVersion !== STUDIO_SAVE_FORMAT_VERSION)
+  if (document.formatVersion !== StudioSaveFormatVersion)
   {
-    refuse(`${name} must have formatVersion ${STUDIO_SAVE_FORMAT_VERSION}.`);
+    refuse(`${name} must have formatVersion ${StudioSaveFormatVersion}.`);
   }
   const missingKeys = spec.dataKeys.filter((key) => !(key in document));
   if (missingKeys.length)
   {
     refuse(`${name} is missing ${missingKeys.join(', ')}.`);
   }
-  const data = studioSaveData(name, document);
+  const data = StudioSaveData(name, document);
   STUDIO_SAVE_DATA_CHECKS[name](data);
   return data;
 }
 
 function studioSaveSerialize(name, data, savedAt)
 {
-  return JSON.stringify(studioSaveDocument(name, data, savedAt), null, JSON_INDENT) + LINE_END;
+  return JSON.stringify(StudioSaveDocument(name, data, savedAt), null, JSON_INDENT) + LINE_END;
 }
 
 function studioSaveRevisionOf(bytesByName)
 {
   const hash = createHash(HASH_ALGORITHM);
-  for (const name of Object.keys(STUDIO_SAVE_FILES))
+  for (const name of Object.keys(StudioSaveFiles))
   {
     hash.update(`${name}${LINE_END}${bytesByName[name] ?? ABSENT_FILE_MARK}${LINE_END}`);
   }
@@ -453,7 +453,7 @@ function studioSaveRevisionOf(bytesByName)
 function readStudioSaveBytes(pathOf)
 {
   const bytesByName = {};
-  for (const [name, spec] of Object.entries(STUDIO_SAVE_FILES))
+  for (const [name, spec] of Object.entries(StudioSaveFiles))
   {
     const target = pathOf(spec.path);
     bytesByName[name] = existsSync(target)
@@ -477,7 +477,7 @@ export function readStudioSave(rootDir)
   const bytesByName = readStudioSaveBytes(pathOf);
   const files = {};
   const paths = {};
-  for (const [name, spec] of Object.entries(STUDIO_SAVE_FILES))
+  for (const [name, spec] of Object.entries(StudioSaveFiles))
   {
     paths[name] = spec.path;
     files[name] = parseOrNull(bytesByName[name]);
@@ -512,7 +512,7 @@ function validateStudioSaveRequest(body)
   {
     refuse('revision must be the revision the Studio loaded.');
   }
-  requireExactKeys(body.files, Object.keys(STUDIO_SAVE_FILES), 'files');
+  requireExactKeys(body.files, Object.keys(StudioSaveFiles), 'files');
   const names = Object.keys(body.files);
   if (!names.length)
   {
@@ -540,14 +540,14 @@ export function saveStudioSave(rootDir, body, { writeFile = writeFileAtomic, now
   for (const [name, data] of Object.entries(dataByName))
   {
     const prior = parseOrNull(priorBytes[name]);
-    if (prior && stableJson(studioSaveData(name, prior)) === stableJson(data))
+    if (prior && StableJson(StudioSaveData(name, prior)) === StableJson(data))
     {
       unchanged.push(name);
       continue;
     }
     writes.push({
       name,
-      target: pathOf(STUDIO_SAVE_FILES[name].path),
+      target: pathOf(StudioSaveFiles[name].path),
       bytes: studioSaveSerialize(name, data, savedAt),
     });
   }

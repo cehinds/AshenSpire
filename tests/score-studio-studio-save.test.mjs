@@ -10,14 +10,14 @@ import { request as httpRequest } from 'node:http';
 import { serve } from '../tools/serve.mjs';
 import { readStudioSave, saveStudioSave, STUDIO_SAVE_STALE_MESSAGE } from '../tools/score-studio-save.mjs';
 import {
-  STUDIO_CARD_TEMPLATES_KIND,
-  STUDIO_SAVE_DIR,
-  STUDIO_SAVE_ENDPOINT,
-  STUDIO_SAVE_FILES,
-  STUDIO_SAVE_FILE_NAMES,
-  STUDIO_SAVE_FORMAT_VERSION,
-  STUDIO_SAVE_MAX_BYTES,
-  studioSaveDocument,
+  StudioCardTemplatesKind,
+  StudioSaveDir,
+  StudioSaveEndpoint,
+  StudioSaveFiles,
+  StudioSaveFileNames,
+  StudioSaveFormatVersion,
+  StudioSaveMaxBytes,
+  StudioSaveDocument,
 } from '../tools/score-studio/studioSaveFiles.js';
 
 const TEMP_PREFIX = 'ashen-studio-save-';
@@ -47,7 +47,7 @@ function withTempRepo(run)
 
 function cardsDocument(cardName = 'QA save card')
 {
-  return studioSaveDocument(STUDIO_SAVE_FILE_NAMES.cards, {
+  return StudioSaveDocument(StudioSaveFileNames.Cards, {
     cards: [{ id: QA_CARD_ID, name: cardName, _custom: true, _edited: true }],
     removedCardIds: ['reaver.strike'],
   });
@@ -55,7 +55,7 @@ function cardsDocument(cardName = 'QA save card')
 
 function artLayersDocument()
 {
-  return studioSaveDocument(STUDIO_SAVE_FILE_NAMES.artLayers, {
+  return StudioSaveDocument(StudioSaveFileNames.ArtLayers, {
     cardArtLayers: CARD_ART_LAYERS,
     itemArtLayers: ITEM_ART_LAYERS,
   });
@@ -66,24 +66,24 @@ function saveBody(revision, cardName)
   return {
     revision,
     files: {
-      [STUDIO_SAVE_FILE_NAMES.cards]: cardsDocument(cardName),
-      [STUDIO_SAVE_FILE_NAMES.artLayers]: artLayersDocument(),
+      [StudioSaveFileNames.Cards]: cardsDocument(cardName),
+      [StudioSaveFileNames.ArtLayers]: artLayersDocument(),
     },
   };
 }
 
-const fileOf = (root, name) => join(root, ...STUDIO_SAVE_FILES[name].path.split('/'));
+const fileOf = (root, name) => join(root, ...StudioSaveFiles[name].path.split('/'));
 const bytesOf = (root, name) => readFileSync(fileOf(root, name), 'utf8');
-const studioDirOf = (root) => join(root, ...STUDIO_SAVE_DIR.split('/'));
+const studioDirOf = (root) => join(root, ...StudioSaveDir.split('/'));
 const fixedClock = { now: () => FIXED_TIME };
 
 test('studio save: the fixed paths sit in content/source/studio/ and nothing else', () =>
 {
-  for (const spec of Object.values(STUDIO_SAVE_FILES))
+  for (const spec of Object.values(StudioSaveFiles))
   {
     assert.match(spec.path, /^content\/source\/studio\/[A-Za-z]+\.json$/);
   }
-  assert.deepEqual(Object.values(STUDIO_SAVE_FILES).map((spec) => spec.path), [
+  assert.deepEqual(Object.values(StudioSaveFiles).map((spec) => spec.path), [
     'content/source/studio/cards.json',
     'content/source/studio/artLayers.json',
     'content/source/studio/templates.json',
@@ -97,16 +97,16 @@ test('studio save: a first save writes both files with kind, formatVersion and t
     const empty = readStudioSave(root);
     assert.deepEqual(Object.values(empty.files), [null, null, null]);
     const result = saveStudioSave(root, saveBody(empty.revision), fixedClock);
-    assert.deepEqual(result.written, [STUDIO_SAVE_FILE_NAMES.cards, STUDIO_SAVE_FILE_NAMES.artLayers]);
+    assert.deepEqual(result.written, [StudioSaveFileNames.Cards, StudioSaveFileNames.ArtLayers]);
     assert.equal(result.savedAt, FIXED_TIME);
-    const cards = JSON.parse(bytesOf(root, STUDIO_SAVE_FILE_NAMES.cards));
+    const cards = JSON.parse(bytesOf(root, StudioSaveFileNames.Cards));
     assert.equal(cards.kind, STORY_CARDS_KIND);
-    assert.equal(cards.formatVersion, STUDIO_SAVE_FORMAT_VERSION);
+    assert.equal(cards.formatVersion, StudioSaveFormatVersion);
     assert.equal(cards.savedAt, FIXED_TIME);
     assert.deepEqual(Object.keys(cards), ['kind', 'formatVersion', 'savedAt', 'cards', 'removedCardIds']);
     assert.equal(cards.cards[0].id, QA_CARD_ID);
     assert.equal(cards.cards[0]._custom, true, 'Studio _ flags are kept, as the draft keeps them');
-    const art = JSON.parse(bytesOf(root, STUDIO_SAVE_FILE_NAMES.artLayers));
+    const art = JSON.parse(bytesOf(root, StudioSaveFileNames.ArtLayers));
     assert.equal(art.kind, STORY_ART_LAYERS_KIND);
     assert.deepEqual(art.cardArtLayers, CARD_ART_LAYERS);
     assert.deepEqual(readdirSync(studioDirOf(root)).sort(), ['artLayers.json', 'cards.json'], 'no temp file is left');
@@ -120,12 +120,12 @@ test('studio save: a save with no data change keeps every byte, savedAt included
   withTempRepo((root) =>
   {
     const first = saveStudioSave(root, saveBody(readStudioSave(root).revision), fixedClock);
-    const before = bytesOf(root, STUDIO_SAVE_FILE_NAMES.cards);
+    const before = bytesOf(root, StudioSaveFileNames.Cards);
     const again = saveStudioSave(root, saveBody(first.revision), { now: () => LATER_TIME });
     assert.deepEqual(again.written, []);
     assert.equal(again.savedAt, null);
     assert.equal(again.revision, first.revision);
-    assert.equal(bytesOf(root, STUDIO_SAVE_FILE_NAMES.cards), before);
+    assert.equal(bytesOf(root, StudioSaveFileNames.Cards), before);
   });
 });
 
@@ -135,13 +135,13 @@ test('studio save: a stale revision is refused with 409 and the files keep their
   {
     const loadedByTabTwo = readStudioSave(root).revision;
     saveStudioSave(root, saveBody(loadedByTabTwo, 'Tab one'), fixedClock);
-    const tabOneBytes = bytesOf(root, STUDIO_SAVE_FILE_NAMES.cards);
+    const tabOneBytes = bytesOf(root, StudioSaveFileNames.Cards);
     assert.throws(
       () => saveStudioSave(root, saveBody(loadedByTabTwo, 'Tab two'), fixedClock),
       (error) => error.statusCode === HTTP_CONFLICT && error.message === STUDIO_SAVE_STALE_MESSAGE,
     );
     assert.throws(() => saveStudioSave(root, saveBody(STALE_REVISION), fixedClock), (error) => error.statusCode === HTTP_CONFLICT);
-    assert.equal(bytesOf(root, STUDIO_SAVE_FILE_NAMES.cards), tabOneBytes);
+    assert.equal(bytesOf(root, StudioSaveFileNames.Cards), tabOneBytes);
   });
 });
 
@@ -155,13 +155,13 @@ test('studio save: a path, an unknown file, extra keys and bad shapes are refuse
       { revision, files: { '../package.json': cardsDocument() } },
       { revision, files: { scoring: cardsDocument() } },
       { revision, files: {} },
-      { revision, files: { [STUDIO_SAVE_FILE_NAMES.cards]: { ...cardsDocument(), path: 'package.json' } } },
-      { revision, files: { [STUDIO_SAVE_FILE_NAMES.cards]: { ...cardsDocument(), selectedCardId: QA_CARD_ID } } },
-      { revision, files: { [STUDIO_SAVE_FILE_NAMES.cards]: { ...cardsDocument(), kind: STORY_ART_LAYERS_KIND } } },
-      { revision, files: { [STUDIO_SAVE_FILE_NAMES.cards]: { ...cardsDocument(), formatVersion: 2 } } },
-      { revision, files: { [STUDIO_SAVE_FILE_NAMES.cards]: { ...cardsDocument(), cards: [{ name: 'no id' }] } } },
-      { revision, files: { [STUDIO_SAVE_FILE_NAMES.cards]: { ...cardsDocument(), removedCardIds: [7] } } },
-      { revision, files: { [STUDIO_SAVE_FILE_NAMES.artLayers]: { ...artLayersDocument(), cardArtLayers: {} } } },
+      { revision, files: { [StudioSaveFileNames.Cards]: { ...cardsDocument(), path: 'package.json' } } },
+      { revision, files: { [StudioSaveFileNames.Cards]: { ...cardsDocument(), selectedCardId: QA_CARD_ID } } },
+      { revision, files: { [StudioSaveFileNames.Cards]: { ...cardsDocument(), kind: STORY_ART_LAYERS_KIND } } },
+      { revision, files: { [StudioSaveFileNames.Cards]: { ...cardsDocument(), formatVersion: 2 } } },
+      { revision, files: { [StudioSaveFileNames.Cards]: { ...cardsDocument(), cards: [{ name: 'no id' }] } } },
+      { revision, files: { [StudioSaveFileNames.Cards]: { ...cardsDocument(), removedCardIds: [7] } } },
+      { revision, files: { [StudioSaveFileNames.ArtLayers]: { ...artLayersDocument(), cardArtLayers: {} } } },
       { files: saveBody(revision).files },
       null,
     ];
@@ -178,10 +178,10 @@ test('studio save: a failed second write puts the first file back and leaves no 
   withTempRepo((root) =>
   {
     const first = saveStudioSave(root, saveBody(readStudioSave(root).revision, 'Saved name'), fixedClock);
-    const cardsBefore = bytesOf(root, STUDIO_SAVE_FILE_NAMES.cards);
-    const artBefore = bytesOf(root, STUDIO_SAVE_FILE_NAMES.artLayers);
+    const cardsBefore = bytesOf(root, StudioSaveFileNames.Cards);
+    const artBefore = bytesOf(root, StudioSaveFileNames.ArtLayers);
     const changed = saveBody(first.revision, 'Unsaved name');
-    changed.files[STUDIO_SAVE_FILE_NAMES.artLayers].itemArtLayers = { version: 1, layers: [{ id: 'itemLayer' }] };
+    changed.files[StudioSaveFileNames.ArtLayers].itemArtLayers = { version: 1, layers: [{ id: 'itemLayer' }] };
     let writeCount = 0;
     const failingSecondWrite = (target, bytes) =>
     {
@@ -193,8 +193,8 @@ test('studio save: a failed second write puts the first file back and leaves no 
       writeFileSync(target, bytes);
     };
     assert.throws(() => saveStudioSave(root, changed, { now: () => LATER_TIME, writeFile: failingSecondWrite }), /rolled back: disk full/);
-    assert.equal(bytesOf(root, STUDIO_SAVE_FILE_NAMES.cards), cardsBefore);
-    assert.equal(bytesOf(root, STUDIO_SAVE_FILE_NAMES.artLayers), artBefore);
+    assert.equal(bytesOf(root, StudioSaveFileNames.Cards), cardsBefore);
+    assert.equal(bytesOf(root, StudioSaveFileNames.ArtLayers), artBefore);
     assert.deepEqual(readdirSync(studioDirOf(root)).sort(), ['artLayers.json', 'cards.json']);
     assert.equal(readStudioSave(root).revision, first.revision);
   });
@@ -295,7 +295,7 @@ async function withTempRepoAsync(run)
   }
 }
 
-function send(port, { method = 'GET', path = STUDIO_SAVE_ENDPOINT, body = null, origin = `http://${LOOPBACK}:${port}`, contentType = JSON_TYPE } = {})
+function send(port, { method = 'GET', path = StudioSaveEndpoint, body = null, origin = `http://${LOOPBACK}:${port}`, contentType = JSON_TYPE } = {})
 {
   return new Promise((resolveReply, rejectReply) =>
   {
@@ -330,10 +330,10 @@ test('studio save endpoint: GET reads, POST saves the two fixed files and nothin
   {
     const loaded = await send(port);
     assert.equal(loaded.status, HTTP_OK);
-    assert.equal(loaded.json.paths.cards, STUDIO_SAVE_FILES.cards.path);
+    assert.equal(loaded.json.paths.cards, StudioSaveFiles.cards.path);
     const saved = await send(port, { method: 'POST', body: saveBody(loaded.json.revision) });
     assert.equal(saved.status, HTTP_OK, JSON.stringify(saved.json));
-    assert.deepEqual(saved.json.written, [STUDIO_SAVE_FILE_NAMES.cards, STUDIO_SAVE_FILE_NAMES.artLayers]);
+    assert.deepEqual(saved.json.written, [StudioSaveFileNames.Cards, StudioSaveFileNames.ArtLayers]);
     assert.deepEqual(readdirSync(studioDirOf(root)).sort(), ['artLayers.json', 'cards.json']);
     assert.deepEqual(readdirSync(root).sort(), ['content']);
     const stale = await send(port, { method: 'POST', body: saveBody(loaded.json.revision, 'Stale tab') });
@@ -347,12 +347,12 @@ test('studio save endpoint: paths, .. segments, extra keys, oversize bodies and 
   await withServer({ editorWrite: true }, async ({ root, port }) =>
   {
     const { revision } = (await send(port)).json;
-    const oversize = JSON.stringify({ ...saveBody(revision), padding: 'x'.repeat(STUDIO_SAVE_MAX_BYTES) });
+    const oversize = JSON.stringify({ ...saveBody(revision), padding: 'x'.repeat(StudioSaveMaxBytes) });
     const refusals = [
       { method: 'POST', body: { ...saveBody(revision), path: 'package.json' }, status: HTTP_BAD_REQUEST },
       { method: 'POST', body: { revision, files: { '../../package.json': cardsDocument() } }, status: HTTP_BAD_REQUEST },
-      { method: 'POST', path: `${STUDIO_SAVE_ENDPOINT}?path=../package.json`, body: { revision, files: { [STUDIO_SAVE_FILE_NAMES.cards]: { ...cardsDocument(), extra: true } } }, status: HTTP_BAD_REQUEST },
-      { method: 'POST', path: `${STUDIO_SAVE_ENDPOINT}/../package.json`, body: saveBody(revision), status: null },
+      { method: 'POST', path: `${StudioSaveEndpoint}?path=../package.json`, body: { revision, files: { [StudioSaveFileNames.Cards]: { ...cardsDocument(), extra: true } } }, status: HTTP_BAD_REQUEST },
+      { method: 'POST', path: `${StudioSaveEndpoint}/../package.json`, body: saveBody(revision), status: null },
       { method: 'POST', body: oversize, status: HTTP_BAD_REQUEST },
       { method: 'POST', body: saveBody(revision), origin: 'http://evil.example', status: HTTP_FORBIDDEN },
       { method: 'POST', body: saveBody(revision), contentType: TEXT_TYPE, status: HTTP_FORBIDDEN },
@@ -389,12 +389,12 @@ test('studio save: templates.json is saved in its own shape, kind and no savedAt
   withTempRepo((root) =>
   {
     const templates = [{ id: 'qaTemplate' }];
-    const document = studioSaveDocument(STUDIO_SAVE_FILE_NAMES.templates, { templates });
-    assert.deepEqual(document, { kind: STUDIO_CARD_TEMPLATES_KIND, formatVersion: STUDIO_SAVE_FORMAT_VERSION, templates });
+    const document = StudioSaveDocument(StudioSaveFileNames.Templates, { templates });
+    assert.deepEqual(document, { kind: StudioCardTemplatesKind, formatVersion: StudioSaveFormatVersion, templates });
     const { revision } = readStudioSave(root);
     assert.throws(() => saveStudioSave(root, { revision, files: { templates: { ...document, savedAt: FIXED_TIME } } }, fixedClock), /keys that are not allowed: savedAt/);
     assert.throws(() => saveStudioSave(root, { revision, files: { templates: { ...document, kind: RETIRED_TEMPLATES_KIND } } }, fixedClock), /must have kind "ashenspire.studioCardTemplates"/);
     saveStudioSave(root, { revision, files: { templates: document } }, fixedClock);
-    assert.deepEqual(JSON.parse(bytesOf(root, STUDIO_SAVE_FILE_NAMES.templates)), document);
+    assert.deepEqual(JSON.parse(bytesOf(root, StudioSaveFileNames.Templates)), document);
   });
 });
