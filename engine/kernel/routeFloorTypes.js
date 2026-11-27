@@ -99,9 +99,9 @@ function sureFreeDepths(context, pinned, first, last) {
   const range = depthRange(first, last);
   const plain = range.filter(depth => !restDepths.has(depth) && !pinned.has(depth));
   let count = plain.length;
-  for (const window of windows) {
-    const inside = range.filter(depth => depth >= window.first && depth <= window.last);
-    count += Math.max(0, inside.length - window.rests);
+  for (const restWindow of windows) {
+    const inside = range.filter(depth => depth >= restWindow.first && depth <= restWindow.last);
+    count += Math.max(0, inside.length - restWindow.rests);
   }
   return { count, plain };
 }
