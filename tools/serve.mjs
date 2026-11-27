@@ -52,11 +52,11 @@ import { sourceDigest, stampSource, readOrdinal, padOrdinal, VERSION_MODULE, RUN
 import { saveFirstStepDefaults } from './prologue-editor-save.mjs';
 import {
   readStudioConfig,
-  readStudioSave,
+  ReadStudioSave,
   saveStudioArtLayers,
   saveStudioDecks,
   saveStudioItemArtLayers,
-  saveStudioSave,
+  SaveStudioSave,
   saveStudioScoring,
   saveStudioSubclassCatalog,
 } from './score-studio-save.mjs';
@@ -500,7 +500,7 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, editorWrite =
         {
           try
           {
-            reply(200, { ok: true, ...readStudioSave(rootResolved) });
+            reply(200, { ok: true, ...ReadStudioSave(rootResolved) });
           }
           catch (error)
           {
@@ -527,7 +527,7 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, editorWrite =
           const body = JSON.parse(Buffer.concat(chunks).toString('utf8'));
           if (urlPath === StudioSaveEndpoint)
           {
-            reply(200, { ok: true, ...saveStudioSave(rootResolved, body) });
+            reply(200, { ok: true, ...SaveStudioSave(rootResolved, body) });
           }
           else if (urlPath === '/__studio/subclass-catalog') {
             reply(200, { ok: true, ...saveStudioSubclassCatalog(rootResolved, body) });

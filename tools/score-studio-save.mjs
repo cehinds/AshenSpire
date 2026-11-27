@@ -26,6 +26,31 @@ export const DEFAULT_ART_LAYERS_PATH = 'content/source/cardArtLayers.json';
 export const DEFAULT_ITEM_ART_LAYERS_PATH = 'content/source/itemArtLayers.json';
 export const DEFAULT_CUSTOM_DECKS_PATH = 'content/source/studioDecks.json';
 
+const subclassExportLabel = 'Subclass export';
+const parentSegment = '..';
+const missingFileCode = 'ENOENT';
+const studioSaveLabel = 'Studio save';
+const studioSaveRequestKeys = Object.freeze([
+  'revision',
+  'files',
+]);
+const absentFileMark = '<absent>';
+const lineEnd = '\n';
+const jsonIndent = 2;
+const hashAlgorithm = 'sha256';
+const hashEncoding = 'hex';
+const textEncoding = 'utf8';
+const httpBadRequest = 400;
+const httpConflict = 409;
+const studioSaveDataChecks = Object.freeze({
+  [StudioSaveFileNames.Cards]: checkCardsData,
+  [StudioSaveFileNames.ArtLayers]: checkArtLayersData,
+  [StudioSaveFileNames.Templates]: checkTemplatesData,
+});
+
+export const StudioSaveStaleMessage = 'The Studio save files changed since this Studio loaded them'
+  + ' (another tab, or a git pull). Reload to see them; your draft is kept.';
+
 function resolveRepoPath(rootDir, relPath, fallback) {
   const chosen = typeof relPath === 'string' && relPath.trim() ? relPath.trim() : fallback;
   const cleaned = chosen.replace(/\\/g, '/').replace(/^\/+/, '');
@@ -169,13 +194,48 @@ export function saveStudioSubclassCatalog(rootDir, { catalog, rebuild = true } =
 function isInsideDirectory(baseDirectory, targetPath)
 {
   const relativePath = relative(baseDirectory, targetPath);
-  return !isAbsolute(relativePath) && relativePath !== '..' && !relativePath.startsWith(`..${sep}`);
+  const isParent = relativePath === parentSegment;
+  const startsAbove = relativePath.startsWith(`${parentSegment}${sep}`);
+  return !isAbsolute(relativePath) && !isParent && !startsAbove;
 }
 
-/**
- * A resolver for repository-relative paths that refuses an escape, a symbolic link anywhere on the
- * path, or a part whose real path lies outside the repository. `label` starts every refusal.
- */
+// lstat must run before any existence check: existsSync follows a link,
+// so a dangling link looks absent even though a later write follows it.
+function linkStatOrNull(part)
+{
+  try
+  {
+    return lstatSync(part);
+  }
+  catch (error)
+  {
+    if (error.code === missingFileCode)
+    {
+      return null;
+    }
+    throw error;
+  }
+}
+
+function requireSafePart(part, guard)
+{
+  const stat = linkStatOrNull(part);
+  if (!stat)
+  {
+    return;
+  }
+  if (stat.isSymbolicLink())
+  {
+    throw new Error(`${guard.label} refuses symbolic-link path: ${guard.relativePath}`);
+  }
+  if (!isInsideDirectory(guard.realRoot, realpathSync(part)))
+  {
+    throw new Error(`${guard.label} path resolves outside the repository: ${guard.relativePath}`);
+  }
+}
+
+// A resolver for repository-relative paths that refuses an escape, a symbolic link on the path,
+// or a part whose real path lies outside the repository. `label` starts every refusal.
 function guardedRepoPath(rootDir, label)
 {
   const root = resolve(rootDir);
@@ -187,31 +247,14 @@ function guardedRepoPath(rootDir, label)
     {
       throw new Error(`${label} path escapes the repository: ${relativePath}`);
     }
+    const guard = {
+      realRoot,
+      label,
+      relativePath,
+    };
     for (let part = target; part !== root; part = dirname(part))
     {
-      // lstat must run before any existence check: existsSync follows a link,
-      // so a dangling link looks absent even though a later write follows it.
-      let stat;
-      try
-      {
-        stat = lstatSync(part);
-      }
-      catch (error)
-      {
-        if (error.code === 'ENOENT')
-        {
-          continue;
-        }
-        throw error;
-      }
-      if (stat.isSymbolicLink())
-      {
-        throw new Error(`${label} refuses symbolic-link path: ${relativePath}`);
-      }
-      if (!isInsideDirectory(realRoot, realpathSync(part)))
-      {
-        throw new Error(`${label} path resolves outside the repository: ${relativePath}`);
-      }
+      requireSafePart(part, guard);
     }
     return target;
   };
@@ -219,7 +262,7 @@ function guardedRepoPath(rootDir, label)
 
 function saveSubclassCatalogLocked(rootDir, { catalog, rebuild, env }) {
   const root = resolve(rootDir);
-  const pathOf = guardedRepoPath(rootDir, 'Subclass export');
+  const pathOf = guardedRepoPath(rootDir, subclassExportLabel);
   const read = rel => readFileSync(pathOf(rel), 'utf8');
   const json = rel => JSON.parse(read(rel));
   const initialErrors = ValidateSubclassCatalog(catalog);
@@ -314,32 +357,20 @@ function saveSubclassCatalogLocked(rootDir, { catalog, rebuild, env }) {
   return { cardCount: catalog.cards.length, listCount: catalog.lists.length, paths: [...writes.keys()], rebuilt };
 }
 
-// ---------------------------------------------------------------------------
-// Studio Save (SS-003): the Studio's own config, in the fixed StudioSaveFiles only.
-// ---------------------------------------------------------------------------
-
-const STUDIO_SAVE_LABEL = 'Studio save';
-const STUDIO_SAVE_REQUEST_KEYS = Object.freeze([
-  'revision',
-  'files',
-]);
-const ABSENT_FILE_MARK = '<absent>';
-const LINE_END = '\n';
-const JSON_INDENT = 2;
-const HASH_ALGORITHM = 'sha256';
-const HASH_ENCODING = 'hex';
-const TEXT_ENCODING = 'utf8';
-const HTTP_BAD_REQUEST = 400;
-const HTTP_CONFLICT = 409;
-export const STUDIO_SAVE_STALE_MESSAGE = 'The Studio save files changed since this Studio loaded them (another tab, or a git pull). Reload to see them; your draft is kept.';
+// Studio Save: the Studio's own config, in the fixed StudioSaveFiles only.
 
 class StudioSaveError extends Error
 {
-  constructor(message, statusCode = HTTP_BAD_REQUEST)
+  constructor(message, statusCode = httpBadRequest)
   {
     super(message);
     this.statusCode = statusCode;
   }
+}
+
+function isoNow()
+{
+  return new Date().toISOString();
 }
 
 function isPlainObject(value)
@@ -359,10 +390,14 @@ function isCardObject(card)
 
 function refuse(message)
 {
-  throw new StudioSaveError(`${STUDIO_SAVE_LABEL} refused: ${message}`);
+  throw new StudioSaveError(`${studioSaveLabel} refused: ${message}`);
 }
 
-function requireExactKeys(value, allowedKeys, where)
+function requireExactKeys(
+  value,
+  allowedKeys,
+  where,
+)
 {
   if (!isPlainObject(value))
   {
@@ -375,7 +410,11 @@ function requireExactKeys(value, allowedKeys, where)
   }
 }
 
-function requireArrayOf(value, isItem, message)
+function requireArrayOf(
+  value,
+  isItem,
+  message,
+)
 {
   if (!Array.isArray(value) || !value.every(isItem))
   {
@@ -391,32 +430,53 @@ function requireLayerSet(value, where)
   }
 }
 
-const STUDIO_SAVE_DATA_CHECKS = Object.freeze({
-  [StudioSaveFileNames.Cards]: (data) =>
+function checkCardsData(data)
+{
+  requireArrayOf(
+    data.cards,
+    isCardObject,
+    'cards must be an array of card objects, each with an id.',
+  );
+  const uniqueIds = new Set(data.cards.map((card) => card.id));
+  if (uniqueIds.size !== data.cards.length)
   {
-    requireArrayOf(data.cards, isCardObject, 'cards must be an array of card objects, each with an id.');
-    if (new Set(data.cards.map((card) => card.id)).size !== data.cards.length)
-    {
-      refuse('cards holds the same id twice.');
-    }
-    requireArrayOf(data.removedCardIds, isNonEmptyString, 'removedCardIds must be an array of card ids.');
-  },
-  [StudioSaveFileNames.ArtLayers]: (data) =>
-  {
-    requireLayerSet(data.cardArtLayers, 'cardArtLayers');
-    requireLayerSet(data.itemArtLayers, 'itemArtLayers');
-  },
-  [StudioSaveFileNames.Templates]: (data) =>
-  {
-    requireArrayOf(data.templates, isPlainObject, 'templates must be an array of objects.');
-  },
-});
+    refuse('cards holds the same id twice.');
+  }
+  requireArrayOf(
+    data.removedCardIds,
+    isNonEmptyString,
+    'removedCardIds must be an array of card ids.',
+  );
+}
+
+function checkArtLayersData(data)
+{
+  requireLayerSet(data.cardArtLayers, 'cardArtLayers');
+  requireLayerSet(data.itemArtLayers, 'itemArtLayers');
+}
+
+function checkTemplatesData(data)
+{
+  requireArrayOf(
+    data.templates,
+    isPlainObject,
+    'templates must be an array of objects.',
+  );
+}
 
 /** Checks one file's document as the Studio sent it and returns its data keys. */
 function validateStudioSaveDocument(name, document)
 {
   const spec = StudioSaveFiles[name];
-  requireExactKeys(document, [...StudioSaveHeaderKeys(name), ...spec.dataKeys], name);
+  const allowedKeys = [
+    ...StudioSaveHeaderKeys(name),
+    ...spec.dataKeys,
+  ];
+  requireExactKeys(
+    document,
+    allowedKeys,
+    name,
+  );
   if (document.kind !== spec.kind)
   {
     refuse(`${name} must have kind "${spec.kind}".`);
@@ -431,23 +491,38 @@ function validateStudioSaveDocument(name, document)
     refuse(`${name} is missing ${missingKeys.join(', ')}.`);
   }
   const data = StudioSaveData(name, document);
-  STUDIO_SAVE_DATA_CHECKS[name](data);
+  studioSaveDataChecks[name](data);
   return data;
 }
 
-function studioSaveSerialize(name, data, savedAt)
+function studioSaveSerialize(
+  name,
+  data,
+  savedAt,
+)
 {
-  return JSON.stringify(StudioSaveDocument(name, data, savedAt), null, JSON_INDENT) + LINE_END;
+  const document = StudioSaveDocument(
+    name,
+    data,
+    savedAt,
+  );
+  const json = JSON.stringify(
+    document,
+    null,
+    jsonIndent,
+  );
+  return `${json}${lineEnd}`;
 }
 
 function studioSaveRevisionOf(bytesByName)
 {
-  const hash = createHash(HASH_ALGORITHM);
+  const hash = createHash(hashAlgorithm);
   for (const name of Object.keys(StudioSaveFiles))
   {
-    hash.update(`${name}${LINE_END}${bytesByName[name] ?? ABSENT_FILE_MARK}${LINE_END}`);
+    const bytes = bytesByName[name] ?? absentFileMark;
+    hash.update(`${name}${lineEnd}${bytes}${lineEnd}`);
   }
-  return hash.digest(HASH_ENCODING);
+  return hash.digest(hashEncoding);
 }
 
 function readStudioSaveBytes(pathOf)
@@ -457,7 +532,7 @@ function readStudioSaveBytes(pathOf)
   {
     const target = pathOf(spec.path);
     bytesByName[name] = existsSync(target)
-      ? readFileSync(target, TEXT_ENCODING)
+      ? readFileSync(target, textEncoding)
       : null;
   }
   return bytesByName;
@@ -468,25 +543,6 @@ function parseOrNull(bytes)
   return bytes === null
     ? null
     : JSON.parse(bytes);
-}
-
-/** The saved Studio files: { revision, paths, files: { name: document or null } }. */
-export function readStudioSave(rootDir)
-{
-  const pathOf = guardedRepoPath(rootDir, STUDIO_SAVE_LABEL);
-  const bytesByName = readStudioSaveBytes(pathOf);
-  const files = {};
-  const paths = {};
-  for (const [name, spec] of Object.entries(StudioSaveFiles))
-  {
-    paths[name] = spec.path;
-    files[name] = parseOrNull(bytesByName[name]);
-  }
-  return {
-    revision: studioSaveRevisionOf(bytesByName),
-    paths,
-    files,
-  };
 }
 
 function restorePriorBytes(written, priorBytes)
@@ -507,40 +563,65 @@ function restorePriorBytes(written, priorBytes)
 
 function validateStudioSaveRequest(body)
 {
-  requireExactKeys(body, STUDIO_SAVE_REQUEST_KEYS, 'The request');
+  requireExactKeys(
+    body,
+    studioSaveRequestKeys,
+    'The request',
+  );
   if (typeof body.revision !== 'string')
   {
     refuse('revision must be the revision the Studio loaded.');
   }
-  requireExactKeys(body.files, Object.keys(StudioSaveFiles), 'files');
+  requireExactKeys(
+    body.files,
+    Object.keys(StudioSaveFiles),
+    'files',
+  );
   const names = Object.keys(body.files);
   if (!names.length)
   {
     refuse('files is empty.');
   }
-  return Object.fromEntries(names.map((name) => [name, validateStudioSaveDocument(name, body.files[name])]));
+  const validatedEntries = names.map((name) =>
+  {
+    const document = body.files[name];
+    return [name, validateStudioSaveDocument(name, document)];
+  });
+  return Object.fromEntries(validatedEntries);
 }
 
-/**
- * Writes the files a Studio Save sent, all or none, and keeps the bytes of a file whose data is unchanged.
- * `writeFile` and `now` are test seams; the endpoint passes only the body.
- */
-export function saveStudioSave(rootDir, body, { writeFile = writeFileAtomic, now = () => new Date().toISOString() } = {})
+function isUnchangedData(
+  name,
+  data,
+  priorBytes,
+)
 {
-  const dataByName = validateStudioSaveRequest(body);
-  const pathOf = guardedRepoPath(rootDir, STUDIO_SAVE_LABEL);
-  const priorBytes = readStudioSaveBytes(pathOf);
-  if (studioSaveRevisionOf(priorBytes) !== body.revision)
+  const prior = parseOrNull(priorBytes[name]);
+  if (!prior)
   {
-    throw new StudioSaveError(STUDIO_SAVE_STALE_MESSAGE, HTTP_CONFLICT);
+    return false;
   }
-  const savedAt = now();
+  return StableJson(StudioSaveData(name, prior)) === StableJson(data);
+}
+
+/** Splits the sent files into the writes a Save owes and the names whose data is unchanged. */
+function planStudioSaveWrites(dataByName, plan)
+{
+  const {
+    priorBytes,
+    pathOf,
+    savedAt,
+  } = plan;
   const writes = [];
   const unchanged = [];
   for (const [name, data] of Object.entries(dataByName))
   {
-    const prior = parseOrNull(priorBytes[name]);
-    if (prior && StableJson(StudioSaveData(name, prior)) === StableJson(data))
+    const dataUnchanged = isUnchangedData(
+      name,
+      data,
+      priorBytes,
+    );
+    if (dataUnchanged)
     {
       unchanged.push(name);
       continue;
@@ -548,9 +629,25 @@ export function saveStudioSave(rootDir, body, { writeFile = writeFileAtomic, now
     writes.push({
       name,
       target: pathOf(StudioSaveFiles[name].path),
-      bytes: studioSaveSerialize(name, data, savedAt),
+      bytes: studioSaveSerialize(
+        name,
+        data,
+        savedAt,
+      ),
     });
   }
+  return {
+    writes,
+    unchanged,
+  };
+}
+
+function writeAllOrRestore(
+  writes,
+  priorBytes,
+  writeFile,
+)
+{
   const written = [];
   try
   {
@@ -564,9 +661,56 @@ export function saveStudioSave(rootDir, body, { writeFile = writeFileAtomic, now
   catch (error)
   {
     restorePriorBytes(written, priorBytes);
-    throw new StudioSaveError(`${STUDIO_SAVE_LABEL} failed and was rolled back: ${error.message}`);
+    throw new StudioSaveError(`${studioSaveLabel} failed and was rolled back: ${error.message}`);
   }
-  const current = readStudioSave(rootDir);
+}
+
+/** The saved Studio files: { revision, paths, files: { name: document or null } }. */
+export function ReadStudioSave(rootDir)
+{
+  const pathOf = guardedRepoPath(rootDir, studioSaveLabel);
+  const bytesByName = readStudioSaveBytes(pathOf);
+  const files = {};
+  const paths = {};
+  for (const [name, spec] of Object.entries(StudioSaveFiles))
+  {
+    paths[name] = spec.path;
+    files[name] = parseOrNull(bytesByName[name]);
+  }
+  return {
+    revision: studioSaveRevisionOf(bytesByName),
+    paths,
+    files,
+  };
+}
+
+// Writes the files a Studio Save sent, all or none, keeping the bytes of unchanged data.
+// `writeFile` and `now` are test seams; the endpoint passes only the body.
+export function SaveStudioSave(
+  rootDir,
+  body,
+  { writeFile = writeFileAtomic, now = isoNow } = {},
+)
+{
+  const dataByName = validateStudioSaveRequest(body);
+  const pathOf = guardedRepoPath(rootDir, studioSaveLabel);
+  const priorBytes = readStudioSaveBytes(pathOf);
+  if (studioSaveRevisionOf(priorBytes) !== body.revision)
+  {
+    throw new StudioSaveError(StudioSaveStaleMessage, httpConflict);
+  }
+  const savedAt = now();
+  const { writes, unchanged } = planStudioSaveWrites(dataByName, {
+    priorBytes,
+    pathOf,
+    savedAt,
+  });
+  writeAllOrRestore(
+    writes,
+    priorBytes,
+    writeFile,
+  );
+  const current = ReadStudioSave(rootDir);
   return {
     revision: current.revision,
     paths: current.paths,
