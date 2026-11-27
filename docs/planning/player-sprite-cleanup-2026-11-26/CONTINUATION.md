@@ -1,5 +1,16 @@
 # Player sprite cleanup — continuation
 
+## PAUSED — owner checkpoint
+
+The owner requested: **"push work to origin with a continuation note and stop
+all work for now"** on 2026-11-27. All three workers were interrupted. Do not
+resume implementation, testing, review, or publication until the owner resumes.
+
+Current branch: `fix/PlayerSpriteConsistency`. This checkpoint contains unfinished,
+unverified source edits and evidence. It is not an accepted fix or release.
+Read [execution status and next steps](implementation/EXECUTION.md#paused-checkpoint)
+before resuming. No new verification was run after the stop instruction.
+
 Updated: 2026-11-27, America/Anchorage. Implementation approved after readability delivery.
 
 ## Status and scope

@@ -1,5 +1,7 @@
 # Player sprite cleanup — execution
 
+**PAUSED at the owner's request, 2026-11-27. Do not resume until instructed.**
+
 Started: 2026-11-27, America/Anchorage. Owner instruction: **"approved, execute"**.
 
 ## Authority and baseline
@@ -85,3 +87,58 @@ This checkpoint records the approval, refreshed baseline, ownership, and first
 measurements. Push immediately. Secure actual combat before captures, finish
 source/calibration decisions, then assign the single renderer owner and tests.
 Subsequent meaningful commits update this file with results and remaining tasks.
+
+## Paused checkpoint
+
+The owner requested a push/continuation checkpoint and stopped all work. Workers
+A, B, and C were interrupted. No further tests, implementation, or review were
+performed after that instruction; only this save/push operation is authorized.
+
+### Saved work
+
+- `src/content/playerSpriteCalibrations.js`: draft fixed SW09 calibration data,
+  multiplier 0.60, native root [520, 734], source hashes and provenance.
+- `src/ui/models/PlayerSpritePlacementModel.js`: draft pure placement helper.
+- `src/ui/alternativeCardStage.js`: in-progress integration of calibrated SW09
+  placement and removal of foreign HURT substitution. Treat this diff as
+  **unreviewed and untested**, potentially incomplete.
+- `implementation/measurements/`: anatomical survey, helmet grid, and 0.55/0.60/0.65
+  candidate comparisons. Candidate 0.60 is selected for pilot testing, not accepted.
+- `implementation/identity/`: canonical search/provenance and three unchanged
+  renewal source references. The matching hooded HURT exists but is an unshipped
+  authoring draft with contact/tip/separation issues. Selected fix retains the
+  current character frame and existing recoil/flash; no art was published.
+- `implementation/verification/before-verified/`: accepted full-game-context
+  before capture set, 12 desktop/mobile PNGs and receipt metadata, zero reported
+  page errors. Source was still unchanged when these were captured.
+- `implementation/verification/before/`: earlier **unverified/superseded** set;
+  Starseer hit timing was not reliable. Preserved as work history, not acceptance.
+- Boot diagnosis and capture scripts are preserved. Invalid hyphenated seed was
+  the old capture blocker; valid seed is `SPRITEAUDIT20261126`.
+
+### Not complete
+
+- Renderer/helper/data review and targeted regression tests.
+- Reproduction of the prior defect turning the new checks red.
+- Candidate after-images, motion/interruptions/repeated hits, light/reduced-motion
+  and actual engine-damage integration checks.
+- Full-game HUD, targeting, clipping and inspection acceptance.
+- Remaining player classes/source families still have the legacy posed-height
+  policy outside the bounded SW09 pilot. Broader rollout must follow pilot acceptance.
+- Core/discovered tests, build, sandbox QA, independent review, feature preview,
+  PR evidence, and all implementation acceptance checkboxes.
+
+### Resume order
+
+1. Wait for explicit owner resume. Check this branch against origin and inspect
+   the saved source diff before assuming any part is working.
+2. Review A's helper/data/renderer API together, then coordinate C's regression
+   tests. B is available for identity/read-only review.
+3. Run focused checks and inspect actual-game after captures against the immutable
+   before-verified set. Correct the pilot before expanding.
+4. Update stories/checklist with evidence, run required broader gates, and push
+   meaningful milestones with this continuation note updated.
+
+Prior pushed implementation checkpoints: `7f34344b39e` (approval/ownership) and
+`4d79f50fc72` (approved scale/reaction contract). The commit containing this
+paused note saves all current work; its SHA is available from the branch log.

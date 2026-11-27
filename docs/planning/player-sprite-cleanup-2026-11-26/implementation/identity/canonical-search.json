@@ -1,0 +1,138 @@
+{
+  "searchDate": "2026-11-27",
+  "timezone": "America/Anchorage",
+  "repository": "cehinds/AI-Art",
+  "canonicalBranch": "ashenspire",
+  "canonicalCommit": "75d0ba9650ee17eb7a5af74594b3a8a6a490896f",
+  "canonicalTree": "334a849a42c50e66e2ef64773149e7b8f5ab0406",
+  "localCommit": "9b72f401a036a9219dedfbf6de3c4487c3a94e63",
+  "localTreeMatchesCanonical": true,
+  "trackedPaths": 32588,
+  "rootOrNestedAgentGuidanceFiles": [],
+  "guidanceRead": [
+    "README.md",
+    "pose-studio/stances/README.md",
+    "pose-studio/stances/class-smash/README.md",
+    "pose-studio/renewal/starseer/README.md",
+    "pose-studio/renewal/rogue/README.md",
+    "pose-studio/renewal/herald/README.md",
+    "provenance/AshenSpire/assets-display/alternative/README.md"
+  ],
+  "inspectedCanonicalRuntimeCandidates": [
+    {
+      "path": "hd/assets/animations/dagger-outfits/starseer/HURT.webp",
+      "gitBlob": "5e5361a58e4c1573ca97c4113de6fd10709e7b8a",
+      "sha256": "7f7b7c9aed2e1d1ecbb6df4f4ab31e097a721e791edf981069b7876b2b4789ea",
+      "bytes": 35354,
+      "inspected": true,
+      "disposition": "older-pointed-hat-identity-rejected"
+    },
+    {
+      "path": "hd/assets/animations/greatsword-outfits/starseer/HURT.webp",
+      "gitBlob": "844473ce1a3821298783445c90e3acc4d2733b60",
+      "sha256": "9068323c2cd0bfdadbbb78f831298cf2852a7fe03c43e02e41ca89c0cb53d800",
+      "bytes": 27200,
+      "inspected": true,
+      "disposition": "older-pointed-hat-identity-rejected"
+    },
+    {
+      "path": "hd/assets/animations/sword-shield-outfits/starseer/HURT.webp",
+      "gitBlob": "1c6581d70cc9e1bfbf32a3306ae12ef261790622",
+      "sha256": "6e3c2245a531661565cd622bcee1e6e22ef401c254a7cf51c1b266cdcffaf5c5",
+      "bytes": 45240,
+      "inspected": true,
+      "disposition": "older-pointed-hat-identity-rejected"
+    },
+    {
+      "path": "hd/assets/animations/twin-sword-outfits/starseer/HURT.webp",
+      "gitBlob": "9953e3c1109d926129da723f5791d672da578048",
+      "sha256": "52706541db852a674b8986f32e85e100eabcc5813ba8686f0f09a0744a8d0ab0",
+      "bytes": 37362,
+      "inspected": true,
+      "disposition": "older-pointed-hat-identity-rejected"
+    },
+    {
+      "path": "hd/assets/animations/unarmed-magic/starseer/HURT.webp",
+      "gitBlob": "9da97d955e48045a1a72ce277a5056b4ee24417e",
+      "sha256": "6014d268d24694129335242764f28a91e12ed04668b411e8195e1cf33b2c90f0",
+      "bytes": 43888,
+      "inspected": true,
+      "disposition": "older-pointed-hat-identity-rejected"
+    },
+    {
+      "path": "hd/assets/animations/unarmed/starseer/HURT.webp",
+      "gitBlob": "eb83334b77706580d3e97c833b8b109b28ec4a26",
+      "sha256": "10ae83c6c15d0cc321407eebf66b77a94864c4f0625e56cc942c3f92c0357190",
+      "bytes": 44214,
+      "inspected": true,
+      "disposition": "older-pointed-hat-identity-rejected"
+    },
+    {
+      "path": "hd/assets/painted-outfits/starseer/hit.webp",
+      "gitBlob": "f4ea19906f82f8a127dfbab4ad8c047fa0ee80b0",
+      "sha256": "65ebc80fe584a60b286371ed02d18af2c0677c6a0d74ec2ed27c888ea5111ac9",
+      "bytes": 12450,
+      "inspected": true,
+      "disposition": "older-pointed-hat-identity-rejected"
+    },
+    {
+      "path": "hd/assets/poses/starseer_hit_gold.webp",
+      "gitBlob": "35c311e774468927eee82e41294849b2182ced99",
+      "sha256": "b7062ac3b9d9b72b4fa85244c73519e290d34f62023da19d7f3a11094840ad34",
+      "bytes": 11484,
+      "inspected": true,
+      "disposition": "older-pointed-hat-identity-rejected"
+    },
+    {
+      "path": "common/assets-display/alternative/card-starseer-ready.webp",
+      "gitBlob": "79307ee4226660de266cf0f29a651b3d9dadfb5b",
+      "sha256": "33f34a784254ca1494d793c3d9c806f63f96620ae002359d82ac1246c3c7972c",
+      "bytes": 9316,
+      "inspected": true,
+      "disposition": "canonical-ready-reference"
+    }
+  ],
+  "retainedCanonicalDraftReferences": [
+    {
+      "canonicalPath": "pose-studio/renewal/starseer/frames/ready.png",
+      "retainedFile": "canonical-starseer-ready.png",
+      "gitBlob": "d8db69cc5fbf0364643bcebb2655c8aadc44c3b9",
+      "sha256": "f370649322a99ed28f281ffd87dd001a68b1fed202445bdc112fee84872a3be6",
+      "bytes": 147161,
+      "inspected": true,
+      "status": "authoring-preview/draft; not runtime-approved or exported",
+      "pixelsUnchanged": true
+    },
+    {
+      "canonicalPath": "pose-studio/renewal/starseer/frames/hurt.png",
+      "retainedFile": "canonical-starseer-hurt.png",
+      "gitBlob": "61c6cbf16e00c2d16599018d06f86920a5ddd13a",
+      "sha256": "9fadd76058d83b3c02731d5317215b84b31a035998adcb2053f7e6588e105ae9",
+      "bytes": 154639,
+      "inspected": true,
+      "status": "authoring-preview/draft; not runtime-approved or exported",
+      "pixelsUnchanged": true
+    },
+    {
+      "canonicalPath": "pose-studio/renewal/starseer/frames/hurt-recover.png",
+      "retainedFile": "canonical-starseer-hurt-recover.png",
+      "gitBlob": "2d766babe44f6715c40df802e7c6eafc23d2782e",
+      "sha256": "928d952ce45a0972d0cc9edc04ca55574c558e1d7447fddc2e908dcd04a72a86",
+      "bytes": 150893,
+      "inspected": true,
+      "status": "authoring-preview/draft; not runtime-approved or exported",
+      "pixelsUnchanged": true
+    }
+  ],
+  "matchingDraftExists": true,
+  "draftReadinessLimitations": [
+    "empty gameplay bindings",
+    "hand contacts require review",
+    "hurt staff-tip margin requires review",
+    "body/weapon layer separation remains open",
+    "disconnected bottom-right fragment visible in hurt-recover"
+  ],
+  "decision": "Keep current selected frame and existing finite recoil/flash for ordinary HIT; do not publish unfinished draft or generate new art.",
+  "historyScope": "Pinned canonical AI-Art path histories inspected; pre-migration source repositories not exhaustively searched.",
+  "runtimeOrArtChangesMadeByThisSearch": false
+}

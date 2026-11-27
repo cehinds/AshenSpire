@@ -1,6 +1,7 @@
 import { t } from './strings.js';
 import { COMBAT_BODY_LANDMARKS } from '../content/combatBodyLandmarks.js';
 import { bodyPlacement, bodyResize } from './models/CombatBodyModel.js';
+import { PlayerSpritePlacement } from './models/PlayerSpritePlacementModel.js';
 import { selectedWeaponSequence, selectedWeaponSequenceTiming } from '../model/selectedWeaponSequences.js';
 import { sampleSequence, hitFlashOpacity, hitRecoilX, HURT_CLIP_MIN_MS } from '../model/alternativeCardAnimation.js';
 import { alternativeArtUrl } from './alternativeArt.js';
@@ -9,10 +10,8 @@ import { createAlternativeAuraRenderer } from './alternativeAuraRenderer.js';
 import { reducedMotionRequested } from './motion.js';
 import { liteRendering, FxOff, motionOff } from './performance.js';
 import { DEFEATED_ART } from '../content/defeatedArt.js';
-import { playerHurtFrames } from '../content/playerHurtFrames.js';
 import { assetUrl } from './assetmap.js';
 import { ANIM_SPEEDS, getAnimSpeed } from './animationPace.js';
-import { builtInFor } from './highResArt.js';
 import { markArtPlaceholder, ART_PLACEHOLDER_ATTR } from './artFallback.js';
 import { warmImageBoundsWhenIdle } from './artBounds.js';
 import { createPaintGate, paintSignature } from './paintSignature.js';
@@ -96,13 +95,6 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
   // idle slot after the artwork lands keeps those readbacks out of the first card play.
   const warmBounds=()=>{for(const name of Object.keys(frames))warmImageBoundsWhenIdle(images.get(name));};
   let down = null;
-  // The hurt clip draws its own registered outfit art; until it loads the clip keeps the current pose.
-  let hurt = null;
-  const hurtPlacement = playerHurtFrames[classId] || null;
-  // A detached loader must retry the built-in copy itself when a high-res file fails (highResArt.js).
-  const hurtUrl = hurtPlacement ? assetUrl(hurtPlacement.file) : null;
-  if (hurtUrl) load(hurtUrl).ready.catch(error => { const fallback=builtInFor(hurtUrl); if (!fallback) throw error; return load(fallback).ready; })
-    .then(image => { if (!disposed) { hurt=image; paint(); } }).catch(()=>{});
   if (DEFEATED_ART[classId]?.file) load(assetUrl(DEFEATED_ART[classId].file)).ready.then(image => { if (!disposed) { down=image; paint(); } }).catch(()=>{});
   // A hit reaction (red tint + knock-back) has its own clock: flashElapsed ms of
   // flashMs, advanced only outside hold-stop. flashAt is non-null while it runs.
@@ -141,7 +133,7 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
     const lite=liteRendering(),off=FxOff('glow'),noFlash=FxOff('flash')||document.body.classList.contains('reduce-flashes');
     const flashing=flashAt!==null?flashElapsed:-1;
     const sig=paintSignature({pose,x,effect,rest,stance,lite,off,reduced:reducedMotionRequested(),noFlash,flashing,
-      action:playing?.sequence.action||playing?.action||'',resources:resources.join(','),loaded:images.size,hurt:!!hurt,down:!!down,clip:!bodyReaction&&flashAt!==null&&!!hurt});const fresh=paintGate.changed(sig);
+      action:playing?.sequence.action||playing?.action||'',resources:resources.join(','),loaded:images.size,down:!!down});const fresh=paintGate.changed(sig);
     if(!fresh&&!materialize)return;
     ctx.clearRect(0,0,canvas.width,canvas.height);
     currentArt=null;
@@ -152,30 +144,43 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
     // left while the reaction runs; the effects overlay stays on its own registration.
     const reduced=reducedMotionRequested();
     const reacting=flashAt!==null && !reduced;
-    // The hurt clip replaces the pose while it runs, registered onto the ready figure.
-    const clipping=!bodyReaction && reacting && hurt && hurtPlacement;
-    const source=clipping?hurt:image;
+    // Ordinary hits retain the selected character frame through recoil and tint.
+    const source = image;
     if (!source) return;
     const frame=images.has(pose)?frames[pose]:frames.ready;
-    const place=clipping?hurtPlacement:{dx:0,dy:0,scale:1};
     const bodyX=x+(reacting?hitRecoilX(flashElapsed/flashMs):0);
-    const offset=!clipping&&frame?.drawOffset ? frame.drawOffset : [128,0];
-    const dimensions=!clipping&&frame?.drawOffset ? frame.size : [512,512];
-    const authored = { left:leftPadding+offset[0]+bodyX+place.dx, top:16+topPadding+offset[1]+place.dy,
-      width:dimensions[0]*place.scale, height:dimensions[1]*place.scale, anchorX:leftPadding+384+bodyX };
-    const landmarks = !clipping && COMBAT_BODY_LANDMARKS[frame?.path];
-    // Held stance bodies match the ready body's head-to-sole distance. Action
-    // frames retain their authored progression, including jumps and crouches.
-    // The opening/closing bookend can be the exact held bitmap. Keep its
-    // body registration while the action clock starts; only different action
-    // images retain their authored transient crouch, jump and travel.
+    const offset = frame?.drawOffset || [128, 0];
+    const dimensions = frame?.drawOffset
+      ? frame.size
+      : [512, 512];
+    const authored =
+    {
+      left: leftPadding + offset[0] + bodyX,
+      top: 16 + topPadding + offset[1],
+      width: dimensions[0],
+      height: dimensions[1],
+      anchorX: leftPadding + 384 + bodyX,
+    };
+    const landmarks = COMBAT_BODY_LANDMARKS[frame?.path];
     const heldRegistration = !playing || frame?.path === frames[restPose()]?.path;
-    // Every measured frame is drawn at the ready body's height (owner, 2026-11-02:
-    // one size in every pose). Held bodies also register on the floor; action
-    // and reaction frames are resized about their own feet so a jump keeps its lift.
-    const normalized = !landmarks ? authored
-      : heldRegistration && !bodyReaction ? bodyPlacement(authored, landmarks, bodyHeight, 480+topPadding)
-        : readyBody ? bodyResize(authored, landmarks, bodyHeight) : authored;
+    let normalized = PlayerSpritePlacement(frame?.path,
+    {
+      x: leftPadding + 384 + bodyX,
+      y: 480 + topPadding,
+    });
+
+    // The calibrated pilot keeps physical scale; other families retain policy.
+    if (!normalized)
+    {
+      normalized = !landmarks
+        ? authored
+        : heldRegistration && !bodyReaction
+          ? bodyPlacement(authored, landmarks, bodyHeight, 480 + topPadding)
+          : readyBody
+            ? bodyResize(authored, landmarks, bodyHeight)
+            : authored;
+    }
+
     const {left,top,width,height} = normalized;
     const body = normalized.body || (landmarks ? {
       headY: top + landmarks.headY * height / landmarks.height,
@@ -183,8 +188,8 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
     } : null);
     currentArt={canvas,image:source,left,top,width,height,body};
     ctx.save();
-    // Loaded outfit and hurt images never change their pixels after decoding.
-    auraRenderer.draw(ctx,source,filterFor(pose,playing?.sequence.action || playing?.action),left,top,width,height,{materialize:materialize&&!FxOff('glow'),still:FxOff('glow'),immutable:true,reuse:!!classSmash&&playing?.action==='smash'&&!clipping&&!reacting});ctx.restore();
+    // Loaded character frames never change their pixels after decoding.
+    auraRenderer.draw(ctx,source,filterFor(pose,playing?.sequence.action || playing?.action),left,top,width,height,{materialize:materialize&&!FxOff('glow'),still:FxOff('glow'),immutable:true,reuse:!!classSmash&&playing?.action==='smash'&&!reacting});ctx.restore();
     // Trails share body registration, but never enter its aura or hit mask.
     if(effect && !still && !FxOff('sparks') &&!reducedMotionRequested() && !document.body.classList.contains('reduce-flashes')) {
       const overlay=images.get(effect);
@@ -193,8 +198,19 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
     // Reduce flashes suppresses the red tint (SPEC §7.4); the knock-back stays.
     const flash=flashAt===null||FxOff('flash')||document.body.classList.contains('reduce-flashes')?0:hitFlashOpacity('hurt',flashElapsed,{reduced,duration:flashMs});
     if (flash) {
-      if(mask.width!==dimensions[0])mask.width=dimensions[0];
-      if(mask.height!==dimensions[1])mask.height=dimensions[1];
+      const maskWidth = source.naturalWidth || dimensions[0];
+      const maskHeight = source.naturalHeight || dimensions[1];
+
+      if (mask.width !== maskWidth)
+      {
+        mask.width = maskWidth;
+      }
+
+      if (mask.height !== maskHeight)
+      {
+        mask.height = maskHeight;
+      }
+
       maskCtx.clearRect(0,0,mask.width,mask.height);maskCtx.globalCompositeOperation='source-over';
       maskCtx.drawImage(source,0,0,mask.width,mask.height);maskCtx.globalCompositeOperation='source-in';
       maskCtx.fillStyle='#ff2424';maskCtx.fillRect(0,0,mask.width,mask.height);
@@ -355,6 +371,6 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
       holdUntil=Math.max(performance.now(),holdUntil)+ms;return true;
     },
     react(resource){clearTimeout(reactionTimer);el.dataset.poseReaction=resource;reactionTimer=setTimeout(()=>{el.dataset.poseReaction='';},180);},settle:settleStage,endReaction,
-    dispose(){disposed=true;clearTimeout(reactionTimer);if(request!==null)cancelAnimationFrame(request);request=null;playing=null;bodyReaction=null;images.clear();down=null;hurt=null;auraRenderer.dispose();}
+    dispose(){disposed=true;clearTimeout(reactionTimer);if(request!==null)cancelAnimationFrame(request);request=null;playing=null;bodyReaction=null;images.clear();down=null;auraRenderer.dispose();}
   });
 }

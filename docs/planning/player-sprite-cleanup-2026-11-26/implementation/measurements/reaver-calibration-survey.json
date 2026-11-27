@@ -1,0 +1,474 @@
+{
+  "sourceBaseline": "49eca254d795d06266aa23941cb2b31fe77b27bf",
+  "artRelease": "ashenspire-hd-assets-v30",
+  "measurementKind": "manual diagnostic landmarks; not accepted implementation calibration",
+  "readyReferenceSegmentsStage": {
+    "helmetCrown": 32.55764119219941,
+    "forearm": 42.37924020083418,
+    "shin": 40.0,
+    "bootLongAxis": 42.190046219457976
+  },
+  "sourceRoot": [
+    520,
+    734
+  ],
+  "targetRoot": [
+    384,
+    480
+  ],
+  "rootDerivation": "[384,464] - [-136,-270] = [520,734]; painter adds16 to target Y",
+  "candidateScales": [
+    0.55,
+    0.6,
+    0.65
+  ],
+  "recommendedFirstCandidate": 0.6,
+  "uncertainty": "Approximately \u00b110\u201315% for camera/landmark differences; not rig-derived anatomy",
+  "existingHeldSemanticFeetY": 759,
+  "records": [
+    {
+      "name": "ready",
+      "path": "assets-display/alternative/card-reaver-ready.webp",
+      "sha256": "2bacbe2b5f1ee3fc418a0f6754fefd6d50e8db861b3e1fb764c103c18de88e17",
+      "rasterSize": [
+        256,
+        256
+      ],
+      "alpha128Box": [
+        71,
+        102,
+        189,
+        231
+      ],
+      "headTop": [
+        131,
+        102
+      ],
+      "supportingSoleBoundaryY": 231,
+      "segments": {
+        "helmetCrown": {
+          "points": [
+            [
+              124,
+              109
+            ],
+            [
+              140,
+              112
+            ]
+          ],
+          "nativeLength": 16.278820596099706,
+          "readyReferenceStage": 32.55764119219941,
+          "matchingStageUnitsPerNativePixel": 2.0
+        },
+        "forearm": {
+          "points": [
+            [
+              150,
+              153
+            ],
+            [
+              157,
+              173
+            ]
+          ],
+          "nativeLength": 21.18962010041709,
+          "readyReferenceStage": 42.37924020083418,
+          "matchingStageUnitsPerNativePixel": 2.0
+        },
+        "shin": {
+          "points": [
+            [
+              148,
+              204
+            ],
+            [
+              148,
+              224
+            ]
+          ],
+          "nativeLength": 20.0,
+          "readyReferenceStage": 40.0,
+          "matchingStageUnitsPerNativePixel": 2.0
+        },
+        "bootLongAxis": {
+          "points": [
+            [
+              145,
+              228
+            ],
+            [
+              166,
+              230
+            ]
+          ],
+          "nativeLength": 21.095023109728988,
+          "readyReferenceStage": 42.190046219457976,
+          "matchingStageUnitsPerNativePixel": 2.0
+        }
+      },
+      "confidence": "medium for helmet; low-to-medium for occluded limb joints"
+    },
+    {
+      "name": "held",
+      "path": "assets-display/alternative/reaver-greatsword-pilot-sweep.webp",
+      "sha256": "81d348d0382b9a99c1f72d5d23dab4975bbe648b3db979d8f725fc250d02db7c",
+      "rasterSize": [
+        1024,
+        1024
+      ],
+      "alpha128Box": [
+        71,
+        404,
+        678,
+        736
+      ],
+      "headTop": [
+        567,
+        406
+      ],
+      "supportingSoleBoundaryY": 736,
+      "segments": {
+        "helmetCrown": {
+          "points": [
+            [
+              543,
+              417
+            ],
+            [
+              594,
+              437
+            ]
+          ],
+          "nativeLength": 54.78138369920935,
+          "readyReferenceStage": 32.55764119219941,
+          "matchingStageUnitsPerNativePixel": 0.594319438350903
+        },
+        "forearm": {
+          "points": [
+            [
+              487,
+              534
+            ],
+            [
+              423,
+              572
+            ]
+          ],
+          "nativeLength": 74.43117626371358,
+          "readyReferenceStage": 42.37924020083418,
+          "matchingStageUnitsPerNativePixel": 0.5693748551102068
+        },
+        "shin": {
+          "points": [
+            [
+              624,
+              631
+            ],
+            [
+              648,
+              699
+            ]
+          ],
+          "nativeLength": 72.11102550927978,
+          "readyReferenceStage": 40.0,
+          "matchingStageUnitsPerNativePixel": 0.5547001962252291
+        },
+        "bootLongAxis": {
+          "points": [
+            [
+              604,
+              718
+            ],
+            [
+              677,
+              719
+            ]
+          ],
+          "nativeLength": 73.00684899377592,
+          "readyReferenceStage": 42.190046219457976,
+          "matchingStageUnitsPerNativePixel": 0.5778916197719316
+        }
+      },
+      "confidence": "medium for helmet/sole; low-to-medium for limb comparison",
+      "candidates": [
+        {
+          "stageUnitsPerNativePixel": 0.55,
+          "drawPlacement": [
+            98.0,
+            76.29999999999995,
+            563.2,
+            563.2
+          ],
+          "posedHeadToSoleStage": 181.50000000000003,
+          "compressionAgainstReady261": 0.6954022988505748,
+          "soleStageY": 481.09999999999997,
+          "helmetCrownStage": 30.129761034565146
+        },
+        {
+          "stageUnitsPerNativePixel": 0.6,
+          "drawPlacement": [
+            72.0,
+            39.60000000000002,
+            614.4,
+            614.4
+          ],
+          "posedHeadToSoleStage": 198.0,
+          "compressionAgainstReady261": 0.7586206896551724,
+          "soleStageY": 481.2,
+          "helmetCrownStage": 32.868830219525606
+        },
+        {
+          "stageUnitsPerNativePixel": 0.65,
+          "drawPlacement": [
+            46.0,
+            2.8999999999999773,
+            665.6,
+            665.6
+          ],
+          "posedHeadToSoleStage": 214.5,
+          "compressionAgainstReady261": 0.8218390804597702,
+          "soleStageY": 481.3,
+          "helmetCrownStage": 35.607899404486076
+        }
+      ]
+    },
+    {
+      "name": "windup",
+      "path": "assets-display/alternative/reaver-greatsword-pilot-sweep-windup.webp",
+      "sha256": "e42ea1976a0a162c78098cb7a13010cc1b855d5baf6f4fe0fe90e42cc9991f4d",
+      "rasterSize": [
+        1024,
+        1024
+      ],
+      "alpha128Box": [
+        206,
+        393,
+        952,
+        732
+      ],
+      "headTop": [
+        554,
+        393
+      ],
+      "supportingSoleBoundaryY": 732,
+      "segments": {
+        "helmetCrown": {
+          "points": [
+            [
+              529,
+              403
+            ],
+            [
+              580,
+              422
+            ]
+          ],
+          "nativeLength": 54.42425929675111,
+          "readyReferenceStage": 32.55764119219941,
+          "matchingStageUnitsPerNativePixel": 0.598219279653898
+        }
+      },
+      "confidence": "medium; compare crown shell, not extended visor or shoulder",
+      "candidates": [
+        {
+          "stageUnitsPerNativePixel": 0.55,
+          "drawPlacement": [
+            98.0,
+            76.29999999999995,
+            563.2,
+            563.2
+          ],
+          "posedHeadToSoleStage": 186.45000000000002,
+          "compressionAgainstReady261": 0.7143678160919541,
+          "soleStageY": 478.9,
+          "helmetCrownStage": 29.933342613213114
+        },
+        {
+          "stageUnitsPerNativePixel": 0.6,
+          "drawPlacement": [
+            72.0,
+            39.60000000000002,
+            614.4,
+            614.4
+          ],
+          "posedHeadToSoleStage": 203.4,
+          "compressionAgainstReady261": 0.7793103448275862,
+          "soleStageY": 478.8,
+          "helmetCrownStage": 32.65455557805066
+        },
+        {
+          "stageUnitsPerNativePixel": 0.65,
+          "drawPlacement": [
+            46.0,
+            2.8999999999999773,
+            665.6,
+            665.6
+          ],
+          "posedHeadToSoleStage": 220.35,
+          "compressionAgainstReady261": 0.8442528735632183,
+          "soleStageY": 478.7,
+          "helmetCrownStage": 35.375768542888224
+        }
+      ]
+    },
+    {
+      "name": "contact",
+      "path": "assets-display/alternative/reaver-greatsword-pilot-sweep-contact.webp",
+      "sha256": "2f57d14e2f17a7366977829957514d0a97f64adf91cb24c26ede51a25e56bbb2",
+      "rasterSize": [
+        1024,
+        1024
+      ],
+      "alpha128Box": [
+        185,
+        404,
+        856,
+        732
+      ],
+      "headTop": [
+        559,
+        405
+      ],
+      "supportingSoleBoundaryY": 732,
+      "segments": {
+        "helmetCrown": {
+          "points": [
+            [
+              523,
+              416
+            ],
+            [
+              577,
+              421
+            ]
+          ],
+          "nativeLength": 54.230987451824994,
+          "readyReferenceStage": 32.55764119219941,
+          "matchingStageUnitsPerNativePixel": 0.6003512515998596
+        }
+      },
+      "confidence": "medium; rear helmet differs in perspective",
+      "candidates": [
+        {
+          "stageUnitsPerNativePixel": 0.55,
+          "drawPlacement": [
+            98.0,
+            76.29999999999995,
+            563.2,
+            563.2
+          ],
+          "posedHeadToSoleStage": 179.85000000000002,
+          "compressionAgainstReady261": 0.689080459770115,
+          "soleStageY": 478.9,
+          "helmetCrownStage": 29.82704309850375
+        },
+        {
+          "stageUnitsPerNativePixel": 0.6,
+          "drawPlacement": [
+            72.0,
+            39.60000000000002,
+            614.4,
+            614.4
+          ],
+          "posedHeadToSoleStage": 196.2,
+          "compressionAgainstReady261": 0.7517241379310344,
+          "soleStageY": 478.8,
+          "helmetCrownStage": 32.538592471094994
+        },
+        {
+          "stageUnitsPerNativePixel": 0.65,
+          "drawPlacement": [
+            46.0,
+            2.8999999999999773,
+            665.6,
+            665.6
+          ],
+          "posedHeadToSoleStage": 212.55,
+          "compressionAgainstReady261": 0.8143678160919541,
+          "soleStageY": 478.7,
+          "helmetCrownStage": 35.25014184368625
+        }
+      ]
+    },
+    {
+      "name": "finish",
+      "path": "assets-display/alternative/reaver-greatsword-pilot-sweep-finish.webp",
+      "sha256": "96a520910a6962ade28c268da0cc34fed5c747b309b6a60580a32ebdd58c429b",
+      "rasterSize": [
+        1024,
+        1024
+      ],
+      "alpha128Box": [
+        234,
+        444,
+        832,
+        733
+      ],
+      "headTop": [
+        567,
+        493
+      ],
+      "supportingSoleBoundaryY": 733,
+      "segments": {
+        "helmetCrown": {
+          "points": [
+            [
+              537,
+              507
+            ],
+            [
+              584,
+              528
+            ]
+          ],
+          "nativeLength": 51.478150704935004,
+          "readyReferenceStage": 32.55764119219941,
+          "matchingStageUnitsPerNativePixel": 0.6324555320336758
+        }
+      },
+      "confidence": "medium; deep flexion and visor angle change visible geometry",
+      "candidates": [
+        {
+          "stageUnitsPerNativePixel": 0.55,
+          "drawPlacement": [
+            98.0,
+            76.29999999999995,
+            563.2,
+            563.2
+          ],
+          "posedHeadToSoleStage": 132.0,
+          "compressionAgainstReady261": 0.5057471264367817,
+          "soleStageY": 479.45,
+          "helmetCrownStage": 28.312982887714256
+        },
+        {
+          "stageUnitsPerNativePixel": 0.6,
+          "drawPlacement": [
+            72.0,
+            39.60000000000002,
+            614.4,
+            614.4
+          ],
+          "posedHeadToSoleStage": 144.0,
+          "compressionAgainstReady261": 0.5517241379310345,
+          "soleStageY": 479.40000000000003,
+          "helmetCrownStage": 30.886890422961002
+        },
+        {
+          "stageUnitsPerNativePixel": 0.65,
+          "drawPlacement": [
+            46.0,
+            2.8999999999999773,
+            665.6,
+            665.6
+          ],
+          "posedHeadToSoleStage": 156.0,
+          "compressionAgainstReady261": 0.5977011494252874,
+          "soleStageY": 479.34999999999997,
+          "helmetCrownStage": 33.460797958207756
+        }
+      ]
+    }
+  ]
+}
