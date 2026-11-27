@@ -50,6 +50,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawn, execFile } from 'node:child_process';
 import { sourceDigest, stampSource, readOrdinal, padOrdinal, VERSION_MODULE, RUN_PATH_SERVE } from './buildversion.mjs';
 import { saveFirstStepDefaults } from './prologue-editor-save.mjs';
+import { CONTENT_API_PREFIX, HandleContentRequest } from './content-editor-save.mjs';
 import { readStudioConfig, saveStudioScoring, saveStudioArtLayers, saveStudioItemArtLayers, saveStudioDecks, saveStudioSubclassCatalog } from './score-studio-save.mjs';
 import { artPath, packTreeOf, HIGH_TREE } from './art-source.mjs';
 import { authoringRoot, compositeSourcePath, isAuthoringFile } from './art-authoring.mjs';
@@ -360,6 +361,11 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, editorWrite =
         const ok = local && /^(localhost|127\.0\.0\.1):\d+$/.test(req.headers.host || '');
         res.writeHead(ok ? 200 : 403, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
         res.end(JSON.stringify(ok ? { root: rootResolved } : { error: 'Local requests only.' }));
+        return;
+      }
+      if (urlPath.startsWith(CONTENT_API_PREFIX))
+      {
+        await HandleContentRequest(req, res, { root: rootResolved, editorWrite });
         return;
       }
       // Direct edits to the master JSON become native card data on refresh.
