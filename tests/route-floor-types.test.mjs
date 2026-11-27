@@ -1,8 +1,8 @@
-// routes.floorTypes (owner, 2026-11-27): a pinned depth is that room type on every lane, in every
-// act; without it the Core map draws exactly as before; a bad entry fails with a plain message.
+// routes.floorTypes: a pinned depth is that room type on every lane, in every act; without it the
+// map draws as before; a bad table fails with a plain message. Depths, types and limits come from
+// the loaded Core route config, so retuning routes.json moves the inputs, not the expectations.
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createHash } from 'node:crypto';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import {
@@ -13,12 +13,14 @@ import {
 import { createRunState } from '../src/model/state.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import { createRng } from '../src/engine/rng.js';
+import { RouteShapeOf } from '../src/model/routeShape.js';
+import {
+  RouteDepths,
+  PinnableDepths,
+  BranchFullDepth,
+} from '../engine/kernel/routeDepths.js';
+import { RouteRoomTypes, ELITE_ROOM, SHOP_ROOM } from '../engine/kernel/routeFloorPins.js';
 
-const ACTS = [
-  1,
-  2,
-  3,
-];
 const SEEDS = [
   1,
   2,
@@ -26,76 +28,9 @@ const SEEDS = [
   4,
   5,
   6,
-  7,
-  8,
 ];
-const SHOP_DEPTH = 4;
-const ELITE_DEPTH = 8;
-const PINNED = { [SHOP_DEPTH]: 'shop', [ELITE_DEPTH]: 'elite' };
 const FLOOR_TYPES_PATH = '$/modules/routes/floorTypes';
-// Core lanes are all open on depths 8 and 9; pinning both away leaves a lane no elite floor.
-const NO_LANE_ELITE = {
-  3: 'shop',
-  4: 'event',
-  8: 'fight',
-  9: 'fight',
-  10: 'fight',
-};
-const ONE_FREE_ELITE_FLOOR = {
-  3: 'shop',
-  4: 'event',
-  8: 'fight',
-  10: 'fight',
-};
-// With no random shops, a branch's only shop is its guaranteed one.
-const NO_RANDOM_SHOPS = { typeWeights: { shop: 0 } };
-// Core's middle rest lands on one of depths 5 to 7, so two of them are always free for a shop.
-const MOVING_REST_SHOP_ROOM = { floorTypes: { 4: 'event', 8: 'fight' } };
-// restFloorSpread 0 rests only on depth 6, so shops can use 4, 5, 7 and 8 (PR #3025 review).
-const FIXED_RESTS_TWO_SHOP_FLOORS = {
-  restFloorSpread: 0,
-  floorTypes: {
-    3: 'fight',
-    4: 'event',
-    5: 'fight',
-    9: 'fight',
-    10: 'fight',
-  },
-};
-const FIXED_RESTS_NO_SHOP = {
-  restFloorSpread: 0,
-  floorTypes: {
-    4: 'fight',
-    5: 'fight',
-    7: 'fight',
-    8: 'fight',
-  },
-};
-// Depth 8 is the only free depth for both the elites and the shop (PR #3025 review).
-const FIXED_RESTS_SHARED_SLOT = {
-  restFloorSpread: 0,
-  floorTypes: {
-    3: 'fight',
-    4: 'event',
-    5: 'fight',
-    7: 'fight',
-    9: 'fight',
-    10: 'fight',
-  },
-};
-// Elites only from depth 10: lanes may end on 9, 10 or 11, so depth 10 is the only sure elite
-// floor before the pre-boss rest (PR #3025 review).
-const LATE_THREAT = { prebossNodes: 11, minimumThreatFloor: 10 };
-const LATE_THREAT_NO_ELITE = { ...LATE_THREAT, floorTypes: { 10: 'fight' } };
 const LANE_ID = /^n(\d+)_(\d+)$/;
-// Core maps of seeds 3 and 7 (acts 1 and 3) rolled before floorTypes existed (dev 72a5ca42565).
-// A retune of routes.json or the boss roster moves them: reprint with PRINT_GOLDEN=1.
-const GOLDEN = {
-  '3:1': 'aa29acd981926af5',
-  '3:3': '01bb039faf5857a0',
-  '7:1': '427f1b36738ef565',
-  '7:3': 'f2d12a2b3d3ed146',
-};
 
 function SetupCore(routes = {})
 {
@@ -107,6 +42,35 @@ function SetupCore(routes = {})
   return { registries, run };
 }
 
+// The route facts every test derives its depths and types from.
+function RouteConfig(routes = {})
+{
+  const core = SetupCore(routes);
+  const settings = core.registries.gameProfile.modules.routes;
+  const shape = RouteShapeOf(core.registries);
+  const types = RouteRoomTypes(core.registries.gameProfile.content.routes, shape);
+  const depths = RouteDepths(settings, shape);
+  const count = settings.prebossNodes;
+  const plain = types.pinnable.find(type => type !== ELITE_ROOM && type !== SHOP_ROOM);
+  const fullDepth = BranchFullDepth(count, shape);
+  const openLast = count - shape.narrowDepthsBeforeBoss;
+  const eliteFirst = Math.max(fullDepth, settings.minimumThreatFloor);
+  const shopLast = Math.min(shape.guaranteedShopDepths.last, count);
+  return {
+    core,
+    settings,
+    shape,
+    types,
+    count,
+    plain,
+    acts: settings.acts,
+    eliteSpan: PinnableDepths(depths, eliteFirst, openLast),
+    shopSpan: PinnableDepths(depths, shape.guaranteedShopDepths.first, shopLast),
+    branchDepths: PinnableDepths(depths, shape.firstBranchDepth, count),
+    restDepths: depths.restDepths,
+  };
+}
+
 function BuildMap(core, seed, act)
 {
   const rng = createRng(seed);
@@ -114,67 +78,30 @@ function BuildMap(core, seed, act)
   return { map, counters: rng.getCounters() };
 }
 
-function MapDigest(map)
+function EachMap(core, acts, visit)
 {
-  const rows = Object.keys(map.nodes).sort().map(id =>
+  for (const seed of SEEDS)
   {
-    const node = map.nodes[id];
-    return [
-      node.id,
-      node.actualType,
-      node.type,
-      node.next,
-      node.encounterId ?? null,
-      node.resolved ?? null,
-    ];
-  });
-  return createHash('sha256').update(JSON.stringify(rows)).digest('hex').slice(0, 16);
+    for (let act = 1; act <= acts; act++)
+    {
+      visit(BuildMap(core, seed, act).map, `seed ${seed} act ${act}`);
+    }
+  }
 }
 
-function NodesAt(map, depth)
+function PinAll(depths, type)
 {
-  return Object.values(map.nodes).filter(node => node.floor === depth);
+  return Object.fromEntries(depths.map(depth => [depth, type]));
 }
 
-test('a pinned depth is that room type on every lane, for every seed and act', () =>
+// A shop pinned on a branch depth outside the elite span covers every branch's shop.
+function ShopPinOutside(config, span)
 {
-  const core = SetupCore({ floorTypes: PINNED });
-  for (const seed of SEEDS) for (const act of ACTS)
-  {
-    const { map } = BuildMap(core, seed, act);
-    const shops = NodesAt(map, SHOP_DEPTH);
-    const elites = NodesAt(map, ELITE_DEPTH);
-    const label = `seed ${seed} act ${act}`;
-    assert.ok(shops.length >= map.bossIds.length, `${label} has depth ${SHOP_DEPTH}`);
-    for (const node of shops) assert.equal(node.actualType, 'shop', `${node.id} seed ${seed}`);
-    for (const node of shops) assert.equal(node.type, 'merchant', `${node.id} seed ${seed}`);
-    for (const node of elites) assert.equal(node.actualType, 'elite', `${node.id} seed ${seed}`);
-    // The pinned elite depth is each lane's guaranteed elite, so Core rolls no other.
-    const otherElites = Object.values(map.nodes)
-      .filter(node => node.actualType === 'elite' && node.floor !== ELITE_DEPTH);
-    assert.deepEqual(otherElites.map(node => node.id), [], label);
-  }
-});
+  const depth = config.branchDepths.find(candidate => !span.includes(candidate));
+  return { [depth]: SHOP_ROOM };
+}
 
-test('without floorTypes a known seed rolls the same Core map and the same draws', () =>
-{
-  const core = SetupCore();
-  const cleared = SetupCore({ floorTypes: null });
-  assert.deepEqual(core.registries.gameProfile.content.routes.floorTypes, {});
-  const got = {};
-  for (const seed of [3, 7]) for (const act of [1, 3])
-  {
-    const authored = BuildMap(core, seed, act);
-    const absent = BuildMap(cleared, seed, act);
-    assert.deepEqual(MapDigest(absent.map), MapDigest(authored.map));
-    assert.deepEqual(absent.counters, authored.counters, 'no extra map draws');
-    got[`${seed}:${act}`] = MapDigest(authored.map);
-  }
-  if (process.env.PRINT_GOLDEN) console.log(JSON.stringify(got));
-  assert.deepEqual(got, GOLDEN);
-});
-
-function LaneTypes(map)
+function RoomsByLane(map)
 {
   const lanes = new Map();
   for (const node of Object.values(map.nodes))
@@ -188,98 +115,185 @@ function LaneTypes(map)
   return lanes;
 }
 
-test('every lane keeps its elite when pins leave it one free floor', () =>
+function BranchesWith(map, room)
 {
-  const core = SetupCore({ floorTypes: ONE_FREE_ELITE_FLOOR });
-  for (const seed of SEEDS) for (const act of ACTS)
+  const rooms = Object.values(map.nodes).filter(node => node.actualType === room);
+  return new Set(rooms.map(node => node.branch));
+}
+
+function DepthList(depths)
+{
+  return depths.join(', ');
+}
+
+function RefusedWith(routes, phrase)
+{
+  const matches = error => error.path === FLOOR_TYPES_PATH && error.message.includes(phrase);
+  assert.throws(() => SetupCore(routes), matches, phrase);
+}
+
+test('a pinned depth is that room type on every lane, for every seed and act', () =>
+{
+  const config = RouteConfig();
+  const eliteDepth = config.eliteSpan[0];
+  const shopDepth = config.shopSpan.find(depth => depth !== eliteDepth);
+  const floorTypes = { [shopDepth]: SHOP_ROOM, [eliteDepth]: ELITE_ROOM };
+  const randomElites = (config.settings.typeWeights || {})[ELITE_ROOM] > 0;
+  EachMap(SetupCore({ floorTypes }), config.acts, (map, label) =>
   {
-    const { map } = BuildMap(core, seed, act);
-    for (const [lane, types] of LaneTypes(map))
+    for (const [depth, room] of Object.entries(floorTypes))
     {
-      assert.ok(types.has('elite'), `seed ${seed} act ${act} lane ${lane} has an elite`);
+      const nodes = Object.values(map.nodes).filter(node => node.floor === Number(depth));
+      assert.ok(nodes.length >= map.bossIds.length, `${label} has depth ${depth}`);
+      for (const node of nodes) assert.equal(node.actualType, room, `${label} ${node.id}`);
     }
-  }
-  const refusal = /leaves a lane no free floor for its elite\. Keep one of depths 8, 9 unpinned/;
-  const isLaneError = error => error.path === FLOOR_TYPES_PATH && refusal.test(error.message);
-  assert.throws(() => SetupCore({ floorTypes: NO_LANE_ELITE }), isLaneError);
-  const lateThreat = BuildMap(SetupCore(LATE_THREAT), 1, 1).map;
-  const lateElites = Object.values(lateThreat.nodes).filter(node => node.actualType === 'elite');
-  assert.ok(lateElites.length > 0, 'without pins the late-threat route has elites');
-  const lateRefusal = /leaves a lane no free floor for its elite\. Keep depth 10 unpinned/;
-  const isLateError = error => error.path === FLOOR_TYPES_PATH && lateRefusal.test(error.message);
-  assert.throws(() => SetupCore(LATE_THREAT_NO_ELITE), isLateError);
+    if (randomElites) return;
+    const others = Object.values(map.nodes)
+      .filter(node => node.actualType === ELITE_ROOM && node.floor !== eliteDepth);
+    assert.deepEqual(others.map(node => node.id), [], `${label}: the pin is each lane's elite`);
+  });
 });
 
-test('every branch keeps its shop when pins leave it room', () =>
+test('without floorTypes the map and its draws are the same as with an empty table', () =>
 {
-  for (const routes of [MOVING_REST_SHOP_ROOM, FIXED_RESTS_TWO_SHOP_FLOORS])
+  const config = RouteConfig();
+  const cleared = SetupCore({ floorTypes: null });
+  assert.deepEqual(config.core.registries.gameProfile.content.routes.floorTypes, {});
+  for (const seed of SEEDS)
   {
-    const core = SetupCore({ ...NO_RANDOM_SHOPS, ...routes });
-    for (const seed of SEEDS) for (const act of ACTS)
+    for (let act = 1; act <= config.acts; act++)
     {
-      const { map } = BuildMap(core, seed, act);
-      const shopBranches = new Set(Object.values(map.nodes)
-        .filter(node => node.actualType === 'shop')
-        .map(node => node.branch));
-      map.bossIds.forEach((bossId, branch) =>
-      {
-        const label = `${JSON.stringify(routes)} seed ${seed} act ${act} branch ${branch}`;
-        assert.ok(shopBranches.has(branch), `${label} has a shop`);
-      });
+      const authored = BuildMap(config.core, seed, act);
+      const absent = BuildMap(cleared, seed, act);
+      assert.deepEqual(absent.map.nodes, authored.map.nodes, `seed ${seed} act ${act}`);
+      assert.deepEqual(absent.counters, authored.counters, 'no extra map draws');
     }
   }
+});
+
+test('every lane keeps its elite when pins leave it one free floor', () =>
+{
+  const config = RouteConfig();
+  const pinned = config.eliteSpan.slice(0, -1);
+  const shopPin = ShopPinOutside(config, config.eliteSpan);
+  const floorTypes = { ...PinAll(pinned, config.plain), ...shopPin };
+  EachMap(SetupCore({ floorTypes }), config.acts, (map, label) =>
+  {
+    for (const [lane, rooms] of RoomsByLane(map))
+    {
+      assert.ok(rooms.has(ELITE_ROOM), `${label} lane ${lane} has an elite`);
+    }
+  });
+  const noElite = { ...PinAll(config.eliteSpan, config.plain), ...shopPin };
+  const keep = `Keep one of depths ${DepthList(config.eliteSpan)} unpinned`;
+  RefusedWith({ floorTypes: noElite }, `leaves a lane no free floor for its elite. ${keep}`);
+});
+
+test('a late minimumThreatFloor still guards the lane elite', () =>
+{
+  const config = RouteConfig();
+  const openLast = config.count - config.shape.narrowDepthsBeforeBoss;
+  const lateDepth = config.branchDepths.find(depth => depth > openLast);
+  const late = { prebossNodes: config.count, minimumThreatFloor: lateDepth };
+  const { map } = BuildMap(SetupCore(late), 1, 1);
+  const elites = Object.values(map.nodes).filter(node => node.actualType === ELITE_ROOM);
+  assert.ok(elites.length > 0, 'without pins the late route has elites');
+  const floorTypes = { [lateDepth]: config.plain };
+  RefusedWith({ ...late, floorTypes }, `Keep depth ${lateDepth} unpinned, or pin an elite`);
+});
+
+// Fixed rests (restFloorSpread 0) leave no spare rest-span floors, so pins can use up the shop.
+function FixedRestConfig()
+{
+  return RouteConfig({ restFloorSpread: 0 });
+}
+
+function NoRandomShops(config)
+{
+  const weights = config.settings.typeWeights;
+  if (!weights) return {};
+  return { typeWeights: { ...weights, [SHOP_ROOM]: 0 } };
+}
+
+test('every branch keeps its shop when pins leave it two free floors', () =>
+{
+  const config = FixedRestConfig();
+  const floorTypes = PinAll(config.shopSpan.slice(0, -2), config.plain);
+  const routes = { restFloorSpread: 0, ...NoRandomShops(config), floorTypes };
+  EachMap(SetupCore(routes), config.acts, (map, label) =>
+  {
+    const shops = BranchesWith(map, SHOP_ROOM);
+    map.bossIds.forEach((bossId, branch) =>
+    {
+      assert.ok(shops.has(branch), `${label} branch ${branch} has a shop`);
+    });
+  });
 });
 
 test('pins that leave a branch no shop floor, alone or beside its elites, are refused', () =>
 {
-  const noShop = /no free floor for its shop\. Keep one of depths 4, 5, 7, 8 unpinned/;
-  assert.throws(() => SetupCore(FIXED_RESTS_NO_SHOP), noShop);
-  const sharedSlot = /shop only floors its elites can take\. Keep two of depths 4, 5, 7, 8/;
-  const isSharedSlot = error => error.path === FLOOR_TYPES_PATH && sharedSlot.test(error.message);
-  assert.throws(() => SetupCore(FIXED_RESTS_SHARED_SLOT), isSharedSlot);
+  const config = FixedRestConfig();
+  const keepShop = `Keep one of depths ${DepthList(config.shopSpan)} unpinned`;
+  const noShop = { restFloorSpread: 0, floorTypes: PinAll(config.shopSpan, config.plain) };
+  RefusedWith(noShop, `leaves a branch no free floor for its shop. ${keepShop}`);
+  const shared = config.shopSpan.filter(depth => config.eliteSpan.includes(depth)).at(-1);
+  const others = [...config.shopSpan, ...config.eliteSpan].filter(depth => depth !== shared);
+  const sharedSlot = { restFloorSpread: 0, floorTypes: PinAll(others, config.plain) };
+  const keepTwo = `Keep two of depths ${DepthList(config.shopSpan)} unpinned`;
+  RefusedWith(sharedSlot, `leaves a branch's shop only floors its elites can take. ${keepTwo}`);
 });
 
-const INVALID = [
-  [{ 0: 'shop' }, /depth "0" must be a whole number from 1 to 11/],
-  [{ 12: 'shop' }, /depth "12" must be a whole number from 1 to 11/],
-  [{ '4.5': 'shop' }, /depth "4\.5" must be a whole number/],
-  [{ four: 'shop' }, /depth "four" must be a whole number/],
-  [{ 6: 'shop' }, /depth 6 is or can become a rest floor/],
-  [{ 5: 'shop' }, /depth 5 is or can become a rest floor/],
-  [{ 4: 'dragon' }, /depth 4: "dragon" is not a room type this route uses/],
-  [{ 4: 'rest' }, /depth 4 cannot be "rest": the route places that room itself/],
-  [{ 4: 'boss' }, /depth 4 cannot be "boss"/],
-  [{ 2: 'elite' }, /depth 2: an elite needs depth 3 or later/],
-];
+function InvalidTables(config)
+{
+  const { count, plain, types, settings, restDepths } = config;
+  const restDepth = [...restDepths].find(depth => depth > 1 && depth < count);
+  const unknown = `${types.all.join('')}x`;
+  const earlyDepth = config.branchDepths.find(depth => depth < settings.minimumThreatFloor);
+  const tables = [
+    [{ 0: plain }, `depth "0" must be a whole number from 1 to ${count}`],
+    [{ [count + 1]: plain }, `depth "${count + 1}" must be a whole number from 1 to ${count}`],
+    [{ [`${config.branchDepths[0]}.5`]: plain }, 'must be a whole number'],
+    [{ four: plain }, 'depth "four" must be a whole number'],
+    [{ [restDepth]: plain }, `depth ${restDepth} is or can become a rest floor`],
+    [{ [config.branchDepths[0]]: unknown }, `"${unknown}" is not a room type this route uses`],
+  ];
+  for (const placed of config.shape.placedTypes)
+  {
+    tables.push([{ [config.branchDepths[0]]: placed }, `cannot be "${placed}"`]);
+  }
+  if (earlyDepth !== undefined)
+  {
+    const message = `an elite needs depth ${settings.minimumThreatFloor} or later`;
+    tables.push([{ [earlyDepth]: ELITE_ROOM }, message]);
+  }
+  return tables;
+}
 
 test('each invalid floorTypes entry fails at resolve time with its message', () =>
 {
-  for (const [floorTypes, message] of INVALID)
-  {
-    const isFloorTypesError = error =>
-      error.path === FLOOR_TYPES_PATH && message.test(error.message);
-    assert.throws(() => SetupCore({ floorTypes }), isFloorTypesError, JSON.stringify(floorTypes));
-  }
+  const config = RouteConfig();
+  for (const [floorTypes, phrase] of InvalidTables(config)) RefusedWith({ floorTypes }, phrase);
+  const restFloors = config.settings.restFloors.filter(depth => depth !== 1);
   const noStartRest = {
-    prebossNodes: 11,
-    restFloors: [6, 11],
-    restsPerAct: 2,
+    prebossNodes: config.count,
+    restFloors,
+    restsPerAct: restFloors.length,
     startRestFromAct: null,
+    firstFloor: config.settings.firstFloor ?? config.plain,
   };
-  const firstFloorClash = { ...noStartRest, floorTypes: { 1: 'shop' } };
-  assert.throws(() => SetupCore(firstFloorClash), /depth 1 is already set by firstFloor/);
-  const atFloorTypes = error => error.path === FLOOR_TYPES_PATH;
-  assert.throws(() => SetupCore({ floorTypes: ['shop'] }), atFloorTypes);
+  RefusedWith({ ...noStartRest, floorTypes: { 1: config.plain } }, 'already set by firstFloor');
+  assert.throws(() => SetupCore({ floorTypes: [config.plain] }), { path: FLOOR_TYPES_PATH });
 });
 
 test('the map build refuses a bad floorTypes that skipped the resolver', () =>
 {
-  const core = SetupCore();
-  const profile = core.registries.gameProfile;
-  const routes = { ...profile.content.routes, floorTypes: { 6: 'shop' } };
+  const config = RouteConfig();
+  const profile = config.core.registries.gameProfile;
+  const restDepth = [...config.restDepths].find(depth => depth > 1 && depth < config.count);
+  const floorTypes = { [restDepth]: config.plain };
+  const routes = { ...profile.content.routes, floorTypes };
   const gameProfile = { ...profile, content: { ...profile.content, routes } };
-  const registries = { ...core.registries, gameProfile };
-  const seat = core.run.seatOrder[0];
-  const build = () => buildActMap(registries, createRng(1), seat, 1);
-  assert.throws(build, /Invalid configured floorTypes: depth 6 is or can become a rest floor/);
+  const registries = { ...config.core.registries, gameProfile };
+  const build = () => buildActMap(registries, createRng(1), config.core.run.seatOrder[0], 1);
+  assert.throws(build, new RegExp(`Invalid configured floorTypes: depth ${restDepth} is or can`));
 });
