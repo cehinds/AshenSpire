@@ -48,6 +48,10 @@ import { filterMembership, deckCatalogOptions, resolveStudioDeck } from './deckC
 import { initGalleryZoom } from './galleryZoom.js';
 import { focusedEffectOptions } from './focusedRebalance.js';
 import { createAddCardTile, CaptureCardTilePositions, animateCardInsertion } from './addCardTile.js';
+import {
+  OpenContentEditor,
+  SaveShownContentEditor,
+} from './contentEditor/contentEditor.js';
 import { InitStudioSaveUi, StudioSaveMenuLabel } from './studioSaveUi.js';
 import {
   GalleryKind,
@@ -110,6 +114,7 @@ function CountRuleRow(state, R, id, label)
 
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
 const saveShortcutKey = 's';
+const contentPanelId = 'tab-content';
 const fileMenu = 'file';
 const fileMenuHeadingId = 'menu-file';
 const studioSaveMenuId = 'menu-studio-save';
@@ -4724,6 +4729,8 @@ function setupStudioMenubar() {
   const restore = document.getElementById('btn-restore-names')?.closest('.studio-menu'); if (restore) { panel('edit').append(restore); document.getElementById('btn-restore-names').classList.add('menu-item'); }
   command('view', 'menu-view-cards', 'Cards', () => document.querySelector('.studio-tab[data-tab="cards"]').click());
   command('view', 'menu-view-items', 'Items', () => document.querySelector('.studio-tab[data-tab="items"]').click());
+  const contentTab = '.studio-tab[data-tab="content"]';
+  command('view', 'menu-view-content', 'Game content', () => document.querySelector(contentTab).click());
   group('view', 'Customization pane');
   for (const [view, text] of [['properties', 'Properties'], ['design', 'Design and art layers'], ['weights', 'Weights'], ['decks', 'Deck lists']]) command('view', `menu-view-${view}`, text, () => setCustomizationView(view));
   command('view', 'menu-view-dock', 'Dock customization pane', () => cardEditorDockUi?.setDocked(true));
@@ -4815,6 +4822,10 @@ function setupShortcuts() {
     if (key === saveShortcutKey && !e.altKey)
     {
       e.preventDefault();
+      if (SaveShownContentEditor(document.getElementById(contentPanelId)))
+      {
+        return;
+      }
       studioSaveUi?.save();
       return;
     }
@@ -4999,6 +5010,7 @@ function wireEvents() {
         saveWorkingContext();
       }
       if (tab === 'sandbox' && !state.sandbox.combat) startSandboxCombat();
+      if (tab === 'content') OpenContentEditor(document.getElementById(contentPanelId));
       if (tab === 'art') renderArtTab();
       if (tab === 'effects') {
         if (!effectsFrame.hasAttribute('src')) effectsFrame.src = effectsFrame.dataset.src;

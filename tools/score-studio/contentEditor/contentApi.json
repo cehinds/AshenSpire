@@ -1,0 +1,32 @@
+{
+  "$note": "The /__content/ API shared by tools/content-editor-save.mjs and the Score Studio Game content tab.",
+  "prefix": "/__content/",
+  "routes": {
+    "file": "/__content/file",
+    "list": "/__content/list",
+    "check": "/__content/check"
+  },
+  "maxBodyBytes": 8388608,
+  "listExtension": ".json",
+  "hiddenPrefix": "_",
+  "hash": {
+    "node": "sha256",
+    "web": "SHA-256"
+  },
+  "checkTimeoutMs": 600000,
+  "messages": {
+    "notLocal": "Game content editing needs `npm run play` on this computer.",
+    "notFromStudio": "Save from the local Score Studio.",
+    "noSuchRoute": "Unknown content request.",
+    "tooLarge": "The file is too large to save.",
+    "notRepoPath": "Not a repo path: {path}",
+    "notEditable": "This file cannot be edited here: {path}",
+    "notListable": "This folder cannot be listed here: {path}",
+    "notJson": "Not valid JSON, nothing saved: {error}",
+    "noServer": "Game content needs `npm run play`. Start it and open Score Studio from it.",
+    "staleFile": "{path} changed on disk since you opened it, so it was not saved. It is reloaded now; make your change again.",
+    "checkBusy": "A check is already running.",
+    "checkTimedOut": "FAIL The check took longer than {seconds} seconds and was stopped.",
+    "checkStopped": "FAIL The check stopped before it finished (exit code {code})."
+  }
+}

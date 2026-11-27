@@ -24,7 +24,7 @@ export const DEFAULT_CARD_LIMIT_RULES = Object.freeze({
 });
 
 /** A null or missing cap in CARD_LIMITS means no limit. */
-function hasLimit(limit)
+export function HasCardLimit(limit)
 {
     return Number.isFinite(limit);
 }
@@ -68,7 +68,7 @@ function effectsProblem(
     rules,
 )
 {
-    if (!hasLimit(rules.maxEffects) || count <= rules.maxEffects)
+    if (!HasCardLimit(rules.maxEffects) || count <= rules.maxEffects)
     {
         return null;
     }
@@ -85,7 +85,7 @@ function drawbacksProblem(
     rules,
 )
 {
-    if (!hasLimit(rules.maxDrawbacks) || drawbacks.length <= rules.maxDrawbacks)
+    if (!HasCardLimit(rules.maxDrawbacks) || drawbacks.length <= rules.maxDrawbacks)
     {
         return null;
     }
