@@ -55,15 +55,37 @@ function registriesFor(profile)
     return Profile.bindGameProfileRegistries(createRegistries(content), profile);
 }
 
-function fight(profile, enemyId, { act = 1, floor = 0, hpMult = 1 } = {})
+function fight(
+    profile,
+    enemyId,
+    {
+        act = 1,
+        floor = 0,
+        hpMult = 1,
+    } = {},
+)
 {
     const registries = registriesFor(profile);
-    const run = createRunState({ registries, classId: CLASS_ID, seed: SEED });
+    const run = createRunState({
+        registries,
+        classId: CLASS_ID,
+        seed: SEED,
+    });
     run.actNumber = act;
     run.floor = floor;
     const rng = createRng(SEED);
-    const combat = createRunCombat({ registries, run, rng, enemyIds: [enemyId], hpMult });
-    const nextHpDraw = rng.int(HP_STREAM, 1, PROBE_MAX);
+    const combat = createRunCombat({
+        registries,
+        run,
+        rng,
+        enemyIds: [enemyId],
+        hpMult,
+    });
+    const nextHpDraw = rng.int(
+        HP_STREAM,
+        1,
+        PROBE_MAX,
+    );
     return {
         enemy: combat.enemies[0],
         nextHpDraw,
@@ -109,8 +131,16 @@ test('an override sets a normal enemy\'s HP and draws the HP roll the same', () 
 test('an override sets an act-levelled elite\'s HP in place of its level row', () =>
 {
     const options = { act: ELITE_ACT };
-    const baseline = fight(shippedProfile, ELITE_ID, options);
-    const overridden = fight(profileWithOverrides({ [ELITE_ID]: OVERRIDE_HP }), ELITE_ID, options);
+    const baseline = fight(
+        shippedProfile,
+        ELITE_ID,
+        options,
+    );
+    const overridden = fight(
+        profileWithOverrides({ [ELITE_ID]: OVERRIDE_HP }),
+        ELITE_ID,
+        options,
+    );
     const expected = scaled(OVERRIDE_HP, tierScale(ELITE_ID));
     assert.equal(overridden.enemy.maxHp, expected);
     assert.notEqual(baseline.enemy.maxHp, expected);
@@ -124,13 +154,29 @@ test('Custom Climb hpMult, the floor step and the tier scale still apply on top'
         [ELITE_ID]: OVERRIDE_HP,
     });
     const deep = { floor: DEEP_FLOOR, hpMult: CLIMB_HP_MULT };
-    const minion = fight(profile, MINION_ID, deep).enemy;
-    const { step } = enemyFightLevel(rowOf(MINION_ID), settings, { act: 1, floor: DEEP_FLOOR });
-    const stepFactor = enemyScalingHpFactor(rowOf(MINION_ID), settings, step);
+    const minion = fight(
+        profile,
+        MINION_ID,
+        deep,
+    ).enemy;
+    const { step } = enemyFightLevel(
+        rowOf(MINION_ID),
+        settings,
+        { act: 1, floor: DEEP_FLOOR },
+    );
+    const stepFactor = enemyScalingHpFactor(
+        rowOf(MINION_ID),
+        settings,
+        step,
+    );
     assert.ok(stepFactor > 1, 'the deep floor gives the minion a floor step');
     const climbed = scaled(OVERRIDE_HP, CLIMB_HP_MULT);
     assert.equal(minion.maxHp, scaled(scaled(climbed, stepFactor), tierScale(MINION_ID)));
-    const elite = fight(profile, ELITE_ID, { act: ELITE_ACT, hpMult: CLIMB_HP_MULT }).enemy;
+    const elite = fight(
+        profile,
+        ELITE_ID,
+        { act: ELITE_ACT, hpMult: CLIMB_HP_MULT },
+    ).enemy;
     assert.equal(elite.maxHp, scaled(climbed, tierScale(ELITE_ID)));
 });
 
@@ -139,9 +185,17 @@ test('without an override every enemy keeps its HP', () =>
     const definitions = [{ id: MINION_ID, hp: [31, 36] }];
     assert.equal(ApplyEnemyHpOverrides(definitions, shippedProfile.content.enemies), definitions);
     assert.ok(shippedProfile.content.enemies.every(row => row.hpOverride === undefined));
-    const baseline = fight(shippedProfile, ELITE_ID, { act: ELITE_ACT });
+    const baseline = fight(
+        shippedProfile,
+        ELITE_ID,
+        { act: ELITE_ACT },
+    );
     const minionOnly = profileWithOverrides({ [MINION_ID]: OVERRIDE_HP });
-    const unrelated = fight(minionOnly, ELITE_ID, { act: ELITE_ACT });
+    const unrelated = fight(
+        minionOnly,
+        ELITE_ID,
+        { act: ELITE_ACT },
+    );
     assert.equal(unrelated.enemy.maxHp, baseline.enemy.maxHp);
     assert.equal(unrelated.nextHpDraw, baseline.nextHpDraw);
 });
@@ -157,7 +211,11 @@ test('an unusable override is ignored at runtime', () =>
     ];
     for (const value of unusable)
     {
-        assert.equal(EnemyHpOverride({ hpOverride: value }), null, JSON.stringify(value));
+        assert.equal(
+            EnemyHpOverride({ hpOverride: value }),
+            null,
+            JSON.stringify(value),
+        );
     }
     assert.equal(EnemyHpOverride({ hpOverride: 1 }), 1);
     assert.equal(EnemyHpOverride(undefined), null);
