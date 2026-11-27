@@ -2004,12 +2004,21 @@ function applyCardJson() {
   try { scoreCardEntry(normalizeStudioCard(clone(next))); } catch (err) { error.textContent = `Not a valid card: ${err.message}`; return; }
   if (state.selectedCardId !== id) selectStudioCard(id);
   const index = state.cards.findIndex((card) => card.id === id), before = clone(state.cards[index]), history = state.undoStack.length;
+  // An explicit name or text in the JSON wins, exactly like typing in the Name or Text field:
+  // it switches that generation off instead of being overwritten by it.
+  const nameChanged = (next.name ?? '') !== (before.name ?? ''), textChanged = (next.textTemplate ?? '') !== (before.textTemplate ?? '');
+  if (textChanged) {
+    const autoTextToggle = document.getElementById('toggle-auto-text');
+    if (autoTextToggle?.checked) { autoTextToggle.checked = false; writeStoredJson(AUTO_TEXT_KEY, false); }
+  }
   try {
     mutateSelectedCard((card) => {
       const internal = Object.fromEntries(Object.entries(card).filter(([key]) => key.startsWith('_')));
       for (const key of Object.keys(card)) delete card[key];
       Object.assign(card, next, internal);
-    });
+      if (nameChanged) card._autoName = false;
+      if (textChanged) card._autoText = false;
+    }, { autoName: !nameChanged, autoText: !textChanged });
   } catch (err) {
     // Roll back: the card, the history entry the edit pushed, and the views.
     state.cards[index] = before;
