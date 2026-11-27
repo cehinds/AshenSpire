@@ -238,6 +238,12 @@ class StudioSaveUi
     return this.#controller.status() !== StudioSaveStatus.None;
   }
 
+  // True when the Studio differs from its saved files, even if it matches the game baseline.
+  hasUnsavedChanges()
+  {
+    return this.#controller.status() === StudioSaveStatus.Draft;
+  }
+
   #draftSaveScope(draft)
   {
     const { state } = this.#deps;

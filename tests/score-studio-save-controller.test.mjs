@@ -603,3 +603,35 @@ test('studio save: an edit made while a save is in flight stays Draft and is sen
       'the edit made in flight is not marked as saved',
     );
   });
+
+test('studio save: deleting a saved card back to the game baseline still counts as unsaved',
+  async () =>
+  {
+    const savedCardsData = {
+      cards: [qaCard],
+      removedCardIds: [],
+    };
+    const options = {
+      choice: StudioSaveChoice.KeepDraft,
+      storage: {
+        draft: null,
+      },
+      asked: {
+        count: 0,
+      },
+    };
+    const savedUi = setupSaveUi({
+      ...options,
+      savedFiles: {
+        cards: savedDocument(cardsName, savedCardsData),
+      },
+    });
+    await savedUi.loadSavedFiles();
+    assert.equal(savedUi.hasUnsavedChanges(), true, 'the deletion keeps the draft');
+    const unsavedUi = setupSaveUi({
+      ...options,
+      savedFiles: {},
+    });
+    await unsavedUi.loadSavedFiles();
+    assert.equal(unsavedUi.hasUnsavedChanges(), false, 'no save files, nothing unsaved');
+  });

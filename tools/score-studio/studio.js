@@ -601,7 +601,8 @@ function writeDraftNow() {
   state.draftStorageFailed = false;
   if (state.autosave) {
     try {
-      if (isDirty()) {
+      const keepsDraft = isDirty() || Boolean(studioSaveUi?.hasUnsavedChanges());
+      if (keepsDraft) {
         localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({
           savedAt: new Date().toISOString(),
           scoring: state.scoring,
