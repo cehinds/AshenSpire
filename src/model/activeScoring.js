@@ -43,9 +43,11 @@ export function ValidateScoringConfig(obj) {
       if ('multiplier' in entry && typeof entry.multiplier !== 'boolean') errors.push(`${section}.${id}.multiplier must be true or false.`);
     }
   }
-  const effectCount = obj.effectCount;
-  if (effectCount && typeof effectCount === 'object' && 'multiplier' in effectCount && typeof effectCount.multiplier !== 'boolean') {
-    errors.push('effectCount.multiplier must be true or false.');
+  for (const countRule of ['effectCount', 'drawbackCount']) {
+    const rule = obj[countRule];
+    if (rule && typeof rule === 'object' && 'multiplier' in rule && typeof rule.multiplier !== 'boolean') {
+      errors.push(`${countRule}.multiplier must be true or false.`);
+    }
   }
   // A keyword is flat (adds `flat`) or a multiplier (adds P x `multiplier`); a tag adds `weight` or carries
   // `multiplier` / `pMultiplier`. Either form is valid; a number it has must be finite.
