@@ -48,7 +48,9 @@ export function createActiveEntities({ state, onChange } = {})
     {
       throw new Error(`Unknown entity kind '${kind}'`);
     }
-    const next = isKnownEntity(state, kind, id) ? id : null;
+    const next = isKnownEntity(state, kind, id)
+      ? id
+      : null;
     const changed = next !== committed[kind];
     state[field] = next;
     committed[kind] = next;
@@ -74,7 +76,9 @@ export function createActiveEntities({ state, onChange } = {})
 export function nextInDisplayedOrder(displayedIds, removedId, fullOrder = displayedIds)
 {
   const isDisplayed = (displayedIds || []).includes(removedId);
-  const order = isDisplayed ? displayedIds : (fullOrder || []);
+  const order = isDisplayed
+    ? displayedIds
+    : (fullOrder || []);
   const removedIndex = order.indexOf(removedId);
   if (removedIndex < 0)
   {
@@ -140,7 +144,9 @@ export function readWorkingContext(storage)
     }
     const saved = JSON.parse(raw);
     const isRecord = saved && typeof saved === 'object' && !Array.isArray(saved);
-    return isRecord ? saved : null;
+    return isRecord
+      ? saved
+      : null;
   }
   catch
   {
@@ -166,15 +172,19 @@ export function resolveWorkingContext(saved, state, defaults = {})
 {
   function pick(kind, stored, fallback)
   {
-    if (isKnownEntity(state, kind, stored))
-    {
-      return stored;
-    }
-    return isKnownEntity(state, kind, fallback) ? fallback : null;
+    return isKnownEntity(state, kind, stored)
+      ? stored
+      : isKnownEntity(state, kind, fallback)
+        ? fallback
+        : null;
   }
-  const fallbackGallery = GALLERIES.includes(defaults.gallery) ? defaults.gallery : GalleryKind.Cards;
+  const gallery = GALLERIES.includes(saved?.gallery)
+    ? saved.gallery
+    : GALLERIES.includes(defaults.gallery)
+      ? defaults.gallery
+      : GalleryKind.Cards;
   return {
-    gallery: GALLERIES.includes(saved?.gallery) ? saved.gallery : fallbackGallery,
+    gallery,
     cardId: pick(GalleryKind.Cards, saved?.cardId, defaults.cardId),
     itemKey: pick(GalleryKind.Items, saved?.itemKey, defaults.itemKey),
   };
@@ -194,7 +204,9 @@ function tileIdSelector(attribute)
 function focusedPart(element)
 {
   const firstClass = String(element.className || '').split(CLASS_NAME_SEPARATOR).filter(Boolean)[0];
-  return firstClass ? `${CLASS_SELECTOR_PREFIX}${firstClass}` : element.tagName.toLowerCase();
+  return firstClass
+    ? `${CLASS_SELECTOR_PREFIX}${firstClass}`
+    : element.tagName.toLowerCase();
 }
 
 /** Before a gallery re-render: which tile (by stable id) and which part of it had focus. */
@@ -212,7 +224,9 @@ export function captureTileFocus(grid, attribute, doc = globalThis.document)
   }
   return {
     id: tile.getAttribute(tileIdAttributeName(attribute)),
-    part: focused === tile ? null : focusedPart(focused),
+    part: focused === tile
+      ? null
+      : focusedPart(focused),
   };
 }
 
@@ -223,7 +237,9 @@ function isFocusableTile(tile)
 
 function focusTarget(tile, part, fallback)
 {
-  const partNode = tile && part ? tile.querySelector(part) : null;
+  const partNode = tile && part
+    ? tile.querySelector(part)
+    : null;
   if (partNode)
   {
     return partNode;

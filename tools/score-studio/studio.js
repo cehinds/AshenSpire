@@ -3698,7 +3698,9 @@ function renderArtTab() {
   // The picker follows the gallery's active card or item.
   const cardSel = document.getElementById('art-preview-card-select');
   cardSel.innerHTML = '';
-  const pickerKind = isItems ? GalleryKind.Items : GalleryKind.Cards;
+  const pickerKind = isItems
+    ? GalleryKind.Items
+    : GalleryKind.Cards;
   const options = isItems
     ? state.items.map((item) => [item.key, `[${item.kind[0].toUpperCase() + item.kind.slice(1)}] ${item.name || item.id}`])
     : state.cards.map((card) => [card.id, card.name || card.id]);
@@ -4898,7 +4900,9 @@ function wireEvents() {
     const next = state.cards.find((card) => card.id === activeId);
     syncAllViews();
     saveDraft({ autoName: false });
-    toast(next ? DeletedCardToast.withNext(removed.name, next.name) : DeletedCardToast.withoutNext(removed.name));
+    toast(next
+      ? DeletedCardToast.withNext(removed.name, next.name)
+      : DeletedCardToast.withoutNext(removed.name));
   });
 
   // Card inspector edits
@@ -5303,7 +5307,9 @@ function wireEvents() {
   // The Design target is the gallery context, so it switches the gallery too.
   document.querySelectorAll('[data-art-target]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      const kind = btn.dataset.artTarget === GalleryKind.Items ? GalleryKind.Items : GalleryKind.Cards;
+      const kind = btn.dataset.artTarget === GalleryKind.Items
+        ? GalleryKind.Items
+        : GalleryKind.Cards;
       if (kind !== activeGallery)
       {
         showGallery(kind);
