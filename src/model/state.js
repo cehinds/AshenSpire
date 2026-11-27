@@ -224,6 +224,9 @@ export function createRunState({
   startingRelicId = undefined,
   startingAbilityIds = undefined,
   profileMeta = {},
+  // Read-only reference runs (cardMechanicalProjection's neutral card-face
+  // baseline) keep the caller's deep-frozen canonical profile instead of a copy.
+  shareFrozenProfile = false,
 }) {
   if (![1, 2].includes(combatExpansionVersion)) throw new Error('combatExpansionVersion must be 1 or 2');
   if (![null, 1].includes(enemyKnowledgeVersion)) throw new Error('enemyKnowledgeVersion must be 1 or null');
@@ -293,7 +296,7 @@ export function createRunState({
     // Only normalized factories prove canonical JSON's domain. Raw verified
     // snapshots may retain metadata, so every other input keeps native cloning.
     ...(gameProfile ? { gameProfile: IsCanonicalVerifiedProfile(gameProfile) && Object.isFrozen(gameProfile)
-      ? copyCanonical(gameProfile) : structuredClone(gameProfile), runId: runId || globalThis.crypto.randomUUID() } : {}),
+      ? shareFrozenProfile ? gameProfile : copyCanonical(gameProfile) : structuredClone(gameProfile), runId: runId || globalThis.crypto.randomUUID() } : {}),
     combatExpansionVersion,
     ...(combatExpansionVersion === 2 && gameModule(profileSubject, 'effects')?.fixCoreVersion === 1
       ? { rangePolicy: snapshotRangePolicy(gameProfile.fixCoreRules?.range ?? fixCoreMechanics.range, profileMeta.settings || {}) } : {}),

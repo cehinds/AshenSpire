@@ -73,7 +73,7 @@ export function CardScoreReferenceContext(def, { registries } = {}) {
   const magic = def?.tags?.includes('camp:spell') || def?.damageSchool && def.damageSchool !== 'physical';
   const classId = classes.includes(def?.class) ? def.class : magic ? 'starseer' : 'reaver';
   if (!references.has(classId)) {
-    const rules = State.createRunState({ registries, classId, seed: 31, runId: `score-reference-${classId}`, profileMeta: { gameProfileUnlocks: { [profile.id]: { completedRunIds: ['a', 'b', 'c'] } } } });
+    const rules = State.createRunState({ registries, classId, seed: 31, runId: `score-reference-${classId}`, shareFrozenProfile: true, profileMeta: { gameProfileUnlocks: { [profile.id]: { completedRunIds: ['a', 'b', 'c'] } } } });
     rules.relics = [];
     references.set(classId, { registries, rules });
   }
