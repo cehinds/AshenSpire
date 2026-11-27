@@ -1,8 +1,10 @@
 // An enemy's authored HP (sheet stats.hp, row hpOverride) replaces the HP its attributes and
 // level give. The fight's HP multipliers still apply on top of it.
 
-const HP_OVERRIDE_FIELD = 'hpOverride';
-const MINIMUM_HP = 1;
+/** The characters.json row field that holds the override. */
+export const EnemyHpOverrideField = 'hpOverride';
+/** The smallest usable override. */
+export const EnemyHpOverrideMinimum = 1;
 
 function overriddenDefinition(definition, hp)
 {
@@ -19,8 +21,8 @@ function overriddenDefinition(definition, hp)
 /** The enemy row's HP override, or null when it has none (or an unusable one). */
 export function EnemyHpOverride(row)
 {
-    const value = row?.[HP_OVERRIDE_FIELD];
-    if (!Number.isSafeInteger(value) || value < MINIMUM_HP)
+    const value = row?.[EnemyHpOverrideField];
+    if (!Number.isSafeInteger(value) || value < EnemyHpOverrideMinimum)
     {
         return null;
     }
