@@ -1,7 +1,7 @@
 // A DOM-free read model for the Core card-upgrade picker (rest site and Blacksmith).
 // Every fact comes from planCardUpgrade, which is inert: the rolled step shown here
 // is the step commitCardUpgrade applies. Nothing here mutates the run.
-import { planCardUpgrade, RunUpgradeStateFingerprint } from '../../model/cardUpgradeService.js';
+import { planCardUpgrade, PlanCardUpgradeBatch, RunUpgradeStateFingerprint } from '../../model/cardUpgradeService.js';
 import { upgradeCount, upgradeStepsOf, FlatSteps } from '../../model/cardUpgrade.js';
 import { RarityOfStep } from '../../model/cardUpgradeSteps.js';
 import { UpgradeOfferKey } from '../../model/upgradeOffer.js';
@@ -303,11 +303,19 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
   if (!rows) {
     const groups = new Map();
     const built = [];
-    for (const { instance, inDeck } of owned) {
-      if (!instance || !registries.cards.has(instance.cardId)) continue;
-      // Blacksmith: 2 or 3 options. Rest site (owner, 2026-11-14): 1 option up to the third upgrade, then 2, some with two effects.
-      const rule = blacksmith ? { choices: upgradeChoiceCount(registries.cards.get(instance.cardId), instance, { blacksmith, run }), combos: false, vendor: 'blacksmith' } : RestUpgradeRule(instance);
-      const plan = planCardUpgrade(run, registries, instance.instanceId, rule);
+    // Price callbacks may change the next row's operands. Keep that path
+    // sequential and freshly planned; only the callback-free build may batch.
+    const entries = quote ? owned : owned.filter(({ instance }) => instance && registries.cards.has(instance.cardId));
+    // Blacksmith: 2 or 3 options. Rest: 1 up to the third upgrade, then 2, some with two effects.
+    const ruleFor = (instance) => blacksmith
+      ? { choices: upgradeChoiceCount(registries.cards.get(instance.cardId), instance, { blacksmith, run }), combos: false, vendor: 'blacksmith' }
+      : RestUpgradeRule(instance);
+    const plans = quote ? null : PlanCardUpgradeBatch(run, registries,
+      entries.map(({ instance }) => ({ ...ruleFor(instance), instanceId: instance.instanceId })));
+    let planIndex = 0;
+    for (const { instance, inDeck } of entries) {
+      if (quote && (!instance || !registries.cards.has(instance.cardId))) continue;
+      const plan = plans ? plans[planIndex++] : planCardUpgrade(run, registries, instance.instanceId, ruleFor(instance));
       if (HIDDEN_CODES.includes(plan.code)) continue;
       // Identical copies (same card, same upgrade steps and rank) are one row that selects the first instance.
       // upgradeStepsOf normalises an old-style `upgraded: true` (no step list) to the authored step, so such a copy
@@ -329,6 +337,7 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
       const rarity = base.rarity || 'common';
       const read = changeFaceReader(registries);
       const changes = after => changesFromFaces(registries, plan.before, after, playsEverOf(instance), run.rangePolicy?.maxRange, read);
+      const mainChanges=changes(plan.after); const mainLook=plan.step ? UpgradeStepLook(registries,plan.step,plan.before,plan.after) : null;
       const row = {
         instanceId: instance.instanceId, instanceIds: [instance.instanceId], copies: 1, inDeck, cardId: instance.cardId,
         name: plan.before?.name || base.name, rarity,
@@ -342,11 +351,11 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
         chipLabel: t(row_upgrades(instance), { rank: RankLabel(base, VisibleCardRank(instance)), n: upgradeCount(instance) }),
         statusLabel: t('cardUpgrade.row.next', { n: plan.n }),
         levelFrom: upgradeCount(instance), levelTo: upgradeCount(instance) + 1,
-        changes: changes(plan.after),
-        look: plan.step ? UpgradeStepLook(registries, plan.step, plan.before, plan.after) : null,
+        changes: mainChanges,
+        look: mainLook,
         options: freeze((plan.options || (plan.step ? [{ step: plan.step, after: plan.after }] : [])).map((option, index) => freeze({
-          index, step: option.step, after: option.after, changes: changes(option.after),
-          look: UpgradeStepLook(registries, option.step, plan.before, option.after),
+          index, step: option.step, after: option.after, changes: option.after === plan.after ? mainChanges : changes(option.after),
+          look: option.step === plan.step && option.after === plan.after ? mainLook : UpgradeStepLook(registries, option.step, plan.before, option.after),
         }))),
         tags: cardTags(registries, plan.before || base, rarity),
         artAsset: playingCardArtwork({ cardId: instance.cardId }), artGlyph: (plan.before || base).icon || 'smith',

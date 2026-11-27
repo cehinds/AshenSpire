@@ -10,6 +10,7 @@ import { STACK_CAPS, rankedEffectsCapped, VisibleCardRank } from './cardRank.js'
 import { EvaluateUpgradeStepCp, PrepareUpgradeStepCpContext } from './cardUpgradeCp.js';
 import * as MechanicalProjection from './cardMechanicalProjection.js';
 import { GetActiveScoring } from './activeScoring.js';
+import { EffectiveCostGrowth } from './combatMechanics.js';
 import * as CombatPower from './combatPower.js';
 import { fixCoreMechanics } from '../content/generated/fixCoreMechanics.js';
 import {
@@ -250,8 +251,8 @@ function resolveEffectiveTier(base, current, limits, scoring) {
 // Numeric tier limits are in the mechanic units the card face displays. The
 // saved step still stores an authored delta; never compare those input units to
 // a mechanical ceiling or offer an input-only change hidden by rounding.
-function mechanicalNumbers(card, registries, projectionScope) {
-  const projected = MechanicalProjection.ProjectCardMechanicalValues(card, { registries, projectionScope }).card;
+function mechanicalNumbers(card, registries, projectionScope, suppliedProjection) {
+  const projected = suppliedProjection || MechanicalProjection.ProjectCardMechanicalValues(card, { registries, projectionScope }).card;
   const payloads = [[...(projected.effects || []), ...(card.onTurnEndInHand || [])],
     ...(card.effectVariants || []).map(variant => [...variant.effects, ...(card.onTurnEndInHand || [])])];
   const totals = { damage: 0, block: 0 };
@@ -360,7 +361,7 @@ function options(base, current, applied, limits, rarity = 0, scoring = GetActive
     if (dirs.length) found.costSwap = { dirs };
   }
   // A Power eases its drawbacks too (Ethereal, a rising cost, a debuff); it has no Exhaust to drop.
-  if (type === 'power') addDrawbackEase(base, current, found);
+  if (type === 'power') addDrawbackEase(base, current, found, limits.mechanicsContext);
   if (restricted) return found;
 
   // Cost-only/restricted cards need no numeric projection. Even an unrestricted
@@ -490,7 +491,7 @@ function options(base, current, applied, limits, rarity = 0, scoring = GetActive
   }
   addTagOptions(base, current, applied, found, dmgIndex, limits, counterReturn, rarity, tier, scoring);
   addMenuOptions(base, current, found, dmgIndex, counterReturn, rarity, scale);
-  addDrawbackEase(base, current, found);
+  addDrawbackEase(base, current, found, limits.mechanicsContext);
   if (!counterReturn && isSpellCard(current) && !applied.some((s) => s.k === 'attr')) found.attr = { stats: RUN_ATTRIBUTE_STATS };
   return found;
 }
@@ -555,10 +556,11 @@ function addMenuOptions(base, current, found, dmgIndex, counterReturn, rarity = 
 }
 
 /** Ethereal and a rising cost (both `fx` steps) and the signed `stk` (proposal section 7) lower what a card's drawback costs. */
-function addDrawbackEase(base, current, found) {
+function addDrawbackEase(base, current, found, mechanicsContext) {
   const effects = current.effects || [];
   if ((current.keywords || []).includes('ethereal')) found['fx:unethereal'] = { fx: 'unethereal' };
-  if (risingCost(current)) found['fx:steady'] = { fx: 'steady' };
+  const growth = EffectiveCostGrowth(current, mechanicsContext);
+  if ((growth?.stamina || 0) > 0 || (growth?.mana || 0) > 0) found['fx:steady'] = { fx: 'steady' };
   const targets = [];
   for (const e of effects) {
     if (isDrawbackStatus(e) && !targets.some((t) => t.status === e.status && t.side === (e.target === 'self' ? 'self' : 'enemy'))) targets.push({ status: e.status, side: e.target === 'self' ? 'self' : 'enemy', count: e.stacks });
@@ -573,7 +575,6 @@ function addDrawbackEase(base, current, found) {
 
 const tagsOf = (card) => card.cardTags ?? card.tags ?? [];
 /** Whether the card's cost still rises with each play (an upgrade's `steady` sets the growth to 0). */
-const risingCost = (card) => !!card.costGrowth && ((card.costGrowth.stamina || 0) > 0 || (card.costGrowth.mana || 0) > 0);
 const familyValue = (tags, prefix) => tags.find((tag) => tag.startsWith(prefix))?.slice(prefix.length) || '';
 // The owner removed ranged cards (2026-11-14): a stance change never offers `ranged` (old saves with it still resolve).
 const ATTACK_MANEUVERS = TAG_FAMILIES['maneuver:'].filter((m) => ['attack', 'smash'].some((x) => x === m));
@@ -678,15 +679,16 @@ const TEMPERED_KINDS = new Set(['hits', 'poise', 'fx:block', 'fx:counter', 'rang
 const PURIFIED_KINDS = new Set(['fx:heal', 'fx:cleanse']);
 
 function optionsByRarity(base, current, applied, limits, scoring = GetActiveScoring()) {
-  // The three rarity sizes probe many identical rounded deltas. Memoize only
-  // within this immutable roll so neither caller edits nor a changed profile
-  // can reuse stale numbers, and the picker avoids repeat projection work.
-  const numericCache = new Map();
+  // The projection already fingerprints the complete authored definition and
+  // context. Reuse its identity instead of serializing each numeric probe a
+  // second time; held payloads and variants still contribute to its full key.
+  const numericCache = new WeakMap();
   const byDefinition = new WeakMap();
   const readNumbers = card => {
     if (byDefinition.has(card)) return byDefinition.get(card);
-    const key = JSON.stringify(card);
-    if (!numericCache.has(key)) numericCache.set(key, mechanicalNumbers(card, limits.registries, limits.preparation?.projectionScope));
+    const projectionScope = limits.preparation?.projectionScope;
+    const key = MechanicalProjection.ProjectCardMechanicalValues(card, { registries: limits.registries, projectionScope });
+    if (!numericCache.has(key)) numericCache.set(key, mechanicalNumbers(card, limits.registries, projectionScope, key.card));
     const numbers = numericCache.get(key);
     byDefinition.set(card, numbers);
     return numbers;

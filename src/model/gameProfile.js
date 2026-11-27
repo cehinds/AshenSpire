@@ -37,7 +37,12 @@ export function gameContent(subject,key) { return subjectProfile(subject)?.conte
 // The one "is this the Core game" predicate: a profile, or a run/registries carrying one, authored on the supported Core.
 export function isCoreProfile(subject) { return subjectProfile(subject)?.author?.core === SUPPORTED_CORE; }
 // `rampless` leaves a ramp unapplied: the registry copy of a card stays plain so resolveCard can ramp it with the instance's plays (SPEC §4.3).
-export function projectGameCard(subject,idOrInstance,{rampless=false}={}) {
+export function projectGameCard(subject,idOrInstance,{rampless=false}={}) {return projectGameCardCore(subject,idOrInstance,{rampless});}
+// Upgrade probes consume this fresh owned definition immediately. The same
+// policy and strict dataClone run for every candidate; only public freezing
+// is deferred, so no alternate formula or resource/rank policy can drift.
+export function ProjectGameCardProbe(subject,idOrInstance) {return projectGameCardCore(subject,idOrInstance,{probe:true});}
+function projectGameCardCore(subject,idOrInstance,{rampless=false,probe=false}={}) {
   if (!gameModule(subject,'cards') || gameModule(subject,'cards').mode === 'legacy') return null;
   const id = typeof idOrInstance === 'string' ? idOrInstance : idOrInstance?.cardId || idOrInstance?.id;
   const def = gameContent(subject,'cards')?.find(card => card.id === id);
@@ -70,7 +75,7 @@ export function projectGameCard(subject,idOrInstance,{rampless=false}={}) {
   if (chosen.ramp && !rampless) chosen = applyRamp(chosen, chosen.ramp.scope === 'run' ? playsEverOf(idOrInstance) : 0, (chosen.tags || []).filter(tag => !tag.startsWith('classification.')));
   chosen.kindIds = ['classification.' + chosen.type];
   chosen.resourceCosts = {sp:chosen.staminaCost || 0,mp:chosen.manaCost || 0};
-  return freezeGameData(chosen);
+  return probe ? chosen : freezeGameData(chosen);
 }
 function cloneLegacy(value,seen = new Map()) {
   if (!value || typeof value !== 'object') return value;

@@ -9,6 +9,7 @@ import { UpgradeOfferKey } from './upgradeOffer.js';
 import { GetActiveScoring } from './activeScoring.js';
 import { resolveCard } from './registries.js';
 import { projectGameCard } from './gameProfile.js';
+import * as MechanicalProjection from './cardMechanicalProjection.js';
 
 const MAX_CHOICES = 3;
 const MAX_PLAN_CACHE_PER_RUN = 256;
@@ -35,7 +36,7 @@ export function RunUpgradeStateFingerprint(run) {
   ]);
 }
 
-function planCacheKey(run, instance, count, combos, vendor) {
+function planCacheKey(run, instance, count, combos, vendor, runFingerprint) {
   return [
     run?.seed ?? 0,
     UpgradeOfferKey(run),
@@ -44,7 +45,7 @@ function planCacheKey(run, instance, count, combos, vendor) {
     run?.level?.level ?? 1,
     run?.rangePolicy?.maxRange ?? '',
     Number.isSafeInteger(run?.smithingStones) ? run.smithingStones : 0,
-    RunUpgradeStateFingerprint(run),
+    runFingerprint,
     instance.instanceId,
     instance.cardId,
     JSON.stringify(upgradeStepsOf(instance)),
@@ -75,7 +76,28 @@ export function ClearCardUpgradePlanCache(run) {
  * `choices` > 1 (a blacksmith; see upgradeChoiceCount) adds `options: [{ step, after }]`, the distinct steps the
  * player picks from, `step`/`after` being the first; the quote remembers `choices` so a commit re-plans the same list.
  */
-export function planCardUpgrade(run, registries, instanceId, { choices = 1, combos = false, vendor = '' } = {}) {
+export function planCardUpgrade(run, registries, instanceId, options = {}) {
+  return planCardUpgradeInOperation(run, registries, instanceId, options, null);
+}
+
+/**
+ * Plan an ordered, synchronous list of { instanceId, choices?, combos?, vendor? }.
+ * Only invariant setup is shared; every request owns its menu, CP baseline and
+ * RNG/rejection state. No callback, fingerprint or reusable scratch is accepted
+ * or returned. A new operation is created on every call, including after edits.
+ */
+export function PlanCardUpgradeBatch(run, registries, requests = []) {
+  if (!Array.isArray(requests)) throw new TypeError('Upgrade batch requests must be an array.');
+  if (!requests.length) return [];
+  const operation = {
+    fingerprint: RunUpgradeStateFingerprint(run),
+    projectionScope: MechanicalProjection.CreateCardUpgradeProjectionScope(),
+    scorer: undefined,
+  };
+  return requests.map((request) => planCardUpgradeInOperation(run, registries, request.instanceId, request, operation));
+}
+
+function planCardUpgradeInOperation(run, registries, instanceId, { choices = 1, combos = false, vendor = '' } = {}, operation = null) {
   const instance = findInstance(run, instanceId);
   const count = Number.isInteger(choices) && choices > 1 ? Math.min(choices, MAX_CHOICES) : 1;
   const activeScoring = GetActiveScoring();
@@ -87,14 +109,19 @@ export function planCardUpgrade(run, registries, instanceId, { choices = 1, comb
       runMap = new Map();
       planCacheByRun.set(run, runMap);
     }
-    cacheKey = planCacheKey(run, instance, count, combos, vendor);
+    cacheKey = planCacheKey(run, instance, count, combos, vendor,
+      operation ? operation.fingerprint : RunUpgradeStateFingerprint(run));
     const hit = runMap.get(cacheKey);
     if (hit && hit.scoring === activeScoring && hit.registries === registries && hit.gameProfile === run.gameProfile) return hit.quote;
   }
 
   // Eligibility and the offered roll use the same structural menu. This
   // preparation lives for this synchronous plan only, never in a run cache.
-  const preparation = { projectionScope: new WeakMap() };
+  const preparation = { projectionScope: operation ? operation.projectionScope : MechanicalProjection.CreateCardUpgradeProjectionScope() };
+  if (operation) Object.defineProperty(preparation, 'scorer', {
+    get: () => operation.scorer,
+    set: (value) => { operation.scorer = value; },
+  });
   const verdict = canUpgrade(registries, run, instance || { instanceId, cardId: '' }, { preparation });
   const quote = { ok: verdict.ok, code: verdict.code, reason: verdict.reason, instanceId, n: verdict.n, cost: verdict.cost, free: verdict.free, step: null, before: null, after: null };
   let result = quote;

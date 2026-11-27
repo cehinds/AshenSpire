@@ -97,12 +97,12 @@ export function EffectiveWitherLimit(def, ctx = null) {
 }
 
 /** Effective costGrowth config for a card, inheriting defaults from `costGrowth` / `costGrowth.shared`. */
-export function EffectiveCostGrowth(def, ctx = null) {
+export function EffectiveCostGrowth(def, ctx = null, ruleId = 'costGrowth') {
   if (!def?.costGrowth) return null;
-  const parentRule = MechanicRule('costGrowth', ctx);
+  const parentRule = MechanicRule(ruleId, ctx) || (ruleId !== 'costGrowth' ? MechanicRule('costGrowth', ctx) : null);
   const raw = def.costGrowth;
   const isShared = raw.perCard === true || raw.scope === 'card' || (raw.scope === undefined && raw.perCard === undefined && parentRule?.scope === 'card');
-  const baseRule = isShared ? (MechanicRule('costGrowth.shared', ctx) || parentRule) : parentRule;
+  const baseRule = isShared ? (MechanicRule(ruleId + '.shared', ctx) || parentRule) : parentRule;
   if (baseRule && baseRule.enabled === false) return null;
   const stamina = raw.stamina ?? baseRule?.stamina ?? 0;
   const mana = raw.mana ?? baseRule?.mana ?? 0;

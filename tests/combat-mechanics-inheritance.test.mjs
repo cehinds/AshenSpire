@@ -9,7 +9,7 @@ import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
 import { combatMechanics } from '../src/content/generated/combatMechanics.js';
 import { ResolveMechanicsTable, MechanicRule, EffectiveWitherLimit, EffectiveCostGrowth } from '../src/model/combatMechanics.js';
-import { WitherRemaining, Withered, projectCardBehavior } from '../src/engine/cardBehavior.js';
+import { WitherRemaining, Withered, projectCardBehavior, ChoiceModeCard } from '../src/engine/cardBehavior.js';
 import { BaseFace, ScoreCard, PrepareCardScorer } from '../src/model/combatPower.js';
 import { CardDefinitionToScoreFace, PrepareUpgradeStepCpContext, EvaluateUpgradeStepCp } from '../src/model/cardUpgradeCp.js';
 import { planCardUpgrade, RunUpgradeStateFingerprint } from '../src/model/cardUpgradeService.js';
@@ -251,3 +251,50 @@ test('upgrade quote cache invalidates on mechanics table edits and replacements 
     ['mechanicsContext', 'preparation', 'scoreCard', 'projectionScope'].includes(key) || typeof item === 'function' || hasInternal(item));
   assert.equal(Boolean(hasInternal(replaced)), false);
 }));
+
+
+test('choice-mode growth inherits its selected child, shares only the requested counters, and applies once', () => {
+  const table = { ...authoredRules(), 'costGrowth.choiceMode': { extends: 'costGrowth', stamina: 3, mana: 2, perUse: 2, maxSteps: 2, scope: 'instance' } };
+  const ctx = { combatMechanics: ResolveMechanicsTable(table), fixCoreRules: { retreatRulesVersion: 1 },
+    player: { abilityRiders: { instanceModeUsesCombat: { i: { rise: 2, plain: 9 } }, cardModeUsesCombat: { probe: { rise: 8 } } } } };
+  const inst = { instanceId: 'i', cardId: 'probe' };
+  const card = growth => ({ id: 'probe', cost: 1, staminaCost: 1, manaCost: 1, resourceCosts: { sp: 1, mp: 1 },
+    choiceModes: [{ id: 'rise', costGrowth: growth }, { id: 'plain' }] });
+  const project = (growth, environment = ctx) => projectCardBehavior(environment, inst, card(growth), { applyGear: false });
+  const before = structuredClone(ctx);
+  assert.deepEqual(project({}).choiceModes[0].costGrowthApplied, { stamina: 3, mana: 2 });
+  for (const growth of [{ scope: 'card' }, { perCard: true }]) {
+    const projected = project(growth), selected = ChoiceModeCard(projected, 'rise');
+    assert.deepEqual(projected.choiceModes[0].costGrowthApplied, { stamina: 6, mana: 4 }, 'shared fallback uses selected child, not generic shared');
+    assert.deepEqual(selected.resourceCosts, { sp: 7, mp: 5 });
+    assert.deepEqual(ChoiceModeCard(selected, 'rise').resourceCosts, selected.resourceCosts, 'rereading selected mode never compounds');
+    assert.deepEqual(ChoiceModeCard(selected, 'plain').resourceCosts, { sp: 1, mp: 1 }, 'switching mode removes previous mode growth');
+    assert.deepEqual(ChoiceModeCard(ChoiceModeCard(selected, 'plain'), 'rise').resourceCosts, selected.resourceCosts);
+  }
+  assert.deepEqual(project({ scope: 'instance' }).choiceModes[0].costGrowthApplied, { stamina: 3, mana: 2 });
+  assert.deepEqual(project({ scope: 'instance', perCard: true }).choiceModes[0].costGrowthApplied, { stamina: 6, mana: 4 }, 'existing explicit perCard true precedence retained');
+  ctx.combatMechanics = ResolveMechanicsTable({ ...table, 'costGrowth.choiceMode.shared': { extends: 'costGrowth.choiceMode', stamina: 5, maxSteps: 1 } });
+  assert.deepEqual(project({ scope: 'card' }).choiceModes[0].costGrowthApplied, { stamina: 5, mana: 2 }, 'specific shared child overrides selected choice child');
+  ctx.combatMechanics = before.combatMechanics;
+  assert.deepEqual(ctx, before);
+});
+
+test('choice-mode growth preserves explicit legacy caps, zero increments, selected disable and Retreat gate', () => {
+  const table = { ...authoredRules(), 'costGrowth.choiceMode': { extends: 'costGrowth', stamina: 2, mana: 1, perUse: 1, maxSteps: 4 } };
+  const ctx = { combatMechanics: ResolveMechanicsTable(table), fixCoreRules: { retreatRulesVersion: 1 },
+    player: { abilityRiders: { instanceModeUsesCombat: { i: { rise: 7 } }, cardModeUsesCombat: { probe: { rise: 7 } } } } };
+  const inst = { instanceId: 'i', cardId: 'probe' };
+  const def = growth => ({ id: 'probe', cost: 1, staminaCost: 1, manaCost: 0, choiceModes: [{ id: 'rise', costGrowth: growth }] });
+  const amount = (growth, environment = ctx) => projectCardBehavior(environment, inst, def(growth), { applyGear: false }).choiceModes[0].costGrowthApplied;
+  assert.deepEqual(amount({ stamina: 1, mana: 0, perUse: 1, max: 3 }), { stamina: 3, mana: 0 }, 'recorded explicit max=3 retained');
+  assert.deepEqual(amount({ stamina: 1, mana: 0, perUse: 1, max: 0 }), { stamina: 0, mana: 0 }, 'explicit max=0 still means no steps');
+  assert.deepEqual(amount({ stamina: 1, mana: 0, max: 0, uncapped: true }), { stamina: 7, mana: 0 }, 'uncapped still takes precedence over max=0');
+  assert.equal(amount({ stamina: 0, mana: 0 }), undefined);
+  const disabled = { ...ctx, combatMechanics: ResolveMechanicsTable({ ...table, 'costGrowth.choiceMode': { extends: 'costGrowth', enabled: false } }) };
+  assert.equal(amount({}, disabled), undefined);
+  assert.equal(amount({ stamina: 9 }, disabled), undefined, 'explicit increments cannot turn a disabled rule on');
+  assert.equal(amount({}, { ...ctx, fixCoreRules: {} }), undefined, 'saved absence of Retreat version keeps mode behavior off');
+  const source = def({ stamina: 1, mana: 0, max: 3 }), before = structuredClone(source);
+  projectCardBehavior(ctx, inst, source, { applyGear: false });
+  assert.deepEqual(source, before);
+});

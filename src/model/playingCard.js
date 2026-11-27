@@ -390,8 +390,8 @@ function faceAttributes(registries, rules) {
   try { return gameProfileEffectiveAttributes(registries, rules); } catch { return null; }
 }
 /** The card's combat profile with an untyped damage type resolved from the face holder's wielded armament (run or combat loadout). */
-function faceDamageProfile(def, registries, rules) {
-  const profile = { ...(combatProfileFor(def) || {}), ...(def?.combatProfile || {}) };
+function faceDamageProfile(def, registries, rules, canonicalProfile = combatProfileFor(def)) {
+  const profile = { ...(canonicalProfile || {}), ...(def?.combatProfile || {}) };
   const loadout = rules?.loadout;
   if (!loadout || !registries) return profile;
   const classId = rules.classId ?? (Array.isArray(rules.deck) ? rules.class : rules.player?.classId);
@@ -399,7 +399,24 @@ function faceDamageProfile(def, registries, rules) {
     sourceHand: def.sourceHand, combatProfile: profile };
   try { return ResolveCarrierDamageType(carrier, registries, loadout, classId).combatProfile; } catch { return profile; }
 }
-export function staticCardTokens(def, registries = null, rules = null) {
+export function staticCardTokens(def, registries = null, rules = null) { return readStaticTokens(def, registries, rules, null); }
+// A plan supplies a read-only run context. Card identity, hand selection, gear
+// application and every rounding stage remain in the ordinary shared body.
+export function PrepareStaticCardTokenReader(registries, rules) {
+  const holder = rules?.gameProfile ? rules : rules?.faceAttributes && registries?.gameProfile ? { ...rules, gameProfile: registries.gameProfile } : null;
+  const faceEffects = holder ? configuredModule(holder, 'effects') : null;
+  const baseDamageMultiplier = faceEffects?.baseDamageMultiplier;
+  const actionVersion = rules?.player || Object.hasOwn(rules || {}, 'core2ActionRulesVersion') ? rules.core2ActionRulesVersion : faceEffects?.core2ActionRulesVersion;
+  const prepared = {
+    holder, faceEffects, attributes: Number.isFinite(baseDamageMultiplier) ? faceAttributes(registries, rules) : null,
+    baseDamageMultiplier, playerMultiplier: faceEffects?.playerDamageMultiplier,
+    finesseRules: core2MultiHitRulesEnabled({ gameProfile: holder?.gameProfile, fixCoreRules: holder?.fixCoreRules,
+      combatExpansionVersion: holder?.combatExpansionVersion ?? 2, core2ActionRulesVersion: actionVersion }),
+    traditions: SpellTraditionsActive(holder),
+  };
+  return def => readStaticTokens(def, registries, rules, prepared);
+}
+function readStaticTokens(def, registries, rules, prepared) {
   const tokens = {};
   // A live definition already contains combat Gear and charged effects. Compare it with
   // the same selected card before that projection, retaining its rank and upgrades.
@@ -408,34 +425,35 @@ export function staticCardTokens(def, registries = null, rules = null) {
   const gear = rules?.gearRules ? { rules: rules.gearRules, state: rules.gearState || {} } : rules?.loadout ? GearAlwaysOn(registries, rules) : null;
   if (gear?.rules.length) def = ApplyGearCardRules(gear.rules, def, gear.state);
   // Keep any saved combat policy with the always-on attributes; an explicit profile pin wins over the registries' own.
-  const holder = rules?.gameProfile ? rules : rules?.faceAttributes && registries?.gameProfile ? { ...rules, gameProfile: registries.gameProfile } : null;
+  const holder = prepared ? prepared.holder : rules?.gameProfile ? rules : rules?.faceAttributes && registries?.gameProfile ? { ...rules, gameProfile: registries.gameProfile } : null;
   const effects = cardTokenEffects(def);
-  const baseDamageMultiplier = holder ? configuredModule(holder, 'effects')?.baseDamageMultiplier : undefined;
+  const baseDamageMultiplier = prepared ? prepared.baseDamageMultiplier : holder ? configuredModule(holder, 'effects')?.baseDamageMultiplier : undefined;
   // Owner, 2026-11-18: the player's side scale (`effects.playerDamageMultiplier`) shows on the face too: floored, never 0 for a positive hit (the receipt's side-damage-scale stage).
-  const playerMultiplier = holder ? configuredModule(holder, 'effects')?.playerDamageMultiplier : undefined;
+  const playerMultiplier = prepared ? prepared.playerMultiplier : holder ? configuredModule(holder, 'effects')?.playerDamageMultiplier : undefined;
   // A Counter's damage is its armed base: its return is final damage and takes no side scale (the receipt's flat-return rule).
-  const counterCard = combatProfileFor(def)?.maneuver === 'counter';
+  const canonicalProfile = combatProfileFor(def);
+  const counterCard = canonicalProfile?.maneuver === 'counter';
   // Owner, 2026-11-18: `effects.physicalDamageMultiplier` cuts the physical share of the figure first (the receipt's physical-damage-scale stage), then the side scale.
-  const faceEffects = holder ? configuredModule(holder, 'effects') : null;
+  const faceEffects = prepared ? prepared.faceEffects : holder ? configuredModule(holder, 'effects') : null;
   const physicalMultiplier = faceEffects?.physicalDamageMultiplier;
   // Codex review on PR #2835: an untyped card takes its wielded armament's type before the split, as tacticalCarrier resolves it in combat
   // (a Herald's Arcane Spark is Arcane, half magic), so the face and the receipt cut the same physical share.
-  const faceProfile = holder ? faceDamageProfile(def, registries, rules) : (combatProfileFor(def) || {});
+  const faceProfile = holder ? faceDamageProfile(def, registries, rules, canonicalProfile) : (canonicalProfile || {});
   const physicalFraction = 1 - Math.min(1, Math.max(0, magicShareOf(faceProfile) || 0));
   // Owner, 2026-11-18: a face outside combat carries the run character's always-on attribute bonus, as a normal neutral-stance hit does:
   // physical damage adds STR, a finesse hit DEX, and magic its saved tradition's attribute (legacy: max(INT, WIS)), each at its effects weight; Block adds DEX. No stance, status or enemy defence.
   // A profile that predates the balance rules (no `baseDamageMultiplier`) keeps its authored faces.
-  const attributes = Number.isFinite(baseDamageMultiplier) ? faceAttributes(registries, rules) : null;
+  const attributes = prepared ? prepared.attributes : Number.isFinite(baseDamageMultiplier) ? faceAttributes(registries, rules) : null;
   const faceShare = magicShareOf(faceProfile) || 0;
   const magicHit = faceProfile.camp === 'spell' || faceShare > 0 || cardIsMagical(def);
   const actionVersion = rules?.player || Object.hasOwn(rules || {}, 'core2ActionRulesVersion')
     ? rules.core2ActionRulesVersion : faceEffects?.core2ActionRulesVersion;
-  const finesseSource = core2MultiHitRulesEnabled({
+  const finesseSource = (prepared ? prepared.finesseRules : core2MultiHitRulesEnabled({
     gameProfile: holder?.gameProfile, fixCoreRules: holder?.fixCoreRules,
     combatExpansionVersion: holder?.combatExpansionVersion ?? 2, core2ActionRulesVersion: actionVersion,
-  }) && IsFinesseHit({ registries, loadout: rules?.loadout }, rules?.player, { ...def, combatProfile: faceProfile });
+  })) && IsFinesseHit({ registries, loadout: rules?.loadout }, rules?.player, { ...def, combatProfile: faceProfile });
   const finesseHit = !magicHit && finesseSource;
-  const magicStat = attributes && SpellTraditionsActive(holder) ? SpellScalingValue(attributes, { ...def, combatProfile: faceProfile })
+  const magicStat = attributes && (prepared ? prepared.traditions : SpellTraditionsActive(holder)) ? SpellScalingValue(attributes, { ...def, combatProfile: faceProfile })
     : Math.max(attributes?.intelligence || 0, attributes?.wisdom || 0);
   const damageStat = attributes ? (magicHit ? magicStat : (attributes[finesseHit ? 'dexterity' : 'strength'] || 0)) : 0;
   // A finesse hit reads DEX but stays on the physical-damage channel (its weight), as profileDamageReceiptCore resolves it.
@@ -471,7 +489,8 @@ export function staticCardTokens(def, registries = null, rules = null) {
     const args = value.args.map(constant);
     return args.every(Number.isFinite) ? args.reduce((sum, item) => sum + item, 0) : undefined;
   };
-  for (const binding of computeTokenBindings(effects)) {
+  const tokenBindings = computeTokenBindings(effects);
+  for (const binding of tokenBindings) {
     const effect = effects[binding.index] || {};
     const raw = effect[binding.field];
     const value = constant(raw);
@@ -504,7 +523,7 @@ export function staticCardTokens(def, registries = null, rules = null) {
   // its magic part in {packet}: STR on the first, INT / Power on the second, the same two stages the receipt reads.
   const packetIndex = effects.findIndex(effect => effect.op === 'damage' && typeof constant(effect.amount) === 'number');
   if (packetIndex >= 0 && def.ratingId === undefined && faceProfile.camp === 'physical' && Number.isFinite(def.magicShare) && faceShare > 0 && faceShare < 1) {
-    const token = computeTokenBindings(effects).find(binding => binding.index === packetIndex && binding.field === 'amount')?.token;
+    const token = tokenBindings.find(binding => binding.index === packetIndex && binding.field === 'amount')?.token;
     if (token && typeof tokens[token] === 'number') {
       const base = ScaleCardBaseDamage(constant(effects[packetIndex].amount), baseDamageMultiplier);
       const physicalBonus = attributes ? (attributes[finesseSource ? 'dexterity' : 'strength'] || 0) * ChannelWeight(faceEffects, 'ar') : 0;

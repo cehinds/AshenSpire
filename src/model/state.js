@@ -16,6 +16,17 @@ import { advancedConfigSnapshot, coreAdvancedConfigSnapshot } from './advancedCo
 import { reactionRulesSnapshot, reactionRulesProblems } from '../content/combatCardTraits.js';
 import { snapshotRangePolicy, rangePolicyProblems, RANGE_POLICY_DEFAULTS } from './combatEngagement.js';
 import { fixCoreMechanics } from '../content/generated/fixCoreMechanics.js';
+
+// Only the separate canonical brand plus deep freeze authorizes this copy.
+// Normalization already established finite, acyclic plain data; preserve -0,
+// array holes and every value while creating a fresh graph for the run.
+function copyCanonical(value) {
+  if (!value || typeof value !== 'object') return value;
+  if (Array.isArray(value)) return value.map(copyCanonical);
+  const copy = {};
+  for (const key of Object.keys(value)) copy[key] = copyCanonical(value[key]);
+  return copy;
+}
 // src/model/state.js — run/combat state factories + (de)serialization (SPEC §3.3, §3.12)
 //
 // State stores INSTANCE data referencing definitions by id only:
@@ -282,7 +293,7 @@ export function createRunState({
     // Only normalized factories prove canonical JSON's domain. Raw verified
     // snapshots may retain metadata, so every other input keeps native cloning.
     ...(gameProfile ? { gameProfile: IsCanonicalVerifiedProfile(gameProfile) && Object.isFrozen(gameProfile)
-      ? GameConfig.dataClone(gameProfile) : structuredClone(gameProfile), runId: runId || globalThis.crypto.randomUUID() } : {}),
+      ? copyCanonical(gameProfile) : structuredClone(gameProfile), runId: runId || globalThis.crypto.randomUUID() } : {}),
     combatExpansionVersion,
     ...(combatExpansionVersion === 2 && gameModule(profileSubject, 'effects')?.fixCoreVersion === 1
       ? { rangePolicy: snapshotRangePolicy(gameProfile.fixCoreRules?.range ?? fixCoreMechanics.range, profileMeta.settings || {}) } : {}),
