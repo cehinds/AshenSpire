@@ -1,0 +1,128 @@
+{
+  "$note": "Settings for the owner's play, check and ship commands (docs/OWNER-EDITING.md).",
+  "git": {
+    "remote": "origin",
+    "baseBranch": "dev",
+    "branchPrefix": "feature/Owner",
+    "repositoryUrl": "https://github.com/cehinds/AshenSpire"
+  },
+  "editableRoots": [
+    "content/source/",
+    "content/config/",
+    "games/ashenspire/"
+  ],
+  "editableExtensions": [
+    ".json",
+    ".csv"
+  ],
+  "generatedNames": [
+    "game.lock.json",
+    "_reference.json",
+    "_reference.md"
+  ],
+  "neverCommit": [
+    "buildordinal.json",
+    ".html"
+  ],
+  "buildSteps": [
+    {
+      "label": "Enemy sheets",
+      "args": [
+        "tools/enemy-sheets.mjs",
+        "--write"
+      ]
+    },
+    {
+      "label": "Content tables",
+      "args": [
+        "tools/content-build.mjs"
+      ]
+    },
+    {
+      "label": "Interface config",
+      "args": [
+        "tools/config-build.mjs"
+      ]
+    },
+    {
+      "label": "Game packs",
+      "args": [
+        "tools/game-config.mjs",
+        "build"
+      ]
+    }
+  ],
+  "checkSteps": [
+    {
+      "label": "Enemy sheets",
+      "args": [
+        "tools/enemy-sheets.mjs",
+        "--check"
+      ]
+    },
+    {
+      "label": "Content tables",
+      "args": [
+        "tools/content-build.mjs",
+        "--check"
+      ]
+    },
+    {
+      "label": "Interface config",
+      "args": [
+        "tools/config-build.mjs",
+        "--check"
+      ]
+    },
+    {
+      "label": "Game packs",
+      "args": [
+        "tools/game-config.mjs",
+        "check"
+      ]
+    }
+  ],
+  "testSteps": [
+    {
+      "label": "Core tests",
+      "args": [
+        "tests/run-node.mjs",
+        "--no-selftests",
+        "--no-discovered"
+      ]
+    }
+  ],
+  "changelog": {
+    "file": "CHANGELOG.md",
+    "projectionArgs": [
+      "tools/about-changelog.mjs",
+      "--write"
+    ],
+    "generatedModule": "src/content/changelog.generated.js",
+    "buildOrdinalFile": "buildordinal.json"
+  },
+  "play": {
+    "serverArgs": [
+      "tools/serve.mjs",
+      "--watch",
+      "--editor-write",
+      "--host",
+      "localhost"
+    ],
+    "enemySheetFolder": "games/ashenspire/packs/core/enemies",
+    "rebuildDelayMs": 200,
+    "enemySheetStep": "Enemy sheets"
+  },
+  "generatedLocations": [
+    "src/content/generated/",
+    "src/config/generated/",
+    "src/framework/data/"
+  ],
+  "generatedSuffixes": [
+    ".generated.js",
+    ".generated.css",
+    "game.lock.json",
+    "_reference.json",
+    "_reference.md"
+  ]
+}
