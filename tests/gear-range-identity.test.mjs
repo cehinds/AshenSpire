@@ -107,7 +107,7 @@ function expectedPreparedQuote(combat, authored, focusCut)
 
 for (const cardId of preparedCardIds)
 {
-    test(`${cardId}: Prepared keeps the spell identity and pays the rule, Graduate, gear cuts`, () =>
+    test(`${cardId}: Prepared keeps the spell identity and pays rule, Graduate, gear cuts`, () =>
     {
         for (const [hand, focusCut] of preparedHands)
         {
