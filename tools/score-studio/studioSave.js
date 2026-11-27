@@ -1,6 +1,5 @@
-// tools/score-studio/studioSave.js — File > Save for the Studio's own config (SS-003).
-// Hook: registerStudioSaveFile({ name, path, kind, read, apply }) adds a file to Save, load on start, the pill
-// and the web download. name, path and kind match StudioSaveFiles; read() gives the data keys, apply(data) takes them.
+// File > Save for the Studio's own config. RegisterStudioSaveFile({ name, path, kind, read,
+// apply }) adds a StudioSaveFiles entry; read() gives its data keys, apply(data) takes them.
 
 import {
   StudioSaveDownloadKind,
@@ -13,63 +12,443 @@ import {
   StudioSaveDocument,
 } from './studioSaveFiles.js';
 
-export const STUDIO_SAVE_STATUS = Object.freeze({
-  none: 'none',
-  draft: 'draft',
-  saved: 'saved',
-  web: 'web',
+export const StudioSaveStatus = Object.freeze({
+  None: 'none',
+  Draft: 'draft',
+  Saved: 'saved',
+  Web: 'web',
 });
 
-export const STUDIO_SAVE_RESULT = Object.freeze({
-  saved: 'saved',
-  unchanged: 'unchanged',
-  downloaded: 'downloaded',
-  stale: 'stale',
-  failed: 'failed',
+export const StudioSaveResult = Object.freeze({
+  Saved: 'saved',
+  Unchanged: 'unchanged',
+  Downloaded: 'downloaded',
+  Stale: 'stale',
+  Failed: 'failed',
 });
 
-export const STUDIO_SAVE_CHOICE = Object.freeze({
-  keepDraft: 'keepDraft',
-  useSaved: 'useSaved',
+export const StudioSaveChoice = Object.freeze({
+  KeepDraft: 'keepDraft',
+  UseSaved: 'useSaved',
 });
 
-export const STUDIO_SAVE_PILL_TEXT = Object.freeze({
-  draft: 'Draft',
-  saved: 'Saved',
-  saving: 'Saving…',
-  failed: 'Save failed',
-  web: 'Web mode · Download',
+export const StudioSavePillText = Object.freeze({
+  Draft: 'Draft',
+  Saved: 'Saved',
+  Saving: 'Saving…',
+  Failed: 'Save failed',
+  Web: 'Web mode · Download',
 });
 
-const DRAFT_TITLE = 'Studio edits are in the local draft only. File > Save (Ctrl+S) writes:';
-const SAVED_TITLE = 'Saved';
-const WEB_TITLE = `No local server: File > Save (Ctrl+S) downloads ${StudioSaveDownloadName}.`;
-const CONTENT_TYPE_HEADER = 'Content-Type';
-const JSON_CONTENT_TYPE = 'application/json';
-const POST_METHOD = 'POST';
-const NO_STORE = 'no-store';
-const HTTP_OK = 200;
-const HTTP_CONFLICT = 409;
-const LINE_BREAK = '\n';
-const CHOICE_DIALOG_CLASS = 'studio-modal';
-const CHOICE_DIALOG_HTML = `<form method="dialog">
-  <h3>The Studio save files changed</h3>
-  <p class="studio-muted">They changed after your local draft was made (another tab, or a git pull).</p>
-  <div class="modal-actions">
-    <button value="${STUDIO_SAVE_CHOICE.useSaved}" class="s-btn">Use the saved file</button>
-    <button value="${STUDIO_SAVE_CHOICE.keepDraft}" class="s-btn s-btn-primary">Keep my draft</button>
-  </div>
-</form>`;
+const draftTitle = 'Studio edits are in the local draft only. File > Save (Ctrl+S) writes:';
+const savedTitle = 'Saved';
+const webTitle = `No local server: File > Save (Ctrl+S) downloads ${StudioSaveDownloadName}.`;
+const contentTypeHeader = 'Content-Type';
+const jsonContentType = 'application/json';
+const postMethod = 'POST';
+const noStore = 'no-store';
+const httpOk = 200;
+const httpConflict = 409;
+const lineBreak = '\n';
+const closeEvent = 'close';
+const dialogFormMethod = 'dialog';
+const elementTag = Object.freeze({
+  dialog: 'dialog',
+  form: 'form',
+  heading: 'h3',
+  paragraph: 'p',
+  actions: 'div',
+  button: 'button',
+});
+const choiceDialogClass = Object.freeze({
+  dialog: 'studio-modal',
+  note: 'studio-muted',
+  actions: 'modal-actions',
+  button: 's-btn',
+  primaryButton: 's-btn s-btn-primary',
+});
+const choiceDialogText = Object.freeze({
+  heading: 'The Studio save files changed',
+  note: 'They changed after your local draft was made (another tab, or a git pull).',
+  useSaved: 'Use the saved file',
+  keepDraft: 'Keep my draft',
+});
 
 const registeredFiles = new Map();
 
-export function registerStudioSaveFile({ name, path, kind, read, apply })
+function isoNow()
 {
+  return new Date().toISOString();
+}
+
+function latestTime(first, second)
+{
+  return [first, second].filter(Boolean).sort().at(-1) ?? null;
+}
+
+function currentJson(file)
+{
+  return StableJson(file.read());
+}
+
+function pathList()
+{
+  return RegisteredStudioSaveFiles().map((file) => file.path).join(lineBreak);
+}
+
+function isOkReply(reply)
+{
+  return reply.status === httpOk && Boolean(reply.json?.ok);
+}
+
+function documentsToSave(savedAt)
+{
+  const entries = RegisteredStudioSaveFiles().map((file) =>
+  {
+    const document = StudioSaveDocument(
+      file.name,
+      file.read(),
+      savedAt,
+      file.kind,
+    );
+    return [file.name, document];
+  });
+  return Object.fromEntries(entries);
+}
+
+// spec is { tag, ...properties }; the properties are set on the new element.
+function renderElement(documentRef, spec)
+{
+  const {
+    tag,
+    ...properties
+  } = spec;
+  const element = documentRef.createElement(tag);
+  Object.assign(element, properties);
+  return element;
+}
+
+function renderChoiceActions(documentRef)
+{
+  const actions = renderElement(documentRef, {
+    tag: elementTag.actions,
+    className: choiceDialogClass.actions,
+  });
+  const useSavedButton = renderElement(documentRef, {
+    tag: elementTag.button,
+    value: StudioSaveChoice.UseSaved,
+    className: choiceDialogClass.button,
+    textContent: choiceDialogText.useSaved,
+  });
+  const keepDraftButton = renderElement(documentRef, {
+    tag: elementTag.button,
+    value: StudioSaveChoice.KeepDraft,
+    className: choiceDialogClass.primaryButton,
+    textContent: choiceDialogText.keepDraft,
+  });
+  actions.append(useSavedButton, keepDraftButton);
+  return actions;
+}
+
+function renderChoiceForm(documentRef)
+{
+  const form = renderElement(documentRef, {
+    tag: elementTag.form,
+    method: dialogFormMethod,
+  });
+  const heading = renderElement(documentRef, {
+    tag: elementTag.heading,
+    textContent: choiceDialogText.heading,
+  });
+  const note = renderElement(documentRef, {
+    tag: elementTag.paragraph,
+    className: choiceDialogClass.note,
+    textContent: choiceDialogText.note,
+  });
+  form.append(
+    heading,
+    note,
+    renderChoiceActions(documentRef),
+  );
+  return form;
+}
+
+class StudioSaveController
+{
+  #isLocalServer;
+  #fetchJson;
+  #download;
+  #now;
+  #revision = null;
+  #lastSavedAt = null;
+  #lastSavedJson = new Map();
+  #onDisk = new Map();
+  #loadedData = new Map();
+
+  constructor(options)
+  {
+    this.#isLocalServer = options.isLocalServer;
+    this.#fetchJson = options.fetchJson;
+    this.#download = options.download;
+    this.#now = options.now;
+  }
+
+  async load()
+  {
+    if (!this.#isLocalServer)
+    {
+      return null;
+    }
+    const reply = await this.#fetchJson(StudioSaveEndpoint, { cache: noStore });
+    if (!isOkReply(reply))
+    {
+      const fallbackError = `Could not read the Studio save files (${reply.status}).`;
+      throw new Error(reply.json?.error || fallbackError);
+    }
+    this.#revision = reply.json.revision;
+    const savedFiles = reply.json.files;
+    for (const file of RegisteredStudioSaveFiles())
+    {
+      const document = savedFiles?.[file.name];
+      if (document)
+      {
+        this.#rememberLoaded(file, document);
+      }
+    }
+    return { revision: this.#revision };
+  }
+
+  // For each file not on disk, what the Studio holds now is the clean state.
+  // Call it before a draft applies.
+  captureBaseline()
+  {
+    for (const file of RegisteredStudioSaveFiles())
+    {
+      if (!this.#onDisk.get(file.name))
+      {
+        this.#lastSavedJson.set(file.name, currentJson(file));
+      }
+    }
+  }
+
+  loadedFile(name)
+  {
+    return this.#loadedData.get(name) ?? null;
+  }
+
+  anyOnDisk()
+  {
+    return RegisteredStudioSaveFiles().some((file) => this.#onDisk.get(file.name));
+  }
+
+  /** Hands each loaded file to its apply(), except the names in skipNames. */
+  applyLoaded(skipNames = [])
+  {
+    for (const file of RegisteredStudioSaveFiles())
+    {
+      const isSkipped = skipNames.includes(file.name);
+      const appliesNow = file.apply && this.#onDisk.get(file.name) && !isSkipped;
+      if (appliesNow)
+      {
+        file.apply(this.#loadedData.get(file.name));
+      }
+    }
+  }
+
+  matchesSaved(name, data)
+  {
+    return this.#lastSavedJson.get(name) === StableJson(data);
+  }
+
+  status()
+  {
+    if (!this.#isLocalServer)
+    {
+      return StudioSaveStatus.Web;
+    }
+    if (this.#changedFiles().length)
+    {
+      return StudioSaveStatus.Draft;
+    }
+    return this.anyOnDisk()
+      ? StudioSaveStatus.Saved
+      : StudioSaveStatus.None;
+  }
+
+  /** The pill's text and title for the Save scope, or null when there is no file and no edit. */
+  describe()
+  {
+    const describers = {
+      [StudioSaveStatus.Web]: () => this.#webPill(),
+      [StudioSaveStatus.Draft]: () => this.#draftPill(),
+      [StudioSaveStatus.Saved]: () => this.#savedPill(),
+      [StudioSaveStatus.None]: () => null,
+    };
+    return describers[this.status()]();
+  }
+
+  async save()
+  {
+    if (!this.#isLocalServer)
+    {
+      return this.#downloadAll();
+    }
+    if (this.status() === StudioSaveStatus.Saved)
+    {
+      return { result: StudioSaveResult.Unchanged };
+    }
+    const reply = await this.#postAll();
+    if (reply.status === httpConflict)
+    {
+      return {
+        result: StudioSaveResult.Stale,
+        message: reply.json?.error,
+      };
+    }
+    if (!isOkReply(reply))
+    {
+      return {
+        result: StudioSaveResult.Failed,
+        message: reply.json?.error || `Save failed (${reply.status}).`,
+      };
+    }
+    return this.#acceptSaved(reply.json);
+  }
+
+  revision()
+  {
+    return this.#revision;
+  }
+
+  #changedFiles()
+  {
+    return RegisteredStudioSaveFiles()
+      .filter((file) => this.#lastSavedJson.get(file.name) !== currentJson(file));
+  }
+
+  #rememberLoaded(file, document)
+  {
+    if (document.kind !== file.kind)
+    {
+      throw new Error(`${file.path} has kind "${document.kind}", expected "${file.kind}".`);
+    }
+    const data = StudioSaveData(file.name, document);
+    this.#loadedData.set(file.name, data);
+    this.#lastSavedJson.set(file.name, StableJson(data));
+    this.#onDisk.set(file.name, true);
+    this.#lastSavedAt = latestTime(this.#lastSavedAt, document.savedAt);
+  }
+
+  #savedHeading()
+  {
+    return this.#lastSavedAt
+      ? `${savedTitle} ${new Date(this.#lastSavedAt).toLocaleString()}`
+      : savedTitle;
+  }
+
+  #webPill()
+  {
+    return {
+      text: StudioSavePillText.Web,
+      title: webTitle,
+      dirty: this.#changedFiles().length > 0,
+    };
+  }
+
+  #draftPill()
+  {
+    return {
+      text: StudioSavePillText.Draft,
+      title: [draftTitle, pathList()].join(lineBreak),
+      dirty: true,
+    };
+  }
+
+  #savedPill()
+  {
+    return {
+      text: StudioSavePillText.Saved,
+      title: [this.#savedHeading(), pathList()].join(lineBreak),
+      dirty: false,
+    };
+  }
+
+  #markSaved(savedAt)
+  {
+    for (const file of RegisteredStudioSaveFiles())
+    {
+      this.#lastSavedJson.set(file.name, currentJson(file));
+      this.#onDisk.set(file.name, true);
+    }
+    this.#lastSavedAt = savedAt ?? this.#lastSavedAt;
+  }
+
+  #acceptSaved(replyJson)
+  {
+    this.#revision = replyJson.revision;
+    this.#markSaved(replyJson.savedAt);
+    return {
+      result: replyJson.written.length
+        ? StudioSaveResult.Saved
+        : StudioSaveResult.Unchanged,
+    };
+  }
+
+  #downloadAll()
+  {
+    const savedAt = this.#now();
+    this.#download(StudioSaveDownloadName, {
+      kind: StudioSaveDownloadKind,
+      formatVersion: StudioSaveFormatVersion,
+      savedAt,
+      files: documentsToSave(savedAt),
+    });
+    return { result: StudioSaveResult.Downloaded };
+  }
+
+  async #postAll()
+  {
+    try
+    {
+      return await this.#fetchJson(StudioSaveEndpoint, {
+        method: postMethod,
+        headers: {
+          [contentTypeHeader]: jsonContentType,
+        },
+        body: JSON.stringify({
+          revision: this.#revision,
+          files: documentsToSave(null),
+        }),
+      });
+    }
+    catch (error)
+    {
+      return {
+        status: null,
+        json: {
+          error: error.message,
+        },
+      };
+    }
+  }
+}
+
+export function RegisterStudioSaveFile(file)
+{
+  const {
+    name,
+    path,
+    kind,
+    read,
+    apply,
+  } = file;
   const spec = StudioSaveFiles[name];
   const fileKind = kind ?? spec?.kind;
-  if (!spec || spec.path !== path || spec.kind !== fileKind)
+  const matchesSpec = Boolean(spec) && spec.path === path && spec.kind === fileKind;
+  if (!matchesSpec)
   {
-    throw new Error(`Unknown Studio Save file "${name}" (${path}, ${fileKind}). Add it to StudioSaveFiles first.`);
+    const fileLabel = `"${name}" (${path}, ${fileKind})`;
+    throw new Error(`Unknown Studio Save file ${fileLabel}. Add it to StudioSaveFiles first.`);
   }
   if (typeof read !== 'function')
   {
@@ -86,251 +465,50 @@ export function registerStudioSaveFile({ name, path, kind, read, apply })
   });
 }
 
-export function registeredStudioSaveFiles()
+export function RegisteredStudioSaveFiles()
 {
   return [...registeredFiles.values()];
 }
 
 /** Test seam: forget every registration. */
-export function clearStudioSaveFiles()
+export function ClearStudioSaveFiles()
 {
   registeredFiles.clear();
 }
 
-function latestTime(first, second)
+// The Save controller. fetchJson(url, init) gives { status, json };
+// download(name, value) saves a web-mode file.
+export function CreateStudioSave({
+  isLocalServer,
+  fetchJson,
+  download,
+  now = isoNow,
+})
 {
-  return [first, second].filter(Boolean).sort().at(-1) ?? null;
-}
-
-/** The Save controller. fetchJson(url, init) gives { status, json }; download(name, value) saves a web-mode file. */
-export function createStudioSave({ isLocalServer, fetchJson, download, now = () => new Date().toISOString() })
-{
-  let revision = null;
-  let lastSavedAt = null;
-  const lastSavedJson = new Map();
-  const onDisk = new Map();
-  const loadedData = new Map();
-
-  const files = () => registeredStudioSaveFiles();
-  const currentJson = (file) => StableJson(file.read());
-  const changedFiles = () => files().filter((file) => lastSavedJson.get(file.name) !== currentJson(file));
-  const pathList = () => files().map((file) => file.path).join(LINE_BREAK);
-
-  function savedHeading()
-  {
-    return lastSavedAt
-      ? `${SAVED_TITLE} ${new Date(lastSavedAt).toLocaleString()}`
-      : SAVED_TITLE;
-  }
-
-  function rememberLoaded(file, document)
-  {
-    if (document.kind !== file.kind)
-    {
-      throw new Error(`${file.path} has kind "${document.kind}", expected "${file.kind}".`);
-    }
-    const data = StudioSaveData(file.name, document);
-    loadedData.set(file.name, data);
-    lastSavedJson.set(file.name, StableJson(data));
-    onDisk.set(file.name, true);
-    lastSavedAt = latestTime(lastSavedAt, document.savedAt);
-  }
-
-  async function load()
-  {
-    if (!isLocalServer)
-    {
-      return null;
-    }
-    const reply = await fetchJson(StudioSaveEndpoint, { cache: NO_STORE });
-    if (reply.status !== HTTP_OK || !reply.json?.ok)
-    {
-      throw new Error(reply.json?.error || `Could not read the Studio save files (${reply.status}).`);
-    }
-    revision = reply.json.revision;
-    for (const file of files())
-    {
-      const document = reply.json.files?.[file.name];
-      if (document)
-      {
-        rememberLoaded(file, document);
-      }
-    }
-    return { revision };
-  }
-
-  /** For each file not on disk, what the Studio holds now is the clean state. Call before a draft applies. */
-  function captureBaseline()
-  {
-    for (const file of files())
-    {
-      if (!onDisk.get(file.name))
-      {
-        lastSavedJson.set(file.name, currentJson(file));
-      }
-    }
-  }
-
-  function anyOnDisk()
-  {
-    return files().some((file) => onDisk.get(file.name));
-  }
-
-  /** Hands each loaded file to its apply(), except the names in skipNames. */
-  function applyLoaded(skipNames = [])
-  {
-    for (const file of files())
-    {
-      if (file.apply && onDisk.get(file.name) && !skipNames.includes(file.name))
-      {
-        file.apply(loadedData.get(file.name));
-      }
-    }
-  }
-
-  function matchesSaved(name, data)
-  {
-    return lastSavedJson.get(name) === StableJson(data);
-  }
-
-  function status()
-  {
-    if (!isLocalServer)
-    {
-      return STUDIO_SAVE_STATUS.web;
-    }
-    if (changedFiles().length)
-    {
-      return STUDIO_SAVE_STATUS.draft;
-    }
-    return anyOnDisk()
-      ? STUDIO_SAVE_STATUS.saved
-      : STUDIO_SAVE_STATUS.none;
-  }
-
-  /** The pill's text and title for the Save scope, or null when there is no file and no edit. */
-  function describe()
-  {
-    const describers = {
-      [STUDIO_SAVE_STATUS.web]: () => ({
-        text: STUDIO_SAVE_PILL_TEXT.web,
-        title: WEB_TITLE,
-        dirty: changedFiles().length > 0,
-      }),
-      [STUDIO_SAVE_STATUS.draft]: () => ({
-        text: STUDIO_SAVE_PILL_TEXT.draft,
-        title: [DRAFT_TITLE, pathList()].join(LINE_BREAK),
-        dirty: true,
-      }),
-      [STUDIO_SAVE_STATUS.saved]: () => ({
-        text: STUDIO_SAVE_PILL_TEXT.saved,
-        title: [savedHeading(), pathList()].join(LINE_BREAK),
-        dirty: false,
-      }),
-      [STUDIO_SAVE_STATUS.none]: () => null,
-    };
-    return describers[status()]();
-  }
-
-  function documentsToSave(savedAt)
-  {
-    return Object.fromEntries(files().map((file) => [file.name, StudioSaveDocument(file.name, file.read(), savedAt, file.kind)]));
-  }
-
-  function markSaved(savedAt)
-  {
-    for (const file of files())
-    {
-      lastSavedJson.set(file.name, currentJson(file));
-      onDisk.set(file.name, true);
-    }
-    lastSavedAt = savedAt ?? lastSavedAt;
-  }
-
-  function downloadAll()
-  {
-    const savedAt = now();
-    download(StudioSaveDownloadName, {
-      kind: StudioSaveDownloadKind,
-      formatVersion: StudioSaveFormatVersion,
-      savedAt,
-      files: documentsToSave(savedAt),
-    });
-    return { result: STUDIO_SAVE_RESULT.downloaded };
-  }
-
-  async function postAll()
-  {
-    try
-    {
-      return await fetchJson(StudioSaveEndpoint, {
-        method: POST_METHOD,
-        headers: { [CONTENT_TYPE_HEADER]: JSON_CONTENT_TYPE },
-        body: JSON.stringify({ revision, files: documentsToSave(null) }),
-      });
-    }
-    catch (error)
-    {
-      return { status: null, json: { error: error.message } };
-    }
-  }
-
-  async function save()
-  {
-    if (!isLocalServer)
-    {
-      return downloadAll();
-    }
-    if (status() === STUDIO_SAVE_STATUS.saved)
-    {
-      return { result: STUDIO_SAVE_RESULT.unchanged };
-    }
-    const reply = await postAll();
-    if (reply.status === HTTP_CONFLICT)
-    {
-      return { result: STUDIO_SAVE_RESULT.stale, message: reply.json?.error };
-    }
-    if (reply.status !== HTTP_OK || !reply.json?.ok)
-    {
-      return { result: STUDIO_SAVE_RESULT.failed, message: reply.json?.error || `Save failed (${reply.status}).` };
-    }
-    revision = reply.json.revision;
-    markSaved(reply.json.savedAt);
-    return {
-      result: reply.json.written.length
-        ? STUDIO_SAVE_RESULT.saved
-        : STUDIO_SAVE_RESULT.unchanged,
-    };
-  }
-
-  return {
-    load,
-    captureBaseline,
-    loadedFile: (name) => loadedData.get(name) ?? null,
-    anyOnDisk,
-    applyLoaded,
-    matchesSaved,
-    status,
-    describe,
-    save,
-    revision: () => revision,
-  };
+  return new StudioSaveController({
+    isLocalServer,
+    fetchJson,
+    download,
+    now,
+  });
 }
 
 /** One choice, Keep my draft or Use the saved file. Escape keeps the draft. */
-export function chooseDraftOrSavedFile(documentRef = document)
+export function ChooseDraftOrSavedFile(documentRef = document)
 {
-  const dialog = documentRef.createElement('dialog');
-  dialog.className = CHOICE_DIALOG_CLASS;
-  dialog.innerHTML = CHOICE_DIALOG_HTML;
+  const dialog = renderElement(documentRef, {
+    tag: elementTag.dialog,
+    className: choiceDialogClass.dialog,
+  });
+  dialog.append(renderChoiceForm(documentRef));
   documentRef.body.append(dialog);
   return new Promise((resolveChoice) =>
   {
-    dialog.addEventListener('close', () =>
+    dialog.addEventListener(closeEvent, () =>
     {
-      const choice = dialog.returnValue === STUDIO_SAVE_CHOICE.useSaved
-        ? STUDIO_SAVE_CHOICE.useSaved
-        : STUDIO_SAVE_CHOICE.keepDraft;
+      const choice = dialog.returnValue === StudioSaveChoice.UseSaved
+        ? StudioSaveChoice.UseSaved
+        : StudioSaveChoice.KeepDraft;
       dialog.remove();
       resolveChoice(choice);
     });

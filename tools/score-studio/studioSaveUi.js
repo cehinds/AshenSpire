@@ -2,13 +2,13 @@
 // layer files, drives the #draft-status pill, settles the draft against the saved files, and runs a Save.
 
 import {
-  chooseDraftOrSavedFile,
-  createStudioSave,
-  registerStudioSaveFile,
-  STUDIO_SAVE_CHOICE,
-  STUDIO_SAVE_PILL_TEXT,
-  STUDIO_SAVE_RESULT,
-  STUDIO_SAVE_STATUS,
+  ChooseDraftOrSavedFile,
+  CreateStudioSave,
+  RegisterStudioSaveFile,
+  StudioSaveChoice,
+  StudioSavePillText,
+  StudioSaveResult,
+  StudioSaveStatus,
 } from './studioSave.js';
 import {
   StudioSaveDir,
@@ -26,9 +26,9 @@ const DRAFT_CARRIED_FILES = Object.freeze([
   StudioSaveFileNames.ArtLayers,
 ]);
 const TOAST_TEXT = Object.freeze({
-  [STUDIO_SAVE_RESULT.saved]: `Saved Studio cards and art to ${StudioSaveDir}/`,
-  [STUDIO_SAVE_RESULT.unchanged]: 'No Studio changes since the last Save',
-  [STUDIO_SAVE_RESULT.downloaded]: `Downloaded ${StudioSaveDownloadName}`,
+  [StudioSaveResult.Saved]: `Saved Studio cards and art to ${StudioSaveDir}/`,
+  [StudioSaveResult.Unchanged]: 'No Studio changes since the last Save',
+  [StudioSaveResult.Downloaded]: `Downloaded ${StudioSaveDownloadName}`,
   loadFailed: 'Could not read the Studio save files',
 });
 
@@ -70,14 +70,14 @@ function arrayOrEmpty(value)
 export function initStudioSaveUi(deps)
 {
   const { state, clone } = deps;
-  const controller = createStudioSave({
+  const controller = CreateStudioSave({
     isLocalServer: deps.isLocalServer,
     fetchJson,
     download: deps.download,
   });
   let failedUntil = 0;
 
-  registerStudioSaveFile({
+  RegisterStudioSaveFile({
     name: StudioSaveFileNames.Cards,
     path: StudioSaveFiles.cards.path,
     read: () => ({
@@ -86,7 +86,7 @@ export function initStudioSaveUi(deps)
     }),
     apply: (data) => deps.mergeStudioCards(clone(data.cards), data.removedCardIds),
   });
-  registerStudioSaveFile({
+  RegisterStudioSaveFile({
     name: StudioSaveFileNames.ArtLayers,
     path: StudioSaveFiles.artLayers.path,
     read: () => ({
@@ -181,7 +181,7 @@ export function initStudioSaveUi(deps)
     {
       return;
     }
-    if (await chooseDraftOrSavedFile() === STUDIO_SAVE_CHOICE.useSaved)
+    if (await ChooseDraftOrSavedFile() === StudioSaveChoice.UseSaved)
     {
       putSavedFilesIntoDraft(draft);
     }
@@ -199,7 +199,7 @@ export function initStudioSaveUi(deps)
   {
     failedUntil = Date.now() + FAILED_PILL_MS;
     paintPill(pill, {
-      text: STUDIO_SAVE_PILL_TEXT.failed,
+      text: StudioSavePillText.Failed,
       title: message ?? '',
       dirty: true,
     });
@@ -228,11 +228,11 @@ export function initStudioSaveUi(deps)
     const pill = document.getElementById(DRAFT_STATUS_ID);
     if (deps.isLocalServer)
     {
-      pill.textContent = STUDIO_SAVE_PILL_TEXT.saving;
+      pill.textContent = StudioSavePillText.Saving;
     }
     const outcome = await controller.save();
     deps.toast(outcome.message ?? TOAST_TEXT[outcome.result]);
-    if (outcome.result === STUDIO_SAVE_RESULT.failed)
+    if (outcome.result === StudioSaveResult.Failed)
     {
       showFailed(pill, outcome.message);
       return outcome;
@@ -248,6 +248,6 @@ export function initStudioSaveUi(deps)
     applySavedFiles,
     save,
     revision: () => controller.revision(),
-    hasStatus: () => controller.status() !== STUDIO_SAVE_STATUS.none,
+    hasStatus: () => controller.status() !== StudioSaveStatus.None,
   };
 }
