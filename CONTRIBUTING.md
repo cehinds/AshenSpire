@@ -187,9 +187,11 @@ way: through review, into `dev`, then promoted to `review` (rule 6; the review s
    Stages (owner, 2026-10-11; DEVELOPER.md, *Which checks gate a pull request*
    lists each check):
    - **PR into `dev` and push to `dev`: smoke, about five minutes or less.**
-     `tests.yml`'s core suite and discovered shards (`--no-slow`), `receipts.yml`,
+     `tests.yml`'s core suite, `receipts.yml`,
      `dev-preview.yml`'s preview build and fast gates, `quick-start.yml`, and
      `art-migrate.yml`'s intake. A PR is gated by these alone.
+   - **Push to `review`: the discovered test shards** (`tests.yml`, `--no-slow`),
+     moved off `dev` (owner, 2026-11-27). A red here is fixed on a `chore/*` PR into `dev`.
    - **Push to `test`: the heavy functional suites.** `ci.yml`'s test-stage
      jobs (3-OS tests, all discovered shards, tool self-tests, the bundler parse
      gate, the real-browser checks), `dev-preview.yml`'s reachability gates,

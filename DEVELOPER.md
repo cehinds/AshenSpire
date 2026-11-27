@@ -148,7 +148,7 @@ Any workflow can be started by hand on any branch (Actions → *Run workflow*).
 | `build-stamp.yml` → stamp: rebuild the merged tree, re-point the landed receipts, commit `buildordinal.json`, `CHANGELOG.md` and the generated module as `[build-stamp]`, then dispatch `dev-preview` for that commit | — | yes (push to `dev` only; not on a pull request) | — | — |
 | `pr-restamp.yml` → re-stamp: after a successful `build-stamp` on `dev`, merge `dev` into each conflicting open PR into `dev` with `tools/pr-restamp.mjs`, push that merge, dispatch its checks; or comment once when a person must merge | — | yes (after a stamp on `dev`; also dispatch) | — | — |
 | `tests.yml` → core: engine suite, each tool's verdict, CHANGELOG order (no browser) | — | yes | — | — |
-| `tests.yml` → discovered tests, six shards, `--no-slow` (`SLOW_DISCOVERED` in `tests/run-node-lanes.mjs`; this includes `tests/readme-sync.test.mjs`) | — | yes | — | — |
+| `tests.yml` → discovered tests, six shards, `--no-slow` (`SLOW_DISCOVERED` in `tests/run-node-lanes.mjs`; this includes `tests/readme-sync.test.mjs`); on push to `review`, not `dev` (owner, 2026-11-27) | — | — | — | — |
 | `quick-start.yml` → Quick start input budget; ordered Core2 stages retain four 500 ms waits and half-rate sprites. `tools/click-impact-probe.mjs` reports raw latency and gates median contact/first-number overhead at 400/750 ms after declared waits, the active authored clip and receipt-derived hit-stop. Requires a real hostile contact and at least three numeric readouts; optional reactions use the real Back control. | — | yes | yes | only when release differs from test |
 | `ci.yml` → stage decision (`stage`): a push to `test` is the functional stage; a push to `release` is polish, and also functional when its tree differs from `test` | — | — | yes | yes |
 | `ci.yml` → tests (ubuntu, windows, macOS): engine suite and tool verdicts | — | — | yes | yes, if the tree differs from `test` |
@@ -573,7 +573,7 @@ than `.github`) and hands them to one `node --test`. A new test file needs no
 registration. A file that must not be spawned there goes in its `NOT_SPAWNED`
 map with the reason. A file that spawns full simulation runs goes in
 `SLOW_DISCOVERED` (`tests/run-node-lanes.mjs`), also with its reason: the
-discovered shards on a pull request into `dev` pass `--no-slow`, and
+discovered shards on a push to `review` pass `--no-slow`, and
 `ci.yml` runs the complete corpus on every push to `test`: Linux/macOS keep
 all files in `test-discovered`; Windows uses `--no-slow` there and runs each
 `SLOW_DISCOVERED` file once in the `test-discovered-slow-windows` matrix. The
@@ -584,9 +584,9 @@ default author in `games/ashenspire/game.json` uses the Current preset's core.
 The configured Core build reports an explicit skip before spawning its
 300-seed report. Manual `node tools/balance.mjs` remains available; shared
 runsim checks, report/parser contracts and simulation unit tests stay active.
-`.github/workflows/tests.yml` runs the core suite and the
-six discovered shards as Linux jobs on a pull request into `dev` and on a push
-to `dev`; the slow files, the tools' self-tests and the bundler's parse-gate
+`.github/workflows/tests.yml` runs the core suite as a Linux job on a pull
+request into `dev` and on a push to `dev`, and the core suite plus the six
+discovered shards on a push to `review`; the slow files, the tools' self-tests and the bundler's parse-gate
 fixtures (`node tools/bundle.test.mjs`, several minutes) run in `ci.yml` on a
 push to `test` (see *Which checks gate a pull request* above).
 
