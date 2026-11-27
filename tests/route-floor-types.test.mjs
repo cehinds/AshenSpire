@@ -259,6 +259,37 @@ test('pins that leave a branch no shop floor, alone or beside its elites, are re
   RefusedWith(sharedSlot, `leaves a branch's shop only floors its elites can take. ${keepTwo}`);
 });
 
+// A short route whose free shop floors are one too early for an elite and every lane's elite slot.
+function EarlyShopRoute(config)
+{
+  const shopFirst = config.shape.guaranteedShopDepths.first;
+  const count = shopFirst + config.shape.narrowDepthsBeforeBoss + 1;
+  const threat = count - config.shape.narrowDepthsBeforeBoss;
+  const restFloors = [
+    1,
+    threat,
+    count,
+  ];
+  return {
+    prebossNodes: count,
+    restFloors,
+    restsPerAct: restFloors.length,
+    restGap: null,
+    minimumThreatFloor: threat,
+    shopsPerBranch: 1,
+  };
+}
+
+test('pinning the early shop floor is refused when the other is every elite slot', () =>
+{
+  const config = RouteConfig();
+  const route = EarlyShopRoute(config);
+  assert.doesNotThrow(() => SetupCore(route), 'the short route resolves without pins');
+  const earlyDepth = config.shape.guaranteedShopDepths.first;
+  const floorTypes = { [earlyDepth]: config.plain };
+  RefusedWith({ ...route, floorTypes }, "leaves a branch's shop only floors its elites can take");
+});
+
 function InvalidTables(config)
 {
   const {
