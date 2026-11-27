@@ -1758,6 +1758,10 @@ Full playability with mouse only. Keyboard (nice-to-have, M4): 1–9 select card
 
 **Hit feedback**
 - Floating damage/heal/block numbers; brief target flash on hit; Bleed burst and Stagger get distinct, slightly bigger effects.
+- Player hit reactions retain the selected class artwork, including the current
+  held/action frame, with the existing recoil and flash. They must not substitute
+  a different costume or character. Confirmed guard/evade body reactions retain
+  their own choreography and precedence.
 - Screen shake on every hit that costs HP, by share of target max HP lost (after Block): 1 px under 2%, 2 px from 2%, 4 px from 8%, 7 px from 20%, 10 px from 35%; never over 10 px. Unknown max HP: 1–4 px by absolute HP. Phones keep the shake.
 - Hit-stop: 60 ms on a hit of 6 HP or more, 120 ms on a hit of 35% of max HP or more (data rows; 0 disables). The attacker's impact frame and the target's recoil hold; only those two figures pause, and a click skips it.
 - Damage numbers size by share of max HP: `pct20` from 20%, `pct35` from 35%, `crit` from 25 HP. Hits ≥20% fire the `bigHit` haptic.
@@ -1772,6 +1776,15 @@ Full playability with mouse only. Keyboard (nice-to-have, M4): 1–9 select card
 - Instant and Reduced motion drop the hit-stop; slow/normal/fast keep it. Reduced motion also drops the shake; the Screen shake setting drops only the shake; Reduce flashes suppresses flashes (`src/ui/fx.js`).
 - No animation blocks input; a click always skips to end-state.
 - Fixed effect durations: heavy hit flash 380 ms, cast glyph 450 ms, Stagger wobble 600 ms. The Animation speed setting (slow/normal/fast/instant) scales pacing (beat, step, lunge), never these.
+
+**Player sprite calibration** (owner-approved cleanup, 2026-11-27)
+- Physical scale and support/root registration are independent of posed vertical
+  height. Crouching lowers the head without enlarging anatomy to standing height.
+- Independently authored frame families use explicit, reviewed source calibration.
+  Matching held/action/bookend images share that calibration; native image
+  resolution, weapon reach, effects, and padding do not set body size.
+- Ground support and intentional movement remain authored. Viewport/stature sizing
+  and settled HUD/target anchors remain separate from transient pose bounds.
 
 **Action pacing**
 - Each action plays: action word → animation → result (hit, miss, blocked, countered) → sprite reaction → damage and bars → reset → next action, one gap per step.

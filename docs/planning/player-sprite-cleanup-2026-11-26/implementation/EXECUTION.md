@@ -25,6 +25,24 @@ authorized by this checkpoint.
    reaction through idle/held/action interruption and return.
 3. Verify the pilot in actual combat, at desktop/mobile, before expansion.
 
+### Selected pilot design
+
+- SW09 starts with multiplier **0.60** for all four 1024-pixel frames, native
+  root **[520, 734]**, and logical root **[384, 464]** before stage padding.
+  Multiple helmet/limb measurements support this candidate; visual acceptance
+  and perspective uncertainty remain explicit. No posed-height normalization.
+- Ordinary hits retain the currently selected character/frame and existing
+  recoil/red-flash clock. This applies to all four player classes, preserving
+  action continuity and confirmed guard/evade reaction precedence.
+- The canonical hooded Starseer renewal HURT was found and inspected, but its
+  package is still an authoring preview with contact/tip/separation issues.
+  It is recorded as an optional future deformation source, not silently shipped.
+  No new art, art release, or cache edits are required for the selected fix.
+- Actual full-game before captures are secured under
+  `verification/before-verified/`: desktop/mobile, correct HURT source loaded,
+  selected Reaver SW09, and zero page errors. Earlier unverified captures/raw
+  diagnosis outputs are retained locally but excluded from accepted evidence.
+
 ## Current ownership
 
 | Owner | Current work | Write boundary |
