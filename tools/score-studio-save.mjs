@@ -9,11 +9,47 @@ import { ValidateScoringConfig } from '../src/model/activeScoring.js';
 import { ValidateSubclassCatalog, SerializeSubclassCatalog } from '../src/model/subclassCatalogExport.js';
 import { tryAcquire, lockEnv, busyMessage } from './lib/build-lock.mjs';
 import { expansionStatuses } from '../src/content/combatStatusRules.js';
+import { createHash } from 'node:crypto';
+import { writeFileAtomic } from './lib/write-atomic.mjs';
+import {
+  StudioSaveFiles,
+  StudioSaveFileNames,
+  StudioSaveFormatVersion,
+  StudioSaveData,
+  StudioSaveDocument,
+  StudioSaveHeaderKeys,
+  StableJson,
+} from './score-studio/studioSaveFiles.js';
 
 export const DEFAULT_SCORING_PATH = 'content/source/scoring.json';
 export const DEFAULT_ART_LAYERS_PATH = 'content/source/cardArtLayers.json';
 export const DEFAULT_ITEM_ART_LAYERS_PATH = 'content/source/itemArtLayers.json';
 export const DEFAULT_CUSTOM_DECKS_PATH = 'content/source/studioDecks.json';
+
+const subclassExportLabel = 'Subclass export';
+const parentSegment = '..';
+const missingFileCode = 'ENOENT';
+const studioSaveLabel = 'Studio save';
+const studioSaveRequestKeys = Object.freeze([
+  'revision',
+  'files',
+]);
+const absentFileMark = '<absent>';
+const lineEnd = '\n';
+const jsonIndent = 2;
+const hashAlgorithm = 'sha256';
+const hashEncoding = 'hex';
+const textEncoding = 'utf8';
+const httpBadRequest = 400;
+const httpConflict = 409;
+const studioSaveDataChecks = Object.freeze({
+  [StudioSaveFileNames.Cards]: checkCardsData,
+  [StudioSaveFileNames.ArtLayers]: checkArtLayersData,
+  [StudioSaveFileNames.Templates]: checkTemplatesData,
+});
+
+export const StudioSaveStaleMessage = 'The Studio save files changed since this Studio loaded them'
+  + ' (another tab, or a git pull). Reload to see them; your draft is kept.';
 
 function resolveRepoPath(rootDir, relPath, fallback) {
   const chosen = typeof relPath === 'string' && relPath.trim() ? relPath.trim() : fallback;
@@ -155,23 +191,78 @@ export function saveStudioSubclassCatalog(rootDir, { catalog, rebuild = true } =
   finally { release(); }
 }
 
-function saveSubclassCatalogLocked(rootDir, { catalog, rebuild, env }) {
+function isInsideDirectory(baseDirectory, targetPath)
+{
+  const relativePath = relative(baseDirectory, targetPath);
+  const isParent = relativePath === parentSegment;
+  const startsAbove = relativePath.startsWith(`${parentSegment}${sep}`);
+  return !isAbsolute(relativePath) && !isParent && !startsAbove;
+}
+
+// lstat must run before any existence check: existsSync follows a link,
+// so a dangling link looks absent even though a later write follows it.
+function linkStatOrNull(part)
+{
+  try
+  {
+    return lstatSync(part);
+  }
+  catch (error)
+  {
+    if (error.code === missingFileCode)
+    {
+      return null;
+    }
+    throw error;
+  }
+}
+
+function requireSafePart(part, guard)
+{
+  const stat = linkStatOrNull(part);
+  if (!stat)
+  {
+    return;
+  }
+  if (stat.isSymbolicLink())
+  {
+    throw new Error(`${guard.label} refuses symbolic-link path: ${guard.relativePath}`);
+  }
+  if (!isInsideDirectory(guard.realRoot, realpathSync(part)))
+  {
+    throw new Error(`${guard.label} path resolves outside the repository: ${guard.relativePath}`);
+  }
+}
+
+// A resolver for repository-relative paths that refuses an escape, a symbolic link on the path,
+// or a part whose real path lies outside the repository. `label` starts every refusal.
+function guardedRepoPath(rootDir, label)
+{
   const root = resolve(rootDir);
   const realRoot = realpathSync(root);
-  const inside = (base, target) => { const rel = relative(base, target); return !isAbsolute(rel) && rel !== '..' && !rel.startsWith(`..${sep}`); };
-  const pathOf = rel => {
-    const target = resolve(root, rel);
-    if (!inside(root, target)) throw new Error(`Subclass export path escapes the repository: ${rel}`);
-    for (let part = target; part !== root; part = dirname(part)) {
-      // lstat must run before any existence check: existsSync follows a link,
-      // so a dangling link looks absent even though a later write follows it.
-      let stat;
-      try { stat = lstatSync(part); } catch (error) { if (error.code === 'ENOENT') continue; throw error; }
-      if (stat.isSymbolicLink()) throw new Error(`Subclass export refuses symbolic-link path: ${rel}`);
-      if (!inside(realRoot, realpathSync(part))) throw new Error(`Subclass export path resolves outside the repository: ${rel}`);
+  return (relativePath) =>
+  {
+    const target = resolve(root, relativePath);
+    if (!isInsideDirectory(root, target))
+    {
+      throw new Error(`${label} path escapes the repository: ${relativePath}`);
+    }
+    const guard = {
+      realRoot,
+      label,
+      relativePath,
+    };
+    for (let part = target; part !== root; part = dirname(part))
+    {
+      requireSafePart(part, guard);
     }
     return target;
   };
+}
+
+function saveSubclassCatalogLocked(rootDir, { catalog, rebuild, env }) {
+  const root = resolve(rootDir);
+  const pathOf = guardedRepoPath(rootDir, subclassExportLabel);
   const read = rel => readFileSync(pathOf(rel), 'utf8');
   const json = rel => JSON.parse(read(rel));
   const initialErrors = ValidateSubclassCatalog(catalog);
@@ -264,4 +355,369 @@ function saveSubclassCatalogLocked(rootDir, { catalog, rebuild, env }) {
     throw new Error(`Subclass export rolled back: ${error.message}`);
   }
   return { cardCount: catalog.cards.length, listCount: catalog.lists.length, paths: [...writes.keys()], rebuilt };
+}
+
+// Studio Save: the Studio's own config, in the fixed StudioSaveFiles only.
+
+class StudioSaveError extends Error
+{
+  constructor(message, statusCode = httpBadRequest)
+  {
+    super(message);
+    this.statusCode = statusCode;
+  }
+}
+
+function isoNow()
+{
+  return new Date().toISOString();
+}
+
+function isPlainObject(value)
+{
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function isNonEmptyString(value)
+{
+  return typeof value === 'string' && Boolean(value);
+}
+
+function isCardObject(card)
+{
+  return isPlainObject(card) && isNonEmptyString(card.id);
+}
+
+function refuse(message)
+{
+  throw new StudioSaveError(`${studioSaveLabel} refused: ${message}`);
+}
+
+function requireExactKeys(
+  value,
+  allowedKeys,
+  where,
+)
+{
+  if (!isPlainObject(value))
+  {
+    refuse(`${where} must be a JSON object.`);
+  }
+  const extraKeys = Object.keys(value).filter((key) => !allowedKeys.includes(key));
+  if (extraKeys.length)
+  {
+    refuse(`${where} has keys that are not allowed: ${extraKeys.join(', ')}.`);
+  }
+}
+
+function requireArrayOf(
+  value,
+  isItem,
+  message,
+)
+{
+  if (!Array.isArray(value) || !value.every(isItem))
+  {
+    refuse(message);
+  }
+}
+
+function requireLayerSet(value, where)
+{
+  if (!isPlainObject(value) || !Array.isArray(value.layers))
+  {
+    refuse(`${where} must be an object with a "layers" array.`);
+  }
+}
+
+function checkCardsData(data)
+{
+  requireArrayOf(
+    data.cards,
+    isCardObject,
+    'cards must be an array of card objects, each with an id.',
+  );
+  const uniqueIds = new Set(data.cards.map((card) => card.id));
+  if (uniqueIds.size !== data.cards.length)
+  {
+    refuse('cards holds the same id twice.');
+  }
+  requireArrayOf(
+    data.removedCardIds,
+    isNonEmptyString,
+    'removedCardIds must be an array of card ids.',
+  );
+}
+
+function checkArtLayersData(data)
+{
+  requireLayerSet(data.cardArtLayers, 'cardArtLayers');
+  requireLayerSet(data.itemArtLayers, 'itemArtLayers');
+}
+
+function checkTemplatesData(data)
+{
+  requireArrayOf(
+    data.templates,
+    isPlainObject,
+    'templates must be an array of objects.',
+  );
+}
+
+/** Checks one file's document as the Studio sent it and returns its data keys. */
+function validateStudioSaveDocument(name, document)
+{
+  const spec = StudioSaveFiles[name];
+  const allowedKeys = [
+    ...StudioSaveHeaderKeys(name),
+    ...spec.dataKeys,
+  ];
+  requireExactKeys(
+    document,
+    allowedKeys,
+    name,
+  );
+  if (document.kind !== spec.kind)
+  {
+    refuse(`${name} must have kind "${spec.kind}".`);
+  }
+  if (document.formatVersion !== StudioSaveFormatVersion)
+  {
+    refuse(`${name} must have formatVersion ${StudioSaveFormatVersion}.`);
+  }
+  const missingKeys = spec.dataKeys.filter((key) => !(key in document));
+  if (missingKeys.length)
+  {
+    refuse(`${name} is missing ${missingKeys.join(', ')}.`);
+  }
+  const data = StudioSaveData(name, document);
+  studioSaveDataChecks[name](data);
+  return data;
+}
+
+function studioSaveSerialize(
+  name,
+  data,
+  savedAt,
+)
+{
+  const document = StudioSaveDocument(
+    name,
+    data,
+    savedAt,
+  );
+  const json = JSON.stringify(
+    document,
+    null,
+    jsonIndent,
+  );
+  return `${json}${lineEnd}`;
+}
+
+function studioSaveRevisionOf(bytesByName)
+{
+  const hash = createHash(hashAlgorithm);
+  for (const name of Object.keys(StudioSaveFiles))
+  {
+    const bytes = bytesByName[name] ?? absentFileMark;
+    hash.update(`${name}${lineEnd}${bytes}${lineEnd}`);
+  }
+  return hash.digest(hashEncoding);
+}
+
+function readStudioSaveBytes(pathOf)
+{
+  const bytesByName = {};
+  for (const [name, spec] of Object.entries(StudioSaveFiles))
+  {
+    const target = pathOf(spec.path);
+    bytesByName[name] = existsSync(target)
+      ? readFileSync(target, textEncoding)
+      : null;
+  }
+  return bytesByName;
+}
+
+function parseOrNull(bytes)
+{
+  return bytes === null
+    ? null
+    : JSON.parse(bytes);
+}
+
+function restorePriorBytes(written, priorBytes)
+{
+  for (const write of written)
+  {
+    const prior = priorBytes[write.name];
+    if (prior === null)
+    {
+      rmSync(write.target, { force: true });
+    }
+    else
+    {
+      writeFileAtomic(write.target, prior);
+    }
+  }
+}
+
+function validateStudioSaveRequest(body)
+{
+  requireExactKeys(
+    body,
+    studioSaveRequestKeys,
+    'The request',
+  );
+  if (typeof body.revision !== 'string')
+  {
+    refuse('revision must be the revision the Studio loaded.');
+  }
+  requireExactKeys(
+    body.files,
+    Object.keys(StudioSaveFiles),
+    'files',
+  );
+  const names = Object.keys(body.files);
+  if (!names.length)
+  {
+    refuse('files is empty.');
+  }
+  const validatedEntries = names.map((name) =>
+  {
+    const document = body.files[name];
+    return [name, validateStudioSaveDocument(name, document)];
+  });
+  return Object.fromEntries(validatedEntries);
+}
+
+function isUnchangedData(
+  name,
+  data,
+  priorBytes,
+)
+{
+  const prior = parseOrNull(priorBytes[name]);
+  if (!prior)
+  {
+    return false;
+  }
+  return StableJson(StudioSaveData(name, prior)) === StableJson(data);
+}
+
+/** Splits the sent files into the writes a Save owes and the names whose data is unchanged. */
+function planStudioSaveWrites(dataByName, plan)
+{
+  const {
+    priorBytes,
+    pathOf,
+    savedAt,
+  } = plan;
+  const writes = [];
+  const unchanged = [];
+  for (const [name, data] of Object.entries(dataByName))
+  {
+    const dataUnchanged = isUnchangedData(
+      name,
+      data,
+      priorBytes,
+    );
+    if (dataUnchanged)
+    {
+      unchanged.push(name);
+      continue;
+    }
+    writes.push({
+      name,
+      target: pathOf(StudioSaveFiles[name].path),
+      bytes: studioSaveSerialize(
+        name,
+        data,
+        savedAt,
+      ),
+    });
+  }
+  return {
+    writes,
+    unchanged,
+  };
+}
+
+function writeAllOrRestore(
+  writes,
+  priorBytes,
+  writeFile,
+)
+{
+  const written = [];
+  try
+  {
+    for (const write of writes)
+    {
+      mkdirSync(dirname(write.target), { recursive: true });
+      writeFile(write.target, write.bytes);
+      written.push(write);
+    }
+  }
+  catch (error)
+  {
+    restorePriorBytes(written, priorBytes);
+    throw new StudioSaveError(`${studioSaveLabel} failed and was rolled back: ${error.message}`);
+  }
+}
+
+/** The saved Studio files: { revision, paths, files: { name: document or null } }. */
+export function ReadStudioSave(rootDir)
+{
+  const pathOf = guardedRepoPath(rootDir, studioSaveLabel);
+  const bytesByName = readStudioSaveBytes(pathOf);
+  const files = {};
+  const paths = {};
+  for (const [name, spec] of Object.entries(StudioSaveFiles))
+  {
+    paths[name] = spec.path;
+    files[name] = parseOrNull(bytesByName[name]);
+  }
+  return {
+    revision: studioSaveRevisionOf(bytesByName),
+    paths,
+    files,
+  };
+}
+
+// Writes the files a Studio Save sent, all or none, keeping the bytes of unchanged data.
+// `writeFile` and `now` are test seams; the endpoint passes only the body.
+export function SaveStudioSave(
+  rootDir,
+  body,
+  { writeFile = writeFileAtomic, now = isoNow } = {},
+)
+{
+  const dataByName = validateStudioSaveRequest(body);
+  const pathOf = guardedRepoPath(rootDir, studioSaveLabel);
+  const priorBytes = readStudioSaveBytes(pathOf);
+  if (studioSaveRevisionOf(priorBytes) !== body.revision)
+  {
+    throw new StudioSaveError(StudioSaveStaleMessage, httpConflict);
+  }
+  const savedAt = now();
+  const { writes, unchanged } = planStudioSaveWrites(dataByName, {
+    priorBytes,
+    pathOf,
+    savedAt,
+  });
+  writeAllOrRestore(
+    writes,
+    priorBytes,
+    writeFile,
+  );
+  const current = ReadStudioSave(rootDir);
+  return {
+    revision: current.revision,
+    paths: current.paths,
+    savedAt: writes.length
+      ? savedAt
+      : null,
+    written: writes.map((write) => write.name),
+    unchanged,
+  };
 }
