@@ -18,11 +18,12 @@ class OpenFile
         this.MarkSaved(text);
     }
 
-    MarkSaved(text)
+    /** `shape` is the value as it was sent; edits made while the save ran stay dirty. */
+    MarkSaved(text, shape = JSON.stringify(this.value))
     {
         this.text = text;
-        this.savedShape = JSON.stringify(this.value);
-        this.dirty = false;
+        this.savedShape = shape;
+        this.Refresh();
     }
 
     Refresh()
@@ -81,11 +82,12 @@ export class ContentStore
     async SaveFile(path)
     {
         const file = this.files.get(path);
+        const shape = JSON.stringify(file.value);
         const text = FormatJsonLike(file.text, file.value, this.indent);
         try
         {
             await this.api.SaveFile(path, text, file.text);
-            file.MarkSaved(text);
+            file.MarkSaved(text, shape);
             return null;
         }
         catch (error)
