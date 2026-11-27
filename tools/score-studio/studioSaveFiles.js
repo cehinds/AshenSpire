@@ -1,8 +1,5 @@
 // tools/score-studio/studioSaveFiles.js — the fixed files the Studio's own Save writes (SS-003).
-//
-// Shared by the browser Studio (studioSave.js) and the local server (tools/score-studio-save.mjs),
-// so both name the same paths, kinds and keys. A new Save file is added here and nowhere else on
-// the server side; the Studio registers how to read and apply it with registerStudioSaveFile.
+// Shared by the browser Studio and tools/score-studio-save.mjs, so both name the same paths, kinds and keys.
 
 export const STUDIO_SAVE_FORMAT_VERSION = 1;
 export const STUDIO_SAVE_DIR = 'content/source/studio';
@@ -10,11 +7,13 @@ export const STUDIO_SAVE_ENDPOINT = '/__studio/studio-save';
 export const STUDIO_SAVE_MAX_BYTES = 4 * 1024 * 1024;
 export const STUDIO_SAVE_DOWNLOAD_NAME = 'ashenspire-studio-save.json';
 export const STUDIO_SAVE_DOWNLOAD_KIND = 'ashenspire.studioSave';
-export const STUDIO_SAVE_HEADER_KEYS = Object.freeze([
-  'kind',
-  'formatVersion',
-  'savedAt',
-]);
+export const STUDIO_CARDS_KIND = 'ashenspire.studioCards';
+export const STUDIO_ART_LAYERS_KIND = 'ashenspire.studioArtLayers';
+export const STUDIO_CARD_TEMPLATES_KIND = 'ashenspire.studioCardTemplates';
+
+const KIND_KEY = 'kind';
+const FORMAT_VERSION_KEY = 'formatVersion';
+const SAVED_AT_KEY = 'savedAt';
 
 export const STUDIO_SAVE_FILE_NAMES = Object.freeze({
   cards: 'cards',
@@ -25,30 +24,48 @@ export const STUDIO_SAVE_FILE_NAMES = Object.freeze({
 export const STUDIO_SAVE_FILES = Object.freeze({
   [STUDIO_SAVE_FILE_NAMES.cards]: Object.freeze({
     path: `${STUDIO_SAVE_DIR}/cards.json`,
-    kind: 'ashenspire.studioCards',
+    kind: STUDIO_CARDS_KIND,
     dataKeys: Object.freeze(['cards', 'removedCardIds']),
+    stampsSavedAt: true,
   }),
   [STUDIO_SAVE_FILE_NAMES.artLayers]: Object.freeze({
     path: `${STUDIO_SAVE_DIR}/artLayers.json`,
-    kind: 'ashenspire.studioArtLayers',
+    kind: STUDIO_ART_LAYERS_KIND,
     dataKeys: Object.freeze(['cardArtLayers', 'itemArtLayers']),
+    stampsSavedAt: true,
   }),
+  // SS-004 owns this format: the same shape as template Import and Export, with no savedAt.
   [STUDIO_SAVE_FILE_NAMES.templates]: Object.freeze({
     path: `${STUDIO_SAVE_DIR}/templates.json`,
-    kind: 'ashenspire.studioTemplates',
+    kind: STUDIO_CARD_TEMPLATES_KIND,
     dataKeys: Object.freeze(['templates']),
+    stampsSavedAt: false,
   }),
 });
 
-/** The file's JSON: the header keys first, then its data keys in their fixed order. */
-export function studioSaveDocument(name, data, savedAt)
+/** The header keys a file's document carries before its data keys. */
+export function studioSaveHeaderKeys(name)
+{
+  const headerKeys = [KIND_KEY, FORMAT_VERSION_KEY];
+  if (STUDIO_SAVE_FILES[name].stampsSavedAt)
+  {
+    headerKeys.push(SAVED_AT_KEY);
+  }
+  return headerKeys;
+}
+
+/** The file's JSON: the header first, then its data keys in their fixed order. */
+export function studioSaveDocument(name, data, savedAt, kind = STUDIO_SAVE_FILES[name].kind)
 {
   const spec = STUDIO_SAVE_FILES[name];
   const document = {
-    kind: spec.kind,
-    formatVersion: STUDIO_SAVE_FORMAT_VERSION,
-    savedAt,
+    [KIND_KEY]: kind,
+    [FORMAT_VERSION_KEY]: STUDIO_SAVE_FORMAT_VERSION,
   };
+  if (spec.stampsSavedAt)
+  {
+    document[SAVED_AT_KEY] = savedAt;
+  }
   for (const key of spec.dataKeys)
   {
     document[key] = data[key];

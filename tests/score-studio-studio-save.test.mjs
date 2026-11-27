@@ -10,6 +10,7 @@ import { request as httpRequest } from 'node:http';
 import { serve } from '../tools/serve.mjs';
 import { readStudioSave, saveStudioSave, STUDIO_SAVE_STALE_MESSAGE } from '../tools/score-studio-save.mjs';
 import {
+  STUDIO_CARD_TEMPLATES_KIND,
   STUDIO_SAVE_DIR,
   STUDIO_SAVE_ENDPOINT,
   STUDIO_SAVE_FILES,
@@ -377,5 +378,20 @@ test('studio save endpoint: without --editor-write the save is refused but the r
     const refused = await send(port, { method: 'POST', body: saveBody(loaded.json.revision) });
     assert.equal(refused.status, HTTP_FORBIDDEN);
     assert.equal(existsSync(studioDirOf(root)), false);
+  });
+});
+
+test('studio save: templates.json is saved in its own shape, kind and no savedAt', () =>
+{
+  withTempRepo((root) =>
+  {
+    const templates = [{ id: 'qaTemplate' }];
+    const document = studioSaveDocument(STUDIO_SAVE_FILE_NAMES.templates, { templates });
+    assert.deepEqual(document, { kind: STUDIO_CARD_TEMPLATES_KIND, formatVersion: STUDIO_SAVE_FORMAT_VERSION, templates });
+    const { revision } = readStudioSave(root);
+    assert.throws(() => saveStudioSave(root, { revision, files: { templates: { ...document, savedAt: FIXED_TIME } } }, fixedClock), /keys that are not allowed: savedAt/);
+    assert.throws(() => saveStudioSave(root, { revision, files: { templates: { ...document, kind: 'ashenspire.studioTemplates' } } }, fixedClock), /must have kind "ashenspire.studioCardTemplates"/);
+    saveStudioSave(root, { revision, files: { templates: document } }, fixedClock);
+    assert.deepEqual(JSON.parse(bytesOf(root, STUDIO_SAVE_FILE_NAMES.templates)), document);
   });
 });

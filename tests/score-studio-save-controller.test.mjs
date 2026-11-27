@@ -12,6 +12,7 @@ import {
   STUDIO_SAVE_STATUS,
 } from '../tools/score-studio/studioSave.js';
 import {
+  STUDIO_CARD_TEMPLATES_KIND,
   STUDIO_SAVE_DOWNLOAD_KIND,
   STUDIO_SAVE_DOWNLOAD_NAME,
   STUDIO_SAVE_ENDPOINT,
@@ -195,4 +196,41 @@ test('studio save: web mode downloads one file with both sections and sends no r
   assert.equal(downloads[0].value.kind, STUDIO_SAVE_DOWNLOAD_KIND);
   assert.deepEqual(Object.keys(downloads[0].value.files), ['cards', 'artLayers']);
   assert.deepEqual(downloads[0].value.files.cards.cards, [QA_CARD]);
+});
+
+test('studio save hook: a file carries its own kind; SS-004 templates register without one and save in their own shape', async () =>
+{
+  const templates = [{ id: 'qaTemplate', name: 'QA template' }];
+  const { studio, controller, requests } = setup();
+  assert.throws(() => registerStudioSaveFile({
+    name: STUDIO_SAVE_FILE_NAMES.templates,
+    path: STUDIO_SAVE_FILES.templates.path,
+    kind: 'ashenspire.studioTemplates',
+    read: () => ({ templates }),
+  }), /Unknown Studio Save file/);
+  registerStudioSaveFile({
+    name: STUDIO_SAVE_FILE_NAMES.templates,
+    path: STUDIO_SAVE_FILES.templates.path,
+    read: () => ({ templates }),
+    apply: () => {},
+  });
+  await controller.load();
+  controller.captureBaseline();
+  studio.cards = [QA_CARD];
+  await controller.save();
+  const body = JSON.parse(requests.find((request) => request.method === 'POST').body);
+  assert.deepEqual(body.files.templates, {
+    kind: STUDIO_CARD_TEMPLATES_KIND,
+    formatVersion: 1,
+    templates,
+  });
+});
+
+test('studio save: a loaded file whose kind is not the registered kind is refused', async () =>
+{
+  const savedFiles = {
+    cards: { ...studioSaveDocument(STUDIO_SAVE_FILE_NAMES.cards, { cards: [], removedCardIds: [] }), kind: STUDIO_CARD_TEMPLATES_KIND },
+  };
+  const { controller } = setup({ savedFiles });
+  await assert.rejects(controller.load(), /has kind "ashenspire.studioCardTemplates", expected "ashenspire.studioCards"/);
 });
