@@ -19,6 +19,7 @@ import { dispatch, previewCard } from '../src/engine/combat.js';
 import { candidateState } from '../src/engine/combatRules.js';
 import { withLegacyDefaults, withoutBatch2Rules, withoutSpellCostRules, withoutStatusCapsRule, withoutCounterStackDefaults, withoutQuickstepCounterStacks, withoutThemeBRules } from './legacyHitRules.mjs';
 import { legacyGearProfile } from './helpers/legacy-gear.mjs';
+import { LegacySpellCostBlock } from './helpers/spellCostRules.mjs';
 import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
 
 // Exact resolved Dev profile at a1d31db6b5, runtime 521250500d421c9742b8877b11e395c5718e0fc218c1add1c27c85d338253772.
@@ -71,13 +72,10 @@ function withoutGearPierce(combat) {
   for (const key of ['builtInElements', 'skinStatus', 'earthSource']) delete combat.fixCoreRules.pierce[key];
   // ...and the Magic Adept zero Mana floor key (owner ruling 2026-11-22): a fight saved before it keeps floor 1 and its original state.
   delete combat.fixCoreRules.stance?.playerMinimumCost;
-  // ...and they predate the dropped spell Stamina surcharge (owner ruling 2026-11-23): a fight saved before it keeps staminaSurcharge 1 in its snapshot.
-  if (combat.fixCoreRules.spellCosts) combat.fixCoreRules.spellCosts.staminaSurcharge = 1;
-  // ...and the 2026-11-26 Star Seer hotfix (manaSurcharge 0, Prepared SP floor and Mana cut): a fight saved before it keeps manaSurcharge 1 and no new keys.
-  if (combat.fixCoreRules.spellCosts) {
-    combat.fixCoreRules.spellCosts.manaSurcharge = 1;
-    delete combat.fixCoreRules.spellCosts.preparedStaminaMinimum;
-    delete combat.fixCoreRules.spellCosts.preparedManaDiscount;
+  // ...and the spell cost rule list: a fight saved before it holds the version 1 block.
+  if (combat.fixCoreRules.spellCosts)
+  {
+    combat.fixCoreRules.spellCosts = LegacySpellCostBlock();
   }
   return combat;
 }
