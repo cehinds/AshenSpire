@@ -48,6 +48,7 @@ import { filterMembership, deckCatalogOptions, resolveStudioDeck } from './deckC
 import { initGalleryZoom } from './galleryZoom.js';
 import { focusedEffectOptions } from './focusedRebalance.js';
 import { createAddCardTile, CaptureCardTilePositions, animateCardInsertion } from './addCardTile.js';
+import { createActiveEntities, nextInDisplayedOrder, resolveWorkingContext } from './workingContext.js';
 
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
 const AB_STORAGE_KEY = 'ashenspire:scoreStudioAB:v1';
@@ -579,8 +580,7 @@ function restoreSnapshot(snapStr) {
   if (Array.isArray(snap.customDecks)) state.customDecks = snap.customDecks;
   state.subclassCatalog = snap.subclassCatalog || null;
   studioCardOverrides.clear();
-  if (!state.cards.some((c) => c.id === state.selectedCardId)) state.selectedCardId = state.cards[0]?.id || null;
-  if (!state.items.some((x) => x.key === state.selectedItemKey)) state.selectedItemKey = state.items[0]?.key || null;
+  // The snapshot holds content only: syncAllViews keeps a still-valid active entity and clears a removed one.
   syncAllViews();
   saveDraft();
 }
@@ -1006,7 +1006,7 @@ function applyGeneratedPool() {
   const fresh = fitted.map((f) => f.def);
   const exact = fitted.filter((f) => f.gap === 0).length;
   state.cards = [...fresh, ...kept];
-  state.selectedCardId = fresh[0]?.id || state.cards[0]?.id || null;
+  if (fresh.length) selectStudioCard(fresh[0].id, { render: false, reveal: true });
   syncAllViews();
   saveDraft();
   toast(`Generated ${fresh.length} card(s), ${exact} at their exact CP. Undo puts the list back.`);
@@ -1486,6 +1486,7 @@ function renderCardsGrid() {
   const grid = document.getElementById('cards-grid');
   grid.classList.toggle('is-single', state.viewMode === 'single');
   const filtered = getFilteredCards();
+  displayedIds.cards = filtered.map((def) => def.id);
 
   grid.innerHTML = '';
   grid.appendChild(createAddCardTile({ onAdd: () => document.getElementById('btn-new-card').click() }));
@@ -1517,17 +1518,48 @@ function renderCardsGrid() {
     trackCardsArtLoading(grid);
   }
   computeShiftCount();
+  consumeReveal('cards');
 }
 
-function selectStudioCard(id) {
-  if (!state.cards.some(card => card.id === id)) return;
-  state.selectedCardId = id;
-  for (const tile of document.querySelectorAll('.studio-card-tile')) tile.classList.toggle('is-selected', tile.dataset.cardId === id);
+// ---------------------------------------------------------------------------
+// One active card and one active item (SS-002)
+// ---------------------------------------------------------------------------
+// selectStudioCard and selectStudioItem are the only writers of state.selectedCardId and
+// state.selectedItemKey. An id that is gone gives the empty state, never the first card.
+// Filters never call them. Content changes reconcile through them in syncAllViews.
+const activeEntities = createActiveEntities({ state });
+// The ids each gallery shows, in displayed order, as of its last render.
+const displayedIds = { cards: [], items: [] };
+const pendingReveal = new Set();
+
+function activeTile(kind) {
+  const id = activeEntities.get(kind);
+  if (!id) return null;
+  const selector = kind === 'items' ? `.item-grid-tile[data-item-key="${CSS.escape(id)}"]` : `.studio-card-tile[data-card-id="${CSS.escape(id)}"]`;
+  return document.getElementById(kind === 'items' ? 'items-grid' : 'cards-grid')?.querySelector(selector) || null;
+}
+
+function revealActiveTile(kind) {
+  activeTile(kind)?.scrollIntoView?.({ block: 'nearest' });
+}
+
+// A setter called before a gallery render asks for its tile to be shown once that render lands.
+function consumeReveal(kind) {
+  if (!pendingReveal.delete(kind)) return;
+  revealActiveTile(kind);
+}
+
+function selectStudioCard(id, { render = true, reveal = false } = {}) {
+  const { id: active } = activeEntities.set('cards', id);
+  if (!render) { if (reveal) pendingReveal.add('cards'); return active; }
+  for (const tile of document.querySelectorAll('.studio-card-tile')) tile.classList.toggle('is-selected', tile.dataset.cardId === active);
   renderInspector();
   renderArtTab();
   deckListPanelUi?.refresh();
   cardEditorDockUi?.refresh();
-  if (isNarrowLayout() && !cardEditorDockUi) openInspectorSheet();
+  if (reveal) revealActiveTile('cards');
+  if (active && isNarrowLayout() && !cardEditorDockUi) openInspectorSheet();
+  return active;
 }
 
 // ---------------------------------------------------------------------------
@@ -1621,16 +1653,14 @@ function renderAddFeatureOptions({ pickBest = false } = {}) {
 }
 
 function renderInspector() {
-  const def = state.cards.find((c) => c.id === state.selectedCardId) || state.cards[0];
+  const def = selectedCardDef();
   if (!def) {
-    // No card left to show: clear the stale preview and let the pane show its empty state.
+    // No active card: clear the stale preview and let the pane show its empty state. Never pick the first card.
     document.getElementById('inspector-card-preview').replaceChildren();
     document.getElementById('inspector-sheet-title').textContent = '';
-    state.selectedCardId = null;
     cardEditorDockUi?.refresh();
     return;
   }
-  state.selectedCardId = def.id;
   cardEditorDockUi?.refreshEntity?.();
 
   renderCardWithLayers(def, document.getElementById('inspector-card-preview'));
@@ -3196,6 +3226,7 @@ function renderItemsGrid() {
 
   const countEl = document.getElementById('items-count');
   if (countEl) countEl.textContent = `${filtered.length} / ${state.items.length} items`;
+  displayedIds.items = filtered.map(({ entry }) => entry.key);
 
   grid.innerHTML = '';
   for (const { entry, sc } of filtered) {
@@ -3225,26 +3256,29 @@ function renderItemsGrid() {
   }
   cardEditorDockUi?.refresh();
   setItemsLoading(false);
+  consumeReveal('items');
 }
 
-function selectStudioItem(key) {
-  if (!state.items.some(item => item.key === key)) return;
-  state.selectedItemKey = key;
-  for (const tile of document.querySelectorAll('.item-grid-tile')) tile.classList.toggle('is-selected', tile.dataset.itemKey === key);
+function selectStudioItem(key, { render = true, reveal = false } = {}) {
+  const { id: active } = activeEntities.set('items', key);
+  if (!render) { if (reveal) pendingReveal.add('items'); return active; }
+  for (const tile of document.querySelectorAll('.item-grid-tile')) tile.classList.toggle('is-selected', tile.dataset.itemKey === active);
   renderItemInspector();
   renderArtTab();
+  deckListPanelUi?.refresh();
   cardEditorDockUi?.refresh();
+  if (reveal) revealActiveTile('items');
+  return active;
 }
 
 function renderItemInspector() {
-  const entry = state.items.find((x) => x.key === state.selectedItemKey) || state.items[0];
+  const entry = state.items.find((x) => x.key === state.selectedItemKey);
   if (!entry) {
+    // No active item: the pane shows its empty state rather than the first item.
     document.getElementById('item-preview-host')?.replaceChildren();
-    state.selectedItemKey = null;
     cardEditorDockUi?.refresh();
     return;
   }
-  state.selectedItemKey = entry.key;
   cardEditorDockUi?.refreshEntity?.();
   populateItemTraitControls();
   const sc = scoreItemEntry(entry, state.scoring, state.itemRules);
@@ -4040,8 +4074,6 @@ function discardSummaryHtml() {
 async function revertToRepo() {
   clearTimeout(draftTimer);
   try { localStorage.removeItem(DRAFT_STORAGE_KEY); } catch { /* storage unavailable */ }
-  const keepSelection = state.selectedCardId;
-  const keepItem = state.selectedItemKey;
   studioCardOverrides.clear();
   state.cards = buildCardList();
   state.subclassCatalog = null;
@@ -4049,8 +4081,7 @@ async function revertToRepo() {
   const roster = buildItemRoster(contentBundle);
   state.items = roster.items;
   state.itemRules = roster.rules;
-  state.selectedCardId = state.cards.some((c) => c.id === keepSelection) ? keepSelection : state.cards[0]?.id || null;
-  state.selectedItemKey = state.items.some((x) => x.key === keepItem) ? keepItem : state.items[0]?.key || null;
+  // A still-valid active card or item is kept; an added one that Revert removes gives the empty state.
   state.undoStack = [];
   state.redoStack = [];
   updateUndoButtons();
@@ -4133,6 +4164,8 @@ function populateCardOptions() {
 }
 
 function syncAllViews() {
+  // Content changed: keep each still-valid active entity, clear a removed one (never a silent first card).
+  activeEntities.reconcile();
   populateRebalanceStatusOptions();
   populateRankFilter();
   populateCardOptions();
@@ -4415,6 +4448,13 @@ function updateFilterCount() {
   badge.classList.toggle('hidden', count === 0);
 }
 
+// Every card filter back to All and the search empty. The caller re-renders the gallery.
+function resetCardFilters() {
+  document.getElementById('card-search').value = '';
+  for (const key of ['filter-type', 'filter-class', 'filter-rank', 'filter-shift', 'filter-deck']) document.getElementById(key).value = 'all';
+  updateFilterCount();
+}
+
 function updateItemFilterCount() {
   const count = ['item-filter-kind', 'item-filter-rarity', 'item-filter-rank', 'filter-item-deck'].filter(id => document.getElementById(id).value !== 'all').length
     + Number(document.getElementById('item-filter-sort').value !== 'rank-desc');
@@ -4592,14 +4632,11 @@ function wireEvents() {
       textTemplate: 'New card', _custom: true, _edited: true, _autoName: false, _autoText: false, _newDraft: true,
     });
     state.cards.unshift(card);
-    state.selectedCardId = id;
-    document.getElementById('card-search').value = '';
-    for (const key of ['filter-type', 'filter-class', 'filter-rank', 'filter-shift', 'filter-deck']) document.getElementById(key).value = 'all';
-    updateFilterCount();
+    resetCardFilters();
     document.querySelector('.studio-tab[data-tab="cards"]').click();
     cardEditorDockUi?.setView('properties');
     renderCardsGrid();
-    renderInspector();
+    selectStudioCard(id, { reveal: true });
     animateCardInsertion(grid, id, { before });
     saveDraft({ autoName: false });
     toast('Added a new card. Edit its properties to begin.');
@@ -4611,9 +4648,8 @@ function wireEvents() {
     pushHistory();
     const copy = normalizeStudioCard({ ...clone(src), id: `custom.copy_${Date.now().toString(36)}`, name: `${src.name} (Copy)`, _custom: true, _edited: true, _autoName: true });
     state.cards.unshift(copy);
-    state.selectedCardId = copy.id;
     renderCardsGrid();
-    renderInspector();
+    selectStudioCard(copy.id, { reveal: true });
     saveDraft();
     toast(`Duplicated "${src.name}"`);
   });
@@ -4639,14 +4675,16 @@ function wireEvents() {
     if (idx < 0 || !isAddedCard(state.cards[idx])) return;
     const removed = state.cards[idx], plan = removeAddedCardsFromState(state, [removed.id]);
     if (!plan.removedIds.length) { toast('Original cards are protected.'); return; }
+    // The next card in displayed order (else the one before), named in the toast.
+    const nextId = nextInDisplayedOrder(displayedIds.cards, removed.id, state.cards.map((c) => c.id));
     pushHistory();
     Object.assign(state, plan.nextState);
     studioCardOverrides.delete(removed.id);
     studioCardOverrides.delete(`${LIVE_ID_PREFIX}${removed.id}`);
-    state.selectedCardId = state.cards[Math.min(idx, state.cards.length - 1)]?.id || null;
+    const next = state.cards.find((c) => c.id === selectStudioCard(nextId, { render: false, reveal: true }));
     syncAllViews();
     saveDraft({ autoName: false });
-    toast(`Deleted "${removed.name}"`);
+    toast(next ? `Deleted "${removed.name}". Now editing "${next.name}".` : `Deleted "${removed.name}". No card selected.`);
   });
 
   // Card inspector edits
@@ -5283,11 +5321,12 @@ async function boot() {
   state.items = roster.items;
   state.itemRules = roster.rules;
   state.defaultItemNames = Object.fromEntries(state.items.map((it) => [it.key, it.name]));
-  state.selectedItemKey = state.items[0]?.key || null;
+  // Boot's default: the first card and item, until restoreWorkingContext runs after the draft.
+  selectStudioItem(state.items[0]?.key, { render: false });
   // Default names are the repo's authored names, taken before any draft is restored.
   state.defaultNameSet = DefaultNameSet(state.cards);
   loadStoredNameSets();
-  state.selectedCardId = state.cards[0]?.id || null;
+  selectStudioCard(state.cards[0]?.id, { render: false });
   state.repoArtLayers = clone(state.artLayers);
   state.repoItemArtLayers = clone(state.itemArtLayers);
 
@@ -5328,8 +5367,10 @@ async function boot() {
     getFilteredItems,
     studioCardOverrides,
     prepareSubclassEdit: prepareCardEdit,
+    selectCard: selectStudioCard,
+    selectItem: selectStudioItem,
   });
-  subclassCatalogUi = initSubclassCatalogUi({ state, isLocalServer, pushHistory, saveDraft, syncAllViews, toast, normalizeStudioCard, studioCardOverrides });
+  subclassCatalogUi = initSubclassCatalogUi({ state, isLocalServer, pushHistory, saveDraft, syncAllViews, toast, normalizeStudioCard, studioCardOverrides, selectCard: selectStudioCard });
   cardSelectionUi = initCardSelectionUi({ state, pushHistory, saveDraft, syncAllViews, toast, getFilteredCards, normalizeStudioCard,
     prepareSubclassEdit: prepareCardEdit, applyAutoNames: autoNameSelectedCards,
     openBalanceSelection: ids => studioToolsUi.openBalanceSelection(ids),
@@ -5374,6 +5415,7 @@ async function boot() {
   state.coreShape = MeasurePoolShape(state.cards, { rankOf: (c) => state.baselineRanks[c.id] ?? 0, scoring: state.repoScoring });
 
   // Restore local draft temp copy if present. Everything is checked first; state changes only after.
+  let restoredDraft = false;
   try {
     const draft = JSON.parse(localStorage.getItem(DRAFT_STORAGE_KEY) || 'null');
     if (draft?.scoring && ValidateScoringConfig(draft.scoring).length === 0) {
@@ -5423,10 +5465,21 @@ async function boot() {
       syncAllViews();
       refreshDirtyStatus();
       if (isDirty()) document.getElementById('draft-status').textContent = 'Restored local draft temp copy';
-      return;
+      restoredDraft = true;
     }
   } catch { /* ignore */ }
-  refreshDirtyStatus();
+  if (!restoredDraft) refreshDirtyStatus();
+  restoreWorkingContext();
+}
+
+// After boot: the active card and item, or the existing default (first card and item) when there is none.
+function restoreWorkingContext() {
+  const { cardId, itemKey } = resolveWorkingContext(null, state, {
+    cardId: state.selectedCardId ?? state.cards[0]?.id,
+    itemKey: state.selectedItemKey ?? state.items[0]?.key,
+  });
+  selectStudioItem(itemKey);
+  selectStudioCard(cardId, { reveal: true });
 }
 
 boot()

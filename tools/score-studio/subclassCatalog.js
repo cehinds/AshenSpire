@@ -206,9 +206,10 @@ export function initSubclassCatalogUi(ctx) {
   }
 
   function apply(catalog) {
-    const next = mergeSubclassCatalog(state, catalog, { replace: el('subclass-replace').checked, normalize: normalizeStudioCard });
+    const { selectedCardId, ...next } = mergeSubclassCatalog(state, catalog, { replace: el('subclass-replace').checked, normalize: normalizeStudioCard });
     pushHistory();
     Object.assign(state, next);
+    ctx.selectCard(selectedCardId, { render: false, reveal: true });
     studioCardOverrides.clear();
     preview = null;
     syncAllViews();
@@ -280,7 +281,7 @@ export function initSubclassCatalogUi(ctx) {
     if (!list) return;
     for (const id of ['filter-type', 'filter-class', 'filter-rank', 'filter-shift']) el(id).value = 'all';
     el('card-search').value = '';
-    state.selectedCardId = list.cardIds[0];
+    ctx.selectCard(list.cardIds[0], { render: false, reveal: true });
     syncAllViews();
     el('filter-deck').value = DECK_PREFIX + list.id;
     syncAllViews();

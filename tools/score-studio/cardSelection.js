@@ -74,7 +74,8 @@ export function removeCardsAndReferences(state, ids) {
   const withoutIds = map => Object.fromEntries(Object.entries(map || {}).filter(([id]) => !removed.has(id)));
   const nextState = { ...state, cards, customDecks, subclassCatalog,
     customClasses: (state.customClasses || []).map(row => removedDeckIds.has(row.deckId) ? { ...row, deckId: null } : row),
-    selectedCardId: removed.has(state.selectedCardId) ? cards[0]?.id || null : state.selectedCardId,
+    // No replacement choice here: a removed active card is null and the caller names any replacement (SS-002).
+    selectedCardId: removed.has(state.selectedCardId) ? null : state.selectedCardId,
     ...(state.baselineRanks ? { baselineRanks: withoutIds(state.baselineRanks) } : {}),
     ...(state.scoring?.overrides ? { scoring: { ...state.scoring, overrides: withoutIds(state.scoring.overrides) } } : {}),
     ...(state.sandbox?.customCardId && removed.has(state.sandbox.customCardId) ? { sandbox: { ...state.sandbox, customCardId: null } } : {}),

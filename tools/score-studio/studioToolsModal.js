@@ -572,7 +572,7 @@ export function initStudioToolsModals(ctx) {
         state.cards.unshift(card);
         if (deck && !deck.cardIds.includes(card.id)) deck.cardIds.push(card.id);
       }
-      if (cards.length) state.selectedCardId = state.cards[0].id;
+      if (cards.length) ctx.selectCard(state.cards[0].id, { render: false, reveal: true });
       studioCardOverrides.clear();
       syncAllViews();
       populateDeckAndClassDropdowns();
@@ -602,7 +602,7 @@ export function initStudioToolsModals(ctx) {
         state.items.unshift(entry);
         if (deck && !deck.itemKeys.includes(entry.key)) deck.itemKeys.push(entry.key);
       }
-      if (items.length) state.selectedItemKey = state.items[0].key;
+      if (items.length) ctx.selectItem(state.items[0].key, { render: false, reveal: true });
       syncAllViews();
       populateDeckAndClassDropdowns();
       saveDraft({ autoName: false });
