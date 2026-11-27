@@ -198,7 +198,10 @@
       "classification.power"
     ],
     "textTemplate": "Apply {frail} Frail to the enemy. Shuffle Slimed into the enemy's discard.",
-    "faceTemplate": ["Apply {frail} Frail.", "Shuffle Slimed into discard."]
+    "faceTemplate": [
+      "Apply {frail} Frail.",
+      "Shuffle Slimed into discard."
+    ]
   },
   {
     "id": "huskBrute.brace",
@@ -254,7 +257,9 @@
       "classification.power"
     ],
     "textTemplate": "Shuffle Dazed into the enemy's draw.",
-    "faceTemplate": ["Shuffle Dazed into draw."]
+    "faceTemplate": [
+      "Shuffle Dazed into draw."
+    ]
   },
   {
     "id": "graveWisp.drain",
@@ -488,7 +493,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 14
+        "amount": 9,
+        "breakBlock": 9
       }
     ],
     "tags": [
@@ -496,7 +502,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage. Charges for 1 turn.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage. Charges for 1 turn.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -757,7 +763,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 41
+        "amount": 27,
+        "breakBlock": 27
       }
     ],
     "tags": [
@@ -765,7 +772,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage. Charges for 1 turn.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage. Charges for 1 turn.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0,
     "range": "reach"
@@ -786,7 +793,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 19
+        "amount": 13,
+        "breakBlock": 13
       }
     ],
     "tags": [
@@ -794,7 +802,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage. Charges for 1 turn.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage. Charges for 1 turn.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -954,7 +962,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 15
+        "amount": 10,
+        "breakBlock": 10
       },
       {
         "op": "applyStatus",
@@ -968,7 +977,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage. Apply {bleed} Bleed to the enemy. Charges for 1 turn.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage. Apply {bleed} Bleed to the enemy. Charges for 1 turn.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -1125,7 +1134,10 @@
       "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage. Shuffle Wound into the enemy's discard.",
-    "faceTemplate": ["Deal {damage} damage.", "Shuffle Wound into discard."],
+    "faceTemplate": [
+      "Deal {damage} damage.",
+      "Shuffle Wound into discard."
+    ],
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -1726,7 +1738,9 @@
       "classification.power"
     ],
     "textTemplate": "Shuffle Dazed into the enemy's discard.",
-    "faceTemplate": ["Shuffle Dazed into discard."]
+    "faceTemplate": [
+      "Shuffle Dazed into discard."
+    ]
   },
   {
     "id": "mirrorScribe.shardVolley",
@@ -1981,8 +1995,9 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 12,
-        "hits": 3
+        "amount": 8,
+        "hits": 3,
+        "breakBlock": 8
       }
     ],
     "tags": [
@@ -1990,7 +2005,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage {hits} times. Charges for 1 turn.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage {hits} times. Charges for 1 turn.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -2066,7 +2081,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 28
+        "amount": 19,
+        "breakBlock": 19
       }
     ],
     "tags": [
@@ -2074,7 +2090,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage. Charges for 1 turn.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage. Charges for 1 turn.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -2678,7 +2694,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 18
+        "amount": 12,
+        "breakBlock": 12
       }
     ],
     "tags": [
@@ -2686,7 +2703,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage. Charges for 1 turn.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage. Charges for 1 turn.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -2810,7 +2827,10 @@
       "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage. Shuffle Dazed into the enemy's discard.",
-    "faceTemplate": ["Deal {damage} damage.", "Shuffle Dazed into discard."],
+    "faceTemplate": [
+      "Deal {damage} damage.",
+      "Shuffle Dazed into discard."
+    ],
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -2830,7 +2850,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 32
+        "amount": 21,
+        "breakBlock": 21
       }
     ],
     "tags": [
@@ -2838,7 +2859,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage. Charges for 1 turn.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage. Charges for 1 turn.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -2923,7 +2944,9 @@
       "classification.power"
     ],
     "textTemplate": "Shuffle Dazed into the enemy's discard.",
-    "faceTemplate": ["Shuffle Dazed into discard."]
+    "faceTemplate": [
+      "Shuffle Dazed into discard."
+    ]
   },
   {
     "id": "hollowAstronomer.orbitalShards",
@@ -2970,7 +2993,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 30
+        "amount": 20,
+        "breakBlock": 20
       },
       {
         "op": "applyStatus",
@@ -2984,7 +3008,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage. Apply {insanity} Insanity to the enemy. Charges for 1 turn.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage. Apply {insanity} Insanity to the enemy. Charges for 1 turn.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -3116,8 +3140,9 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 18,
-        "hits": 2
+        "amount": 12,
+        "hits": 2,
+        "breakBlock": 12
       }
     ],
     "tags": [
@@ -3125,7 +3150,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage {hits} times. Charges for 1 turn.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage {hits} times. Charges for 1 turn.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -4225,7 +4250,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 4,
+        "breakBlock": 4
       }
     ],
     "tags": [
@@ -4233,7 +4259,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -4657,7 +4683,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 17
+        "amount": 11,
+        "breakBlock": 11
       }
     ],
     "tags": [
@@ -4665,7 +4692,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -4827,7 +4854,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 17
+        "amount": 11,
+        "breakBlock": 11
       }
     ],
     "tags": [
@@ -4835,7 +4863,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -4960,7 +4988,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 18
+        "amount": 12,
+        "breakBlock": 12
       }
     ],
     "tags": [
@@ -4968,7 +4997,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -5121,7 +5150,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 16
+        "amount": 11,
+        "breakBlock": 11
       }
     ],
     "tags": [
@@ -5129,7 +5159,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -5420,7 +5450,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 20
+        "amount": 13,
+        "breakBlock": 13
       }
     ],
     "tags": [
@@ -5428,7 +5459,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -5536,7 +5567,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 20
+        "amount": 13,
+        "breakBlock": 13
       }
     ],
     "tags": [
@@ -5544,7 +5576,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -5678,7 +5710,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 18
+        "amount": 12,
+        "breakBlock": 12
       }
     ],
     "tags": [
@@ -5686,7 +5719,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -5867,7 +5900,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 4,
+        "breakBlock": 4
       }
     ],
     "tags": [
@@ -5875,7 +5909,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -6147,7 +6181,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 5
+        "amount": 3,
+        "breakBlock": 3
       }
     ],
     "tags": [
@@ -6155,7 +6190,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -6289,7 +6324,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 8
+        "amount": 5,
+        "breakBlock": 5
       }
     ],
     "tags": [
@@ -6297,7 +6333,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -6397,7 +6433,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 5
+        "amount": 3,
+        "breakBlock": 3
       }
     ],
     "tags": [
@@ -6405,7 +6442,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -6533,7 +6570,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 18
+        "amount": 12,
+        "breakBlock": 12
       }
     ],
     "tags": [
@@ -6541,7 +6579,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -6977,7 +7015,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 18
+        "amount": 12,
+        "breakBlock": 12
       }
     ],
     "tags": [
@@ -6985,7 +7024,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -7278,7 +7317,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 20
+        "amount": 13,
+        "breakBlock": 13
       }
     ],
     "tags": [
@@ -7286,7 +7326,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -7475,7 +7515,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 20
+        "amount": 13,
+        "breakBlock": 13
       }
     ],
     "tags": [
@@ -7483,7 +7524,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -8081,7 +8122,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 19
+        "amount": 13,
+        "breakBlock": 13
       }
     ],
     "tags": [
@@ -8089,7 +8131,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -8193,7 +8235,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 18
+        "amount": 12,
+        "breakBlock": 12
       }
     ],
     "tags": [
@@ -8201,7 +8244,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -8384,7 +8427,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 19
+        "amount": 13,
+        "breakBlock": 13
       }
     ],
     "tags": [
@@ -8392,7 +8436,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -8578,7 +8622,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 16
+        "amount": 11,
+        "breakBlock": 11
       }
     ],
     "tags": [
@@ -8586,7 +8631,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -8740,7 +8785,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 18
+        "amount": 12,
+        "breakBlock": 12
       }
     ],
     "tags": [
@@ -8748,7 +8794,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -8875,7 +8921,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 20
+        "amount": 13,
+        "breakBlock": 13
       }
     ],
     "tags": [
@@ -8883,7 +8930,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage.",
+    "textTemplate": "Break {breakBlock} Block. Deal {damage} damage.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },

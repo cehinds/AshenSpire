@@ -37,6 +37,7 @@ Two menus that do the same job must behave the same and have the same proportion
 ## 2. Data-driven
 
 - Content, layout values, timings, sizes, copy keys and per-variant differences live in JSON config, not in code.
+- Multi-branch rule pipelines (such as combat mitigation stages in `content/source/mechanics/protection.json`) and optional payload field mappings belong in configurable JSON or declarative tables, not nested `if / else if` chains, so updates and tuning stay simple.
 - Code reads the config and behaves the same for every entry.
 - Variants are JSON entries that `extends` a base and hold only their tweaks.
 - Adding a new menu, modal, button style or option is a config edit, with no new code path.

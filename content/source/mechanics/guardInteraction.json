@@ -26,7 +26,6 @@
     "mode": "multiplier",
     "damageMultiplier": 1.25,
     "defendDamageMultiplier": 1.5,
-    "blockFraction": 0.25,
     "poiseFraction": 0.5
   }
 }

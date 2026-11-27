@@ -160,16 +160,65 @@ export function EffectiveSmashGuardRules(fixCoreRulesObj = null, ctx = null) {
 
 /**
  * Flat Block removed before normal Block absorption (when `blockBreak` is enabled).
- * Reads explicit `carrier.blockBreak` (if > 0) or derives from `smashRule.mode` (`"flatBreak"` | `"both"`).
+ * Reads explicit `carrier.breakBlock` / `carrier.blockBreak` (if > 0) or derives from `smashRule.mode` (`"flatBreak"` | `"both"`).
  */
 export function EffectiveBlockBreakAmount(carrier, rawAmount = 0, smashRule = null, ctx = null) {
   const rule = MechanicRule('blockBreak', ctx);
   if (rule && rule.enabled === false) return 0;
-  const explicit = Number(carrier?.blockBreak);
+  const explicit = Number(carrier?.breakBlock ?? carrier?.blockBreak);
   if (Number.isFinite(explicit) && explicit > 0) return Math.floor(explicit);
   if (smashRule && (smashRule.mode === 'flatBreak' || smashRule.mode === 'both') && smashRule.flatBreak) {
     const ratio = Number(smashRule.flatBreak.blockBreakRatio) || 0;
     return Math.max(0, Math.floor(Math.max(0, Number(rawAmount) || 0) * ratio));
   }
   return 0;
+}
+
+/** Flat Poise removed on a landed hit when `blockBreak` is enabled. */
+export function EffectivePoiseBreakAmount(carrier, context = null)
+{
+  const blockBreakRule = MechanicRule('blockBreak', context);
+  if (blockBreakRule && blockBreakRule.enabled === false)
+  {
+    return 0;
+  }
+
+  const explicitAmount = Number(carrier?.breakPoise);
+  const hasExplicitAmount = Number.isFinite(explicitAmount) && explicitAmount > 0;
+
+  return hasExplicitAmount
+    ? Math.floor(explicitAmount)
+    : 0;
+}
+
+/**
+ * Resolved protection pipeline config (`protection` -> `protection.<mode>`).
+ * Returns null when disabled via `protection.enabled === false` or the child's `enabled === false`.
+ * Falls back to compiled defaults when a partial custom mechanics table omits `protection`.
+ */
+export function EffectiveProtectionPipeline(pipelineId, context = null)
+{
+  if (!pipelineId)
+  {
+    return null;
+  }
+
+  const pipelineRule = MechanicRule(pipelineId, context);
+  if (pipelineRule)
+  {
+    return pipelineRule.enabled === false
+      ? null
+      : pipelineRule;
+  }
+
+  const parentRule = MechanicRule('protection', context);
+  if (parentRule && parentRule.enabled === false)
+  {
+    return null;
+  }
+
+  const defaultRule = GENERATED_MECHANICS?.resolved?.[pipelineId] || null;
+  return defaultRule && defaultRule.enabled !== false
+    ? defaultRule
+    : null;
 }

@@ -52,14 +52,11 @@
 - **Children:** Coverage matrices (`meleeIncomingManeuvers`, `meleeBypassDamageTypes`, `rangedProjectilesOnly`, `damageDealsOnlyMeleeCovered`).
 - **Why:** Keeps Counter coverage, reply math, and enemy hit-back rules synchronized across `combatMatchups.js` and `enemyReactions.js`.
 
-### 7. `protection.json` — Defensive Pools (Block, Ward, Poise)
-- **Hierarchy:** `protection` → `protection.block`, `protection.ward`, `protection.poise`
-- **Parent fields:** `enabled`, `decayPerTurn`, `carryOverTurn`, `routing`, `breakTriggersStagger`
-- **Children:**
-  - `protection.block`: turn-end decay, physical/all-hit soak
-  - `protection.ward`: `routing: "hpBuffer" | "blockFirst"`, `hpPerStack: 5`, `decayPerTurn: 1`
-  - `protection.poise`: `carryOverTurn: true`, `breakTriggersStagger: true`, weapon-poise toggle
-- **Why:** Makes `ward.routing`, Poise break rules, and Block decay cleanly comparable and toggleable from one family file.
+### 7. `protection.json` — Defensive Mitigation Pipelines (Block, Ward, Poise)
+- **Hierarchy:** `protection` → `protection.wardBlockFirst`, `protection.wardPoiseFirst`, `protection.weaponPoise`, `protection.wardHpBuffer`, `protection.standard`
+- **Parent fields:** `enabled`, `pierceApplies`, `wardShieldsPoise`, `smashSkipsPoiseAbsorption`, `applyLegacyPoiseAdjust`
+- **Children:** Each pipeline declares its stage `order` (`block`, `wardHp`, `wardPoise`, `stancePoise`, `weaponPoiseDrain`, `standardPoiseAfterWard`, `standardSplit`) and overrides (`poiseDrainBasis`, `applyLegacyPoiseAdjust`).
+- **Status:** Shipped in PR #3017 (`content/source/mechanics/protection.json`, `src/model/combatMechanics.js`, `src/engine/gameProfileCombat.js`, `tests/combat-mechanics-protection.test.mjs`).
 
 ### 8. `elementEffect.json` — Elemental Hit Riders & Triggers
 - **Hierarchy:** `elementEffect` → `element.fire`, `element.frost`, `element.lightning`, `element.earth`, `element.force`, `element.sacred`, `element.decay`

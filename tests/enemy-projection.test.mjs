@@ -64,9 +64,9 @@ test('Core card offense and SP opt-ins project without an authored closing move'
     assert.deepEqual(Object.keys(dragonMoves), Object.keys(sharedDragon.moves));
     assert.deepEqual(Object.keys(colossusMoves), Object.keys(sharedColossus.moves));
     // tailBastion opts into its card's Block (coreBlock "card", owner 2026-11-20).
-    assert.deepEqual(dragonMoves, { ...sharedDragon.moves, ashBreath: { ...sharedDragon.moves.ashBreath, damage: 18, hits: 2 }, tailBastion: { ...sharedDragon.moves.tailBastion, block: 10 } });
+    assert.deepEqual(dragonMoves, { ...sharedDragon.moves, ashBreath: { ...sharedDragon.moves.ashBreath, damage: 12, hits: 2 }, tailBastion: { ...sharedDragon.moves.tailBastion, block: 10 } });
     assert.deepEqual(colossusMoves, { ...sharedColossus.moves, smash: { ...sharedColossus.moves.smash, sp: 1 }, harden: { ...sharedColossus.moves.harden, block: 10 } });
-    assert.equal(registry.enemies.get(dragon).moves.ashBreath.damage, 18);
+    assert.equal(registry.enemies.get(dragon).moves.ashBreath.damage, 12);
     assert.equal(registry.enemies.get(colossus).moves.smash.sp, 1);
     assert.equal(registry.enemies.get(dragon).rangeClosingMove, undefined);
     assert.equal(registry.enemies.get('wanderingSoldier').rangeClosingMove, 'advance');
@@ -90,7 +90,7 @@ test('card-only projection preserves explicit shared rows and their order', () =
     };
     const projected = applyGameProfileToContent(shared, profile);
     const registry = createRegistries(projected);
-    assert.equal(registry.enemies.get(dragon).moves.ashBreath.damage, 18);
+    assert.equal(registry.enemies.get(dragon).moves.ashBreath.damage, 12);
     assert.equal(registry.enemies.get('wanderingSoldier').moves.slash.damage, 123);
     assert.deepEqual(projected.enemyMoves.map(({ enemyId, id }) => [enemyId, id]), shared.enemyMoves.map(({ enemyId, id }) => [enemyId, id]));
     assert.deepEqual(projected.enemyMoves.find(move => move.enemyId === 'wanderingSoldier' && move.id === 'slash'),
@@ -164,6 +164,6 @@ test('sheet checks address adapter fields and still allow opaque hint extensions
     {
         enemy(content.enemies, dragon).cardHints[extensionCard.slice('card:'.length)] = sheet.ai[extensionCard];
     });
-    assert.equal(enemy(applyGameProfileToContent(contentBundle, profile).enemies, dragon).moves.ashBreath.damage, 18);
+    assert.equal(enemy(applyGameProfileToContent(contentBundle, profile).enemies, dragon).moves.ashBreath.damage, 12);
 });
 

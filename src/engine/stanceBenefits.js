@@ -121,9 +121,27 @@ export function SweepSplashTargets(ctx, source, primary, carrier, candidates) {
 }
 
 /** The carrier a splash hit travels as: no committed contact, range plan or crit of the main hit, and the fraction its damage carries. */
-export function SplashCarrier(ctx, source, carrier) {
-  const { rangePlan, rangeContactId, expansionGroup, expansionContact, manualCounterSerial, critMultiplier, ...rest } = carrier;
-  return { ...rest, stanceSplash: SweepSplashFraction(ctx, source, carrier), proposalTargetDecisions: {}, combatRiderTargets: [] };
+export function SplashCarrier(ctx, source, carrier)
+{
+  // Splash hits carry no flat break or committed primary contact.
+  const {
+    rangePlan,
+    rangeContactId,
+    expansionGroup,
+    expansionContact,
+    manualCounterSerial,
+    critMultiplier,
+    breakBlock,
+    blockBreak,
+    breakPoise,
+    ...rest
+  } = carrier;
+  return {
+    ...rest,
+    stanceSplash: SweepSplashFraction(ctx, source, carrier),
+    proposalTargetDecisions: {},
+    combatRiderTargets: [],
+  };
 }
 
 /** Neutral: the extra cards a player draws at a turn start when it holds no stance. The first turn has no earlier turn to have rested in. */
