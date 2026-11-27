@@ -1,6 +1,21 @@
-// The routes module's routeShape for a run; a profile pinned before it existed gets the default.
+// The routes module's routeShape for a run. A profile pinned before routeShape existed keeps the
+// branch shape it was built with, so retuning the defaults never moves an old save's maps.
 import { gameModule } from './gameProfile.js';
-import { gameProfileCatalog } from '../content/generated/gameProfiles.js';
+
+const PRE_ROUTE_SHAPE = Object.freeze({
+  placedTypes: Object.freeze([
+    'rest',
+    'boss',
+  ]),
+  firstBranchDepth: 2,
+  earliestFullDepth: 3,
+  fullDepthsBeforeBoss: 3,
+  narrowDepthsBeforeBoss: 2,
+  guaranteedShopDepths: Object.freeze({
+    first: 4,
+    last: 8,
+  }),
+});
 
 export function RouteShapeOf(subject)
 {
@@ -9,5 +24,5 @@ export function RouteShapeOf(subject)
   {
     return pinned;
   }
-  return gameProfileCatalog.modules.routes.defaults.routeShape;
+  return PRE_ROUTE_SHAPE;
 }
