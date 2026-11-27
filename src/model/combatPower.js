@@ -193,7 +193,8 @@ function scorePrepared(c, scoring, S, context) {
   const P = Object.entries(parts).filter(([k, v]) => k !== 'SP' && k !== 'MP' && v > 0).reduce((s, [, v]) => s + v, 0);
   // Multiplier-form entries scale with P and never feed it (as categories do): a -0.1 SP weight takes 10% of P per SP.
   for (const [part, weight, units, isEffect] of deferred) (isEffect ? addFx : add)(part, P * weight * units);
-  for (const t of c.tags) { const w = S.tags[t]; if (w && w.surchargeEnabled !== false && w.pMultiplier) add(t, P * w.pMultiplier); }
+  // A pMultiplier tag adds P x pMultiplier, once per hit (and per enemy) when its flat form counts hits (owner, 2026-11-27).
+  for (const t of c.tags) { const w = S.tags[t]; if (w && w.surchargeEnabled !== false && w.pMultiplier) add(t, P * w.pMultiplier * (w.per === 'hit' ? Math.max(1, c.hits) * area : 1)); }
   // Counterstrike as a multiplier scales P; set flat (weight, no multiplier) it scored in the tag loop above.
   const cs = S.tags[CM.counterstrikeTag];
   if (c.tags.includes(CM.counterstrikeTag) && cs && cs.surchargeEnabled !== false && Number.isFinite(cs.multiplier)) add('counterstrike', P * (cs.multiplier - 1));

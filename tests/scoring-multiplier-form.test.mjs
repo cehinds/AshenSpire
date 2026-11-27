@@ -101,6 +101,27 @@ test('multiplier form: the multi-effect bonus scores P x weight per extra effect
   assert.deepEqual(ScoreCard(face({ draw: 1 }), off), ScoreCard(face({ draw: 1 }), scoringContract()));
 });
 
+test('multiplier form: a tag multiplies through pMultiplier, once per hit when its flat form counts hits', () => {
+  const hitFace = face({ blk: 0, hits: 3, tags: ['damage:fire'] });
+  // Flat per-hit tag: weight 2 x 3 hits.
+  const flatScoring = scoringContract();
+  flatScoring.tags['damage:fire'] = { weight: 2, per: 'hit' };
+  assert.equal(ScoreCard(hitFace, flatScoring).parts['damage:fire'], 6);
+  // The multiply form: weight goes to 0 and pMultiplier holds the share of P, per hit.
+  const scoring = scoringContract();
+  scoring.tags['damage:fire'] = { weight: 0, pMultiplier: 0.1, per: 'hit' };
+  const scored = ScoreCard(hitFace, scoring);
+  assert.equal(scored.positive, 4, 'the tag does not feed P');
+  assert.equal(scored.parts['damage:fire'], 4 * 0.1 * 3);
+  // Per action (no per): once per card, as before.
+  scoring.tags['damage:fire'] = { weight: 0, pMultiplier: 0.1 };
+  assert.equal(ScoreCard(hitFace, scoring).parts['damage:fire'], 4 * 0.1);
+  // On an area card a per-hit share counts each enemy, like the flat form.
+  scoring.tags['damage:fire'] = { weight: 0, pMultiplier: 0.1, per: 'hit' };
+  const area = ScoreCard(face({ blk: 0, hits: 3, tags: ['damage:fire', 'targeting:area'] }), scoring);
+  assert.equal(area.parts['damage:fire'], 8 * 0.1 * (3 * 2));
+});
+
 test('scoring validation: multiplier on a cost, effect or status must be a boolean', () => {
   const ok = scoringContract();
   Object.assign(ok, { keywords: {}, rank: ok.rank, rarity: ok.rarity, tags: {} });
@@ -130,6 +151,7 @@ test('multiplier form: the shipped scoring scores every authored card and item a
     for (const [id, entry] of Object.entries(scoring[section])) assert.ok(!(entry && 'multiplier' in entry), `${section}.${id} ships without multiplier`);
   }
   assert.ok(!('multiplier' in scoring.effectCount), 'effectCount ships without multiplier');
+  for (const [id, tag] of Object.entries(scoring.tags)) assert.ok(!(tag && tag.pMultiplier && tag.per !== undefined), `tags.${id}: no shipped pMultiplier tag counts per hit`);
   // The generated table was written before the multiplier form existed: the scorer still reproduces it exactly.
   const table = buildTable();
   assert.deepEqual(table.cardCombatPower, cardCombatPower);
