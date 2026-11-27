@@ -25,6 +25,7 @@ const STATUS_OK = 200;
 const STATUS_BAD_REQUEST = 400;
 const STATUS_FORBIDDEN = 403;
 const STATUS_NOT_FOUND = 404;
+const STATUS_CONFLICT = 409;
 const STATUS_TOO_LARGE = 413;
 const STATUS_SERVER_ERROR = 500;
 const MISSING_FILE_CODE = 'ENOENT';
@@ -81,6 +82,31 @@ async function readJsonBody(req)
 }
 
 const { routes } = CONTENT_API;
+let checkRunning = false;
+
+function refuseWhileChecking(messageName)
+{
+    if (checkRunning)
+    {
+        throw new ContentError(STATUS_CONFLICT, ApiMessage(messageName));
+    }
+}
+
+/** One check at a time; saves wait until it ends so a build cannot overwrite them. */
+async function runExclusiveCheck(root, runCheck)
+{
+    refuseWhileChecking('checkBusy');
+    checkRunning = true;
+    try
+    {
+        return await runCheck(root);
+    }
+    finally
+    {
+        checkRunning = false;
+    }
+}
+
 const ROUTES = {
     [`${METHOD_GET} ${routes.file}`]: async (req, root, query) =>
     {
@@ -93,12 +119,13 @@ const ROUTES = {
     [`${METHOD_PUT} ${routes.file}`]: async (req, root) =>
     {
         const body = await readJsonBody(req);
-        return SaveContentFile(root, body.path, body.text);
+        refuseWhileChecking('checkRunning');
+        return SaveContentFile(root, body.path, body.text, body.baseHash);
     },
-    [`${METHOD_POST} ${routes.check}`]: async (req, root) =>
+    [`${METHOD_POST} ${routes.check}`]: async (req, root, query, runCheck) =>
     {
         await readJsonBody(req);
-        return RunContentCheck(root);
+        return runExclusiveCheck(root, runCheck);
     },
 };
 
@@ -113,9 +140,14 @@ function errorStatus(error)
         : STATUS_SERVER_ERROR;
 }
 
-/** Answers one /__content/ request: read, list, save or check game JSON. */
-export async function HandleContentRequest(req, res, { root, editorWrite })
+/** Answers one /__content/ request; `runCheck` is replaceable so tests need no real build. */
+export async function HandleContentRequest(req, res, options)
 {
+    const {
+        root,
+        editorWrite,
+        runCheck = RunContentCheck,
+    } = options;
     if (!isAllowed(req, editorWrite))
     {
         reply(res, STATUS_FORBIDDEN, { ok: false, error: ApiMessage('notLocal') });
@@ -135,11 +167,16 @@ export async function HandleContentRequest(req, res, { root, editorWrite })
     }
     try
     {
-        const result = await route(req, root, url.searchParams);
+        const result = await route(req, root, url.searchParams, runCheck);
         reply(res, STATUS_OK, { ok: true, ...result });
     }
     catch (error)
     {
-        reply(res, errorStatus(error), { ok: false, error: error.message });
+        const failure = {
+            ok: false,
+            error: error.message,
+            stale: Boolean(error.stale),
+        };
+        reply(res, errorStatus(error), failure);
     }
 }

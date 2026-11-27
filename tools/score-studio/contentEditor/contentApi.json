@@ -9,6 +9,11 @@
   "maxBodyBytes": 8388608,
   "listExtension": ".json",
   "hiddenPrefix": "_",
+  "hash": {
+    "node": "sha256",
+    "web": "SHA-256"
+  },
+  "checkTimeoutMs": 600000,
   "messages": {
     "notLocal": "Game content editing needs `npm run play` on this computer.",
     "notFromStudio": "Save from the local Score Studio.",
@@ -18,6 +23,11 @@
     "notEditable": "This file cannot be edited here: {path}",
     "notListable": "This folder cannot be listed here: {path}",
     "notJson": "Not valid JSON, nothing saved: {error}",
-    "noServer": "Game content needs `npm run play`. Start it and open Score Studio from it."
+    "noServer": "Game content needs `npm run play`. Start it and open Score Studio from it.",
+    "staleFile": "{path} changed on disk since you opened it, so it was not saved. It is reloaded now; make your change again.",
+    "checkRunning": "A check is running. Save again when it ends.",
+    "checkBusy": "A check is already running.",
+    "checkTimedOut": "FAIL The check took longer than {seconds} seconds and was stopped.",
+    "checkStopped": "FAIL The check stopped before it finished (exit code {code})."
   }
 }

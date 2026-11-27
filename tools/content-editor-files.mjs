@@ -1,4 +1,5 @@
 // Reads, lists and writes the owner's game JSON for the Score Studio "Game content" tab.
+import { createHash } from 'node:crypto';
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { isAbsolute, relative, resolve } from 'node:path';
 import { ApiMessage, CONTENT_API } from './content-editor-config.mjs';
@@ -12,15 +13,24 @@ const NEWLINE = '\n';
 const TEXT_ENCODING = 'utf8';
 const STATUS_BAD_REQUEST = 400;
 const STATUS_FORBIDDEN = 403;
+const STATUS_CONFLICT = 409;
+const HEX_DIGEST = 'hex';
 
-/** An error with the HTTP status the handler should answer with. */
+/** An error with the HTTP status the handler should answer with; `stale` marks a 409. */
 export class ContentError extends Error
 {
-    constructor(status, message)
+    constructor(status, message, stale = false)
     {
         super(message);
         this.status = status;
+        this.stale = stale;
     }
+}
+
+/** The hash of a file's text, matching the browser's WebCrypto digest of the same text. */
+export function TextHash(text)
+{
+    return createHash(CONTENT_API.hash.node).update(text, TEXT_ENCODING).digest(HEX_DIGEST);
 }
 
 function slashPath(path)
@@ -90,10 +100,18 @@ export async function ReadContentFile(root, path)
     return readFile(ResolveEditablePath(root, path), TEXT_ENCODING);
 }
 
-export async function SaveContentFile(root, path, text)
+/** Writes `text` only when the file still hashes to `baseHash`, the text it was opened from. */
+export async function SaveContentFile(root, path, text, baseHash)
 {
     const absolutePath = ResolveEditablePath(root, path);
-    await writeFile(absolutePath, PrepareContentText(text), TEXT_ENCODING);
+    const prepared = PrepareContentText(text);
+    const onDisk = await readFile(absolutePath, TEXT_ENCODING);
+    if (TextHash(onDisk) !== baseHash)
+    {
+        const message = ApiMessage('staleFile', { path: slashPath(path) });
+        throw new ContentError(STATUS_CONFLICT, message, true);
+    }
+    await writeFile(absolutePath, prepared, TEXT_ENCODING);
     return { path: slashPath(path) };
 }
 

@@ -4,12 +4,14 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, test } from 'node:test';
-import { CollectCheck } from '../tools/content-editor-check.mjs';
+import { EventEmitter } from 'node:events';
+import { CollectCheck, RunContentCheck } from '../tools/content-editor-check.mjs';
 import {
     ListContentFolder,
     PrepareContentText,
     ResolveEditablePath,
     SaveContentFile,
+    TextHash,
 } from '../tools/content-editor-files.mjs';
 import { HandleContentRequest } from '../tools/content-editor-save.mjs';
 
@@ -22,6 +24,8 @@ const LOOPBACK = '127.0.0.1';
 const STATUS_OK = 200;
 const STATUS_BAD_REQUEST = 400;
 const STATUS_FORBIDDEN = 403;
+const STATUS_CONFLICT = 409;
+const ORIGINAL_HASH = TextHash(ORIGINAL_TEXT);
 
 const root = mkdtempSync(join(tmpdir(), 'content-editor-'));
 mkdirSync(join(root, ENEMY_FOLDER), { recursive: true });
@@ -120,13 +124,15 @@ test('text that is not JSON is refused and the file is left alone', async () =>
 {
     const badRequest = { status: STATUS_BAD_REQUEST };
     assert.throws(() => PrepareContentText('{ "maxBranches": 3, }'), badRequest);
-    await assert.rejects(SaveContentFile(root, ROUTES_PATH, '{ broken'), badRequest);
+    const broken = SaveContentFile(root, ROUTES_PATH, '{ broken', ORIGINAL_HASH);
+    await assert.rejects(broken, badRequest);
     assert.equal(readRoutes(), ORIGINAL_TEXT);
 });
 
 test('a save writes LF line endings and one trailing newline', async () =>
 {
-    await SaveContentFile(root, ROUTES_PATH, '{\r\n  "maxBranches": 4\r\n}\r\n\r\n');
+    const crlfText = '{\r\n  "maxBranches": 4\r\n}\r\n\r\n';
+    await SaveContentFile(root, ROUTES_PATH, crlfText, ORIGINAL_HASH);
     assert.equal(readRoutes(), '{\n  "maxBranches": 4\n}\n');
     writeFileSync(join(root, ROUTES_PATH), ORIGINAL_TEXT);
 });
@@ -174,7 +180,11 @@ test('a save must come from the Studio page and pass the path guard', async () =
     await HandleContentRequest(escapingRequest, escaping, { root, editorWrite: true });
     assert.equal(escaping.status, STATUS_FORBIDDEN);
     const saved = fakeResponse();
-    const change = { path: ROUTES_PATH, text: '{"maxBranches": 5}' };
+    const change = {
+        path: ROUTES_PATH,
+        text: '{"maxBranches": 5}',
+        baseHash: ORIGINAL_HASH,
+    };
     await HandleContentRequest(studioPut(change), saved, { root, editorWrite: true });
     assert.equal(saved.status, STATUS_OK);
     assert.equal(readRoutes(), '{"maxBranches": 5}\n');
@@ -197,4 +207,122 @@ test('the check collects every step line and reports the result', () =>
         'FAIL Check card limits',
         'core.x has 5 effects.',
     ]);
+});
+
+test('a save against a file changed since it was opened is refused as stale', async () =>
+{
+    const rebuilt = '{\n  "maxBranches": 3,\n  "rebuilt": true\n}\n';
+    writeFileSync(join(root, ROUTES_PATH), rebuilt);
+    const stale = SaveContentFile(root, ROUTES_PATH, '{"maxBranches": 9}', ORIGINAL_HASH);
+    await assert.rejects(stale, {
+        status: STATUS_CONFLICT,
+        stale: true,
+    });
+    assert.equal(readRoutes(), rebuilt);
+    const response = fakeResponse();
+    const change = {
+        path: ROUTES_PATH,
+        text: '{"maxBranches": 9}',
+        baseHash: ORIGINAL_HASH,
+    };
+    await HandleContentRequest(studioPut(change), response, { root, editorWrite: true });
+    assert.equal(response.status, STATUS_CONFLICT);
+    assert.equal(response.body.stale, true);
+    assert.match(response.body.error, /routes\.json changed on disk/);
+    writeFileSync(join(root, ROUTES_PATH), ORIGINAL_TEXT);
+});
+
+function studioCheck()
+{
+    return fakeRequest({
+        method: 'POST',
+        url: '/__content/check',
+        body: '{}',
+        headers: {
+            origin: `http://${LOCAL_HOST}`,
+            'content-type': 'application/json',
+        },
+    });
+}
+
+test('while a check runs, saves and a second check are refused', async () =>
+{
+    let finishCheck;
+    const runCheck = () => new Promise((resolve) =>
+    {
+        finishCheck = resolve;
+    });
+    const options = {
+        root,
+        editorWrite: true,
+        runCheck,
+    };
+    const checkResponse = fakeResponse();
+    const running = HandleContentRequest(studioCheck(), checkResponse, options);
+    await new Promise((resolve) => setImmediate(resolve));
+    const save = fakeResponse();
+    const change = {
+        path: ROUTES_PATH,
+        text: '{"maxBranches": 7}',
+        baseHash: ORIGINAL_HASH,
+    };
+    await HandleContentRequest(studioPut(change), save, options);
+    assert.equal(save.status, STATUS_CONFLICT);
+    assert.match(save.body.error, /check is running/);
+    const second = fakeResponse();
+    await HandleContentRequest(studioCheck(), second, options);
+    assert.equal(second.status, STATUS_CONFLICT);
+    finishCheck({ ok: true, lines: [] });
+    await running;
+    assert.equal(checkResponse.status, STATUS_OK);
+    assert.equal(readRoutes(), ORIGINAL_TEXT);
+    const afterCheck = fakeResponse();
+    await HandleContentRequest(studioPut(change), afterCheck, options);
+    assert.equal(afterCheck.status, STATUS_OK);
+    writeFileSync(join(root, ROUTES_PATH), ORIGINAL_TEXT);
+});
+
+class FakeWorker extends EventEmitter
+{
+    constructor()
+    {
+        super();
+        this.terminated = false;
+    }
+
+    terminate()
+    {
+        this.terminated = true;
+    }
+}
+
+test('a check worker that exits without a result reports a failed check', async () =>
+{
+    const worker = new FakeWorker();
+    const running = RunContentCheck(root, { createWorker: () => worker });
+    worker.emit('exit', 1);
+    const result = await running;
+    assert.equal(result.ok, false);
+    assert.match(result.lines[0], /^FAIL .*exit code 1/);
+});
+
+test('a check worker that runs past the timeout is stopped and reported as failed', async () =>
+{
+    const worker = new FakeWorker();
+    const result = await RunContentCheck(root, {
+        createWorker: () => worker,
+        timeoutMs: 20,
+    });
+    assert.equal(result.ok, false);
+    assert.equal(worker.terminated, true);
+    assert.match(result.lines[0], /^FAIL .*took longer than/);
+});
+
+test('the browser hash of a file text matches the server hash', async () =>
+{
+    const { ContentApi } = await import('../tools/score-studio/contentEditor/contentApi.js');
+    const { CONTENT_API } = await import('../tools/content-editor-config.mjs');
+    const api = new ContentApi(CONTENT_API);
+    const text = `${ORIGINAL_TEXT}é ·\n`;
+    assert.equal(await api.Hash(text), TextHash(text));
 });
