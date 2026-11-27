@@ -1940,7 +1940,7 @@ const RARITY_ORDER = Object.freeze(['starter', 'common', 'uncommon', 'rare', 'bo
 function cardMenuActions() {
   const def = selectedCardDef();
   if (!def) return [];
-  const added = isAddedCard(def), inGame = !!registries.cards.get(def.id);
+  const added = isAddedCard(def), inGame = registries.cards.has(def.id);
   const openDecks = () => {
     cardSelectionUi?.select([def.id], { replace: true });
     setCustomizationView('decks');
@@ -2054,7 +2054,7 @@ function applyCardJson() {
 
 // The card as it ships in the game, scored with the game's weights; null for cards the game does not have.
 function inGameScore(def) {
-  const original = registries.cards.get(def.id);
+  const original = registries.cards.has(def.id) ? registries.cards.get(def.id) : null;
   if (!original) return null;
   const sc = scoreCardEntry(clone(original), state.repoScoring);
   return { cp: sc.cp, rank: sc.rank, rarity: original.rarity || sc.rarity };
