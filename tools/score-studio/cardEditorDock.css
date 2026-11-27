@@ -277,27 +277,30 @@ body.studio-body .customization-context-fields .art-context-opacity .opacity-val
 /* Weights beside the card: uniform rows (owner, 2026-11-27). Name left, controls right in fixed columns:
    value | per | multiply | surcharge | reset. The sentence and worked example are on hover. */
 body.studio-body .customization-context-fields[data-context-view="weights"] { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 10px; align-content: start; }
-body.studio-body .customization-context-fields .weight-row.is-compact { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 6px; margin: 0; padding: 2px 4px; border: 0; border-radius: 4px; }
-body.studio-body .customization-context-fields .weight-row.is-compact[data-weight-key^="costs:"] { grid-column: auto; }
-body.studio-body .customization-context-fields .weight-row.is-compact > :first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; font-weight: 600; cursor: help; }
-body.studio-body .customization-context-fields .weight-row.is-compact .weight-sentence { display: grid; grid-template-columns: 50px 34px 16px 16px 14px; align-items: center; column-gap: 3px; justify-items: end; font-size: 11px; color: var(--st-muted); }
-body.studio-body .customization-context-fields .weight-row.is-compact[data-weight-key^="costs:"] .weight-sentence { grid-template-columns: 50px 14px; }
-body.studio-body .customization-context-fields .weight-row.is-compact :is(.weight-words, .weight-example) { display: none; }
-body.studio-body .customization-context-fields .weight-row.is-compact .weight-sentence > * { grid-row: 1; }
-body.studio-body .customization-context-fields .weight-row.is-compact input.weight-input { grid-column: 1; width: 50px; padding: 1px 4px; text-align: right; }
-body.studio-body .customization-context-fields .weight-row.is-compact .weight-per-label:not(.weight-mult-label):not(.weight-surcharge-label) { grid-column: 2; display: inline-flex; align-items: center; gap: 1px; }
-body.studio-body .customization-context-fields .weight-row.is-compact .weight-per-label:not(.weight-mult-label):not(.weight-surcharge-label)::before { content: "/"; }
-body.studio-body .customization-context-fields .weight-row.is-compact .weight-per { width: 28px; padding: 1px 2px; text-align: right; }
-body.studio-body .customization-context-fields .weight-row.is-compact select.weight-per { width: 34px; }
-body.studio-body .customization-context-fields .weight-row.is-compact .weight-mult-label { grid-column: 3; }
-body.studio-body .customization-context-fields .weight-row.is-compact .weight-surcharge-label { grid-column: 4; }
-body.studio-body .customization-context-fields .weight-row.is-compact :is(.weight-mult-label, .weight-surcharge-label) { display: inline-flex; align-items: center; font-size: 0; }
-body.studio-body .customization-context-fields .weight-row.is-compact :is(.weight-mult-label, .weight-surcharge-label) input { margin: 0; }
-body.studio-body .customization-context-fields .weight-row.is-compact .weight-reset-btn { grid-column: 5; padding: 0; min-height: 0; font-size: 11px; }
-body.studio-body .customization-context-fields .weight-row.is-compact[data-weight-key^="costs:"] .weight-reset-btn { grid-column: 2; }
-body.studio-body .customization-context-fields .weight-row.is-compact .weight-reset-btn.is-clean { visibility: hidden; }
 /* Header line over the toggles so the narrow columns stay readable. */
 body.studio-body .customization-context-fields[data-context-view="weights"]::after { content: ""; }
-body.studio-body .customization-context-fields .weight-context-head { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 6px; padding: 2px 4px 0; }
-body.studio-body .customization-context-fields .weight-context-head .weight-sentence { display: grid; grid-template-columns: 50px 34px 16px 16px 14px; column-gap: 3px; justify-items: center; font-size: 10px; font-weight: 700; color: var(--st-muted); }
-body.studio-body .customization-context-fields .weight-context-head .weight-sentence > span[title] { cursor: help; }
+
+/* Weights beside the card: uniform columns (owner, 2026-11-27). Name left; Pts | Scalar | Surcharge | reset on the
+   right with equal gaps. The per-unit count, sentence and worked example are on hover (edit per in the full list). */
+body.studio-body .customization-context-fields :is(.weight-row.is-compact, .weight-context-head) { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 6px; margin: 0; padding: 2px 4px; border: 0; border-radius: 4px; }
+body.studio-body .customization-context-fields .weight-row.is-compact[data-weight-key^="costs:"] { grid-column: auto; }
+body.studio-body .customization-context-fields :is(.weight-row.is-compact, .weight-context-head) > :first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+body.studio-body .customization-context-fields .weight-row.is-compact > :first-child { font-weight: 600; cursor: help; }
+body.studio-body .customization-context-fields :is(.weight-row.is-compact, .weight-context-head) .weight-sentence { display: grid; grid-template-columns: 46px 40px 40px 12px; column-gap: 6px; align-items: center; font-size: 11px; color: var(--st-muted); }
+body.studio-body .customization-context-fields .weight-row.is-compact[data-weight-key^="costs:"] .weight-sentence { grid-template-columns: 46px 20px 12px; column-gap: 4px; }
+body.studio-body .customization-context-fields .weight-row.is-compact[data-weight-key^="costs:"] > :first-child { min-width: 20px; }
+body.studio-body .customization-context-fields .weight-row.is-compact :is(.weight-words, .weight-example) { display: none; }
+body.studio-body .customization-context-fields .weight-row.is-compact .weight-per-label:not(.weight-mult-label):not(.weight-surcharge-label) { display: none; }
+body.studio-body .customization-context-fields .weight-row.is-compact .weight-sentence > * { grid-row: 1; }
+body.studio-body .customization-context-fields .weight-row.is-compact input.weight-input { grid-column: 1; width: 46px; padding: 1px 4px; text-align: right; justify-self: end; }
+body.studio-body .customization-context-fields .weight-row.is-compact .weight-mult-label { grid-column: 2; }
+body.studio-body .customization-context-fields .weight-row.is-compact .weight-surcharge-label { grid-column: 3; }
+body.studio-body .customization-context-fields .weight-row.is-compact[data-weight-key^="costs:"] .weight-surcharge-label { display: none; }
+body.studio-body .customization-context-fields .weight-row.is-compact :is(.weight-mult-label, .weight-surcharge-label) { display: inline-flex; justify-content: center; align-items: center; font-size: 0; }
+body.studio-body .customization-context-fields .weight-row.is-compact :is(.weight-mult-label, .weight-surcharge-label) input { margin: 0; }
+body.studio-body .customization-context-fields .weight-row.is-compact .weight-reset-btn { grid-column: -2 / -1; padding: 0; min-height: 0; font-size: 11px; justify-self: center; }
+body.studio-body .customization-context-fields .weight-row.is-compact .weight-reset-btn.is-clean { visibility: hidden; }
+body.studio-body .customization-context-fields .weight-context-head { padding-top: 4px; font-size: 10px; font-weight: 700; color: var(--st-muted); }
+body.studio-body .customization-context-fields .weight-context-head .weight-sentence { font-size: 10px; justify-items: center; }
+body.studio-body .customization-context-fields .weight-context-head .weight-sentence > span:first-child { justify-self: end; }
+body.studio-body .customization-context-fields .weight-context-head span[title] { cursor: help; }

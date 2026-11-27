@@ -2729,9 +2729,10 @@ function renderCardWeightFields(container, def) {
 function weightContextHead() {
   const head = document.createElement('div');
   head.className = 'weight-context-head'; head.setAttribute('aria-hidden', 'true');
-  head.innerHTML = '<span></span><span class="weight-sentence"><span></span><span></span>'
-    + '<span title="Multiply instead: use the value as a multiplier of the card\'s positive score">×</span>'
-    + '<span title="Surcharge: apply this CP surcharge">S</span><span></span></span>';
+  head.innerHTML = '<span title="The weight, its tag or feature">Tag / feature</span><span class="weight-sentence">'
+    + '<span title="Points per unit: per SP, per stack, per damage">Pts</span>'
+    + '<span title="Scalar: use the value as a multiplier of the card\'s positive score">Scalar</span>'
+    + '<span title="Surcharge: apply this CP surcharge">Surch.</span><span></span></span>';
   return head;
 }
 
