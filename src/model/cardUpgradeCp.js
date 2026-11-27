@@ -42,6 +42,7 @@ export function CardDefinitionToScoreFace(def, { scoring = GetActiveScoring(), r
       case 'damage':
         face.dmg += amount * Math.max(1, num(eff.hits, 1));
         face.hits = Math.max(face.hits, num(eff.hits, 1));
+        if ((eff.breakBlock ?? eff.blockBreak) > 0) face.blockBreak = (face.blockBreak || 0) + num(eff.breakBlock ?? eff.blockBreak, 0) * reliability;
         break;
       case 'block':
         face.blk += amount;

@@ -299,6 +299,11 @@ export function expandedEnemyMove(enemy, move, moveId, ctx = null) {
 export function enemyMoveCarrier(enemy, move, moveId, ctx = null) {
   const projected = expandedEnemyMove(enemy, move, moveId, ctx);
   const carrier = tacticalCarrier(projected, { enemyId: enemy.enemyId, moveId, type: 'attack' }, ctx, enemy);
+  // The move's flat break (Smash breakBlock / breakPoise on its damage effect), so the intent quote meets the Block the hit will leave.
+  const hit = projected?.effects?.find(effect => effect?.op === 'damage');
+  const bb = hit?.breakBlock ?? hit?.blockBreak;
+  if (bb > 0) carrier.breakBlock = bb;
+  if (hit?.breakPoise > 0) carrier.breakPoise = hit.breakPoise;
   return combatExpansionEnabled(ctx) ? expansionCarrierTraits(carrier, enemy) : carrier;
 }
 

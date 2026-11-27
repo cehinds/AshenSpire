@@ -161,6 +161,9 @@ export function computeTokenBindings(effects) {
     if (eff.op === 'damage' && eff.hits != null) {
       push('hits', i, 'hits', eff.op, typeof eff.hits === 'number');
     }
+    // Smash's flat break (owner, 2026-11-20): `{breakBlock}` / `{breakPoise}` read the damage effect's own fields, unscaled.
+    if (eff.op === 'damage' && eff.breakBlock != null) push('breakBlock', i, 'breakBlock', eff.op, typeof eff.breakBlock === 'number');
+    if (eff.op === 'damage' && eff.breakPoise != null) push('breakPoise', i, 'breakPoise', eff.op, typeof eff.breakPoise === 'number');
   });
   return out;
 }

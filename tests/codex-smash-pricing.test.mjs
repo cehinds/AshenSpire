@@ -19,8 +19,11 @@ test('Codex Smashes pay one Stamina more than the matching Attack damage tier', 
     assert.equal(card.cost, card.staminaCost, `${card.id}: face and paid cost agree`);
     const damage = card.effects.filter(effect => effect.op === 'damage');
     assert.equal(damage.length, 1, card.id);
+    // Owner, 2026-11-20: a Smash deals 2/3 of its tier's damage and breaks the same amount of Block (breakBlock), so the band scales by 2/3.
     const amount = damage[0].amount * (damage[0].hits ?? 1);
-    assert.ok(amount >= band[0] && amount <= band[1], `${card.id}: ${amount} damage for ${card.staminaCost} Stamina`);
+    const [low, high] = band.map(value => Math.round(value * 2 / 3));
+    assert.equal(damage[0].breakBlock, damage[0].amount, `${card.id}: breaks as much Block as it deals per hit`);
+    assert.ok(amount >= low && amount <= high, `${card.id}: ${amount} damage for ${card.staminaCost} Stamina`);
   }
 });
 

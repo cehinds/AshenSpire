@@ -261,7 +261,7 @@ export function ElementSecondaryPlan(ctx, source, target, carrier, { single = tr
   // price the first target's Counter return from the chained hit (review #2822).
   const own = receipt && Object.fromEntries(Object.entries(receipt).map(([key, value]) => [key, Array.isArray(value) ? [...value] : value]));
   const contact = carrier?.expansionContact && { ...carrier.expansionContact, receipt: own || receipt };
-  return other ? [{ kind: 'chain', target: other, carrier: { ...carrier, elementChain: true, ...(contact ? { expansionContact: contact } : {}) } }] : [];
+  return other ? [{ kind: 'chain', target: other, carrier: { ...carrier, breakBlock: undefined, blockBreak: undefined, breakPoise: undefined, elementChain: true, ...(contact ? { expansionContact: contact } : {}) } }] : [];
 }
 
 /** After a landed lightning hit on a single target: the chained hit, dealt through `deal` (the same door as the first). */

@@ -24,7 +24,7 @@ import { GearSelectorMatches } from '../src/model/gearEffects.js';
 const preRegistryRuntime = 'sha256:777939d6ee4065a02491fcd7ff21fc2d9f44271a0d7f10ec3b2435d1786a72cd';
 const registryRuntime = 'sha256:c77d4f30494cb821fc66b9b9ef19b91fbb2c699633fe0137b72ab89d261ec831';
 const preScalingRuntime = 'sha256:eff6f5c38dcdba3c78d012bf55c8baf6fe703f664bc3f3416244b15d1fa07216';
-const catalogRuntime = 'sha256:659730689c3f0675a28b5ecbf6ef6c2bcbefa32b77c4794a5a5f9c14f0b8f07d';
+const catalogRuntime = 'sha256:a8dd5f6ad6b903aade4671ac2532fed89ef5a38e80be5420077593e7d3032024';
 const preRegistrySave = () => gunzipSync(readFileSync(new URL('./fixtures/pre-registry-dev-7dff4b03-save.json.gz', import.meta.url))).toString('utf8');
 
 test('the real Dev 7dff4b03 save resumes its active fight without changing the old profile or policy', () => {
@@ -281,16 +281,16 @@ test('a compatible prior-runtime Core profile resumes without changing its integ
   const def = registries.cards.get('core.evade');
   // The resumed fight keeps its snapshotted evadeStackBase of 1: its card face reads that, not the shipped evadeStacksPerCard, and the
   // grant matches the face. Off-combat faces (no combat rules) still read the shipped rule.
-  assert.equal(cardPlainText(registries, {cardId:'core.evade'}), 'Gain 1 Evade.');
+  assert.equal(cardPlainText(registries, {cardId:'core.evade'}), 'Gain 1 Evade. · Wither 3 · +1 SP each time you play this card this fight (max +3)');
   assert.equal(restored.fixCoreRules.accuracy.hitRoll, undefined, 'the saved fight keeps rolling');
-  const face = cardFaceLines(def, null, registries, restored).map(row=>row.html).join('').replace(/<[^>]*>/g,'');
+  const face = cardFaceLines(def, null, registries, restored).map(row=>row.html).join(' · ').replace(/<[^>]*>/g,'');
   const plain = cardPlainText(registries, {cardId:'core.evade'}, { rules: restored });
   const live = cardPlainText(registries, {cardId:'core.evade'}, { rules: restored, preview: previewCard(restored, 'resumed-evade', null) });
   const start=restored.player.statuses.evade?.stacks || 0;
   dispatch(restored,{type:'playCard',cardInstanceId:'resumed-evade'});
   const granted = restored.player.statuses.evade.stacks - start;
   assert.equal(granted, 1);
-  for (const text of [face, plain, live]) assert.equal(text, `Gain ${granted} Evade.`, 'the resumed card face matches its grant');
+  for (const text of [face, plain, live]) assert.equal(text, `Gain ${granted} Evade. · Wither 3 · +1 SP each time you play this card this fight (max +3)`, 'the resumed card face matches its grant');
   const roundtrip=restoreStripped({registries,rng:createRng(511),snapshot:serializeCombatSnapshot(restored),expectedGameProfile:restoredRun.gameProfile});
   assert.equal(roundtrip.gameProfile.hash,originalHash);assert.equal(roundtrip.fixCoreRules.accuracy.evadeStackDex,0);
 });

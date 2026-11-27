@@ -41,6 +41,8 @@
 // Prepared-only Focus wording and the shared Evade grant source reference move only the runtime artifact identity.
 // The 2026-11-19 deferred Axe Strength grant repoints its generated mechanic reader to finishAbilityPlay; the preceding runtime keeps its own snapshotted rules.
 const PREVIOUS_RUNTIMES = new Set([
+  // Before Evade/Wither/Smash/Retreat breakBlock/breakPoise op args in engine/runtime/ops.json.
+  'sha256:659730689c3f0675a28b5ecbf6ef6c2bcbefa32b77c4794a5a5f9c14f0b8f07d',
   // Before catalog regeneration 7c32f9ef4bc: keep the exact recorded profile and its tradition tags.
   'sha256:c77d4f30494cb821fc66b9b9ef19b91fbb2c699633fe0137b72ab89d261ec831',
   // Dev c5c5ec4a before #3002: no enemyLevelScaling table or enemy level-card lists.
@@ -191,6 +193,8 @@ const COMPATIBLE_HOST_RUNTIMES = new Set([
   'sha256:c77d4f30494cb821fc66b9b9ef19b91fbb2c699633fe0137b72ab89d261ec831',
   // Enemy level scaling (spCap in engine/kernel/gameConfig.js) moves the host runtime; prior saves keep their own rules.
   'sha256:659730689c3f0675a28b5ecbf6ef6c2bcbefa32b77c4794a5a5f9c14f0b8f07d',
+  // Flat breakBlock/breakPoise damage op fields (engine/runtime/ops.json) move the host runtime; prior saves keep their own rules.
+  'sha256:a8dd5f6ad6b903aade4671ac2532fed89ef5a38e80be5420077593e7d3032024',
 ]);
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return COMPATIBLE_HOST_RUNTIMES.has(currentRuntime)

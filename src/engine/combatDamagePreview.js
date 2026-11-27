@@ -264,7 +264,9 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
         // A Counter that answered is used up for whatever acts after this action in the same detached state.
         if (bonus > 0) defender.combatCounter = { ...defender.combatCounter, charges: 0 };
       }
-      const receipt = ProfileCombat.profileDamageReceipt(previewCtx, attacker || source, defender, base, carrier, { forecast: true });
+      // Smash's flat break lands with the first hit only (once per contact), as live does.
+      const hitCarrier = hit > 0 && (carrier?.breakBlock || carrier?.blockBreak || carrier?.breakPoise) ? { ...carrier, breakBlock: undefined, blockBreak: undefined, breakPoise: undefined } : carrier;
+      const receipt = ProfileCombat.profileDamageReceipt(previewCtx, attacker || source, defender, base, hitCarrier, { forecast: true });
       receipts.push(receipt);
       const blockBefore = defender?.block || 0;
       if (defender) { applyReceiptToPreviewTarget(ctx, defender, receipt, attacker || source); if (receipt.evaded) SpendPreviewEvade(defender); }

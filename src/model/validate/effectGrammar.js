@@ -119,7 +119,7 @@ export function validateEffects(effects, path, vctx) {
       const pct = eff.pct !== undefined;
       if (by === pct) err(p, `Opcode 'arcaneBuildup' takes exactly one of 'amount' or 'pct'`);
     }
-    for (const numeric of ['amount', 'stacks', 'hits', 'pct', 'count', 'repeat', 'toFloorPct']) {
+    for (const numeric of ['amount', 'stacks', 'hits', 'pct', 'count', 'repeat', 'toFloorPct', 'breakBlock', 'breakPoise', 'blockBreak']) {
       if (eff[numeric] !== undefined) validateFormula(eff[numeric], `${p}.${numeric}`, vctx);
     }
     if (eff.if !== undefined) validatePredicate(eff.if, `${p}.if`, vctx);

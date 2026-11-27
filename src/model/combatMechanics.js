@@ -160,16 +160,26 @@ export function EffectiveSmashGuardRules(fixCoreRulesObj = null, ctx = null) {
 
 /**
  * Flat Block removed before normal Block absorption (when `blockBreak` is enabled).
- * Reads explicit `carrier.blockBreak` (if > 0) or derives from `smashRule.mode` (`"flatBreak"` | `"both"`).
+ * Reads explicit `carrier.breakBlock` / `carrier.blockBreak` (if > 0) or derives from `smashRule.mode` (`"flatBreak"` | `"both"`).
  */
 export function EffectiveBlockBreakAmount(carrier, rawAmount = 0, smashRule = null, ctx = null) {
   const rule = MechanicRule('blockBreak', ctx);
   if (rule && rule.enabled === false) return 0;
-  const explicit = Number(carrier?.blockBreak);
+  const explicit = Number(carrier?.breakBlock ?? carrier?.blockBreak);
   if (Number.isFinite(explicit) && explicit > 0) return Math.floor(explicit);
   if (smashRule && (smashRule.mode === 'flatBreak' || smashRule.mode === 'both') && smashRule.flatBreak) {
     const ratio = Number(smashRule.flatBreak.blockBreakRatio) || 0;
     return Math.max(0, Math.floor(Math.max(0, Number(rawAmount) || 0) * ratio));
   }
   return 0;
+}
+
+/**
+ * Flat Poise removed on a landed hit (when `blockBreak` is enabled).
+ */
+export function EffectivePoiseBreakAmount(carrier, ctx = null) {
+  const rule = MechanicRule('blockBreak', ctx);
+  if (rule && rule.enabled === false) return 0;
+  const explicit = Number(carrier?.breakPoise);
+  return Number.isFinite(explicit) && explicit > 0 ? Math.floor(explicit) : 0;
 }

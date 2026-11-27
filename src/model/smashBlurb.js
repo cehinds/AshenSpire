@@ -41,7 +41,7 @@ export const fill = (id, ctx) => {
   }
   const matchupRow = row('card.smash.matchupClause');
   const matchups = groups.map(group => matchupRow.replace('{stances}', list(group.stances)).replace('{mult}', multWord(group.multiplier))).join(' ');
-  const words = { matchups, block: fractionWord(rules.blockFraction), poise: fractionWord(rules.poiseFraction) };
+  const words = { matchups, poise: fractionWord(rules.poiseFraction) };
   return row(id).replace(/\{(\w+)\}/g, (whole, key) => words[key] ?? whole);
 };
 /** A resolved tag row with the Core Smash help swapped in for maneuver:smash under a Core profile; any other row is returned as is. */

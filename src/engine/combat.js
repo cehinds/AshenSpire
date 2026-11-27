@@ -24,7 +24,7 @@ import { QueueItemTurnStart, QueueItemSkillPlayed, ItemRetainIds } from './itemP
 import { beginEnemyBurdens, endEnemyBurdens, allowBurdenMove } from './enemyBurdens.js';
 import { selectCardVariant, PlayConditionEnemies, PlayConditionMet, ChoiceModeCard, Withered } from './cardBehavior.js';
 import { chooseZoneCards, hasCardChoice, returnHiddenCards } from './cardZones.js';
-import { configuredCombat, configuredModule, setProfileStance, profileCardCosts, profileHandSize, profileFallbackDamage, freezeProfile, PacketFaceSplit } from './gameProfileCombat.js';
+import { configuredCombat, configuredModule, setProfileStance, profileCardCosts, profileHandSize, profileFallbackDamage, freezeProfile, PacketFaceSplit, HitBreakCarrier } from './gameProfileCombat.js';
 import { decayStanceRoundStart } from './combatMatchups.js';
 import { previewCardAttackHit, previewTargetFor, precisionEntryGrant } from './stanceHit.js';
 import { stanceOf, stanceStaminaCost, stanceManaCost, stanceEffectiveness, stanceEntryBonuses } from '../model/stanceRules.js';
@@ -2443,7 +2443,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
             : !configuredCombat(combat) && combat.combatExpansionVersion === 2 ? expandedPreview(e, i)
             : previewDamageHits(combat, p, e,
               evalPreview(combat, action, eff.amount, e) + (action.meta.abilityChargeDamage || 0) + (action.meta.abilityChargeDamageEffect || 0),
-              attackTags, carrier, entry.hits, damagePreviewStates.get(e.id));
+              attackTags, HitBreakCarrier(carrier, eff), entry.hits, damagePreviewStates.get(e.id));
           entry.perTarget[e.id] = result.damage;
           entry.perTargetHitDamages[e.id] = result.hitDamages;
           if (result.poiseLoss !== undefined) entry.perTargetPoise[e.id] = { removed: result.poiseLoss, breaks: !!result.poiseBreaks };

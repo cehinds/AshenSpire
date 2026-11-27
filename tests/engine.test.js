@@ -29,7 +29,7 @@ import { resolveFloorPlan, applyRunShape, minViableFloors, MAP_SHAPE_KEYS } from
 import { rewardPlan, resolveContinue, unseenIds, REWARD_KIND_ORDER, rewardClaimStatus } from '../src/model/rewardplan.js';
 import { beatFor } from '../src/model/secondbeat.js';
 import { createRng, seedFromString, seedToString, seedProblem, SEED_MAX_LEN, sweepSeed } from '../src/engine/rng.js';
-import { createCombat, dispatch, previewCard, previewIntent, getEntity, playerWeightClass } from '../src/engine/combat.js';
+import { createCombat, dispatch, previewCard, previewIntent, getEntity, playerWeightClass, cardPlayCosts } from '../src/engine/combat.js';
 import { commitCombatSnapshot, serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
 import { computeAttackDamage, applyLoseHp, applyHeal } from '../src/engine/actions.js';
@@ -1798,9 +1798,11 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
           // playCard refuses, and this fixture died on the throw. The pools are
           // read from the same cost authority the engine spends from.
           const pools = REG.framework.costProfile(def, { weightClass: playerWeightClass(c).weightClass });
+          // A rising cost (costGrowth, the Evade cards since 2026-11-20) grows with each play: the live quote is what playCard charges.
+          const live = cardPlayCosts(c, inst.instanceId);
           return c.player.energy >= (def.cost === 'X' ? 0 : def.cost)
-            && c.player.mana >= (pools.mana || 0)
-            && c.player.stamina >= (pools.stamina || 0);
+            && c.player.mana >= Math.max(pools.mana || 0, live.mana || 0)
+            && c.player.stamina >= Math.max(pools.stamina || 0, live.stamina || 0);
         });
         if (playable && target) dispatch(c, { type: 'playCard', cardInstanceId: playable.instanceId });
         else dispatch(c, { type: 'endTurn' });

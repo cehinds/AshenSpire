@@ -15,14 +15,14 @@ const bind = p => bindGameProfileRegistries(createRegistries(applyGameProfileToC
 
 // Owner, 2026-11-14: with no hit roll one Evade card is one stack (accuracy.evadeStacksPerCard).
 test('shipped compact Evade wording is exactly Gain 1 Evade', () => {
-  assert.equal(cardPlainText(bind(profile), { cardId: 'core.evade' }), 'Gain 1 Evade.');
+  assert.equal(cardPlainText(bind(profile), { cardId: 'core.evade' }), 'Gain 1 Evade. · Wither 3 · +1 SP each time you play this card this fight (max +3)');
 });
 
 test('compact Evade text follows a profile evadeStacksPerCard override', () => {
   const reg = bind(profile);
   const over = Object.create(reg, { gameProfile: { value: null, writable: true } });
   over.gameProfile = { ...profile, fixCoreRules: (r => ({ ...r, accuracy: { ...r.accuracy, evadeStacksPerCard: 4 } }))(structuredClone(fixCoreRules({ combatExpansionVersion: 2 }))) };
-  assert.equal(cardPlainText(over, { cardId: 'core.evade' }), 'Gain 4 Evade.');
+  assert.equal(cardPlainText(over, { cardId: 'core.evade' }), 'Gain 4 Evade. · Wither 3 · +1 SP each time you play this card this fight (max +3)');
 });
 
 test('compact Evade text follows a legacy profile evadeStackBase/evadeStackDex override', () => {

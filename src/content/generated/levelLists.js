@@ -75,7 +75,6 @@ export const levelLists = {
    "core.rakingSweep",
    "core.rallyingRoar",
    "core.reapingArc",
-   "core.reaverSpecial",
    "core.rendingHex",
    "core.rendingSmash",
    "core.retreat",
