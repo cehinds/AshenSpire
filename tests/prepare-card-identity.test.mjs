@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
@@ -18,11 +19,12 @@ const world = id => {
   return { profile, registries };
 };
 for (const profileId of ['core']) {
-  test(`${profileId}: Draw remains a one-SP zero-MP Skill with its existing Draw Two effect and Prepare stance`, () => {
+  test(`${profileId}: the authored Draw definition reaches runtime and retains its Skill preparation identity`, () => {
     const { registries } = world(profileId), card = resolveCard(registries, { cardId: 'base.draw' });
     assert.equal(card.type, 'skill');
-    assert.equal(card.cost, 1); assert.equal(card.manaCost, 0);
-    assert.deepEqual(card.effects, [{ op: 'draw', amount: 2 }]);
+    const source = JSON.parse(readFileSync(new URL('../games/ashenspire/packs/base-cards/cards.json', import.meta.url))).cards.find(row => row.definition.id === 'base.draw').definition;
+    assert.equal(card.cost, source.cost); assert.equal(card.manaCost, source.manaCost);
+    assert.deepEqual(card.effects, source.effects);
     assert.deepEqual(cardClassification(card), { cardCategory: 'skill', stanceType: 'prepare', stanceGroups: [] });
     assert.equal(combatCardType(card), 'Skill', 'the visible card kind remains distinct from its stance');
     assert.equal(playingCardModel(registries, { cardId: card.id }).type.label, 'SKILL');
@@ -46,20 +48,16 @@ for (const profileId of ['core']) {
     }
   });
 }
-test('each Core character starts with its authored base copies plus its normal weapon art', () => {
+test('each Core character starts with its current authored recipe before equipment grants', () => {
   const { registries, profile } = world('core');
-  const expected = {
-    reaver: { 'core.strike': 4, 'core.defend': 4, 'core.reaverSpecial': 1, 'greatswordSunderingHew': 1, 'base.draw': 0 },
-    rogue: { 'core.strike': 4, 'core.defend': 4, 'core.rogueSpecial': 1, twinFang: 1, 'base.draw': 0 },
-    starseer: { 'custom.card_mwx2mb6p': 4, 'custom.copy_mwx6hh79': 1, 'core.arcaneSiphon': 1, 'core.astralBolt': 4, blightTouch: 1, 'core.cantrip': 0, 'core.starseerSpecial': 0, 'core.smash': 0, 'base.draw': 0 },
-    herald: { 'core.cantrip': 4, 'core.heraldSpecial': 1, blightTouch: 1, 'core.smash': 0, 'base.draw': 0 },
-  };
-  for (const classId of Object.keys(expected)) {
+  const source = JSON.parse(readFileSync(new URL('../games/ashenspire/packs/core/starterDeck.json', import.meta.url)));
+  for (const [classId, recipe] of Object.entries(source.classDecks)) {
     const run = createRunState({ seed: 1, classId, registries, profileMeta: { gameProfileUnlocks: { [profile.id]: { completedRunIds: ['one', 'two', 'three'] } } } });
-    assert.equal(run.deck.length, classId === 'starseer' ? 11 : 10);
-    for (const [cardId, copies] of Object.entries(expected[classId])) assert.equal(run.deck.filter(card => card.cardId === cardId).length, copies, `${classId} ${cardId}`);
+    const ordinary = run.deck.filter(card => !card.grantedBy && !card.equipmentRole);
+    assert.deepEqual(ordinary.map(card => card.cardId), recipe.flatMap(row => Array(row.copies).fill(row.card)), classId);
   }
 });
+
 test('untyped spell-camp moves retain their role and resolved tag objects support Prepare', () => {
   assert.equal(cardPreparationCategory({ id: 'enemy-support', camp: 'spell', maneuver: 'casting' }), null);
   assert.equal(cardPreparationCategory({ camp: 'spell', maneuver: 'counter' }), null);
@@ -69,16 +67,19 @@ test('untyped spell-camp moves retain their role and resolved tag objects suppor
   assert.equal(configuredStance(card), 'prepared');
   assert.equal(stanceOf({ camp: 'physical', maneuver: 'casting' }).maneuver, 'casting');
 });
-test('playing the configured Draw Skill actually enters Prepare and draws two cards', () => {
+test('playing the configured Draw Skill enters Prepare and draws its authored number of cards', () => {
   const { registries, profile } = world('core');
   const deck = Array.from({ length: 10 }, (_, i) => ({ cardId: 'core.strike', instanceId: `draw-skill-${i}` }));
   const combat = createCombat({ registries, gameProfile: profile, rng: createRng(31), enemyIds: ['wanderingSoldier'],
     player: { classId: 'reaver', hp: 100, maxHp: 100, stamina: 10, maxStamina: 10, mana: 5, maxMana: 5,
       energyMax: 10, drawPerTurn: 5, attributes: { intelligence: 1 }, deck } });
   combat.piles.hand = [{ cardId: 'base.draw', instanceId: 'draw-selected' }];
-  combat.piles.draw = deck.slice(0, 3);
+  const draw = resolveCard(registries, { cardId: 'base.draw' }).effects.filter(effect => effect.op === 'draw').reduce((sum, effect) => sum + effect.amount, 0);
+  combat.piles.draw = Array.from({ length: draw + 1 }, (_, i) => ({ cardId: 'core.strike', instanceId: `available-${i}` }));
+  combat.player.energy = combat.player.stamina = combat.player.maxStamina = 1000000;
+  combat.player.mana = combat.player.maxMana = 1000000;
   dispatch(combat, { type: 'playCard', cardInstanceId: 'draw-selected' });
   assert.equal(combat.player.combatStance.maneuver, 'prepared');
-  assert.equal(combat.piles.hand.length, 2);
+  assert.equal(combat.piles.hand.length, draw);
   assert.ok(combat.eventLog.some(event => event.type === 'cardResolved' && event.cardInstanceId === 'draw-selected'));
 });

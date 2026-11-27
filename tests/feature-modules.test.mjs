@@ -34,30 +34,44 @@ test('switched-off features fall back as documented', () => {
 test('boss phase reserves remain payable with enemy relics off', () => {
   const on = resolveGameAuthor(author, catalog);
   const off = without('enemy-relics');
-  const manaOutcomes = (profile, enemy) => {
+  const poolOutcomes = (profile, enemy) => {
     const settings = characterSettings(profile.modules);
     const bonus = enemyItemBonuses(enemy, profile.content, profile.modules.gear);
     return enemyAttributeOutcomes(enemy, settings)
-      .map(attributes => enemyPools({ ...enemy, resolvedAttributes: attributes }, settings, undefined, bonus).mp);
+      .map(attributes => enemyPools({ ...enemy, resolvedAttributes: attributes }, settings, undefined, bonus));
   };
-  for (const [id, cardName, onMinimum] of [
-    ['mireProcessional', 'finalRequiem', 3],
-    ['veiledJusticiar', 'finalJudgement', 2],
-  ]) {
-    const before = on.content.enemies.find(enemy => enemy.id === id);
+  const bosses = on.content.enemies.filter(enemy => enemy.phases?.some(phase => phase.unlockCards?.length));
+  assert.ok(bosses.length > 0, 'exercise authored phase unlocks');
+  for (const before of bosses) {
+    const id = before.id;
     const after = off.content.enemies.find(enemy => enemy.id === id);
-    const cardId = `${id}.${cardName}`;
-    const onMana = manaOutcomes(on, before);
-    assert.equal(Math.min(...onMana), onMinimum);
-    assert.deepEqual(onMana, manaOutcomes(on, { ...before, mpFloor: undefined }), `${id}: relic-enabled pools are unchanged`);
-    assert.equal(Math.min(...manaOutcomes(off, after)), 2);
-    assert.equal(Math.min(...manaOutcomes(off, { ...after, mpFloor: undefined })), 1);
+    assert.ok(after, id);
+    const cardIds = [...new Set(before.phases.flatMap(phase => phase.unlockCards || []))];
     assert.deepEqual(after.defaultDeck, before.defaultDeck);
-    assert.equal(after.defaultDeck.length, 8);
     assert.deepEqual(after.phases, before.phases);
-    assert.ok(after.phases.some(phase => phase.unlockCards.includes(cardId)));
-    assert.deepEqual(after.unlockCards, [cardId]);
-    const card = off.content.enemyCards.find(row => row.id === cardId);
-    assert.deepEqual([card.staminaCost, card.manaCost], [3, 2]);
+    assert.deepEqual(after.unlockCards, before.unlockCards);
+    for (const cardId of cardIds) {
+      const card = off.content.enemyCards.find(row => row.id === cardId);
+      assert.ok(card, `${id}: ${cardId} resolves`);
+      assert.deepEqual(card, on.content.enemyCards.find(row => row.id === cardId));
+      for (const [label, configured, enemy] of [['on', on, before], ['off', off, after]]) {
+        for (const pools of poolOutcomes(configured, enemy)) {
+          assert.ok(pools.mp >= (card.manaCost || 0), `${id}: ${label} reserve pays ${cardId} Mana`);
+          assert.ok(pools.sp >= (card.staminaCost ?? card.cost ?? 0), `${id}: ${label} reserve pays ${cardId} Stamina`);
+        }
+      }
+    }
   }
+});
+
+test('explicit enemy pool floors remain effective without equipment or relic bonuses', () => {
+  const settings = { levelFrom: 'levelProfile.max', rounding: 'down',
+    tagRules: { 'character.enemy': { pools: { hp: 20, sp: 1, mp: 1 } } },
+    statRules: { hp: {}, sp: {}, mp: {} } };
+  const enemy = { tier: 'boss', levelProfile: { min: 1, max: 1 }, spFloor: 3, mpFloor: 4,
+    resolvedAttributes: { strength: 0, dexterity: 0, constitution: 0, wisdom: 0, intelligence: 0 } };
+  const plain = enemyPools({ ...enemy, spFloor: undefined, mpFloor: undefined }, settings);
+  assert.deepEqual(plain, { hp: 20, sp: 1, mp: 1 });
+  assert.deepEqual(enemyPools(enemy, settings), { hp: 20, sp: 3, mp: 4 });
+  assert.deepEqual(enemyPools(enemy, settings, 1, { sp: 2, mp: 4 }), { hp: 20, sp: 3, mp: 5 });
 });

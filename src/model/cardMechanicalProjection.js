@@ -1,16 +1,41 @@
 // The same neutral, attributed card-face baseline used by playingCardModel.
 // Reference profiles/runs are initialized only on the first headless request.
 import { contentBundle } from '../content/index.js';
-import { createRegistries } from './registries.js';
-import { createRunState } from './state.js';
+import * as Registries from './registries.js';
+import * as State from './state.js';
 import * as Profile from './gameProfile.js';
-import { staticCardTokens } from './playingCard.js';
+import { staticCardTokens, PrepareStaticCardTokenReader } from './playingCard.js';
 import { computeTokenBindings } from './validate/tokenBindings.js';
 import { BarrierPoiseFactor } from './combatRatings.js';
 import { ApplyGearCardRules, GearAlwaysOn } from './gearEffects.js';
 import { gameProfileEffectiveAttributes } from './gameProfileGear.js';
 
 const classes = ['reaver', 'starseer', 'rogue', 'herald'];
+const probeScopes = new WeakMap();
+
+// Only a synchronous upgrade operation creates this opaque handle. Neither
+// its context records nor its source markers are available to the caller.
+export function CreateCardUpgradeProjectionScope() {
+  const scope = Object.freeze({});
+  probeScopes.set(scope, { records: new WeakMap(), definitions: new WeakMap() });
+  return scope;
+}
+
+function needsNativeNormalization(value, seen = new Set()) {
+  if (typeof value === 'function' || typeof value === 'symbol') return true;
+  if (!value || typeof value !== 'object') return false;
+  if (seen.has(value)) return true;
+  seen.add(value);
+  const prototype = Object.getPrototypeOf(value);
+  if (prototype !== Object.prototype && prototype !== Array.prototype && prototype !== null) return true;
+  for (const key of Object.keys(value)) {
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    // The native snapshot owns accessor evaluation and transport metadata,
+    // including otherwise ignored $comment values that cannot be cloned.
+    if (key === '$comment' || !Object.hasOwn(descriptor, 'value') || needsNativeNormalization(descriptor.value, seen)) return true;
+  }
+  return false;
+}
 const referencesByRegistry = new WeakMap(), contextCaches = new WeakMap(), projectedDefinitions = new WeakMap();
 let defaultRegistries, defaultProfile;
 const transient = new Set(['_edited', '_custom', '_generated', '_cpMiss', 'scoringOverride', '_autoName', '_autoNameCore', '_autoNameBudget']);
@@ -34,7 +59,7 @@ export function CardScoreReferenceContext(def, { registries } = {}) {
   if (!registries?.gameProfile) {
     if (!defaultRegistries) {
       defaultProfile = Profile.resolveGameProfile('default');
-      defaultRegistries = Profile.bindGameProfileRegistries(createRegistries(Profile.applyGameProfileToContent(contentBundle, defaultProfile)), defaultProfile);
+      defaultRegistries = Profile.bindGameProfileRegistries(Registries.createRegistries(Profile.applyGameProfileToContent(contentBundle, defaultProfile)), defaultProfile);
     }
     registries = defaultRegistries;
   }
@@ -48,7 +73,7 @@ export function CardScoreReferenceContext(def, { registries } = {}) {
   const magic = def?.tags?.includes('camp:spell') || def?.damageSchool && def.damageSchool !== 'physical';
   const classId = classes.includes(def?.class) ? def.class : magic ? 'starseer' : 'reaver';
   if (!references.has(classId)) {
-    const rules = createRunState({ registries, classId, seed: 31, runId: `score-reference-${classId}`, profileMeta: { gameProfileUnlocks: { [profile.id]: { completedRunIds: ['a', 'b', 'c'] } } } });
+    const rules = State.createRunState({ registries, classId, seed: 31, runId: `score-reference-${classId}`, profileMeta: { gameProfileUnlocks: { [profile.id]: { completedRunIds: ['a', 'b', 'c'] } } } });
     rules.relics = [];
     references.set(classId, { registries, rules });
   }
@@ -57,8 +82,11 @@ export function CardScoreReferenceContext(def, { registries } = {}) {
 
 /** Frozen projected definition, per-effect mechanic-unit values, and the exact
  * visible token map. No combat stance, enemy mitigation, or invented CP pins. */
-export function ProjectCardMechanicalValues(def, { registries, rules } = {}) {
-  const previous = projectedDefinitions.get(def);
+export function ProjectCardMechanicalValues(def, { registries, rules, projectionScope } = {}) {
+  const operation = probeScopes.get(projectionScope);
+  const probeDefinitions = operation?.definitions;
+  const probe = !!operation;
+  const previous = projectedDefinitions.get(def) || probeDefinitions?.get(def);
   if (previous) def = previous.source;
   if (!registries || !rules) {
     const reference = CardScoreReferenceContext(def, { registries });
@@ -66,7 +94,15 @@ export function ProjectCardMechanicalValues(def, { registries, rules } = {}) {
   }
   let byRules = contextCaches.get(registries);
   if (!byRules) contextCaches.set(registries, byRules = new WeakMap());
-  const signature = contextSignature(rules), profile = rules.gameProfile || registries.gameProfile;
+  const profile = rules.gameProfile || registries.gameProfile;
+  // Only the service's single synchronous, read-only plan supplies a scope.
+  // Ordinary calls always fingerprint again, including in-place rule edits.
+  let scoped = operation?.records.get(rules);
+  if (!scoped || scoped.profile !== profile || scoped.registries !== registries) {
+    scoped = { signature: contextSignature(rules), profile, registries };
+    operation?.records.set(rules, scoped);
+  }
+  const signature = scoped.signature;
   if (previous && previous.registries === registries && previous.rules === rules && previous.signature === signature && previous.profile === profile) return previous.result;
   let context = byRules.get(rules);
   if (!context || context.signature !== signature || context.profile !== profile) {
@@ -78,23 +114,47 @@ export function ProjectCardMechanicalValues(def, { registries, rules } = {}) {
     context = { cache: new Map(), gear, tokenRules, signature, profile };
     byRules.set(rules, context);
   }
-  const { cache, gear, tokenRules } = context;
+  const { gear, tokenRules } = context;
+  const cache = probe ? scoped.probeCache ||= new Map() : context.cache;
   const authored = Object.fromEntries(Object.entries(def || {}).filter(([key]) => !transient.has(key)));
   const key = JSON.stringify(authored);
+  let probeSource, probeCard;
+  if (probe) {
+    // JSON keys are lossy for undefined/nonfinite values and ignored metadata.
+    // Every candidate takes strict canonical projection before a cache hit can
+    // be trusted; on a miss the already-owned result is used directly below.
+    probeSource = needsNativeNormalization(authored) ? structuredClone(authored) : authored;
+    if (profile?.content) {
+      const subject = { gameProfile: { ...profile, content: { ...profile.content, cards: [probeSource], resourceVariants: {} } } };
+      probeCard = Profile.ProjectGameCardProbe(subject, probeSource.id);
+    }
+    probeCard ||= structuredClone(probeSource);
+  }
   let data = cache.get(key);
   if (!data) {
-    let card = structuredClone(authored);
-    if (profile?.content) {
+    // Public results retain an owned source for later context re-projection.
+    // Private probes instead own dataClone's fresh result, which never escapes
+    // their synchronous plan. Native transport still handles metadata and VM
+    // inputs before the same strict per-candidate canonical validation.
+    const source = probe ? probeSource : structuredClone(authored);
+    let card = probeCard;
+    if (!probe && profile?.content) {
       // The subject contains only this authored card. Its resource variant is
       // intentionally absent so edited costs remain authoritative; unrelated
       // variants cannot be selected and need not be copied into every probe.
-      const subject = { gameProfile: { ...profile, content: { ...profile.content, cards: [card], resourceVariants: {} } } };
-      card = structuredClone(Profile.projectGameCard(subject, card.id) || card);
+      const subject = { gameProfile: { ...profile, content: { ...profile.content, cards: [source], resourceVariants: {} } } };
+      const projected = Profile.projectGameCard(subject, source.id);
+      // projectGameCard already clones and freezes its entire result. Only
+      // these effect records receive numeric assignments below; leave the
+      // independently owned frozen metadata shared with that detached result.
+      if (projected) card = { ...projected, ...(Array.isArray(projected.effects) ? { effects: projected.effects.map(effect => ({ ...effect })) } : {}) };
     }
+    card ||= structuredClone(source);
     // Apply always-on equipment exactly once, as staticCardTokens does. Its
     // appended effects must participate in bindings and scoring as well.
     if (gear?.rules?.length) card = ApplyGearCardRules(gear.rules, card, gear.state);
-    const tokens = staticCardTokens(card, registries, tokenRules);
+    if (probe && !scoped.tokenReader) scoped.tokenReader = PrepareStaticCardTokenReader(registries, tokenRules);
+    const tokens = probe ? scoped.tokenReader(card) : staticCardTokens(card, registries, tokenRules);
     const bindings = computeTokenBindings(card.effects || []);
     const values = (card.effects || []).map(() => ({}));
     let packetAdded = false;
@@ -115,7 +175,8 @@ export function ProjectCardMechanicalValues(def, { registries, rules } = {}) {
     }
     for (const [index, fields] of values.entries()) Object.assign(card.effects[index], fields);
     data = freeze({ card, values, tokens, bindings });
-    projectedDefinitions.set(card, { source: structuredClone(authored), registries, rules, profile, signature, result: data });
+    if (probe) probeDefinitions.set(card, { source, registries, rules, profile, signature, result: data });
+    else projectedDefinitions.set(card, { source, registries, rules, profile, signature, result: data });
     cache.set(key, data);
     if (cache.size > 512) cache.delete(cache.keys().next().value);
   }

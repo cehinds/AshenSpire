@@ -14,17 +14,17 @@ import { enqueueExpandedAction } from './combatExpansionActions.js';
 // dependency as a bare side-effect line (nothing here reads it) so the production
 // bundle's module order is unchanged.
 import './normalPreview.js';
-import { meleeCounterCovers, combatProfileOf } from './combatMatchups.js';
+import { MeleeCounterCovers, combatProfileOf } from './combatMatchups.js';
 import { reactionPaused } from './reactionState.js';
 import { BandsEnemyHeldBack } from './bandRows.js';
-import { enemyDefinitionOf, enemyMoveOf } from '../model/enemyMoveSet.js';
+import { EnemyDefinitionOf, EnemyMoveOf } from '../model/enemyMoveSet.js';
 
 // Version 2 with the flag. Absent (or a version-1 snapshot) means no enemy reactions.
 export const enemyReactionsActive = ctx => ctx.reactionRulesVersion === 2 && ctx.reactionRules?.enemyReactions === true;
 
 // The enemy's reaction moves that list `window`, in authored order.
 export function reactionMovesOf(ctx, enemy, reactionWindow) {
-  const def = enemyDefinitionOf(ctx.registries, enemy);
+  const def = EnemyDefinitionOf(ctx.registries, enemy);
   return Object.entries(def?.moves || {}).filter(([id, move]) => move.reaction?.on?.includes(reactionWindow)
     && (!move.locked || (enemy.unlockedMoves || []).includes(id)));
 }
@@ -42,7 +42,7 @@ export function incomingAgainst(source, id) {
 }
 
 // A reaction move that deals damage (hit-back): damage or counterDamage above zero.
-export const reactionDealsDamage = move => Number(move?.damage) > 0 || Number(move?.counterDamage) > 0;
+export const ReactionDealsDamage = move => Number(move?.damage) > 0 || Number(move?.counterDamage) > 0;
 
 // The move this enemy takes for one window, or null. Eligibility first (alive, not
 // staggered, not control-locked, one reaction per combat turn). Then each reaction move
@@ -61,7 +61,7 @@ export function decideEnemyReaction(ctx, enemy, reactionWindow, { groupKey, wind
     const { minIncoming = 1, chance = 1 } = move.reaction;
     // Owner 2026-11-13: a hit-back move answers only what a melee Counter would cover. An unknown
     // incoming profile (no incomingProfile passed) leaves the old behaviour.
-    if (incomingProfile !== undefined && reactionDealsDamage(move) && !meleeCounterCovers(ctx, incomingProfile)) continue;
+    if (incomingProfile !== undefined && ReactionDealsDamage(move) && !MeleeCounterCovers(ctx, incomingProfile)) continue;
     if (minIncoming !== 0 && !(incoming > 0 && incoming >= minIncoming)) continue;
     if (chance >= 1) return moveId;
     if (chance <= 0) continue;
@@ -111,7 +111,7 @@ function entityOf(ctx, ref) {
 export function pushEnemyReaction(ctx, group, enemy, moveId, targetPlayerId, hooks) {
   let spPayment;
   if (core2ActionPolicyEnabled(ctx)) {
-    const move = enemyMoveOf(ctx.registries, enemy, moveId);
+    const move = EnemyMoveOf(ctx.registries, enemy, moveId);
     const quote = Rounds.enemyMoveQuote(move, { enemy, moveId, combat: ctx });
     if (quote.totalSp > Rounds.enemyAvailableSp(enemy)) return null;
     if (quote.advanceSp > 0 && BandsEnemyHeldBack(ctx, enemy)) return null; // a held back-row enemy's melee reaction cannot reach (its Advance would only spend a stack)

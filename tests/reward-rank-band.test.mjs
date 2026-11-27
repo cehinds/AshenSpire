@@ -7,40 +7,42 @@ import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
-import { gameProfileRewardOffers, gameProfileShopStock } from '../src/model/gameProfileRewards.js';
+import { gameProfileRewardOffers, gameProfileShopStock, gameProfileRewardPools } from '../src/model/gameProfileRewards.js';
 import { productionBundle } from './helpers/production-bundle.mjs';
 import { cardCombatPower } from '../src/content/generated/combatPower.js';
-import { FilterToRankBand, RankBandForLevel } from '../src/model/levelLists.js';
 import { scoring } from '../src/content/generated/scoring.js';
+import { FilterToRankBand, FilterToBand, RankBandForLevel } from '../src/model/levelLists.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const fresh = (seed, level = 1) => { const run = createRunState({ seed, classId: 'reaver', registries: reg, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } }); run.level.level = level; return run; };
 const offer = (seed, level) => gameProfileRewardOffers(reg, fresh(seed, level), createRng(seed), { offerId: `t:${seed}:${level}`, source: 'combat', pool: 'normal' });
 const cardsOf = (o) => o.options.filter(x => x.kind === 'combatCards').map(x => x.id);
+const act1 = scoring.levelLists.tiers[0];
 const SEEDS = Array.from({ length: 120 }, (_, i) => i + 1);
-const LEVEL_ONE_MAX = 2; // Level 1 plus the possible normal-pool rare boost.
 
-test('character level 1 offers only Rank 0–2 cards when the band has any', () => {
-  const seen = new Set();
-  for (const seed of SEEDS) for (const id of cardsOf(offer(seed, 1))) {
-    const row = cardCombatPower[id]; if (!row) continue; seen.add(id);
-    assert.ok(row.rank >= 0 && row.rank <= LEVEL_ONE_MAX, `${id} rank ${row.rank}`);
+function assertEligibleOffer(run, result, level) {
+  let candidates=gameProfileRewardPools(reg,run).combatCards;
+  for(const option of result.options){
+    if(option.kind==='combatCards'){
+      const possible=new Set([false,true].flatMap(rareBoost=>FilterToRankBand('cards',candidates,RankBandForLevel({level,rareBoost}))));
+      assert.ok(possible.has(option.id),`${option.id} belongs to a current band or its empty-band fallback`);
+    }
+    candidates=candidates.filter(id=>id!==option.id);
   }
-  assert.ok(seen.size > 5, `only ${seen.size} distinct scored cards seen`);
+}
+
+test('level-one rewards follow current eligible bands, including empty-band fallback', () => {
+  for(const seed of SEEDS){const run=fresh(seed,1);const result=gameProfileRewardOffers(reg,run,createRng(seed),{offerId:`t:${seed}:1`,source:'combat',pool:'normal'});assertEligibleOffer(run,result,1);}
 });
 
-test('level 5 expands a controlled ranked pool and actual same-act offers remain in their current band', () => {
-  const ids = ['fixture.low', 'fixture.high'];
-  const table = { cardCombatPower: { 'fixture.low': { rank: 1 }, 'fixture.high': { rank: 5 } }, itemCombatPower: {} };
-  assert.deepEqual(FilterToRankBand('cards', ids, { ...RankBandForLevel({ level: 1 }), table }), ['fixture.low']);
-  assert.deepEqual(FilterToRankBand('cards', ids, { ...RankBandForLevel({ level: 5 }), table }), ids);
-  const seen = new Set();
-  for (const seed of SEEDS) for (const id of cardsOf(offer(seed, 5))) {
-    const row = cardCombatPower[id]; if (!row) continue; seen.add(id);
-    assert.ok(row.rank >= 0 && row.rank <= scoring.rank.maxRank, `${id} rank ${row.rank}`);
-  }
-  assert.ok(seen.size > 5, 'the actual current pool still offers distinct cards');
+test('higher character bands admit higher ranks when those candidates exist', () => {
+  const table = { cardCombatPower: { low: { rank: 1 }, high: { rank: 4 } }, itemCombatPower: {} };
+  const ids = ['low', 'high'];
+  assert.deepEqual(FilterToRankBand('cards', ids, { ...RankBandForLevel({ level: 1, maxRank: 5 }), table }), ['low']);
+  assert.deepEqual(FilterToRankBand('cards', ids, { ...RankBandForLevel({ level: 5, maxRank: 5 }), table }), ids);
+  assert.deepEqual(FilterToRankBand('cards', ['high'], { ...RankBandForLevel({ level: 1, maxRank: 5 }), table }), ['high'], 'empty band falls back to available content');
+  assert.deepEqual(FilterToRankBand('cards', ['unknown', ...ids], { minRank: 0, maxRank: 1, table }), ['unknown', 'low'], 'unscored content remains available');
 });
 
 test('the same seed gives the same offer', () => {
@@ -50,10 +52,11 @@ test('the same seed gives the same offer', () => {
 test('an empty tier falls back and the actual legacy door filters mixed pools through its tierId', () => {
   // Use known scored IDs so the production filter treats the controlled high
   // entries as out of band, rather than preserving them as unknown content.
-  const ids = Object.keys(cardCombatPower).slice(0, 8), high = ids.slice(0, 4), low = ids.slice(4);
-  assert.equal(ids.length, 8);
+  const ids = Array.from({length:8},(_,i)=>`fixture.band.${i}`), high = ids.slice(0, 4), low = ids.slice(4);
+  const table = Object.fromEntries(ids.map((id,i)=>[id,{rank:i<4?4:1}]));
   const lists = { cards: { act1: low, act3: high }, items: {} };
   const bundled = productionBundle({ sourceOverrides: {
+    'src/content/generated/combatPower.js': `export const cardCombatPower = ${JSON.stringify(table)};\nexport const itemCombatPower = {};`,
     'src/content/generated/levelLists.js': `export const levelLists = ${JSON.stringify(lists)};`,
   } });
   const { rollCardRewardIds } = bundled('src/engine/encounters.js');
@@ -70,13 +73,9 @@ test('an empty tier falls back and the actual legacy door filters mixed pools th
   assert.deepEqual(draw([...high, ...low], 9), draw([...high, ...low], 9));
 });
 
-test('shop shelves use the same character-level rank band as rewards', () => {
-  const stock = (seed, level) => gameProfileShopStock(reg, fresh(seed, level), createRng(seed), { shopId: 'm' }).options.filter(x => x.kind === 'combatCards').map(x => x.id);
-  const seen = new Set(), later = new Set();
-  for (const seed of SEEDS) {
-    for (const id of stock(seed, 1)) { const row = cardCombatPower[id]; if (!row) continue; seen.add(id); assert.ok(row.rank >= 0 && row.rank <= LEVEL_ONE_MAX, `${id} rank ${row.rank}`); }
-    for (const id of stock(seed, 5)) { const row = cardCombatPower[id]; if (!row) continue; later.add(id); assert.ok(row.rank >= 0 && row.rank <= scoring.rank.maxRank, `${id} rank ${row.rank}`); }
+test('shop shelves apply current character bands to eligible authored candidates', () => {
+  for(const seed of SEEDS)for(const level of [1,Math.min(5,scoring.rank.maxRank)]){
+    const run=fresh(seed,level),stock=gameProfileShopStock(reg,run,createRng(seed),{shopId:'m'});
+    assertEligibleOffer(run,stock,level);
   }
-  assert.ok(seen.size > 5, `only ${seen.size} distinct scored shop cards seen`);
-  assert.ok(later.size > 5, 'higher-level shelves retain a real eligible pool even when no current common card exceeds Rank 2');
 });

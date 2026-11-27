@@ -6,7 +6,7 @@ import { applyCombatDisplayReceipt } from './CombatDisplayReceiptModel.js';
 import { applyCombatIntentReceipt } from './CombatIntentProjectionModel.js';
 import { applyRangeRankEvent, rangeRankSnapshot } from './CombatRangeRankModel.js';
 import { followUpPlan } from './IntentFollowUpModel.js';
-import { enemyDefinitionOf, enemyEventMoveOf } from '../../model/enemyMoveSet.js';
+import { EnemyDefinitionOf, EnemyEventMoveOf } from '../../model/enemyMoveSet.js';
 
 function captureEntity(combat, e, alive, projectCombatIntent)
 {
@@ -90,7 +90,7 @@ export function CaptureCombatDisplay(combat, {
                 e.alive && e.plannedMoves?.length
                     ? followUpPlan({
                         queue: e.plannedMoves,
-                        def: enemyDefinitionOf(registries, e),
+                        def: EnemyDefinitionOf(registries, e),
                         enemyId: e.id,
                         combat,
                         offset: combat.reactionCursor ? combat.followTrace?.[e.id]?.length || 0 : 0,
@@ -302,7 +302,11 @@ export function ApplyCombatBeat(disp, events, {
                 }
                 const actor = disp.ents[e.sourceId];
                 const enemy = combat.enemies.find(row => row.id === e.sourceId);
-                const move = enemyEventMoveOf(registries, { enemy, enemyId: e.enemyId || enemy?.enemyId, moveId: e.moveId });
+                const move = EnemyEventMoveOf(registries, {
+                    enemy,
+                    enemyId: e.enemyId || enemy?.enemyId,
+                    moveId: e.moveId,
+                });
                 if (actor && enemy && move)
                 {
                     actor.presentationStance = enemyStanceCategory({

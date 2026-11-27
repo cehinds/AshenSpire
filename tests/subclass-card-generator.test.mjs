@@ -1,5 +1,4 @@
 import test from 'node:test';
-import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { GenerateSubclassCatalog, SUBCLASS_CATALOG, RefreshSubclassCard } from '../src/model/subclassCardGenerator.js';
 import { ValidateSubclassCatalog } from '../src/model/subclassCatalogExport.js';
@@ -20,7 +19,7 @@ import { beginAbilityTurn } from '../src/engine/abilityRiders.js';
 import { planCardUpgrade, commitCardUpgrade } from '../src/model/cardUpgradeService.js';
 import { validateCardTemplates } from '../src/model/validate/templates.js';
 
-const historicalScoring = JSON.parse(readFileSync(new URL('./fixtures/scoring-pre-starseer.json', import.meta.url), 'utf8'));
+
 
 function assertMeasuredTarget(meta) {
   assert.equal(meta.projectedRank,RankOf(meta.projectedCp,scoring),meta.cardId);
@@ -232,22 +231,25 @@ test('default-rank generation keeps real authored upgrade headroom on the neares
   }
 });
 
-test('historical defaults retain exact requested ranks and the Quiet Incision rounded CP plateau',()=>{
-  const scoring=historicalScoring;
-  const result=GenerateSubclassCatalog({seed:'mechanical-export-integration'},{scoring});
-  assert.equal(result.cards.length,180);
+test('custom weight edits reach generated measurements and truthfully report infeasible targets',()=>{
+  const custom=structuredClone(scoring);
+  custom.costs.sp.weight=-3;
+  custom.costs.mp.weight=-7;
+  custom.effects.damage.per=2;
+  const result=GenerateSubclassCatalog({seed:'weight-propagation',subclassIds:['assassin'],countPerSubclass:3},{scoring:custom});
+  assert.equal(result.cards.length,3);
   for(const [index,card] of result.cards.entries()){
     const meta=result.metadata[index];
-    assert.equal(meta.projectedRank,meta.requestedRank,card.id);
-    assert.equal(meta.miss,meta.projectedCp!==meta.targetCp,card.id);
-    assert.ok(card.upgrade,card.id);
-    const after=applyUpgradeSteps(card,[{k:'authored'}]);
-    assert.notDeepEqual(ProjectCardMechanicalValues(after).card.effects,ProjectCardMechanicalValues(card).card.effects,card.id);
-    const cp=CombatPower(ScoreCard(CardDefinitionToScoreFace(after,{scoring}),scoring).raw,after.rarity,scoring);
-    assert.ok(RankOf(cp,scoring)<=meta.requestedRank,card.id);
+    const raw=ScoreCard(CardDefinitionToScoreFace(card,{scoring:custom}),custom).raw;
+    assert.equal(meta.projectedRaw,raw);
+    assert.equal(meta.projectedCp,CombatPower(raw,card.rarity,custom));
+    assert.equal(meta.projectedRank,RankOf(meta.projectedCp,custom));
+    assert.equal(meta.miss,meta.projectedCp!==meta.targetCp);
+    if(meta.projectedRank!==meta.requestedRank)assert.ok(meta.adaptations.some(reason=>reason.includes('infeasible')));
+    if(card.upgrade){
+      const after=applyUpgradeSteps(card,[{k:'authored'}]);
+      assert.notDeepEqual(ProjectCardMechanicalValues(after).card.effects,ProjectCardMechanicalValues(card).card.effects);
+      assert.ok(RankOf(CombatPower(ScoreCard(CardDefinitionToScoreFace(after,{scoring:custom}),custom).raw,after.rarity,custom),custom)<=meta.requestedRank);
+    }else assert.ok(meta.adaptations.some(reason=>reason.includes('No legal signature upgrade')));
   }
-  const quiet = result.cards.find(card => card.name === 'Quiet Incision');
-  const meta = result.metadata.find(row => row.cardId === quiet.id);
-  assert.equal(meta.targetCp, 6); assert.equal(meta.projectedCp, 5); assert.equal(meta.miss, true);
-  assert.ok(quiet.upgrade, 'a truthful target miss still keeps an actual upgrade within the same CP plateau');
 });

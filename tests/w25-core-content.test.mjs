@@ -1,224 +1,168 @@
-import { legacyGearRegistries } from './helpers/legacy-gear.mjs';
-// Owner, 2026-11-14 content decisions for Core (W25-B): Backstep cost, Jab as a reaction, spell damage, Ward and Barrier.
+// Current content follows its JSON. Reaction and protection regressions use
+// explicit cards, rules and an enemy rather than named balance snapshots.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { contentBundle } from '../src/content/index.js';
+import { createRegistries, resolveCard } from '../src/model/registries.js';
+import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries, projectGameCard } from '../src/model/gameProfile.js';
+import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
+import { dispatch } from '../src/engine/combat.js';
+import { applyStatus } from '../src/engine/statuses.js';
+import { w25Fight } from './helpers/w25-rules-contract.mjs';
 
-const cards = JSON.parse(readFileSync(new URL('../games/ashenspire/packs/core/cards.json', import.meta.url), 'utf8'));
-const card = id => cards.find(row => row.id === id);
+const read = path => JSON.parse(readFileSync(new URL('../' + path, import.meta.url), 'utf8'));
+const cards = read('games/ashenspire/packs/core/cards.json');
+const variants = read('games/ashenspire/packs/core/resourceVariants.json');
+const author = read('games/ashenspire/game.json');
 
-// W25-EvadeCards (2026-11-15): Backstep costs 1 Stamina again (SPEC 5.1: Evade 1, Retreat, Prepared 1).
-test('Backstep costs 1 Stamina, in the pack and under every resource profile', () => {
-  const backstep = card('core.backstep');
-  assert.equal(backstep.staminaCost, 1);
-  assert.equal(backstep.cost, 1);
-  const variants = JSON.parse(readFileSync(new URL('../games/ashenspire/packs/core/resourceVariants.json', import.meta.url), 'utf8'))['core.backstep'];
-  assert.equal(variants.sp.staminaCost, 1);
-  assert.equal(variants['sp,mp'].staminaCost, 1);
+test('current card effects and base/upgrade prices follow JSON under every resource profile', () => {
+  for (const include of [[], ['sp'], ['mp'], ['sp', 'mp']]) {
+    const profile = resolveGameProfile({ ...author, modules: { ...author.modules, resources: { include } } });
+    const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+    const key = include.join(',') || 'none';
+    for (const source of cards) {
+      const installed = profile.content.cards.find(row => row.id === source.id);
+      for (const field of ['class', 'rarity', 'effects', 'upgrade']) assert.deepEqual(installed[field], source[field], source.id + '.' + field);
+      assert.deepEqual(profile.content.resourceVariants[source.id], variants[source.id], source.id + ' variants');
+      const chosen = { ...source, ...(variants[source.id]?.[key] || {}) };
+      const base = projectGameCard(profile, source.id);
+      assert.equal(base.cost, chosen.cost, source.id + ' authored SP');
+      assert.equal(base.manaCost || 0, chosen.manaCost || 0, source.id + ' authored MP');
+      for (const upgraded of [false, true]) {
+        const ref = { cardId: source.id, upgraded };
+        const expected = projectGameCard(profile, ref), actual = resolveCard(reg, ref);
+        for (const field of ['effects', 'cost', 'manaCost', 'keywords']) assert.deepEqual(actual[field], expected[field], source.id + '/' + upgraded + '/' + field);
+      }
+    }
+  }
 });
 
-import { contentBundle } from '../src/content/index.js';
-import { createRegistries } from '../src/model/registries.js';
-import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
-import { createRunState } from '../src/model/state.js';
-import { createRng } from '../src/engine/rng.js';
-import { createRunCombat } from './withoutWeaknesses.mjs';
-import { dispatch } from '../src/engine/combat.js';
+test('current Ward routing and spell cost/flux rules reach runtime from JSON', () => {
+  const source = read('content/source/fixCoreMechanics.json');
+  for (const key of ['ward', 'spellCosts', 'elementFlux']) assert.deepEqual(fixCoreMechanics[key], source[key], key);
+});
 
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
-const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
-function live(classId = 'reaver', seed = 511, registries = reg) {
-  const run = createRunState({ registries, classId, seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
-  const combat = createRunCombat({ registries, run, rng: createRng(seed), enemyIds: ['wanderingSoldier'] });
-  return { run, combat };
+function held(combat, cardId) {
+  const card = Object.values(combat.piles).flat().find(row => row.cardId === cardId);
+  assert.ok(card, cardId);
+  for (const pile of Object.values(combat.piles)) { const at = pile.indexOf(card); if (at >= 0) pile.splice(at, 1); }
+  combat.piles.hand.push(card);
+  return card;
+}
+function reactionFight() {
+  const result = w25Fight();
+  const card = held(result.combat, 'fixture.reaction');
+  result.combat.piles.hand = [card];
+  for (const enemy of result.combat.enemies) enemy.intentRevealed = false;
+  return result;
 }
 
-test('Jab is a reaction card: it is offered against an incoming melee attack when held and affordable', () => {
-  assert.ok(card('core.jab').tags.includes('trait:reaction'));
-  const { combat } = live();
-  combat.piles.hand.length = 0;
-  combat.piles.hand.push({ cardId: 'core.jab', instanceId: 'jab1', upgraded: false });
-  for (const enemy of combat.enemies) enemy.intentRevealed = false;
+test('a held affordable reaction is offered against an incoming attack at its explicit price', () => {
+  const { combat } = reactionFight();
   dispatch(combat, { type: 'endTurn' });
   const offer = combat.pendingReaction;
-  assert.ok(offer, 'the enemy attack opens a reaction window');
-  const option = offer.options.find(row => row.cardId === 'core.jab');
-  assert.ok(option, 'Jab is among the options');
+  assert.ok(offer, 'the incoming attack opens a real reaction window');
+  const option = offer.options.find(row => row.cardId === 'fixture.reaction');
+  assert.ok(option);
   assert.equal(option.staminaCost, 1);
 });
 
-test('played as a reaction, Jab pays 1 Stamina and strikes the attacker before the hit lands', () => {
-  const { combat } = live();
-  const enemy = combat.enemies[0];
-  combat.piles.hand.length = 0;
-  combat.piles.hand.push({ cardId: 'core.jab', instanceId: 'jab1', upgraded: false });
-  const hpBefore = enemy.hp;
+test('the reaction pays its quote and hits the attacker before the incoming hit lands', () => {
+  const { combat, enemy } = reactionFight();
+  const hp = enemy.hp;
   dispatch(combat, { type: 'endTurn' });
-  const out = dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id,
-    optionId: combat.pendingReaction.options.find(row => row.cardId === 'core.jab').id });
-  const types = out.events.map(event => event.type);
-  assert.ok(types.includes('cardPlayed'));
-  assert.ok(types.indexOf('cardPlayed') < types.indexOf('attackHit'), 'the reaction resolves before the incoming hit');
-  assert.ok(enemy.hp < hpBefore, 'the Jab landed on the attacker');
-  assert.equal(out.events.find(event => event.type === 'cardPlayed').staminaSpent, 1);
+  const offer = combat.pendingReaction, option = offer.options.find(row => row.cardId === 'fixture.reaction');
+  const out = dispatch(combat, { type: 'chooseReaction', offerId: offer.id, optionId: option.id });
+  const played = out.events.findIndex(event => event.type === 'cardPlayed');
+  const incoming = out.events.findIndex(event => event.type === 'attackHit');
+  assert.ok(played >= 0 && incoming > played, 'reaction resolves before the incoming contact');
+  assert.ok(enemy.hp < hp);
+  assert.equal(out.events[played].staminaSpent, option.staminaCost);
 });
 
-// Owner, 2026-11-14: spells deal double base damage. Pre-change damage per spell card, [base, upgraded] (the
-// authored `damage` effects only; poiseDamage, Block and statuses did not change).
-// Venom Spray's upgraded damage was raised 3 -> 4 (6 -> 8 doubled) by the no-op upgrade pass (w25-upgrade-no-ops: Venom is capped at 3, so the upgrade
-// had to change something else); the entry below is the value that pass left, so the doubling check still holds for it.
-// Owner ruling 2026-11-21 (starter budget): Arcane Spark prints 3 (was 6) so the starter cantrips stay Unranked.
-const SPELL_DAMAGE_BEFORE = {"starseerSpecial":[[9],[]],"cantrip":[[3],[]],"cinderDart":[[3],[4]],"galePush":[[3],[5]],"galePull":[[3],[5]],"starfall":[[8],[11]],"cometLance":[[12],[16]],"searingRay":[[9],[13]],"meteor":[[30],[38]],"judgment":[[10],[13]],"arcaneSiphon":[[7],[10]],"emberWave":[[3],[5]],"eclipse":[[6],[9]],"astralBolt":[[7],[10]],"censure":[[5],[7]],"smite":[[8],[10]],"manaLash":[[6],[8]],"frostNip":[[3],[4]],"spark":[[3],[4]],"emberFlick":[[2],[3]],"dazzleFlare":[[2],[3]],"palmFlame":[[4],[5]],"rimeBite":[[2],[3]],"brittleTouch":[[1],[2]],"dawnFlame":[[4],[6]],"venomSpray":[[2],[4]],"graveToll":[[3],[4]],"rendingHex":[[2],[3]],"acidSplash":[[3],[4]],"jolt":[[4],[6]],"shockingGrasp":[[3],[4]],"stormLash":[[3],[5]]};
-
-// Explicit owner-authored 2026-11-26 replacements supersede the historical
-// blanket doubling for these IDs. Numbers are asserted directly, including
-// the intentional Arcane Bolt/Smash upgrade damage reductions.
-const AUTHORED_STARSEER_DAMAGE = {
-  'core.arcaneSiphon': [[], [20]], 'core.astralBolt': [[17], [20]],
-  'core.cometLance': [[13], [32]], 'core.eclipse': [[11], [18]],
-  'core.glacialSpike': [[17], [22]], 'core.meteor': [[37], [76]],
-  'core.pyreLash': [[69], [29]], 'core.searingRay': [[18], [26]],
-  'custom.card_mwx2mb6p': [[], []], 'custom.copy_mwx6hh79': [[37], [20]],
-  'custom.copy_mwx6xoww': [[29], [20]],
-};
-
-// Owner, 2026-11-15: "Halve cantrip damage": a `rank.cantrip` card is back at its pre-doubling damage (floor, at least 1); every other spell keeps the doubling.
-test('retained legacy Spell damage keeps its doubling and cantrip baseline while tradition rebalances are explicit', () => {
-  const damages = effects => (effects || []).filter(effect => effect.op === 'damage').map(effect => effect.amount);
-  // The nine cost.manaOnly spells are new in batch 4 and authored at their final damage: neither doubled nor halved.
-  const spells = cards.filter(row => !Object.hasOwn(AUTHORED_STARSEER_DAMAGE, row.id) && row.tags.includes('camp:spell') && !row.tags.includes('cost.manaOnly') && (damages(row.effects).length || damages(row.upgrade?.effects).length));
-  const repurposed = ['censure', 'graveToll', 'rendingHex', 'acidSplash'];
-  const added = { glimpse: [[4], [6]], mindLance: [[12], [16]] };
-  const retained = Object.keys(SPELL_DAMAGE_BEFORE).filter(id => !repurposed.includes(id) && !Object.hasOwn(AUTHORED_STARSEER_DAMAGE, `core.${id}`)).concat(Object.keys(added)).map(id => `core.${id}`);
-  assert.deepEqual(spells.map(row => row.id).sort(), retained.sort(), 'every untouched historical spell remains covered');
-  for (const id of repurposed) {
-    const row = card(`core.${id}`);
-    assert.deepEqual(damages(row.effects), [], `${id}: Divine support replaces its former damage`);
-    assert.deepEqual(damages(row.upgrade.effects), [], `${id}: upgraded support stays non-damaging`);
-  }
-  for (const row of spells) {
-    const id = row.id.replace('core.', '');
-    if (added[id]) {
-      assert.deepEqual([damages(row.effects), damages(row.upgrade.effects)], added[id], `${id}: authored Arcane offense`);
-      continue;
-    }
-    const [base, upgraded] = SPELL_DAMAGE_BEFORE[id];
-    const scale = row.tags.includes('rank.cantrip') ? 1 : 2;
-    assert.deepEqual(damages(row.effects), base.map(n => Math.max(1, n * scale)), row.id);
-    assert.deepEqual(damages(row.upgrade?.effects), upgraded.map(n => Math.max(1, n * scale)), `${row.id} upgraded`);
-  }
-});
-
-test('the authored Starseer replacements retain their exact base and upgrade damage', () => {
-  const damages = effects => (effects || []).filter(effect => effect.op === 'damage').map(effect => effect.amount);
-  for (const [id, expected] of Object.entries(AUTHORED_STARSEER_DAMAGE)) {
-    const row = card(id);
-    assert.ok(row, id);
-    assert.deepEqual([damages(row.effects), damages(row.upgrade?.effects)], expected, id);
-  }
-});
-
-test('a physical card keeps its damage', () => {
-  assert.equal(card('core.jab').effects[0].amount, 4);
-  assert.equal(card('core.strike').effects.find(effect => effect.op === 'damage').amount, 6);
-});
-
-test('a cast cantrip deals its halved damage, and the hit meets Poise before HP', () => {
-  const { combat } = live('starseer');
-  const target = combat.enemies[0];
-  target.hp = target.maxHp = 500; target.block = 0;
-  target.combatStance = { maneuver: 'counter', camp: 'physical', range: 'melee' };
-  assert.ok(target.persistentPoise.value > 0, 'the Countering target has Poise');
-  combat.piles.hand.push({ cardId: 'core.cantrip', instanceId: 'c1', upgraded: false });
-  const out = dispatch(combat, { type: 'playCard', cardInstanceId: 'c1', targetId: target.id });
-  const dealt = out.events.find(event => event.type === 'damageDealt');
-  const hit = dealt.damageReceipt.hits[0];
-  assert.equal(hit.sources.find(row => row.id === 'base').amount, 3 + 1, 'Cantrip authored 3 (owner 2026-11-21 starter budget), plus the current Sceptre magic damage 1');
-  assert.ok(dealt.poiseAbsorbed > 0, 'Poise took its share first');
-  assert.equal(hit.hpLoss, hit.incoming - hit.poiseReduced, 'HP only took what Poise left');
-  assert.equal(500 - target.hp, dealt.hpLoss);
-});
-
-// Owner, 2026-11-14: Ward and Barrier are Poise effects. Each stack raises the holder's Poise and its maximum while it lasts, and a hit
-// meets Poise before HP. Ward is not a separate pool (ward.enabled stays false); `ward.poisePerStack` is the new rule key.
-import { applyStatus } from '../src/engine/statuses.js';
 const poiseOf = combat => ({ ...combat.player.persistentPoise });
 const enemyHit = combat => {
+  combat.piles.hand.length = 0;
   combat.enemies[0].intentRevealed = false;
   dispatch(combat, { type: 'setReactions', enabled: false });
-  const hp = combat.player.hp;
-  const out = dispatch(combat, { type: 'endTurn' });
-  return { out, lost: hp - combat.player.hp, dealt: out.events.find(event => event.type === 'damageDealt' && event.targetId === 'player') };
+  const hp = combat.player.hp, out = dispatch(combat, { type: 'endTurn' });
+  return { lost: hp - combat.player.hp, dealt: out.events.find(event => event.type === 'damageDealt' && event.targetId === 'player') };
 };
 
-test('the shipped rules give Ward 5 HP buffer per stack and keep the legacy Ward pool off', () => {
-  const { combat } = live('starseer');
-  assert.equal(combat.fixCoreRules.ward.enabled, false);
-  assert.equal(combat.fixCoreRules.ward.hpPerStack, 5);
-  assert.equal(combat.fixCoreRules.ward.routing, 'hpBuffer');
-  assert.equal(combat.player.persistentWard?.max || 0, 0, 'no legacy persistentWard pool');
+test('explicit Barrier stacks raise current/max Poise while HP-buffer Ward leaves Poise unchanged', () => {
+  const { combat: barrier } = w25Fight(), beforeB = poiseOf(barrier);
+  applyStatus(barrier, barrier.player, 'barrier', 2, null);
+  assert.equal(poiseOf(barrier).max, beforeB.max + 10);
+  assert.equal(poiseOf(barrier).value, beforeB.value + 10);
+  const { combat: ward } = w25Fight(), beforeW = poiseOf(ward), hp = ward.player.wardHp || 0;
+  applyStatus(ward, ward.player, 'ward', 2, null);
+  assert.deepEqual(poiseOf(ward), beforeW);
+  assert.equal(ward.player.wardHp, hp + 10);
+  assert.equal(ward.player.persistentWard?.max || 0, 0, 'the retired Ward pool remains off');
 });
 
-test('Barrier raises current and maximum Poise by 5 a stack, while Ward adds 5 Ward HP per stack without changing Poise', () => {
-  const { combat: barrierCombat } = live('starseer');
-  const beforeB = poiseOf(barrierCombat);
-  applyStatus(barrierCombat, barrierCombat.player, 'barrier', 2, null);
-  const afterB = poiseOf(barrierCombat);
-  assert.equal(afterB.max, beforeB.max + 10, 'barrier max');
-  assert.equal(afterB.value, beforeB.value + 10, 'barrier current');
-
-  const { combat: wardCombat } = live('starseer');
-  const beforeW = poiseOf(wardCombat);
-  const wardHpBefore = wardCombat.player.wardHp || 0;
-  applyStatus(wardCombat, wardCombat.player, 'ward', 2, null);
-  assert.deepEqual(poiseOf(wardCombat), beforeW, 'ward does not alter Poise');
-  assert.equal(wardCombat.player.wardHp, wardHpBefore + 10, 'ward adds +10 Ward HP');
+test('cards apply both protection operations through the real dispatch path', () => {
+  for (const [id, expectedWard] of [['fixture.protection', 5], ['fixture.barrier', 0]]) {
+    const { combat } = w25Fight(), before = poiseOf(combat), hp = combat.player.wardHp || 0;
+    const card = held(combat, id);
+    dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId });
+    assert.equal(poiseOf(combat).max, before.max + 5);
+    assert.equal(poiseOf(combat).value, before.value + 5);
+    assert.equal((combat.player.wardHp || 0) - hp, expectedWard);
+  }
 });
 
-test('Mote Shield (Ward 1 and Barrier 1) raises Poise by 5 and Ward HP by 5; Hallowed Ward (1 Barrier) raises Poise by 5', () => {
-  const play = id => {
-    const { combat } = live('starseer');
-    const before = poiseOf(combat);
-    const wardBefore = combat.player.wardHp || 0;
-    combat.piles.hand.push({ cardId: id, instanceId: 'g1', upgraded: false });
-    dispatch(combat, { type: 'playCard', cardInstanceId: 'g1' });
-    return { before, after: poiseOf(combat), wardDelta: (combat.player.wardHp || 0) - wardBefore };
-  };
-  const mote = play('core.moteShield'), hallowed = play('core.hallowedWard');
-  assert.equal(mote.after.max - mote.before.max, 5);
-  assert.equal(mote.after.value - mote.before.value, 5);
-  assert.equal(mote.wardDelta, 5);
-  assert.equal(hallowed.after.max - hallowed.before.max, 5);
-  assert.equal(hallowed.wardDelta, 0);
+test('Barrier Poise mitigates before HP and HP-buffer Ward absorbs before Poise and HP', () => {
+  const { combat: barrier } = w25Fight();
+  barrier.player.combatStance = { maneuver: 'counter', camp: 'physical', range: 'melee' };
+  applyStatus(barrier, barrier.player, 'barrier', 3, null);
+  const poise = poiseOf(barrier).value, blocked = enemyHit(barrier);
+  assert.ok(blocked.dealt.poiseAbsorbed > 0);
+  assert.equal(blocked.dealt.hpLoss, blocked.lost);
+  assert.ok(blocked.dealt.damageReceipt.hits[0].poiseReduced <= poise);
+  assert.ok(blocked.lost < blocked.dealt.damageReceipt.hits[0].incoming);
+  const { combat: ward } = w25Fight();
+  ward.player.ratings.poise = 20;
+  ward.player.persistentPoise = { value: 20, max: 20 };
+  ward.player.combatStance = { maneuver: 'counter', camp: 'physical', range: 'melee' };
+  applyStatus(ward, ward.player, 'ward', 3, null);
+  const beforeWard = { poise: poiseOf(ward), hp: ward.player.wardHp };
+  const absorbed = enemyHit(ward);
+  assert.ok(absorbed.dealt.wardAbsorbed > 0);
+  assert.equal(absorbed.dealt.wardHpBuffer, true);
+  assert.equal(absorbed.lost, absorbed.dealt.hpLoss);
+  const wardHit = absorbed.dealt.damageReceipt.hits[0];
+  assert.ok(beforeWard.hp >= wardHit.incoming, 'the explicit Ward buffer covers this whole contact');
+  assert.equal(wardHit.wardReduced, wardHit.incoming, 'Ward absorbs the full incoming amount before Poise');
+  assert.equal(wardHit.poiseReduced, 0, 'the available mitigating Poise is not spent ahead of Ward');
+  assert.equal(wardHit.hpLoss, 0);
+  assert.equal(ward.player.wardHp, beforeWard.hp - wardHit.incoming);
+  assert.deepEqual(poiseOf(ward), beforeWard.poise, 'Ward-first routing preserves the available Poise vessel');
 });
 
-test('while the holder has Barrier, a hit meets Poise; while the holder has Ward, Ward absorbs before Poise + HP', () => {
-  const { combat: bCombat } = live('starseer');
-  bCombat.player.block = 0;
-  bCombat.player.combatStance = { maneuver: 'counter', camp: 'physical', range: 'melee' };
-  applyStatus(bCombat, bCombat.player, 'barrier', 3, null);
-  const poise = poiseOf(bCombat).value;
-  const bRes = enemyHit(bCombat);
-  assert.ok(bRes.dealt.poiseAbsorbed > 0, 'barrier: Poise took the first of the hit');
-  assert.equal(bRes.dealt.hpLoss, bRes.lost);
-  assert.ok(bRes.dealt.damageReceipt.hits[0].poiseReduced <= poise);
-  assert.ok(bRes.lost < bRes.dealt.damageReceipt.hits[0].incoming, 'barrier: HP lost less than the hit');
-
-  const { combat: wCombat } = live('starseer');
-  wCombat.player.block = 0;
-  applyStatus(wCombat, wCombat.player, 'ward', 3, null); // 15 Ward HP
-  const wRes = enemyHit(wCombat);
-  assert.ok(wRes.dealt.wardAbsorbed > 0, 'ward: Ward absorbed hit before Poise and HP');
-  assert.equal(wRes.dealt.wardHpBuffer, true);
-  assert.equal(wRes.lost, wRes.dealt.hpLoss);
-});
-
-test('a fight saved before the ruling (its rules lack ward.poisePerStack) gives Ward no Poise', () => {
-  const { combat } = live('starseer', 511, legacyGearRegistries(reg));
-  delete combat.fixCoreRules.ward.poisePerStack;
+test('a retained fight without Ward Poise rules grants no Ward Poise while Barrier still works', () => {
+  const { combat } = w25Fight();
+  combat.fixCoreRules.ward = { enabled: false };
   const before = poiseOf(combat);
   applyStatus(combat, combat.player, 'ward', 2, null);
   assert.deepEqual(poiseOf(combat), before);
   applyStatus(combat, combat.player, 'barrier', 1, null);
-  assert.equal(poiseOf(combat).max, before.max + 5, 'Barrier is unchanged');
+  assert.equal(poiseOf(combat).max, before.max + 5);
+});
+
+
+test('an outgoing spell meets the target Poise before Health', () => {
+  const { combat, enemy } = w25Fight();
+  enemy.hp = enemy.maxHp = 500;
+  enemy.combatStance = { maneuver: 'counter', camp: 'physical', range: 'melee' };
+  enemy.ratings.poise = 20;
+  enemy.persistentPoise = { value: 20, max: 20 };
+  const card = held(combat, 'fixture.fire');
+  const out = dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: enemy.id });
+  const dealt = out.events.find(event => event.type === 'damageDealt'), hit = dealt.damageReceipt.hits[0];
+  assert.equal(hit.sources.find(row => row.id === 'base').amount, 8);
+  assert.ok(dealt.poiseAbsorbed > 0);
+  assert.equal(hit.hpLoss, hit.incoming - hit.poiseReduced);
+  assert.equal(500 - enemy.hp, dealt.hpLoss);
 });

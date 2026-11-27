@@ -1,5 +1,6 @@
 // W25-R step 1: "rank up a card" is a service any door can offer (combat reward, shop, event), not only the Blacksmith.
 import test from 'node:test';
+import {scoringContract} from './helpers/scoring-contract.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
@@ -21,13 +22,13 @@ const profile = resolveGameProfile(JSON.parse(readFileSync(new URL('../games/ash
 const registries = bindGameProfileRegistries(createRegistries(configuredContentBundle(applyGameProfileToContent(contentBundle, profile), {})), profile);
 const newRun = (seed = 7) => createRunState({ seed, classId: 'reaver', registries, runId: 'w25-rankup' });
 
-test('the data holds the owner numbers: 5% normal, 25% elite and boss, 15% per shop, the Blacksmith price', () => {
-  const run = newRun();
-  assert.equal(CombatRankUpChance(run, 'normal'), 5);
-  assert.equal(CombatRankUpChance(run, 'elite'), 25);
-  assert.equal(CombatRankUpChance(run, 'boss'), 25);
-  assert.equal(ShopRankUpChance(run), 15);
-  assert.equal(ShopRankUpPrice(run), 240);
+test('authored rank-up chances and the current Blacksmith price reach the runtime', () => {
+  const run=newRun();
+  const rewards=JSON.parse(readFileSync(new URL('../games/ashenspire/packs/core/rewards.json',import.meta.url)));
+  const shops=JSON.parse(readFileSync(new URL('../games/ashenspire/packs/core/shops.json',import.meta.url)));
+  for(const pool of ['normal','elite','boss'])assert.equal(CombatRankUpChance(run,pool),rewards.rankUp.chancePct[pool]);
+  assert.equal(ShopRankUpChance(run),shops.rankUp.stockChancePct);
+  assert.equal(ShopRankUpPrice(run),shops.blacksmith.prices.rankUp);
 });
 
 test('raising a card adds one rank and its upgrade slots follow', () => {
@@ -114,8 +115,11 @@ test('a roll is seeded on the run and the door key: the same answer every time, 
   assert.notDeepEqual(Array.from({ length: 64 }, (_, i) => RollRankUp(newRun(1), `d${i}`, 50)), Array.from({ length: 64 }, (_, i) => RollRankUp(newRun(2), `d${i}`, 50)), 'the seed matters');
 });
 
-test('combat and shop doors read their chance from the profile data and are deterministic', () => {
+test('combat and shop doors read controlled profile chances and remain deterministic', () => {
   const run = newRun(5);
+  run.gameProfile=structuredClone(run.gameProfile);
+  run.gameProfile.content.rewards.rankUp.chancePct={normal:5,elite:25,boss:25};
+  run.gameProfile.content.shops.rankUp.stockChancePct=15;
   const door = (id, pool) => CombatRewardRanksUp(registries, run, id, pool);
   for (const pool of ['normal', 'elite', 'boss']) assert.equal(door('1:n:combat', pool), door('1:n:combat', pool));
   const eliteHits = Array.from({ length: 2000 }, (_, i) => door(`1:${i}:combat`, 'elite')).filter(Boolean).length / 20;
@@ -148,8 +152,15 @@ test('five skill rank-ups: a Rank 5 card still fills its 6 slots and ranks up (b
   // keeps the independent budget gate from advancing rank or ending the menu.
   // The default-budget behavior has its own regression below.
   const previousScoring = GetActiveScoring(), hadCustomScoring = HasCustomScoring();
-  const accountingScoring = JSON.parse(readFileSync(new URL('./fixtures/scoring-pre-starseer.json', import.meta.url), 'utf8'));
-  accountingScoring.rank.width = 32;
+  const accountingScoring = structuredClone(previousScoring);
+  accountingScoring.rank = { unrankedMax: 0, width: 100000, maxRank: 10, maxCp: 1000000 };
+  accountingScoring.tierUnlocks = { enabled: false };
+  // Neutral CP isolates slot accounting from all authored scoring gates.
+  accountingScoring.costs={sp:{weight:0},mp:{weight:0}};
+  for(const row of Object.values(accountingScoring.effects))if(row&&typeof row==='object')row.weight=0;
+  accountingScoring.statuses={}; accountingScoring.tags={}; accountingScoring.categories={};
+  accountingScoring.keywords={}; accountingScoring.effectCount={weight:0};
+  accountingScoring.upgradeTags={}; accountingScoring.rarity.discount={common:0,uncommon:0,rare:0,starter:0};
   assert.equal(SetCustomScoring(accountingScoring).ok, true);
   try {
     const { awardSkillXp, xpToNext, coreCardRanks, raiseCardRank } = await import('../src/model/skills.js');
@@ -157,14 +168,16 @@ test('five skill rank-ups: a Rank 5 card still fills its 6 slots and ranks up (b
     const { planCardUpgrade, commitCardUpgrade } = await import('../src/model/cardUpgradeService.js');
     const { canUpgrade } = await import('../src/model/cardUpgradeLimits.js');
     const { paidUpgradeCount, upgradeCount, upgradeStepsProblems } = await import('../src/model/cardUpgrade.js');
-    const { registries } = await import('./helpers/fixcore-combat-rules.mjs');
+    const { registries: sourceRegistries } = await import('./helpers/fixcore-combat-rules.mjs');
+    const definition={id:'fixture.slot-accounting',name:'Slot fixture',class:'reaver',rarity:'common',type:'attack',cost:3,staminaCost:3,manaCost:0,costRule:'fixed',icon:'attack',keywords:[],tags:['camp:physical','source:weapon','maneuver:attack'],effects:[{op:'damage',target:'enemy',amount:12}],textTemplate:'Deal {damage} damage.'};
+    const registries={...sourceRegistries,cards:{...sourceRegistries.cards,get:id=>id===definition.id?definition:sourceRegistries.cards.get(id),has:id=>id===definition.id||sourceRegistries.cards.has(id),ids:()=>[...sourceRegistries.cards.ids(),definition.id],all:()=>[...sourceRegistries.cards.all(),definition]}};
     const run = createRunState({ registries, classId: 'reaver', seed: 17, runId: 'w25-cap', profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
     run.smithingStones = 99;
     const xp = Array.from({ length: 8 }, (_, l) => xpToNext(registries, 'weapon', l)).reduce((a, b) => a + b, 0);
     awardSkillXp(registries, run, 'item:blade', xp, { queueRewards: false, queueRankUps: coreCardRanks(run) });
     // The explicit accounting fixture leaves CP headroom across all six ranks.
-    const card = run.deck.find((c) => c.cardId === 'core.strike');
-    card.cardId = 'core.smash';
+    const card={instanceId:'fixture.accounting-owned',cardId:definition.id,upgraded:false,upgradeSteps:[]};
+    run.deck.push(card);
     const fill = () => {
       while (paidUpgradeCount(card) < UpgradeSlots(run, card)) {
         const quote = planCardUpgrade(run, registries, card.instanceId, { choices: 3 });
@@ -199,9 +212,8 @@ test('five skill rank-ups: a Rank 5 card still fills its 6 slots and ranks up (b
   }
 });
 
-test('the shipped CP budget refuses a paid-slot quote and a level increase refreshes its legal rank transition', async () => {
+test('a controlled CP budget refuses a paid-slot quote and a level increase refreshes its legal rank transition', async () => {
   const previousScoring = GetActiveScoring(), hadCustomScoring = HasCustomScoring();
-  ClearCustomScoring();
   try {
     const { planCardUpgrade, commitCardUpgrade } = await import('../src/model/cardUpgradeService.js');
     const { canUpgrade, nextUpgradeOptions, upgradeCost } = await import('../src/model/cardUpgradeLimits.js');
@@ -219,6 +231,13 @@ test('the shipped CP budget refuses a paid-slot quote and a level increase refre
       get: id => id === baseDef.id ? baseDef : registries.cards.get(id),
       ids: () => [...registries.cards.ids(), baseDef.id], all: () => [...registries.cards.all(), baseDef],
     } };
+    const policy={...previousScoring,...scoringContract(),tierUnlocks:{enabled:false}};
+    policy.rarity.discount={common:0,uncommon:0,rare:0,starter:0};
+    policy.effects.damage={weight:1,per:1};
+    policy.upgradeTags.improved={mode:'flat',base:1};
+    const initialRaw=ScoreCard(CardDefinitionToScoreFace(baseDef,{scoring:policy}),policy).raw;
+    policy.tags['trait:unavoidable']={weight:policy.rank.width-initialRaw};
+    assert.equal(SetCustomScoring(policy).ok,true);
     const run = createRunState({ registries: budgetRegistries, classId: 'reaver', seed: 17, runId: 'w25-cp-budget', profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
     const card = { instanceId: 'budget-card', cardId: baseDef.id, rank: 1, rarityOverride: 'rare', upgraded: false, upgradeSteps: [] };
     run.deck = [card]; run.smithingStones = 99;

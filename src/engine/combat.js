@@ -7,8 +7,8 @@ import { InitBandRows, GrantRetreatCard, BandsActive, BandsEnemyAdvance, BandsEn
 import { initializeCombatRange, assertRangeCardEnabled, quoteRangeActions, addRangeCosts, previewRangeRoutes, paidCounterRange, rangeCardSourceSnapshots } from './combatEngagement.js';
 import { actorRangeKey, engagementBand, rangeBand, bandCap } from '../model/combatEngagement.js';
 import { ownGameProfile } from '../model/ownedGameProfile.js';
-import { gameProfileEnemyRatings, gameProfileEnemyLevelMoves } from '../model/gameProfileEnemy.js';
-import { enemyDefinitionOf } from '../model/enemyMoveSet.js';
+import { gameProfileEnemyRatings, GameProfileEnemyLevelMoves } from '../model/gameProfileEnemy.js';
+import { EnemyDefinitionOf } from '../model/enemyMoveSet.js';
 import { snapshotEnemyKnowledgeRules } from '../model/enemyKnowledgeRules.js';
 import { decayAtTurnStart } from './statuses.js';
 import { ElementTurnStart, ElementTurnEnd } from './elementIdentity.js';
@@ -380,7 +380,7 @@ export function createCombat({
         const { effectiveMaxHp, hpScale, hpStepScale, ...ratings } = gameProfileEnemyRatings(combat,enemy,{actLevelled:Number.isSafeInteger(enemyLevels[index]),levelStep:enemyLevelSteps[index]}) || {};
         Object.assign(enemy, ratings);
         // Its floor step's level cards join its moves on the instance (owner, 2026-11-20); the registry row stays shared and unchanged.
-        const levelMoves = gameProfileEnemyLevelMoves(combat, enemy);
+        const levelMoves = GameProfileEnemyLevelMoves(combat, enemy);
         if (levelMoves) enemy.extraMoves = levelMoves;
         // An act-levelled elite or boss (enemies.effectiveLevelHp) takes its level's HP; Custom Climb hpMult still scales it.
         if (Number.isSafeInteger(effectiveMaxHp) && effectiveMaxHp > 0) enemy.hp = enemy.maxHp = hpMult !== 1 ? Math.max(1, Math.round(effectiveMaxHp * hpMult)) : effectiveMaxHp;
@@ -486,7 +486,7 @@ function settleBrokenEnemyStances(combat) {
     delete enemy.stanceBrokenFrom;
     const moveId = enemy.intent?.moveId;
     if (combat.phase !== 'player' || !enemy.alive || enemy.pendingMove || !moveId || enemy.intent.resolved) continue;
-    const def = combat.registries.enemies.get(enemy.enemyId);
+    const def = EnemyDefinitionOf(combat.registries, enemy);
     if (stanceOf({ ...def.moves[moveId], enemyId: enemy.enemyId, moveId })?.maneuver !== from) continue;
     combat.emit('enemyMoveUnavailable', { sourceId: enemy.id, moveId, resource: 'stance', reason: 'stanceBroken', from });
     const next = enemy.plannedMoves?.shift();
@@ -748,11 +748,11 @@ function enemyOwnerTurnStart(combat, enemy) {
   decayAtTurnStart(combat, enemy);
   if (fixCoreEnabled(combat)) {
     // A Poise break (Staggered stance) took SP from this turn's pool; it is owed once.
-    enemy.fixCoreStaminaRemaining = Math.max(0, (enemy.maxStamina ?? Rounds.enemyPool(enemyDefinitionOf(combat.registries, enemy))) - (enemy.pendingStaminaLoss || 0));
+    enemy.fixCoreStaminaRemaining = Math.max(0, (enemy.maxStamina ?? Rounds.enemyPool(EnemyDefinitionOf(combat.registries, enemy))) - (enemy.pendingStaminaLoss || 0));
     if (core2ActionPolicyEnabled(combat)) enemy.stamina = enemy.fixCoreStaminaRemaining;
     enemy.pendingStaminaLoss = 0;
   }
-  beginEnemyBurdens(combat,enemy,Rounds.enemyPool(enemyDefinitionOf(combat.registries, enemy)));
+  beginEnemyBurdens(combat,enemy,Rounds.enemyPool(EnemyDefinitionOf(combat.registries, enemy)));
   Reactions.revealActor(combat, enemy);
   proposalTurn(combat,enemy,'start');
   fireOwnerHooks(combat, enemy, 'ownerTurnStart');
@@ -777,7 +777,7 @@ function consumeEnemyIntent(combat, enemy, moveId = enemy.intent?.moveId) {
 // re-picked and no RNG is drawn; each move is priced alone (enemyMoveQuote), as execution prices it.
 export function trimEnemyPlanDuringTurn(combat, enemy) {
   if (!core2ActionPolicyEnabled(combat) || !enemy.alive || enemy.pendingMove || !enemy.plannedMoves?.length) return;
-  const def = enemyDefinitionOf(combat.registries, enemy);
+  const def = EnemyDefinitionOf(combat.registries, enemy);
   // Only a real SP loss trims: the SP the enemy was due to have after its last move (payment and Advance) must have dropped
   // (a Poise break, a weakness, a reaction). A shortfall without one (the range changed) stays what it was, a refusal
   // at act time, so the moves that play are exactly the ones that played before this trim existed.
@@ -836,7 +836,7 @@ function enemyPhase(combat) {
       if (combat.turn >= enemy.pendingMove.resolveOnTurn) {
         // Delayed move resolving: the committed attack lands regardless of
         // newly rolled intents (SPEC §5.3 'Held Blade' pattern, generic data).
-        const def = enemyDefinitionOf(combat.registries, enemy);
+        const def = EnemyDefinitionOf(combat.registries, enemy);
         const moveId = enemy.pendingMove.moveId;
         const move = def.moves[moveId];
         const spPayment = enemy.pendingMove.spPayment;
@@ -845,7 +845,7 @@ function enemyPhase(combat) {
       }
       // else: still charging (delay.turns > 1) — the enemy does nothing.
     } else if (enemy.intent && enemy.intent.moveId) {
-      const def = enemyDefinitionOf(combat.registries, enemy);
+      const def = EnemyDefinitionOf(combat.registries, enemy);
       const move = expandedEnemyMove(enemy, def.moves[enemy.intent.moveId], enemy.intent.moveId, combat);
       if (move.delay) {
         // A charging move takes the enemy's turn: its planned follow-ups do not play this turn.
@@ -870,7 +870,7 @@ function enemyPhase(combat) {
       // that turn (SPEC §4.6a), and keeps the rest of it, as the turn-start stagger branch above does.
       if (enemyHalted(combat, enemy)) { enemy.planDue = false; break; }
       const next = enemy.plannedMoves.shift();
-      const def = enemyDefinitionOf(combat.registries, enemy);
+      const def = EnemyDefinitionOf(combat.registries, enemy);
       presentIntent(combat, enemy, def, next.moveId);
       // The UI's "?" row (SPEC §4.6a): this follow-up's own read, rolled once by presentIntent, and what became of it.
       // No move id: a failed read must leave nothing about the move in state.
@@ -975,7 +975,7 @@ function executeMovePayload(combat, enemy, move, moveId, { spPayment } = {}) {
     return 'refused';
   }
   if (!prepaid && rangeQuote?.advanceSp > 0 && BandsEnemyHeldBack(combat, enemy)) {
-    const def = enemyDefinitionOf(combat.registries, enemy), closingId = def.rangeClosingMove, closing = def.moves[closingId];
+    const def = EnemyDefinitionOf(combat.registries, enemy), closingId = def.rangeClosingMove, closing = def.moves[closingId];
     const closingEligible = closing && closingId !== moveId && !closing.reaction && (!closing.locked || enemy.unlockedMoves.includes(closingId))
       && closing.effects?.some(effect => effect.op === 'moveEngagement') && Rounds.enemyMoveSp(closing, { enemy, moveId: closingId, combat }) <= Rounds.enemyAvailableSp(enemy);
     if (closingEligible) return executeMovePayload(combat, enemy, closing, closingId);
@@ -983,11 +983,11 @@ function executeMovePayload(combat, enemy, move, moveId, { spPayment } = {}) {
     return 'refused';
   }
   if (fixCoreEnabled(combat)) {
-    const available=core2ActionPolicyEnabled(combat) ? Rounds.enemyAvailableSp(enemy) : enemy.fixCoreStaminaRemaining ?? enemy.maxStamina ?? Rounds.enemyPool(enemyDefinitionOf(combat.registries, enemy));
+    const available=core2ActionPolicyEnabled(combat) ? Rounds.enemyAvailableSp(enemy) : enemy.fixCoreStaminaRemaining ?? enemy.maxStamina ?? Rounds.enemyPool(EnemyDefinitionOf(combat.registries, enemy));
     const required = prepaid ? Math.max(0, (rangeQuote?.advanceSp || 0) - spPayment.advanceSp) : totalSp;
     // Rows (W25-BANDS): a back-row melee move is planned as the step forward when it needs one, so this swap is only the SP one: the move shown is the move done.
     if(!prepaid && rangeQuote?.advanceSp > 0 && required>available) {
-      const def = enemyDefinitionOf(combat.registries, enemy), closingId = def.rangeClosingMove, closing = def.moves[closingId];
+      const def = EnemyDefinitionOf(combat.registries, enemy), closingId = def.rangeClosingMove, closing = def.moves[closingId];
       const closingEligible = !core2ActionPolicyEnabled(combat) || (!closing?.reaction && (!closing?.locked || enemy.unlockedMoves.includes(closingId)));
       if (closingEligible && closing && closingId !== moveId && closing.effects?.some(effect => effect.op === 'moveEngagement') && Rounds.enemyMoveSp(closing,{enemy,moveId:closingId,combat}) <= available) return executeMovePayload(combat, enemy, closing, closingId);
     }
@@ -1026,7 +1026,7 @@ function executeMovePayload(combat, enemy, move, moveId, { spPayment } = {}) {
 // Enemy reactions: the reaction move's actions and carrier, planned by the stack
 // (engine/enemyReactions.js pushEnemyReaction) instead of the queue.
 function planEnemyReactionMove(combat, enemy, moveId) {
-  const move = expandedEnemyMove(enemy, enemyDefinitionOf(combat.registries, enemy).moves[moveId], moveId, combat);
+  const move = expandedEnemyMove(enemy, EnemyDefinitionOf(combat.registries, enemy).moves[moveId], moveId, combat);
   const carrier = enemyMoveCarrier(enemy, move, moveId, combat);
   return { actions: enemyMoveActions(combat, enemy, move, moveId, carrier), carrier, target: combat.player, kind: move.intent };
 }
@@ -1062,7 +1062,7 @@ function enemyMoveActions(combat, enemy, move, moveId, carrier) {
   for (const eff of move.effects || []) {
     if (carrier.combatProfile.maneuver !== 'counter' || !['damage', 'poiseDamage', ...(combat.combatExpansionVersion === 2 ? ['wardDamage'] : [])].includes(eff.op)) actions.push({ effect: eff, source: enemy, owner: enemy, target: combat.player, card: carrier, meta: { moveId } });
   }
-  return scaleOwnElementActions(combat, enemy, carrier, actions, enemyDefinitionOf(combat.registries, enemy)); // own-element x1.25 (SPEC 4.7)
+  return scaleOwnElementActions(combat, enemy, carrier, actions, EnemyDefinitionOf(combat.registries, enemy)); // own-element x1.25 (SPEC 4.7)
 }
 
 // ---------------------------------------------------------------------------
@@ -1087,7 +1087,7 @@ function rollIntents(combat, isFirstTurn = false) {
       enemy.intent = { kind: 'staggered', moveId: null };
       continue;
     }
-    const def = enemyDefinitionOf(combat.registries, enemy);
+    const def = EnemyDefinitionOf(combat.registries, enemy);
     // The head of the plan, whose picks were recorded when planned (the pool plays all of it).
     const moveId = Rounds.takePlannedMove(combat, enemy, def, { isFirstTurn, pick: (e, d, maxSp, pricing = combat) => weightedMovePick(pricing, e, d, maxSp) });
     if (moveId == null) {
@@ -1115,7 +1115,7 @@ function revalidateEnemyPlans(combat) {
   for (const enemy of combat.enemies) {
     const head = enemy.intent;
     if (!enemy.alive || !enemy.planDue || enemy.pendingMove || enemy.skipNextTurn || !head?.moveId || head.resolved) continue;
-    const def = enemyDefinitionOf(combat.registries, enemy);
+    const def = EnemyDefinitionOf(combat.registries, enemy);
     const before = [{ moveId: head.moveId, ...(head.approachFor ? { approachFor: head.approachFor } : {}) }, ...(enemy.plannedMoves ?? [])];
     const kept = Rounds.trimEnemyPlan(enemy, def, before, { combat, projectBands: true });
     const ids = rows => rows.map(row => row.moveId).join(',');
@@ -2779,7 +2779,7 @@ export function previewIntent(combat, enemyInstanceId) {
     out.counterPoiseDamage = counter?.payload?.poise ?? counter?.poiseDamage ?? 0;
   }
   if (intent.damage != null) {
-    const move = expandedEnemyMove(enemy, enemyDefinitionOf(combat.registries, enemy).moves[intent.moveId], intent.moveId, combat);
+    const move = expandedEnemyMove(enemy, EnemyDefinitionOf(combat.registries, enemy).moves[intent.moveId], intent.moveId, combat);
     const effect = move?.effects?.find(e => e.op === 'damage');
     const carrier = { ...enemyMoveCarrier(enemy, move || {}, intent.moveId, combat), damageSchool: effect?.damageSchool || move?.damageSchool };
     Object.assign(out, previewDamageHits(combat, enemy, combat.player, intent.damage, carrier.tags, carrier,

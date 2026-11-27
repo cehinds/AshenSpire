@@ -47,7 +47,8 @@ export function projectCardBehavior(ctx, instance, def, { applyGear = true } = {
     const riders = ctx.player.abilityRiders;
     result = { ...result, choiceModes: result.choiceModes.map(mode => {
       if (!mode.costGrowth) return mode;
-      const growth = mode.costGrowth;
+      const growth = EffectiveCostGrowth(mode, ctx, 'costGrowth.choiceMode');
+      if (!growth) return mode;
       const uses = (instance.instanceId && !growth.perCard ? riders?.instanceModeUsesCombat?.[instance.instanceId]?.[mode.id]
         : riders?.cardModeUsesCombat?.[instance.cardId || def.id]?.[mode.id]) || 0;
       const steps = growthSteps(growth, uses);
