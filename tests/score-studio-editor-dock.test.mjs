@@ -1,8 +1,27 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { withKitDom } from './helpers/dom.mjs';
-import { initCardEditorDock, CARD_EDITOR_DOCK_KEY } from '../tools/score-studio/cardEditorDock.js';
+import {
+  initCardEditorDock,
+  CARD_EDITOR_DOCK_KEY,
+  FilterNoteId,
+} from '../tools/score-studio/cardEditorDock.js';
+import { GalleryKind } from '../tools/score-studio/workingContext.js';
 import { createAddCardTile, CaptureCardTilePositions, animateCardInsertion } from '../tools/score-studio/addCardTile.js';
+
+// The fixture's cards and the filter notice's parts, for the filter notice test.
+const FilterNoteFixture = Object.freeze({
+  ActiveCardId: 'a',
+  ActiveCardName: 'Alpha',
+  OtherCardId: 'b',
+  ClearCall: 'clear',
+  TextSelector: 'span',
+  ButtonSelector: 'button',
+  EntityNameId: 'customization-entity-name',
+  EntityNameTextSelector: '.customization-entity-name-text',
+  AriaLabelAttribute: 'aria-label',
+  ClearAriaLabel: 'Clear filters',
+});
 
 function fixture(dom, stored = new Map(), extra = {}, { scoreSummary = false } = {}) {
   const { document: doc } = dom;
@@ -400,3 +419,118 @@ test('outside Properties the column beside the card holds the view fields only w
   api.setView('properties');
   assert.equal(context.hidden, true);
 }));
+
+test(
+  'the dock requires a selectCard callback instead of writing the active card itself',
+  () => withKitDom(dom =>
+  {
+    assert.throws(
+      () => fixture(
+        dom,
+        new Map(),
+        { selectCard: undefined },
+      ),
+      /requires ctx\.selectCard/,
+    );
+  }),
+);
+
+// The dock fixture with filters that hide the cards in hidden until Clear runs.
+function filterNoteFixture(dom, hidden)
+{
+  let parts = null;
+
+  function clearFilters(kind)
+  {
+    hidden.clear();
+    parts.calls.push([FilterNoteFixture.ClearCall, kind]);
+    parts.api.refresh();
+  }
+
+  parts = fixture(
+    dom,
+    new Map(),
+    {
+      isHiddenByFilters: (kind, id) => kind === GalleryKind.Cards && hidden.has(id),
+      clearFilters,
+    },
+  );
+  return parts;
+}
+
+// The notice shows one action while the card stays active and named in the banner.
+function assertNoticeKeepsActiveCard({ doc, state }, note)
+{
+  assert.equal(
+    note.hidden,
+    false,
+    'the banner says the active card is hidden',
+  );
+  const noticeText = note.querySelector(FilterNoteFixture.TextSelector).textContent;
+  assert.match(noticeText, /Hidden by current filters/);
+  assert.equal(
+    state.selectedCardId,
+    FilterNoteFixture.ActiveCardId,
+    'filters never change the active card',
+  );
+  const entityName = doc.getElementById(FilterNoteFixture.EntityNameId);
+  const bannerName = entityName.querySelector(FilterNoteFixture.EntityNameTextSelector);
+  assert.equal(
+    bannerName.textContent,
+    FilterNoteFixture.ActiveCardName,
+    'the banner still shows the active card',
+  );
+  const clear = doc.getElementById(FilterNoteId.Clear);
+  const clearLabel = clear.getAttribute(FilterNoteFixture.AriaLabelAttribute);
+  assert.equal(clearLabel, FilterNoteFixture.ClearAriaLabel);
+  assert.equal(
+    note.querySelectorAll(FilterNoteFixture.ButtonSelector).length,
+    1,
+    'one action, no extra controls',
+  );
+}
+
+// Clear asks the studio to clear the card filters, then hides the notice and focuses the tile.
+function assertClearShowsActiveTile({ doc, state, calls }, note)
+{
+  doc.getElementById(FilterNoteId.Clear).click();
+  const clearCalls = calls.filter(row => row[0] === FilterNoteFixture.ClearCall);
+  assert.deepEqual(clearCalls, [[FilterNoteFixture.ClearCall, GalleryKind.Cards]]);
+  assert.equal(
+    note.hidden,
+    true,
+    'the notice goes once the tile is shown',
+  );
+  assert.equal(
+    doc.activeElement?.dataset?.cardId,
+    FilterNoteFixture.ActiveCardId,
+    'focus lands on the active tile, not the page body',
+  );
+  assert.equal(state.selectedCardId, FilterNoteFixture.ActiveCardId);
+}
+
+test(
+  'filters that hide the active card keep it active; one notice with Clear brings its tile back',
+  () => withKitDom(dom =>
+  {
+    const hidden = new Set([FilterNoteFixture.ActiveCardId]);
+    const dock = filterNoteFixture(dom, hidden);
+    const {
+      doc,
+      state,
+      api,
+    } = dock;
+    api.refresh();
+    const note = doc.getElementById(FilterNoteId.Note);
+    assertNoticeKeepsActiveCard(dock, note);
+    assertClearShowsActiveTile(dock, note);
+    // A visible active card, or no active card, shows no notice.
+    hidden.add(FilterNoteFixture.OtherCardId);
+    api.refresh();
+    assert.equal(note.hidden, true);
+    state.selectedCardId = null;
+    hidden.add(null);
+    api.refresh();
+    assert.equal(note.hidden, true);
+  }),
+);

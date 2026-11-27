@@ -40,7 +40,8 @@
   "generatedNames": [
     "game.lock.json",
     "_reference.json",
-    "_reference.md"
+    "_reference.md",
+    "enemyLevelCards.json"
   ],
   "neverCommit": [
     "buildordinal.json",
@@ -49,14 +50,18 @@
   "generatedLocations": [
     "src/content/generated/",
     "src/config/generated/",
-    "src/framework/data/"
+    "src/framework/data/",
+    "games/ashenspire/derived/",
+    "engine/ui/index.json",
+    "README.md"
   ],
   "generatedSuffixes": [
     ".generated.js",
     ".generated.css",
     "game.lock.json",
     "_reference.json",
-    "_reference.md"
+    "_reference.md",
+    "enemyLevelCards.json"
   ],
   "rebuiltContentFiles": [
     "games/ashenspire/packs/core/characters.json"
@@ -89,10 +94,48 @@
       ]
     },
     {
+      "label": "Build enemy level cards",
+      "args": [
+        "tools/enemy-level-cards.mjs",
+        "--write"
+      ]
+    },
+    {
       "label": "Build game packs",
       "args": [
         "tools/game-config.mjs",
         "build"
+      ]
+    },
+    {
+      "label": "Build combat power table",
+      "args": [
+        "tools/combat-power-report.mjs"
+      ]
+    },
+    {
+      "label": "Build level lists",
+      "args": [
+        "tools/level-lists.mjs"
+      ]
+    },
+    {
+      "label": "Build derived tables",
+      "args": [
+        "tools/derived-tables.mjs"
+      ]
+    },
+    {
+      "label": "Build interface index",
+      "args": [
+        "tools/ui-validate.mjs"
+      ]
+    },
+    {
+      "label": "Build README tables",
+      "args": [
+        "tools/readme-sync.mjs",
+        "--write"
       ]
     }
   ],
@@ -126,10 +169,52 @@
       ]
     },
     {
+      "label": "Check enemy level cards",
+      "args": [
+        "tools/enemy-level-cards.mjs",
+        "--check"
+      ]
+    },
+    {
       "label": "Check game packs",
       "args": [
         "tools/game-config.mjs",
         "check"
+      ]
+    },
+    {
+      "label": "Check combat power table",
+      "args": [
+        "tools/combat-power-report.mjs",
+        "--check"
+      ]
+    },
+    {
+      "label": "Check level lists",
+      "args": [
+        "tools/level-lists.mjs",
+        "--check"
+      ]
+    },
+    {
+      "label": "Check derived tables",
+      "args": [
+        "tools/derived-tables.mjs",
+        "--check"
+      ]
+    },
+    {
+      "label": "Check interface index",
+      "args": [
+        "tools/ui-validate.mjs",
+        "--check"
+      ]
+    },
+    {
+      "label": "Check README tables",
+      "args": [
+        "tools/readme-sync.mjs",
+        "--check"
       ]
     },
     {
@@ -173,5 +258,8 @@
     "enemySheetStep": "Build enemy sheets",
     "enemySheetExtension": ".json",
     "generatedSheetPrefix": "_"
-  }
+  },
+  "generatedFolders": [
+    "games/ashenspire/derived/"
+  ]
 }
