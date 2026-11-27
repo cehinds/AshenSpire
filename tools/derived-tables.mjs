@@ -8,12 +8,32 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadGameProfileCatalog } from './game-config.mjs';
+import { EnemyHpOverride } from '../src/model/enemyHpOverride.js';
 import { resolveGameAuthor, enemyAttributeTotal, enemyPools, enemyItemBonuses, enemyLevel, characterSettings, resolveEnemyAttributes, characterRule,
   displayName, resolveGearItem, enemyGearIds, enemyRelicIds, resolveCharacterDeck, deckCopyLimit } from '../engine/kernel/gameConfig.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = resolve(ROOT, 'games/ashenspire/derived');
 const ATTRS = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
+
+// An enemy sheet's stats.hp replaces the attribute and level HP, so the table shows it instead.
+function hpSummary(row, hpTerms, derivedHp)
+{
+  const override = EnemyHpOverride(row);
+  if (override === null)
+  {
+    return {
+      terms: hpTerms,
+      total: derivedHp,
+      formula: Object.values(hpTerms).join('+') + ` = ${derivedHp}`,
+    };
+  }
+  return {
+    terms: hpTerms,
+    total: override,
+    formula: `stats.hp = ${override}`,
+  };
+}
 
 export function buildDerivedTables() {
   const profile = resolveGameAuthor(JSON.parse(readFileSync(resolve(ROOT, 'games/ashenspire/game.json'), 'utf8')), loadGameProfileCatalog());
@@ -36,13 +56,14 @@ export function buildDerivedTables() {
     const hpTerms = { base: rule.pools.hp, constitution: t('constitution') * r.constitution, strength: t('strength') * r.strength,
       dexterity: t('dexterity') * r.dexterity, wisdom: t('wisdom') * r.wisdom, intelligence: t('intelligence') * r.intelligence, level: (level - 1) * r.perLevel };
     const pools = enemyPools({ ...row, resolvedAttributes: own }, s, level, bonus);
+    const hp = hpSummary(row, hpTerms, pools.hp);
     const deck = source.tags.includes('character.player') ? resolveCharacterDeck(source, c, g, s.cardPoolRules) : row.defaultDeck;
     return {
       id: source.id, name: source.name, displayName: displayName(source.name), tags: source.tags,
       kind: source.tags.includes('character.player') ? 'player' : 'enemy', tier: row.tier || null, level,
       attributePoints: Object.values(own).reduce((a, b) => a + b, 0), attributes,
-      hp: { terms: hpTerms, total: pools.hp, formula: Object.values(hpTerms).join('+') + ` = ${pools.hp}` },
-      pools: { hp: pools.hp, sp: pools.sp, mp: pools.mp, hand: pools.hand },
+      hp,
+      pools: { hp: hp.total, sp: pools.sp, mp: pools.mp, hand: pools.hand },
       gear: (source.defaultGear || []).map(e => ({ ...e, name: gear.get(e.id)?.name })),
       relics: (source.defaultRelics || []).map(e => ({ ...e, name: relics.get(e.id)?.name })),
       deck: { size: deck.length, cards: Object.entries(deck.reduce((m, id) => ((m[id] = (m[id] || 0) + 1), m), {})).map(([id, copies]) => ({ id, name: cards.get(id)?.name, copies })) },
