@@ -284,7 +284,7 @@ export function commitUpgradeArt(registries, run, quote, { priceMult = 1 } = {})
   // The roll is always made, but it lands only when the rank-up rule allows it with this step on (RankUpBlock).
   const card = owned(run).find((row) => row.instanceId === receipt.instanceId);
   const rolled = !!card && InstanceRank(card) < RANK_CEILING && upgradeGrantsRankAt(run, card, receipt.n - 1);
-  const ranked = rolled && !RankUpBlock(run, card);
+  const ranked = rolled && !RankUpBlock(run, card, registries);
   if (ranked) card.rank = OwnCardRank(card) + 1;
   return { instanceId: receipt.instanceId, spentStones: receipt.spentStones - lent, step: receipt.step, n: receipt.n, ...(ranked ? { rankedUp: card.rank } : {}) };
 }
@@ -312,7 +312,7 @@ export function rankUpPlan(registries, run, instanceId, { priceMult = 1 } = {}) 
   else if (!card) reason = say('shop.refuse.gone');
   else if (EquipmentBound(card) || !registries.cards.has(card.cardId)) reason = say('blacksmith.refuse.rankNone', { name });
   else if (InstanceRank(card) >= RANK_CEILING) reason = say('blacksmith.refuse.rankMax', { name });
-  else if (RankUpBlock(run, card)) reason = RankUpBlock(run, card);
+  else if (RankUpBlock(run, card, registries)) reason = RankUpBlock(run, card, registries);
   else if (stones(run) < need) reason = say('blacksmith.refuse.stones', { cost: need, have: stones(run), plural: plural(need) });
   else if (!affordable(run, price)) reason = say('shop.refuse.cinders');
   const from = OwnCardRank(card); // an unranked card reads 0 and rises to Rank 1
@@ -344,7 +344,7 @@ export function serviceCandidates(registries, run, id) {
     case 'upgrade': return coreSmithingActive(run) ? SmithUpgradeItems(registries, run) : smithingPlan(registries, run).candidates;
     case 'upgradeArt': return upgradeableArts(registries, run);
     // Only the cards that may rank up now: one the full-upgrade rule holds back is listed, disabled, but not counted.
-    case 'rankUp': return rankUpCards(registries, run).filter((card) => !RankUpBlock(run, card));
+    case 'rankUp': return rankUpCards(registries, run).filter((card) => !RankUpBlock(run, card, registries));
     case 'cardCopy': return CardCopyUsesLeft(run.shopStock?.cardCopy) > 0 ? CardCopyCandidates(registries, run) : [];
     default: return [];
   }

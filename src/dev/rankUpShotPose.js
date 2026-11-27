@@ -9,7 +9,7 @@ import { UpgradeSlots } from './../model/cardUpgradeLimits.js';
 export function FillRankUpCandidateSlots(registries, run, skillId) {
   const cards = rankUpCandidates(registries, run, skillId);
   for (const card of cards) {
-    while (paidUpgradeCount(card) < UpgradeSlots(run, card) && freeCardUpgradeStep(run, registries, card)) applyFreeCardUpgrade(run, registries, card);
+    while (paidUpgradeCount(card) < UpgradeSlots(run, card, registries) && freeCardUpgradeStep(run, registries, card)) applyFreeCardUpgrade(run, registries, card);
   }
   return cards;
 }

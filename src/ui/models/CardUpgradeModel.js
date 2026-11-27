@@ -308,8 +308,8 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
     const entries = quote ? owned : owned.filter(({ instance }) => instance && registries.cards.has(instance.cardId));
     // Blacksmith: 2 or 3 options. Rest: 1 up to the third upgrade, then 2, some with two effects.
     const ruleFor = (instance) => blacksmith
-      ? { choices: upgradeChoiceCount(registries.cards.get(instance.cardId), instance, { blacksmith, run }), combos: false, vendor: 'blacksmith' }
-      : RestUpgradeRule(instance);
+      ? { choices: upgradeChoiceCount(registries.cards.get(instance.cardId), instance, { blacksmith, run, registries }), combos: false, vendor: 'blacksmith' }
+      : RestUpgradeRule(instance, registries);
     const plans = quote ? null : PlanCardUpgradeBatch(run, registries,
       entries.map(({ instance }) => ({ ...ruleFor(instance), instanceId: instance.instanceId })));
     let planIndex = 0;
@@ -395,7 +395,7 @@ export function RankUpUpgradeModel(registries, run, skillId, selectedInstanceId 
     const inDeck = (run.deck || []).includes(instance);
     const base = registries.cards.get(instance.cardId);
     const rank = OwnCardRank(instance); // an unranked card reads 0 and rises to Rank 1 (owner, 2026-11-23)
-    const blocked = RankUpBlock(run, instance); // the full-upgrade rule: shown, disabled, with its reason
+    const blocked = RankUpBlock(run, instance, registries); // the full-upgrade rule: shown, disabled, with its reason
     const before = faceOf(instance);
     const raised = faceOf({ ...instance, rank: rank + 1 });
     const bonus = rankUpBonusOptions(registries, run, instance);
