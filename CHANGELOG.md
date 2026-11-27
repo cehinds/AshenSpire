@@ -34,7 +34,9 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-27
 
-- **Spell costs match their cards** ([#3022](https://github.com/cehinds/AshenSpire/pull/3022), `0.7.5.143`). A spell now costs the Mana and Stamina printed on it; the hidden extra Mana on every spell is gone. Prepared stance takes 1 Mana off a spell and 1 Stamina off only down to 1, so Arcane Strike and Mana Rite cost Stamina only.
+- **Spell costs match their cards** ([#3022](https://github.com/cehinds/AshenSpire/pull/3022), `0.7.5.145`). A spell now costs the Mana and Stamina printed on it; the hidden extra Mana on every spell is gone. Prepared stance takes 1 Mana off a spell and 1 Stamina off only down to 1, so Arcane Strike and Mana Rite cost Stamina only.
+- **A code style guide** ([#3020](https://github.com/cehinds/AshenSpire/pull/3020), `0.7.5.145`). `CODE-STYLE.md` sets how all new and changed code looks. No game changes.
+
 - **Faster upgrade choices and Act schedules** ([#3014](https://github.com/cehinds/AshenSpire/pull/3014), `0.7.5.143`). Upgrade offers skip unused extra candidates while preserving choices and prices. Generated map nodes use a direct text sort when preparing upgrade and reward schedules, while custom node IDs retain their existing ordering.
 
 - **Safer card JSON edits in Score Studio** ([#3015](https://github.com/cehinds/AshenSpire/pull/3015), `0.7.5.143`). Failed card JSON edits preserve Undo and Redo history, invalid card text is rejected before changes, and custom cards can open their comparison summary and menu.
