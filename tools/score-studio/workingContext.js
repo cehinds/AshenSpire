@@ -40,7 +40,10 @@ function isKnownEntity(state, kind, id)
  * onChange runs once per real change. */
 export function createActiveEntities({ state, onChange } = {})
 {
-  const committed = { [GalleryKind.Cards]: undefined, [GalleryKind.Items]: undefined };
+  const committed = {
+    [GalleryKind.Cards]: undefined,
+    [GalleryKind.Items]: undefined,
+  };
   function set(kind, id)
   {
     const field = SelectedField[kind];

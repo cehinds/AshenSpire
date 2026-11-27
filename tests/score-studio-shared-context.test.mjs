@@ -31,7 +31,10 @@ function studioState()
       { id: 'b', name: 'Beta' },
       { id: 'c', name: 'Gamma' },
     ],
-    items: [{ key: 'weapon:one' }, { key: 'weapon:two' }],
+    items: [
+      { key: 'weapon:one' },
+      { key: 'weapon:two' },
+    ],
     selectedCardId: null,
     selectedItemKey: null,
   };

@@ -72,11 +72,36 @@ body.studio-body .customization-preview-body .inspector-card-preview { width: cl
 body.studio-body .customization-entity .inspector-preview-wrap { container-type: inline-size; }
 body.studio-body .customization-entity .inspector-card-preview { max-width: max(60px, calc(100cqw - 230px)); }
 body.studio-body .customization-scope { margin: 0; color: var(--st-muted); font-size: 12px; overflow-wrap: anywhere; }
-body.studio-body .customization-filter-note { margin: 0; color: var(--st-muted); font-size: 12px; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-body.studio-body .customization-filter-note[hidden] { display: none; }
-body.studio-body .customization-filter-clear { padding: 0; border: 0; background: none; color: var(--st-accent); font: inherit; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
-body.studio-body .customization-filter-clear:hover { color: var(--st-text); }
-body.studio-body .customization-filter-clear:focus-visible { outline: 2px solid var(--st-accent); outline-offset: 2px; border-radius: 2px; }
+body.studio-body .customization-filter-note {
+  margin: 0;
+  color: var(--st-muted);
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+body.studio-body .customization-filter-note[hidden] {
+  display: none;
+}
+body.studio-body .customization-filter-clear {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--st-accent);
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+body.studio-body .customization-filter-clear:hover {
+  color: var(--st-text);
+}
+body.studio-body .customization-filter-clear:focus-visible {
+  outline: 2px solid var(--st-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
 body.studio-body .customization-entity-preview { min-width: 0; }
 body.studio-body .customization-entity-preview > [hidden] { display: none !important; }
 body.studio-body .customization-entity-preview .inspector-preview-wrap { min-width: 0; }

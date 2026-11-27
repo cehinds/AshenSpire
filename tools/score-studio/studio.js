@@ -1606,10 +1606,17 @@ function saveWorkingContext()
   {
     return;
   }
-  writeWorkingContext(localStorage, { gallery: activeGallery, cardId: state.selectedCardId, itemKey: state.selectedItemKey });
+  writeWorkingContext(localStorage, {
+    gallery: activeGallery,
+    cardId: state.selectedCardId,
+    itemKey: state.selectedItemKey,
+  });
 }
 // Each gallery's ids in displayed order, as of its last render.
-const displayedIds = { [GalleryKind.Cards]: null, [GalleryKind.Items]: null };
+const displayedIds = {
+  [GalleryKind.Cards]: null,
+  [GalleryKind.Items]: null,
+};
 
 function isHiddenByFilters(kind, id)
 {
@@ -4302,7 +4309,10 @@ function showGallery(kind)
 }
 
 // Each gallery keeps its own place: the grid scrolls on desktop, the page on narrow screens.
-const galleryScroll = { [GalleryKind.Cards]: null, [GalleryKind.Items]: null };
+const galleryScroll = {
+  [GalleryKind.Cards]: null,
+  [GalleryKind.Items]: null,
+};
 
 function galleryGrid(kind)
 {
