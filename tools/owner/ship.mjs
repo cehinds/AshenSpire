@@ -1,17 +1,27 @@
 #!/usr/bin/env node
 // npm run ship -- "Title": puts your JSON edits on a feature branch cut from origin/dev, one
-// commit per file, then pushes and opens a pull request. --quick, --dry-run, --local.
+// commit per file, then pushes and opens a pull request. Flags are in ownerTools.json.
 import { DescribeFileChange } from './contentDiff.mjs';
-import { IsMainModule, OWNER_TOOLS } from './ownerConfig.mjs';
+import {
+    FormatText,
+    IsMainModule,
+    OWNER_TEXT,
+    OWNER_TOOLS,
+} from './ownerConfig.mjs';
 import {
     AddDetachedWorktree,
     ChangedContentFiles,
+    ChangedPaths,
     ReadAtRef,
     ReadWorking,
     RemoveWorktree,
 } from './ownerGit.mjs';
 import { IsRebuiltPath } from './ownerPaths.mjs';
-import { RunGit, RunProgram, RunSteps } from './ownerProcess.mjs';
+import {
+    RunGit,
+    RunGitHub,
+    RunSteps,
+} from './ownerProcess.mjs';
 import { CarryFile, OwnerRebuiltEdits } from './shipCarry.mjs';
 import {
     Commit,
@@ -23,24 +33,27 @@ import {
 import { FetchShippedRefs, ShippedIn } from './shipRefs.mjs';
 import { ReceiptSummary } from './shipText.mjs';
 
-const QUICK_FLAG = '--quick';
-const DRY_RUN_FLAG = '--dry-run';
-const LOCAL_FLAG = '--local';
-const FLAG_PREFIX = '--';
 const HEAD_REF = 'HEAD';
-const GH_PROGRAM = 'gh';
-const REGENERATE_SUBJECT = 'Regenerate game data from the edited files';
-const STOPPED_NOTE = 'Stopped: fix the error above, then run "npm run ship" again. Not pushed.';
-const SYNC_NOTE = 'Your edits are still here. After the pull request merges, run "npm run sync".';
-const RECEIPT_FAILED = 'The pull request is open, but its changelog entry failed:';
+const FLAGS = OWNER_TOOLS.flags;
+const GIT = OWNER_TOOLS.git;
+const TEXT = OWNER_TEXT.ship;
+const EXIT = Object.freeze({
+    ok: 0,
+    failed: 1,
+});
+
+function say(key, values)
+{
+    console.log(FormatText(TEXT[key], values));
+}
 
 function parseOptions(argv)
 {
-    const words = argv.filter((arg) => !arg.startsWith(FLAG_PREFIX));
+    const words = argv.filter((arg) => !arg.startsWith(FLAGS.prefix));
     return {
-        quick: argv.includes(QUICK_FLAG),
-        dryRun: argv.includes(DRY_RUN_FLAG),
-        local: argv.includes(LOCAL_FLAG),
+        quick: argv.includes(FLAGS.quick),
+        dryRun: argv.includes(FLAGS.dryRun),
+        local: argv.includes(FLAGS.local),
         title: words.join(' ').trim(),
     };
 }
@@ -68,7 +81,10 @@ function unshippedFiles()
         const ref = ShippedIn(file.path, refs);
         if (ref)
         {
-            console.log(`Skipping ${file.path}: already in ${ref}.`);
+            say('skipping', {
+                path: file.path,
+                ref,
+            });
         }
         return !ref;
     });
@@ -88,6 +104,14 @@ function selectEdits()
         file,
         described: describe(file),
     }));
+}
+
+/** Carries every edit; keeps only those that still change something on dev. */
+function carryEdits(worktree, edits)
+{
+    edits.forEach((edit) => CarryFile(edit.file, worktree));
+    const changed = new Set(ChangedPaths(worktree).map((file) => file.path));
+    return edits.filter((edit) => changed.has(edit.file.path));
 }
 
 function runGates(
@@ -111,7 +135,20 @@ function runGates(
     ).ok);
 }
 
-/** Carries and commits each edit, rebuilds, runs the gates, commits generated data. */
+function commitGenerated(worktree)
+{
+    const generated = GeneratedPaths(worktree);
+    if (!generated.length)
+    {
+        return;
+    }
+    Commit(worktree, generated, {
+        subject: OWNER_TEXT.commits.regenerate,
+        lines: [],
+    });
+}
+
+/** Commits each edit, runs the gates, commits generated data; null when a gate fails. */
 function buildBranch(
     worktree,
     edits,
@@ -124,7 +161,6 @@ function buildBranch(
         console.log(line);
         checkLines.push(line);
     };
-    edits.forEach((edit) => CarryFile(edit.file, worktree));
     edits.forEach((edit) => Commit(
         worktree,
         [edit.file.path],
@@ -139,14 +175,7 @@ function buildBranch(
     {
         return null;
     }
-    const generated = GeneratedPaths(worktree);
-    if (generated.length)
-    {
-        Commit(worktree, generated, {
-            subject: REGENERATE_SUBJECT,
-            lines: [],
-        });
-    }
+    commitGenerated(worktree);
     return checkLines;
 }
 
@@ -156,10 +185,31 @@ function push(worktree, branch)
         'push',
         '--quiet',
         '-u',
-        OWNER_TOOLS.git.remote,
+        GIT.remote,
         branch,
     ];
     RunGit(args, { cwd: worktree });
+}
+
+function addReceipt(
+    worktree,
+    pull,
+    pullNumber,
+)
+{
+    try
+    {
+        WriteReceipt(worktree, {
+            title: pull.title,
+            pullNumber,
+            summary: ReceiptSummary(pull.described),
+        });
+        push(worktree, pull.branch);
+    }
+    catch (error)
+    {
+        say('receiptFailed', { error: error.message });
+    }
 }
 
 /** Pushes, opens the pull request, then adds its receipt. */
@@ -172,45 +222,30 @@ function publish(
     push(worktree, pull.branch);
     state.unpushedBranch = null;
     const opened = OpenPullRequest(worktree, pull);
-    try
-    {
-        WriteReceipt(worktree, {
-            title: pull.title,
-            pullNumber: opened.pullNumber,
-            summary: ReceiptSummary(pull.described),
-        });
-        push(worktree, pull.branch);
-    }
-    catch (error)
-    {
-        console.log(`\n${RECEIPT_FAILED}\n${error.message}`);
-    }
-    console.log(`\nPull request: ${opened.url}\n${SYNC_NOTE}`);
+    addReceipt(
+        worktree,
+        pull,
+        opened.pullNumber,
+    );
+    say('pullRequest', { url: opened.url });
+    say('afterMerge');
 }
 
 function listEdits(edits)
 {
-    console.log('Shipping:');
-    edits.forEach((edit) => console.log(`  ${edit.file.path}: ${edit.described.subject}`));
+    say('shipping');
+    edits.forEach((edit) => say('shippingLine', {
+        path: edit.file.path,
+        subject: edit.described.subject,
+    }));
 }
 
-/** Builds the branch in `worktree`, then keeps it local or publishes it; returns an exit code. */
-function shipFrom(
+function startBranch(
     worktree,
     edits,
     state,
 )
 {
-    const checkLines = buildBranch(
-        worktree,
-        edits,
-        state.options.quick,
-    );
-    if (!checkLines)
-    {
-        console.log(`\n${STOPPED_NOTE}`);
-        return 1;
-    }
     const described = edits.map((edit) => edit.described);
     const title = state.options.title || described[0].subject;
     const branch = UniqueBranchName(title);
@@ -220,19 +255,52 @@ function shipFrom(
         '-c',
         branch,
     ], { cwd: worktree });
-    if (state.options.local)
-    {
-        console.log(`\nLocal only: branch ${branch} has the commits. Nothing was pushed.`);
-        return 0;
-    }
-    state.unpushedBranch = branch;
-    publish(worktree, {
+    return {
         branch,
         title,
         described,
+    };
+}
+
+/** Builds the branch in `worktree`, then keeps it local or publishes it; returns an exit code. */
+function shipFrom(
+    worktree,
+    edits,
+    state,
+)
+{
+    const landed = carryEdits(worktree, edits);
+    if (!landed.length)
+    {
+        say('allInDev');
+        return EXIT.ok;
+    }
+    const checkLines = buildBranch(
+        worktree,
+        landed,
+        state.options.quick,
+    );
+    if (!checkLines)
+    {
+        say('stopped');
+        return EXIT.failed;
+    }
+    const pull = startBranch(
+        worktree,
+        landed,
+        state,
+    );
+    if (state.options.local)
+    {
+        say('localOnly', { branch: pull.branch });
+        return EXIT.ok;
+    }
+    state.unpushedBranch = pull.branch;
+    publish(worktree, {
+        ...pull,
         checkLines,
     }, state);
-    return 0;
+    return EXIT.ok;
 }
 
 function cleanUp(worktree, state)
@@ -249,26 +317,9 @@ function cleanUp(worktree, state)
     ], { allowFailure: true });
 }
 
-function main(argv)
+function shipInWorktree(edits, options)
 {
-    const options = parseOptions(argv);
-    const edits = selectEdits();
-    if (!edits.length)
-    {
-        console.log('Nothing new to ship.');
-        return 0;
-    }
-    listEdits(edits);
-    if (options.dryRun)
-    {
-        return 0;
-    }
-    if (!options.local)
-    {
-        RunProgram(GH_PROGRAM, ['auth', 'status']);
-    }
-    const { remote, baseBranch } = OWNER_TOOLS.git;
-    const worktree = AddDetachedWorktree(`${remote}/${baseBranch}`);
+    const worktree = AddDetachedWorktree(`${GIT.remote}/${GIT.baseBranch}`);
     const state = {
         options,
         unpushedBranch: null,
@@ -287,6 +338,27 @@ function main(argv)
     }
 }
 
+function main(argv)
+{
+    const options = parseOptions(argv);
+    const edits = selectEdits();
+    if (!edits.length)
+    {
+        say('nothingNew');
+        return EXIT.ok;
+    }
+    listEdits(edits);
+    if (options.dryRun)
+    {
+        return EXIT.ok;
+    }
+    if (!options.local)
+    {
+        RunGitHub(['auth', 'status']);
+    }
+    return shipInWorktree(edits, options);
+}
+
 if (IsMainModule(import.meta.url))
 {
     try
@@ -295,7 +367,7 @@ if (IsMainModule(import.meta.url))
     }
     catch (error)
     {
-        console.error(`\nship: ${error.message}`);
-        process.exitCode = 1;
+        say('errorPrefix', { error: error.message });
+        process.exitCode = EXIT.failed;
     }
 }
