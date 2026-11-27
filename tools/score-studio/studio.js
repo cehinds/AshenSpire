@@ -2007,6 +2007,8 @@ function applyCardJson() {
   // An explicit name or text in the JSON wins, exactly like typing in the Name or Text field:
   // it switches that generation off instead of being overwritten by it.
   const nameChanged = (next.name ?? '') !== (before.name ?? ''), textChanged = (next.textTemplate ?? '') !== (before.textTemplate ?? '');
+  // Snapshot everything first: a failed apply must also undo other cards' auto-names and the Auto-text setting.
+  const snapshot = snapshotState(), autoTextBefore = document.getElementById('toggle-auto-text')?.checked;
   if (textChanged) {
     const autoTextToggle = document.getElementById('toggle-auto-text');
     if (autoTextToggle?.checked) { autoTextToggle.checked = false; writeStoredJson(AUTO_TEXT_KEY, false); }
@@ -2020,10 +2022,11 @@ function applyCardJson() {
       if (textChanged) card._autoText = false;
     }, { autoName: !nameChanged, autoText: !textChanged });
   } catch (err) {
-    // Roll back: the card, the history entry the edit pushed, and the views.
-    state.cards[index] = before;
+    // Roll back everything the edit touched: all cards, the history entry, the Auto-text setting and the views.
+    restoreSnapshot(snapshot);
     if (state.undoStack.length > history) { state.undoStack.length = history; updateUndoButtons(); }
-    renderInspector(); updateCardTileInPlace(id);
+    const autoTextToggle = document.getElementById('toggle-auto-text');
+    if (autoTextToggle && autoTextBefore !== undefined && autoTextToggle.checked !== autoTextBefore) { autoTextToggle.checked = autoTextBefore; writeStoredJson(AUTO_TEXT_KEY, autoTextBefore); }
     error.textContent = `Not applied: ${err.message}`;
     return;
   }
