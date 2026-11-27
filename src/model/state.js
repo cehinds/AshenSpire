@@ -200,6 +200,18 @@ export function createDeck(cardIds, idGen = createIdGen('d')) {
 // Run state (SPEC §3.12 save shape)
 // ---------------------------------------------------------------------------
 
+// Only factory-made canonical profiles skip native cloning; raw snapshots may carry metadata.
+function RunGameProfile(gameProfile, shareFrozenProfile)
+{
+  if (!IsCanonicalVerifiedProfile(gameProfile) || !Object.isFrozen(gameProfile))
+  {
+    return structuredClone(gameProfile);
+  }
+  return shareFrozenProfile
+    ? gameProfile
+    : copyCanonical(gameProfile);
+}
+
 /**
  * createRunState({ seed, classId, registries }) → new run at floor 0, act 1.
  * Starting deck/relic/HP come from the class def; cinders from
@@ -224,8 +236,7 @@ export function createRunState({
   startingRelicId = undefined,
   startingAbilityIds = undefined,
   profileMeta = {},
-  // Read-only reference runs (cardMechanicalProjection's neutral card-face
-  // baseline) keep the caller's deep-frozen canonical profile instead of a copy.
+  // Read-only reference runs may keep a deep-frozen canonical profile uncopied.
   shareFrozenProfile = false,
 }) {
   if (![1, 2].includes(combatExpansionVersion)) throw new Error('combatExpansionVersion must be 1 or 2');
@@ -293,10 +304,9 @@ export function createRunState({
   const equipmentPoolBonuses = Object.fromEntries(Loadout.EQUIPMENT_POOL_FIELDS.map((field) => [field, startingRunMods[field]]));
   const oldMaxHp = classDef.maxHp + equipmentPoolBonuses.maxHp;
   const run = {
-    // Only normalized factories prove canonical JSON's domain. Raw verified
-    // snapshots may retain metadata, so every other input keeps native cloning.
-    ...(gameProfile ? { gameProfile: IsCanonicalVerifiedProfile(gameProfile) && Object.isFrozen(gameProfile)
-      ? shareFrozenProfile ? gameProfile : copyCanonical(gameProfile) : structuredClone(gameProfile), runId: runId || globalThis.crypto.randomUUID() } : {}),
+    ...(gameProfile
+      ? { gameProfile: RunGameProfile(gameProfile, shareFrozenProfile), runId: runId || globalThis.crypto.randomUUID() }
+      : {}),
     combatExpansionVersion,
     ...(combatExpansionVersion === 2 && gameModule(profileSubject, 'effects')?.fixCoreVersion === 1
       ? { rangePolicy: snapshotRangePolicy(gameProfile.fixCoreRules?.range ?? fixCoreMechanics.range, profileMeta.settings || {}) } : {}),

@@ -25,67 +25,171 @@ import * as CardProfile from './combatCardProfile.js';
 import * as CarrierDamage from './carrierDamageType.js';
 import * as FixCore from './fixCoreRulesCache.js';
 
-// A plan's projection scope marks one synchronous, read-only operation over one
-// run. The detached receipt source below reads only that run and registries,
-// so every card the operation checks shares it instead of rebuilding it.
+// One damage receipt source per plan scope; it reads only the run and registries.
 const receiptContextsByScope = new WeakMap();
-function checkDamageUpgrade(run, registries, rank, ranked, projectionScope) {
-  if (!Number.isFinite(run.gameProfile?.modules?.effects?.baseDamageMultiplier)) return undefined;
-  const tokens = (def, atRank) => staticCardTokens(
-    atRank > 1 ? { ...def, effects: rankedEffectsCapped(def, atRank - 1) } : def, registries, run);
-  const shared = projectionScope ? receiptContextsByScope.get(projectionScope) : null;
-  let before, intrinsicBefore, receiptContext = shared && shared.run === run && shared.registries === registries ? shared.value : undefined;
-  const intrinsicDamage = (def, atRank) => {
-    // Conditional payloads, charges and Counter returns have their own runtime
-    // context. Retain the existing static fallback rather than guessing it.
-    if (!run.class || !run.attributes || !registries?.gameProfile || def.effectVariants?.length || def.comboHook
-      || (def.effects || []).some(effect => effect.op === 'grantCardCharge' || effect.op === 'damage' && !isPlainEffect(effect, 'damage'))) return null;
-    const index = firstPlainIndex(def.effects, 'damage');
-    if (index < 0 || CardProfile.combatProfileFor(def).maneuver === 'counter') return null;
-    // The source is detached and first-play only: no statuses, enemy, flux or
-    // prior stance. Construct it lazily, only after a numeric damage candidate
-    // has already passed the shared static-face increase check.
-    if (receiptContext === undefined) {
-      const ratings = ProfileRun.gameProfileRatingReceipt(registries, run);
-      if (!ratings) receiptContext = null;
-      else {
-        const attributes = ProfileRun.gameProfileEffectiveAttributes(registries, run);
-        const source = { id: 'player', kind: 'player', classId: run.class, attributes,
-          ratings: ratings.totals, ratingSources: ratings.sources, statuses: {}, alive: true,
-          itemProps: { ...ItemProperties.ItemPropertySummary(run), ...Gear.GearItemProps(Gear.GearSummary(registries, run.loadout, run.class, run)) } };
-        receiptContext = { source, gear: Gear.GearAlwaysOn(registries, run),
-          ctx: { ...run, registries, fixCoreRules: FixCore.fixCoreRules(run), attributes, enemies: [], phase: 'player', elementFlux: null } };
-      }
-      if (projectionScope) receiptContextsByScope.set(projectionScope, { run, registries, value: receiptContext });
-    }
-    if (!receiptContext) return null;
-    const { source, ctx, gear } = receiptContext;
-    const rankedDef = atRank > 1 ? { ...def, effects: rankedEffectsCapped(def, atRank - 1) } : def;
-    const shown = Gear.ApplyGearCardRules(gear.rules, rankedDef, gear.state);
-    const carrier = CarrierDamage.ResolveCarrierDamageType({ ...shown, cardId: shown.id,
-      combatProfile: { ...CardProfile.combatProfileFor(shown) }, fixCoreSameStance: false }, registries, run.loadout, run.class);
-    const attacker = { ...source, combatStance: Stances.stanceOf(carrier, source) };
-    return Offense.ProfileDamageOffense({ ...ctx, player: attacker }, attacker, null,
-      shown.effects[index].amount, carrier, {
-        getAdd: () => 0, FluxMultiplier: () => 1, defensiveCombatStance: () => undefined,
-        hitWeaknessTriggers: () => [], matchingHitWeaknesses: () => [], weaknessLabel: () => '',
-        AttackDamageMultiplier: StanceRead.AttackDamageMultiplier,
-        StanceWeaknessMultiplier: StanceRead.StanceWeaknessMultiplier,
-        ElementReceiptStages: (...args) => ElementStages.ElementReceiptStages(...args,
-          { stacksOf: () => 0, hasTag: () => false, opponents: () => [], bandsActive: () => false }),
-      }).rawHit;
+
+function RankedCard(def, atRank)
+{
+  return atRank > 1
+    ? { ...def, effects: rankedEffectsCapped(def, atRank - 1) }
+    : def;
+}
+
+// A detached first-play source: no statuses, enemy, flux or prior stance.
+function BuildDamageReceiptContext(run, registries)
+{
+  const ratings = ProfileRun.gameProfileRatingReceipt(registries, run);
+  if (!ratings)
+  {
+    return null;
+  }
+  const attributes = ProfileRun.gameProfileEffectiveAttributes(registries, run);
+  const source = {
+    id: 'player',
+    kind: 'player',
+    classId: run.class,
+    attributes,
+    ratings: ratings.totals,
+    ratingSources: ratings.sources,
+    statuses: {},
+    alive: true,
+    itemProps: {
+      ...ItemProperties.ItemPropertySummary(run),
+      ...Gear.GearItemProps(Gear.GearSummary(registries, run.loadout, run.class, run)),
+    },
   };
-  return (current, step, nextRank) => {
+  return {
+    source,
+    gear: Gear.GearAlwaysOn(registries, run),
+    ctx: {
+      ...run,
+      registries,
+      fixCoreRules: FixCore.fixCoreRules(run),
+      attributes,
+      enemies: [],
+      phase: 'player',
+      elementFlux: null,
+    },
+  };
+}
+
+function SharedDamageReceiptContext(projectionScope, run, registries)
+{
+  const shared = projectionScope
+    ? receiptContextsByScope.get(projectionScope)
+    : null;
+  if (shared && shared.run === run && shared.registries === registries)
+  {
+    return shared.value;
+  }
+  const value = BuildDamageReceiptContext(run, registries);
+  if (projectionScope)
+  {
+    receiptContextsByScope.set(projectionScope, { run, registries, value });
+  }
+  return value;
+}
+
+// Readers for a detached hit: no adds, flux, defender stance or weaknesses.
+function NeutralOffenseHooks()
+{
+  return {
+    getAdd: () => 0,
+    FluxMultiplier: () => 1,
+    defensiveCombatStance: () => undefined,
+    hitWeaknessTriggers: () => [],
+    matchingHitWeaknesses: () => [],
+    weaknessLabel: () => '',
+    AttackDamageMultiplier: StanceRead.AttackDamageMultiplier,
+    StanceWeaknessMultiplier: StanceRead.StanceWeaknessMultiplier,
+    ElementReceiptStages: (...args) => ElementStages.ElementReceiptStages(...args, {
+      stacksOf: () => 0,
+      hasTag: () => false,
+      opponents: () => [],
+      bandsActive: () => false,
+    }),
+  };
+}
+
+// Conditional payloads, charges and Counter returns keep the static fallback.
+function HasIntrinsicDamage(run, registries, def)
+{
+  if (!run.class || !run.attributes || !registries?.gameProfile || def.effectVariants?.length || def.comboHook)
+  {
+    return false;
+  }
+  return !(def.effects || []).some(effect => effect.op === 'grantCardCharge'
+    || effect.op === 'damage' && !isPlainEffect(effect, 'damage'));
+}
+
+function checkDamageUpgrade(run, registries, rank, ranked, projectionScope)
+{
+  if (!Number.isFinite(run.gameProfile?.modules?.effects?.baseDamageMultiplier))
+  {
+    return undefined;
+  }
+  const tokens = (def, atRank) => staticCardTokens(RankedCard(def, atRank), registries, run);
+  let before;
+  let intrinsicBefore;
+  let receiptContext;
+  const intrinsicDamage = (def, atRank) =>
+  {
+    if (!HasIntrinsicDamage(run, registries, def))
+    {
+      return null;
+    }
+    const index = firstPlainIndex(def.effects, 'damage');
+    if (index < 0 || CardProfile.combatProfileFor(def).maneuver === 'counter')
+    {
+      return null;
+    }
+    // Built lazily, after a numeric damage candidate passed the static-face check.
+    if (receiptContext === undefined)
+    {
+      receiptContext = SharedDamageReceiptContext(projectionScope, run, registries);
+    }
+    if (!receiptContext)
+    {
+      return null;
+    }
+    const { source, ctx, gear } = receiptContext;
+    const shown = Gear.ApplyGearCardRules(gear.rules, RankedCard(def, atRank), gear.state);
+    const carrierCard = {
+      ...shown,
+      cardId: shown.id,
+      combatProfile: { ...CardProfile.combatProfileFor(shown) },
+      fixCoreSameStance: false,
+    };
+    const carrier = CarrierDamage.ResolveCarrierDamageType(carrierCard, registries, run.loadout, run.class);
+    const attacker = { ...source, combatStance: Stances.stanceOf(carrier, source) };
+    const amount = shown.effects[index].amount;
+    return Offense.ProfileDamageOffense({ ...ctx, player: attacker }, attacker, null, amount, carrier, NeutralOffenseHooks()).rawHit;
+  };
+  return (current, step, nextRank) =>
+  {
     before ??= tokens(current, rank);
-    const afterDef = applyUpgradeSteps(current, [step]), afterRank = ranked ? Math.max(rank, nextRank || 0) : rank;
+    const afterDef = applyUpgradeSteps(current, [step]);
+    const afterRank = ranked
+      ? Math.max(rank, nextRank || 0)
+      : rank;
     const after = tokens(afterDef, afterRank);
-    if (!Object.values(before).some(Number.isFinite)) return true;
-    if (!Object.keys(after).some(key => before[key] !== after[key])) return false;
-    // A real static increase can still disappear in the intrinsic stance and
-    // element chain's final rounding. CP remains on the shared neutral face;
-    // only eligibility uses the engine's pure pre-defense incoming quantity.
-    if (intrinsicBefore === undefined) intrinsicBefore = intrinsicDamage(current, rank);
-    const intrinsicAfter = intrinsicBefore === null ? null : intrinsicDamage(afterDef, afterRank);
+    if (!Object.values(before).some(Number.isFinite))
+    {
+      return true;
+    }
+    if (!Object.keys(after).some(key => before[key] !== after[key]))
+    {
+      return false;
+    }
+    // A static increase can still round away in the stance and element chain,
+    // so eligibility also checks the engine's pre-defense hit.
+    if (intrinsicBefore === undefined)
+    {
+      intrinsicBefore = intrinsicDamage(current, rank);
+    }
+    const intrinsicAfter = intrinsicBefore === null
+      ? null
+      : intrinsicDamage(afterDef, afterRank);
     return intrinsicBefore === null || intrinsicAfter === null || intrinsicAfter > intrinsicBefore;
   };
 }

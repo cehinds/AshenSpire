@@ -20,13 +20,8 @@ import { EvaluateUpgradeStepCp, PrepareUpgradeStepCpContext } from '../src/model
 import { cardUpgradeModel } from '../src/ui/models/CardUpgradeModel.js';
 import { PrecomputeActRewardSchedule, RewardScheduleForOffer, gameProfileRewardOffers } from '../src/model/gameProfileRewards.js';
 
-// The first ICU collation in a process loads its data from the node binary.
-// On a fresh GitHub runner that first read comes from a lazily filled disk:
-// run 45945847782 measured 197.6ms wall, 6.2ms CPU, 25 major page faults and
-// 29 blocking context switches for one `localeCompare`; the next call took
-// 4.8ms. That is a one-time disk cost of the host, not schedule or picker
-// work, and it landed inside the Act timing below because that file runs
-// first in its shard. Pay it here, before any timed region.
+// The first text sort on a fresh CI runner waits ~200 ms on disk (run 45945847782).
+// Pay that one-time host cost before any timed region.
 const IcuWarmupLeft = 'n1_0';
 const IcuWarmupRight = 'n10_0';
 IcuWarmupLeft.localeCompare(IcuWarmupRight);
@@ -34,8 +29,7 @@ IcuWarmupLeft.localeCompare(IcuWarmupRight);
 const MicrosecondsPerMillisecond = 1000;
 const ReportedDecimals = 1;
 
-// Wall time, plus the process CPU and OS counters that say why wall time ran
-// longer than CPU (disk faults, blocked or preempted waits) when it does.
+// Wall time plus the CPU, fault and wait counts that explain a slow run.
 function Measure(work)
 {
   const usageStart = process.resourceUsage();
