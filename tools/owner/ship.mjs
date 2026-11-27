@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // npm run ship -- "Title": puts your JSON edits on a new feature branch from origin/dev,
 // one commit per file, then pushes and opens a pull request into dev. --local skips the push.
-import { existsSync, mkdtempSync, readFileSync, writeFileSync, copyFileSync, mkdirSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync, copyFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -29,6 +29,7 @@ const WORKTREE_PREFIX = 'ashenspire-ship-';
 const REGENERATE_SUBJECT = 'Regenerate game data from the edited files';
 const RECEIPT_SUBJECT = 'Add the changelog receipt';
 const OPEN_PULL_LIMIT = '200';
+const BASELINE_SUBJECT = 'Owner rebuild baseline';
 const PULL_NUMBER_PATTERN = /\/pull\/(\d+)/;
 const TITLE_WORD_PATTERN = /[A-Za-z0-9]+/g;
 const BRANCH_TITLE_LIMIT = 40;
@@ -77,16 +78,29 @@ function readWorking(path, workingDirectory)
         : null;
 }
 
+function copyIntoWorktree(path, worktree)
+{
+    const source = join(REPO_ROOT, path);
+    const target = join(worktree, path);
+    if (!existsSync(source))
+    {
+        rmSync(target, { force: true });
+        return;
+    }
+    mkdirSync(dirname(target), { recursive: true });
+    copyFileSync(source, target);
+}
+
 /** Brings one file's edit into the ship worktree with a three-way apply; untracked files are copied. */
 function carryFile(file, worktree)
 {
     if (file.untracked)
     {
-        mkdirSync(dirname(join(worktree, file.path)), { recursive: true });
-        copyFileSync(join(REPO_ROOT, file.path), join(worktree, file.path));
+        copyIntoWorktree(file.path, worktree);
         return;
     }
-    if (!ApplyPatch(CapturePatch(file.path), file.path, worktree))
+    const patch = file.patch || CapturePatch(file.path);
+    if (!ApplyPatch(patch, file.path, worktree))
     {
         throw new Error(`${file.path} also changed on dev and the edits clash. Run "npm run sync", redo the edit, then ship again.`);
     }
@@ -237,7 +251,10 @@ function shippedIn(path, refs)
 
 function describe(file)
 {
-    const change = DescribeFileChange(file.path, readAtHead(file.path, REPO_ROOT), readWorking(file.path, REPO_ROOT));
+    const before = file.baseline
+        ? RunGit(['show', `${file.baseline}:${file.path}`], REPO_ROOT, { allowFailure: true }) || null
+        : readAtHead(file.path, REPO_ROOT);
+    const change = DescribeFileChange(file.path, before, readWorking(file.path, REPO_ROOT));
     return {
         ...change,
         path: file.path,
@@ -249,10 +266,44 @@ function isRebuilt(file)
     return OWNER_TOOLS.rebuiltContentFiles.includes(file.path);
 }
 
-/** A rebuilt file is an owner edit only if the rebuild alone does not reproduce it. */
-function ownerEditsAfterBuild(files, worktree)
+/** Commits a rebuild of the owner's own HEAD plus their direct edits; returns its commit. */
+function rebuildBaseline(direct)
 {
-    return files.filter((file) => !SameText(readWorking(file.path, worktree), readWorking(file.path, REPO_ROOT)));
+    const baseline = mkdtempSync(join(tmpdir(), WORKTREE_PREFIX));
+    RunGit(['worktree', 'add', '--quiet', '--detach', baseline, 'HEAD']);
+    try
+    {
+        direct.forEach((file) => copyIntoWorktree(file.path, baseline));
+        const built = RunSteps(OWNER_TOOLS.buildSteps, baseline, () => {});
+        if (!built.ok)
+        {
+            throw new Error(`The rebuild failed at "${built.failedStep}". Run "npm run check" to see why.`);
+        }
+        RunGit(['add', '--all'], baseline);
+        RunGit(['commit', '--quiet', '--allow-empty', '-m', BASELINE_SUBJECT], baseline);
+        return RunGit(['rev-parse', 'HEAD'], baseline);
+    }
+    finally
+    {
+        RunGit(['worktree', 'remove', '--force', baseline], REPO_ROOT, { allowFailure: true });
+    }
+}
+
+/** A rebuilt file is an owner edit only where it differs from that rebuild; the patch is that difference. */
+function ownerRebuiltEdits(rebuilt, direct)
+{
+    if (!rebuilt.length)
+    {
+        return [];
+    }
+    const baseline = rebuildBaseline(direct);
+    return rebuilt
+        .map((file) => ({
+            ...file,
+            baseline,
+            patch: RunGit(['diff', '--binary', baseline, '--', file.path], REPO_ROOT, { raw: true }),
+        }))
+        .filter((file) => file.patch);
 }
 
 function commitEach(described, worktree)
@@ -311,11 +362,18 @@ function main(argv)
         return 0;
     }
     const direct = fresh.filter((file) => !isRebuilt(file));
-    const rebuilt = fresh.filter(isRebuilt);
-    const described = direct.map(describe);
+    const carried = [
+        ...direct,
+        ...ownerRebuiltEdits(fresh.filter(isRebuilt), direct),
+    ];
+    if (!carried.length)
+    {
+        console.log('Nothing new to ship: the rebuild alone makes these changes.');
+        return 0;
+    }
+    const described = carried.map(describe);
     console.log('Shipping:');
     described.forEach((item) => console.log(`  ${item.path}: ${item.subject}`));
-    rebuilt.forEach((file) => console.log(`  ${file.path}: checked after the rebuild`));
     if (dryRun)
     {
         return 0;
@@ -332,23 +390,10 @@ function main(argv)
     let pushed = false;
     try
     {
-        direct.forEach((file) => carryFile(file, worktree));
+        carried.forEach((file) => carryFile(file, worktree));
         commitEach(described, worktree);
         const checks = captureLog();
         const built = RunSteps(OWNER_TOOLS.buildSteps, worktree, checks.log);
-        const ownerRebuilt = built.ok
-            ? ownerEditsAfterBuild(rebuilt, worktree)
-            : [];
-        ownerRebuilt.forEach((file) => carryFile(file, worktree));
-        const describedRebuilt = ownerRebuilt.map(describe);
-        commitEach(describedRebuilt, worktree);
-        described.push(...describedRebuilt);
-        if (built.ok && !described.length)
-        {
-            console.log('Nothing new to ship: the rebuild alone makes these changes.');
-            return 0;
-        }
-
         const checked = built.ok && RunSteps(OWNER_TOOLS.checkSteps, worktree, checks.log).ok;
         const tested = checked && (quick || RunSteps(OWNER_TOOLS.testSteps, worktree, checks.log).ok);
         if (!tested)
