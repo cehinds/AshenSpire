@@ -13,12 +13,11 @@ import { gameProfileEffectiveAttributes } from './gameProfileGear.js';
 const classes = ['reaver', 'starseer', 'rogue', 'herald'];
 const probeScopes = new WeakMap();
 
-// Only a synchronous upgrade plan creates this scope. A caller's ordinary
-// signature WeakMap never changes the public frozen/owned projection contract.
+// Only a synchronous upgrade operation creates this opaque handle. Neither
+// its context records nor its source markers are available to the caller.
 export function CreateCardUpgradeProjectionScope() {
-  const scope = new WeakMap();
-  // The source markers belong to this scope, never to a global output cache.
-  probeScopes.set(scope, new WeakMap());
+  const scope = Object.freeze({});
+  probeScopes.set(scope, { records: new WeakMap(), definitions: new WeakMap() });
   return scope;
 }
 
@@ -84,8 +83,9 @@ export function CardScoreReferenceContext(def, { registries } = {}) {
 /** Frozen projected definition, per-effect mechanic-unit values, and the exact
  * visible token map. No combat stance, enemy mitigation, or invented CP pins. */
 export function ProjectCardMechanicalValues(def, { registries, rules, projectionScope } = {}) {
-  const probeDefinitions = probeScopes.get(projectionScope);
-  const probe = !!probeDefinitions;
+  const operation = probeScopes.get(projectionScope);
+  const probeDefinitions = operation?.definitions;
+  const probe = !!operation;
   const previous = projectedDefinitions.get(def) || probeDefinitions?.get(def);
   if (previous) def = previous.source;
   if (!registries || !rules) {
@@ -97,10 +97,10 @@ export function ProjectCardMechanicalValues(def, { registries, rules, projection
   const profile = rules.gameProfile || registries.gameProfile;
   // Only the service's single synchronous, read-only plan supplies a scope.
   // Ordinary calls always fingerprint again, including in-place rule edits.
-  let scoped = projectionScope?.get(rules);
+  let scoped = operation?.records.get(rules);
   if (!scoped || scoped.profile !== profile || scoped.registries !== registries) {
     scoped = { signature: contextSignature(rules), profile, registries };
-    projectionScope?.set(rules, scoped);
+    operation?.records.set(rules, scoped);
   }
   const signature = scoped.signature;
   if (previous && previous.registries === registries && previous.rules === rules && previous.signature === signature && previous.profile === profile) return previous.result;
@@ -174,7 +174,7 @@ export function ProjectCardMechanicalValues(def, { registries, rules, projection
       values[binding.index][binding.field] = value;
     }
     for (const [index, fields] of values.entries()) Object.assign(card.effects[index], fields);
-    data = probe ? { card, values, tokens, bindings } : freeze({ card, values, tokens, bindings });
+    data = freeze({ card, values, tokens, bindings });
     if (probe) probeDefinitions.set(card, { source, registries, rules, profile, signature, result: data });
     else projectedDefinitions.set(card, { source, registries, rules, profile, signature, result: data });
     cache.set(key, data);

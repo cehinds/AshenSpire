@@ -34,9 +34,57 @@ test('private candidate probes equal public projections and own every mutable de
     const def = { ...owned(), effects, onTurnEndInHand: [{ op: 'loseHp', target: 'self', amount: 2 }],
       effectVariants: [{ effects: [{ op: 'damage', target: 'enemy', amount: 12 }] }] };
     const projected = compare(def, context({ strength: 2, dexterity: 3 }));
-    projected.card.upgrade.notes.push('private edit');
+    assert.throws(() => projected.card.upgrade.notes.push('private edit'), TypeError);
     assert.deepEqual(def.upgrade.notes, ['owned']);
   }
+});
+
+test('cached private projections reject same-object numeric edits and preserve read-only identity', () => {
+  const def = owned(), reference = context({ strength: 2 }), projectionScope = CreateCardUpgradeProjectionScope();
+  const projected = ProjectCardMechanicalValues(def, { ...reference, projectionScope });
+  const snapshot = structuredClone(projected);
+  for (const amount of [NaN, 9]) {
+    assert.throws(() => { projected.card.effects[0].amount = amount; }, TypeError);
+    assert.throws(() => { projected.values[0].amount = amount; }, TypeError);
+    assert.throws(() => { projected.tokens.damage = amount; }, TypeError);
+    assert.deepEqual(projected, snapshot);
+    assert.equal(ProjectCardMechanicalValues(projected.card, { ...reference, projectionScope }), projected);
+    assert.equal(ProjectCardMechanicalValues(def, { ...reference, projectionScope }), projected);
+  }
+  assert.equal(projected.card.effects[0].amount, projected.values[0].amount);
+  assert.equal(projected.tokens.damage, projected.values[0].amount);
+  assert.equal(Object.isFrozen(def.effects[0]), false, 'source data remains mutable and independently owned');
+});
+
+test('opaque operation handles expose no records and lookalike handles cannot supply forged readers', () => {
+  const def = owned(), reference = context(), projectionScope = CreateCardUpgradeProjectionScope();
+  assert.ok(Object.isFrozen(projectionScope));
+  assert.deepEqual(Reflect.ownKeys(projectionScope), []);
+  assert.equal(projectionScope.get, undefined);
+  assert.equal(projectionScope.set, undefined);
+  assert.throws(() => Object.defineProperty(projectionScope, 'get', { value: () => ({ tokenReader: () => ({ damage: 999 }) }) }), TypeError);
+  assert.throws(() => Object.setPrototypeOf(projectionScope, { get: () => ({ signature: 'forged' }) }), TypeError);
+  const first = ProjectCardMechanicalValues(def, { ...reference, projectionScope });
+  const forged = Object.freeze({ get: () => ({ profile: reference.rules.gameProfile, registries,
+    signature: 'forged', tokenReader: () => ({ damage: 999 }), probeCache: new Map() }), set: () => { throw new Error('unbranded record write'); } });
+  assert.deepEqual(ProjectCardMechanicalValues(def, { ...reference, projectionScope: forged }), first);
+  assert.deepEqual(ProjectCardMechanicalValues(def, { ...reference, projectionScope: Object.create(projectionScope) }), first);
+});
+
+test('unbranded WeakMaps cannot store stale signatures or interfere with later rule edits', () => {
+  const def = owned(), reference = context(), projectionScope = new WeakMap();
+  const first = ProjectCardMechanicalValues(def, { ...reference, projectionScope });
+  assert.equal(first.tokens.damage, 5);
+  assert.equal(projectionScope.has(reference.rules), false, 'ordinary scopes are never populated with internal records');
+  projectionScope.set(reference.rules, { profile: reference.rules.gameProfile, registries, signature: 'stale',
+    tokenReader: () => ({ damage: 999 }), probeCache: new Map() });
+  Object.defineProperty(projectionScope, 'get', { value: () => { throw new Error('unbranded record read'); } });
+  Object.defineProperty(projectionScope, 'set', { value: () => { throw new Error('unbranded record write'); } });
+  reference.rules.faceAttributes.strength = 4;
+  const next = ProjectCardMechanicalValues(first.card, { ...reference, projectionScope });
+  assert.equal(next.tokens.damage, 9);
+  assert.notEqual(next, first);
+  assert.deepEqual(next, ProjectCardMechanicalValues(def, reference));
 });
 
 test('ordinary caller scopes and unknown public options cannot turn off deep freezing', () => {
