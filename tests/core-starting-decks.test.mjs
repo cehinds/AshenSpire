@@ -330,18 +330,83 @@ test('sweep: every Core class deck row and a legacy deck badge Basic iff the Bas
     // A card the face prints no rank for (a Starseer spell) has no badge to disagree.
     if (badges.length === 0) continue;
     const zero = badges.filter((b) => b.rank === 0 && !b.magical);
+    // A deck whose only rank-badged rows are magical weapon art (Blight Touch) has no Basic badge to disagree.
+    assert.ok(zero.length > 0 || badges.every((b) => b.magical), `${name}: has rank-0 rows`);
     for (const b of zero) assert.equal(b.text === 'Basic', b.shown, `${name}: ${b.row.cardId} (${b.row.source}) badge "${b.text}" vs Basic filter ${b.shown}`);
   }
 });
 
-// Every currently authored starter must have a fresh finite generated scoring row;
-// its balance, rank composition and budget are authoring choices.
-import { cardCombatPower } from '../src/content/generated/combatPower.js';
+// Every currently authored starter must have a fresh finite generated scoring row.
+import { cardCombatPower, itemCombatPower } from '../src/content/generated/combatPower.js';
+// Owner ruling 2026-11-21: starting decks are Unranked basics plus at most one uncommon
+// specialty and one rare weapon art at the authored rank, inside the authored budget;
+// starting armour is Unranked. Every limit below is read from content/source/scoring.json.
+const starterRules = readJson('content/source/scoring.json').starter;
 for (const classId of Object.keys(DECKS)) {
   test(`Core ${classId} starter scoring covers the current recipe and grants`, () => {
     for (const id of Object.keys(DECKS[classId])) {
       assert.ok(cardCombatPower[id], `${id} has a combat power row`);
       assert.ok(Number.isFinite(cardCombatPower[id].raw) && Number.isFinite(cardCombatPower[id].cp), `${id} has finite scores`);
+    }
+  });
+
+  test(`Core ${classId} starting deck passes the authored starter budget and rank recipe`, () => {
+    const b = starterRules.budget;
+    const cards = Object.entries(DECKS[classId]).flatMap(([id, n]) => Array(n).fill(id));
+    assert.ok(cards.length >= b.cardsMin && cards.length <= b.cardsMax, `${cards.length} cards, budget ${b.cardsMin}-${b.cardsMax}`);
+    const rows = cards.map(id => ({ id, ...cardCombatPower[id] }));
+    for (const r of rows) assert.ok(r.raw !== undefined, `${r.id} has a combat power row`);
+    const special = rows.filter(r => r.rarity !== 'common' || r.rank > 0);
+    assert.ok(special.length <= b.maxSpecial, `${special.length} special cards (max ${b.maxSpecial}): ${special.map(r => r.id)}`);
+    for (const r of rows) assert.ok(r.rank <= b.maxRankPerCard, `${r.id} rank ${r.rank} (max ${b.maxRankPerCard})`);
+    const rawTotal = rows.reduce((sum, r) => sum + Math.max(r.raw, b.rawFloorPerCard), 0);
+    assert.ok(rawTotal <= b.rawTotalMax, `raw total ${rawTotal} > ${b.rawTotalMax}`);
+    const { weaponArt, specialty } = starterRules.deck;
+    const art = rows.filter(r => r.rarity === weaponArt.rarity);
+    assert.equal(art.length, weaponArt.count, `exactly ${weaponArt.count} ${weaponArt.rarity} weapon art`);
+    for (const r of art) {
+      assert.equal(r.rank, weaponArt.rank, `${r.id} is Rank ${weaponArt.rank} (cp ${r.cp})`);
+      assert.equal(r.rank, starterSource.weaponArtRank, `${r.id} scores at the authored starter art rank`);
+    }
+    for (const r of rows.filter(x => !art.includes(x))) assert.ok(r.cp <= 0, `${r.id} cp ${r.cp} is Unranked`);
+    // The specialty is the authored class special; a recipe may leave it out (Starseer authors ten common copies).
+    const specials = rows.filter(r => r.rarity === specialty.rarity);
+    assert.ok(specials.length <= specialty.count, `${specials.length} ${specialty.rarity} cards (max ${specialty.count})`);
+    const authoredSpecialCopies = starterSource.classDecks[classId].filter(row => row.card === starterSource.classSpecials[classId]).reduce((sum, row) => sum + row.copies, 0);
+    assert.deepEqual(specials.map(r => r.id), Array(authoredSpecialCopies).fill(starterSource.classSpecials[classId]), 'the only uncommon is the authored class special');
+    for (const r of specials) assert.ok(r.rank <= specialty.maxRank, `${r.id} rank ${r.rank} (max ${specialty.maxRank})`);
+  });
+
+  test(`Core ${classId} starting armour is Unranked`, () => {
+    const row = itemCombatPower[`armour:${classId}.default`];
+    assert.ok(row, 'armour row');
+    assert.ok(row.cp <= 0, `cp ${row.cp}`);
+    assert.ok(row.rank <= starterRules.armourMaxRank, `rank ${row.rank} (max ${starterRules.armourMaxRank})`);
+  });
+
+  test(`Core ${classId} can play every starter card at combat start with its weapon and real SP and MP`, () => {
+    const run = start(classId);
+    const maxMana = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] }).player.maxMana;
+    for (const card of run.deck) {
+      const def = reg.cards.get(card.cardId);
+      assert.ok((def.manaCost || 0) <= maxMana, `${def.id} costs ${def.manaCost} MP, class starts with ${maxMana}`);
+    }
+    for (const cardId of Object.keys(DECKS[classId])) {
+      const attempt = withTarget => {
+        const combat = createRunCombat({ registries: reg, run: start(classId), rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+        const p = combat.player;
+        assert.equal(p.stamina, p.maxStamina); assert.equal(p.mana, p.maxMana);
+        combat.piles.hand.push({ cardId, instanceId: 'probe', upgraded: false });
+        dispatch(combat, { type: 'playCard', cardInstanceId: 'probe', ...(withTarget ? { targetId: combat.enemies[0].id } : {}) });
+        return combat;
+      };
+      let combat;
+      try { combat = attempt(true); } catch (error) {
+        // Self-targeted cards refuse an enemy target; any other refusal fails here too.
+        assert.match(error.message, /friendly target/, `${classId} ${cardId}: ${error.message}`);
+        combat = attempt(false);
+      }
+      assert.ok(combat.eventLog.some(e => e.type === 'cardPlayed' && e.cardId === cardId) || !combat.piles.hand.some(c => c.instanceId === 'probe'), `${classId} ${cardId} left the hand`);
     }
   });
 }
