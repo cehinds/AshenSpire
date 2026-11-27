@@ -59,6 +59,7 @@ import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
+import { SmithProbeQuery, SMITH_PROBE_OPEN } from './lib/smith-shot-fixture.mjs';
 
 // DOOR, and why --selftest exists (Rune, 2026-08-15). The real input is the
 // RENDERED PAGE: this tool serves the real tree, boots each ?shot= state in a
@@ -480,12 +481,8 @@ const SCREENS = [
   // of its own — the review that photographed every room got the title screen
   // for `?shot=smith`. Its controls (the candidates, Back, Upgrade) are as
   // reachable-or-not as any room's.
-  { name: 'smith', q: '?shot=smith', ready: `!!document.querySelector('.upgrade-desk, #smith-opt')`,
-    setup: `(() => {
-      if (!document.querySelector('.upgrade-desk')) document.querySelector('#smith-opt')?.click();
-      if (!document.querySelector('.upgrade-desk')) throw new Error('screenreach: Smith option did not open its candidate dialog');
-      return true;
-    })()`,
+  { name: 'smith', q: SmithProbeQuery(), ready: `!!document.querySelector('.upgrade-desk, #smith-opt')`,
+    setup: SMITH_PROBE_OPEN,
     overlay: 'the Smith is a modal over the Shrine; the Shrine\'s band and cards under its veil are covered on purpose' },
   { name: 'shop', q: '?shot=shop', ready: `!!document.querySelector('#leave-shop')` },
 ];
