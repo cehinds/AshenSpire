@@ -35,6 +35,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 ## 2026-11-27
 
 - **Evade Wither, rising cost, and Smash flat Block break** ([#3017](https://github.com/cehinds/AshenSpire/pull/3017), `0.7.5.161`). Player Evade cards gain Wither 3 and +1 SP per play (max +3); Smash cards now break flat Block before damage (`Break N Block. Deal N damage.`).
+- **Steadier timing checks and a lighter Blacksmith picker** ([#3016](https://github.com/cehinds/AshenSpire/pull/3016), `0.7.5.161`). Timing checks skip a one-time test-machine disk wait. The Blacksmith opens faster, and card upgrade rules now live in config.
+
 - **Spell costs match their cards** ([#3022](https://github.com/cehinds/AshenSpire/pull/3022), `0.7.5.161`). A spell now costs the Mana and Stamina printed on it; the hidden extra Mana on every spell is gone. Prepared stance takes 1 Stamina off a spell, never below 1, and no Mana; Mana cuts in Prepared come from a staff or robes. Arcane Strike and Mana Rite cost Stamina only.
 - **Owner editing commands** ([#3021](https://github.com/cehinds/AshenSpire/pull/3021), `0.7.5.159`). New npm run play, check, ship and sync let the owner edit JSON, test with live reload, and open a pull request with one commit per file.
 - **Score Studio saves cards and art** ([#3027](https://github.com/cehinds/AshenSpire/pull/3027), `0.7.5.157`). File > Save or Ctrl+S writes them to `content/source/studio/`, and the game never reads them.

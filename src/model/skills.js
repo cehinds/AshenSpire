@@ -304,7 +304,7 @@ export function pendingRankUpRows(registries, run) {
  * now (RankUpBlock). The after-fight door opens only then; with none ready the rank-ups stay queued for a later fight.
  */
 export function RankUpRowsReady(registries, run, rows) {
-  return (rows || []).some((row) => rankUpCandidates(registries, run, row.skillId).some((card) => !RankUpService.RankUpBlock(run, card)));
+  return (rows || []).some((row) => rankUpCandidates(registries, run, row.skillId).some((card) => !RankUpService.RankUpBlock(run, card, registries)));
 }
 
 /**
@@ -319,7 +319,7 @@ export function raiseCardRank(registries, run, skillId, instanceId, bonus = null
   const row = run && run.skills && run.skills[skillId];
   if (!row || !(row.pendingRankUps > 0)) return null;
   const inst = rankUpCandidates(registries, run, skillId).find((card) => card.instanceId === instanceId);
-  if (!inst || RankUpService.RankUpBlock(run, inst)) return null; // the full-upgrade rule (rankUpService.js)
+  if (!inst || RankUpService.RankUpBlock(run, inst, registries)) return null; // the full-upgrade rule (rankUpService.js)
   const options = rankUpBonusOptions(registries, run, inst);
   let picked = null;
   if (options.length) {
