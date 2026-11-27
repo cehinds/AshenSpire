@@ -611,3 +611,6 @@ build/windows-installer/
 
 # QA sandbox output (tools/qa-sandbox.mjs)
 /qa-sandbox-out/
+
+# Owner sync backups of unshipped edits
+.owner-backup/

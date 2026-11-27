@@ -1,7 +1,7 @@
 // Shared helpers for the owner's play, check and ship commands.
-import { readFileSync } from 'node:fs';
+import { readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import { resolve } from 'node:path';
+import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const REPO_ROOT = resolve(fileURLToPath(new URL('../..', import.meta.url)));
@@ -57,6 +57,7 @@ const STATUS_DELETED = 'D';
 const STATUS_RENAMED = 'R';
 const STATUS_CODE_LENGTH = 3;
 const NUL_SEPARATOR = String.fromCharCode(0);
+const PATCH_FILE_NAME = '.owner-tools.patch';
 
 /** Every changed path in a working tree: [{ path, deleted, untracked }]. */
 export function ChangedPaths(workingDirectory = REPO_ROOT)
@@ -79,6 +80,34 @@ export function ChangedPaths(workingDirectory = REPO_ROOT)
         }
     }
     return changes;
+}
+
+/** The diff of one file against HEAD, ready for ApplyPatch in another checkout. */
+export function CapturePatch(path, workingDirectory = REPO_ROOT)
+{
+    return RunGit(['diff', '--binary', 'HEAD', '--', path], workingDirectory, { raw: true });
+}
+
+/** Three-way applies a captured patch; on a clash restores the file and returns false. */
+export function ApplyPatch(patch, path, workingDirectory)
+{
+    const patchFile = join(workingDirectory, PATCH_FILE_NAME);
+    writeFileSync(patchFile, patch);
+    try
+    {
+        RunGit(['apply', '--3way', '--whitespace=nowarn', patchFile], workingDirectory);
+        return true;
+    }
+    catch
+    {
+        RunGit(['checkout', 'HEAD', '--', path], workingDirectory, { allowFailure: true });
+        return false;
+    }
+    finally
+    {
+        rmSync(patchFile, { force: true });
+        RunGit(['reset', '--quiet', '--', path], workingDirectory, { allowFailure: true });
+    }
 }
 
 function lastLines(text)

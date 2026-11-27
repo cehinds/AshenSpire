@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // npm run ship -- "Title": puts your JSON edits on a new feature branch from origin/dev,
 // one commit per file, then pushes and opens a pull request into dev. --local skips the push.
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync, copyFileSync, mkdirSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, writeFileSync, copyFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -9,6 +9,8 @@ import { DescribeFileChange } from './contentDiff.mjs';
 import {
     OWNER_TOOLS,
     REPO_ROOT,
+    ApplyPatch,
+    CapturePatch,
     ChangedPaths,
     IsEditableContentPath,
     IsNeverCommitPath,
@@ -82,20 +84,9 @@ function carryFile(file, worktree)
         copyFileSync(join(REPO_ROOT, file.path), join(worktree, file.path));
         return;
     }
-    const patch = RunGit(['diff', '--binary', 'HEAD', '--', file.path]);
-    const patchFile = join(worktree, '.owner-ship.patch');
-    writeFileSync(patchFile, `${patch}\n`);
-    try
+    if (!ApplyPatch(CapturePatch(file.path), file.path, worktree))
     {
-        RunGit(['apply', '--3way', '--whitespace=nowarn', patchFile], worktree);
-    }
-    catch (error)
-    {
-        throw new Error(`${file.path} also changed on dev and the edits clash. Run "npm run sync", redo the edit, then ship again.\n${error.message}`);
-    }
-    finally
-    {
-        rmSync(patchFile, { force: true });
+        throw new Error(`${file.path} also changed on dev and the edits clash. Run "npm run sync", redo the edit, then ship again.`);
     }
 }
 
@@ -230,7 +221,6 @@ function main(argv)
     try
     {
         files.forEach((file) => carryFile(file, worktree));
-        RunGit(['reset', '--quiet'], worktree);
         for (const item of described)
         {
             commit(worktree, [item.path], item.subject, item.lines);
