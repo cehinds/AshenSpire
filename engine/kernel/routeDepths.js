@@ -1,6 +1,6 @@
 // Depth math for configured routes, shared by the map build and the resolver. `shape` is the
-// routes module's routeShape. A moving rest lands on exactly one depth of its restFloorSpread
-// span, so a span of several depths always leaves the others free; overlapping spans merge.
+// routes module's routeShape. Rest placement here is the one PlaceRestFloors (actmap.js) draws
+// from, so the resolver can walk every placement the builder can roll.
 
 export function DepthRange(first, last)
 {
@@ -8,10 +8,9 @@ export function DepthRange(first, last)
   return Array.from({ length }, (_, index) => first + index);
 }
 
-function movingRests(routes)
+function movingRests(sorted, count)
 {
-  const authored = routes.restFloors || [];
-  return authored.filter(floor => floor !== 1 && floor !== routes.prebossNodes);
+  return sorted.filter(floor => floor !== 1 && floor !== count);
 }
 
 // The depths a rest can land on: the authored ones, widened by restFloorSpread when it moves.
@@ -23,7 +22,7 @@ export function PossibleRestDepths(routes)
     return depths;
   }
   const spread = routes.restFloorSpread || 0;
-  for (const floor of movingRests(routes))
+  for (const floor of movingRests(routes.restFloors || [], routes.prebossNodes))
   {
     for (const depth of DepthRange(floor - spread, floor + spread))
     {
@@ -33,53 +32,10 @@ export function PossibleRestDepths(routes)
   return depths;
 }
 
-// Merged spans of the moving rests, each with how many rests land inside it.
-export function RestSpans(routes, shape)
-{
-  const spread = routes.restFloorSpread || 0;
-  if (!routes.restGap || spread === 0)
-  {
-    return [];
-  }
-  const spans = [];
-  for (const floor of [...movingRests(routes)].sort((a, b) => a - b))
-  {
-    const first = Math.max(shape.firstBranchDepth, floor - spread);
-    const last = Math.min(routes.prebossNodes - 1, floor + spread);
-    const previous = spans.at(-1);
-    if (previous && first <= previous.last)
-    {
-      previous.last = Math.max(previous.last, last);
-      previous.rests += 1;
-      continue;
-    }
-    spans.push({
-      first,
-      last,
-      rests: 1,
-    });
-  }
-  return spans;
-}
-
-// How many depths from first to last are sure to be free of rests and pins in every act.
-export function SureFreeCount(depths, pinned, first, last)
-{
-  const range = DepthRange(first, last);
-  const plain = range.filter(depth => !depths.restDepths.has(depth) && !pinned.has(depth));
-  let count = plain.length;
-  for (const span of depths.restSpans)
-  {
-    const inside = range.filter(depth => depth >= span.first && depth <= span.last);
-    count += Math.max(0, inside.length - span.rests);
-  }
-  return count;
-}
-
 // The depths from first to last a pin may use: those no rest can land on.
-export function PinnableDepths(depths, first, last)
+export function PinnableDepths(restDepths, first, last)
 {
-  return DepthRange(first, last).filter(depth => !depths.restDepths.has(depth));
+  return DepthRange(first, last).filter(depth => !restDepths.has(depth));
 }
 
 // The depth by which every lane of a branch is open.
@@ -88,15 +44,81 @@ export function BranchFullDepth(prebossNodes, shape)
   return Math.max(shape.earliestFullDepth, prebossNodes - shape.fullDepthsBeforeBoss);
 }
 
-// Every depth a lane can end on: a wide branch may close a lane near the boss.
-export function LaneLastDepths(prebossNodes, shape)
+// The depths one moving rest may take, given the rest placed before it and the next authored one.
+export function RestCandidates(place)
 {
-  const first = prebossNodes - shape.narrowDepthsBeforeBoss;
-  return DepthRange(first, prebossNodes);
+  const {
+    previous,
+    authored,
+    next,
+    count,
+    restGap,
+    spread,
+    lowest,
+  } = place;
+  const candidates = [];
+  for (const floor of DepthRange(authored - spread, authored + spread))
+  {
+    const gap = floor - previous - 1;
+    const outside = floor < lowest || floor >= count || gap < restGap.min || gap > restGap.max;
+    const crowdsNext = next !== undefined && next - spread - floor - 1 < restGap.min;
+    if (!outside && !crowdsNext)
+    {
+      candidates.push(floor);
+    }
+  }
+  return candidates;
 }
 
-// The rest facts every check reads, built once per route.
-export function RouteDepths(routes, shape)
+// The choices PlaceRestFloors may make for one rest: one draw among several, else the only one.
+export function RestChoices(candidates, authored, spread)
 {
-  return { restDepths: PossibleRestDepths(routes), restSpans: RestSpans(routes, shape) };
+  if (!candidates.length)
+  {
+    return [authored];
+  }
+  return spread > 0
+    ? candidates
+    : [candidates[0]];
+}
+
+function firstPartial(fixedFirst)
+{
+  if (fixedFirst)
+  {
+    return { placed: [1], previous: 1 };
+  }
+  return { placed: [], previous: 0 };
+}
+
+// Every rest placement an act can roll from these authored rest floors.
+export function RestPlacements(restFloors, count, restGap, spread, lowest)
+{
+  const sorted = [...restFloors].sort((a, b) => a - b);
+  if (!restGap)
+  {
+    return [sorted];
+  }
+  const movable = movingRests(sorted, count);
+  const tail = sorted.includes(count)
+    ? [count]
+    : [];
+  let partials = [firstPartial(sorted[0] === 1)];
+  movable.forEach((authored, index) =>
+  {
+    const base = {
+      authored,
+      next: movable[index + 1],
+      count,
+      restGap,
+      spread,
+      lowest,
+    };
+    partials = partials.flatMap(({ placed, previous }) =>
+    {
+      const choices = RestChoices(RestCandidates({ ...base, previous }), authored, spread);
+      return choices.map(chosen => ({ placed: [...placed, chosen], previous: chosen }));
+    });
+  });
+  return partials.map(({ placed }) => [...placed, ...tail]);
 }

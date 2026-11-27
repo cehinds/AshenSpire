@@ -15,10 +15,12 @@ import { buildActMap } from '../src/engine/actmap.js';
 import { createRng } from '../src/engine/rng.js';
 import { RouteShapeOf } from '../src/model/routeShape.js';
 import {
-  RouteDepths,
+  PossibleRestDepths,
   PinnableDepths,
   BranchFullDepth,
+  RestPlacements,
 } from '../engine/kernel/routeDepths.js';
+import { BranchShapes, BranchLaneCount } from '../engine/kernel/routeBranchShapes.js';
 import {
   RouteRoomTypes,
   ELITE_ROOM,
@@ -34,6 +36,8 @@ const SEEDS = [
   6,
 ];
 const FLOOR_TYPES_PATH = '$/modules/routes/floorTypes';
+const ELITE_REFUSAL = 'can leave a lane no free floor for its elite';
+const SHOP_REFUSAL = 'can leave a branch no free floor for its shop';
 const LANE_ID = /^n(\d+)_(\d+)$/;
 
 function SetupCore(routes = {})
@@ -61,7 +65,7 @@ function RouteConfig(routes = {})
   const settings = core.registries.gameProfile.modules.routes;
   const shape = RouteShapeOf(core.registries);
   const types = RouteRoomTypes(core.registries.gameProfile.content.routes, shape);
-  const depths = RouteDepths(settings, shape);
+  const restDepths = PossibleRestDepths(settings);
   const count = settings.prebossNodes;
   const plain = types.pinnable.find(type => type !== ELITE_ROOM && type !== SHOP_ROOM);
   const fullDepth = BranchFullDepth(count, shape);
@@ -76,10 +80,10 @@ function RouteConfig(routes = {})
     count,
     plain,
     acts: settings.acts,
-    eliteSpan: PinnableDepths(depths, eliteFirst, openLast),
-    shopSpan: PinnableDepths(depths, shape.guaranteedShopDepths.first, shopLast),
-    branchDepths: PinnableDepths(depths, shape.firstBranchDepth, count),
-    restDepths: depths.restDepths,
+    eliteSpan: PinnableDepths(restDepths, eliteFirst, openLast),
+    shopSpan: PinnableDepths(restDepths, shape.guaranteedShopDepths.first, shopLast),
+    branchDepths: PinnableDepths(restDepths, shape.firstBranchDepth, count),
+    restDepths,
   };
 }
 
@@ -197,8 +201,7 @@ test('every lane keeps its elite when pins leave it one free floor', () =>
     }
   });
   const noElite = { ...PinAll(config.eliteSpan, config.plain), ...shopPin };
-  const keep = `Keep one of depths ${DepthList(config.eliteSpan)} unpinned`;
-  RefusedWith({ floorTypes: noElite }, `leaves a lane no free floor for its elite. ${keep}`);
+  RefusedWith({ floorTypes: noElite }, ELITE_REFUSAL);
 });
 
 test('a late minimumThreatFloor still guards the lane elite', () =>
@@ -211,7 +214,7 @@ test('a late minimumThreatFloor still guards the lane elite', () =>
   const elites = Object.values(map.nodes).filter(node => node.actualType === ELITE_ROOM);
   assert.ok(elites.length > 0, 'without pins the late route has elites');
   const floorTypes = { [lateDepth]: config.plain };
-  RefusedWith({ ...late, floorTypes }, `Keep depth ${lateDepth} unpinned, or pin an elite`);
+  RefusedWith({ ...late, floorTypes }, `${ELITE_REFUSAL}. Unpin one of depths ${lateDepth},`);
 });
 
 // Fixed rests (restFloorSpread 0) leave no spare rest-span floors, so pins can use up the shop.
@@ -249,14 +252,12 @@ test('every branch keeps its shop when pins leave it two free floors', () =>
 test('pins that leave a branch no shop floor, alone or beside its elites, are refused', () =>
 {
   const config = FixedRestConfig();
-  const keepShop = `Keep one of depths ${DepthList(config.shopSpan)} unpinned`;
   const noShop = { restFloorSpread: 0, floorTypes: PinAll(config.shopSpan, config.plain) };
-  RefusedWith(noShop, `leaves a branch no free floor for its shop. ${keepShop}`);
+  RefusedWith(noShop, SHOP_REFUSAL);
   const shared = config.shopSpan.filter(depth => config.eliteSpan.includes(depth)).at(-1);
   const others = [...config.shopSpan, ...config.eliteSpan].filter(depth => depth !== shared);
   const sharedSlot = { restFloorSpread: 0, floorTypes: PinAll(others, config.plain) };
-  const keepTwo = `Keep two of depths ${DepthList(config.shopSpan)} unpinned`;
-  RefusedWith(sharedSlot, `leaves a branch's shop only floors its elites can take. ${keepTwo}`);
+  RefusedWith(sharedSlot, SHOP_REFUSAL);
 });
 
 test('a shop pinned before the guaranteed shop depths does not stand in for the branch shop', () =>
@@ -328,7 +329,113 @@ test('pinning the early shop floor is refused when the other is every elite slot
   assert.doesNotThrow(() => SetupCore(route), 'the short route resolves without pins');
   const earlyDepth = config.shape.guaranteedShopDepths.first;
   const floorTypes = { [earlyDepth]: config.plain };
-  RefusedWith({ ...route, floorTypes }, "leaves a branch's shop only floors its elites can take");
+  RefusedWith({ ...route, floorTypes }, SHOP_REFUSAL);
+});
+
+// Rests on the first shop depth and the last; elites from the next depth (PR #3025 review).
+function MidShopRoute(config)
+{
+  const shopFirst = config.shape.guaranteedShopDepths.first;
+  const count = shopFirst + config.shape.narrowDepthsBeforeBoss + 1;
+  const restFloors = [
+    1,
+    shopFirst,
+    count,
+  ];
+  return {
+    prebossNodes: count,
+    restFloors,
+    restsPerAct: restFloors.length,
+    restGap: null,
+    restFloorSpread: 0,
+    minimumThreatFloor: shopFirst + 1,
+    shopsPerBranch: 1,
+  };
+}
+
+test('pinning the free shop floor beside the only elite slot is refused', () =>
+{
+  const config = RouteConfig();
+  const route = MidShopRoute(config);
+  const unpinned = SetupCore({ ...route, ...NoRandomShops(config) });
+  EachMap(unpinned, 1, (map, label) =>
+  {
+    const shops = BranchesWith(map, SHOP_ROOM);
+    map.bossIds.forEach((bossId, branch) =>
+    {
+      assert.ok(shops.has(branch), `${label} branch ${branch} has its shop without pins`);
+    });
+  });
+  const floorTypes = { [route.minimumThreatFloor + 1]: config.plain };
+  RefusedWith({ ...route, floorTypes }, SHOP_REFUSAL);
+});
+
+function LaneIntervals(map, branch, lanes, lastDepth)
+{
+  const open = {};
+  for (const node of Object.values(map.nodes))
+  {
+    const match = LANE_ID.exec(node.id);
+    if (!match || node.branch !== branch || node.floor > lastDepth)
+    {
+      continue;
+    }
+    const lane = Number(match[2]) - branch * lanes;
+    const span = open[node.floor] ?? { lo: lane, hi: lane };
+    open[node.floor] = { lo: Math.min(span.lo, lane), hi: Math.max(span.hi, lane) };
+  }
+  return open;
+}
+
+function Truncated(active, lastDepth)
+{
+  const kept = Object.entries(active).filter(([depth]) => Number(depth) <= lastDepth);
+  return JSON.stringify(Object.fromEntries(kept));
+}
+
+function WalkedShapes(config, lastDepth)
+{
+  const known = new Map();
+  return lanes =>
+  {
+    if (!known.has(lanes))
+    {
+      const shapes = BranchShapes(lanes, config.settings, config.shape);
+      known.set(lanes, new Set(shapes.map(active => Truncated(active, lastDepth))));
+    }
+    return known.get(lanes);
+  };
+}
+
+function WalkedRests(config)
+{
+  const { restGap, restFloorSpread, restFloors } = config.settings;
+  const spread = restFloorSpread || 0;
+  const lowest = config.shape.firstBranchDepth;
+  const placements = RestPlacements(restFloors, config.count, restGap, spread, lowest);
+  return placements.map(rests => rests.filter(depth => depth > 1).join(','));
+}
+
+test('every branch shape and rest placement the builder rolls is one the resolver walks', () =>
+{
+  const config = RouteConfig();
+  const lastDepth = config.count - 1;
+  const shapesOf = WalkedShapes(config, lastDepth);
+  const placements = WalkedRests(config);
+  EachMap(config.core, config.acts, (map, label) =>
+  {
+    const lanes = BranchLaneCount(config.settings.branchColumns, map.bossIds.length);
+    map.bossIds.forEach((bossId, branch) =>
+    {
+      const drawn = Truncated(LaneIntervals(map, branch, lanes, lastDepth), lastDepth);
+      assert.ok(shapesOf(lanes).has(drawn), `${label} branch ${branch} shape is walked`);
+    });
+    const rests = Object.values(map.nodes)
+      .filter(node => node.actualType === 'rest' && node.floor > 1)
+      .map(node => node.floor);
+    const placed = [...new Set(rests)].sort((a, b) => a - b).join(',');
+    assert.ok(placements.includes(placed), `${label} rests ${placed} are walked`);
+  });
 });
 
 function InvalidTables(config)

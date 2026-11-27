@@ -34,7 +34,12 @@ import {
   ELITE_ROOM,
   SHOP_ROOM,
 } from '../../engine/kernel/routeFloorPins.js';
-import { BranchFullDepth } from '../../engine/kernel/routeDepths.js';
+import { BranchFullDepth, RestCandidates, RestChoices } from '../../engine/kernel/routeDepths.js';
+import {
+  BranchLaneCount,
+  TWO_LANE_OPENING_LANES,
+  NARROW_MIN_LANES,
+} from '../../engine/kernel/routeBranchShapes.js';
 import { RouteShapeOf } from '../model/routeShape.js';
 
 /**
@@ -278,7 +283,7 @@ const NARROW_PERCENT = 25;
 function drawBranchShape(rng, lanes, count, forkPercent, routeShape) {
   const active = {}, edges = []; // edges: [floor, fromLane, toLane] join floor -> floor + 1, branch-local lanes
   if (count < 2) return { active, edges };
-  const width = lanes >= 3 && rng.chance('map', 50) ? 2 : 1;
+  const width = lanes >= TWO_LANE_OPENING_LANES && rng.chance('map', 50) ? 2 : 1;
   const lo0 = rng.int('map', Math.floor((lanes - width) / 2), Math.ceil((lanes - width) / 2));
   const firstDepth = routeShape.firstBranchDepth;
   active[firstDepth] = { lo: lo0, hi: lo0 + width - 1 };
@@ -293,7 +298,7 @@ function drawBranchShape(rng, lanes, count, forkPercent, routeShape) {
     } else {
       const narrow = rng.chance('map', NARROW_PERCENT), dropLeft = rng.chance('map', 50);
       const narrowing = floor >= count - routeShape.narrowDepthsBeforeBoss;
-      if (narrowing && narrow && hi - lo + 1 >= 3) {
+      if (narrowing && narrow && hi - lo + 1 >= NARROW_MIN_LANES) {
         if (dropLeft) { next.lo = lo + 1; edges.push([floor, lo, lo + 1]); }
         else { next.hi = hi - 1; edges.push([floor, hi, hi - 1]); }
       }
@@ -309,10 +314,11 @@ function drawBranchShape(rng, lanes, count, forkPercent, routeShape) {
  * restGap { min, max }. The gap that ends at the pre-boss rest is not limited. A rest with no legal depth keeps its authored one.
  * Every path shares the result: each branch rests on the same depths.
  */
-export function PlaceRestFloors(rng, restFloors, count, { restGap = null, restFloorSpread = null } = {}) {
+export function PlaceRestFloors(rng, restFloors, count, options = {}) {
+  const { restGap = null, restFloorSpread = null } = options;
+  const lowest = options.lowest ?? RouteShapeOf(null).firstBranchDepth;
   const sorted = [...restFloors].sort((a, b) => a - b);
   if (!restGap) return sorted;
-  const { min, max } = restGap;
   const spread = restFloorSpread || 0;
   const fixedFirst = sorted[0] === 1;
   const movable = sorted.filter(floor => floor !== 1 && floor !== count);
@@ -320,14 +326,19 @@ export function PlaceRestFloors(rng, restFloors, count, { restGap = null, restFl
   let previous = fixedFirst ? 1 : 0;
   for (let i = 0; i < movable.length; i++) {
     const authored = movable[i], next = movable[i + 1];
-    const candidates = [];
-    for (let floor = authored - spread; floor <= authored + spread; floor++) {
-      const gap = floor - previous - 1;
-      if (floor < 2 || floor >= count || gap < min || gap > max) continue;
-      if (next !== undefined && next - spread - floor - 1 < min) continue;
-      candidates.push(floor);
-    }
-    const chosen = candidates.length > 1 && spread > 0 ? rng.pick('map', candidates) : candidates.length ? candidates[0] : authored;
+    const place = {
+      previous,
+      authored,
+      next,
+      count,
+      restGap,
+      spread,
+      lowest,
+    };
+    const choices = RestChoices(RestCandidates(place), authored, spread);
+    const chosen = choices.length > 1
+      ? rng.pick('map', choices)
+      : choices[0];
     placed.push(chosen);
     previous = chosen;
   }
@@ -361,7 +372,12 @@ function buildBranchedActMap(registries, rng, seat, tier, ctx) {
   // Rest depths (restGap / restFloorSpread): drawn first, one set per act, shared by every branch. Absent keys draw nothing.
   const restGap = rules.restGap ?? null;
   if (restGap !== null && !(Number.isInteger(restGap.min) && Number.isInteger(restGap.max) && restGap.min >= 0 && restGap.min <= restGap.max)) throw new Error('Invalid configured restGap');
-  const restFloors = PlaceRestFloors(rng, authoredRests, count, { restGap, restFloorSpread: rules.restFloorSpread ?? 0 });
+  const restOptions = {
+    restGap,
+    restFloorSpread: rules.restFloorSpread ?? 0,
+    lowest: routeShape.firstBranchDepth,
+  };
+  const restFloors = PlaceRestFloors(rng, authoredRests, count, restOptions);
   if (restGap !== null) {
     let previous = restFloors[0] === 1 ? 1 : 0;
     for (const floor of restFloors.filter(f => f !== 1 && f !== count)) {
@@ -374,7 +390,7 @@ function buildBranchedActMap(registries, rng, seat, tier, ctx) {
   if (typeof branchSpread !== 'number' || !(branchSpread >= 0)) throw new Error('Invalid configured branchSpread');
   const branchCount = rng.int('map', 1, Math.min(maxBranches, pool.length));
   const bosses = rng.shuffle('map', pool).slice(0, branchCount);
-  const lanes = Math.max(1, Math.min(laneColumns, Math.floor(2 * laneColumns / branchCount)));
+  const lanes = BranchLaneCount(laneColumns, branchCount);
   const total = branchCount * lanes;
   // branchSpread (V spread): branch k's centre moves away from the board centre in proportion to depth, so the branches fan apart.
   const middle = (total - 1) / 2;

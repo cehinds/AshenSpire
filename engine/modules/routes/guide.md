@@ -123,13 +123,11 @@ Every node on that floor is that type, in every act.
 - A rest can land on the floor (`restFloors`, widened by `restFloorSpread`).
 - It is an elite before `minimumThreatFloor`.
 - It is floor 1 while `firstFloor` is set.
-- It leaves a lane no free floor for its elite.
-- It leaves a branch no free floor for its shop (with `shopsPerBranch`).
-- It leaves a branch's shop only floors its elites can take.
-- It pins the only shop floor too early for an elite, when the other free one is an elite's.
+- On some branch shape and rest placement the map can roll, it leaves a lane no free floor
+  for its elite, or a branch no free floor for its shop, where there was one without pins.
+  The check walks every shape and placement, and places elites before the shop as the map does.
 
-The error names the floors to keep free.
-A moving rest lands on one floor of its window, so the others there count as free.
+The error names the pinned floors to unpin.
 
 ## Branch shape numbers
 

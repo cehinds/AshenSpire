@@ -1,13 +1,13 @@
 // Entry point for routes.floorTypes checks: the map build and the resolver both call it, with the
 // routes settings, the route content (its room types) and the routes module's routeShape.
-import { RouteDepths } from './routeDepths.js';
+import { PossibleRestDepths } from './routeDepths.js';
 import {
   IsPlainObject,
   RouteRoomTypes,
   PinnedFloorTypes,
   FloorEntryProblems,
 } from './routeFloorPins.js';
-import { RouteRequirements, RequirementProblems } from './routeGuarantees.js';
+import { GuaranteeProblems } from './routeGuarantees.js';
 
 const TABLE_PROBLEM = 'floorTypes must map a depth to a room type, like { "4": "shop" }';
 const SHAPE_PROBLEM = 'floorTypes needs the routes routeShape settings';
@@ -29,12 +29,11 @@ export function RouteFloorTypeProblems(routes, routeContent, shape)
     return [SHAPE_PROBLEM];
   }
   const types = RouteRoomTypes(routeContent, shape);
-  const depths = RouteDepths(routes, shape);
-  const entryProblems = FloorEntryProblems(floorTypes, routes, types, depths.restDepths);
+  const restDepths = PossibleRestDepths(routes);
+  const entryProblems = FloorEntryProblems(floorTypes, routes, types, restDepths);
   if (entryProblems.length)
   {
     return entryProblems;
   }
-  const requirements = RouteRequirements(routes, shape, types);
-  return RequirementProblems(requirements, depths, PinnedFloorTypes(floorTypes));
+  return GuaranteeProblems(routes, shape, types, PinnedFloorTypes(floorTypes));
 }
