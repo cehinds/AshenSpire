@@ -4,7 +4,7 @@ import { withKitDom } from './helpers/dom.mjs';
 import { initCardEditorDock, CARD_EDITOR_DOCK_KEY } from '../tools/score-studio/cardEditorDock.js';
 import { createAddCardTile, CaptureCardTilePositions, animateCardInsertion } from '../tools/score-studio/addCardTile.js';
 
-function fixture(dom, stored = new Map(), extra = {}) {
+function fixture(dom, stored = new Map(), extra = {}, { scoreSummary = false } = {}) {
   const { document: doc } = dom;
   const create = doc.createElement;
   doc.createElement = tag => {
@@ -16,7 +16,7 @@ function fixture(dom, stored = new Map(), extra = {}) {
     return node;
   };
   doc.body.innerHTML = `<main class="studio-main">
-    <section id="tab-cards"><div class="cards-layout"><div class="cards-gallery-pane"><div class="names-row"></div><div id="cards-grid"><div class="studio-card-tile" data-card-id="a"><div class="studio-card-stage"></div></div><div class="studio-card-tile" data-card-id="b"><div class="studio-card-stage"></div></div></div></div><div id="inspector-resizer" class="inspector-resizer"></div><aside id="card-inspector" class="card-inspector"><div class="inspector-preview-wrap"><div id="inspector-card-preview"></div></div><input id="edit-name"></aside></div></section>
+    <section id="tab-cards"><div class="cards-layout"><div class="cards-gallery-pane"><div class="names-row"></div><div id="cards-grid"><div class="studio-card-tile" data-card-id="a"><div class="studio-card-stage"></div></div><div class="studio-card-tile" data-card-id="b"><div class="studio-card-stage"></div></div></div></div><div id="inspector-resizer" class="inspector-resizer"></div><aside id="card-inspector" class="card-inspector"><div class="inspector-preview-wrap"><div id="inspector-card-preview"></div>${scoreSummary ? '<div id="inspector-score-summary"></div>' : ''}</div><input id="edit-name"></aside></div></section>
     <section id="tab-items"><div class="cards-layout"><div class="cards-gallery-pane"><div class="names-row"></div><div id="items-grid"><div class="item-grid-tile" data-item-key="weapon:one"><div></div></div><div class="item-grid-tile" data-item-key="weapon:two"><div></div></div></div></div><div id="item-inspector-resizer" class="inspector-resizer"></div><aside id="item-inspector-pane" class="card-inspector"><div id="item-preview-host" class="item-preview-host"></div><input id="item-edit-name"></aside></div></section>
     <section id="tab-weights" class="studio-panel"><input id="weight-value"></section>
     <section id="tab-art" class="studio-panel"><input id="art-value"></section>
@@ -355,4 +355,48 @@ test('card name collapses the preview; there is no resize bar and only collapsed
   again.doc.getElementById('customization-entity-name').click();
   assert.equal(again.doc.querySelector('.customization-preview-body').hidden, false, 'clicking again expands it');
   assert.equal(again.doc.querySelectorAll('.customization-preview-body').length, 1);
+}));
+
+test('outside Properties the column beside the card holds the view fields only when the composition root draws some', () => withKitDom(dom => {
+  const requests = [];
+  let draws = true;
+  const renderContextFields = (view, container, cardId) => {
+    requests.push([view, cardId]);
+    if (!draws) return false;
+    const row = dom.document.createElement('div'); row.className = 'context-row'; row.textContent = `${view}:${cardId}`;
+    container.append(row);
+    return true;
+  };
+  const { api, doc, state } = fixture(dom, new Map(), { renderContextFields }, { scoreSummary: true });
+  const context = doc.querySelector('.customization-context-fields');
+  assert.ok(context, 'the container exists');
+  assert.equal(context.closest('.customization-entity-details')?.parentNode, doc.querySelector('.inspector-preview-wrap'));
+  assert.equal(context.getAttribute('role'), 'group');
+  assert.equal(context.hidden, true, 'Properties keeps its own fields');
+  assert.ok(!requests.some(([view]) => view === 'properties'), 'Properties never asks for context fields');
+  api.setView('weights');
+  assert.equal(context.hidden, false);
+  assert.equal(context.getAttribute('aria-label'), 'Weights for this card');
+  assert.equal(doc.querySelector('.customization-quick-fields').hidden, true);
+  for (let run = 0; run < 4; run++) { api.refresh(); api.refreshEntity(); api.refreshContextFields(); }
+  assert.equal(doc.querySelectorAll('.customization-context-fields').length, 1, 'one container');
+  assert.equal(context.querySelectorAll('.context-row').length, 1, 'rows are rebuilt, never stacked');
+  assert.equal(context.querySelector('.context-row').textContent, 'weights:a');
+  state.selectedCardId = 'b'; api.refreshEntity();
+  assert.equal(context.querySelector('.context-row').textContent, 'weights:b', 'follows the selected card');
+  doc.getElementById('customization-entity-name').click();
+  assert.equal(context.hidden, true, 'hidden while the preview is collapsed');
+  doc.getElementById('customization-entity-name').click();
+  assert.equal(context.hidden, false);
+  draws = false; api.setView('design');
+  assert.equal(context.hidden, true, 'hidden when the view has nothing to show');
+  assert.equal(context.children.length, 0);
+  draws = true; api.setView('decks');
+  assert.equal(context.getAttribute('aria-label'), 'Decks with this card');
+  api.setContext('items');
+  assert.equal(context.hidden, true, 'cards only');
+  api.setContext('cards'); state.selectedCardId = 'gone'; api.refresh();
+  assert.equal(context.hidden, true, 'no fields without a valid card');
+  api.setView('properties');
+  assert.equal(context.hidden, true);
 }));

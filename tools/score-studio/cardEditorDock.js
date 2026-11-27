@@ -6,6 +6,8 @@ const PREVIEW_KEY = 'ashenspire:scoreStudioEntityPreview:v1';
 const VIEWS = ['properties', 'design', 'weights', 'decks'];
 // What an edit in each view reaches: the selected card only, shared art rules,
 // global scoring or one deck's membership.
+// What the column beside the card holds outside Properties.
+const CONTEXT_LABELS = { design: 'Art layers on this card', weights: 'Weights for this card', decks: 'Decks with this card' };
 const VIEW_SCOPES = { properties: 'card', design: 'shared', weights: 'global', decks: 'deck' };
 const SCOPE_TEXT = {
   properties: (noun, name) => `Selected ${noun} · edits change only ${name}`,
@@ -84,8 +86,10 @@ export function initCardEditorDock(ctx) {
   const previewBody = doc.createElement('div'); previewBody.className = 'customization-preview-body';
   previewBody.append(previewSlot);
   // The card is as tall as the fields beside it (2:3, never stretched), so the section needs no scroll bar.
+  // The fields are the Properties basics or, in the other views, that view's fields for this card.
   function fitCardToFields() {
-    const height = quickFieldsShown() ? Math.round(quick.getBoundingClientRect().height) : 0;
+    const fields = previewBody.hidden ? null : [quick, contextFields].find(node => !node.hidden);
+    const height = fields ? Math.round(fields.getBoundingClientRect().height) : 0;
     if (height > 0) { previewBody.style.setProperty('--entity-card-h', `${height}px`); previewBody.dataset.fit = 'fields'; }
     else { previewBody.style.removeProperty('--entity-card-h'); delete previewBody.dataset.fit; }
   }
@@ -108,8 +112,10 @@ export function initCardEditorDock(ctx) {
   const entityDetails = doc.createElement('div'); entityDetails.className = 'customization-entity-details';
   const quick = doc.createElement('div'); quick.className = 'form-grid customization-quick-fields'; quick.hidden = true;
   quick.setAttribute('role', 'group'); quick.setAttribute('aria-label', 'Card basics');
+  const contextFields = doc.createElement('div'); contextFields.className = 'customization-context-fields'; contextFields.hidden = true;
+  contextFields.setAttribute('role', 'group');
   const scoreSummary = previews.cards?.querySelector('#inspector-score-summary');
-  if (scoreSummary) { scoreSummary.before(entityDetails); entityDetails.append(quick); rememberHome(scoreSummary); entityName.append(scoreSummary); }
+  if (scoreSummary) { scoreSummary.before(entityDetails); entityDetails.append(quick, contextFields); rememberHome(scoreSummary); entityName.append(scoreSummary); }
   // Card options: a vertical ellipsis at the top right of the fields. The composition root supplies the actions.
   const cardMenuWrap = doc.createElement('div'); cardMenuWrap.className = 'studio-menu customization-card-menu-wrap';
   const cardMenuButton = button('\u22EE', () => (cardMenu.hidden ? openCardMenu() : closeCardMenu(true)), 's-btn s-btn-icon customization-card-menu-button');
@@ -143,7 +149,6 @@ export function initCardEditorDock(ctx) {
     else if (event.key === 'Tab') closeCardMenu(false);
   });
   doc.addEventListener('pointerdown', event => { if (!cardMenu.hidden && !cardMenuWrap.contains(event.target)) closeCardMenu(false); });
-  const quickFieldsShown = () => !quick.hidden && !previewBody.hidden;
   function placeQuickFields() {
     const inHeader = !!scoreSummary && view === 'properties' && context === 'cards' && isValid('cards') && !previewPrefs.collapsed;
     for (const node of quickFields) {
@@ -151,7 +156,18 @@ export function initCardEditorDock(ctx) {
       else { const home = homes.get(node); if (home && home.nextSibling !== node) home.after(node); }
     }
     quick.hidden = !inHeader;
+    placeContextFields();
     fitCardToFields();
+  }
+  // Outside Properties the column beside the card holds that view's most-used fields for this card, drawn by
+  // the composition root. Rebuilt from empty on every render, so repeated refreshes never stack rows.
+  function placeContextFields() {
+    const eligible = !!scoreSummary && view !== 'properties' && context === 'cards' && isValid('cards') && !previewPrefs.collapsed;
+    contextFields.replaceChildren();
+    contextFields.dataset.contextView = view;
+    contextFields.setAttribute('aria-label', CONTEXT_LABELS[view] || 'Fields for this card');
+    contextFields.hidden = !(eligible && ctx.renderContextFields?.(view, contextFields, selectedId('cards')) === true);
+    if (contextFields.hidden) contextFields.replaceChildren();
   }
   const entityHead = doc.createElement('div'); entityHead.className = 'customization-entity-head';
   entityHead.append(entityHeading);
@@ -436,6 +452,6 @@ export function initCardEditorDock(ctx) {
   // Crossing the breakpoint starts on the library, so focus is never left on a hidden gallery tile.
   narrowMedia?.addEventListener?.('change', () => { panel = 'library'; applyPanel(); });
   setContext('cards'); setDocked(docked); setView(view);
-  setPreviewCollapsed(previewPrefs.collapsed); fieldsObserver?.observe(quick); fitCardToFields();
-  return { edit: id => edit(id, 'cards'), editItem: id => edit(id, 'items'), decorateTile: (tile, def) => decorate(tile, def, 'cards'), decorateItemTile: (tile, def) => decorate(tile, def, 'items'), open: openModal, refresh, refreshEntity: renderEntity, showProperties, setPanel, getPanel: () => panel, setDocked, setContext, setView, isDocked: () => docked, getView: () => view, element: pane };
+  setPreviewCollapsed(previewPrefs.collapsed); fieldsObserver?.observe(quick); fieldsObserver?.observe(contextFields); fitCardToFields();
+  return { edit: id => edit(id, 'cards'), editItem: id => edit(id, 'items'), decorateTile: (tile, def) => decorate(tile, def, 'cards'), decorateItemTile: (tile, def) => decorate(tile, def, 'items'), open: openModal, refresh, refreshEntity: renderEntity, refreshContextFields: () => { placeContextFields(); fitCardToFields(); }, showProperties, setPanel, getPanel: () => panel, setDocked, setContext, setView, isDocked: () => docked, getView: () => view, element: pane };
 }
