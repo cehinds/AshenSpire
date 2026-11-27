@@ -12,6 +12,7 @@ import {
     REPO_ROOT,
 } from './ownerConfig.mjs';
 import { RunNode } from './ownerProcess.mjs';
+import { CreateRebuildQueue } from './rebuildQueue.mjs';
 
 const PLAY = OWNER_TOOLS.play;
 const TEXT = OWNER_TEXT.play;
@@ -42,25 +43,16 @@ function rebuildSheet(fileName)
 function watchEnemySheets()
 {
     const folder = join(REPO_ROOT, PLAY.enemySheetFolder);
-    let timer = null;
-    let writing = false;
-    const settle = () =>
-    {
-        writing = false;
-    };
+    const queue = CreateRebuildQueue({
+        rebuild: rebuildSheet,
+        delayMs: PLAY.rebuildDelayMs,
+    });
     watch(folder, (eventType, fileName) =>
     {
-        if (!isSheet(fileName) || writing)
+        if (isSheet(fileName))
         {
-            return;
+            queue.Notify(fileName);
         }
-        clearTimeout(timer);
-        timer = setTimeout(() =>
-        {
-            writing = true;
-            rebuildSheet(fileName);
-            setTimeout(settle, PLAY.rebuildDelayMs);
-        }, PLAY.rebuildDelayMs);
     });
 }
 
