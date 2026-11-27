@@ -25,11 +25,16 @@ import * as CardProfile from './combatCardProfile.js';
 import * as CarrierDamage from './carrierDamageType.js';
 import * as FixCore from './fixCoreRulesCache.js';
 
-function checkDamageUpgrade(run, registries, rank, ranked) {
+// A plan's projection scope marks one synchronous, read-only operation over one
+// run. The detached receipt source below reads only that run and registries,
+// so every card the operation checks shares it instead of rebuilding it.
+const receiptContextsByScope = new WeakMap();
+function checkDamageUpgrade(run, registries, rank, ranked, projectionScope) {
   if (!Number.isFinite(run.gameProfile?.modules?.effects?.baseDamageMultiplier)) return undefined;
   const tokens = (def, atRank) => staticCardTokens(
     atRank > 1 ? { ...def, effects: rankedEffectsCapped(def, atRank - 1) } : def, registries, run);
-  let before, intrinsicBefore, receiptContext;
+  const shared = projectionScope ? receiptContextsByScope.get(projectionScope) : null;
+  let before, intrinsicBefore, receiptContext = shared && shared.run === run && shared.registries === registries ? shared.value : undefined;
   const intrinsicDamage = (def, atRank) => {
     // Conditional payloads, charges and Counter returns have their own runtime
     // context. Retain the existing static fallback rather than guessing it.
@@ -42,13 +47,16 @@ function checkDamageUpgrade(run, registries, rank, ranked) {
     // has already passed the shared static-face increase check.
     if (receiptContext === undefined) {
       const ratings = ProfileRun.gameProfileRatingReceipt(registries, run);
-      if (!ratings) { receiptContext = null; return null; }
-      const attributes = ProfileRun.gameProfileEffectiveAttributes(registries, run);
-      const source = { id: 'player', kind: 'player', classId: run.class, attributes,
-        ratings: ratings.totals, ratingSources: ratings.sources, statuses: {}, alive: true,
-        itemProps: { ...ItemProperties.ItemPropertySummary(run), ...Gear.GearItemProps(Gear.GearSummary(registries, run.loadout, run.class, run)) } };
-      receiptContext = { source, gear: Gear.GearAlwaysOn(registries, run),
-        ctx: { ...run, registries, fixCoreRules: FixCore.fixCoreRules(run), attributes, enemies: [], phase: 'player', elementFlux: null } };
+      if (!ratings) receiptContext = null;
+      else {
+        const attributes = ProfileRun.gameProfileEffectiveAttributes(registries, run);
+        const source = { id: 'player', kind: 'player', classId: run.class, attributes,
+          ratings: ratings.totals, ratingSources: ratings.sources, statuses: {}, alive: true,
+          itemProps: { ...ItemProperties.ItemPropertySummary(run), ...Gear.GearItemProps(Gear.GearSummary(registries, run.loadout, run.class, run)) } };
+        receiptContext = { source, gear: Gear.GearAlwaysOn(registries, run),
+          ctx: { ...run, registries, fixCoreRules: FixCore.fixCoreRules(run), attributes, enemies: [], phase: 'player', elementFlux: null } };
+      }
+      if (projectionScope) receiptContextsByScope.set(projectionScope, { run, registries, value: receiptContext });
     }
     if (!receiptContext) return null;
     const { source, ctx, gear } = receiptContext;
@@ -187,7 +195,7 @@ export function nextUpgradeOptions(run, instance, base, registries, count = 1, {
   const mechanics = run.combatMechanics || run.gameProfile?.combatMechanics;
   const mechanicsContext = mechanics ? { combatMechanics: mechanics } : null;
   const limits = { ...mana, mechanicsContext, rank, cardRank: visibleRank, playerLevel, instance, scale, registries, preparation,
-    damageChanges: checkDamageUpgrade(run, registries, rank, ranked),
+    damageChanges: checkDamageUpgrade(run, registries, rank, ranked, preparation?.projectionScope),
     exposure: registries?.balance?.exposure?.elementUpgradeBuildup, maxRange: run.rangePolicy?.maxRange, ...(vendor ? { vendor } : {}), ...(nodeSpecialty ? { nodeSpecialty } : {}) };
   const authored = applied.length === 0 && base.upgrade && !Array.isArray(base.gradeProfiles) && !noAuthored;
   if (count <= 1 && authored) return [{ k: 'authored' }];
