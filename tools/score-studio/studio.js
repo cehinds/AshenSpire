@@ -48,6 +48,7 @@ import { filterMembership, deckCatalogOptions, resolveStudioDeck } from './deckC
 import { initGalleryZoom } from './galleryZoom.js';
 import { focusedEffectOptions } from './focusedRebalance.js';
 import { createAddCardTile, CaptureCardTilePositions, animateCardInsertion } from './addCardTile.js';
+import { initCardTemplatesUi } from './cardTemplatesUi.js';
 
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
 const AB_STORAGE_KEY = 'ashenspire:scoreStudioAB:v1';
@@ -161,6 +162,9 @@ const state = {
   coreCardIds: [],
   coreShape: null,
   generatorSettings: null,
+  // Card templates (SS-004): the working list and the last stored copy (cardTemplatesUi.js).
+  templates: [],
+  savedTemplates: [],
   sandbox: { combat: null, classId: 'reaver', enemyId: 'wanderingSoldier', appliedScoring: null, customCardId: null, log: [] },
 };
 
@@ -346,6 +350,7 @@ function snapshotState() {
     customClasses: state.customClasses,
     customDecks: state.customDecks,
     subclassCatalog: state.subclassCatalog,
+    templates: state.templates,
   });
 }
 
@@ -393,7 +398,8 @@ function isDirty() {
     || editedItems().length > 0
     || (state.customClasses || []).length > 0
     || (state.customDecks || []).length > 0
-    || artLayersChanged();
+    || artLayersChanged()
+    || Boolean(cardTemplatesUi?.changed());
 }
 
 function refreshDirtyStatus() {
@@ -539,6 +545,7 @@ function writeDraftNow() {
           customClasses: state.customClasses,
           customDecks: state.customDecks,
           subclassCatalog: state.subclassCatalog,
+          templates: state.templates,
         }));
       } else {
         localStorage.removeItem(DRAFT_STORAGE_KEY);
@@ -578,6 +585,7 @@ function restoreSnapshot(snapStr) {
   if (Array.isArray(snap.customClasses)) state.customClasses = snap.customClasses;
   if (Array.isArray(snap.customDecks)) state.customDecks = snap.customDecks;
   state.subclassCatalog = snap.subclassCatalog || null;
+  if (Array.isArray(snap.templates)) state.templates = snap.templates;
   studioCardOverrides.clear();
   if (!state.cards.some((c) => c.id === state.selectedCardId)) state.selectedCardId = state.cards[0]?.id || null;
   if (!state.items.some((x) => x.key === state.selectedItemKey)) state.selectedItemKey = state.items[0]?.key || null;
@@ -1989,6 +1997,15 @@ function cardJsonProblem(card) {
   }
   if (card.tags !== undefined && (!Array.isArray(card.tags) || card.tags.some((tag) => typeof tag !== 'string'))) return '"tags" must be a list of text.';
   if (card.name !== undefined && typeof card.name !== 'string') return '"name" must be text.';
+  return '';
+}
+
+// The JSON dialog's checks for a card a template keeps or makes: shape first, then a scoring dry run on a copy.
+function templateCardProblem(card) {
+  const visible = Object.fromEntries(Object.entries(card || {}).filter(([key]) => !key.startsWith('_')));
+  const problem = cardJsonProblem(visible);
+  if (problem) return problem;
+  try { scoreCardEntry(normalizeStudioCard(clone(visible))); } catch (err) { return `Not a valid card: ${err.message}`; }
   return '';
 }
 
@@ -4046,6 +4063,7 @@ async function revertToRepo() {
   state.cards = buildCardList();
   state.subclassCatalog = null;
   state.customDecks = state.customDecks.filter(deck => !deck.id?.startsWith('subclass-list.'));
+  cardTemplatesUi?.revert();
   const roster = buildItemRoster(contentBundle);
   state.items = roster.items;
   state.itemRules = roster.rules;
@@ -4099,6 +4117,7 @@ function fillSelect(select, values, allLabel = null) {
 }
 
 let studioToolsUi = null;
+let cardTemplatesUi = null;
 let subclassCatalogUi = null;
 let cardSelectionUi = null;
 let cardEditorDockUi = null;
@@ -5369,6 +5388,9 @@ async function boot() {
     document.getElementById('draft-status').title = 'Web mode: use Download JSON in the More menu to export';
   }
 
+  // Templates load before the draft is restored over them (the in-memory store until SS-003's Save path).
+  cardTemplatesUi = initCardTemplatesUi({ state, checkCard: templateCardProblem });
+
   await loadFromRepo(state.repoPath);
   state.coreCardIds = state.cards.map((c) => c.id);
   state.coreShape = MeasurePoolShape(state.cards, { rankOf: (c) => state.baselineRanks[c.id] ?? 0, scoring: state.repoScoring });
@@ -5404,6 +5426,7 @@ async function boot() {
       if (Array.isArray(draft.customClasses)) state.customClasses = draft.customClasses;
       if (Array.isArray(draft.customDecks)) state.customDecks = draft.customDecks;
       if (draft.subclassCatalog?.kind === 'ashenspire.subclassCatalog' && Array.isArray(draft.subclassCatalog.lists)) state.subclassCatalog = draft.subclassCatalog;
+      cardTemplatesUi.restoreDraft(draft.templates);
       for (const draftItem of (Array.isArray(draft.editedItems) ? draft.editedItems : [])) {
         if (!draftItem?.key) continue;
         const j = state.items.findIndex((x) => x.key === draftItem.key);
