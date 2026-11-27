@@ -105,7 +105,7 @@ export function alternativeBackdropHtml(sceneId = 'hollow-weald-1') {
   const device = scene.devices[mobile ? 'phone' : 'desktop'];
   const layers = combatSceneLayers(device);
   // The fill's sources are set when the backdrop is fitted (first paint loads each file once).
-  const image = (layer, attr) => `<image ${attr}="${layer.id}" ${attr === 'data-layer' ? `href="${alternativeArtUrl(sceneArtPath(alternativeArtCatalog.sceneLayers[layer.id], mobile))}" ` : ''}x="${layer.x}" y="${layer.y}" width="${layer.width}" height="${layer.height}"/>`;
+  const image = (layer, attr) => `<image ${attr}="${layer.id}" ${attr === 'data-layer' ? `href="${alternativeArtUrl(sceneArtPath(alternativeArtCatalog.sceneLayers[layer.id], mobile))}" ` : ''}x="${layer.x}" y="${layer.y}" width="${layer.width}" height="${layer.height}" onerror="this.setAttribute('display','none')"/>`;
   // Zooming the art out can leave bare edges. `fill` repeats the far sky and the
   // ground at the old, closer framing, blurred once and static, behind the sharp
   // layers; `edge` feathers the sharp layers into it only where an edge shows.
