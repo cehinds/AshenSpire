@@ -27,7 +27,8 @@ const FilterNoteCopy = Object.freeze({
   Separator: ' · ',
   ClearLabel: 'Clear',
   ClearAriaLabel: 'Clear filters',
-  NoteTitle: noun => `The current filters hide this ${noun} in the library. It stays active and editable.`,
+  NoteTitle: noun =>
+    `The current filters hide this ${noun} in the library. It stays active and editable.`,
   ClearTitle: noun => `Clear the ${noun} filters and show this ${noun} in the library`,
 });
 const FilterNoteAria = Object.freeze({
@@ -35,6 +36,42 @@ const FilterNoteAria = Object.freeze({
   HiddenValue: 'true',
   LabelAttribute: 'aria-label',
 });
+
+function renderFilterNotePart(doc, text)
+{
+  const part = doc.createElement('span');
+  part.textContent = text;
+  return part;
+}
+
+// The filter notice: one line saying filters hide the active entity, and a Clear button.
+function renderFilterNote(
+  doc,
+  button,
+  onClear,
+)
+{
+  const note = doc.createElement('p');
+  note.id = FilterNoteId.Note;
+  note.className = FilterNoteId.Note;
+  note.hidden = true;
+  const text = renderFilterNotePart(doc, FilterNoteCopy.Text);
+  const separator = renderFilterNotePart(doc, FilterNoteCopy.Separator);
+  separator.setAttribute(FilterNoteAria.HiddenAttribute, FilterNoteAria.HiddenValue);
+  const clear = button(
+    FilterNoteCopy.ClearLabel,
+    onClear,
+    FilterNoteId.Clear,
+  );
+  clear.id = FilterNoteId.Clear;
+  clear.setAttribute(FilterNoteAria.LabelAttribute, FilterNoteCopy.ClearAriaLabel);
+  note.append(
+    text,
+    separator,
+    clear,
+  );
+  return { note, clear };
+}
 
 export function initCardEditorDock(ctx) {
   const doc = ctx.document || document;
@@ -198,39 +235,16 @@ export function initCardEditorDock(ctx) {
   const entityHead = doc.createElement('div'); entityHead.className = 'customization-entity-head';
   entityHead.append(entityHeading);
   // When filters hide the active entity, one line says so and offers to clear them.
-  const filterNote = doc.createElement('p');
-  filterNote.id = FilterNoteId.Note;
-  filterNote.className = FilterNoteId.Note;
-  filterNote.hidden = true;
-
-  function filterNotePart(text)
-  {
-    const part = doc.createElement('span');
-    part.textContent = text;
-    return part;
-  }
-
-  const filterNoteText = filterNotePart(FilterNoteCopy.Text);
-  const filterNoteSeparator = filterNotePart(FilterNoteCopy.Separator);
-  filterNoteSeparator.setAttribute(FilterNoteAria.HiddenAttribute, FilterNoteAria.HiddenValue);
-
   function clearFiltersAndShowLibrary()
   {
     ctx.clearFilters?.(context);
     showLibrary(context);
   }
 
-  const clearFilters = button(
-    FilterNoteCopy.ClearLabel,
+  const { note: filterNote, clear: clearFilters } = renderFilterNote(
+    doc,
+    button,
     clearFiltersAndShowLibrary,
-    FilterNoteId.Clear,
-  );
-  clearFilters.id = FilterNoteId.Clear;
-  clearFilters.setAttribute(FilterNoteAria.LabelAttribute, FilterNoteCopy.ClearAriaLabel);
-  filterNote.append(
-    filterNoteText,
-    filterNoteSeparator,
-    clearFilters,
   );
   entity.append(
     entityHead,
@@ -446,7 +460,8 @@ export function initCardEditorDock(ctx) {
     for (const [key, node] of Object.entries(properties)) if (node) node.hidden = key !== context || !valid;
     for (const [key, node] of Object.entries(previews)) if (node) node.hidden = key !== context || !valid;
     rename.disabled = balance.disabled = !valid;
-    const filteredOut = valid && ctx.isHiddenByFilters?.(context, selectedId(context)) === true;
+    const shownId = selectedId(context);
+    const filteredOut = valid && ctx.isHiddenByFilters?.(context, shownId) === true;
     filterNote.hidden = !filteredOut;
     filterNote.title = FilterNoteCopy.NoteTitle(noun);
     clearFilters.title = FilterNoteCopy.ClearTitle(noun);
