@@ -1,4 +1,5 @@
-// Headless helpers for the active card and item and the library view state; studio.js wires them in.
+// Headless helpers for the active card and item and the library view state.
+// studio.js wires them in.
 
 export const GalleryKind = Object.freeze({
   Cards: 'cards',
@@ -39,7 +40,8 @@ export const GalleryEntity = Object.freeze({
 
 export const DataAttributePrefix = 'data-';
 
-// Options for the card and item select setters. A deferred reveal waits for the next gallery render.
+// Options for the card and item select setters.
+// A deferred reveal waits for the next gallery render.
 export const SelectionOptions = Object.freeze({
   Reveal: Object.freeze({ reveal: true }),
   Deferred: Object.freeze({ render: false }),
@@ -62,6 +64,171 @@ const tileFocusSelectors = Object.freeze({
   focusableDescendant: 'button, [tabindex]',
   classNameSeparator: /\s+/,
 });
+
+function isKnownEntity(
+  state,
+  kind,
+  id,
+)
+{
+  const { list, idOf } = GalleryEntity[kind];
+  const hasId = id !== null && id !== undefined;
+  return hasId && list(state).some(entity => idOf(entity) === id);
+}
+
+function knownIdOrNull(
+  state,
+  kind,
+  id,
+)
+{
+  const isKnown = isKnownEntity(
+    state,
+    kind,
+    id,
+  );
+  if (!isKnown)
+  {
+    return null;
+  }
+  return id;
+}
+
+function requireSelectedField(kind)
+{
+  const field = selectedField[kind];
+  if (!field)
+  {
+    throw new Error(`Unknown entity kind '${kind}'`);
+  }
+  return field;
+}
+
+// One typing burst: the first begin pushes an undo step; a pause or end closes it.
+function createBurst(openBursts, timing)
+{
+  const {
+    pushHistory,
+    delayMs,
+    setTimer,
+    clearTimer,
+  } = timing;
+  let timer = null;
+  const burst = {
+    begin()
+    {
+      if (!openBursts.has(burst))
+      {
+        pushHistory?.();
+        openBursts.add(burst);
+      }
+      clearTimer(timer);
+      timer = setTimer(() => openBursts.delete(burst), delayMs);
+    },
+    end()
+    {
+      openBursts.delete(burst);
+      clearTimer(timer);
+    },
+    isOpen: () => openBursts.has(burst),
+  };
+  return burst;
+}
+
+function pickKnownId(
+  state,
+  kind,
+  stored,
+  fallback,
+)
+{
+  const storedIsKnown = isKnownEntity(
+    state,
+    kind,
+    stored,
+  );
+  if (storedIsKnown)
+  {
+    return stored;
+  }
+  return knownIdOrNull(
+    state,
+    kind,
+    fallback,
+  );
+}
+
+function resolveGallery(saved, defaults)
+{
+  if (Galleries.includes(saved?.gallery))
+  {
+    return saved.gallery;
+  }
+  if (Galleries.includes(defaults.gallery))
+  {
+    return defaults.gallery;
+  }
+  return GalleryKind.Cards;
+}
+
+function tileIdAttributeName(attribute)
+{
+  return `${DataAttributePrefix}${attribute}`;
+}
+
+function tileIdSelector(attribute)
+{
+  return `[${tileIdAttributeName(attribute)}]`;
+}
+
+// A focused part is found again by its first class, else by its tag.
+function focusedPart(element)
+{
+  const className = String(element.className || '');
+  const classNames = className.split(tileFocusSelectors.classNameSeparator);
+  const firstClass = classNames.filter(Boolean)[0];
+  return firstClass
+    ? `${tileFocusSelectors.classPrefix}${firstClass}`
+    : element.tagName.toLowerCase();
+}
+
+function isFocusableTile(tile)
+{
+  const hasTabindex = tile.getAttribute(tileFocusSelectors.tabindexAttribute) !== null;
+  return tile.tabIndex >= 0 || hasTabindex;
+}
+
+function findTile(
+  grid,
+  attribute,
+  id,
+)
+{
+  const idAttribute = tileIdAttributeName(attribute);
+  const tiles = [...grid.querySelectorAll(tileIdSelector(attribute))];
+  return tiles.find(node => node.getAttribute(idAttribute) === id);
+}
+
+function focusTarget(
+  tile,
+  part,
+  fallback,
+)
+{
+  const partNode = tile && part
+    ? tile.querySelector(part)
+    : null;
+  if (partNode)
+  {
+    return partNode;
+  }
+  if (tile && isFocusableTile(tile))
+  {
+    return tile;
+  }
+  const focusableDescendant = tile?.querySelector(tileFocusSelectors.focusableDescendant);
+  return focusableDescendant || fallback || null;
+}
 
 // One value per gallery kind, for per-gallery bookkeeping.
 export function PerGallery(value)
@@ -86,17 +253,6 @@ export function FindGalleryEntity(
   return list(state).find(entity => idOf(entity) === id);
 }
 
-function isKnownEntity(
-  state,
-  kind,
-  id,
-)
-{
-  const { list, idOf } = GalleryEntity[kind];
-  const hasId = id !== null && id !== undefined;
-  return hasId && list(state).some(entity => idOf(entity) === id);
-}
-
 /** The one writer of the active card and item. A missing id gives null, never the first entity.
  * onChange runs once per real change. */
 export function CreateActiveEntities({ state, onChange } = {})
@@ -105,18 +261,12 @@ export function CreateActiveEntities({ state, onChange } = {})
 
   function set(kind, id)
   {
-    const field = selectedField[kind];
-    if (!field)
-    {
-      throw new Error(`Unknown entity kind '${kind}'`);
-    }
-    const next = isKnownEntity(
+    const field = requireSelectedField(kind);
+    const next = knownIdOrNull(
       state,
       kind,
       id,
-    )
-      ? id
-      : null;
+    );
     const changed = next !== committed[kind];
     state[field] = next;
     committed[kind] = next;
@@ -161,7 +311,9 @@ export function NextInDisplayedOrder(
   {
     return null;
   }
-  return order[removedIndex + 1] ?? order[removedIndex - 1] ?? null;
+  const nextId = order[removedIndex + 1];
+  const previousId = order[removedIndex - 1];
+  return nextId ?? previousId ?? null;
 }
 
 /** One undo step per typing burst. endAll lets an entity change end every open burst. */
@@ -173,29 +325,16 @@ export function CreateEditBursts({
 } = {})
 {
   const openBursts = new Set();
+  const timing = {
+    pushHistory,
+    delayMs,
+    setTimer,
+    clearTimer,
+  };
 
   function create()
   {
-    let timer = null;
-    const burst = {
-      begin()
-      {
-        if (!openBursts.has(burst))
-        {
-          pushHistory?.();
-          openBursts.add(burst);
-        }
-        clearTimer(timer);
-        timer = setTimer(() => openBursts.delete(burst), delayMs);
-      },
-      end()
-      {
-        openBursts.delete(burst);
-        clearTimer(timer);
-      },
-      isOpen: () => openBursts.has(burst),
-    };
-    return burst;
+    return createBurst(openBursts, timing);
   }
 
   function endAll()
@@ -270,65 +409,23 @@ export function ResolveWorkingContext(
   defaults = {},
 )
 {
-  function pick(
-    kind,
-    stored,
-    fallback,
-  )
-  {
-    return isKnownEntity(
-      state,
-      kind,
-      stored,
-    )
-      ? stored
-      : isKnownEntity(
-        state,
-        kind,
-        fallback,
-      )
-        ? fallback
-        : null;
-  }
-
-  const gallery = Galleries.includes(saved?.gallery)
-    ? saved.gallery
-    : Galleries.includes(defaults.gallery)
-      ? defaults.gallery
-      : GalleryKind.Cards;
+  const cardId = pickKnownId(
+    state,
+    GalleryKind.Cards,
+    saved?.cardId,
+    defaults.cardId,
+  );
+  const itemKey = pickKnownId(
+    state,
+    GalleryKind.Items,
+    saved?.itemKey,
+    defaults.itemKey,
+  );
   return {
-    gallery,
-    cardId: pick(
-      GalleryKind.Cards,
-      saved?.cardId,
-      defaults.cardId,
-    ),
-    itemKey: pick(
-      GalleryKind.Items,
-      saved?.itemKey,
-      defaults.itemKey,
-    ),
+    gallery: resolveGallery(saved, defaults),
+    cardId,
+    itemKey,
   };
-}
-
-function tileIdAttributeName(attribute)
-{
-  return `${DataAttributePrefix}${attribute}`;
-}
-
-function tileIdSelector(attribute)
-{
-  return `[${tileIdAttributeName(attribute)}]`;
-}
-
-// A focused part is found again by its first class, else by its tag.
-function focusedPart(element)
-{
-  const classNames = String(element.className || '').split(tileFocusSelectors.classNameSeparator);
-  const firstClass = classNames.filter(Boolean)[0];
-  return firstClass
-    ? `${tileFocusSelectors.classPrefix}${firstClass}`
-    : element.tagName.toLowerCase();
 }
 
 /** Before a gallery re-render: which tile (by stable id) and which part of it had focus. */
@@ -339,7 +436,8 @@ export function CaptureTileFocus(
 )
 {
   const focused = doc?.activeElement;
-  if (!grid || !focused || focused === grid || !grid.contains(focused))
+  const focusInsideGrid = Boolean(grid && focused && focused !== grid && grid.contains(focused));
+  if (!focusInsideGrid)
   {
     return null;
   }
@@ -348,37 +446,13 @@ export function CaptureTileFocus(
   {
     return null;
   }
+  const part = focused === tile
+    ? null
+    : focusedPart(focused);
   return {
     id: tile.getAttribute(tileIdAttributeName(attribute)),
-    part: focused === tile
-      ? null
-      : focusedPart(focused),
+    part,
   };
-}
-
-function isFocusableTile(tile)
-{
-  return tile.tabIndex >= 0 || tile.getAttribute(tileFocusSelectors.tabindexAttribute) !== null;
-}
-
-function focusTarget(
-  tile,
-  part,
-  fallback,
-)
-{
-  const partNode = tile && part
-    ? tile.querySelector(part)
-    : null;
-  if (partNode)
-  {
-    return partNode;
-  }
-  if (tile && isFocusableTile(tile))
-  {
-    return tile;
-  }
-  return tile?.querySelector(tileFocusSelectors.focusableDescendant) || fallback || null;
 }
 
 /** After the rebuild: focus the same tile or part, else the fallback; never the page body. */
@@ -395,13 +469,16 @@ export function RestoreTileFocus(
     return null;
   }
   const focused = doc?.activeElement;
-  if (focused && focused !== doc.body && grid.contains(focused))
+  const focusStayedInGrid = focused && focused !== doc.body && grid.contains(focused);
+  if (focusStayedInGrid)
   {
     return focused;
   }
-  const idAttribute = tileIdAttributeName(attribute);
-  const tiles = [...grid.querySelectorAll(tileIdSelector(attribute))];
-  const tile = tiles.find(node => node.getAttribute(idAttribute) === captured.id);
+  const tile = findTile(
+    grid,
+    attribute,
+    captured.id,
+  );
   const target = focusTarget(
     tile,
     captured.part,
