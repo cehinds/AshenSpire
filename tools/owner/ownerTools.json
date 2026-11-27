@@ -93,6 +93,18 @@
         "tools/game-config.mjs",
         "build"
       ]
+    },
+    {
+      "label": "Build combat power table",
+      "args": [
+        "tools/combat-power-report.mjs"
+      ]
+    },
+    {
+      "label": "Build level lists",
+      "args": [
+        "tools/level-lists.mjs"
+      ]
     }
   ],
   "checkSteps": [
@@ -129,6 +141,20 @@
       "args": [
         "tools/game-config.mjs",
         "check"
+      ]
+    },
+    {
+      "label": "Check combat power table",
+      "args": [
+        "tools/combat-power-report.mjs",
+        "--check"
+      ]
+    },
+    {
+      "label": "Check level lists",
+      "args": [
+        "tools/level-lists.mjs",
+        "--check"
       ]
     }
   ],
