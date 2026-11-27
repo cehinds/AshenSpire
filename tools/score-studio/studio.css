@@ -130,6 +130,7 @@ body.studio-body .studio-pill {
   min-width: 0;
 }
 body.studio-body .studio-pill.is-dirty { border-color: var(--st-warn); color: var(--st-warn); }
+body.studio-body .studio-pill .pill-short { display: none; }
 
 body.studio-body .studio-tabs { grid-area: tabs; display: flex; justify-content: center; gap: var(--studio-gap-1); min-width: 0; }
 body.studio-body .studio-tab {
@@ -295,7 +296,11 @@ body.studio-body .item-filter-fields > label { display: flex; flex-direction: co
 body.studio-body .item-filter-fields select { width: 100%; }
 @media (max-width: 600px) {
   body.studio-body .studio-menubar .studio-menu-heading { min-height: 36px; padding-inline: 6px; font-size: 12px; }
-  body.studio-body .studio-brand .studio-pill { display: none; }
+  body.studio-body .studio-brand .studio-pill {
+    max-width: 88px;
+    padding-inline: 6px;
+    font-size: 11px;
+  }
   body.studio-body .studio-title { font-size: 13px; }
   body.studio-body .studio-menubar > .studio-menu > .studio-menu-panel { position: fixed; top: 44px; left: 8px; right: 8px; width: auto; max-width: none; max-height: calc(100dvh - 56px); }
   body.studio-body #tab-cards .filter-bar > .filter-row { flex-wrap: wrap; }
@@ -801,6 +806,11 @@ body.studio-body .export-diff { background: #0e1117; border: 1px solid var(--st-
 body.studio-body .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
 
 body.studio-body .studio-toast { position: fixed; bottom: 16px; right: 16px; background: var(--st-surface-2); border: 1px solid var(--st-accent); color: var(--st-text); padding: 8px 14px; border-radius: 8px; font-weight: 600; z-index: 9999; box-shadow: 0 6px 20px rgba(0,0,0,.5); }
+/* A long message wraps inside the viewport instead of running off its left edge. */
+body.studio-body .studio-toast {
+  max-width: calc(100vw - 32px);
+  overflow-wrap: anywhere;
+}
 
 /* NARROW SCREENS (900px and below): one column, the page scrolls instead of inner boxes,
    and the inspector opens as a full-screen sheet when a card is tapped. */
@@ -1535,6 +1545,18 @@ body.studio-body .studio-card-tile.is-art-loading .studio-card-stage {
   body.studio-body .studio-loading-progress {
     max-width: none;
   }
+}
+/* Phones: the menus keep their width, and the Save pill takes its short text and wraps
+   above the title when both do not fit on one line. */
+@media (max-width: 600px) {
+  body.studio-body .studio-topbar { grid-template-columns: auto minmax(0, 1fr); }
+  body.studio-body .studio-brand {
+    flex-wrap: wrap;
+    row-gap: 0;
+  }
+  body.studio-body .studio-brand .studio-pill { max-width: 100%; }
+  body.studio-body .studio-pill .pill-long { display: none; }
+  body.studio-body .studio-pill .pill-short { display: inline; }
 }
 @media (prefers-reduced-motion: reduce) {
   body.studio-body .studio-loading-spinner,
