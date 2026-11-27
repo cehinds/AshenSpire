@@ -28,6 +28,7 @@ const LOCAL_FLAG = '--local';
 const WORKTREE_PREFIX = 'ashenspire-ship-';
 const REGENERATE_SUBJECT = 'Regenerate game data from the edited files';
 const RECEIPT_SUBJECT = 'Add the changelog receipt';
+const OPEN_PULL_LIMIT = '200';
 const PULL_NUMBER_PATTERN = /\/pull\/(\d+)/;
 const TITLE_WORD_PATTERN = /[A-Za-z0-9]+/g;
 const BRANCH_TITLE_LIMIT = 40;
@@ -180,15 +181,50 @@ function captureLog()
     };
 }
 
+function openOwnerBranches()
+{
+    const { baseBranch, branchPrefix } = OWNER_TOOLS.git;
+    try
+    {
+        const listed = RunProgram('gh', [
+            'pr',
+            'list',
+            '--state',
+            'open',
+            '--base',
+            baseBranch,
+            '--limit',
+            OPEN_PULL_LIMIT,
+            '--json',
+            'headRefName',
+        ]);
+        return JSON.parse(listed)
+            .map((pull) => pull.headRefName)
+            .filter((name) => name.startsWith(branchPrefix));
+    }
+    catch
+    {
+        console.log('Could not list open pull requests, so only dev is checked for edits already shipped.');
+        return [];
+    }
+}
+
+/** dev plus every open owner pull request branch, fetched fresh. */
 function fetchShippedRefs()
 {
-    const { remote, baseBranch, branchPrefix } = OWNER_TOOLS.git;
-    const ownerRefs = `+refs/heads/${branchPrefix}*:refs/remotes/${remote}/${branchPrefix}*`;
-    RunGit(['fetch', '--quiet', remote, baseBranch, ownerRefs]);
-    const owned = RunGit(['for-each-ref', '--format=%(refname:short)', `refs/remotes/${remote}/${branchPrefix}*`]);
+    const { remote, baseBranch } = OWNER_TOOLS.git;
+    const branches = openOwnerBranches();
+    const refspecs = branches.map((name) => `+refs/heads/${name}:refs/remotes/${remote}/${name}`);
+    RunGit([
+        'fetch',
+        '--quiet',
+        remote,
+        baseBranch,
+        ...refspecs,
+    ]);
     return [
         `${remote}/${baseBranch}`,
-        ...owned.split('\n').filter(Boolean),
+        ...branches.map((name) => `${remote}/${name}`),
     ];
 }
 
