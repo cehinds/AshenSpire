@@ -1,6 +1,7 @@
 // The same neutral, attributed card-face baseline used by playingCardModel.
 // Reference profiles/runs are initialized only on the first headless request.
 import { contentBundle } from '../content/index.js';
+import { balance } from '../content/balance.js';
 import * as Registries from './registries.js';
 import * as State from './state.js';
 import * as Profile from './gameProfile.js';
@@ -10,7 +11,8 @@ import { BarrierPoiseFactor } from './combatRatings.js';
 import { ApplyGearCardRules, GearAlwaysOn } from './gearEffects.js';
 import { gameProfileEffectiveAttributes } from './gameProfileGear.js';
 
-const classes = ['reaver', 'starseer', 'rogue', 'herald'];
+// Reference classes, seed and the magic test live in content/source/balanceCardUpgrades.json.
+const ScoreReference = balance.cardUpgrades.scoreReference;
 const probeScopes = new WeakMap();
 const referencesByRegistry = new WeakMap();
 const contextCaches = new WeakMap();
@@ -118,10 +120,7 @@ function freeze(value)
   return value;
 }
 
-const ReferenceSeed = 31;
 const ReferenceCompletedRunIds = ['a', 'b', 'c'];
-const MagicReferenceClass = 'starseer';
-const MartialReferenceClass = 'reaver';
 const MaxCachedProjections = 512;
 const WholeNumberText = /^\d+$/;
 
@@ -138,14 +137,15 @@ function DefaultReferenceRegistries()
 
 function ReferenceClassId(def)
 {
-  if (classes.includes(def?.class))
+  if (ScoreReference.classes.includes(def?.class))
   {
     return def.class;
   }
-  const magic = def?.tags?.includes('camp:spell') || def?.damageSchool && def.damageSchool !== 'physical';
+  const magic = def?.tags?.includes(ScoreReference.magicTag)
+    || def?.damageSchool && def.damageSchool !== ScoreReference.physicalSchool;
   return magic
-    ? MagicReferenceClass
-    : MartialReferenceClass;
+    ? ScoreReference.magicClass
+    : ScoreReference.martialClass;
 }
 
 // A neutral run on the registry's own profile, never the player's progressed state.
@@ -168,7 +168,7 @@ export function CardScoreReferenceContext(def, { registries } = {})
     const rules = State.createRunState({
       registries,
       classId,
-      seed: ReferenceSeed,
+      seed: ScoreReference.seed,
       runId: `score-reference-${classId}`,
       shareFrozenProfile: true,
       profileMeta: { gameProfileUnlocks: { [profile.id]: { completedRunIds: [...ReferenceCompletedRunIds] } } },
