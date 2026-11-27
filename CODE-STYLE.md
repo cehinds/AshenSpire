@@ -19,7 +19,8 @@ config, so the owner can change the game without reading code, and in time from 
 - **Configured values must apply:** read `registries.balance.<name>` from the registries the caller
   holds; use the authored `balance.<name>` only when no registries are given. Bad values still fail
   loudly. An Advanced row that nothing reads is a bug.
-- **Variants extend a base** and hold only their tweaks; a new option is a config edit, not new code.
+- **Variants extend a base** and hold only their tweaks; a new option is a config edit, not new
+  code.
 - **Engine internals stay in code:** caches, internal record ids, and result codes callers check.
 - **Every change:** move the values the touched code uses into config, and prove the output is
   unchanged before and after.
@@ -31,7 +32,8 @@ config, so the owner can change the game without reading code, and in time from 
 - **Vertical lists:** a list of more than 2 items (arguments, properties, array elements) and every
   nested object goes one item per line, with trailing commas.
 - **Scoped components:** each block, callback body or nested object on its own lines.
-- **Ternaries:** the `?` and `:` parts each on their own line; a nested ternary indents one more level.
+- **Ternaries:** the `?` and `:` parts each on their own line; a nested ternary indents one more
+  level.
 - **Line length:** 100 characters at most.
 - **File order:** imports, constants, private helpers, exports, with a blank line between groups.
 
@@ -60,7 +62,8 @@ export function ReferenceClassId(definition, scoreReference)
 
 ## Names and values
 
-- **Descriptive names:** never single letters. PascalCase for public or exported names, camelCase for
+- **Descriptive names:** never single letters. PascalCase for public or exported names, camelCase
+  for
   private ones.
 - **No magic values:** ids, class names, storage keys, paths and status words become named constants
   or config; tuning numbers go to config.
@@ -68,12 +71,14 @@ export function ReferenceClassId(definition, scoreReference)
 ## Comments and changelog
 
 - **Few comments, at most 2 lines each,** saying why, not what. Names explain the code.
-- No history, dates, issue numbers or owner quotes, and no comments about code that no longer exists.
+- No history, dates, issue numbers or owner quotes, and no comments about code that no longer
+  exists.
 - **CHANGELOG receipts:** 2 short sentences at most.
 
 ## Scope and enforcement
 
 - Clean up only the files the change touches.
 - A style cleanup never changes behaviour; prove it with the same output before and after.
-- The pinned dprint formatter in `tools/code-quality` applies the layout, with its own 4-space indent,
+- The pinned dprint formatter in `tools/code-quality` applies the layout, with its own 4-space
+  indent,
   to files enrolled in its `policy.json`.
