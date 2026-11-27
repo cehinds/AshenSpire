@@ -3796,6 +3796,8 @@ function setupMenus() {
 function setCustomizationView(view) {
   document.querySelector(`.studio-tab[data-tab="${activeGallery}"]`).click();
   cardEditorDockUi?.setView(view);
+  // On narrow screens the pane is a panel of its own: show it, or the chosen view stays hidden.
+  cardEditorDockUi?.setPanel?.('editor');
   if (cardEditorDockUi && !cardEditorDockUi.isDocked()) cardEditorDockUi.open?.();
 }
 
@@ -4921,7 +4923,7 @@ async function boot() {
     selectCard: id => { document.querySelector('.studio-tab[data-tab="cards"]').click(); selectStudioCard(id); },
     selectItem: key => { document.querySelector('.studio-tab[data-tab="items"]').click(); selectStudioItem(key); },
     openDeckManager: () => studioToolsUi.openDecksModal(),
-    onOpen: () => cardEditorDockUi?.setView('decks'),
+    onOpen: () => { cardEditorDockUi?.setView('decks'); cardEditorDockUi?.setPanel?.('editor'); },
     onRowSelect: () => cardEditorDockUi?.showProperties(),
   });
   cardEditorDockUi = initCardEditorDock({ state, selectCard: selectStudioCard, narrowQuery: NARROW_LAYOUT_QUERY,
@@ -4934,7 +4936,7 @@ async function boot() {
     views: { design: document.getElementById('tab-art'), weights: document.getElementById('tab-weights'), decks: () => deckListPanelUi?.element },
     onViewChange: view => { if (view === 'design') renderArtTab(); else if (view === 'weights') renderWeights(); else if (view === 'decks') deckListPanelUi?.refresh(); },
   });
-  document.getElementById('btn-open-decks').addEventListener('click', () => { cardEditorDockUi?.setView?.('decks'); deckListPanelUi?.refresh(); });
+  document.getElementById('btn-open-decks').addEventListener('click', () => { setCustomizationView('decks'); deckListPanelUi?.refresh(); });
   document.getElementById('btn-custom-decks-items')?.addEventListener('click', () => studioToolsUi.openDecksModal());
 
   // Web mode (GitHub Pages): nothing can be written to the repo, so the repo controls go and
