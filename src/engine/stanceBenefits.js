@@ -121,7 +121,8 @@ export function SweepSplashTargets(ctx, source, primary, carrier, candidates) {
 }
 
 /** The carrier a splash hit travels as: no committed contact, range plan or crit of the main hit, and the fraction its damage carries. */
-export function SplashCarrier(ctx, source, carrier) {
+export function SplashCarrier(ctx, source, carrier)
+{
   // Splash hits carry no flat break or committed primary contact.
   const {
     rangePlan,

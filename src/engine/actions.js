@@ -492,23 +492,27 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
     poiseRemaining: target.persistentPoise?.value,
     isAttack: true,
   };
-  if (carrier.instanceId) {
+  if (carrier.instanceId)
+  {
     damageEvent.cardInstanceId = carrier.instanceId;
     damageEvent.sourceHand = carrier.sourceHand;
     damageEvent.grantedBy = carrier.grantedBy;
-    if (Object.hasOwn(carrier, 'usedArmamentId')) {
+    if (Object.hasOwn(carrier, 'usedArmamentId'))
+    {
       damageEvent.usedArmamentId = carrier.usedArmamentId;
     }
   }
   if (target.broken) damageEvent.targetBroken = true;
-  if (receipt.wardHpAbsorbed) {
+  if (receipt.wardHpAbsorbed)
+  {
     damageEvent.wardAbsorbed = receipt.wardHpAbsorbed;
     damageEvent.wardHpBuffer = true;
     damageEvent.wardHpRemaining = target.wardHp || 0;
   }
   if (receipt.wardRouted) damageEvent.wardRouted = true;
   if (receipt.wardBlockFirst) damageEvent.wardBlockFirst = true;
-  if (receipt.pierceBypassed) {
+  if (receipt.pierceBypassed)
+  {
     damageEvent.pierced = receipt.pierceBypassed;
     damageEvent.piercePoise = receipt.piercePoise;
   }

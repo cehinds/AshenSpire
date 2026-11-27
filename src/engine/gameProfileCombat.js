@@ -202,8 +202,29 @@ export function PacketFaceSplit(ctx, source, carrier, authoredBase, total) {
 }
 /** The factor only a packet's magic part takes: elemental flux (owner ruling, 2026-11-20). Burn, element Vulnerable and the other element stages scale the whole hit. */
 export const PacketMagicMultiplier = flux => Offense.PacketMagicMultiplier(flux);
+const BREAK_BLOCK_SOURCE_ID = 'break-block';
+const BREAK_POISE_SOURCE_ID = 'break-poise';
+
+/** Return a carrier copy without flat break fields, or the original if none were set. */
+export function StripFlatBreakCarrier(carrier)
+{
+  if (!carrier) return carrier;
+  if (!(carrier.breakBlock || carrier.blockBreak || carrier.breakPoise))
+  {
+    return carrier;
+  }
+  const {
+    breakBlock,
+    blockBreak,
+    breakPoise,
+    ...rest
+  } = carrier;
+  return rest;
+}
+
 /** Flat Block/Poise break capped by target's pools, or null if none. */
-export function HitBreakAmounts(target, carrier, ctx = null) {
+export function HitBreakAmounts(target, carrier, ctx = null)
+{
   const blockReq = EffectiveBlockBreakAmount(carrier, 0, null, ctx);
   const poiseReq = EffectivePoiseBreakAmount(carrier, ctx);
   const block = Math.min(Math.max(0, target?.block || 0), blockReq);
@@ -214,18 +235,24 @@ export function HitBreakAmounts(target, carrier, ctx = null) {
 }
 
 /** Carrier with flat break attached on the first hit per target only. */
-export function HitBreakCarrier(carrier, effect, hitIndex = 0) {
-  const { breakBlock, breakPoise, blockBreak, ...rest } = carrier || {};
+export function HitBreakCarrier(carrier, effect, hitIndex = 0)
+{
+  const stripped = StripFlatBreakCarrier(carrier);
   const flatBlock = effect?.breakBlock ?? effect?.blockBreak;
   const hasBreak = Boolean(effect && (flatBlock > 0 || effect.breakPoise > 0));
-  if (hitIndex > 0 || !hasBreak) {
-    return breakBlock || breakPoise || blockBreak
-      ? rest
-      : carrier;
+  if (hitIndex > 0 || !hasBreak)
+  {
+    return stripped;
   }
-  const out = { ...rest };
-  if (flatBlock > 0) out.breakBlock = flatBlock;
-  if (effect.breakPoise > 0) out.breakPoise = effect.breakPoise;
+  const out = { ...stripped };
+  if (flatBlock > 0)
+  {
+    out.breakBlock = flatBlock;
+  }
+  if (effect.breakPoise > 0)
+  {
+    out.breakPoise = effect.breakPoise;
+  }
   return out;
 }
 function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { roll = null, proposal = true, forecast = false } = {}) {
@@ -295,9 +322,10 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
     ? { block: flatBlockBroken, poise: flatPoiseBroken }
     : null;
   const effectiveBlockPool = Math.max(0, initialBlockPool - flatBlockBroken);
-  if (flatBlockBroken > 0) {
+  if (flatBlockBroken > 0)
+  {
     sources.push({
-      id: 'break-block',
+      id: BREAK_BLOCK_SOURCE_ID,
       label: 'Break Block',
       amount: flatBlockBroken,
       requested: initialBlockPool,
@@ -306,9 +334,10 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
       operation: 'subtract',
     });
   }
-  if (flatPoiseBroken > 0) {
+  if (flatPoiseBroken > 0)
+  {
     sources.push({
-      id: 'break-poise',
+      id: BREAK_POISE_SOURCE_ID,
       label: 'Break Poise',
       amount: flatPoiseBroken,
       requested: target.persistentPoise.value,

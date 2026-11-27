@@ -223,14 +223,8 @@ function damageBounds(combat, enemy, move, base, hits, neutral, action = null, o
       for (const state of states) {
         if (!(state.attacker?.hp > 0)) { add(state); continue; }
         // Flat break applies on the first hit only.
-        const hasFlatBreak = Boolean(carrier?.breakBlock || carrier?.blockBreak || carrier?.breakPoise);
-        const hitCarrier = hit > 0 && hasFlatBreak
-          ? {
-              ...carrier,
-              breakBlock: undefined,
-              blockBreak: undefined,
-              breakPoise: undefined,
-            }
+        const hitCarrier = hit > 0
+          ? ProfileCombat.StripFlatBreakCarrier(carrier)
           : carrier;
         const receipt = ProfileCombat.profileDamageReceipt(
           ctx,

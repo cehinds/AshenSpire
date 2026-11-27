@@ -21,7 +21,9 @@ test('every base card has concrete costs, executable effects or burdens, and exp
   }
   const strike = rows.find(row => row.definition.id === 'base.strike').definition;
   const smash = rows.find(row => row.definition.id === 'base.smash').definition;
-  assert.equal(smash.effects[0].amount / strike.effects[0].amount, 2);
+  // Smash deals 2/3 of 2x Strike as damage and breaks the same amount of Block.
+  assert.equal(smash.effects[0].amount, Math.round(strike.effects[0].amount * 2 * 2 / 3));
+  assert.equal(smash.effects[0].breakBlock, smash.effects[0].amount);
   assert.equal(smash.staminaCost, strike.staminaCost + 1);
 });
 test('authored core admission excludes elemental, hand-retaining and unavailable Ward designs', () => {

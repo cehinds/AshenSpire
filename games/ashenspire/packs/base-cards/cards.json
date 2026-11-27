@@ -1279,6 +1279,7 @@
           }
         ],
         "textTemplate": "Gain {base.evade} Evade. Exhaust.",
+        "faceTemplate": ["Gain {base.evade} Evade, +1 SP/play.", "Max +3."],
         "icon": "shield",
         "flavor": "Footwork of the weald's narrow river crossings.\n\nBridge keepers taught travelers to turn sideways when a laden cart passed. During the fighting, the movement became a way to let steel pass just as closely. It requires little ground, and leaves little room for doubt.\n\nThe river took those who stepped twice."
       },
@@ -7859,7 +7860,7 @@
           "faceTemplate": ["Gain {block} Block.", "Keep it {base.retain-block} turn."]
         },
         "textTemplate": "Gain {block} Block; keep it {base.retain-block} turn.",
-        "faceTemplate": ["Gain {block} lasting Block.", "+1 Stamina each play."],
+        "faceTemplate": ["Gain {block} lasting Block.", "+1 Stamina each play.", "Max +2."],
         "icon": "shield",
         "flavor": "A settled guard of the Citadel's long watches.\n\nThe bridge guards learned to hold their shields through the quiet between assaults without letting the shoulders slacken. Their stance preserved work already done instead of demanding it anew. The practice remained useful when the bridges became a frozen road.\n\nThe pause does not belong to the attacker."
       },

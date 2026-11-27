@@ -3,7 +3,20 @@
 import { contentBundle } from '../../src/content/index.js';
 import { createRegistries } from '../../src/model/registries.js';
 
-const strip = card => { const out = { ...card }; for (const key of ['choiceModes', 'upgrade', 'singleBreak', 'gradeProfiles']) delete out[key]; return out; };
+const STRIP_LEGACY_KEYS = [
+  'choiceModes',
+  'upgrade',
+  'singleBreak',
+  'gradeProfiles',
+  'wither',
+  'costGrowth',
+];
+const strip = card =>
+{
+  const out = { ...card };
+  for (const key of STRIP_LEGACY_KEYS) delete out[key];
+  return out;
+};
 export const legacyDodgeRoll = () => ({
   ...strip(contentBundle.cards.find(card => card.id === 'dodgeRoll')), weightClassPriced: true,
   effects: [{ op: 'block', target: 'self', amount: 3 }, { op: 'gainPoise', target: 'self', amount: 3 }, { op: 'gainWard', target: 'self', amount: 3 }],

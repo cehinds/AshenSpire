@@ -90,6 +90,6 @@ test('Smash cards read "Break N Block. Deal N damage." on the face and in their 
   const def = shipped.cards.get('core.smash');
   assert.deepEqual(def.effects.find(e => e.op === 'damage'), { op: 'damage', target: 'enemy', amount: 8, breakBlock: 8 });
   const face = cardFaceLines(def, null, shipped, null).map(line => line.html.replace(/<[^>]+>/g, ''));
-  assert.match(face[0], /^Break 8 Block\. Deal \d+ damage$/);
+  assert.match(face.slice(0, 2).join('. '), /^Break 8 Block\. Deal \d+ damage$/);
   assert.match(cardPlainText(shipped, { cardId: 'core.smash' }), /^Break 8 Block\. Deal \d+ damage\./);
 });

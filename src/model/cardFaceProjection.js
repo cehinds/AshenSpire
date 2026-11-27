@@ -315,6 +315,13 @@ function computedFaceProjection(def, { lines, authoredHtml, registries, effects,
   // A required downside the face could not carry (a long payment, a mandatory discard): a summary may replace the cue
   // only when it names that downside itself.
   const hiddenDownsides = reserved.filter(entry => !chosen.has(entry)).map(entry => plain(entry.line.html));
-  return { clauses, hiddenDownsides, maxLines: FACE_EFFECT_LINES,
-    omitted: !lines || shown < lines.length || candidates.length > shown };
+  const nonInfoCount = lines
+    ? lines.filter(line => !['detail', 'tag'].includes(line.kind)).length
+    : 0;
+  return {
+    clauses,
+    hiddenDownsides,
+    maxLines: FACE_EFFECT_LINES,
+    omitted: !lines || shown < nonInfoCount || candidates.length > shown,
+  };
 }

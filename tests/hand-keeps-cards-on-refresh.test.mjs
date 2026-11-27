@@ -162,9 +162,9 @@ test('a mounted live hand refreshes saved Smash rules with an unchanged preview 
   // Real combat hosts may carry cycles. The hand's signature must read the rule authority, never serialize the host.
   combat.uiTestCycle = combat;
   const cases = [
-    ['old', { damageMultiplier: 1.25, blockFraction: 0.25, poiseFraction: 0.5 }, 'Against Defend or Prepared: 1.25× damage. Add a quarter of their Block; half of the total breaks Poise.'],
-    ['shipped', { ...fixCoreMechanics.smashVsDefensive }, 'Against Defend: 1.5× damage. Against Prepared: 1.25× damage. Add a quarter of their Block; half of the total breaks Poise.'],
-    ['custom', { damageMultiplier: 3, blockFraction: 0.3, poiseFraction: 0.4 }, 'Against Defend or Prepared: 3× damage. Add 30% of their Block; 40% of the total breaks Poise.'],
+    ['old', { damageMultiplier: 1.25, blockFraction: 0.25, poiseFraction: 0.5 }, 'Against Defend or Prepared: 1.25× damage. It breaks Poise for half of the total.'],
+    ['shipped', { ...fixCoreMechanics.smashVsDefensive }, 'Against Defend: 1.5× damage. Against Prepared: 1.25× damage. It breaks Poise for half of the total.'],
+    ['custom', { damageMultiplier: 3, blockFraction: 0.3, poiseFraction: 0.4 }, 'Against Defend or Prepared: 3× damage. It breaks Poise for 40% of the total.'],
   ];
   withHand(({ hand, handEl, wired, updated }) => {
     let first, plays = 0;

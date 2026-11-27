@@ -204,7 +204,13 @@ test('census: every summarized face keeps its qualifiers, in both profiles at ev
           // A literal number on a summary can drift from the graded values: every digit must appear in the full text (a Barrier split into Block + Ward counts as its sum).
           const spelled = full.replace(/\b(?:a|an|one)\b/gi, '1').replace(/\b(?:twice|two)\b/gi, '2').replace(/\b(?:three)\b/gi, '3');
           const chances = (def.effects || []).filter(e => e.chance !== undefined && e.chance < 100).map(e => String(e.chance)); // a chance comes from the card's own effect data
-          for (const n of face.replace(/(\d+) Block, (\d+) Ward/g, (m, x, y) => String(+x + +y)).match(/\d+/g) || []) if (!chances.includes(n)) assert.ok(new RegExp(`(^|\\D)${n}(\\D|$)`).test(spelled), `${label}: face "${face}" shows ${n}, absent from "${full}"`);
+          const growthNums = def.costGrowth
+            ? [def.costGrowth.stamina, def.costGrowth.mana, def.costGrowth.max ?? 3]
+                .filter(n => Number.isFinite(n) && n > 0)
+                .map(String)
+            : [];
+          const allowedNums = new Set([...chances, ...growthNums]);
+          for (const n of face.replace(/(\d+) Block, (\d+) Ward/g, (m, x, y) => String(+x + +y)).match(/\d+/g) || []) if (!allowedNums.has(n)) assert.ok(new RegExp(`(^|\\D)${n}(\\D|$)`).test(spelled), `${label}: face "${face}" shows ${n}, absent from "${full}"`);
           for (const status of registries.statuses.all()) if (statusApplied(full, status)) assert.ok(statusNamed(status, shown), `${label}: face "${face}" never names ${status.name} from "${full}"`);
           for (const [kind, re, faceRe = re] of QUALIFIERS) if (re.test(full)) assert.ok(faceRe.test(shown), `${label}: face "${face}" lost its ${kind} qualifier from "${full}"`);
         }

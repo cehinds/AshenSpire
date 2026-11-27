@@ -296,11 +296,16 @@ export function expandedEnemyMove(enemy, move, moveId, ctx = null) {
   return result;
 }
 
-export function enemyMoveCarrier(enemy, move, moveId, ctx = null) {
+export function enemyMoveCarrier(enemy, move, moveId, ctx = null)
+{
   const projected = expandedEnemyMove(enemy, move, moveId, ctx);
   const carrier = tacticalCarrier(
     projected,
-    { enemyId: enemy.enemyId, moveId, type: 'attack' },
+    {
+      enemyId: enemy.enemyId,
+      moveId,
+      type: 'attack',
+    },
     ctx,
     enemy,
   );

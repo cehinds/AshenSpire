@@ -265,14 +265,8 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
         if (bonus > 0) defender.combatCounter = { ...defender.combatCounter, charges: 0 };
       }
       // Flat break applies on the first hit only.
-      const hasFlatBreak = Boolean(carrier?.breakBlock || carrier?.blockBreak || carrier?.breakPoise);
-      const hitCarrier = hit > 0 && hasFlatBreak
-        ? {
-            ...carrier,
-            breakBlock: undefined,
-            blockBreak: undefined,
-            breakPoise: undefined,
-          }
+      const hitCarrier = hit > 0
+        ? ProfileCombat.StripFlatBreakCarrier(carrier)
         : carrier;
       const receipt = ProfileCombat.profileDamageReceipt(
         previewCtx,

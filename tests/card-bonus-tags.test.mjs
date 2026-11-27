@@ -49,7 +49,7 @@ test('Core Evade retains its short body and one unquantified keyword tag', () =>
   assert.equal(tag.count, undefined);assert.equal(tag.countFormula, undefined);
   assert.match(tag.blurb, /Gain 1 Evade/);assert.match(tag.blurb, /The next attack against you misses\./);assert.doesNotMatch(tag.blurb, /fixed Evasion/);assert.doesNotMatch(tag.blurb, /Evasion/);assert.doesNotMatch(tag.blurb, /On changing stance/);
   assert.deepEqual(tag.representedEffects, []);
-  assert.equal(text(faceWith(def, [tag])), 'Gain 1 Evade.', 'the shared face supplies the whole compact body');
+  assert.equal(text(faceWith(def, [tag])), 'Gain 1 Evade. | Wither 3 | +1 SP each time you play this card this fight (max +3)', 'the shared face supplies the whole compact body');
   const preview = { values: [{ op: 'applyStatus', status: 'evade', value: 7 }] };
   assert.match(cardBonusTags(def, preview, core)[0].blurb, /Gain 7 Evade/);
 });
@@ -160,9 +160,9 @@ test('a visible Core Smash tag explains the standard matchup without repeating i
   const def = definition('core.reaverSpecial');
   const tags = cardSideTags(playingCardModel(core, { cardId: def.id }), def, core);
   const smash = tags.find(tag => tag.id === 'maneuver:smash');
-  assert.match(smash.blurb, /Against Defend: 1\.5× damage\. Against Prepared: 1\.25× damage\. Add a quarter of their Block; half of the total breaks Poise/);
+  assert.match(smash.blurb, /Against Defend: 1\.5× damage\. Against Prepared: 1\.25× damage\. It breaks Poise for half of the total/);
   assert.match(cardTagRailHtml([smash]), /tabindex="0".*data-tip="Smash/);
-  assert.deepEqual(faceWith(def, tags).map(line => line.kind), ['damage']);
+  assert.deepEqual(faceWith(def, tags).map(line => line.kind), ['damage', 'damage']);
   assert.doesNotMatch(text(faceWith(def, tags)), /Defend|Prepared|Poise|Precision/);
   assert.match(text(cardFaceLines(def, null, core)), /Against Defend: 1\.5× damage\. Against Prepared: 1\.25× damage/, 'without a represented tag the complete headless face keeps the rule');
   assert.ok(!cardSideTags(playingCardModel(core, { cardId: 'core.strike' }), definition('core.strike'), core).some(tag => tag.id === 'maneuver:smash'));
