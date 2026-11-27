@@ -2356,14 +2356,10 @@ function mutateSelectedCard(fn, { recordHistory = true, autoName = true, autoTex
 // ---------------------------------------------------------------------------
 // Rows show the pending copy when weight edits are staged; a row whose value differs from the applied
 // config is marked pending. `shifts: false` skips rescoring every card for the rank-shift summary.
-function renderWeights({ shifts = true } = {}) {
-  const q = document.getElementById('weights-search').value.trim().toLowerCase();
-  const groupF = document.getElementById('weights-group-filter').value;
-  const container = document.getElementById('weights-container');
-  container.innerHTML = '';
-
+// Every weight row, grouped, as the scoring config in state.scoring stands now (swap it with withScoring).
+function buildWeightGroups() {
   const R = state.repoScoring;
-  const buildGroups = () => [
+  return [
     { key: 'costs', title: 'Costs (SP / MP)', entries: Object.entries(state.scoring.costs || {}).map(([k, v]) => ({ id: k, label: k.toUpperCase(), val: v.weight, base: R.costs?.[k]?.weight, set: (n) => { state.scoring.costs[k].weight = n; } })) },
     { key: 'effects', title: 'Effects', entries: Object.entries(state.scoring.effects || {}).map(([k, v]) => ({
       id: k, label: k, val: v.weight, base: R.effects?.[k]?.weight, set: (n) => { state.scoring.effects[k].weight = n; },
@@ -2495,11 +2491,25 @@ function renderWeights({ shifts = true } = {}) {
       set: (n) => { state.scoring.items.gearFields[k].weight = n; },
     })) },
   ];
-  // Built from the applied config (to mark pending rows) and from the config Apply would produce.
-  const appliedGroups = buildGroups();
+}
+
+function weightEntryIn(groupList, groupKey, id) {
+  return groupList.find((eg) => eg.key === groupKey)?.entries.find((e) => e.id === id);
+}
+
+// The groups as the applied config has them (to mark pending rows) and as Apply would make them (what rows show).
+function weightGroupsShown() {
+  const appliedGroups = buildWeightGroups();
   const staged = stagedScoring();
-  const groups = staged ? withScoring(staged, buildGroups) : appliedGroups;
-  const entryIn = (groupList, groupKey, id) => groupList.find((eg) => eg.key === groupKey)?.entries.find((e) => e.id === id);
+  return { appliedGroups, groups: staged ? withScoring(staged, buildWeightGroups) : appliedGroups };
+}
+
+function renderWeights({ shifts = true } = {}) {
+  const q = document.getElementById('weights-search').value.trim().toLowerCase();
+  const groupF = document.getElementById('weights-group-filter').value;
+  const container = document.getElementById('weights-container');
+  container.innerHTML = '';
+  const { appliedGroups, groups } = weightGroupsShown();
 
   for (const g of groups) {
     if (groupF !== 'all' && g.key !== groupF) continue;
@@ -2512,121 +2522,125 @@ function renderWeights({ shifts = true } = {}) {
     card.innerHTML = `<summary class="section-head"><h3>${esc(g.title)}</h3></summary>`;
     rememberSection(card);
     wireInfoButtons(card, '.weight-row');
-    for (const r of rows) {
-      const numVal = safeNum(r.val, 0);
-      const baseNum = r.base !== undefined ? safeNum(r.base, 0) : undefined;
-      const applied = entryIn(appliedGroups, g.key, r.id);
-      const row = document.createElement('div');
-      row.className = 'weight-row' + (r.per || r.mult || r.surcharge ? ' has-per' : '');
-      const kind = WEIGHT_GROUP_KINDS[g.key];
-      const info = kind ? describeFeature(kind, r.id) : null;
-      const labelHtml = info
-        ? `<span class="feature-label" title="${esc(featureTitleText(info))}">${esc(r.label)} ${infoButtonHtml()}</span>`
-        : `<span>${esc(r.label)}</span>`;
-      const resetTitle = `Reset to ${baseNum ?? numVal}${r.per ? ` per ${r.per.base ?? r.per.value}` : ''}`;
-      // The row reads as a sentence: "[1] pts per [3] damage", with a worked example under it.
-      const shownScoring = () => stagedScoring() || state.scoring;
-      const words = weightSentence(g.key, r.id, shownScoring(), r.label);
-      const weightBox = `<input type="number" class="weight-input" step="${esc(safeNum(r.step, 1))}" value="${esc(numVal)}" aria-label="${esc(`${r.label} points`)}" />`;
-      row.innerHTML = `${labelHtml}<span class="weight-sentence"><span class="weight-words" data-part="before">${esc(words.before)}</span>${weightBox}<span class="weight-words" data-part="mid">${esc(words.mid)}</span>${perControlHtml(r)}<span class="weight-words" data-part="after">${esc(words.after)}</span>${multControlHtml(r)}${surchargeControlHtml(r)}<button type="button" class="weight-reset-btn" title="${esc(resetTitle)}">↺</button></span><div class="weight-example"></div>`;
-      const input = row.querySelector('.weight-input');
-      const perInput = row.querySelector('.weight-per');
-      const multInput = row.querySelector('.weight-mult');
-      const surchargeInput = row.querySelector('.weight-surcharge');
-      const resetBtn = row.querySelector('.weight-reset-btn');
-      const exampleEl = row.querySelector('.weight-example');
-      // The example follows the boxes as they are typed in: a copy of the shown config with the boxes' values set.
-      const typedScoring = () => {
-        const typed = clone(shownScoring());
-        withScoring(typed, () => {
-          const value = Number(input.value);
-          if (input.value !== '' && Number.isFinite(value)) r.set(value);
-          if (r.per && perInput && !r.per.options) {
-            const per = Math.round(Number(perInput.value));
-            if (Number.isFinite(per) && per >= 1) r.per.set(per);
-          }
-          if (r.surcharge && surchargeInput) r.surcharge.set(surchargeInput.checked);
-        });
-        return typed;
-      };
-      const showExample = (scoring = shownScoring()) => {
-        const now = weightSentence(g.key, r.id, scoring, r.label);
-        for (const part of row.querySelectorAll('.weight-sentence > .weight-words')) part.textContent = now[part.dataset.part];
-        exampleEl.textContent = weightExample(g.key, r.id, scoring, r.label);
-      };
-      showExample();
-      input.addEventListener('input', () => showExample(typedScoring()));
-      if (perInput && !r.per.options) perInput.addEventListener('input', () => showExample(typedScoring()));
-      // Staged edits update this row's marks in place, so focus and scroll stay where the owner left them.
-      const perNow = () => (r.per.options ? perInput.value : Number(perInput.value));
-      const perDiffers = (other) => Boolean(r.per) && other !== undefined && perNow() !== other;
-      const multDiffers = (other) => Boolean(multInput) && other !== undefined && multInput.checked !== other;
-      const surchargeDiffers = (other) => Boolean(surchargeInput) && other !== undefined && surchargeInput.checked !== other;
-      const markRow = () => {
-        const value = Number(input.value);
-        const modified = (baseNum !== undefined && value !== baseNum) || perDiffers(r.per?.base) || multDiffers(r.mult?.base) || surchargeDiffers(r.surcharge?.base);
-        const pending = !applied || value !== safeNum(applied.val, 0) || perDiffers(applied.per?.value) || multDiffers(applied.mult?.value) || surchargeDiffers(applied.surcharge?.value);
-        row.classList.toggle('is-modified', modified);
-        row.classList.toggle('is-pending', pending);
-        row.classList.toggle('is-surcharge-off', Boolean(surchargeInput && !surchargeInput.checked));
-        row.title = pending ? 'Staged: Apply to rescore the cards' : '';
-        resetBtn.classList.toggle('is-clean', !modified);
-      };
-      // After an edit the row shows what its setter stored (Band Width 0 is stored as 1), then re-marks.
-      const showStored = () => {
-        const stored = entryIn(withScoring(stagedScoring() || state.scoring, buildGroups), g.key, r.id);
-        if (stored) { input.value = String(safeNum(stored.val, 0)); input.step = String(safeNum(stored.step, 1)); }
-        if (stored?.per && perInput) perInput.value = String(stored.per.value);
-        if (stored?.mult && multInput) multInput.checked = stored.mult.value;
-        if (stored?.surcharge && surchargeInput) surchargeInput.checked = stored.surcharge.value;
-        markRow();
-        showExample();
-      };
-      markRow();
-      input.addEventListener('change', () => {
-        const n = Number(input.value);
-        if (!Number.isFinite(n)) return;
-        applyWeightEdit(() => r.set(n));
-        showStored();
-      });
-      perInput?.addEventListener('change', () => {
-        const next = r.per.options ? perInput.value : Math.max(1, Math.round(Number(perInput.value)));
-        if (!r.per.options && !Number.isFinite(next)) return;
-        applyWeightEdit(() => r.per.set(next));
-        showStored();
-      });
-      multInput?.addEventListener('change', () => {
-        applyWeightEdit(() => r.mult.set(multInput.checked));
-        showStored();
-      });
-      surchargeInput?.addEventListener('change', () => {
-        applyWeightEdit(() => r.surcharge.set(surchargeInput.checked));
-        showStored();
-      });
-      resetBtn.addEventListener('click', () => {
-        const perChanged = perDiffers(r.per?.base) || multDiffers(r.mult?.base) || surchargeDiffers(r.surcharge?.base);
-        if (baseNum === undefined && !perChanged) return;
-        // Read the row's live controls: staged edits do not redraw it, so r.per / r.mult values can be stale.
-        const resetMult = multDiffers(r.mult?.base);
-        const resetPer = perDiffers(r.per?.base);
-        const resetSurcharge = surchargeDiffers(r.surcharge?.base);
-        applyWeightEdit(() => {
-          if (resetMult) r.mult.set(r.mult.base);
-          if (resetSurcharge) r.surcharge.set(r.surcharge.base);
-          if (baseNum !== undefined) r.set(baseNum);
-          if (resetPer) r.per.set(r.per.base);
-        });
-        showStored();
-      });
-      if (info) row.insertAdjacentHTML('beforeend', infoLineHtml(info));
-      card.appendChild(row);
-    }
+    for (const r of rows) card.appendChild(buildWeightRow(g, r, appliedGroups));
     container.appendChild(card);
   }
   if (groupF === 'all' || groupF === 'naming') renderNamingLimitGroup(container, q);
   renderDescriptionGaps();
   updateWeightsToolbar();
   if (shifts) computeShiftCount();
+}
+
+// One weight row: label, the number box and its per / multiply / surcharge controls, reset and a worked example.
+// Edits are staged through applyWeightEdit; the main list and the rows beside the card share this code.
+function buildWeightRow(g, r, appliedGroups) {
+  const numVal = safeNum(r.val, 0);
+  const baseNum = r.base !== undefined ? safeNum(r.base, 0) : undefined;
+  const applied = weightEntryIn(appliedGroups, g.key, r.id);
+  const row = document.createElement('div');
+  row.className = 'weight-row' + (r.per || r.mult || r.surcharge ? ' has-per' : '');
+  const kind = WEIGHT_GROUP_KINDS[g.key];
+  const info = kind ? describeFeature(kind, r.id) : null;
+  const labelHtml = info
+    ? `<span class="feature-label" title="${esc(featureTitleText(info))}">${esc(r.label)} ${infoButtonHtml()}</span>`
+    : `<span>${esc(r.label)}</span>`;
+  const resetTitle = `Reset to ${baseNum ?? numVal}${r.per ? ` per ${r.per.base ?? r.per.value}` : ''}`;
+  // The row reads as a sentence: "[1] pts per [3] damage", with a worked example under it.
+  const shownScoring = () => stagedScoring() || state.scoring;
+  const words = weightSentence(g.key, r.id, shownScoring(), r.label);
+  const weightBox = `<input type="number" class="weight-input" step="${esc(safeNum(r.step, 1))}" value="${esc(numVal)}" aria-label="${esc(`${r.label} points`)}" />`;
+  row.innerHTML = `${labelHtml}<span class="weight-sentence"><span class="weight-words" data-part="before">${esc(words.before)}</span>${weightBox}<span class="weight-words" data-part="mid">${esc(words.mid)}</span>${perControlHtml(r)}<span class="weight-words" data-part="after">${esc(words.after)}</span>${multControlHtml(r)}${surchargeControlHtml(r)}<button type="button" class="weight-reset-btn" title="${esc(resetTitle)}">↺</button></span><div class="weight-example"></div>`;
+  const input = row.querySelector('.weight-input');
+  const perInput = row.querySelector('.weight-per');
+  const multInput = row.querySelector('.weight-mult');
+  const surchargeInput = row.querySelector('.weight-surcharge');
+  const resetBtn = row.querySelector('.weight-reset-btn');
+  const exampleEl = row.querySelector('.weight-example');
+  // The example follows the boxes as they are typed in: a copy of the shown config with the boxes' values set.
+  const typedScoring = () => {
+    const typed = clone(shownScoring());
+    withScoring(typed, () => {
+      const value = Number(input.value);
+      if (input.value !== '' && Number.isFinite(value)) r.set(value);
+      if (r.per && perInput && !r.per.options) {
+        const per = Math.round(Number(perInput.value));
+        if (Number.isFinite(per) && per >= 1) r.per.set(per);
+      }
+      if (r.surcharge && surchargeInput) r.surcharge.set(surchargeInput.checked);
+    });
+    return typed;
+  };
+  const showExample = (scoring = shownScoring()) => {
+    const now = weightSentence(g.key, r.id, scoring, r.label);
+    for (const part of row.querySelectorAll('.weight-sentence > .weight-words')) part.textContent = now[part.dataset.part];
+    exampleEl.textContent = weightExample(g.key, r.id, scoring, r.label);
+  };
+  showExample();
+  input.addEventListener('input', () => showExample(typedScoring()));
+  if (perInput && !r.per.options) perInput.addEventListener('input', () => showExample(typedScoring()));
+  // Staged edits update this row's marks in place, so focus and scroll stay where the owner left them.
+  const perNow = () => (r.per.options ? perInput.value : Number(perInput.value));
+  const perDiffers = (other) => Boolean(r.per) && other !== undefined && perNow() !== other;
+  const multDiffers = (other) => Boolean(multInput) && other !== undefined && multInput.checked !== other;
+  const surchargeDiffers = (other) => Boolean(surchargeInput) && other !== undefined && surchargeInput.checked !== other;
+  const markRow = () => {
+    const value = Number(input.value);
+    const modified = (baseNum !== undefined && value !== baseNum) || perDiffers(r.per?.base) || multDiffers(r.mult?.base) || surchargeDiffers(r.surcharge?.base);
+    const pending = !applied || value !== safeNum(applied.val, 0) || perDiffers(applied.per?.value) || multDiffers(applied.mult?.value) || surchargeDiffers(applied.surcharge?.value);
+    row.classList.toggle('is-modified', modified);
+    row.classList.toggle('is-pending', pending);
+    row.classList.toggle('is-surcharge-off', Boolean(surchargeInput && !surchargeInput.checked));
+    row.title = pending ? 'Staged: Apply to rescore the cards' : '';
+    resetBtn.classList.toggle('is-clean', !modified);
+  };
+  // After an edit the row shows what its setter stored (Band Width 0 is stored as 1), then re-marks.
+  const showStored = () => {
+    const stored = weightEntryIn(withScoring(stagedScoring() || state.scoring, buildWeightGroups), g.key, r.id);
+    if (stored) { input.value = String(safeNum(stored.val, 0)); input.step = String(safeNum(stored.step, 1)); }
+    if (stored?.per && perInput) perInput.value = String(stored.per.value);
+    if (stored?.mult && multInput) multInput.checked = stored.mult.value;
+    if (stored?.surcharge && surchargeInput) surchargeInput.checked = stored.surcharge.value;
+    markRow();
+    showExample();
+  };
+  markRow();
+  input.addEventListener('change', () => {
+    const n = Number(input.value);
+    if (!Number.isFinite(n)) return;
+    applyWeightEdit(() => r.set(n));
+    showStored();
+  });
+  perInput?.addEventListener('change', () => {
+    const next = r.per.options ? perInput.value : Math.max(1, Math.round(Number(perInput.value)));
+    if (!r.per.options && !Number.isFinite(next)) return;
+    applyWeightEdit(() => r.per.set(next));
+    showStored();
+  });
+  multInput?.addEventListener('change', () => {
+    applyWeightEdit(() => r.mult.set(multInput.checked));
+    showStored();
+  });
+  surchargeInput?.addEventListener('change', () => {
+    applyWeightEdit(() => r.surcharge.set(surchargeInput.checked));
+    showStored();
+  });
+  resetBtn.addEventListener('click', () => {
+    const perChanged = perDiffers(r.per?.base) || multDiffers(r.mult?.base) || surchargeDiffers(r.surcharge?.base);
+    if (baseNum === undefined && !perChanged) return;
+    // Read the row's live controls: staged edits do not redraw it, so r.per / r.mult values can be stale.
+    const resetMult = multDiffers(r.mult?.base);
+    const resetPer = perDiffers(r.per?.base);
+    const resetSurcharge = surchargeDiffers(r.surcharge?.base);
+    applyWeightEdit(() => {
+      if (resetMult) r.mult.set(r.mult.base);
+      if (resetSurcharge) r.surcharge.set(r.surcharge.base);
+      if (baseNum !== undefined) r.set(baseNum);
+      if (resetPer) r.per.set(r.per.base);
+    });
+    showStored();
+  });
+  if (info) row.insertAdjacentHTML('beforeend', infoLineHtml(info));
+  return row;
 }
 
 // Score categories (ScoreCard's scoring.categories): Martial, Magic and each Card Type.
