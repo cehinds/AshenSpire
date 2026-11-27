@@ -4,7 +4,7 @@ Four commands. Run them in a terminal opened in the repo folder (`C:\repos\Ashen
 
 | Command | What it does |
 | --- | --- |
-| `npm run sync` | Moves your copy to the newest `dev`. Run it before you start. |
+| `npm run sync` | Moves your copy to the newest `dev` (on a local branch `owner/editing`). Run it before you start. |
 | `npm run play` | Builds, checks, and opens the game. Saving a file reloads the page. |
 | `npm run check` | Builds and checks only. Add `-- --full` to also run the core tests. |
 | `npm run ship -- "Short title"` | Opens a pull request into `dev` with your edits. |
@@ -26,7 +26,7 @@ Four commands. Run them in a terminal opened in the repo folder (`C:\repos\Ashen
    - It rebuilds the game data, runs the checks and the core tests (about two minutes), pushes, opens the pull request, and adds the changelog entry.
    - Add `--quick` to skip the core tests. Add `--dry-run` to only list what it would ship.
 5. Open the link it prints. When the checks on GitHub are green, press **Merge pull request** (merge commit).
-6. `npm run sync` again. Your shipped edits are cleared; anything not shipped is kept.
+6. `npm run sync` again. Your shipped edits are cleared; anything not shipped is kept, with a backup copy in `.owner-backup/`.
 
 ## Where things live
 
