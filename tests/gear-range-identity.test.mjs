@@ -55,12 +55,13 @@ for (const cardId of ['core.meteor', 'custom.copy_mwx6hh79']) test(`${cardId}: P
     assert.equal(stanceOf(resolved).camp, 'spell');
     assert.equal(stanceOf(resolved).school, combatProfileFor(authored).school);
     const expected = {
-      energy: Math.max(0, authored.staminaCost - 1),
-      stamina: Math.max(0, authored.staminaCost - 1),
-      mana: Math.max(0, Math.max(0, authored.manaCost - 1) + 1 - 1 - focus),
+      // Owner 2026-11-26: no spell surcharge; Prepared takes SP to max(SP - 1, 1) without raising a price at or under 1, and no Mana.
+      energy: authored.staminaCost > 1 ? authored.staminaCost - 1 : authored.staminaCost,
+      stamina: authored.staminaCost > 1 ? authored.staminaCost - 1 : authored.staminaCost,
+      mana: Math.max(0, Math.max(0, authored.manaCost - 1) - 1 - focus),
     };
     const quote = cardPlayCosts(combat, 'range-identity');
-    assert.deepEqual(quote, expected, `${cardId}/${hand}: authored price, Graduate, surcharge, robe, Focus`);
+    assert.deepEqual(quote, expected, `${cardId}/${hand}: authored price, Graduate, robe, Focus`);
     const played = dispatch(combat, { type: 'playCard', cardInstanceId: 'range-identity', targetId: combat.enemies[0].id });
     assert.equal(played.events.find(event => event.type === 'cardPlayed').manaSpent, expected.mana);
   }
