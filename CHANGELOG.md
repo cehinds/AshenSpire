@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-27
 
-- **Pin a map floor's room type** ([#3025](https://github.com/cehinds/AshenSpire/pull/3025), `0.7.5.165`). Core routes can now set floorTypes, such as floor 4 always a shop. Without it, maps are unchanged.
+- **Pin a map floor's room type** ([#3025](https://github.com/cehinds/AshenSpire/pull/3025), `0.7.5.167`). Core routes can now set floorTypes, such as floor 4 always a shop. Without it, maps are unchanged.
 - **Card limits and drawback cost** ([#3030](https://github.com/cehinds/AshenSpire/pull/3030), `0.7.5.165`). Card effect and drawback caps are set in actionCosts.json; none means no limit. Drawbacks can cost Combat Power, flat or as a multiplier, off by default.
 - **Steadier timing checks and a lighter Blacksmith picker** ([#3016](https://github.com/cehinds/AshenSpire/pull/3016), `0.7.5.163`). Timing checks skip a one-time test-machine disk wait. The Blacksmith opens faster, and card upgrade rules now live in config.
 
