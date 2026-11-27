@@ -10,7 +10,7 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { REPO_ROOT } from './ownerConfig.mjs';
+import { OWNER_TOOLS, REPO_ROOT } from './ownerConfig.mjs';
 import { IsEditableContentPath, SameText } from './ownerPaths.mjs';
 import { RunGit } from './ownerProcess.mjs';
 
@@ -19,8 +19,8 @@ const STATUS_DELETED = 'D';
 const STATUS_RENAMED = 'R';
 const STATUS_CODE_LENGTH = 3;
 const NUL_SEPARATOR = String.fromCharCode(0);
-const PATCH_FILE_NAME = '.owner-tools.patch';
-const WORKTREE_PREFIX = 'ashenspire-owner-';
+const PATCH_FILE_NAME = OWNER_TOOLS.files.patchFile;
+const WORKTREE_PREFIX = OWNER_TOOLS.files.worktreePrefix;
 const HEAD_REF = 'HEAD';
 const QUIET = '--quiet';
 const TEXT_ENCODING = 'utf8';

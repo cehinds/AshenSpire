@@ -1,45 +1,54 @@
-// Reads a content CSV into rows keyed by its header; comment lines start with #.
-const CSV_SEPARATOR = ',';
-const QUOTE = '"';
-const COMMENT_PREFIX = '#';
+// Reads a content CSV into rows keyed by its header; the CSV rules live in ownerDiff.json.
+import { OWNER_DIFF } from './ownerConfig.mjs';
+
+const CSV = OWNER_DIFF.csv;
 const LINE_BREAK = /\r?\n/;
-const ID_COLUMN = 'id';
 
 function isDataLine(line)
 {
-    return line.trim() && !line.startsWith(COMMENT_PREFIX);
+    return line.trim() && !line.startsWith(CSV.commentPrefix);
+}
+
+function readCell(state, line)
+{
+    const character = line[state.index];
+    const escapedQuote = state.quoted
+        && character === CSV.quote
+        && line[state.index + 1] === CSV.quote;
+    if (escapedQuote)
+    {
+        state.current += CSV.quote;
+        state.index++;
+        return;
+    }
+    if (character === CSV.quote)
+    {
+        state.quoted = !state.quoted;
+        return;
+    }
+    if (character === CSV.separator && !state.quoted)
+    {
+        state.cells.push(state.current);
+        state.current = '';
+        return;
+    }
+    state.current += character;
 }
 
 function splitLine(line)
 {
-    const cells = [];
-    let current = '';
-    let quoted = false;
-    for (let index = 0; index < line.length; index++)
+    const state = {
+        cells: [],
+        current: '',
+        quoted: false,
+        index: 0,
+    };
+    for (; state.index < line.length; state.index++)
     {
-        const character = line[index];
-        const escapedQuote = quoted && character === QUOTE && line[index + 1] === QUOTE;
-        if (escapedQuote)
-        {
-            current += QUOTE;
-            index++;
-            continue;
-        }
-        if (character === QUOTE)
-        {
-            quoted = !quoted;
-            continue;
-        }
-        if (character === CSV_SEPARATOR && !quoted)
-        {
-            cells.push(current);
-            current = '';
-            continue;
-        }
-        current += character;
+        readCell(state, line);
     }
-    cells.push(current);
-    return cells;
+    state.cells.push(state.current);
+    return state.cells;
 }
 
 function rowOf(header, line)
@@ -50,9 +59,9 @@ function rowOf(header, line)
     {
         row[column] = cells[index] ?? '';
     });
-    if (!(ID_COLUMN in row))
+    if (!(CSV.idColumn in row))
     {
-        row[ID_COLUMN] = cells[0];
+        row[CSV.idColumn] = cells[0];
     }
     return row;
 }

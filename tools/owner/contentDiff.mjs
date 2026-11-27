@@ -1,17 +1,13 @@
 // Turns a before/after content file into plain change lines and a commit subject.
+// The wording lives in ownerDiff.json.
+import { FormatText, OWNER_DIFF } from './ownerConfig.mjs';
 import { ParseCsv } from './csvTable.mjs';
 import { CHANGE_KIND, DisplayNameOf, WalkChanges } from './contentWalk.mjs';
 
-const SUBJECT_LIMIT = 72;
-const ARROW = '→';
-const ELLIPSIS = '...';
-const CSV_EXTENSION = '.csv';
+const PHRASES = OWNER_DIFF.phrases;
 const FILE_EXTENSION = /\.(json|csv)$/;
 const NUMERIC_TEXT = /^-?\d+(\.\d+)?$/;
 const PATH_SEPARATOR = '/';
-const LIST_JOINER = ', ';
-const PART_JOINER = '; ';
-const REORDER_WORD = 'reorder';
 
 function fileLabel(path)
 {
@@ -48,9 +44,17 @@ function parseContent(path, text)
     {
         return undefined;
     }
-    return path.endsWith(CSV_EXTENSION)
+    return path.endsWith(OWNER_DIFF.csv.extension)
         ? ParseCsv(text)
         : JSON.parse(text);
+}
+
+function phrase(key, values)
+{
+    return FormatText(PHRASES[key], {
+        arrow: OWNER_DIFF.arrow,
+        ...values,
+    });
 }
 
 function wholeFileChange(
@@ -59,73 +63,84 @@ function wholeFileChange(
     values,
 )
 {
-    return [
-        {
-            entity: fileLabel(path),
-            field: '',
-            before: values.before,
-            after: values.after,
-            kind,
-        },
-    ];
+    const change = {
+        entity: fileLabel(path),
+        field: '',
+        before: values.before,
+        after: values.after,
+        kind,
+    };
+    return [change];
+}
+
+function listItems(key, items)
+{
+    if (!items.length)
+    {
+        return null;
+    }
+    const listed = items
+        .map(formatValue)
+        .join(OWNER_DIFF.listJoiner);
+    return phrase(key, { items: listed });
 }
 
 function listPhrase(change)
 {
     const added = change.after.filter((item) => !change.before.includes(item));
     const removed = change.before.filter((item) => !change.after.includes(item));
-    const parts = [];
-    if (added.length)
-    {
-        parts.push(`add ${added.map(formatValue).join(LIST_JOINER)}`);
-    }
-    if (removed.length)
-    {
-        parts.push(`remove ${removed.map(formatValue).join(LIST_JOINER)}`);
-    }
-    if (!parts.length)
-    {
-        parts.push(REORDER_WORD);
-    }
-    return `${change.entity} ${change.field}: ${parts.join(PART_JOINER)}`;
+    const parts = [
+        listItems('listAdd', added),
+        listItems('listRemove', removed),
+    ].filter(Boolean);
+    const shown = parts.length
+        ? parts
+        : [PHRASES.reorder];
+    return phrase('list', {
+        entity: change.entity,
+        field: change.field,
+        parts: shown.join(OWNER_DIFF.partJoiner),
+    });
 }
 
-function numberPhrase(
-    where,
-    before,
-    after,
-)
+function setPhraseKey(change, numbers)
 {
-    const verb = after > before
-        ? 'Raise'
-        : 'Lower';
-    return `${verb} ${where} ${before}${ARROW}${after}`;
+    const numbersDiffer = numbers.before !== null
+        && numbers.after !== null
+        && numbers.before !== numbers.after;
+    if (numbersDiffer)
+    {
+        return numbers.after > numbers.before
+            ? 'raise'
+            : 'lower';
+    }
+    if (change.before === undefined)
+    {
+        return 'set';
+    }
+    if (change.after === undefined)
+    {
+        return 'clear';
+    }
+    return 'change';
 }
 
 function setPhrase(where, change)
 {
-    const beforeNumber = asNumber(change.before);
-    const afterNumber = asNumber(change.after);
-    const numbersDiffer = beforeNumber !== null
-        && afterNumber !== null
-        && beforeNumber !== afterNumber;
-    if (numbersDiffer)
-    {
-        return numberPhrase(
-            where,
-            beforeNumber,
-            afterNumber,
-        );
-    }
-    if (change.before === undefined)
-    {
-        return `Set ${where} to ${formatValue(change.after)}`;
-    }
-    if (change.after === undefined)
-    {
-        return `Clear ${where}`;
-    }
-    return `Change ${where} ${formatValue(change.before)}${ARROW}${formatValue(change.after)}`;
+    const numbers = {
+        before: asNumber(change.before),
+        after: asNumber(change.after),
+    };
+    const key = setPhraseKey(change, numbers);
+    const isNumeric = key === 'raise' || key === 'lower';
+    const shown = isNumeric
+        ? numbers
+        : change;
+    return phrase(key, {
+        where,
+        before: formatValue(shown.before),
+        after: formatValue(shown.after),
+    });
 }
 
 function subjectFor(
@@ -141,37 +156,44 @@ function subjectFor(
     }
     if (lines.length === 0)
     {
-        return `Reformat ${fileLabel(path)}`;
+        return phrase('reformat', { file: fileLabel(path) });
     }
     if (entities.size === 1)
     {
-        return `Edit ${[...entities][0]} (${lines.length} changes)`;
+        return phrase('editOne', {
+            entity: [...entities][0],
+            count: lines.length,
+        });
     }
-    return `Edit ${entities.size} entries in ${fileLabel(path)}`;
+    return phrase('editMany', {
+        count: entities.size,
+        file: fileLabel(path),
+    });
 }
 
 function clip(text)
 {
-    if (text.length <= SUBJECT_LIMIT)
+    const { subjectLimit, ellipsis } = OWNER_DIFF;
+    if (text.length <= subjectLimit)
     {
         return text;
     }
-    return `${text.slice(0, SUBJECT_LIMIT - ELLIPSIS.length)}${ELLIPSIS}`;
+    return `${text.slice(0, subjectLimit - ellipsis.length)}${ellipsis}`;
 }
 
 /** One readable line for one change, such as "Raise Husk Brute poiseMax 5→6". */
 export function DescribeChange(change)
 {
     const where = change.field
-        ? `${change.entity} ${change.field}`
+        ? `${change.entity}${OWNER_DIFF.segmentJoiner}${change.field}`
         : change.entity;
     if (change.kind === CHANGE_KIND.add)
     {
-        return `Add ${where}`;
+        return phrase('add', { where });
     }
     if (change.kind === CHANGE_KIND.remove)
     {
-        return `Remove ${where}`;
+        return phrase('remove', { where });
     }
     if (change.kind === CHANGE_KIND.list)
     {
@@ -205,14 +227,15 @@ export function CollectChanges(
             { before },
         );
     }
+    const entity = DisplayNameOf(after, fileLabel(path));
     return WalkChanges(
         before,
         after,
-        DisplayNameOf(after, fileLabel(path)),
+        entity,
     );
 }
 
-/** A commit subject (at most 72 characters) and one line per change. */
+/** A commit subject (clipped to the configured limit) and one line per change. */
 export function DescribeFileChange(
     path,
     beforeText,
@@ -225,12 +248,13 @@ export function DescribeFileChange(
         afterText,
     );
     const lines = changes.map(DescribeChange);
+    const subject = subjectFor(
+        path,
+        changes,
+        lines,
+    );
     return {
-        subject: clip(subjectFor(
-            path,
-            changes,
-            lines,
-        )),
+        subject: clip(subject),
         lines,
     };
 }
