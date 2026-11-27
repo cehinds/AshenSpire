@@ -8,7 +8,8 @@
   },
   "process": {
     "couldNotRun": "Could not run {program}: {error}",
-    "failed": "{command} failed:\n{detail}"
+    "failed": "{command} failed:\n{detail}",
+    "timedOut": "Stopped after {seconds} seconds without finishing."
   },
   "check": {
     "passed": "\nAll checks passed.",

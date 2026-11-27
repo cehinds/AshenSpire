@@ -25,7 +25,8 @@
     "maxOutputBytes": 67108864,
     "outputTailLines": 25,
     "branchTitleLimit": 40,
-    "receiptSummaryLines": 2
+    "receiptSummaryLines": 2,
+    "stepTimeoutMs": 180000
   },
   "editableRoots": [
     "content/source/",
@@ -142,6 +143,7 @@
   "testSteps": [
     {
       "label": "Core tests",
+      "timeoutMs": 900000,
       "args": [
         "tests/run-node.mjs",
         "--no-selftests",
