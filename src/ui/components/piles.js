@@ -17,7 +17,16 @@
 import { renderCard, cardDetailHtml } from './card.js';
 import { OpenModal } from './modalShell.js';
 import { decorateKeywords } from './tooltipGlossary.js';
-import { button, cardGrid, categoryNav, el, flavour, railed, railItem, statusText } from '../kit/index.js';
+import {
+    button,
+    cardGrid,
+    categoryNav,
+    el as createElement,
+    flavour,
+    railed,
+    railItem,
+    statusText,
+} from '../kit/index.js';
 import { SPENT_PILES, spentPileView } from '../models/PileViewerModel.js';
 // This door's words live in content/source/uiStrings.csv, like every other
 // migrated surface: the ratchet (tools/uistrings.mjs) caught this file GROWING
@@ -176,12 +185,12 @@ export function openSpentPileModal(
     let selectedInstanceId = null;
 
     const railItems = buildSpentRailItems();
-    const collection = el('div', { class: COLLECTION_CLASS });
-    const detail = el('div', {
+    const collection = createElement('div', { class: COLLECTION_CLASS });
+    const detail = createElement('div', {
         class: DETAIL_CLASS,
         'aria-live': 'polite',
     });
-    const pane = el(
+    const pane = createElement(
         'div',
         {
             class: PANE_CLASS,
