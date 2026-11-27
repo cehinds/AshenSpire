@@ -9,6 +9,7 @@ import { ContentStore } from './contentStore.js';
 import { El, TextInput } from './dom.js';
 import { EditorToolbar } from './editorToolbar.js';
 import { CreateFieldRenderers } from './fieldRenderers.js';
+import { LatestLoad } from './latestLoad.js';
 
 const OPENED_FLAG = 'contentEditorOpened';
 const LISTBOX_ROLE = 'listbox';
@@ -72,6 +73,7 @@ class ContentEditor
             form,
             scroller: El('div', { className: classes.formPane }, scrollerChildren),
             suggestions: El('div', { attributes: { hidden: '' } }),
+            latestLoad: new LatestLoad(),
         };
     }
 

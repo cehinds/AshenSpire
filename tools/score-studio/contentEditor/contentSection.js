@@ -45,14 +45,26 @@ export class ContentSection
     }
 
     /** Loads the section's files (again, after a revert) and draws it. */
-    async Open()
+    Open()
+    {
+        return this.panes.latestLoad.Run(() => this.Load(), (entries) => this.Show(entries));
+    }
+
+    async Load()
+    {
+        const entries = await LoadEntries(this.config, this.fieldSets, this.store);
+        await this.suggestions.LoadFor(entries.flatMap((entry) => entry.fields));
+        return entries;
+    }
+
+    /** Draws loaded entries into the shared panes; only the newest load gets here. */
+    Show(entries)
     {
         const selectedKey = this.selected?.key;
-        this.entries = await LoadEntries(this.config, this.fieldSets, this.store);
-        await this.suggestions.LoadFor(this.entries.flatMap((entry) => entry.fields));
-        const previous = this.entries.find((entry) => entry.key === selectedKey);
-        this.selected = previous || this.entries[0] || null;
-        this.list.Render(this.entries, this.selected);
+        this.entries = entries;
+        const previous = entries.find((entry) => entry.key === selectedKey);
+        this.selected = previous || entries[0] || null;
+        this.list.Render(entries, this.selected);
         this.RenderForm();
     }
 
