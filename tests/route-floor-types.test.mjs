@@ -114,7 +114,7 @@ const INVALID = [
   [{ 6: 'shop' }, /depth 6 is or can become a rest floor/],
   [{ 5: 'shop' }, /depth 5 is or can become a rest floor/],
   [{ 4: 'dragon' }, /depth 4: "dragon" is not a room type this route uses/],
-  [{ 4: 'rest' }, /depth 4 cannot be "rest"/],
+  [{ 4: 'rest' }, /depth 4 cannot be "rest": the route places that room itself/],
   [{ 4: 'boss' }, /depth 4 cannot be "boss"/],
   [{ 2: 'elite' }, /depth 2: an elite needs depth 3 or later/],
 ];

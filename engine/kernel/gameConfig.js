@@ -825,9 +825,8 @@ function verifyRouteFirstFloor(modules, content) {
 function verifyRouteFloorTypes(modules, content) {
   const routes = modules.routes;
   if (routes?.mode !== 'configured' || !record(content?.routes)) return;
-  const types = [...new Set([...(content.routes.hiddenTypes || []), ...(content.routes.visibleTypes || [])])];
-  const alternatives = types.filter(type => !['rest', 'boss'].includes(type));
-  for (const problem of RouteFloorTypeProblems(routes, alternatives)) fail('$/modules/routes/floorTypes', problem);
+  const problems = RouteFloorTypeProblems(routes, content.routes);
+  for (const problem of problems) fail('$/modules/routes/floorTypes', problem);
 }
 function verifyRewardGroups(modules, content) {
   if (modules.rewards?.mode !== 'configured' || !content.rewards) return;

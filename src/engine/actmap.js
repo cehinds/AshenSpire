@@ -182,7 +182,7 @@ export function buildGameProfileActMap(registries, rng, seat, tier, { history = 
   // real alternative (never rest or boss), an elite only where minimumThreatFloor allows depth 1, and depth 1 cannot also be a rest depth
   // (a rest floor is a single shared node, not a lane per type).
   if (firstFloor !== null && (!alternatives.includes(firstFloor) || (restFloors.includes(1) && startRestFromAct === null) || (firstFloor === 'elite' && minimumThreatFloor > 1))) throw new Error('Invalid configured firstFloor');
-  const floorTypeProblems = RouteFloorTypeProblems(rules, alternatives);
+  const floorTypeProblems = RouteFloorTypeProblems(rules, rules);
   if (floorTypeProblems.length) throw new Error(`Invalid configured floorTypes: ${floorTypeProblems[0]}`);
   const pinnedFloors = PinnedFloorTypes(rules.floorTypes);
   const hideUnknown = gameModule(registries, 'routes').hideUnknownNodes;
