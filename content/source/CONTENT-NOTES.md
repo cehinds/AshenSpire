@@ -1,4 +1,6 @@
-# Content authoring notes (relics, stances, flasks, statuses, events, cards, enemies, classes, attributes, derived stats, action costs)
+# Content authoring notes (relics, stances, flasks, statuses, events, cards, enemi`CARD_LIMITS` caps how many effects and drawbacks one card may have. Drawbacks are `DRAWBACK_OPS`, the `DRAWBACK_KEYWORD_TAGS` keywords, and an `applyStatus` on self whose status is in `selfDebuffStatuses`. `node tools/card-limits.mjs --check` (part of `npm run check`) names every card over a limit in `cardFiles`; upgraded faces count too.
+
+es, classes, attributes, derived stats, action costs)
 
 The relics are `content/source/relics.json`, compiled to `src/content/generated/relics.js` by
 `tools/content-build.mjs`. These are the design notes that lived as comments in the old

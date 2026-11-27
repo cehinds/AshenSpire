@@ -7,6 +7,32 @@
     "cast": 2,
     "sweep": 2
   },
+  "CARD_LIMITS": {
+    "maxEffects": 4,
+    "maxDrawbacks": 2,
+    "cardFiles": [
+      "games/ashenspire/packs/core/cards.json",
+      "games/ashenspire/packs/core/enemyCards.json"
+    ],
+    "selfDebuffStatuses": [
+      "weak",
+      "vulnerable",
+      "frail",
+      "bleed",
+      "burn",
+      "staggered",
+      "silenced",
+      "magicVulnerable",
+      "fireVulnerable",
+      "brittle",
+      "shocked",
+      "chill",
+      "freeze",
+      "insanity",
+      "madness",
+      "venom"
+    ]
+  },
   "CAST_TAGS": [
     "camp:spell",
     "maneuver:casting"

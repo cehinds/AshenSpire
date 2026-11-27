@@ -50,6 +50,21 @@ All paths are from the repo folder. `core` means `games/ashenspire/packs/core/`.
 - **Starting deck**: in `core/starterDeck.json`, change `"copies"`, or add a line `{ "card": "core.cardId", "copies": 1 }`.
 - **Map**: in `core/routes.json`, `typeWeights` sets how often each room appears, `restFloors` which floors rest.
 
+## Card limits
+
+`content/source/actionCosts.json`, block `CARD_LIMITS`:
+
+- `maxEffects`: most effects one card may have (today 4).
+- `maxDrawbacks`: most drawbacks (today 2). Drawbacks are losing HP, discarding, adding cards to your deck, delayed charges, Exhaust, Ethereal, and a debuff such as Frail on yourself.
+- `selfDebuffStatuses`: which statuses on yourself count as a drawback.
+- `cardFiles`: which card files are checked.
+
+`npm run check` fails and names each card over a limit, for example:
+
+```text
+FAIL games/ashenspire/packs/core/cards.json: core.backstep (Backstep) has 2 drawbacks: frail on self, exhaust. The limit is 1 (maxDrawbacks).
+```
+
 ## When something goes wrong
 
 | You see | Do this |
