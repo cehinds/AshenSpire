@@ -28,12 +28,10 @@ import { applyRunShape } from '../model/floorplan.js';
 import { MAP_SHAPE_LIMITS, LEGACY_ACT_BOSSES } from '../content/mapconfig.js';
 import { defaultSeatOrder, encounterFitsSeat, finalTier } from '../model/seats.js';
 import { bossDestinationLabel } from '../model/bossDestinationLabels.js';
-import {
-  RouteFloorTypeProblems,
-  PinnedFloorTypes,
-  BranchFullDepth,
-  GUARANTEED_SHOP_DEPTHS,
-} from '../../engine/kernel/routeFloorTypes.js';
+import { RouteFloorTypeProblems } from '../../engine/kernel/routeFloorTypes.js';
+import { PinnedFloorTypes, ELITE_ROOM, SHOP_ROOM } from '../../engine/kernel/routeFloorPins.js';
+import { BranchFullDepth } from '../../engine/kernel/routeDepths.js';
+import { RouteShapeOf } from '../model/routeShape.js';
 
 /**
  * buildActMap(registries, rng, act, mapShape, { history }) → mapGraph
@@ -187,7 +185,8 @@ export function buildGameProfileActMap(registries, rng, seat, tier, { history = 
   // real alternative (never rest or boss), an elite only where minimumThreatFloor allows depth 1, and depth 1 cannot also be a rest depth
   // (a rest floor is a single shared node, not a lane per type).
   if (firstFloor !== null && (!alternatives.includes(firstFloor) || (restFloors.includes(1) && startRestFromAct === null) || (firstFloor === 'elite' && minimumThreatFloor > 1))) throw new Error('Invalid configured firstFloor');
-  const floorTypeProblems = RouteFloorTypeProblems(rules, rules);
+  const routeShape = RouteShapeOf(registries);
+  const floorTypeProblems = RouteFloorTypeProblems(rules, rules, routeShape);
   if (floorTypeProblems.length) {
     throw new Error(`Invalid configured floorTypes: ${floorTypeProblems[0]}`);
   }
@@ -198,7 +197,7 @@ export function buildGameProfileActMap(registries, rng, seat, tier, { history = 
   if (rules.maxBranches != null) {
     return buildBranchedActMap(registries, rng, seat, tier, {
       rules, count, columns, minimumThreatFloor, restFloors, firstFloor, shopShare, displayTypes, hidden, alternatives, hideUnknown, history,
-      pinnedFloors,
+      pinnedFloors, routeShape,
     });
   }
   const nodes = {}, layers = [], seenEvents = [];
@@ -262,19 +261,18 @@ export function buildGameProfileActMap(registries, rng, seat, tier, { history = 
  * 2 * branchColumns columns (6 today), the widest the 390 px map frames with free pan, while a lone branch keeps the old width.
  */
 const REMERGE_PERCENT = 18;
-const ELITE_NODE = 'elite';
-const SHOP_NODE = 'shop';
 const FORK_PERCENT = 40;
 const NARROW_PERCENT = 25;
 // Per-branch lane occupancy: { [floor]: { lo, hi } } (contiguous lanes, branch-local), plus the fork/narrow edges that make the tree.
-function drawBranchShape(rng, lanes, count, forkPercent = FORK_PERCENT) {
+function drawBranchShape(rng, lanes, count, forkPercent, routeShape) {
   const active = {}, edges = []; // edges: [floor, fromLane, toLane] join floor -> floor + 1, branch-local lanes
   if (count < 2) return { active, edges };
   const width = lanes >= 3 && rng.chance('map', 50) ? 2 : 1;
   const lo0 = rng.int('map', Math.floor((lanes - width) / 2), Math.ceil((lanes - width) / 2));
-  active[2] = { lo: lo0, hi: lo0 + width - 1 };
-  const fillBy = BranchFullDepth(count);
-  for (let floor = 2; floor < count; floor++) {
+  const firstDepth = routeShape.firstBranchDepth;
+  active[firstDepth] = { lo: lo0, hi: lo0 + width - 1 };
+  const fillBy = BranchFullDepth(count, routeShape);
+  for (let floor = firstDepth; floor < count; floor++) {
     const { lo, hi } = active[floor], next = { lo, hi };
     if (floor < fillBy) {
       const left = rng.chance('map', forkPercent), right = rng.chance('map', forkPercent);
@@ -283,7 +281,8 @@ function drawBranchShape(rng, lanes, count, forkPercent = FORK_PERCENT) {
       if (hi < lanes - 1 && (right || lanes - 1 - hi >= remaining)) { next.hi = hi + 1; edges.push([floor, right0, hi + 1]); }
     } else {
       const narrow = rng.chance('map', NARROW_PERCENT), dropLeft = rng.chance('map', 50);
-      if (floor >= count - 2 && narrow && hi - lo + 1 >= 3) {
+      const narrowing = floor >= count - routeShape.narrowDepthsBeforeBoss;
+      if (narrowing && narrow && hi - lo + 1 >= 3) {
         if (dropLeft) { next.lo = lo + 1; edges.push([floor, lo, lo + 1]); }
         else { next.hi = hi - 1; edges.push([floor, hi, hi - 1]); }
       }
@@ -326,7 +325,7 @@ export function PlaceRestFloors(rng, restFloors, count, { restGap = null, restFl
 }
 function buildBranchedActMap(registries, rng, seat, tier, ctx) {
   const { rules, count, columns: laneColumns, minimumThreatFloor, restFloors: authoredRests, firstFloor, shopShare, displayTypes, hidden, alternatives, hideUnknown, history } = ctx;
-  const pinnedFloors = ctx.pinnedFloors;
+  const { pinnedFloors, routeShape } = ctx;
   const maxBranches = rules.maxBranches;
   // Visible-fork keys (owner, 2026-11-14). Each is read only when present, so older pinned profiles keep today's draws exactly.
   const percent = (key, fallback) => {
@@ -377,19 +376,20 @@ function buildBranchedActMap(registries, rng, seat, tier, ctx) {
   const restSet = new Set(restFloors);
   const nodeId = (floor, globalLane) => `n${floor}_${globalLane}`;
   // Every branch's tree shape is drawn first, so what a lane holds cannot depend on how its nodes roll.
-  const shapes = Array.from({ length: branchCount }, () => drawBranchShape(rng, lanes, count, forkPercent));
+  const shapes = Array.from({ length: branchCount }, () => drawBranchShape(rng, lanes, count, forkPercent, routeShape));
   const laneAt = (k, floor, lane) => { const a = shapes[k].active[floor]; return !!a && lane >= a.lo && lane <= a.hi; };
   const branchAt = (k, floor) => !!shapes[k].active[floor];
   // One guaranteed elite slot per lane (owner, 2026-10-27): drawn from the depths where that lane exists, before any node rolls.
   const guaranteed = new Set();
   if (alternatives.includes('elite')) for (let k = 0; k < branchCount; k++) for (let lane = 0; lane < lanes; lane++) {
     const floors = [];
-    for (let floor = Math.max(2, minimumThreatFloor); floor <= count; floor++) {
+    const firstElite = Math.max(routeShape.firstBranchDepth, minimumThreatFloor);
+    for (let floor = firstElite; floor <= count; floor++) {
       const free = !restSet.has(floor) && !pinnedFloors.has(floor);
       if (free && laneAt(k, floor, lane)) floors.push(floor);
     }
     // A lane that crosses a pinned elite depth (floorTypes) already holds its elite.
-    const pinnedElite = hasPinnedDepth(pinnedFloors, ELITE_NODE, floor => laneAt(k, floor, lane));
+    const pinnedElite = hasPinnedDepth(pinnedFloors, ELITE_ROOM, floor => laneAt(k, floor, lane));
     if (floors.length && !pinnedElite) {
       guaranteed.add(`${rng.pick('map', floors)}:${k * lanes + lane}`);
     }
@@ -399,9 +399,10 @@ function buildBranchedActMap(registries, rng, seat, tier, ctx) {
   if (shopsPerBranch > 0) for (let k = 0; k < branchCount; k++) {
     const slots = [];
     // A branch that crosses a pinned shop depth (floorTypes) already holds its shop.
-    if (hasPinnedDepth(pinnedFloors, SHOP_NODE, floor => branchAt(k, floor))) continue;
-    const lastShopDepth = Math.min(GUARANTEED_SHOP_DEPTHS.last, count);
-    for (let floor = GUARANTEED_SHOP_DEPTHS.first; floor <= lastShopDepth; floor++) {
+    if (hasPinnedDepth(pinnedFloors, SHOP_ROOM, floor => branchAt(k, floor))) continue;
+    const shopDepths = routeShape.guaranteedShopDepths;
+    const lastShopDepth = Math.min(shopDepths.last, count);
+    for (let floor = shopDepths.first; floor <= lastShopDepth; floor++) {
       if (restSet.has(floor) || pinnedFloors.has(floor)) continue;
       for (let lane = 0; lane < lanes; lane++) {
         const slot = `${floor}:${k * lanes + lane}`;

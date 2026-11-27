@@ -825,7 +825,7 @@ function verifyRouteFirstFloor(modules, content) {
 function verifyRouteFloorTypes(modules, content) {
   const routes = modules.routes;
   if (routes?.mode !== 'configured' || !record(content?.routes)) return;
-  const problems = RouteFloorTypeProblems(routes, content.routes);
+  const problems = RouteFloorTypeProblems(routes, content.routes, routes.routeShape);
   for (const problem of problems) fail('$/modules/routes/floorTypes', problem);
 }
 function verifyRewardGroups(modules, content) {

@@ -195,7 +195,7 @@ const COMPATIBLE_HOST_RUNTIMES = new Set([
   'sha256:659730689c3f0675a28b5ecbf6ef6c2bcbefa32b77c4794a5a5f9c14f0b8f07d',
   // routes.floorTypes (engine/kernel/routeFloorTypes.js) moves the host runtime.
   // Prior saves pin nothing.
-  'sha256:c97b38f60d66e732136836059088c1851c4d9177230b7ec19a3f349abc3266e1',
+  'sha256:b4a0c8259097d523be5e5cb251a47e65b24902c625d3f3d911c00f3322a268ed',
 ]);
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return COMPATIBLE_HOST_RUNTIMES.has(currentRuntime)

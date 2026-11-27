@@ -199,13 +199,13 @@ test('every lane keeps its elite when pins leave it one free floor', () =>
       assert.ok(types.has('elite'), `seed ${seed} act ${act} lane ${lane} has an elite`);
     }
   }
-  const refusal = /leaves a lane no floor for its elite\. Keep one of depths 8, 9 unpinned/;
+  const refusal = /leaves a lane no free floor for its elite\. Keep one of depths 8, 9 unpinned/;
   const isLaneError = error => error.path === FLOOR_TYPES_PATH && refusal.test(error.message);
   assert.throws(() => SetupCore({ floorTypes: NO_LANE_ELITE }), isLaneError);
   const lateThreat = BuildMap(SetupCore(LATE_THREAT), 1, 1).map;
   const lateElites = Object.values(lateThreat.nodes).filter(node => node.actualType === 'elite');
   assert.ok(lateElites.length > 0, 'without pins the late-threat route has elites');
-  const lateRefusal = /leaves a lane no floor for its elite\. Keep depth 10 unpinned/;
+  const lateRefusal = /leaves a lane no free floor for its elite\. Keep depth 10 unpinned/;
   const isLateError = error => error.path === FLOOR_TYPES_PATH && lateRefusal.test(error.message);
   assert.throws(() => SetupCore(LATE_THREAT_NO_ELITE), isLateError);
 });
@@ -232,9 +232,9 @@ test('every branch keeps its shop when pins leave it room', () =>
 
 test('pins that leave a branch no shop floor, alone or beside its elites, are refused', () =>
 {
-  const noShop = /no floor for its shop\. Keep one of depths 4, 5, 7, 8 unpinned/;
+  const noShop = /no free floor for its shop\. Keep one of depths 4, 5, 7, 8 unpinned/;
   assert.throws(() => SetupCore(FIXED_RESTS_NO_SHOP), noShop);
-  const sharedSlot = /shop one floor that its elites can take\. Keep two of depths 4, 5, 7, 8/;
+  const sharedSlot = /shop only floors its elites can take\. Keep two of depths 4, 5, 7, 8/;
   const isSharedSlot = error => error.path === FLOOR_TYPES_PATH && sharedSlot.test(error.message);
   assert.throws(() => SetupCore(FIXED_RESTS_SHARED_SLOT), isSharedSlot);
 });
