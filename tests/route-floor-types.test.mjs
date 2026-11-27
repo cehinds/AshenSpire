@@ -4,6 +4,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import {
@@ -463,11 +464,12 @@ test('every branch shape and rest placement the builder rolls is one the resolve
 const RESOLVE_BUDGET_MS = 200;
 const HEAP_BUDGET_BYTES = 64 * 1024 * 1024;
 const LARGE_ROUTE_RESTS = 5;
-const SCHEMA_URL = new URL('../engine/modules/routes/settings.schema.json', import.meta.url);
+const SCHEMA_FILE = fileURLToPath(new URL('../engine/modules/routes/settings.schema.json',
+  import.meta.url));
 
 function LargestRoute()
 {
-  const schema = JSON.parse(readFileSync(SCHEMA_URL, 'utf8')).properties;
+  const schema = JSON.parse(readFileSync(SCHEMA_FILE, 'utf8')).properties;
   const count = schema.prebossNodes.maximum;
   const gapSchema = schema.restGap.anyOf.find(option => option.type === 'object').properties;
   const step = Math.floor(count / LARGE_ROUTE_RESTS);
