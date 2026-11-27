@@ -34,8 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-27
 
-- **Spell costs match their cards** ([#3022](https://github.com/cehinds/AshenSpire/pull/3022), `0.7.5.145`). A spell now costs the Mana and Stamina printed on it; the hidden extra Mana on every spell is gone. Prepared stance takes 1 Stamina off a spell, never below 1, and no Mana; Mana cuts in Prepared come from a staff or robes. Arcane Strike and Mana Rite cost Stamina only.
-- **Score Studio keeps one active card and item** ([#3019](https://github.com/cehinds/AshenSpire/pull/3019), `0.7.5.145`). Every panel follows the same card, filters never switch it, and reload brings it back.
+- **Spell costs match their cards** ([#3022](https://github.com/cehinds/AshenSpire/pull/3022), `0.7.5.147`). A spell now costs the Mana and Stamina printed on it; the hidden extra Mana on every spell is gone. Prepared stance takes 1 Stamina off a spell, never below 1, and no Mana; Mana cuts in Prepared come from a staff or robes. Arcane Strike and Mana Rite cost Stamina only.
+- **Score Studio keeps one active card and item** ([#3019](https://github.com/cehinds/AshenSpire/pull/3019), `0.7.5.147`). Every panel follows the same card, filters never switch it, and reload brings it back.
 - **A code style guide** ([#3020](https://github.com/cehinds/AshenSpire/pull/3020), `0.7.5.145`). `CODE-STYLE.md` sets how all new and changed code looks. No game changes.
 
 - **Faster upgrade choices and Act schedules** ([#3014](https://github.com/cehinds/AshenSpire/pull/3014), `0.7.5.143`). Upgrade offers skip unused extra candidates while preserving choices and prices. Generated map nodes use a direct text sort when preparing upgrade and reward schedules, while custom node IDs retain their existing ordering.
