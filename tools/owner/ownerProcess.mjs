@@ -11,18 +11,29 @@ const TEXT_ENCODING = 'utf8';
 const GIT_PROGRAM = 'git';
 const LIMITS = OWNER_TOOLS.limits;
 const MARKS = OWNER_TEXT.marks;
+const TIMED_OUT_CODE = 'ETIMEDOUT';
+const MILLISECONDS_PER_SECOND = 1000;
+const NEWLINE = '\n';
 
 function spawn(
     program,
     args,
     cwd,
+    timeoutMs = LIMITS.stepTimeoutMs,
 )
 {
-    return spawnSync(program, args, {
+    const result = spawnSync(program, args, {
         cwd,
         encoding: TEXT_ENCODING,
         maxBuffer: LIMITS.maxOutputBytes,
+        timeout: timeoutMs,
+        killSignal: LIMITS.stepKillSignal,
     });
+    result.timedOut = result.error?.code === TIMED_OUT_CODE;
+    result.timeoutText = FormatText(OWNER_TEXT.process.timedOut, {
+        seconds: Math.round(timeoutMs / MILLISECONDS_PER_SECOND),
+    });
+    return result;
 }
 
 function lastLines(text)
@@ -61,17 +72,25 @@ function failedStep(
     };
 }
 
-/** Runs `node <args>` in `cwd`; returns { ok, output }. */
-export function RunNode(args, cwd = REPO_ROOT)
+/** Runs `node <args>` in `cwd`; a run past `timeoutMs` is stopped and fails. */
+export function RunNode(
+    args,
+    cwd = REPO_ROOT,
+    { timeoutMs } = {},
+)
 {
     const result = spawn(
         process.execPath,
         args,
         cwd,
+        timeoutMs,
     );
+    const timeoutNote = result.timedOut
+        ? `${NEWLINE}${result.timeoutText}`
+        : '';
     return {
-        ok: result.status === 0,
-        output: `${result.stdout || ''}${result.stderr || ''}`,
+        ok: result.status === 0 && !result.timedOut,
+        output: `${result.stdout || ''}${result.stderr || ''}${timeoutNote}`,
     };
 }
 
@@ -96,7 +115,9 @@ export function RunProgram(
     {
         const message = FormatText(OWNER_TEXT.process.couldNotRun, {
             program,
-            error: result.error.message,
+            error: result.timedOut
+                ? result.timeoutText
+                : result.error.message,
         });
         throw new Error(message);
     }
@@ -143,7 +164,7 @@ export function RunSteps(
 {
     for (const step of steps)
     {
-        const result = RunNode(step.args, cwd);
+        const result = RunNode(step.args, cwd, { timeoutMs: step.timeoutMs });
         if (!result.ok)
         {
             return failedStep(
