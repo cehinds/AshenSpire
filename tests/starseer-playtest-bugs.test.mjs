@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
@@ -63,11 +64,13 @@ test('Core 2 Starseer deck view passes run rules and hides x0 equipment card ent
         'passing run rules applies Core scaling instead of raw authored numbers',
     );
 
-    const equipmentPath = new URL('../src/ui/screens/equipment.js', import.meta.url);
+    const equipmentPath = fileURLToPath(
+        new URL('../src/ui/screens/equipment.js', import.meta.url),
+    );
     const equipmentSrc = readFileSync(equipmentPath, 'utf8');
     assert.match(equipmentSrc, /openPileModal\([\s\S]{0,300}kind:\s*DECK_VIEW_MODAL_KIND/);
     assert.match(equipmentSrc, /openPileModal\([\s\S]{0,300}rules:\s*run/);
-    const mainPath = new URL('../src/main.js', import.meta.url);
+    const mainPath = fileURLToPath(new URL('../src/main.js', import.meta.url));
     const mainSrc = readFileSync(mainPath, 'utf8');
     assert.match(mainSrc, /openPileModal\([\s\S]{0,300}kind:\s*DECK_VIEW_MODAL_KIND/);
     assert.match(mainSrc, /openPileModal\([\s\S]{0,300}rules:\s*run/);
