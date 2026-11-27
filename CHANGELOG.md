@@ -34,6 +34,9 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-27
 
+- **Faster upgrade choices and Act schedules** ([#3014](https://github.com/cehinds/AshenSpire/pull/3014), `0.7.5.143`). Upgrade offers skip unused extra candidates while preserving choices and prices. Generated map nodes use a direct text sort when preparing upgrade and reward schedules, while custom node IDs retain their existing ordering.
+
+- **Safer card JSON edits in Score Studio** ([#3015](https://github.com/cehinds/AshenSpire/pull/3015), `0.7.5.143`). Failed card JSON edits preserve Undo and Redo history, invalid card text is rejected before changes, and custom cards can open their comparison summary and menu.
 - **Score Studio stories for one active card, Studio Save and card templates** ([#3012](https://github.com/cehinds/AshenSpire/pull/3012), `0.7.5.141`). Planning documents for the next three Score Studio features, each with acceptance criteria and a ready-to-use implementation prompt. No game or tool changes.
 - **Weights can multiply with a card's strength** ([#3013](https://github.com/cehinds/AshenSpire/pull/3013), `0.7.5.139`). Cost, effect, status, multi-effect and tag weights can each switch to a multiply form that scales with the card's positive score, so stronger cards pay more per SP. Every switch is off, so no card's CP or rank changes.
 - **Score Studio keeps the library, card preview and editor together** ([#3008](https://github.com/cehinds/AshenSpire/pull/3008), `0.7.5.137`). The customization pane now shows the selected card's name, preview and what an edit will change in every view, Edit and deck-list rows open the card's properties in place instead of a dialog, an empty state replaces stale content when no card is selected, and narrow screens get a Library / Card switch. The resize handle works with Home, End and arrow keys.
