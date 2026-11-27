@@ -92,7 +92,7 @@ body.studio-body #studio-customization-pane[data-scope="deck"] .customization-en
 /* Outside Properties the preview is compact so the shared and global editors keep their room. */
 body.studio-body #studio-customization-pane:not([data-scope="card"]) .inspector-preview-wrap { padding: 6px; }
 body.studio-body #studio-customization-pane:not([data-scope="card"]) .customization-preview-body:not([data-sized]) .inspector-card-preview { width: auto; height: min(220px, 40dvh); }
-body.studio-body #studio-customization-pane:not([data-scope="card"]) :is(.inspector-score-summary, .subclass-upgrade-summary) { display: none; }
+body.studio-body #studio-customization-pane:not([data-scope="card"]) .subclass-upgrade-summary { display: none; }
 body.studio-body #studio-customization-pane:not([data-scope="card"]) .item-preview-host { max-height: 220px; overflow: hidden; }
 body.studio-body #studio-customization-pane:not([data-scope="card"]) .item-preview-host .equipment-poker-card { width: 150px; }
 body.studio-body .customization-empty { margin: 0; padding: 16px 12px; }
@@ -186,13 +186,21 @@ body.studio-body .customization-quick-fields :is(input:not([type="checkbox"]), s
 /* A dragged height keeps the fields reachable without growing the header. */
 body.studio-body .customization-preview-body[data-sized] .customization-entity-details { max-height: 100%; overflow-y: auto; }
 
-/* CP large, rank and rarity beside it on two short lines. */
-body.studio-body .inspector-score-row { display: flex; align-items: center; gap: 10px; min-width: 0; }
-body.studio-body .inspector-score-meta { display: flex; flex-direction: column; gap: 1px; min-width: 0; font-size: 12px; line-height: 1.3; }
-body.studio-body .customization-entity .inspector-score-summary { gap: 0; }
 body.studio-body .customization-quick-fields .cost-label { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 4px; }
 body.studio-body .customization-entity .customization-quick-fields { align-items: end; }
-body.studio-body .inspector-score-row .inspector-score-big { font-size: 28px; line-height: 1; }
 
 /* Properties needs no scope line: the card name above says what is being edited. */
 body.studio-body #studio-customization-pane[data-scope="card"]:not([data-empty="true"]) .customization-scope { display: none; }
+
+/* Card banner: name left; rank, rarity and CP right. */
+body.studio-body .customization-entity-name-text { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body.studio-body .customization-entity-name .inspector-score-summary { display: inline-flex; flex-direction: row; align-items: baseline; white-space: nowrap; gap: 10px; flex: 0 0 auto; margin-left: auto; font-size: 12px; font-weight: 600; }
+body.studio-body .customization-entity-name .inspector-score-summary[hidden] { display: none; }
+body.studio-body .customization-entity-name .inspector-score-rarity { color: var(--st-muted); font-weight: 500; }
+body.studio-body .customization-entity-name .inspector-score-big { font-size: 18px; font-weight: 800; line-height: 1; }
+/* CP trend against the in-game card: room for the arrow even when there is none. */
+body.studio-body .customization-entity-name .cp-trend { display: inline-block; min-width: 14px; margin-left: -4px; padding-right: 4px; font-size: 12px; line-height: 1; text-align: left; }
+body.studio-body .cp-trend.is-down { color: var(--st-good, #4caf50); }
+body.studio-body .cp-trend.is-up { color: var(--st-bad, #e05252); }
+body.studio-body .customization-entity-name .inspector-score-big:has(+ .cp-trend.is-down) { color: var(--st-good, #4caf50); }
+body.studio-body .customization-entity-name .inspector-score-big:has(+ .cp-trend.is-up) { color: var(--st-bad, #e05252); }

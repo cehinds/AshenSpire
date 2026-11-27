@@ -212,7 +212,7 @@ test('one native preview moves into the active entity header and stays there in 
   assert.equal(itemHost.closest('#customization-entity'), entity);
   assert.equal(itemHost.hidden, false); assert.equal(wrap.hidden, true);
   assert.equal(entity.getAttribute('aria-label'), 'Active item');
-  assert.equal(doc.getElementById('customization-entity-name').textContent, 'First weapon');
+  assert.equal(doc.querySelector('.customization-entity-name-text').textContent, 'First weapon');
 }));
 
 test('the scope line names what each view changes and labels the pane scope', () => withKitDom(dom => {
@@ -228,7 +228,7 @@ test('the scope line names what each view changes and labels the pane scope', ()
     api.setView(view);
     assert.equal(pane.getAttribute('data-scope'), kind, view);
     assert.equal(scope.textContent, text, view);
-    assert.equal(doc.getElementById('customization-entity-name').textContent, 'Alpha', view);
+    assert.equal(doc.querySelector('.customization-entity-name-text').textContent, 'Alpha', view);
   }
   api.setView('properties'); api.setContext('items');
   assert.equal(scope.textContent, 'Selected item · edits change only First weapon');
@@ -246,7 +246,7 @@ test('docked Edit selects and shows Properties in place without opening the dial
   assert.ok(calls.some(row => row[0] === 'selectCard' && row[1] === 'b'));
   assert.ok(doc.getElementById('tab-cards').querySelector('#studio-customization-pane'));
   assert.equal(doc.activeElement, doc.getElementById('customization-entity-name'), 'focus goes to the heading, not a field');
-  assert.equal(doc.getElementById('customization-entity-name').textContent, 'Beta');
+  assert.equal(doc.querySelector('.customization-entity-name-text').textContent, 'Beta');
   doc.querySelector('#cards-grid [data-card-id="b"] .card-editor-edit-button').click();
   assert.ok(!modal.open);
 }));
@@ -263,7 +263,7 @@ test('an invalid or missing selection shows the empty state and disables card ac
     assert.equal(empty.textContent, 'No card selected. Choose a card in the library.');
     assert.equal(doc.getElementById('card-inspector').hidden, true, 'stale inspector is hidden');
     assert.equal(doc.querySelector('.inspector-preview-wrap').hidden, true, 'stale preview is hidden');
-    assert.equal(doc.getElementById('customization-entity-name').textContent, 'No card selected');
+    assert.equal(doc.querySelector('.customization-entity-name-text').textContent, 'No card selected');
     assert.equal(doc.getElementById('card-editor-rename').disabled, true);
     assert.equal(doc.getElementById('card-editor-balance').disabled, true);
     assert.equal(doc.querySelectorAll('#cards-grid .card-editor-edit-button').length, 0, 'no Edit on any tile');

@@ -1912,17 +1912,22 @@ function renderCostChips(def, sc) {
 function renderScoreSummary(def, sc) {
   const baseRank = state.baselineRanks[def.id];
   const shiftTxt = (baseRank !== undefined && baseRank !== sc.rank) ? ` (was ${RankName(baseRank)})` : '';
-  // CP stays large; rank and rarity sit beside it on two short lines.
+  // Shown in the card banner, right of the name: rank, rarity, then CP. Spans only: it sits inside a button.
   const rarity = String(sc.rarity || '').replace(/^./, (ch) => ch.toUpperCase());
-  document.getElementById('inspector-score-summary').innerHTML = `
-    <div class="inspector-score-row">
-      <div class="inspector-score-big">CP ${sc.cp}</div>
-      <div class="inspector-score-meta">
-        <div><strong>${esc(RankName(sc.rank))}</strong>${esc(shiftTxt)}</div>
-        <div class="studio-muted">${esc(rarity)}${sc.overridden ? ' · Overridden' : ''}</div>
-      </div>
-    </div>
-  `;
+  document.getElementById('inspector-score-summary').innerHTML =
+    `<span class="inspector-score-rank">${esc(RankName(sc.rank))}${esc(shiftTxt)}</span>`
+    + `<span class="inspector-score-rarity">${esc(rarity)}${sc.overridden ? ' · Overridden' : ''}</span>`
+    + `<span class="inspector-score-big">CP: ${sc.cp}</span>${cpTrendHtml(def, sc)}`;
+}
+
+// Arrow after CP: green and down when CP is below the in-game card, red and up when above.
+function cpTrendHtml(def, sc) {
+  const original = registries.cards.get(def.id);
+  const before = original ? scoreCardEntry(clone(original), state.repoScoring).cp : null;
+  if (!Number.isFinite(before) || before === sc.cp) return '<span class="cp-trend" aria-hidden="true"></span>';
+  const down = sc.cp < before;
+  const words = `${down ? 'down' : 'up'} from CP ${before} in game`;
+  return `<span class="cp-trend ${down ? 'is-down' : 'is-up'}" title="${esc(words)}" aria-label="${esc(words)}">${down ? '▼' : '▲'}</span>`;
 }
 
 const TARGET_LABELS = Object.freeze({

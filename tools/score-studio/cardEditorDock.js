@@ -64,7 +64,9 @@ export function initCardEditorDock(ctx) {
   // The name bar is the preview's disclosure button: click the card name to collapse or expand it.
   const entityHeading = doc.createElement('h2'); entityHeading.className = 'customization-entity-heading';
   const entityName = doc.createElement('button'); entityName.type = 'button'; entityName.id = 'customization-entity-name'; entityName.className = 'customization-entity-name';
-  entityHeading.append(entityName);
+  // Name on the left; the card's rank, rarity and CP sit on the right of the same banner.
+  const entityNameText = doc.createElement('span'); entityNameText.className = 'customization-entity-name-text';
+  entityName.append(entityNameText); entityHeading.append(entityName);
   const scope = doc.createElement('p'); scope.id = 'customization-scope'; scope.className = 'customization-scope';
   const previewSlot = doc.createElement('div'); previewSlot.id = 'customization-entity-preview'; previewSlot.className = 'customization-entity-preview';
   const previews = { cards: properties.cards.querySelector('.inspector-preview-wrap'), items: properties.items?.querySelector('#item-preview-host') || null };
@@ -134,7 +136,7 @@ export function initCardEditorDock(ctx) {
   const quick = doc.createElement('div'); quick.className = 'form-grid customization-quick-fields'; quick.hidden = true;
   quick.setAttribute('role', 'group'); quick.setAttribute('aria-label', 'Card basics');
   const scoreSummary = previews.cards?.querySelector('#inspector-score-summary');
-  if (scoreSummary) { scoreSummary.before(entityDetails); entityDetails.append(scoreSummary, quick); }
+  if (scoreSummary) { scoreSummary.before(entityDetails); entityDetails.append(quick); rememberHome(scoreSummary); entityName.append(scoreSummary); }
   function placeQuickFields() {
     const inHeader = !!scoreSummary && view === 'properties' && context === 'cards' && isValid('cards') && !previewPrefs.collapsed;
     for (const node of quickFields) {
@@ -327,7 +329,8 @@ export function initCardEditorDock(ctx) {
   function renderEntity() {
     const noun = context === 'items' ? 'item' : 'card', valid = isValid(context), name = valid ? selectedName() || selectedId(context) : 'none';
     entity.setAttribute('aria-label', context === 'items' ? 'Active item' : 'Active card');
-    entityName.textContent = valid ? name : `No ${noun} selected`;
+    entityNameText.textContent = valid ? name : `No ${noun} selected`;
+    if (scoreSummary) scoreSummary.hidden = context !== 'cards' || !valid;
     scope.textContent = SCOPE_TEXT[view](noun, name);
     if (!valid && view === 'properties') scope.textContent = `Choose a ${noun} in the library to edit it.`;
     pane.setAttribute('data-scope', VIEW_SCOPES[view]);
