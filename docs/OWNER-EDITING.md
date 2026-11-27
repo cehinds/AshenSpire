@@ -50,6 +50,30 @@ All paths are from the repo folder. `core` means `games/ashenspire/packs/core/`.
 - **Starting deck**: in `core/starterDeck.json`, change `"copies"`, or add a line `{ "card": "core.cardId", "copies": 1 }`.
 - **Map**: in `core/routes.json`, `typeWeights` sets how often each room appears, `restFloors` which floors rest.
 
+## Card limits
+
+`content/source/actionCosts.json`, block `CARD_LIMITS`:
+
+- `maxEffects`: most effects one card may have. `null` means no limit (the default).
+- `maxDrawbacks`: most drawbacks one card may have. `null` means no limit (the default).
+- Drawbacks are: losing HP, discarding, adding cards to your deck, delayed charges, Exhaust, Ethereal, and a debuff such as Frail on yourself.
+- `selfDebuffStatuses`: which statuses on yourself count as a drawback.
+- `cardFiles`: which card files are checked.
+
+Set a number and `npm run check` names each card over it, for example:
+
+```text
+FAIL games/ashenspire/packs/core/cards.json: core.backstep (Backstep) has 2 drawbacks: frail on self, exhaust. The limit is 1 (maxDrawbacks).
+```
+
+## Drawbacks in Combat Power
+
+`content/source/scoring.json`, block `drawbackCount` (also in Score Studio, Weights, "Drawback Cost"):
+
+- `surchargeEnabled`: `true` to make drawbacks lower a card's Combat Power. Off by default.
+- `weight`: Combat Power per drawback (negative lowers it), for example `-5`.
+- `multiplier`: `true` to make each drawback scale the card's positive score instead, for example `-0.1` is 10% less per drawback.
+
 ## When something goes wrong
 
 | You see | Do this |

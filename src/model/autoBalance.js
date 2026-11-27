@@ -5,6 +5,7 @@
 // as close as possible to the maximum allowed CP for that rank (respecting rarity discounts), with optional
 // convention naming, shortage generation, and optional surplus trimming.
 import { scoring as shippedScoring } from '../content/generated/scoring.js';
+import { CountCardParts } from './cardLimits.js';
 import { BaseFace, ScoreCard, CombatPower, RankOf, CardName } from './combatPower.js';
 import { GenerateCard, RankBand, RankMaxCp } from './cardGenerator.js';
 import { GenerateItem, ScoreGeneratedItem } from './itemGenerator.js';
@@ -91,6 +92,7 @@ export function HeadlessCardFace(def, scoring = shippedScoring) {
     ? 'spell'
     : 'physical';
   const f = Object.assign(BaseFace(), {
+    drawbacks: CountCardParts(def).drawbacks,
     id: def.id,
     name: def.name,
     cls: def.class || 'colorless',
