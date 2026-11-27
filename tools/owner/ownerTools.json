@@ -39,7 +39,8 @@
   "generatedNames": [
     "game.lock.json",
     "_reference.json",
-    "_reference.md"
+    "_reference.md",
+    "enemyLevelCards.json"
   ],
   "neverCommit": [
     "buildordinal.json",
@@ -55,7 +56,8 @@
     ".generated.css",
     "game.lock.json",
     "_reference.json",
-    "_reference.md"
+    "_reference.md",
+    "enemyLevelCards.json"
   ],
   "rebuiltContentFiles": [
     "games/ashenspire/packs/core/characters.json"
@@ -85,6 +87,13 @@
       "label": "Build content tables",
       "args": [
         "tools/content-build.mjs"
+      ]
+    },
+    {
+      "label": "Build enemy level cards",
+      "args": [
+        "tools/enemy-level-cards.mjs",
+        "--write"
       ]
     },
     {
@@ -133,6 +142,13 @@
       "label": "Check content tables",
       "args": [
         "tools/content-build.mjs",
+        "--check"
+      ]
+    },
+    {
+      "label": "Check enemy level cards",
+      "args": [
+        "tools/enemy-level-cards.mjs",
         "--check"
       ]
     },
