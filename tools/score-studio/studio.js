@@ -651,6 +651,7 @@ function storeDraft(draft)
   try
   {
     localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+    state.draftStorageFailed = false;
   }
   catch
   {

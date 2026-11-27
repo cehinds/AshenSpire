@@ -80,6 +80,7 @@ const quotedAbsolutePath = /'(?:[A-Za-z]:[\\/]|\/)[^']*'/g;
 const bareWindowsPath = /\b[A-Za-z]:[\\/][^\s'"]*/g;
 const pathSeparator = /[\\/]/;
 const quoteMark = "'";
+const failedMessage = 'Save failed. The save files may be read-only or open elsewhere.';
 
 const registeredFiles = new Map();
 
@@ -337,7 +338,11 @@ class StudioSaveController
     if (!isOkReply(reply))
     {
       const detail = reply.json?.error || `Save failed (${reply.status}).`;
-      return refusedOutcome(StudioSaveResult.Failed, detail);
+      return {
+        result: StudioSaveResult.Failed,
+        message: failedMessage,
+        detail,
+      };
     }
     return this.#acceptSaved(reply.json);
   }

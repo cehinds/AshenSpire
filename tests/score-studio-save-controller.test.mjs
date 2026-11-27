@@ -512,7 +512,7 @@ test('studio save: once Keep my draft or Use the saved file is chosen, the next 
     }
   });
 
-test('studio save: a failed save gives a short message without absolute paths, and the detail',
+test('studio save: a failed save gives a plain message, and the full detail',
   async () =>
   {
     const tempPath = String.raw`C:\Users\qa\AppData\Local\Temp\studio save\.cards.json.tmp`;
@@ -549,10 +549,8 @@ test('studio save: a failed save gives a short message without absolute paths, a
     const outcome = await controller.save();
     assert.equal(outcome.result, StudioSaveResult.Failed);
     assert.equal(outcome.detail, detail);
-    assert.equal(
-      outcome.message,
-      "Studio save failed and was rolled back: EPERM: open '.cards.json.tmp'",
-    );
+    assert.match(outcome.message, /^Save failed\./);
+    assert.doesNotMatch(outcome.message, /EPERM|tmp|[\\/]/);
     assert.equal(
       ShortStudioSaveMessage('EACCES: open \'/tmp/qa/artLayers.json\''),
       'EACCES: open \'artLayers.json\'',

@@ -557,7 +557,8 @@ try {
   });
   assert.match(schoolNote, /10 martial cards became magic to fit the school counts/, 'Preview reports martial cards made magic');
 
-  // 12. At 390 x 844, keyboard only: File, Enter, Enter saves and focus returns to the File heading.
+  // 12. At 390 x 844, keyboard only: File, Enter, Enter saves,
+  // and focus returns to the File heading.
   const focusedId = () => page.evaluate(() => document.activeElement?.id);
   await page.setViewportSize({
     width: 390,
