@@ -48,7 +48,7 @@ import { filterMembership, deckCatalogOptions, resolveStudioDeck } from './deckC
 import { initGalleryZoom } from './galleryZoom.js';
 import { focusedEffectOptions } from './focusedRebalance.js';
 import { createAddCardTile, CaptureCardTilePositions, animateCardInsertion } from './addCardTile.js';
-import { createActiveEntities, nextInDisplayedOrder, resolveWorkingContext } from './workingContext.js';
+import { GALLERIES, createActiveEntities, nextInDisplayedOrder, resolveWorkingContext, captureTileFocus, restoreTileFocus } from './workingContext.js';
 
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
 const AB_STORAGE_KEY = 'ashenspire:scoreStudioAB:v1';
@@ -1487,6 +1487,9 @@ function renderCardsGrid() {
   grid.classList.toggle('is-single', state.viewMode === 'single');
   const filtered = getFilteredCards();
   displayedIds.cards = filtered.map((def) => def.id);
+  // The rebuild destroys the tiles: keep the focused tile (by id) and the scroll position.
+  const focused = captureTileFocus(grid, 'card-id');
+  const scrollTop = grid.scrollTop;
 
   grid.innerHTML = '';
   grid.appendChild(createAddCardTile({ onAdd: () => document.getElementById('btn-new-card').click() }));
@@ -1518,6 +1521,8 @@ function renderCardsGrid() {
     trackCardsArtLoading(grid);
   }
   computeShiftCount();
+  if (grid.scrollTop !== scrollTop) grid.scrollTop = scrollTop;
+  restoreTileFocus(grid, 'card-id', focused, document.getElementById('card-search'));
   consumeReveal('cards');
 }
 
@@ -3237,6 +3242,8 @@ function renderItemsGrid() {
   const countEl = document.getElementById('items-count');
   if (countEl) countEl.textContent = `${filtered.length} / ${state.items.length} items`;
   displayedIds.items = filtered.map(({ entry }) => entry.key);
+  const focused = captureTileFocus(grid, 'item-key');
+  const scrollTop = grid.scrollTop;
 
   grid.innerHTML = '';
   for (const { entry, sc } of filtered) {
@@ -3266,6 +3273,8 @@ function renderItemsGrid() {
   }
   cardEditorDockUi?.refresh();
   setItemsLoading(false);
+  if (grid.scrollTop !== scrollTop) grid.scrollTop = scrollTop;
+  restoreTileFocus(grid, 'item-key', focused, document.getElementById('item-filter-search'));
   consumeReveal('items');
 }
 
@@ -4137,6 +4146,23 @@ function showGallery(kind) {
   if (kind !== activeGallery) document.querySelector(`.studio-tab[data-tab="${kind}"]`)?.click();
 }
 
+// Each gallery keeps its own place: the grid scrolls on desktop, the page on narrow screens.
+const galleryScroll = { cards: null, items: null };
+const galleryGrid = (kind) => document.getElementById(kind === 'items' ? 'items-grid' : 'cards-grid');
+
+function rememberGalleryScroll(kind) {
+  galleryScroll[kind] = { grid: galleryGrid(kind)?.scrollTop || 0, page: window.scrollY };
+}
+
+function restoreGalleryScroll(kind) {
+  const saved = galleryScroll[kind], grid = galleryGrid(kind);
+  if (saved && grid) {
+    grid.scrollTop = saved.grid;
+    if (isNarrowLayout()) window.scrollTo(0, saved.page);
+  }
+  revealActiveTile(kind);
+}
+
 function refreshGalleryArtSoon() {
   if (artGalleryFrame !== null) return;
   artGalleryFrame = requestAnimationFrame(() => {
@@ -4585,6 +4611,8 @@ function wireEvents() {
         if (tab === 'art') renderArtTab(); else renderWeights();
         return;
       }
+      const previousTab = document.querySelector('.studio-tab.is-active')?.dataset.tab;
+      if (GALLERIES.includes(previousTab) && previousTab !== tab) rememberGalleryScroll(previousTab);
       document.querySelectorAll('.studio-tab').forEach((b) => { b.classList.toggle('is-active', b === btn); b.setAttribute('aria-selected', String(b === btn)); });
       document.querySelectorAll('.studio-main > .studio-panel').forEach((p) => p.classList.toggle('is-active', p.id === `tab-${tab}`));
       if (tab === 'cards' || tab === 'items') {
@@ -4594,6 +4622,8 @@ function wireEvents() {
         cardEditorDockUi?.setContext?.(tab);
         renderArtTab();
         deckListPanelUi?.refresh();
+        // Returning to a gallery puts it back where it was, with its active tile in view.
+        if (previousTab !== tab) restoreGalleryScroll(tab);
       }
       if (tab === 'sandbox' && !state.sandbox.combat) startSandboxCombat();
       if (tab === 'art') renderArtTab();
@@ -5097,6 +5127,8 @@ function wireEvents() {
     btn.addEventListener('click', () => {
       const kind = btn.dataset.artTarget === 'items' ? 'items' : 'cards';
       if (kind !== activeGallery) showGallery(kind); else renderArtTab();
+      // The pane moved with the gallery; keep focus on the target button rather than the page body.
+      if (document.activeElement !== btn) btn.focus({ preventScroll: true });
     });
   });
   document.getElementById('btn-add-layer').addEventListener('click', () => {
