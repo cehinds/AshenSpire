@@ -66,6 +66,7 @@ import {
   ResolveWorkingContext,
   CaptureTileFocus,
   RestoreTileFocus,
+  SelectionOptions,
 } from './workingContext.js';
 
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
@@ -1074,7 +1075,7 @@ function applyGeneratedPool() {
   state.cards = [...fresh, ...kept];
   if (fresh.length)
   {
-    selectStudioCard(fresh[0].id, { render: false, reveal: true });
+    selectStudioCard(fresh[0].id, SelectionOptions.DeferredReveal);
   }
   syncAllViews();
   saveDraft();
@@ -4870,7 +4871,7 @@ function wireEvents() {
     document.querySelector('.studio-tab[data-tab="cards"]').click();
     cardEditorDockUi?.setView('properties');
     renderCardsGrid();
-    selectStudioCard(id, { reveal: true });
+    selectStudioCard(id, SelectionOptions.Reveal);
     animateCardInsertion(grid, id, { before });
     saveDraft({ autoName: false });
     toast('Added a new card. Edit its properties to begin.');
@@ -4883,7 +4884,7 @@ function wireEvents() {
     const copy = normalizeStudioCard({ ...clone(src), id: `custom.copy_${Date.now().toString(36)}`, name: `${src.name} (Copy)`, _custom: true, _edited: true, _autoName: true });
     state.cards.unshift(copy);
     renderCardsGrid();
-    selectStudioCard(copy.id, { reveal: true });
+    selectStudioCard(copy.id, SelectionOptions.Reveal);
     saveDraft();
     toast(`Duplicated "${src.name}"`);
   });
@@ -4918,7 +4919,7 @@ function wireEvents() {
     Object.assign(state, plan.nextState);
     studioCardOverrides.delete(removed.id);
     studioCardOverrides.delete(`${LIVE_ID_PREFIX}${removed.id}`);
-    const activeId = selectStudioCard(nextId, { render: false, reveal: true });
+    const activeId = selectStudioCard(nextId, SelectionOptions.DeferredReveal);
     const next = state.cards.find((card) => card.id === activeId);
     syncAllViews();
     saveDraft({ autoName: false });
@@ -5365,11 +5366,11 @@ function wireEvents() {
     }
     if (state.artTarget === GalleryKind.Items)
     {
-      selectStudioItem(event.target.value, { reveal: true });
+      selectStudioItem(event.target.value, SelectionOptions.Reveal);
     }
     else
     {
-      selectStudioCard(event.target.value, { reveal: true });
+      selectStudioCard(event.target.value, SelectionOptions.Reveal);
     }
   });
   document.getElementById('asset-search').addEventListener('input', renderArtTab);
@@ -5584,11 +5585,11 @@ async function boot() {
   state.itemRules = roster.rules;
   state.defaultItemNames = Object.fromEntries(state.items.map((it) => [it.key, it.name]));
   // The first card and item until restoreWorkingContext runs after the draft.
-  selectStudioItem(state.items[0]?.key, { render: false });
+  selectStudioItem(state.items[0]?.key, SelectionOptions.Deferred);
   // Default names are the repo's authored names, taken before any draft is restored.
   state.defaultNameSet = DefaultNameSet(state.cards);
   loadStoredNameSets();
-  selectStudioCard(state.cards[0]?.id, { render: false });
+  selectStudioCard(state.cards[0]?.id, SelectionOptions.Deferred);
   state.repoArtLayers = clone(state.artLayers);
   state.repoItemArtLayers = clone(state.itemArtLayers);
 

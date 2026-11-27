@@ -39,6 +39,16 @@ export const GalleryEntity = Object.freeze({
 
 export const DataAttributePrefix = 'data-';
 
+// Options for the card and item select setters. A deferred reveal waits for the next gallery render.
+export const SelectionOptions = Object.freeze({
+  Reveal: Object.freeze({ reveal: true }),
+  Deferred: Object.freeze({ render: false }),
+  DeferredReveal: Object.freeze({
+    render: false,
+    reveal: true,
+  }),
+});
+
 const selectedField = Object.freeze({
   [GalleryKind.Cards]: 'selectedCardId',
   [GalleryKind.Items]: 'selectedItemKey',

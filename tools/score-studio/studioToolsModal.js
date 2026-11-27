@@ -23,6 +23,7 @@ import {
 import { deckCatalogOptions, resolveStudioDeck } from './deckCatalog.js';
 import { initFocusedRebalanceUi } from './focusedRebalanceUi.js';
 import { removeCardsAndReferences } from './cardSelection.js';
+import { SelectionOptions } from './workingContext.js';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const BUILTIN_CLASSES = Object.freeze(['reaver', 'starseer', 'rogue', 'herald', 'colorless']);
@@ -574,7 +575,7 @@ export function initStudioToolsModals(ctx) {
       }
       if (cards.length)
       {
-        ctx.selectCard(state.cards[0].id, { render: false, reveal: true });
+        ctx.selectCard(state.cards[0].id, SelectionOptions.DeferredReveal);
       }
       studioCardOverrides.clear();
       syncAllViews();
@@ -607,7 +608,7 @@ export function initStudioToolsModals(ctx) {
       }
       if (items.length)
       {
-        ctx.selectItem(state.items[0].key, { render: false, reveal: true });
+        ctx.selectItem(state.items[0].key, SelectionOptions.DeferredReveal);
       }
       syncAllViews();
       populateDeckAndClassDropdowns();
