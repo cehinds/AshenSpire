@@ -306,7 +306,7 @@ export function initCardEditorDock(ctx) {
     resizer.setAttribute('aria-valuemin', String(MIN_WIDTH)); resizer.setAttribute('aria-valuemax', String(MAX_WIDTH));
     resizer.title = `Drag or use arrow keys to resize. Home is the minimum (${MIN_WIDTH} pixels), End the maximum (${MAX_WIDTH}).`;
     resizer.setAttribute('aria-controls', 'studio-customization-pane');
-    resizer.addEventListener('pointerdown', event => { if (!docked) return; dragging = true; resizer.classList.add('is-dragging'); resizer.setPointerCapture?.(event.pointerId); event.preventDefault(); });
+    resizer.addEventListener('pointerdown', event => { if (!docked) return; dragging = true; resizer.classList.add('is-dragging'); resizer.setPointerCapture?.(event.pointerId); event.preventDefault(); resizer.focus?.({ preventScroll: true }); });
     resizer.addEventListener('pointermove', event => {
       if (!dragging) return;
       const box = layout.getBoundingClientRect();
