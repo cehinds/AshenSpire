@@ -245,3 +245,18 @@ body.studio-body .customization-context-fields .weight-row.is-compact .weight-se
 body.studio-body .customization-context-fields .weight-row.is-compact input.weight-input { width: 52px; padding: 1px 4px; }
 body.studio-body .customization-context-fields .weight-row.is-compact .weight-per-label input:not([type="checkbox"]) { width: 44px; padding: 1px 4px; }
 body.studio-body .customization-context-fields .weight-row.is-compact .weight-per-label select { width: 60px; padding: 1px 2px; }
+/* Design: the art layers on this card, each with Show, Edit and its opacity. */
+body.studio-body .customization-context-fields .art-context-list { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+body.studio-body .customization-context-fields .art-context-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 2px 6px; min-width: 0;
+  padding: 4px 6px; border: 1px solid var(--st-border); border-radius: 4px; background: var(--st-surface-2);
+}
+body.studio-body .customization-context-fields .art-context-row.is-off .art-context-name,
+body.studio-body .customization-context-fields .art-context-row.is-off .art-context-opacity { opacity: .5; }
+body.studio-body .customization-context-fields .art-context-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+body.studio-body .customization-context-fields .art-context-show { display: inline-flex; align-items: center; gap: 3px; color: var(--st-muted); font-size: 11px; white-space: nowrap; }
+body.studio-body .customization-context-fields .art-context-edit { min-height: 0; padding: 1px 6px; font-size: 11px; }
+body.studio-body .customization-context-fields .art-context-opacity { grid-column: 1 / -1; display: flex; align-items: center; gap: 6px; min-width: 0; color: var(--st-muted); font-size: 11px; }
+body.studio-body .customization-context-fields .art-context-opacity input[type="range"] { flex: 1 1 auto; min-width: 0; width: auto; margin: 0; }
+body.studio-body .customization-context-fields .art-context-opacity .opacity-val { flex: 0 0 34px; text-align: right; }
+body.studio-body .customization-context-fields .art-context-empty { margin: 0; font-size: 12px; }

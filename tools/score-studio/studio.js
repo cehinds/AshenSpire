@@ -588,11 +588,13 @@ function restoreSnapshot(snapStr) {
 // ---------------------------------------------------------------------------
 // Procedural Art Layer Overlay
 // ---------------------------------------------------------------------------
-function matchingCustomLayers(def) {
+// The card art layers that apply to a card, in z-order. `includeDisabled` keeps the ones switched off, so they
+// can be switched back on from beside the card.
+function matchingCustomLayers(def, { includeDisabled = false } = {}) {
   const tags = def.tags || [];
   const statuses = (def.effects || []).filter((e) => e.op === 'applyStatus').map((e) => e.status);
   return (state.artLayers.layers || [])
-    .filter((l) => l.enabled !== false && l.assetId)
+    .filter((l) => (includeDisabled || l.enabled !== false) && l.assetId)
     .filter((l) => {
       if (l.matchKind === 'default') return true;
       if (l.matchKind === 'type') return def.type === l.matchValue;
@@ -2715,6 +2717,7 @@ function renderContextFields(view, container, cardId) {
   const def = state.cards.find((card) => card.id === cardId);
   if (!def) return false;
   if (view === 'weights') return renderCardWeightFields(container, def);
+  if (view === 'design') return renderCardArtFields(container, def);
   return false;
 }
 
@@ -3255,6 +3258,107 @@ function activeArtLayerIdx() {
 function setActiveArtLayerIdx(idx) {
   if (state.artTarget === 'items') state.selectedItemLayerIdx = idx;
   else state.selectedLayerIdx = idx;
+}
+
+// One edit from a layer control (the Art layers list, or the rows beside the card): the control's value goes
+// into the layer, then the previews and the visible gallery update without rebuilding the layer controls.
+function applyArtLayerInput(control, layer, isItems) {
+  if (control.dataset.lEnabled !== undefined) layer.enabled = control.checked;
+  else if (control.dataset.lKind) {
+    const k = control.dataset.lKind;
+    const set = new Set(layer.entityKinds || ['weapon', 'armour', 'relic']);
+    if (control.checked) set.add(k); else set.delete(k);
+    layer.entityKinds = [...set];
+  }
+  else if (control.dataset.lField) layer[control.dataset.lField] = control.value;
+  else if (control.dataset.lNum) {
+    layer[control.dataset.lNum] = safeNum(control.value, 0);
+    if (control.dataset.lNum === 'opacity') {
+      const span = control.closest('label')?.querySelector('.opacity-val');
+      if (span) span.textContent = `${layer.opacity}%`;
+    }
+  }
+  saveDraft();
+  renderArtPreviewOnly();
+  refreshGalleryArtSoon();
+  if (isItems) renderItemInspector();
+  else renderInspector();
+}
+
+// The Design view's rows beside the card: each card art layer that applies to it, with Show and Opacity bound to
+// the layer (the same edit path as the Art layers list) and Edit to find it in that list.
+let keepArtContextRows = false;
+function renderCardArtFields(container, def) {
+  // An edit from these rows re-renders the inspector; the row being dragged is kept, not rebuilt under the pointer.
+  if (keepArtContextRows && container.firstChild) return true;
+  const allLayers = state.artLayers.layers || [];
+  const layers = matchingCustomLayers(def, { includeDisabled: true });
+  const list = document.createElement('div');
+  list.className = 'art-context-list';
+  if (!layers.length) {
+    list.innerHTML = '<p class="studio-muted art-context-empty">No art layers match this card.</p>';
+    container.replaceChildren(list);
+    return true;
+  }
+  list.innerHTML = layers.map((layer) => {
+    const idx = allLayers.indexOf(layer);
+    const name = layer.name || layer.id;
+    const opacity = safeNum(layer.opacity, 100);
+    return `<div class="art-context-row${layer.enabled === false ? ' is-off' : ''}" data-layer-idx="${idx}">
+      <span class="art-context-name" title="${esc(name)}">${esc(name)}</span>
+      <label class="art-context-show"><input type="checkbox" data-l-enabled="${idx}" ${layer.enabled !== false ? 'checked' : ''} aria-label="${esc(`Show ${name}`)}" /> Show</label>
+      <button type="button" class="s-btn s-btn-sm art-context-edit" data-layer-edit="${idx}" aria-label="${esc(`Edit ${name} in the layer list`)}">Edit</button>
+      <label class="art-context-opacity"><input type="range" data-l-num="opacity" data-l-idx="${idx}" min="0" max="100" value="${esc(opacity)}" aria-label="${esc(`${name} opacity`)}" /><span class="opacity-val">${esc(opacity)}%</span></label>
+    </div>`;
+  }).join('');
+  // Listeners live on this list, which every render replaces, so they never pile up on the column.
+  let historyPushed = false;
+  list.addEventListener('focusin', () => { historyPushed = false; });
+  list.addEventListener('input', (e) => {
+    const idx = Number(e.target.dataset.lIdx ?? e.target.dataset.lEnabled);
+    const layer = allLayers[idx];
+    if (!layer) return;
+    if (!historyPushed) { pushHistory(); historyPushed = true; }
+    keepArtContextRows = true;
+    try { applyArtLayerInput(e.target, layer, false); } finally { keepArtContextRows = false; }
+    e.target.closest('.art-context-row')?.classList.toggle('is-off', layer.enabled === false);
+    mirrorArtListControls(idx, layer);
+  });
+  list.addEventListener('change', () => { historyPushed = false; renderCardsGrid(); });
+  list.addEventListener('click', (e) => {
+    const edit = e.target.closest('[data-layer-edit]');
+    if (edit) showArtLayerInList(Number(edit.dataset.layerEdit));
+  });
+  container.replaceChildren(list);
+  return true;
+}
+
+// The Art layers list shows an edit made beside the card without being rebuilt.
+function mirrorArtListControls(idx, layer) {
+  if (state.artTarget === 'items') return;
+  const cardEl = document.querySelector(`#art-layers-list .layer-card[data-layer-card-idx="${idx}"]`);
+  if (!cardEl) return;
+  const show = cardEl.querySelector(`[data-l-enabled="${idx}"]`);
+  if (show) show.checked = layer.enabled !== false;
+  const opacity = cardEl.querySelector('[data-l-num="opacity"]');
+  if (opacity) {
+    opacity.value = String(safeNum(layer.opacity, 100));
+    const span = opacity.closest('label')?.querySelector('.opacity-val');
+    if (span) span.textContent = `${safeNum(layer.opacity, 100)}%`;
+  }
+}
+
+// Edit beside the card: select that card layer in the Art layers list, open its section and bring it into view.
+function showArtLayerInList(idx) {
+  state.artTarget = 'cards';
+  setActiveArtLayerIdx(idx);
+  renderArtTab();
+  const cardEl = document.querySelector(`#art-layers-list .layer-card[data-layer-card-idx="${idx}"]`);
+  if (!cardEl) return;
+  const section = cardEl.closest('details');
+  if (section && !section.open) section.open = true;
+  cardEl.scrollIntoView({ block: 'center' });
+  cardEl.querySelector('[data-l-field="name"]')?.focus({ preventScroll: true });
 }
 
 function renderArtPreviewOnly() {
@@ -4891,27 +4995,7 @@ function wireEvents() {
     const layer = activeArtLayersObj().layers[idx];
     if (!layer) return;
     if (!layerEditHistoryPushed) { pushHistory(); layerEditHistoryPushed = true; }
-    if (e.target.dataset.lEnabled !== undefined) layer.enabled = e.target.checked;
-    else if (e.target.dataset.lKind) {
-      const k = e.target.dataset.lKind;
-      const set = new Set(layer.entityKinds || ['weapon', 'armour', 'relic']);
-      if (e.target.checked) set.add(k); else set.delete(k);
-      layer.entityKinds = [...set];
-    }
-    else if (e.target.dataset.lField) layer[e.target.dataset.lField] = e.target.value;
-    else if (e.target.dataset.lNum) {
-      layer[e.target.dataset.lNum] = safeNum(e.target.value, 0);
-      if (e.target.dataset.lNum === 'opacity') {
-        const span = e.target.closest('label')?.querySelector('.opacity-val');
-        if (span) span.textContent = `${layer.opacity}%`;
-      }
-    }
-    saveDraft();
-    // Update previews and the visible gallery without rebuilding the layer controls.
-    renderArtPreviewOnly();
-    refreshGalleryArtSoon();
-    if (state.artTarget === 'items') renderItemInspector();
-    else renderInspector();
+    applyArtLayerInput(e.target, layer, state.artTarget === 'items');
   });
   document.getElementById('art-layers-list').addEventListener('change', () => {
     layerEditHistoryPushed = false;
