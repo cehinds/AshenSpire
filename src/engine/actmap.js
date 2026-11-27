@@ -293,11 +293,28 @@ export function buildGameProfileActMap(registries, rng, seat, tier, { history = 
 const REMERGE_PERCENT = 18;
 const FORK_PERCENT = 40;
 const NARROW_PERCENT = 25;
+const OPENING_BRANCH_WIDTH_PERCENT = 50;
 // Per-branch lane occupancy: { [floor]: { lo, hi } } (contiguous lanes, branch-local), plus the fork/narrow edges that make the tree.
-function drawBranchShape(rng, lanes, count, forkPercent, routeShape) {
-  const active = {}, edges = []; // edges: [floor, fromLane, toLane] join floor -> floor + 1, branch-local lanes
+function drawBranchShape(
+  rng,
+  lanes,
+  count,
+  forkPercent,
+  routeShape,
+  {
+    narrowPercent = NARROW_PERCENT,
+    openingBranchWidthPercent = OPENING_BRANCH_WIDTH_PERCENT,
+  } = {},
+)
+{
+  const active = {};
+  const edges = [];
   if (count < 2) return { active, edges };
-  const width = lanes >= TWO_LANE_OPENING_LANES && rng.chance('map', 50) ? 2 : 1;
+  const opensWide = lanes >= TWO_LANE_OPENING_LANES
+    && rng.chance('map', openingBranchWidthPercent);
+  const width = opensWide
+    ? 2
+    : 1;
   const lo0 = rng.int('map', Math.floor((lanes - width) / 2), Math.ceil((lanes - width) / 2));
   const firstDepth = routeShape.firstBranchDepth;
   active[firstDepth] = { lo: lo0, hi: lo0 + width - 1 };
@@ -310,7 +327,8 @@ function drawBranchShape(rng, lanes, count, forkPercent, routeShape) {
       if (lo > 0 && (left || lo >= remaining)) { next.lo = lo - 1; edges.push([floor, left0, lo - 1]); }
       if (hi < lanes - 1 && (right || lanes - 1 - hi >= remaining)) { next.hi = hi + 1; edges.push([floor, right0, hi + 1]); }
     } else {
-      const narrow = rng.chance('map', NARROW_PERCENT), dropLeft = rng.chance('map', 50);
+      const narrow = rng.chance('map', narrowPercent);
+      const dropLeft = rng.chance('map', 50);
       const narrowing = floor >= count - routeShape.narrowDepthsBeforeBoss;
       if (narrowing && narrow && hi - lo + 1 >= NARROW_MIN_LANES) {
         if (dropLeft) { next.lo = lo + 1; edges.push([floor, lo, lo + 1]); }
@@ -371,6 +389,11 @@ function buildBranchedActMap(registries, rng, seat, tier, ctx) {
   };
   const forkPercent = percent('forkPercent', FORK_PERCENT);
   const crossLinkPercent = percent('crossLinkPercent', null);
+  const narrowPercent = percent('narrowPercent', NARROW_PERCENT);
+  const openingBranchWidthPercent = percent(
+    'openingBranchWidthPercent',
+    OPENING_BRANCH_WIDTH_PERCENT,
+  );
   const typeWeights = rules.typeWeights ?? null;
   if (typeWeights !== null) {
     const entries = typeof typeWeights === 'object' && !Array.isArray(typeWeights) ? Object.entries(typeWeights) : [];
@@ -417,7 +440,17 @@ function buildBranchedActMap(registries, rng, seat, tier, ctx) {
   const restSet = new Set(restFloors);
   const nodeId = (floor, globalLane) => `n${floor}_${globalLane}`;
   // Every branch's tree shape is drawn first, so what a lane holds cannot depend on how its nodes roll.
-  const drawShape = () => drawBranchShape(rng, lanes, count, forkPercent, routeShape);
+  const drawShape = () => drawBranchShape(
+    rng,
+    lanes,
+    count,
+    forkPercent,
+    routeShape,
+    {
+      narrowPercent,
+      openingBranchWidthPercent,
+    },
+  );
   const shapes = Array.from({ length: branchCount }, drawShape);
   const laneAt = (k, floor, lane) => { const a = shapes[k].active[floor]; return !!a && lane >= a.lo && lane <= a.hi; };
   const branchAt = (k, floor) => !!shapes[k].active[floor];

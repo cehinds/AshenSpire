@@ -2,6 +2,7 @@
 // own, avoid the last reward screens, and favour basic/cantrip cards early and mana-cost cards after map depth 3.
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -9,6 +10,7 @@ import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { gameProfileRewardOffers } from '../src/model/gameProfileRewards.js';
+import { ClassCardPoolAllowed } from '../src/model/classPoolPolicy.js';
 import { basicOrCantripMatcher } from '../src/model/stanceCoverage.js';
 
 const build = (modules = {}, core = 'ashen.core@2.0.0') => {
@@ -34,8 +36,24 @@ test('combat reward kinds roll 70% cards, 20% potions, 10% weapons over 1000 see
   assert.deepEqual(Object.keys(counts).sort(), ['cards', 'potions', 'weapons'], 'armor and every relic but the flask relic are retired from combat rewards (the gourd counts inside the 20% potions share)');
 });
 
+const REWARD_MIX_CONFIG = JSON.parse(
+  readFileSync(
+    fileURLToPath(new URL('./fixtures/core-reward-mix.config.json', import.meta.url)),
+    'utf8',
+  ),
+);
+
 test('owned cards are offered far less often than unowned ones, per card', () => {
-  const run0 = fresh(1), ids = cardsOf(run0).filter(c => c.rarity === 'common' && c.class === 'colorless').map(c => c.id);
+  const run0 = fresh(1);
+  const { rarity, cardClass } = REWARD_MIX_CONFIG.ownedComparison;
+  const ids = cardsOf(run0)
+    .filter((card) =>
+    {
+      return card.rarity === rarity
+        && card.class === cardClass
+        && ClassCardPoolAllowed(run0, card);
+    })
+    .map((card) => card.id);
   const ownedIds = new Set(ids.slice(0, Math.floor(ids.length / 2)));
   const hits = new Map(); let n = 0;
   for (let i = 0; i < 400; i++) {

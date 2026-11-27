@@ -7,7 +7,9 @@
   "sectionTemplates": {
     "arrayFile": {
       "entries": [
-        { "each": "" }
+        {
+          "each": ""
+        }
       ],
       "keyField": "id",
       "labelField": "name"
@@ -26,36 +28,216 @@
         "label": "Cards",
         "type": "objects",
         "fields": [
-          { "path": "card", "label": "Card", "type": "text", "suggest": { "file": "games/ashenspire/packs/core/cards.json" } },
-          { "path": "copies", "label": "Copies", "type": "number" }
+          {
+            "path": "card",
+            "label": "Card",
+            "type": "text",
+            "suggest": {
+              "file": "games/ashenspire/packs/core/cards.json"
+            }
+          },
+          {
+            "path": "copies",
+            "label": "Copies",
+            "type": "number"
+          }
         ]
       }
     ],
     "deckSettings": [
-      { "path": "classSpecificCopies", "label": "Class card copies", "type": "number" },
-      { "path": "weaponArtRank", "label": "Weapon art rank", "type": "number" },
-      { "path": "classSpecials", "label": "Class specials", "type": "map", "valueType": "text", "suggest": { "file": "games/ashenspire/packs/core/cards.json" } }
+      {
+        "path": "classSpecificCopies",
+        "label": "Class card copies",
+        "type": "number"
+      },
+      {
+        "path": "weaponArtRank",
+        "label": "Weapon art rank",
+        "type": "number"
+      },
+      {
+        "path": "classSpecials",
+        "label": "Class specials",
+        "type": "map",
+        "valueType": "text",
+        "suggest": {
+          "file": "games/ashenspire/packs/core/cards.json"
+        }
+      }
     ],
     "card": [
-      { "path": "name", "label": "Name", "type": "text" },
-      { "path": "rarity", "label": "Rarity", "type": "select", "options": ["starter", "common", "uncommon", "rare", "special"] },
-      { "path": "type", "label": "Type", "type": "select", "options": ["attack", "skill", "power"] },
-      { "path": "cost", "label": "Cost", "type": "number" },
-      { "path": "staminaCost", "label": "Stamina", "type": "number" },
-      { "path": "manaCost", "label": "Mana", "type": "number" },
-      { "path": "keywords", "label": "Keywords", "type": "list", "itemType": "text", "suggest": { "options": ["exhaust", "ethereal"] } },
-      { "path": "textTemplate", "label": "Text", "type": "text", "multiline": true },
+      {
+        "path": "name",
+        "label": "Name",
+        "type": "text"
+      },
+      {
+        "path": "class",
+        "label": "Class",
+        "type": "select",
+        "options": [
+          "colorless",
+          "reaver",
+          "rogue",
+          "starseer",
+          "herald"
+        ]
+      },
+      {
+        "path": "allowedClasses",
+        "label": "Allowed classes",
+        "type": "list",
+        "itemType": "text",
+        "suggest": {
+          "options": [
+            "reaver",
+            "rogue",
+            "starseer",
+            "herald"
+          ]
+        }
+      },
+      {
+        "path": "rarity",
+        "label": "Rarity",
+        "type": "select",
+        "options": [
+          "starter",
+          "common",
+          "uncommon",
+          "rare",
+          "special"
+        ]
+      },
+      {
+        "path": "type",
+        "label": "Type",
+        "type": "select",
+        "options": [
+          "attack",
+          "skill",
+          "power"
+        ]
+      },
+      {
+        "path": "cost",
+        "label": "Cost",
+        "type": "number"
+      },
+      {
+        "path": "staminaCost",
+        "label": "Stamina",
+        "type": "number"
+      },
+      {
+        "path": "manaCost",
+        "label": "Mana",
+        "type": "number"
+      },
+      {
+        "path": "keywords",
+        "label": "Keywords",
+        "type": "list",
+        "itemType": "text",
+        "suggest": {
+          "options": [
+            "exhaust",
+            "ethereal"
+          ]
+        }
+      },
+      {
+        "path": "textTemplate",
+        "label": "Text",
+        "type": "text",
+        "multiline": true
+      },
       {
         "path": "effects",
         "label": "Effects",
         "type": "objects",
         "fields": [
-          { "path": "op", "label": "Op", "type": "text", "suggest": { "options": ["damage", "block", "applyStatus", "removeStatus", "draw", "heal", "loseHp", "addCard", "poiseDamage", "gainBarrier", "applyReflect", "restoreStamina", "restoreMana", "restorePoise", "moveEngagement", "pullEnemy", "swapRows"] } },
-          { "path": "target", "label": "Target", "type": "text", "suggest": { "options": ["enemy", "allEnemies", "self"] } },
-          { "path": "amount", "label": "Amount", "type": "number" },
-          { "path": "status", "label": "Status", "type": "text", "suggest": { "options": ["bleed", "burn", "chill", "frail", "frost", "shock", "venom", "vulnerable", "weak", "strength", "dexterity", "ward", "barrier", "evade", "regen", "prepared", "stoneskin", "insanity", "crimsonBlight"] } },
-          { "path": "stacks", "label": "Stacks", "type": "number" },
-          { "path": "hits", "label": "Hits", "type": "number" }
+          {
+            "path": "op",
+            "label": "Op",
+            "type": "text",
+            "suggest": {
+              "options": [
+                "damage",
+                "block",
+                "applyStatus",
+                "removeStatus",
+                "draw",
+                "heal",
+                "loseHp",
+                "addCard",
+                "poiseDamage",
+                "gainBarrier",
+                "applyReflect",
+                "restoreStamina",
+                "restoreMana",
+                "restorePoise",
+                "moveEngagement",
+                "pullEnemy",
+                "swapRows"
+              ]
+            }
+          },
+          {
+            "path": "target",
+            "label": "Target",
+            "type": "text",
+            "suggest": {
+              "options": [
+                "enemy",
+                "allEnemies",
+                "self"
+              ]
+            }
+          },
+          {
+            "path": "amount",
+            "label": "Amount",
+            "type": "number"
+          },
+          {
+            "path": "status",
+            "label": "Status",
+            "type": "text",
+            "suggest": {
+              "options": [
+                "bleed",
+                "burn",
+                "chill",
+                "frail",
+                "frost",
+                "shock",
+                "venom",
+                "vulnerable",
+                "weak",
+                "strength",
+                "dexterity",
+                "ward",
+                "barrier",
+                "evade",
+                "regen",
+                "prepared",
+                "stoneskin",
+                "insanity",
+                "crimsonBlight"
+              ]
+            }
+          },
+          {
+            "path": "stacks",
+            "label": "Stacks",
+            "type": "number"
+          },
+          {
+            "path": "hits",
+            "label": "Hits",
+            "type": "number"
+          }
         ]
       }
     ]
@@ -66,9 +248,18 @@
       "label": "Starting decks",
       "file": "games/ashenspire/packs/core/starterDeck.json",
       "entries": [
-        { "path": "shared", "label": "Shared" },
-        { "each": "classDecks" },
-        { "path": "", "label": "Settings", "fieldSet": "deckSettings" }
+        {
+          "path": "shared",
+          "label": "Shared"
+        },
+        {
+          "each": "classDecks"
+        },
+        {
+          "path": "",
+          "label": "Settings",
+          "fieldSet": "deckSettings"
+        }
       ],
       "listValue": "{sum:copies}",
       "fieldSet": "deckList"
@@ -78,14 +269,48 @@
       "label": "Card pools",
       "file": "games/ashenspire/packs/core/cardPools.json",
       "entries": [
-        { "each": "" }
+        {
+          "each": ""
+        }
       ],
       "listValue": "{slot}",
       "fields": [
-        { "path": "slot", "label": "Slot", "type": "text", "suggest": { "options": ["mainHand", "offHand"] } },
-        { "path": "fallbackSlot", "label": "Fallback slot", "type": "text", "suggest": { "options": ["mainHand", "offHand"] } },
-        { "path": "byTag", "label": "By tag", "type": "map", "valueType": "text", "suggest": { "file": "games/ashenspire/packs/core/cards.json" } },
-        { "path": "byClass", "label": "By class", "type": "json" }
+        {
+          "path": "slot",
+          "label": "Slot",
+          "type": "text",
+          "suggest": {
+            "options": [
+              "mainHand",
+              "offHand"
+            ]
+          }
+        },
+        {
+          "path": "fallbackSlot",
+          "label": "Fallback slot",
+          "type": "text",
+          "suggest": {
+            "options": [
+              "mainHand",
+              "offHand"
+            ]
+          }
+        },
+        {
+          "path": "byTag",
+          "label": "By tag",
+          "type": "map",
+          "valueType": "text",
+          "suggest": {
+            "file": "games/ashenspire/packs/core/cards.json"
+          }
+        },
+        {
+          "path": "byClass",
+          "label": "By class",
+          "type": "json"
+        }
       ]
     },
     {
@@ -102,15 +327,62 @@
       "labelField": "name",
       "listValue": "Lv {stats.levelProfile.min}-{stats.levelProfile.max}",
       "listDetail": "Poise {stats.poiseMax}, deck {count:deck}",
-      "lockedKeys": ["derived"],
+      "lockedKeys": [
+        "derived"
+      ],
       "fields": [
-        { "path": "name", "label": "Name", "type": "text" },
-        { "path": "stats.levelProfile.min", "label": "Level min", "type": "number" },
-        { "path": "stats.levelProfile.max", "label": "Level max", "type": "number" },
-        { "path": "stats.attributePriority", "label": "Attribute order", "type": "list", "itemType": "text", "suggest": { "options": ["strength", "dexterity", "constitution", "wisdom", "intelligence"] } },
-        { "path": "stats.poiseMax", "label": "Poise max", "type": "number" },
-        { "path": "stats.hp", "label": "HP override", "type": "number", "omitEmpty": true, "hint": "Empty uses the level and attributes." },
-        { "path": "deck", "label": "Deck", "type": "list", "itemType": "text", "suggest": { "file": "games/ashenspire/packs/core/enemyCards.json", "prefix": "card:" } }
+        {
+          "path": "name",
+          "label": "Name",
+          "type": "text"
+        },
+        {
+          "path": "stats.levelProfile.min",
+          "label": "Level min",
+          "type": "number"
+        },
+        {
+          "path": "stats.levelProfile.max",
+          "label": "Level max",
+          "type": "number"
+        },
+        {
+          "path": "stats.attributePriority",
+          "label": "Attribute order",
+          "type": "list",
+          "itemType": "text",
+          "suggest": {
+            "options": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ]
+          }
+        },
+        {
+          "path": "stats.poiseMax",
+          "label": "Poise max",
+          "type": "number"
+        },
+        {
+          "path": "stats.hp",
+          "label": "HP override",
+          "type": "number",
+          "omitEmpty": true,
+          "hint": "Empty uses the level and attributes."
+        },
+        {
+          "path": "deck",
+          "label": "Deck",
+          "type": "list",
+          "itemType": "text",
+          "suggest": {
+            "file": "games/ashenspire/packs/core/enemyCards.json",
+            "prefix": "card:"
+          }
+        }
       ]
     },
     {
@@ -128,11 +400,40 @@
       "listValue": "{rarity}",
       "listDetail": "{textTemplate}",
       "fields": [
-        { "path": "name", "label": "Name", "type": "text" },
-        { "path": "rarity", "label": "Rarity", "type": "select", "options": ["starter", "common", "uncommon", "rare", "boss"] },
-        { "path": "textTemplate", "label": "Text", "type": "text", "multiline": true },
-        { "path": "flavor", "label": "Flavor", "type": "text", "multiline": true },
-        { "path": "passives", "label": "Passives", "type": "json" }
+        {
+          "path": "name",
+          "label": "Name",
+          "type": "text"
+        },
+        {
+          "path": "rarity",
+          "label": "Rarity",
+          "type": "select",
+          "options": [
+            "starter",
+            "common",
+            "uncommon",
+            "rare",
+            "boss"
+          ]
+        },
+        {
+          "path": "textTemplate",
+          "label": "Text",
+          "type": "text",
+          "multiline": true
+        },
+        {
+          "path": "flavor",
+          "label": "Flavor",
+          "type": "text",
+          "multiline": true
+        },
+        {
+          "path": "passives",
+          "label": "Passives",
+          "type": "json"
+        }
       ]
     },
     {
@@ -140,27 +441,223 @@
       "label": "Map rules",
       "file": "games/ashenspire/packs/core/routes.json",
       "entries": [
-        { "path": "", "label": "Map rules" }
+        {
+          "path": "",
+          "label": "Map rules"
+        }
       ],
       "listValue": "{acts} acts",
       "fields": [
-        { "path": "typeWeights", "label": "Room odds", "type": "map", "valueType": "number" },
-        { "path": "restFloors", "label": "Rest floors", "type": "list", "itemType": "number" },
-        { "path": "acts", "label": "Acts", "type": "number" },
-        { "path": "prebossNodes", "label": "Floors before the boss", "type": "number" },
-        { "path": "restsPerAct", "label": "Rests per act", "type": "number" },
-        { "path": "branchColumns", "label": "Branch columns", "type": "number" },
-        { "path": "maxBranches", "label": "Max branches", "type": "number" },
-        { "path": "shopShare", "label": "Shop share", "type": "number" },
-        { "path": "shopsPerBranch", "label": "Shops per branch", "type": "number" },
-        { "path": "forkPercent", "label": "Fork percent", "type": "number" },
-        { "path": "crossLinkPercent", "label": "Cross link percent", "type": "number" },
-        { "path": "minimumThreatFloor", "label": "Minimum threat floor", "type": "number" },
-        { "path": "startRestFromAct", "label": "Rests start in act", "type": "number" },
-        { "path": "restGap.min", "label": "Rest gap min", "type": "number" },
-        { "path": "restGap.max", "label": "Rest gap max", "type": "number" },
-        { "path": "restFloorSpread", "label": "Rest floor spread", "type": "number" },
-        { "path": "branchSpread", "label": "Branch spread", "type": "number" }
+        {
+          "path": "typeWeights",
+          "label": "Room odds",
+          "type": "map",
+          "valueType": "number"
+        },
+        {
+          "path": "restFloors",
+          "label": "Rest floors",
+          "type": "list",
+          "itemType": "number"
+        },
+        {
+          "path": "acts",
+          "label": "Acts",
+          "type": "number"
+        },
+        {
+          "path": "prebossNodes",
+          "label": "Floors before the boss",
+          "type": "number"
+        },
+        {
+          "path": "restsPerAct",
+          "label": "Rests per act",
+          "type": "number"
+        },
+        {
+          "path": "branchColumns",
+          "label": "Branch columns",
+          "type": "number"
+        },
+        {
+          "path": "maxBranches",
+          "label": "Max branches",
+          "type": "number"
+        },
+        {
+          "path": "shopShare",
+          "label": "Shop share",
+          "type": "number"
+        },
+        {
+          "path": "shopsPerBranch",
+          "label": "Shops per branch",
+          "type": "number"
+        },
+        {
+          "path": "forkPercent",
+          "label": "Fork percent",
+          "type": "number"
+        },
+        {
+          "path": "crossLinkPercent",
+          "label": "Cross link percent",
+          "type": "number"
+        },
+        {
+          "path": "narrowPercent",
+          "label": "Narrow percent",
+          "type": "number"
+        },
+        {
+          "path": "openingBranchWidthPercent",
+          "label": "Opening branch width percent",
+          "type": "number"
+        },
+        {
+          "path": "minimumThreatFloor",
+          "label": "Minimum threat floor",
+          "type": "number"
+        },
+        {
+          "path": "startRestFromAct",
+          "label": "Rests start in act",
+          "type": "number"
+        },
+        {
+          "path": "restGap.min",
+          "label": "Rest gap min",
+          "type": "number"
+        },
+        {
+          "path": "restGap.max",
+          "label": "Rest gap max",
+          "type": "number"
+        },
+        {
+          "path": "restFloorSpread",
+          "label": "Rest floor spread",
+          "type": "number"
+        },
+        {
+          "path": "branchSpread",
+          "label": "Branch spread",
+          "type": "number"
+        }
+      ]
+    },
+    {
+      "id": "rewardRules",
+      "label": "Rewards",
+      "file": "games/ashenspire/packs/core/rewards.json",
+      "entries": [
+        {
+          "path": "",
+          "label": "Reward rules"
+        }
+      ],
+      "listValue": "{classPools.mode}",
+      "fields": [
+        {
+          "path": "classPools.enabled",
+          "label": "Class pool filtering",
+          "type": "boolean"
+        },
+        {
+          "path": "classPools.mode",
+          "label": "Class card pool mode",
+          "type": "select",
+          "options": [
+            "classDeckList",
+            "classAndColorless"
+          ]
+        },
+        {
+          "path": "classPools.includeColorlessFallback",
+          "label": "Include colorless fallback",
+          "type": "boolean"
+        },
+        {
+          "path": "classPools.restrictWeaponsToClassTheme",
+          "label": "Restrict weapons to class theme",
+          "type": "boolean"
+        },
+        {
+          "path": "classPools.cardLists.reaver",
+          "label": "Reaver reward deck list",
+          "type": "list",
+          "itemType": "text",
+          "suggest": {
+            "file": "games/ashenspire/packs/core/cards.json"
+          }
+        },
+        {
+          "path": "classPools.cardLists.rogue",
+          "label": "Rogue reward deck list",
+          "type": "list",
+          "itemType": "text",
+          "suggest": {
+            "file": "games/ashenspire/packs/core/cards.json"
+          }
+        },
+        {
+          "path": "classPools.cardLists.starseer",
+          "label": "Starseer reward deck list",
+          "type": "list",
+          "itemType": "text",
+          "suggest": {
+            "file": "games/ashenspire/packs/core/cards.json"
+          }
+        },
+        {
+          "path": "classPools.cardLists.herald",
+          "label": "Herald reward deck list",
+          "type": "list",
+          "itemType": "text",
+          "suggest": {
+            "file": "games/ashenspire/packs/core/cards.json"
+          }
+        }
+      ]
+    },
+    {
+      "id": "shopRules",
+      "label": "Shops",
+      "file": "games/ashenspire/packs/core/shops.json",
+      "entries": [
+        {
+          "path": "",
+          "label": "Shop rules"
+        }
+      ],
+      "listValue": "Offer {offerCount}",
+      "fields": [
+        {
+          "path": "classFilter.enabled",
+          "label": "Shop class filtering",
+          "type": "boolean"
+        },
+        {
+          "path": "classFilter.weapons",
+          "label": "Filter shop weapons by class",
+          "type": "boolean"
+        },
+        {
+          "path": "classFilter.combatCards",
+          "label": "Filter shop cards by class",
+          "type": "boolean"
+        },
+        {
+          "path": "blacksmithChance",
+          "label": "Blacksmith chance (%)",
+          "type": "number"
+        },
+        {
+          "path": "trader.smithChance",
+          "label": "Trader smith chance (%)",
+          "type": "number"
+        }
       ]
     }
   ]
