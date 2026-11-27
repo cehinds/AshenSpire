@@ -35,6 +35,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 ## 2026-11-27
 
 - **Edit game content with forms in Score Studio** ([#3032](https://github.com/cehinds/AshenSpire/pull/3032), `0.7.5.169`). View > Game content edits decks, pools, cards, enemies, enemy cards, relics and map rules and saves the JSON. The game reloads by itself.
+- **Behind the scenes: mana-only mechanic notes refreshed** ([#3031](https://github.com/cehinds/AshenSpire/pull/3031), `0.7.5.169`). Generated mechanic notes now name the spell cost rules as the mana-only reader. Nothing you play changes.
 - **Opening shop pins no longer cover every branch** ([#3033](https://github.com/cehinds/AshenSpire/pull/3033), `0.7.5.169`). A shop pinned on floor 1 now counts only where a branch exists, as the map builder does. Core maps are unchanged.
 - **Pin a map floor's room type** ([#3025](https://github.com/cehinds/AshenSpire/pull/3025), `0.7.5.167`). Core routes can now set floorTypes, such as floor 4 always a shop. Without it, maps are unchanged.
 - **Card limits and drawback cost** ([#3030](https://github.com/cehinds/AshenSpire/pull/3030), `0.7.5.165`). Card effect and drawback caps are set in actionCosts.json; none means no limit. Drawbacks can cost Combat Power, flat or as a multiplier, off by default.
