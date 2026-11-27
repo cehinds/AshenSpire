@@ -690,7 +690,7 @@ if dmg < 0 → 0
   - Upgrades inherit base `wither` unless overridden; saved cards without `wither` are unaffected.
 - **Rising cost (`costGrowth: { stamina, mana, perUse, max, scope }`):**
   - Adds `stamina` / `mana` every `perUse` plays up to `max` steps (default 3); printed on the card face from data.
-  - `scope: "copy"` (default) counts plays per copy; `scope: "card"` (or `perCard: true`) shares one count across all copies of the card ID.
+  - `scope: "instance"` (default, from `content/source/mechanics/costGrowth.json`) counts plays per copy; `scope: "card"` (or `perCard: true`) shares one count across all copies of the card ID. A card that sets neither inherits its rule's scope.
   - Projections without a live copy (codex, rewards) count by card ID.
 
 - **Upgrades:** every non-curse card has exactly one authored upgrade (`name+`), a partial override object on the card def (numbers, cost, keywords; a present `keywords` list replaces the base list, so upgrades can remove Exhaust). Ordinary cards keep a permanent per-copy run upgrade. Equipment-sourced basic cards instead resolve that upgrade from their source armament's run-owned Smithing tier, so every current and future copy from the armament changes together.
@@ -3815,7 +3815,7 @@ Owner decisions of 2026-11-17 (playtest items 12-17): "every card that grants ev
 
 - **Every Core-reachable card that grants Evade has a drawback.** A drawback is 2 or more Stamina, a Mana cost, Exhaust, Ethereal, a cost that rises with each play, or HP lost on play. Evade (3 Stamina) and Closing Dodge (4) already pay in Stamina. Backstep (`core.backstep`), Quickstep and Sidestep (`base.evade`) cost 1 Stamina, so each Exhausts. Quickstep keeps its Mana exemption (`cardManaPolicy.manaFreeCards`). Each upgrade eases the drawback: Evade+ costs 2 Stamina, Closing Dodge+ 3, and Backstep+ drops Exhaust (keeping its Evade 2). Quickstep is a ranked ability card, whose grade table owns its numbers: such a card is offered, and applies, only the drawback-removal steps (`unexhaust`, `unethereal`, `steady`; `DrawbackSteps` in `src/model/cardUpgrade.js`), so its upgrade drops Exhaust.
 - **Hold Block (`base.retain-block`, 1 SP, 6 Block kept 1 turn):**
-  - Rises +1 SP per play of that copy up to +2 (`costGrowth: { stamina: 1, perUse: 1, max: 2 }`, default `scope: "copy"`).
+  - Rises +1 SP per play of that copy up to +2 (`costGrowth: { stamina: 1, perUse: 1, max: 2 }`, default `scope: "instance"`).
   - Cards with `scope: "card"` / `perCard: true` (Evade cards, Retreat) count across all copies by card ID (§4.3).
   - Authored upgrade sets `costGrowth` to 0.
 - **Overtuned damage cards require a drawback** (owner, 2026-11-24). A Core-reachable card whose unupgraded play deals at least 2.5 times Strike's damage per Stamina and Mana paid (measured in the engine against one target) must carry an HP cost, Exhaust or Ethereal. Exhaust and Ethereal satisfy the rule without adding an HP cost; existing authored HP costs remain: Pyre Lash, Forked Bolt, Battering Gale, Wither Draught and Glacial Spike 2 HP; Radiant Verdict and Colossus Smash 3 HP; Meteor 4 HP. The HP is a `nonlethal` `loseHp` effect on `self` that the face reads as "Pay N HP": a play it would kill (cost at or above current HP) is refused before anything resolves, the hand marks the card unplayable with "Not enough HP: it costs N HP and must leave you at least 1.", and the simbot never offers it (`src/model/cardHpCost.js`). Each card's authored upgrade keeps its old numbers and drops the HP cost.
