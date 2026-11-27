@@ -19,6 +19,13 @@ export const COST_TAGS = freeze(source.COST_TAGS);
 export const KEYWORD_TAGS = freeze(source.KEYWORD_TAGS);
 export const DRAWBACK_KEYWORD_TAGS = freeze(source.DRAWBACK_KEYWORD_TAGS);
 export const DRAWBACK_OPS = freeze(source.DRAWBACK_OPS);
+export const CARD_LIMITS = freeze({
+  ...source.CARD_LIMITS,
+  cardFiles: freeze(source.CARD_LIMITS.cardFiles),
+  selfDebuffStatuses: freeze(source.CARD_LIMITS.selfDebuffStatuses),
+  text: freeze(source.CARD_LIMITS.text),
+  drawbackOpRequires: freeze(source.CARD_LIMITS.drawbackOpRequires),
+});
 export const RANGE_WEIGHTS = freeze(source.RANGE_WEIGHTS);
 export const RANGE_TAGS = freeze(source.RANGE_TAGS);
 export const CAST_TAGS = freeze(source.CAST_TAGS);
