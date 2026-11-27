@@ -102,7 +102,8 @@ function carryFile(file, worktree)
 function commit(worktree, paths, subject, bodyLines)
 {
     RunGit(['add', '--', ...paths], worktree);
-    const body = bodyLines.length
+    const bodyRepeatsSubject = bodyLines.length === 1 && bodyLines[0] === subject;
+    const body = bodyLines.length && !bodyRepeatsSubject
         ? `\n\n${bodyLines.map((line) => `- ${line}`).join('\n')}`
         : '';
     RunGit(['commit', '--quiet', '-m', `${subject}${body}`], worktree);
@@ -147,7 +148,8 @@ function receiptLine(title, pullNumber, stamp, summary)
     return `- **${title}** ([#${pullNumber}](${url}), \`${stamp}\`). ${summary}`;
 }
 
-function writeReceipt(worktree, title, pullNumber, summary)
+/** Adds the CHANGELOG receipt for the pull request and commits it with the in-game changelog. */
+export function WriteReceipt(worktree, title, pullNumber, summary)
 {
     const settings = OWNER_TOOLS.changelog;
     const box = JSON.parse(readFileSync(join(worktree, settings.buildOrdinalFile), 'utf8'));
@@ -228,6 +230,7 @@ function main(argv)
     try
     {
         files.forEach((file) => carryFile(file, worktree));
+        RunGit(['reset', '--quiet'], worktree);
         for (const item of described)
         {
             commit(worktree, [item.path], item.subject, item.lines);
@@ -270,7 +273,7 @@ Local only: branch ${branch} has the commits. Nothing was pushed.`);
             pullRequestBody(described, checks.lines.join('\n')),
         ], worktree);
         const pullNumber = Number(PULL_NUMBER_PATTERN.exec(url)?.[1]);
-        writeReceipt(worktree, title, pullNumber, receiptSummary(described));
+        WriteReceipt(worktree, title, pullNumber, receiptSummary(described));
         RunGit(['push', '--quiet', remote, branch], worktree);
         console.log(`\nPull request: ${url}`);
         console.log('Your local edits are still here. After the pull request merges, run "npm run sync".');

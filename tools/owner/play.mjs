@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // npm run play: builds and checks your edits, then opens the game with live reload.
-// Saving a JSON file rebuilds the game data and reloads the page by itself.
+// Saving a JSON file rebuilds and reloads the page. Extra flags (--port 8090) go to the server.
 import { spawn } from 'node:child_process';
 import { watch } from 'node:fs';
 import { join } from 'node:path';
@@ -47,7 +47,11 @@ function main()
         console.log('\nA check failed. The game still opens, but fix the file named above first.');
     }
     watchEnemySheets();
-    const server = spawn(process.execPath, OWNER_TOOLS.play.serverArgs, {
+    const serverArgs = [
+        ...OWNER_TOOLS.play.serverArgs,
+        ...process.argv.slice(2),
+    ];
+    const server = spawn(process.execPath, serverArgs, {
         cwd: REPO_ROOT,
         stdio: 'inherit',
     });

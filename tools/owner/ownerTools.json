@@ -26,26 +26,26 @@
   ],
   "buildSteps": [
     {
-      "label": "Enemy sheets",
+      "label": "Build enemy sheets",
       "args": [
         "tools/enemy-sheets.mjs",
         "--write"
       ]
     },
     {
-      "label": "Content tables",
+      "label": "Build content tables",
       "args": [
         "tools/content-build.mjs"
       ]
     },
     {
-      "label": "Interface config",
+      "label": "Build interface config",
       "args": [
         "tools/config-build.mjs"
       ]
     },
     {
-      "label": "Game packs",
+      "label": "Build game packs",
       "args": [
         "tools/game-config.mjs",
         "build"
@@ -54,28 +54,28 @@
   ],
   "checkSteps": [
     {
-      "label": "Enemy sheets",
+      "label": "Check enemy sheets",
       "args": [
         "tools/enemy-sheets.mjs",
         "--check"
       ]
     },
     {
-      "label": "Content tables",
+      "label": "Check content tables",
       "args": [
         "tools/content-build.mjs",
         "--check"
       ]
     },
     {
-      "label": "Interface config",
+      "label": "Check interface config",
       "args": [
         "tools/config-build.mjs",
         "--check"
       ]
     },
     {
-      "label": "Game packs",
+      "label": "Check game packs",
       "args": [
         "tools/game-config.mjs",
         "check"
@@ -111,7 +111,7 @@
     ],
     "enemySheetFolder": "games/ashenspire/packs/core/enemies",
     "rebuildDelayMs": 200,
-    "enemySheetStep": "Enemy sheets"
+    "enemySheetStep": "Build enemy sheets"
   },
   "generatedLocations": [
     "src/content/generated/",
