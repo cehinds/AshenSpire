@@ -395,7 +395,7 @@ export function RankUpUpgradeModel(registries, run, skillId, selectedInstanceId 
     const inDeck = (run.deck || []).includes(instance);
     const base = registries.cards.get(instance.cardId);
     const rank = OwnCardRank(instance); // an unranked card reads 0 and rises to Rank 1 (owner, 2026-11-23)
-    const blocked = RankUpBlock(run, instance); // the full-upgrade rule: shown, disabled, with its reason
+    const blocked = RankUpBlock(run, instance, registries); // the full-upgrade rule: shown, disabled, with its reason
     const before = faceOf(instance);
     const raised = faceOf({ ...instance, rank: rank + 1 });
     const bonus = rankUpBonusOptions(registries, run, instance);
