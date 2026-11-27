@@ -150,6 +150,9 @@ export function initCardEditorDock(ctx) {
   }
   function setPanel(value) {
     if (!['library', 'editor'].includes(value)) return;
+    // The panel choice only means something in the docked narrow layout; a
+    // desktop or floating Edit must not decide where a later narrow view opens.
+    if (value === 'editor' && !(narrowMedia?.matches && docked)) return;
     panel = value; applyPanel();
   }
   function showEditor(kind) {
@@ -321,7 +324,8 @@ export function initCardEditorDock(ctx) {
       event.preventDefault(); setContext(key); setWidth(keyWidths[event.key]());
     });
   }
-  narrowMedia?.addEventListener?.('change', applyPanel);
+  // Crossing the breakpoint starts on the library, so focus is never left on a hidden gallery tile.
+  narrowMedia?.addEventListener?.('change', () => { panel = 'library'; applyPanel(); });
   setContext('cards'); setDocked(docked); setView(view);
   return { edit: id => edit(id, 'cards'), editItem: id => edit(id, 'items'), decorateTile: (tile, def) => decorate(tile, def, 'cards'), decorateItemTile: (tile, def) => decorate(tile, def, 'items'), open: openModal, refresh, refreshEntity: renderEntity, showProperties, setPanel, getPanel: () => panel, setDocked, setContext, setView, isDocked: () => docked, getView: () => view, element: pane };
 }

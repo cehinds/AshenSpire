@@ -131,7 +131,7 @@ body.studio-body.customize-narrow .customization-narrow-nav {
   background: var(--st-surface); border-bottom: 1px solid var(--st-border);
 }
 /* Keep the entity heading clear of the sticky nav when it is scrolled to. */
-body.studio-body.customize-narrow #customization-entity { scroll-margin-top: calc(var(--customization-nav-top, 0px) + 64px); }
+body.studio-body.customize-narrow :is(#studio-customization-pane, #customization-entity, #customization-entity-name) { scroll-margin-top: calc(var(--customization-nav-top, 0px) + 64px); }
 body.studio-body.customize-narrow .customization-narrow-nav .s-btn { flex: 1 1 0; min-width: 0; min-height: 40px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 body.studio-body.customize-narrow .customization-narrow-nav .s-btn[aria-pressed="true"] { border-color: var(--st-accent); color: var(--st-accent); }
 body.studio-body.customize-narrow:not(.customize-panel-editor) .cards-layout > .studio-customization-pane { display: none; }
