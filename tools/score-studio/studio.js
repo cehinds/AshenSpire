@@ -16,7 +16,7 @@ import { itemArtLayers as shippedItemArtLayers } from '../../src/content/generat
 import { cardShapeCssProperties } from '../../src/ui/models/CardSizeModel.js';
 import { reviewedCardArtCatalog } from '../../src/content/reviewedCardArt.generated.js';
 import { scoring as shippedScoring } from '../../src/content/generated/scoring.js';
-import { CardKind, CardCategories, ScoreCard, CombatPower, RankOf, RankName, CardName, CardNameParts, ApplyScoringOverride } from '../../src/model/combatPower.js';
+import { CardKind, CardCategories, ScoreCard, CombatPower, RankOf, RankName, CardName, CardNameParts, ApplyScoringOverride, ParseUpgradeTag, UpgradeTagLabel } from '../../src/model/combatPower.js';
 import { ValidateScoringConfig, NAME_LIMIT_PARTS } from '../../src/model/activeScoring.js';
 import { EffectiveWardHp } from '../../src/model/fixCoreMechanics.js';
 import { staticCardTokens } from '../../src/model/playingCard.js';
@@ -29,7 +29,7 @@ import { GenerateCard } from '../../src/model/cardGenerator.js';
 import { ScoreGeneratedItem } from '../../src/model/itemGenerator.js';
 import { RenderPoolForm, ReadPoolForm, NormaliseSettings, UpdatePoolSums } from './cardPoolForm.js';
 import { buildItemRoster, typeModsForEntry, scoreItemEntry, livePieceFromEntry, describeItemMod, formatModString, ITEM_TRAIT_SELECTORS, ITEM_QUICK_TRAITS, ITEM_MOTIF_OPTIONS } from './itemStudio.js';
-import { initStudioToolsModals } from './studioToolsModal.js';
+import { initStudioToolsModals, downloadJsonFile } from './studioToolsModal.js';
 import {
   DEFAULT_ART_LOAD_TIMEOUT_MS,
   parseLoadingShotMode,
@@ -41,10 +41,10 @@ import { initSubclassCatalogUi, upgradeNames } from './subclassCatalog.js';
 import { CardDefinitionToScoreFace } from '../../src/model/cardUpgradeCp.js';
 import { ProjectCardMechanicalValues } from '../../src/model/cardMechanicalProjection.js';
 import { RefreshSubclassCard, SubclassCardText } from '../../src/model/subclassCardGenerator.js';
-import { initCardSelectionUi, isAddedCard, removeAddedCardsFromState } from './cardSelection.js';
+import { initCardSelectionUi, isAddedCard, removeAddedCardsFromState, addSelectedCardsToDeck, removeSelectedCardsFromDeck } from './cardSelection.js';
 import { initCardEditorDock } from './cardEditorDock.js';
 import { initDeckListPanel } from './deckListPanel.js';
-import { filterMembership } from './deckCatalog.js';
+import { filterMembership, deckCatalogOptions, resolveStudioDeck } from './deckCatalog.js';
 import { initGalleryZoom } from './galleryZoom.js';
 import { focusedEffectOptions } from './focusedRebalance.js';
 import { createAddCardTile, CaptureCardTilePositions, animateCardInsertion } from './addCardTile.js';
@@ -588,11 +588,13 @@ function restoreSnapshot(snapStr) {
 // ---------------------------------------------------------------------------
 // Procedural Art Layer Overlay
 // ---------------------------------------------------------------------------
-function matchingCustomLayers(def) {
+// The card art layers that apply to a card, in z-order. `includeDisabled` keeps the ones switched off, so they
+// can be switched back on from beside the card.
+function matchingCustomLayers(def, { includeDisabled = false } = {}) {
   const tags = def.tags || [];
   const statuses = (def.effects || []).filter((e) => e.op === 'applyStatus').map((e) => e.status);
   return (state.artLayers.layers || [])
-    .filter((l) => l.enabled !== false && l.assetId)
+    .filter((l) => (includeDisabled || l.enabled !== false) && l.assetId)
     .filter((l) => {
       if (l.matchKind === 'default') return true;
       if (l.matchKind === 'type') return def.type === l.matchValue;
@@ -1620,8 +1622,16 @@ function renderAddFeatureOptions({ pickBest = false } = {}) {
 
 function renderInspector() {
   const def = state.cards.find((c) => c.id === state.selectedCardId) || state.cards[0];
-  if (!def) return;
+  if (!def) {
+    // No card left to show: clear the stale preview and let the pane show its empty state.
+    document.getElementById('inspector-card-preview').replaceChildren();
+    document.getElementById('inspector-sheet-title').textContent = '';
+    state.selectedCardId = null;
+    cardEditorDockUi?.refresh();
+    return;
+  }
   state.selectedCardId = def.id;
+  cardEditorDockUi?.refreshEntity?.();
 
   renderCardWithLayers(def, document.getElementById('inspector-card-preview'));
   document.getElementById('inspector-sheet-title').textContent = def.name || '';
@@ -1904,11 +1914,150 @@ function renderCostChips(def, sc) {
 function renderScoreSummary(def, sc) {
   const baseRank = state.baselineRanks[def.id];
   const shiftTxt = (baseRank !== undefined && baseRank !== sc.rank) ? ` (was ${RankName(baseRank)})` : '';
-  document.getElementById('inspector-score-summary').innerHTML = `
-    <div class="inspector-score-big">CP ${sc.cp}</div>
-    <div><strong>${esc(RankName(sc.rank))}</strong> · ${esc(actForRank(sc.rank))}${esc(shiftTxt)}</div>
-    <div class="studio-muted">Raw: ${sc.raw} · Rarity: ${esc(sc.rarity)}${sc.overridden ? ' · Overridden' : ''}</div>
-  `;
+  // Shown in the card banner, right of the name: rank, rarity, then CP. Spans only: it sits inside a button.
+  // Each value is compared with the in-game card: higher reads red, lower reads green.
+  const before = inGameScore(def);
+  const rarity = String(sc.rarity || '').replace(/^./, (ch) => ch.toUpperCase());
+  const rarityNow = RARITY_ORDER.indexOf(String(sc.rarity || '').toLowerCase());
+  const rarityThen = before ? RARITY_ORDER.indexOf(String(before.rarity || '').toLowerCase()) : -1;
+  document.getElementById('inspector-score-summary').innerHTML =
+    `<span class="inspector-score-rank${trendClass(sc.rank, before?.rank)}"${trendTitle(before ? RankName(before.rank) : "", sc.rank, before?.rank) || (shiftTxt ? ` title="${esc(shiftTxt.trim().replace(/^\(|\)$/g, ''))} before weight changes"` : '')}>${esc(RankName(sc.rank))}</span>`
+    + `<span class="inspector-score-rarity${rarityNow >= 0 && rarityThen >= 0 ? trendClass(rarityNow, rarityThen) : ''}"${rarityNow >= 0 && rarityThen >= 0 ? trendTitle(before.rarity, rarityNow, rarityThen) : ''}>${esc(rarity)}${sc.overridden ? ' · Overridden' : ''}</span>`
+    + `<span class="inspector-score-big">CP: ${sc.cp}</span>${cpTrendHtml(sc, before)}`;
+}
+
+const RARITY_ORDER = Object.freeze(['starter', 'common', 'uncommon', 'rare', 'boss']);
+
+// The card options menu beside the card. Each item runs the handler the rest of the Studio already uses.
+function cardMenuActions() {
+  const def = selectedCardDef();
+  if (!def) return [];
+  const added = isAddedCard(def), inGame = !!registries.cards.get(def.id);
+  const openDecks = () => {
+    cardSelectionUi?.select([def.id], { replace: true });
+    setCustomizationView('decks');
+    deckListPanelUi?.element.querySelector('[data-deck-select]')?.focus();
+  };
+  return [
+    { label: 'Duplicate', run: () => document.getElementById('btn-duplicate-card').click() },
+    { label: 'Delete', enabled: added, hint: added ? '' : 'Only cards you added can be deleted', run: () => document.getElementById('btn-delete-card').click() },
+    { label: 'Reset to default', enabled: inGame && !!def._edited && !def._custom, hint: inGame ? (def._edited ? '' : 'No edits to reset') : 'Not a game card', run: () => document.getElementById('btn-reset-card').click() },
+    { separator: true },
+    { label: 'Add to deck…', run: openDecks },
+    { label: 'Remove from deck…', run: openDecks },
+    { label: 'Rebalance…', run: () => studioToolsUi.openBalanceSelection([def.id]) },
+    { separator: true },
+    { label: 'Edit card art', run: () => setCustomizationView('design') },
+    { label: 'View or edit JSON…', run: () => openCardJson(def.id) },
+    { label: 'Export card JSON', hint: 'Download this card as an importable JSON file', run: () => downloadJsonFile(`${def.id}.json`, { name: def.name, cards: [Object.fromEntries(Object.entries(def).filter(([key]) => !key.startsWith('_')))] }) },
+    { label: 'Undock', enabled: cardEditorDockUi?.isDocked?.() !== false, run: () => cardEditorDockUi?.open?.() },
+  ];
+}
+
+// View or edit one card as JSON. Applying goes through mutateSelectedCard, so it is one Undo step.
+let cardJsonDialog = null;
+function openCardJson(id) {
+  const def = state.cards.find((card) => card.id === id);
+  if (!def) return;
+  if (!cardJsonDialog) {
+    cardJsonDialog = document.createElement('dialog'); cardJsonDialog.id = 'card-json-dialog'; cardJsonDialog.className = 'card-json-dialog';
+    cardJsonDialog.setAttribute('aria-labelledby', 'card-json-title');
+    cardJsonDialog.innerHTML = `<h2 id="card-json-title"></h2>
+      <p class="studio-muted">Edits apply to this card only and can be undone. The card ID cannot change here.</p>
+      <textarea id="card-json-text" spellcheck="false" aria-label="Card JSON"></textarea>
+      <p id="card-json-error" class="card-json-error" role="alert"></p>
+      <div class="card-json-actions"><button type="button" class="s-btn" data-json-copy>Copy</button><button type="button" class="s-btn" data-json-close>Close</button><button type="button" class="s-btn s-btn-primary" data-json-apply>Apply</button></div>`;
+    document.body.append(cardJsonDialog);
+    cardJsonDialog.querySelector('[data-json-close]').addEventListener('click', () => cardJsonDialog.close());
+    cardJsonDialog.querySelector('[data-json-copy]').addEventListener('click', () => navigator.clipboard?.writeText(cardJsonDialog.querySelector('#card-json-text').value).then(() => toast('Card JSON copied')));
+    cardJsonDialog.querySelector('[data-json-apply]').addEventListener('click', applyCardJson);
+  }
+  const visible = Object.fromEntries(Object.entries(def).filter(([key]) => !key.startsWith('_')));
+  cardJsonDialog.dataset.cardId = id;
+  cardJsonDialog.querySelector('#card-json-title').textContent = `${def.name || id} JSON`;
+  cardJsonDialog.querySelector('#card-json-text').value = JSON.stringify(visible, null, 2);
+  cardJsonDialog.querySelector('#card-json-error').textContent = '';
+  cardJsonDialog.showModal();
+}
+
+// Shape checks the Studio's renderers rely on, reported before anything changes.
+function cardJsonProblem(card) {
+  if (card.effects !== undefined) {
+    if (!Array.isArray(card.effects)) return '"effects" must be a list.';
+    const bad = card.effects.findIndex((effect) => !effect || typeof effect !== 'object' || Array.isArray(effect) || typeof effect.op !== 'string');
+    if (bad >= 0) return `Effect ${bad + 1} must be an object with an "op" name.`;
+  }
+  if (card.tags !== undefined && (!Array.isArray(card.tags) || card.tags.some((tag) => typeof tag !== 'string'))) return '"tags" must be a list of text.';
+  if (card.name !== undefined && typeof card.name !== 'string') return '"name" must be text.';
+  return '';
+}
+
+function applyCardJson() {
+  const id = cardJsonDialog.dataset.cardId, error = cardJsonDialog.querySelector('#card-json-error');
+  let next;
+  try { next = JSON.parse(cardJsonDialog.querySelector('#card-json-text').value); } catch (err) { error.textContent = `Not valid JSON: ${err.message}`; return; }
+  if (!next || typeof next !== 'object' || Array.isArray(next)) { error.textContent = 'The card must be one JSON object.'; return; }
+  if (next.id !== id) { error.textContent = `Keep the card ID "${id}".`; return; }
+  const problem = cardJsonProblem(next);
+  if (problem) { error.textContent = problem; return; }
+  // Dry run on a copy first: the live card is only touched by JSON that scores.
+  try { scoreCardEntry(normalizeStudioCard(clone(next))); } catch (err) { error.textContent = `Not a valid card: ${err.message}`; return; }
+  if (state.selectedCardId !== id) selectStudioCard(id);
+  const index = state.cards.findIndex((card) => card.id === id), before = clone(state.cards[index]), history = state.undoStack.length;
+  // An explicit name or text in the JSON wins, exactly like typing in the Name or Text field:
+  // it switches that generation off instead of being overwritten by it.
+  const nameChanged = (next.name ?? '') !== (before.name ?? ''), textChanged = (next.textTemplate ?? '') !== (before.textTemplate ?? '');
+  // Snapshot everything first: a failed apply must also undo other cards' auto-names and the Auto-text setting.
+  const snapshot = snapshotState(), autoTextBefore = document.getElementById('toggle-auto-text')?.checked;
+  if (textChanged) {
+    const autoTextToggle = document.getElementById('toggle-auto-text');
+    if (autoTextToggle?.checked) { autoTextToggle.checked = false; writeStoredJson(AUTO_TEXT_KEY, false); }
+  }
+  try {
+    mutateSelectedCard((card) => {
+      const internal = Object.fromEntries(Object.entries(card).filter(([key]) => key.startsWith('_')));
+      for (const key of Object.keys(card)) delete card[key];
+      Object.assign(card, next, internal);
+      if (nameChanged) card._autoName = false;
+      if (textChanged) card._autoText = false;
+    }, { autoName: !nameChanged, autoText: !textChanged });
+  } catch (err) {
+    // Roll back everything the edit touched: all cards, the history entry, the Auto-text setting and the views.
+    restoreSnapshot(snapshot);
+    if (state.undoStack.length > history) { state.undoStack.length = history; updateUndoButtons(); }
+    const autoTextToggle = document.getElementById('toggle-auto-text');
+    if (autoTextToggle && autoTextBefore !== undefined && autoTextToggle.checked !== autoTextBefore) { autoTextToggle.checked = autoTextBefore; writeStoredJson(AUTO_TEXT_KEY, autoTextBefore); }
+    error.textContent = `Not applied: ${err.message}`;
+    return;
+  }
+  cardJsonDialog.close();
+  toast(`Applied JSON to "${next.name || id}"`);
+}
+
+// The card as it ships in the game, scored with the game's weights; null for cards the game does not have.
+function inGameScore(def) {
+  const original = registries.cards.get(def.id);
+  if (!original) return null;
+  const sc = scoreCardEntry(clone(original), state.repoScoring);
+  return { cp: sc.cp, rank: sc.rank, rarity: original.rarity || sc.rarity };
+}
+
+function trendClass(now, then) {
+  if (!Number.isFinite(now) || !Number.isFinite(then) || now === then) return '';
+  return now > then ? ' is-up' : ' is-down';
+}
+
+function trendTitle(thenLabel, now, then) {
+  if (!Number.isFinite(now) || !Number.isFinite(then) || now === then) return '';
+  return ` title="${esc(`${now > then ? 'Up' : 'Down'} from ${thenLabel} in game`)}"`;
+}
+
+// Arrow after CP: green and down when CP is below the in-game card, red and up when above.
+function cpTrendHtml(sc, before) {
+  if (!Number.isFinite(before?.cp) || before.cp === sc.cp) return '<span class="cp-trend" aria-hidden="true"></span>';
+  const down = sc.cp < before.cp;
+  const words = `${down ? 'down' : 'up'} from CP ${before.cp} in game`;
+  return `<span class="cp-trend ${down ? 'is-down' : 'is-up'}" title="${esc(words)}" aria-label="${esc(words)}">${down ? '▼' : '▲'}</span>`;
 }
 
 const TARGET_LABELS = Object.freeze({
@@ -2221,14 +2370,10 @@ function mutateSelectedCard(fn, { recordHistory = true, autoName = true, autoTex
 // ---------------------------------------------------------------------------
 // Rows show the pending copy when weight edits are staged; a row whose value differs from the applied
 // config is marked pending. `shifts: false` skips rescoring every card for the rank-shift summary.
-function renderWeights({ shifts = true } = {}) {
-  const q = document.getElementById('weights-search').value.trim().toLowerCase();
-  const groupF = document.getElementById('weights-group-filter').value;
-  const container = document.getElementById('weights-container');
-  container.innerHTML = '';
-
+// Every weight row, grouped, as the scoring config in state.scoring stands now (swap it with withScoring).
+function buildWeightGroups() {
   const R = state.repoScoring;
-  const buildGroups = () => [
+  return [
     { key: 'costs', title: 'Costs (SP / MP)', entries: Object.entries(state.scoring.costs || {}).map(([k, v]) => ({ id: k, label: k.toUpperCase(), val: v.weight, base: R.costs?.[k]?.weight, set: (n) => { state.scoring.costs[k].weight = n; } })) },
     { key: 'effects', title: 'Effects', entries: Object.entries(state.scoring.effects || {}).map(([k, v]) => ({
       id: k, label: k, val: v.weight, base: R.effects?.[k]?.weight, set: (n) => { state.scoring.effects[k].weight = n; },
@@ -2360,11 +2505,25 @@ function renderWeights({ shifts = true } = {}) {
       set: (n) => { state.scoring.items.gearFields[k].weight = n; },
     })) },
   ];
-  // Built from the applied config (to mark pending rows) and from the config Apply would produce.
-  const appliedGroups = buildGroups();
+}
+
+function weightEntryIn(groupList, groupKey, id) {
+  return groupList.find((eg) => eg.key === groupKey)?.entries.find((e) => e.id === id);
+}
+
+// The groups as the applied config has them (to mark pending rows) and as Apply would make them (what rows show).
+function weightGroupsShown() {
+  const appliedGroups = buildWeightGroups();
   const staged = stagedScoring();
-  const groups = staged ? withScoring(staged, buildGroups) : appliedGroups;
-  const entryIn = (groupList, groupKey, id) => groupList.find((eg) => eg.key === groupKey)?.entries.find((e) => e.id === id);
+  return { appliedGroups, groups: staged ? withScoring(staged, buildWeightGroups) : appliedGroups };
+}
+
+function renderWeights({ shifts = true } = {}) {
+  const q = document.getElementById('weights-search').value.trim().toLowerCase();
+  const groupF = document.getElementById('weights-group-filter').value;
+  const container = document.getElementById('weights-container');
+  container.innerHTML = '';
+  const { appliedGroups, groups } = weightGroupsShown();
 
   for (const g of groups) {
     if (groupF !== 'all' && g.key !== groupF) continue;
@@ -2377,121 +2536,270 @@ function renderWeights({ shifts = true } = {}) {
     card.innerHTML = `<summary class="section-head"><h3>${esc(g.title)}</h3></summary>`;
     rememberSection(card);
     wireInfoButtons(card, '.weight-row');
-    for (const r of rows) {
-      const numVal = safeNum(r.val, 0);
-      const baseNum = r.base !== undefined ? safeNum(r.base, 0) : undefined;
-      const applied = entryIn(appliedGroups, g.key, r.id);
-      const row = document.createElement('div');
-      row.className = 'weight-row' + (r.per || r.mult || r.surcharge ? ' has-per' : '');
-      const kind = WEIGHT_GROUP_KINDS[g.key];
-      const info = kind ? describeFeature(kind, r.id) : null;
-      const labelHtml = info
-        ? `<span class="feature-label" title="${esc(featureTitleText(info))}">${esc(r.label)} ${infoButtonHtml()}</span>`
-        : `<span>${esc(r.label)}</span>`;
-      const resetTitle = `Reset to ${baseNum ?? numVal}${r.per ? ` per ${r.per.base ?? r.per.value}` : ''}`;
-      // The row reads as a sentence: "[1] pts per [3] damage", with a worked example under it.
-      const shownScoring = () => stagedScoring() || state.scoring;
-      const words = weightSentence(g.key, r.id, shownScoring(), r.label);
-      const weightBox = `<input type="number" class="weight-input" step="${esc(safeNum(r.step, 1))}" value="${esc(numVal)}" aria-label="${esc(`${r.label} points`)}" />`;
-      row.innerHTML = `${labelHtml}<span class="weight-sentence"><span class="weight-words" data-part="before">${esc(words.before)}</span>${weightBox}<span class="weight-words" data-part="mid">${esc(words.mid)}</span>${perControlHtml(r)}<span class="weight-words" data-part="after">${esc(words.after)}</span>${multControlHtml(r)}${surchargeControlHtml(r)}<button type="button" class="weight-reset-btn" title="${esc(resetTitle)}">↺</button></span><div class="weight-example"></div>`;
-      const input = row.querySelector('.weight-input');
-      const perInput = row.querySelector('.weight-per');
-      const multInput = row.querySelector('.weight-mult');
-      const surchargeInput = row.querySelector('.weight-surcharge');
-      const resetBtn = row.querySelector('.weight-reset-btn');
-      const exampleEl = row.querySelector('.weight-example');
-      // The example follows the boxes as they are typed in: a copy of the shown config with the boxes' values set.
-      const typedScoring = () => {
-        const typed = clone(shownScoring());
-        withScoring(typed, () => {
-          const value = Number(input.value);
-          if (input.value !== '' && Number.isFinite(value)) r.set(value);
-          if (r.per && perInput && !r.per.options) {
-            const per = Math.round(Number(perInput.value));
-            if (Number.isFinite(per) && per >= 1) r.per.set(per);
-          }
-          if (r.surcharge && surchargeInput) r.surcharge.set(surchargeInput.checked);
-        });
-        return typed;
-      };
-      const showExample = (scoring = shownScoring()) => {
-        const now = weightSentence(g.key, r.id, scoring, r.label);
-        for (const part of row.querySelectorAll('.weight-sentence > .weight-words')) part.textContent = now[part.dataset.part];
-        exampleEl.textContent = weightExample(g.key, r.id, scoring, r.label);
-      };
-      showExample();
-      input.addEventListener('input', () => showExample(typedScoring()));
-      if (perInput && !r.per.options) perInput.addEventListener('input', () => showExample(typedScoring()));
-      // Staged edits update this row's marks in place, so focus and scroll stay where the owner left them.
-      const perNow = () => (r.per.options ? perInput.value : Number(perInput.value));
-      const perDiffers = (other) => Boolean(r.per) && other !== undefined && perNow() !== other;
-      const multDiffers = (other) => Boolean(multInput) && other !== undefined && multInput.checked !== other;
-      const surchargeDiffers = (other) => Boolean(surchargeInput) && other !== undefined && surchargeInput.checked !== other;
-      const markRow = () => {
-        const value = Number(input.value);
-        const modified = (baseNum !== undefined && value !== baseNum) || perDiffers(r.per?.base) || multDiffers(r.mult?.base) || surchargeDiffers(r.surcharge?.base);
-        const pending = !applied || value !== safeNum(applied.val, 0) || perDiffers(applied.per?.value) || multDiffers(applied.mult?.value) || surchargeDiffers(applied.surcharge?.value);
-        row.classList.toggle('is-modified', modified);
-        row.classList.toggle('is-pending', pending);
-        row.classList.toggle('is-surcharge-off', Boolean(surchargeInput && !surchargeInput.checked));
-        row.title = pending ? 'Staged: Apply to rescore the cards' : '';
-        resetBtn.classList.toggle('is-clean', !modified);
-      };
-      // After an edit the row shows what its setter stored (Band Width 0 is stored as 1), then re-marks.
-      const showStored = () => {
-        const stored = entryIn(withScoring(stagedScoring() || state.scoring, buildGroups), g.key, r.id);
-        if (stored) { input.value = String(safeNum(stored.val, 0)); input.step = String(safeNum(stored.step, 1)); }
-        if (stored?.per && perInput) perInput.value = String(stored.per.value);
-        if (stored?.mult && multInput) multInput.checked = stored.mult.value;
-        if (stored?.surcharge && surchargeInput) surchargeInput.checked = stored.surcharge.value;
-        markRow();
-        showExample();
-      };
-      markRow();
-      input.addEventListener('change', () => {
-        const n = Number(input.value);
-        if (!Number.isFinite(n)) return;
-        applyWeightEdit(() => r.set(n));
-        showStored();
-      });
-      perInput?.addEventListener('change', () => {
-        const next = r.per.options ? perInput.value : Math.max(1, Math.round(Number(perInput.value)));
-        if (!r.per.options && !Number.isFinite(next)) return;
-        applyWeightEdit(() => r.per.set(next));
-        showStored();
-      });
-      multInput?.addEventListener('change', () => {
-        applyWeightEdit(() => r.mult.set(multInput.checked));
-        showStored();
-      });
-      surchargeInput?.addEventListener('change', () => {
-        applyWeightEdit(() => r.surcharge.set(surchargeInput.checked));
-        showStored();
-      });
-      resetBtn.addEventListener('click', () => {
-        const perChanged = perDiffers(r.per?.base) || multDiffers(r.mult?.base) || surchargeDiffers(r.surcharge?.base);
-        if (baseNum === undefined && !perChanged) return;
-        // Read the row's live controls: staged edits do not redraw it, so r.per / r.mult values can be stale.
-        const resetMult = multDiffers(r.mult?.base);
-        const resetPer = perDiffers(r.per?.base);
-        const resetSurcharge = surchargeDiffers(r.surcharge?.base);
-        applyWeightEdit(() => {
-          if (resetMult) r.mult.set(r.mult.base);
-          if (resetSurcharge) r.surcharge.set(r.surcharge.base);
-          if (baseNum !== undefined) r.set(baseNum);
-          if (resetPer) r.per.set(r.per.base);
-        });
-        showStored();
-      });
-      if (info) row.insertAdjacentHTML('beforeend', infoLineHtml(info));
-      card.appendChild(row);
-    }
+    for (const r of rows) card.appendChild(buildWeightRow(g, r, appliedGroups));
     container.appendChild(card);
   }
   if (groupF === 'all' || groupF === 'naming') renderNamingLimitGroup(container, q);
   renderDescriptionGaps();
   updateWeightsToolbar();
   if (shifts) computeShiftCount();
+  // The rows beside the card show the same staged values as this list.
+  if (cardEditorDockUi?.getView?.() === 'weights') cardEditorDockUi.refreshContextFields?.();
+}
+
+// One weight row: label, the number box and its per / multiply / surcharge controls, reset and a worked example.
+// Edits are staged through applyWeightEdit; the main list and the rows beside the card share this code.
+function buildWeightRow(g, r, appliedGroups, { compact = false } = {}) {
+  const numVal = safeNum(r.val, 0);
+  const baseNum = r.base !== undefined ? safeNum(r.base, 0) : undefined;
+  const applied = weightEntryIn(appliedGroups, g.key, r.id);
+  const row = document.createElement('div');
+  row.className = 'weight-row' + (r.per || r.mult || r.surcharge ? ' has-per' : '') + (compact ? ' is-compact' : '');
+  // Rows for the same weight (the main list and the one beside the card) share this key and re-sync each other.
+  row.dataset.weightKey = `${g.key}:${r.id}`;
+  const kind = WEIGHT_GROUP_KINDS[g.key];
+  // A compact row (beside the card) leaves the description and worked example to the main list.
+  const info = kind && !compact ? describeFeature(kind, r.id) : null;
+  const labelHtml = info
+    ? `<span class="feature-label" title="${esc(featureTitleText(info))}">${esc(r.label)} ${infoButtonHtml()}</span>`
+    : `<span>${esc(r.label)}</span>`;
+  const resetTitle = `Reset to ${baseNum ?? numVal}${r.per ? ` per ${r.per.base ?? r.per.value}` : ''}`;
+  // The row reads as a sentence: "[1] pts per [3] damage", with a worked example under it.
+  const shownScoring = () => stagedScoring() || state.scoring;
+  const words = weightSentence(g.key, r.id, shownScoring(), r.label);
+  const weightBox = `<input type="number" class="weight-input" step="${esc(safeNum(r.step, 1))}" value="${esc(numVal)}" aria-label="${esc(`${r.label} points`)}" />`;
+  row.innerHTML = `${labelHtml}<span class="weight-sentence"><span class="weight-words" data-part="before">${esc(words.before)}</span>${weightBox}<span class="weight-words" data-part="mid">${esc(words.mid)}</span>${perControlHtml(r)}<span class="weight-words" data-part="after">${esc(words.after)}</span>${multControlHtml(r)}${surchargeControlHtml(r)}<button type="button" class="weight-reset-btn" title="${esc(resetTitle)}" aria-label="${esc(`${r.label}: ${resetTitle}`)}">↺</button></span>${compact ? '' : '<div class="weight-example"></div>'}`;
+  const input = row.querySelector('.weight-input');
+  const perInput = row.querySelector('.weight-per');
+  const multInput = row.querySelector('.weight-mult');
+  const surchargeInput = row.querySelector('.weight-surcharge');
+  const resetBtn = row.querySelector('.weight-reset-btn');
+  const exampleEl = row.querySelector('.weight-example');
+  // The example follows the boxes as they are typed in: a copy of the shown config with the boxes' values set.
+  const typedScoring = () => {
+    const typed = clone(shownScoring());
+    withScoring(typed, () => {
+      const value = Number(input.value);
+      if (input.value !== '' && Number.isFinite(value)) r.set(value);
+      if (r.per && perInput && !r.per.options) {
+        const per = Math.round(Number(perInput.value));
+        if (Number.isFinite(per) && per >= 1) r.per.set(per);
+      }
+      if (r.surcharge && surchargeInput) r.surcharge.set(surchargeInput.checked);
+    });
+    return typed;
+  };
+  const showExample = (scoring = shownScoring()) => {
+    const now = weightSentence(g.key, r.id, scoring, r.label);
+    for (const part of row.querySelectorAll('.weight-sentence > .weight-words')) part.textContent = now[part.dataset.part];
+    if (exampleEl) exampleEl.textContent = weightExample(g.key, r.id, scoring, r.label);
+    // Compact rows beside the card keep only the value on the line; the full sentence and example are on hover.
+    if (compact) row.firstElementChild.title = [`${r.label}: ${now.before} ${row.querySelector('.weight-input')?.value ?? ''} ${now.mid} ${now.after}`.replace(/\s+/g, ' ').trim(), weightExample(g.key, r.id, scoring, r.label)].filter(Boolean).join('\n');
+  };
+  showExample();
+  input.addEventListener('input', () => showExample(typedScoring()));
+  if (perInput && !r.per.options) perInput.addEventListener('input', () => showExample(typedScoring()));
+  // Staged edits update this row's marks in place, so focus and scroll stay where the owner left them.
+  const perNow = () => (r.per.options ? perInput.value : Number(perInput.value));
+  const perDiffers = (other) => Boolean(r.per) && other !== undefined && perNow() !== other;
+  const multDiffers = (other) => Boolean(multInput) && other !== undefined && multInput.checked !== other;
+  const surchargeDiffers = (other) => Boolean(surchargeInput) && other !== undefined && surchargeInput.checked !== other;
+  const markRow = () => {
+    const value = Number(input.value);
+    const modified = (baseNum !== undefined && value !== baseNum) || perDiffers(r.per?.base) || multDiffers(r.mult?.base) || surchargeDiffers(r.surcharge?.base);
+    const pending = !applied || value !== safeNum(applied.val, 0) || perDiffers(applied.per?.value) || multDiffers(applied.mult?.value) || surchargeDiffers(applied.surcharge?.value);
+    row.classList.toggle('is-modified', modified);
+    row.classList.toggle('is-pending', pending);
+    row.classList.toggle('is-surcharge-off', Boolean(surchargeInput && !surchargeInput.checked));
+    row.title = pending ? 'Staged: Apply to rescore the cards' : '';
+    resetBtn.classList.toggle('is-clean', !modified);
+  };
+  // After an edit the row shows what its setter stored (Band Width 0 is stored as 1), then re-marks.
+  const showStored = () => {
+    const stored = weightEntryIn(withScoring(stagedScoring() || state.scoring, buildWeightGroups), g.key, r.id);
+    if (stored) { input.value = String(safeNum(stored.val, 0)); input.step = String(safeNum(stored.step, 1)); }
+    if (stored?.per && perInput) perInput.value = String(stored.per.value);
+    if (stored?.mult && multInput) multInput.checked = stored.mult.value;
+    if (stored?.surcharge && surchargeInput) surchargeInput.checked = stored.surcharge.value;
+    markRow();
+    showExample();
+  };
+  row.weightSync = showStored;
+  const afterEdit = () => { showStored(); syncWeightTwins(row); };
+  markRow();
+  input.addEventListener('change', () => {
+    const n = Number(input.value);
+    if (!Number.isFinite(n)) return;
+    applyWeightEdit(() => r.set(n));
+    afterEdit();
+  });
+  perInput?.addEventListener('change', () => {
+    const next = r.per.options ? perInput.value : Math.max(1, Math.round(Number(perInput.value)));
+    if (!r.per.options && !Number.isFinite(next)) return;
+    applyWeightEdit(() => r.per.set(next));
+    afterEdit();
+  });
+  multInput?.addEventListener('change', () => {
+    applyWeightEdit(() => r.mult.set(multInput.checked));
+    afterEdit();
+  });
+  surchargeInput?.addEventListener('change', () => {
+    applyWeightEdit(() => r.surcharge.set(surchargeInput.checked));
+    afterEdit();
+  });
+  resetBtn.addEventListener('click', () => {
+    const perChanged = perDiffers(r.per?.base) || multDiffers(r.mult?.base) || surchargeDiffers(r.surcharge?.base);
+    if (baseNum === undefined && !perChanged) return;
+    // Read the row's live controls: staged edits do not redraw it, so r.per / r.mult values can be stale.
+    const resetMult = multDiffers(r.mult?.base);
+    const resetPer = perDiffers(r.per?.base);
+    const resetSurcharge = surchargeDiffers(r.surcharge?.base);
+    applyWeightEdit(() => {
+      if (resetMult) r.mult.set(r.mult.base);
+      if (resetSurcharge) r.surcharge.set(r.surcharge.base);
+      if (baseNum !== undefined) r.set(baseNum);
+      if (resetPer) r.per.set(r.per.base);
+    });
+    afterEdit();
+  });
+  if (info) row.insertAdjacentHTML('beforeend', infoLineHtml(info));
+  return row;
+}
+
+// The weight row each effect op is scored by: its EFFECT_SCORE_KEYS weight, else an effects entry of its own name.
+function effectWeightKey(op) {
+  const weight = EFFECT_SCORE_KEYS[op]?.weight ?? (state.scoring.effects?.[op] ? op : null);
+  return weight ? `effects:${weight}` : null;
+}
+
+// The weight row a ScoreCard part is scored by, for one card (upgrade parts are named by the card's tags).
+const SCORE_PART_EFFECT_WEIGHTS = Object.freeze({ 'HP cost': 'loseHp', counter: 'counterStack', blockBreak: 'blockBreak' });
+function scorePartWeightKey(def, part) {
+  if (part === 'SP' || part === 'MP') return `costs:${part.toLowerCase()}`;
+  if (part.startsWith('category:')) return `categories:${part.slice('category:'.length)}`;
+  if (part === 'effect count') return 'rank:effectCount';
+  if (state.scoring.statuses?.[part]) return `statuses:${part}`;
+  const effect = SCORE_PART_EFFECT_WEIGHTS[part] || Object.values(EFFECT_SCORE_KEYS).find((keys) => keys.part === part)?.weight;
+  if (effect) return `effects:${effect}`;
+  if (state.scoring.keywords?.[part]) return `keywords:${part}`;
+  if (state.scoring.tags?.[part]) return `tags:${part}`;
+  const upgrade = (def.tags || []).map(ParseUpgradeTag).find((parsed, i) => parsed && UpgradeTagLabel(def.tags[i]) === part);
+  return upgrade ? `upgradeTags:${upgrade.family}` : null;
+}
+
+// The weights most edited for one card (owner, 2026-11-26): SP and MP cost, its card type, damage, then what
+// its own effects and statuses are multiplied by in effect order; fewer than four of those are topped up with
+// its largest other score parts.
+const CONTEXT_FEATURE_ROWS = 4;
+function cardWeightKeys(def) {
+  const head = ['costs:sp', 'costs:mp'];
+  const kind = cardKindOf(def);
+  if (CATEGORY_KEYS.includes(kind)) head.push(`categories:${kind}`);
+  const features = [];
+  const effects = def.effects || [];
+  if (effects.some((eff) => eff.op === 'damage')) features.push('effects:damage');
+  for (const eff of effects) {
+    const key = eff.op === 'applyStatus' ? `statuses:${eff.status}` : eff.op === 'gainBarrier' ? 'statuses:barrier' : effectWeightKey(eff.op);
+    if (key && !features.includes(key)) features.push(key);
+  }
+  if (features.length < CONTEXT_FEATURE_ROWS) {
+    const parts = Object.entries(scoreCardEntry(def).parts || {}).filter(([, value]) => value).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
+    for (const [part] of parts) {
+      if (features.length >= CONTEXT_FEATURE_ROWS) break;
+      const key = scorePartWeightKey(def, part);
+      if (key && !head.includes(key) && !features.includes(key)) features.push(key);
+    }
+  }
+  return [...head, ...features];
+}
+
+// The Weights view's rows beside the card: the same rows as the main list (staged, synced with their twins).
+function renderCardWeightFields(container, def) {
+  const { appliedGroups, groups } = weightGroupsShown();
+  container.replaceChildren();
+  for (const key of cardWeightKeys(def)) {
+    const split = key.indexOf(':');
+    const g = groups.find((group) => group.key === key.slice(0, split));
+    const r = g && weightEntryIn(groups, g.key, key.slice(split + 1));
+    if (!r) continue;
+    // One small header over the toggle columns, before the first row that is not a cost.
+    if (g.key !== 'costs' && !container.querySelector('.weight-context-head')) container.append(weightContextHead());
+    container.append(buildWeightRow(g, r, appliedGroups, { compact: true }));
+  }
+  return container.children.length > 0;
+}
+
+function weightContextHead() {
+  const head = document.createElement('div');
+  head.className = 'weight-context-head'; head.setAttribute('aria-hidden', 'true');
+  head.innerHTML = '<span title="The weight, its tag or feature">Tag / feature</span><span class="weight-sentence">'
+    + '<span title="Points per unit: per SP, per stack, per damage">Pts</span>'
+    + '<span title="Scalar: use the value as a multiplier of the card\'s positive score">Scalar</span>'
+    + '<span title="Surcharge: apply this CP surcharge">Surch.</span><span></span></span>';
+  return head;
+}
+
+// The Deck lists view's rows beside the card: every deck holding it (custom decks and the read-only class and
+// subclass templates) and an Add to deck select. Changes go through the deck helpers and the panel's commit path.
+function renderCardDeckFields(container, def) {
+  const decks = deckCatalogOptions(state).filter((row) => row.kind !== 'all').map((row) => resolveStudioDeck(state, row.id)).filter(Boolean);
+  const holding = decks.filter((deck) => deck.cardIds.includes(def.id));
+  const addable = decks.filter((deck) => deck.kind === 'custom' && !deck.readOnly && !deck.cardIds.includes(def.id));
+  const list = document.createElement('div');
+  list.className = 'deck-context-list';
+  // Deck ids hold no duplicates (resolveStudioDeck), so a row needs no copy count.
+  const rows = holding.map((deck) => `<div class="deck-context-row" data-deck-id="${esc(deck.id)}">
+      <span class="deck-context-name" title="${esc(deck.name)}">${esc(deck.name)}</span>
+      ${deck.readOnly
+    ? '<span class="deck-context-template" title="Read-only template">template</span>'
+    : `<button type="button" class="s-btn s-btn-sm deck-context-remove" data-deck-remove="${esc(deck.id)}" aria-label="${esc(`Remove ${def.name} from ${deck.name}`)}">✕</button>`}
+    </div>`).join('');
+  const options = addable.map((deck) => `<option value="${esc(deck.id)}">${esc(deck.name)}</option>`).join('');
+  list.innerHTML = `${rows || '<p class="studio-muted deck-context-empty">Not in any deck yet.</p>'}
+    <select class="deck-context-add" aria-label="${esc(`Add ${def.name} to a deck`)}" ${addable.length ? '' : 'disabled'}><option value="">${addable.length ? 'Add to deck…' : 'No other deck to add to'}</option>${options}</select>`;
+  // Same commit as the Deck lists panel: one undo step, the draft, then every view and the panel.
+  const commit = (next, message) => {
+    pushHistory();
+    state.customDecks = next;
+    saveDraft({ autoName: false });
+    syncAllViews();
+    deckListPanelUi?.refresh();
+    toast(message);
+  };
+  // Listeners live on this list, which every render replaces, so they never pile up on the column.
+  list.addEventListener('click', (e) => {
+    const remove = e.target.closest('[data-deck-remove]');
+    if (!remove) return;
+    const deck = holding.find((row) => row.id === remove.dataset.deckRemove);
+    try { commit(removeSelectedCardsFromDeck(state.customDecks, deck.id, [def.id]), `Removed ${def.name} from ${deck.name}.`); }
+    catch (error) { toast(error.message); }
+  });
+  list.querySelector('.deck-context-add').addEventListener('change', (e) => {
+    const deck = addable.find((row) => row.id === e.target.value);
+    if (!deck) return;
+    try { commit(addSelectedCardsToDeck(state.customDecks, deck.id, [def.id]), `Added ${def.name} to ${deck.name}.`); }
+    catch (error) { toast(error.message); }
+  });
+  container.replaceChildren(list);
+  return true;
+}
+
+// Fields beside the card in the Customize views other than Properties.
+function renderContextFields(view, container, cardId) {
+  const def = state.cards.find((card) => card.id === cardId);
+  if (!def) return false;
+  container.dataset.contextView = view;
+  if (view === 'weights') return renderCardWeightFields(container, def);
+  if (view === 'design') return renderCardArtFields(container, def);
+  if (view === 'decks') return renderCardDeckFields(container, def);
+  return false;
+}
+
+// After an edit in one row, every other row for the same weight shows the stored value too.
+function syncWeightTwins(source) {
+  for (const row of document.querySelectorAll('.weight-row[data-weight-key]')) {
+    if (row !== source && row.dataset.weightKey === source.dataset.weightKey) row.weightSync?.();
+  }
 }
 
 // Score categories (ScoreCard's scoring.categories): Martial, Magic and each Card Type.
@@ -2902,8 +3210,14 @@ function selectStudioItem(key) {
 
 function renderItemInspector() {
   const entry = state.items.find((x) => x.key === state.selectedItemKey) || state.items[0];
-  if (!entry) return;
+  if (!entry) {
+    document.getElementById('item-preview-host')?.replaceChildren();
+    state.selectedItemKey = null;
+    cardEditorDockUi?.refresh();
+    return;
+  }
   state.selectedItemKey = entry.key;
+  cardEditorDockUi?.refreshEntity?.();
   populateItemTraitControls();
   const sc = scoreItemEntry(entry, state.scoring, state.itemRules);
 
@@ -3018,6 +3332,115 @@ function activeArtLayerIdx() {
 function setActiveArtLayerIdx(idx) {
   if (state.artTarget === 'items') state.selectedItemLayerIdx = idx;
   else state.selectedLayerIdx = idx;
+}
+
+// One edit from a layer control (the Art layers list, or the rows beside the card): the control's value goes
+// into the layer, then the previews and the visible gallery update without rebuilding the layer controls.
+function applyArtLayerInput(control, layer, isItems) {
+  if (control.dataset.lEnabled !== undefined) layer.enabled = control.checked;
+  else if (control.dataset.lKind) {
+    const k = control.dataset.lKind;
+    const set = new Set(layer.entityKinds || ['weapon', 'armour', 'relic']);
+    if (control.checked) set.add(k); else set.delete(k);
+    layer.entityKinds = [...set];
+  }
+  else if (control.dataset.lField) layer[control.dataset.lField] = control.value;
+  else if (control.dataset.lNum) {
+    layer[control.dataset.lNum] = safeNum(control.value, 0);
+    if (control.dataset.lNum === 'opacity') {
+      const span = control.closest('label')?.querySelector('.opacity-val');
+      if (span) span.textContent = `${layer.opacity}%`;
+    }
+  }
+  saveDraft();
+  renderArtPreviewOnly();
+  refreshGalleryArtSoon();
+  if (isItems) renderItemInspector();
+  else renderInspector();
+}
+
+// The Design view's rows beside the card: each card art layer that applies to it, with Show and Opacity bound to
+// the layer (the same edit path as the Art layers list) and Edit to find it in that list.
+let artContextHold = false;
+function renderCardArtFields(container, def) {
+  // While a row's control is in use (focused, or a pointer is down on it) the rows are kept, so an edit's
+  // queued gallery refresh never rebuilds the slider under the pointer or takes keyboard focus away.
+  const inUse = container.contains(document.activeElement) && document.activeElement.matches('input');
+  const allLayers = state.artLayers.layers || [];
+  // Undo or a reload replaces the layer list: then the rows are rebuilt even while in use, never left on stale layers.
+  if (container.firstChild && container.dataset.cardId === def.id && container.artLayersRef === allLayers && (artContextHold || inUse)) return true;
+  container.dataset.cardId = def.id; container.artLayersRef = allLayers;
+  const layers = matchingCustomLayers(def, { includeDisabled: true });
+  const list = document.createElement('div');
+  list.className = 'art-context-list';
+  if (!layers.length) {
+    list.innerHTML = '<p class="studio-muted art-context-empty">No art layers match this card.</p>';
+    container.replaceChildren(list);
+    return true;
+  }
+  list.innerHTML = layers.map((layer) => {
+    const idx = allLayers.indexOf(layer);
+    const name = layer.name || layer.id;
+    const opacity = safeNum(layer.opacity, 100);
+    return `<div class="art-context-row${layer.enabled === false ? ' is-off' : ''}" data-layer-idx="${idx}">
+      <span class="art-context-name" title="${esc(name)}">${esc(name)}</span>
+      <label class="art-context-show"><input type="checkbox" data-l-enabled="${idx}" ${layer.enabled !== false ? 'checked' : ''} aria-label="${esc(`Show ${name}`)}" /> Show</label>
+      <button type="button" class="s-btn s-btn-sm art-context-edit" data-layer-edit="${idx}" aria-label="${esc(`Edit ${name} in the layer list`)}">Edit</button>
+      <label class="art-context-opacity"><input type="range" data-l-num="opacity" data-l-idx="${idx}" min="0" max="100" value="${esc(opacity)}" aria-label="${esc(`${name} opacity`)}" /><span class="opacity-val">${esc(opacity)}%</span></label>
+    </div>`;
+  }).join('');
+  // Listeners live on this list, which every render replaces, so they never pile up on the column.
+  let historyPushed = false;
+  list.addEventListener('focusin', () => { historyPushed = false; });
+  list.addEventListener('input', (e) => {
+    const idx = Number(e.target.dataset.lIdx ?? e.target.dataset.lEnabled);
+    // Read the layer from the current state at edit time, not from the list these rows were built from.
+    const layer = (state.artLayers.layers || [])[idx];
+    if (!layer) return;
+    if (!historyPushed) { pushHistory(); historyPushed = true; }
+    applyArtLayerInput(e.target, layer, false);
+    e.target.closest('.art-context-row')?.classList.toggle('is-off', layer.enabled === false);
+    mirrorArtListControls(idx, layer);
+  });
+  list.addEventListener('pointerdown', () => {
+    artContextHold = true;
+    window.addEventListener('pointerup', () => { artContextHold = false; }, { once: true });
+  });
+  list.addEventListener('change', () => { historyPushed = false; renderCardsGrid(); });
+  list.addEventListener('click', (e) => {
+    const edit = e.target.closest('[data-layer-edit]');
+    if (edit) showArtLayerInList(Number(edit.dataset.layerEdit));
+  });
+  container.replaceChildren(list);
+  return true;
+}
+
+// The Art layers list shows an edit made beside the card without being rebuilt.
+function mirrorArtListControls(idx, layer) {
+  if (state.artTarget === 'items') return;
+  const cardEl = document.querySelector(`#art-layers-list .layer-card[data-layer-card-idx="${idx}"]`);
+  if (!cardEl) return;
+  const show = cardEl.querySelector(`[data-l-enabled="${idx}"]`);
+  if (show) show.checked = layer.enabled !== false;
+  const opacity = cardEl.querySelector('[data-l-num="opacity"]');
+  if (opacity) {
+    opacity.value = String(safeNum(layer.opacity, 100));
+    const span = opacity.closest('label')?.querySelector('.opacity-val');
+    if (span) span.textContent = `${safeNum(layer.opacity, 100)}%`;
+  }
+}
+
+// Edit beside the card: select that card layer in the Art layers list, open its section and bring it into view.
+function showArtLayerInList(idx) {
+  state.artTarget = 'cards';
+  setActiveArtLayerIdx(idx);
+  renderArtTab();
+  const cardEl = document.querySelector(`#art-layers-list .layer-card[data-layer-card-idx="${idx}"]`);
+  if (!cardEl) return;
+  const section = cardEl.closest('details');
+  if (section && !section.open) section.open = true;
+  cardEl.scrollIntoView({ block: 'center' });
+  cardEl.querySelector('[data-l-field="name"]')?.focus({ preventScroll: true });
 }
 
 function renderArtPreviewOnly() {
@@ -3782,6 +4205,8 @@ function setupMenus() {
 function setCustomizationView(view) {
   document.querySelector(`.studio-tab[data-tab="${activeGallery}"]`).click();
   cardEditorDockUi?.setView(view);
+  // On narrow screens the pane is a panel of its own: show it, or the chosen view stays hidden.
+  cardEditorDockUi?.setPanel?.('editor');
   if (cardEditorDockUi && !cardEditorDockUi.isDocked()) cardEditorDockUi.open?.();
 }
 
@@ -3838,6 +4263,8 @@ function setupStudioMenubar() {
   if (advanced) { panel('file').append(advanced); document.getElementById('btn-more').textContent = 'Advanced settings…'; document.getElementById('btn-more').classList.add('menu-item'); document.getElementById('btn-more').classList.remove('s-btn-icon'); }
   move('edit', 'btn-undo', 'Undo'); move('edit', 'btn-redo', 'Redo');
   command('edit', 'menu-rename-current', 'Rename card…', () => {
+    // The docked pane lives in the gallery panel; show it first when Sandbox or Effects is active.
+    document.querySelector(`.studio-tab[data-tab="${activeGallery}"]`)?.click();
     if (activeGallery === 'items') cardEditorDockUi.editItem(state.selectedItemKey); else cardEditorDockUi.edit(state.selectedCardId);
     const input = document.getElementById(activeGallery === 'items' ? 'item-edit-name' : 'edit-name'); input.focus(); input.select();
   });
@@ -4079,6 +4506,8 @@ function wireEvents() {
       if (tab === 'weights' || tab === 'art') {
         document.querySelector(`.studio-tab[data-tab="${activeGallery}"]`).click();
         cardEditorDockUi?.setView?.(tab === 'art' ? 'design' : 'weights');
+        // Import and saved-settings flows land here; on narrow screens the pane must be shown too.
+        cardEditorDockUi?.setPanel?.('editor');
         if (tab === 'art') renderArtTab(); else renderWeights();
         return;
       }
@@ -4648,27 +5077,7 @@ function wireEvents() {
     const layer = activeArtLayersObj().layers[idx];
     if (!layer) return;
     if (!layerEditHistoryPushed) { pushHistory(); layerEditHistoryPushed = true; }
-    if (e.target.dataset.lEnabled !== undefined) layer.enabled = e.target.checked;
-    else if (e.target.dataset.lKind) {
-      const k = e.target.dataset.lKind;
-      const set = new Set(layer.entityKinds || ['weapon', 'armour', 'relic']);
-      if (e.target.checked) set.add(k); else set.delete(k);
-      layer.entityKinds = [...set];
-    }
-    else if (e.target.dataset.lField) layer[e.target.dataset.lField] = e.target.value;
-    else if (e.target.dataset.lNum) {
-      layer[e.target.dataset.lNum] = safeNum(e.target.value, 0);
-      if (e.target.dataset.lNum === 'opacity') {
-        const span = e.target.closest('label')?.querySelector('.opacity-val');
-        if (span) span.textContent = `${layer.opacity}%`;
-      }
-    }
-    saveDraft();
-    // Update previews and the visible gallery without rebuilding the layer controls.
-    renderArtPreviewOnly();
-    refreshGalleryArtSoon();
-    if (state.artTarget === 'items') renderItemInspector();
-    else renderInspector();
+    applyArtLayerInput(e.target, layer, state.artTarget === 'items');
   });
   document.getElementById('art-layers-list').addEventListener('change', () => {
     layerEditHistoryPushed = false;
@@ -4907,9 +5316,10 @@ async function boot() {
     selectCard: id => { document.querySelector('.studio-tab[data-tab="cards"]').click(); selectStudioCard(id); },
     selectItem: key => { document.querySelector('.studio-tab[data-tab="items"]').click(); selectStudioItem(key); },
     openDeckManager: () => studioToolsUi.openDecksModal(),
-    onOpen: () => cardEditorDockUi?.setView('decks'),
+    onOpen: () => { cardEditorDockUi?.setView('decks'); cardEditorDockUi?.setPanel?.('editor'); },
+    onRowSelect: () => cardEditorDockUi?.showProperties(),
   });
-  cardEditorDockUi = initCardEditorDock({ state, selectCard: selectStudioCard,
+  cardEditorDockUi = initCardEditorDock({ state, selectCard: selectStudioCard, getCardActions: cardMenuActions, narrowQuery: NARROW_LAYOUT_QUERY,
     renameCard: () => { const input = document.getElementById('edit-name'); input.focus(); input.select(); },
     balanceCard: id => studioToolsUi.openBalanceSelection([id]),
     selectItem: selectStudioItem, getSelectedItemId: () => state.selectedItemKey,
@@ -4917,9 +5327,10 @@ async function boot() {
     renameItem: () => { const input = document.getElementById('item-edit-name'); input?.focus(); input?.select(); },
     balanceItem: key => studioToolsUi.openBalanceItems([key]),
     views: { design: document.getElementById('tab-art'), weights: document.getElementById('tab-weights'), decks: () => deckListPanelUi?.element },
+    renderContextFields,
     onViewChange: view => { if (view === 'design') renderArtTab(); else if (view === 'weights') renderWeights(); else if (view === 'decks') deckListPanelUi?.refresh(); },
   });
-  document.getElementById('btn-open-decks').addEventListener('click', () => { cardEditorDockUi?.setView?.('decks'); deckListPanelUi?.refresh(); });
+  document.getElementById('btn-open-decks').addEventListener('click', () => { setCustomizationView('decks'); deckListPanelUi?.refresh(); });
   document.getElementById('btn-custom-decks-items')?.addEventListener('click', () => studioToolsUi.openDecksModal());
 
   // Web mode (GitHub Pages): nothing can be written to the repo, so the repo controls go and

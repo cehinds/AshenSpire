@@ -116,7 +116,8 @@ export function initDeckListPanel(ctx) {
     details.textContent = isItem ? `${label(card.kind)} · ${label(card.rarity || 'common')}` : `${card.staminaCost ?? card.cost ?? 0} SP · ${card.manaCost ?? 0} MP · ${label(card.rarity || 'common')}`;
     main.append(name, details); main.title = `Inspect ${card.name}`;
     if (id === (isItem ? state.selectedItemKey : state.selectedCardId)) { row.classList.add('is-current'); main.setAttribute('aria-current', 'true'); }
-    main.addEventListener('click', () => { if (isItem) ctx.selectItem?.(id); else ctx.selectCard?.(id); refresh(); }); row.append(main);
+    // A row opens the properties it promises, not just a selection.
+    main.addEventListener('click', () => { if (isItem) ctx.selectItem?.(id); else ctx.selectCard?.(id); ctx.onRowSelect?.(id, isItem); refresh(); }); row.append(main);
     if (!readonly) {
       const remove = document.createElement('button'); remove.type = 'button'; remove.className = 's-btn s-btn-sm deck-list-remove';
       remove.textContent = 'Remove'; remove.setAttribute('aria-label', `Remove ${card.name} from ${deck.name}`);

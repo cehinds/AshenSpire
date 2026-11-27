@@ -83,7 +83,7 @@ try {
   const formulaParts = breakdown.formula.match(/^Raw (-?[\d.]+) − rarity (-?[\d.]+) = CP (-?[\d.]+)/);
   assert.ok(formulaParts, `breakdown formula line is shown (${breakdown.formula})`);
   assert.equal(Number(formulaParts[1]) - Number(formulaParts[2]), Number(formulaParts[3]), 'raw minus rarity equals CP in the formula');
-  assert.equal(`CP ${formulaParts[3]}`, breakdown.summaryCp.trim(), 'the formula CP matches the inspector CP');
+  assert.equal(`CP: ${formulaParts[3]}`, breakdown.summaryCp.trim(), 'the formula CP matches the inspector CP');
 
   // 2c. An edit that changes nothing the score reads keeps the score. The edited copy used to skip the game's
   //     card projection, so retyping Acid Splash's own name charged it an extra MP and dropped CP 13 to CP 5.
