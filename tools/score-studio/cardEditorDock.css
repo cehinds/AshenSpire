@@ -47,17 +47,54 @@ body.studio-body .customization-entity {
   display: flex; flex-direction: column; flex: 0 0 auto; gap: 6px; min-width: 0;
   padding: 10px 12px; border-bottom: 1px solid var(--st-border); border-left: 3px solid var(--st-accent);
 }
-body.studio-body .customization-entity-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px 10px; min-width: 0; }
-body.studio-body .customization-entity-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-body.studio-body .customization-preview-size { display: inline-flex; align-items: center; gap: 6px; color: var(--st-muted); font-size: 12px; }
-body.studio-body .customization-preview-size[hidden],
+body.studio-body .customization-entity-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
+body.studio-body .customization-entity-heading { flex: 1 1 auto; min-width: 0; margin: 0; font-size: 15px; }
+/* The whole name bar is the collapse button; the chevron is drawn here so the name text stays clean. */
+body.studio-body .customization-entity-name,
+body.studio-body .customization-preview-float-title {
+  display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0; margin: 0; padding: 4px 6px;
+  font: inherit; font-weight: 700; color: var(--st-text); text-align: left; overflow-wrap: anywhere;
+  background: transparent; border: 1px solid transparent; border-radius: 6px; cursor: pointer;
+}
+body.studio-body .customization-entity-name::before,
+body.studio-body .customization-preview-float-title::before {
+  content: ''; flex: 0 0 auto; width: 7px; height: 7px; margin: 0 2px;
+  border-right: 2px solid var(--st-muted); border-bottom: 2px solid var(--st-muted);
+  transform: rotate(45deg); transition: transform .12s ease;
+}
+body.studio-body :is(.customization-entity-name, .customization-preview-float-title)[aria-expanded="false"]::before { transform: rotate(-45deg); }
+body.studio-body :is(.customization-entity-name, .customization-preview-float-title):hover { background: var(--st-surface-2); border-color: var(--st-border); }
+body.studio-body :is(.customization-entity-name, .customization-preview-float-title):focus-visible { outline: 2px solid var(--st-accent); outline-offset: 1px; }
+body.studio-body .customization-preview-undock { flex: 0 0 auto; }
+body.studio-body .customization-preview-undock[hidden],
+body.studio-body .customization-preview-body[hidden],
+body.studio-body .customization-preview-float[hidden],
 body.studio-body .customization-entity-preview[hidden] { display: none !important; }
-body.studio-body .customization-preview-size input[type="range"] { width: 90px; accent-color: var(--st-accent); }
-/* The pinned card scales with the window height, so a short screen gets a smaller
-   card instead of a scroll bar; Hide preview gives the editor all the room. */
-body.studio-body #customization-entity .inspector-card-preview { width: clamp(60px, calc((50dvh - 140px) * 2 / 3), var(--inspector-card-width, 165px)); }
-body.studio-body .customization-entity-name { margin: 0; min-width: 0; font-size: 15px; overflow-wrap: anywhere; }
-body.studio-body .customization-entity-name:focus-visible { outline: 2px solid var(--st-accent); outline-offset: 2px; border-radius: 2px; }
+body.studio-body .customization-preview-body { display: flex; flex-direction: column; min-width: 0; }
+/* Auto size: the card follows the window height, so short screens get a smaller card and no scroll bar. */
+body.studio-body .customization-preview-body .inspector-card-preview { width: clamp(60px, calc((50dvh - 140px) * 2 / 3), var(--inspector-card-width, 165px)); }
+/* Dragged size: the preview takes the chosen height and the card scales to fit it. */
+body.studio-body .customization-preview-body[data-sized] .customization-entity-preview { height: var(--entity-preview-h); overflow: hidden; }
+body.studio-body .customization-preview-body[data-sized] .inspector-preview-wrap { height: 100%; box-sizing: border-box; }
+body.studio-body .customization-preview-body[data-sized] .inspector-card-preview { width: max(40px, calc((var(--entity-preview-h) - 22px) * 2 / 3)); }
+body.studio-body .customization-preview-resizer {
+  position: relative; flex: 0 0 auto; height: 10px; margin-top: 2px; cursor: ns-resize; border-radius: 4px; touch-action: none;
+}
+body.studio-body .customization-preview-resizer::after {
+  content: ''; position: absolute; left: 50%; top: 4px; width: 40px; height: 3px; margin-left: -20px;
+  border-radius: 2px; background: var(--st-border);
+}
+body.studio-body .customization-preview-resizer:hover::after,
+body.studio-body .customization-preview-resizer.is-dragging::after { background: var(--st-accent); }
+body.studio-body .customization-preview-resizer:focus-visible { outline: 2px solid var(--st-accent); outline-offset: 1px; }
+/* Undocked preview: a small movable window over the page. */
+body.studio-body .customization-preview-float {
+  position: fixed; z-index: 60; display: flex; flex-direction: column; gap: 6px; max-width: min(520px, calc(100vw - 16px));
+  padding: 8px; background: var(--st-surface); border: 1px solid var(--st-border); border-radius: 10px;
+  box-shadow: 0 10px 30px rgb(0 0 0 / .45);
+}
+body.studio-body .customization-preview-float-bar { display: flex; align-items: center; gap: 8px; cursor: move; touch-action: none; }
+body.studio-body .customization-preview-float-title { flex: 1 1 auto; cursor: move; font-size: 14px; }
 body.studio-body .customization-scope { margin: 0; color: var(--st-muted); font-size: 12px; overflow-wrap: anywhere; }
 body.studio-body .customization-entity-preview { min-width: 0; }
 body.studio-body .customization-entity-preview > [hidden] { display: none !important; }
@@ -67,7 +104,7 @@ body.studio-body #studio-customization-pane[data-scope="global"] .customization-
 body.studio-body #studio-customization-pane[data-scope="deck"] .customization-entity { border-left-color: var(--st-good); }
 /* Outside Properties the preview is compact so the shared and global editors keep their room. */
 body.studio-body #studio-customization-pane:not([data-scope="card"]) .inspector-preview-wrap { padding: 6px; }
-body.studio-body #studio-customization-pane:not([data-scope="card"]) .inspector-card-preview { width: auto; height: min(220px, 40dvh); }
+body.studio-body #studio-customization-pane:not([data-scope="card"]) .customization-preview-body:not([data-sized]) .inspector-card-preview { width: auto; height: min(220px, 40dvh); }
 body.studio-body #studio-customization-pane:not([data-scope="card"]) :is(.inspector-score-summary, .subclass-upgrade-summary) { display: none; }
 body.studio-body #studio-customization-pane:not([data-scope="card"]) .item-preview-host { max-height: 220px; overflow: hidden; }
 body.studio-body #studio-customization-pane:not([data-scope="card"]) .item-preview-host .equipment-poker-card { width: 150px; }

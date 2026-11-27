@@ -61,44 +61,125 @@ export function initCardEditorDock(ctx) {
   // one native preview, moved here from the inspector rather than cloned.
   const entity = doc.createElement('section'); entity.id = 'customization-entity'; entity.className = 'customization-entity';
   entity.setAttribute('role', 'region'); entity.setAttribute('aria-label', 'Active card');
-  const entityName = doc.createElement('h2'); entityName.id = 'customization-entity-name'; entityName.className = 'customization-entity-name'; entityName.tabIndex = -1;
+  // The name bar is the preview's disclosure button: click the card name to collapse or expand it.
+  const entityHeading = doc.createElement('h2'); entityHeading.className = 'customization-entity-heading';
+  const entityName = doc.createElement('button'); entityName.type = 'button'; entityName.id = 'customization-entity-name'; entityName.className = 'customization-entity-name';
+  entityHeading.append(entityName);
   const scope = doc.createElement('p'); scope.id = 'customization-scope'; scope.className = 'customization-scope';
   const previewSlot = doc.createElement('div'); previewSlot.id = 'customization-entity-preview'; previewSlot.className = 'customization-entity-preview';
   const previews = { cards: properties.cards.querySelector('.inspector-preview-wrap'), items: properties.items?.querySelector('#item-preview-host') || null };
   for (const node of Object.values(previews)) if (node) { rememberHome(node); previewSlot.append(node); }
-  // Preview controls: hide it to give the editor the room, or size the card. Both are view state only.
-  let previewPrefs = { hidden: false, size: null };
-  try { previewPrefs = { ...previewPrefs, ...JSON.parse(storage?.getItem(PREVIEW_KEY) || '{}') }; } catch { /* Optional persistence. */ }
-  const savePreviewPrefs = () => { try { storage?.setItem(PREVIEW_KEY, JSON.stringify(previewPrefs)); } catch { /* Optional persistence. */ } };
-  const studioSizeSlider = doc.getElementById('inspector-scale-slider');
-  const sizeLabel = doc.createElement('label'); sizeLabel.className = 'customization-preview-size'; sizeLabel.textContent = 'Size ';
-  const sizeInput = doc.createElement('input'); sizeInput.type = 'range'; sizeInput.id = 'customization-preview-size';
-  sizeInput.min = studioSizeSlider?.min || '130'; sizeInput.max = studioSizeSlider?.max || '260'; sizeInput.step = '5';
-  sizeInput.value = String(previewPrefs.size || studioSizeSlider?.value || 175); sizeInput.setAttribute('aria-label', 'Preview size');
-  sizeLabel.append(sizeInput);
-  function applyPreviewSize(value, fromStudio = false) {
-    const size = Math.max(Number(sizeInput.min), Math.min(Number(sizeInput.max), Number(value) || 175));
-    sizeInput.value = String(size); previewPrefs.size = size; savePreviewPrefs();
-    if (fromStudio) return;
-    // Drive the existing Preview size slider so its card-face fitting runs as before.
-    if (studioSizeSlider) { studioSizeSlider.value = String(size); studioSizeSlider.dispatchEvent(new (doc.defaultView?.Event || Event)('input')); }
-    else doc.getElementById('inspector-card-preview')?.style.setProperty('--inspector-card-width', `${size}px`);
+  // Preview state is view state only: collapsed, its dragged height (null = auto size), and whether it floats.
+  let previewPrefs = { collapsed: false, height: null, floating: false, x: null, y: null };
+  try {
+    const saved = JSON.parse(storage?.getItem(PREVIEW_KEY) || '{}');
+    previewPrefs = { ...previewPrefs, ...saved, collapsed: !!(saved.collapsed ?? saved.hidden) };
+  } catch { /* Optional persistence. */ }
+  const savePreviewPrefs = () => {
+    const { collapsed, height, floating, x, y } = previewPrefs;
+    try { storage?.setItem(PREVIEW_KEY, JSON.stringify({ collapsed, height, floating, x, y })); } catch { /* Optional persistence. */ }
+  };
+  const PREVIEW_MIN_H = 90, PREVIEW_MAX_H = 640;
+  // Drag the bar under the preview to set its height; the card scales to fit. Double-click returns to auto size.
+  const previewResizer = doc.createElement('div'); previewResizer.className = 'customization-preview-resizer';
+  previewResizer.tabIndex = 0; previewResizer.setAttribute('role', 'separator'); previewResizer.setAttribute('aria-orientation', 'horizontal');
+  previewResizer.setAttribute('aria-label', 'Resize preview'); previewResizer.setAttribute('aria-controls', previewSlot.id);
+  previewResizer.setAttribute('aria-valuemin', String(PREVIEW_MIN_H)); previewResizer.setAttribute('aria-valuemax', String(PREVIEW_MAX_H));
+  previewResizer.title = 'Drag to resize the preview. Double-click for auto size.';
+  const previewBody = doc.createElement('div'); previewBody.className = 'customization-preview-body';
+  previewBody.append(previewSlot, previewResizer);
+  function applyPreviewHeight(value, save = true) {
+    const height = value == null ? null : Math.round(Math.max(PREVIEW_MIN_H, Math.min(PREVIEW_MAX_H, Number(value))));
+    previewPrefs.height = height;
+    if (height == null) { previewBody.style.removeProperty('--entity-preview-h'); delete previewBody.dataset.sized; }
+    else { previewBody.style.setProperty('--entity-preview-h', `${height}px`); previewBody.dataset.sized = 'true'; }
+    const shown = Math.round(height ?? previewSlot.getBoundingClientRect?.().height ?? 0);
+    previewResizer.setAttribute('aria-valuenow', String(shown));
+    previewResizer.setAttribute('aria-valuetext', height == null ? `Auto size, ${shown} pixels` : `${height} pixels`);
+    if (save) savePreviewPrefs();
+    ctx.onPreviewResize?.();
   }
-  sizeInput.addEventListener('input', () => applyPreviewSize(sizeInput.value));
-  studioSizeSlider?.addEventListener('input', () => { if (studioSizeSlider.value !== sizeInput.value) applyPreviewSize(studioSizeSlider.value, true); });
-  const previewToggle = button('', () => setPreviewHidden(!previewPrefs.hidden), 's-btn s-btn-sm customization-preview-toggle');
-  previewToggle.id = 'customization-preview-toggle'; previewToggle.setAttribute('aria-controls', previewSlot.id);
-  function setPreviewHidden(value) {
-    previewPrefs.hidden = !!value; savePreviewPrefs();
-    previewSlot.hidden = previewPrefs.hidden; sizeLabel.hidden = previewPrefs.hidden || context === 'items';
-    previewToggle.textContent = previewPrefs.hidden ? 'Show preview' : 'Hide preview';
-    previewToggle.setAttribute('aria-expanded', String(!previewPrefs.hidden));
+  let previewDrag = null;
+  previewResizer.addEventListener('pointerdown', event => {
+    previewDrag = { y: event.clientY, h: previewSlot.getBoundingClientRect().height };
+    previewResizer.classList.add('is-dragging'); previewResizer.setPointerCapture?.(event.pointerId);
+    previewResizer.focus?.({ preventScroll: true }); event.preventDefault();
+  });
+  previewResizer.addEventListener('pointermove', event => { if (previewDrag) applyPreviewHeight(previewDrag.h + event.clientY - previewDrag.y, false); });
+  const endPreviewDrag = () => { if (!previewDrag) return; previewDrag = null; previewResizer.classList.remove('is-dragging'); savePreviewPrefs(); };
+  previewResizer.addEventListener('pointerup', endPreviewDrag); previewResizer.addEventListener('pointercancel', endPreviewDrag);
+  previewResizer.addEventListener('dblclick', () => applyPreviewHeight(null));
+  previewResizer.addEventListener('keydown', event => {
+    if (event.key === 'Enter' || event.key === 'Escape') { event.preventDefault(); applyPreviewHeight(null); return; }
+    const current = previewPrefs.height ?? previewSlot.getBoundingClientRect().height;
+    const next = { ArrowUp: current - 20, ArrowDown: current + 20, Home: PREVIEW_MIN_H, End: PREVIEW_MAX_H }[event.key];
+    if (next == null) return;
+    event.preventDefault(); applyPreviewHeight(next);
+  });
+  // Undock: the same preview node moves into a small floating window you can drag anywhere.
+  const floatWin = doc.createElement('section'); floatWin.id = 'customization-preview-float'; floatWin.className = 'customization-preview-float'; floatWin.hidden = true;
+  floatWin.setAttribute('aria-label', 'Card preview');
+  const floatBar = doc.createElement('div'); floatBar.className = 'customization-preview-float-bar';
+  const floatTitle = doc.createElement('button'); floatTitle.type = 'button'; floatTitle.className = 'customization-preview-float-title';
+  floatTitle.setAttribute('aria-controls', previewSlot.id);
+  const floatDock = button('Dock', () => setPreviewFloating(false), 's-btn s-btn-sm'); floatDock.id = 'customization-preview-dock';
+  floatBar.append(floatTitle, floatDock); floatWin.append(floatBar); doc.body.append(floatWin);
+  const previewUndock = button('Undock preview', () => setPreviewFloating(true), 's-btn s-btn-sm customization-preview-undock');
+  previewUndock.id = 'customization-preview-undock';
+  function setPreviewCollapsed(value) {
+    previewPrefs.collapsed = !!value; savePreviewPrefs();
+    previewBody.hidden = previewPrefs.collapsed;
+    for (const toggleNode of [entityName, floatTitle]) toggleNode.setAttribute('aria-expanded', String(!previewPrefs.collapsed));
+    entity.dataset.previewCollapsed = String(previewPrefs.collapsed);
   }
-  const entityControls = doc.createElement('div'); entityControls.className = 'customization-entity-controls';
-  entityControls.append(sizeLabel, previewToggle);
+  entityName.setAttribute('aria-controls', previewSlot.id);
+  entityName.addEventListener('click', () => setPreviewCollapsed(!previewPrefs.collapsed));
+  let floatMoved = false, floatDrag = null;
+  floatTitle.addEventListener('click', event => {
+    if (floatMoved) { floatMoved = false; event.preventDefault(); return; }
+    setPreviewCollapsed(!previewPrefs.collapsed);
+  });
+  floatBar.addEventListener('pointerdown', event => {
+    if (event.target === floatDock) return;
+    const box = floatWin.getBoundingClientRect();
+    floatDrag = { dx: event.clientX - box.left, dy: event.clientY - box.top, x: event.clientX, y: event.clientY }; floatMoved = false;
+    floatBar.setPointerCapture?.(event.pointerId);
+  });
+  floatBar.addEventListener('pointermove', event => {
+    if (!floatDrag) return;
+    if (Math.abs(event.clientX - floatDrag.x) + Math.abs(event.clientY - floatDrag.y) > 4) floatMoved = true;
+    if (floatMoved) placeFloat(event.clientX - floatDrag.dx, event.clientY - floatDrag.dy, false);
+  });
+  const endFloatDrag = () => { if (!floatDrag) return; floatDrag = null; savePreviewPrefs(); };
+  floatBar.addEventListener('pointerup', endFloatDrag); floatBar.addEventListener('pointercancel', endFloatDrag);
+  function placeFloat(x, y, save = true) {
+    const win = doc.defaultView || globalThis, w = floatWin.offsetWidth || 240;
+    const maxX = Math.max(0, (win.innerWidth || 1280) - w), maxY = Math.max(0, (win.innerHeight || 800) - 48);
+    previewPrefs.x = Math.round(Math.max(0, Math.min(maxX, x ?? maxX - 24)));
+    previewPrefs.y = Math.round(Math.max(0, Math.min(maxY, y ?? 120)));
+    floatWin.style.left = `${previewPrefs.x}px`; floatWin.style.top = `${previewPrefs.y}px`;
+    if (save) savePreviewPrefs();
+  }
+  function placePreview() {
+    // Floating is a desktop choice; the narrow layout always keeps the preview in the pane.
+    const narrow = !!narrowMedia?.matches, floating = previewPrefs.floating && !narrow;
+    if (floating) {
+      if (previewBody.parentNode !== floatWin) floatWin.append(previewBody);
+      floatWin.hidden = false; placeFloat(previewPrefs.x, previewPrefs.y, false);
+    } else {
+      if (previewBody.parentNode !== entity) entity.append(previewBody);
+      floatWin.hidden = true;
+    }
+    entity.dataset.previewFloating = String(floating);
+    previewUndock.hidden = narrow || floating;
+  }
+  function setPreviewFloating(value) {
+    previewPrefs.floating = !!value; savePreviewPrefs(); placePreview();
+    (previewPrefs.floating ? floatDock : entityName).focus?.({ preventScroll: true });
+  }
   const entityHead = doc.createElement('div'); entityHead.className = 'customization-entity-head';
-  entityHead.append(entityName, entityControls);
-  entity.append(entityHead, scope, previewSlot);
+  entityHead.append(entityHeading, previewUndock);
+  entity.append(entityHead, scope, previewBody);
   const content = doc.createElement('div'); content.id = 'customization-content';
   const slots = Object.fromEntries(VIEWS.map(id => {
     const slot = doc.createElement('div'); slot.className = 'customization-view'; slot.dataset.customizationView = id; content.append(slot); return [id, slot];
@@ -281,6 +362,7 @@ export function initCardEditorDock(ctx) {
     const noun = context === 'items' ? 'item' : 'card', valid = isValid(context), name = valid ? selectedName() || selectedId(context) : 'none';
     entity.setAttribute('aria-label', context === 'items' ? 'Active item' : 'Active card');
     entityName.textContent = valid ? name : `No ${noun} selected`;
+    floatTitle.textContent = valid ? name : `No ${noun} selected`;
     scope.textContent = SCOPE_TEXT[view](noun, name);
     if (!valid && view === 'properties') scope.textContent = `Choose a ${noun} in the library to edit it.`;
     pane.setAttribute('data-scope', VIEW_SCOPES[view]);
@@ -290,7 +372,6 @@ export function initCardEditorDock(ctx) {
     for (const [key, node] of Object.entries(properties)) if (node) node.hidden = key !== context || !valid;
     for (const [key, node] of Object.entries(previews)) if (node) node.hidden = key !== context || !valid;
     rename.disabled = balance.disabled = !valid;
-    sizeLabel.hidden = previewPrefs.hidden || context === 'items';
     for (const nav of navs) {
       const navName = isValid(nav.key) ? nameOf(nav.key) || selectedId(nav.key) : 'none';
       nav.editor.textContent = `${nav.key === 'items' ? 'Item' : 'Card'}: ${navName}`;
@@ -359,8 +440,8 @@ export function initCardEditorDock(ctx) {
     });
   }
   // Crossing the breakpoint starts on the library, so focus is never left on a hidden gallery tile.
-  narrowMedia?.addEventListener?.('change', () => { panel = 'library'; applyPanel(); });
+  narrowMedia?.addEventListener?.('change', () => { panel = 'library'; applyPanel(); placePreview(); });
   setContext('cards'); setDocked(docked); setView(view);
-  setPreviewHidden(previewPrefs.hidden); applyPreviewSize(previewPrefs.size || sizeInput.value);
+  setPreviewCollapsed(previewPrefs.collapsed); applyPreviewHeight(previewPrefs.height, false); placePreview();
   return { edit: id => edit(id, 'cards'), editItem: id => edit(id, 'items'), decorateTile: (tile, def) => decorate(tile, def, 'cards'), decorateItemTile: (tile, def) => decorate(tile, def, 'items'), open: openModal, refresh, refreshEntity: renderEntity, showProperties, setPanel, getPanel: () => panel, setDocked, setContext, setView, isDocked: () => docked, getView: () => view, element: pane };
 }
