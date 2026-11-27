@@ -40,10 +40,7 @@ function tokenText(values, token)
         : null;
 }
 
-/**
- * Replaces each token from `values`; a token with no value stays as written,
- * or becomes `options.missing` when that is given (list rows pass '').
- */
+/** Fills each token from `values`; a missing one stays as written, or becomes `options.missing`. */
 export function FillTemplate(template, values = {}, options = {})
 {
     return template.replace(PLACEHOLDER, (match, token) =>

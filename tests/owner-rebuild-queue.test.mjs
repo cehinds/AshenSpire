@@ -1,9 +1,10 @@
 // npm run play's enemy sheet watcher: saves during a rebuild queue one more instead of being lost.
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { OWNER_TOOLS } from '../tools/owner/ownerConfig.mjs';
 import { CreateRebuildQueue } from '../tools/owner/rebuildQueue.mjs';
 
-const DELAY_MS = 200;
+const DELAY_MS = OWNER_TOOLS.play.rebuildDelayMs;
 
 /** Timers that run only when the test says so. */
 function manualTimers()
