@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-11-27
+
+- **Faster card checks** ([#3009](https://github.com/cehinds/AshenSpire/pull/3009), `0.7.5.132`). Avoid unused authored tag lookups when cards already have resolved tags, while preserving card identity and validation.
+
 ## 2026-11-26
 
 - **Score Studio implementation reference and first workspace story** ([#3006](https://github.com/cehinds/AshenSpire/pull/3006), `0.7.5.132`). The project guide links the prioritized Score Studio plan, complete feature checklist and use cases. The first persistent library, preview and inspector task has a user story, acceptance criteria and implementation checklist. This adds a shared reference; the proposed UI features are not implemented by this change.
