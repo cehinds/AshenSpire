@@ -60,6 +60,9 @@ test('a change to ui/tokens.json (or a replaced content/config) owes config-buil
   assert.deepEqual(buildToolsFor('styles/tokens.generated.css'), [], 'the file tokens-css writes does not owe it');
   assert.deepEqual(buildToolsFor('content/hud-layout/tablet.json'), ['hud-layout-css.mjs']);
   assert.deepEqual(buildToolsFor('src/main.js'), []);
+  const balanceTables = ['combat-power-report.mjs', 'level-lists.mjs'];
+  assert.deepEqual(buildToolsFor('content/source/weapons.csv'), ['content-build.mjs', ...balanceTables], 'content edits refresh item ranks and reward bands');
+  assert.deepEqual(buildToolsFor('games/ashenspire/packs/core/cards.json'), ['game-config.mjs build', ...balanceTables]);
 });
 
 function makeTree() {

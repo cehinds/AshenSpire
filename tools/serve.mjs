@@ -101,8 +101,11 @@ const WATCH_DEBOUNCE_MS = 150;
 const WATCH_SKIP = /(^|\/)(\.|node_modules(\/|$))|~$|\.sw[px]$|\.tmp$/;
 
 /** The order builders run in when one batch needs several. */
+const BALANCE_TABLE_TOOLS = ['combat-power-report.mjs', 'level-lists.mjs'];
 const BUILD_ORDER = ['config-build.mjs', 'tokens-css.mjs', 'hud-layout-css.mjs', 'framework-data-build.mjs', 'content-build.mjs',
-  'game-config.mjs build']; // last: it hashes src/** and reads the other generated modules
+  'game-config.mjs build', // it hashes src/** and reads the other generated modules
+  ...BALANCE_TABLE_TOOLS]; // item ranks and reward bands read content and game packs
+
 
 /** Which build tool (in tools/) must run before a change under `rel` can be seen. */
 export function buildToolFor(rel) {
@@ -139,8 +142,12 @@ export function buildToolsFor(rel) {
   if (tool === 'config-build.mjs' && TOKENS_JSON_AND_ANCESTORS.includes(rel)) {
     return [tool, 'tokens-css.mjs'];
   }
+  if (BALANCE_TABLE_SOURCES.includes(tool)) return [tool, ...BALANCE_TABLE_TOOLS];
   return tool ? [tool] : [];
 }
+// Content and game-pack edits move item ranks and reward bands, so their tables are rebuilt too
+// (skipped where a trimmed root, such as a test fixture, has no such tool).
+const BALANCE_TABLE_SOURCES = ['content-build.mjs', 'game-config.mjs build'];
 const TOKENS_JSON_AND_ANCESTORS = ['content/config', 'content/config/ui', 'content/config/ui/tokens.json'];
 
 /** Last 20 lines of a tool's output, for the error banner. */
@@ -242,7 +249,7 @@ function startWatch(root, emit) {
         // module, so config-build must finish first. A builder an earlier
         // failure skipped stays owed until a round runs it.
         const wanted = new Set([...owed, ...batch.flatMap(buildToolsFor)]);
-        const tools = BUILD_ORDER.filter((tool) => wanted.has(tool));
+        const tools = BUILD_ORDER.filter((tool) => wanted.has(tool) && (!BALANCE_TABLE_TOOLS.includes(tool) || existsSync(join(root, 'tools', tool))));
         let failure = null, at = 0;
         for (; at < tools.length; at++) {
           failure = await runBuild(root, tools[at]);
