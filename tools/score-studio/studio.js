@@ -49,6 +49,7 @@ import { initGalleryZoom } from './galleryZoom.js';
 import { focusedEffectOptions } from './focusedRebalance.js';
 import { createAddCardTile, CaptureCardTilePositions, animateCardInsertion } from './addCardTile.js';
 import { OpenContentEditor } from './contentEditor/contentEditor.js';
+import { InitStudioSaveUi, StudioSaveMenuLabel } from './studioSaveUi.js';
 import {
   GalleryKind,
   Galleries,
@@ -81,13 +82,15 @@ const COUNT_RULE_MULTIPLIER_STEP = 0.05;
 /** One Weights row for a count rule (effectCount, drawbackCount): weight, multiplier and on/off. */
 function CountRuleRow(state, R, id, label)
 {
-  const rule = () => (state.scoring[id] ||= {});
+  // An old draft without this block shows and edits the shipped rule, not an implicit "on".
+  const rule = () => (state.scoring[id] ||= structuredClone(R[id] || {}));
+  const current = () => state.scoring[id] ?? R[id];
   const fallback = COUNT_RULE_FALLBACKS[id];
-  const isMultiplier = state.scoring[id]?.multiplier === true;
+  const isMultiplier = current()?.multiplier === true;
   return {
     id,
     label,
-    val: state.scoring[id]?.weight ?? fallback,
+    val: current()?.weight ?? fallback,
     base: R[id]?.weight ?? fallback,
     step: isMultiplier
       ? COUNT_RULE_MULTIPLIER_STEP
@@ -99,7 +102,7 @@ function CountRuleRow(state, R, id, label)
       set: (on) => { SetWeightForm(rule(), R[id], on); },
     },
     surcharge: {
-      value: state.scoring[id]?.surchargeEnabled !== false,
+      value: current()?.surchargeEnabled !== false,
       base: R[id]?.surchargeEnabled !== false,
       set: (on) => { rule().surchargeEnabled = Boolean(on); },
     },
@@ -107,6 +110,14 @@ function CountRuleRow(state, R, id, label)
 }
 
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
+const saveShortcutKey = 's';
+const fileMenu = 'file';
+const fileMenuHeadingId = 'menu-file';
+const studioSaveMenuId = 'menu-studio-save';
+const studioSaveShortcutAria = 'Control+S';
+const ariaKeyShortcutsAttribute = 'aria-keyshortcuts';
+const draftStatusId = 'draft-status';
+const restoredDraftText = 'Restored local draft temp copy';
 const AB_STORAGE_KEY = 'ashenspire:scoreStudioAB:v1';
 // Saved name sets (Rename all), kept apart from the draft so they survive a clean or exported draft.
 const NAME_SETS_STORAGE_KEY = 'ashenspire:scoreStudioNameSets:v1';
@@ -509,6 +520,7 @@ function refreshDirtyStatus() {
   else if (!state.autosave) pill.textContent = 'Unsaved edits';
   else if (state.draftStorageFailed) pill.textContent = 'Unsaved edits (storage full)';
   else pill.textContent = 'Draft auto-saved (local temp copy)';
+  studioSaveUi?.decoratePill(pill);
 }
 
 const LOADING_SHOT_MODE = parseLoadingShotMode(location.search);
@@ -628,7 +640,8 @@ function writeDraftNow() {
   state.draftStorageFailed = false;
   if (state.autosave) {
     try {
-      if (isDirty()) {
+      const keepsDraft = isDirty() || Boolean(studioSaveUi?.hasUnsavedChanges());
+      if (keepsDraft) {
         localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({
           savedAt: new Date().toISOString(),
           scoring: state.scoring,
@@ -643,6 +656,7 @@ function writeDraftNow() {
           customClasses: state.customClasses,
           customDecks: state.customDecks,
           subclassCatalog: state.subclassCatalog,
+          studioSaveRevision: studioSaveUi?.revision() ?? null,
         }));
       } else {
         localStorage.removeItem(DRAFT_STORAGE_KEY);
@@ -669,6 +683,20 @@ function saveDraft({ autoName = true } = {}) {
 // Writes a pending draft at once, so closing or hiding the tab inside the debounce loses nothing.
 function flushDraft() {
   if (draftPending) writeDraftNow();
+}
+
+// Stores a draft object as it is, such as one settled by the draft-or-saved choice.
+function storeDraft(draft)
+{
+  try
+  {
+    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+    state.draftStorageFailed = false;
+  }
+  catch
+  {
+    state.draftStorageFailed = true;
+  }
 }
 
 function restoreSnapshot(snapStr) {
@@ -3006,6 +3034,7 @@ function scorePartWeightKey(def, part) {
   if (part === 'SP' || part === 'MP') return `costs:${part.toLowerCase()}`;
   if (part.startsWith('category:')) return `categories:${part.slice('category:'.length)}`;
   if (part === 'effect count') return 'rank:effectCount';
+  if (part === 'drawback count') return 'rank:drawbackCount';
   if (state.scoring.statuses?.[part]) return `statuses:${part}`;
   const effect = SCORE_PART_EFFECT_WEIGHTS[part] || Object.values(EFFECT_SCORE_KEYS).find((keys) => keys.part === part)?.weight;
   if (effect) return `effects:${effect}`;
@@ -4383,7 +4412,8 @@ async function revertToRepo() {
   state.artLayers = clone(state.repoArtLayers);
   state.itemArtLayers = clone(state.repoItemArtLayers);
   syncAllViews();
-  refreshDirtyStatus();
+  // Keeps the revert as a draft when it differs from the Studio save files; refreshes status.
+  writeDraftNow();
   toast(reloaded ? 'Reverted to the repo version' : 'Reverted to the last loaded repo copy (server offline)');
 }
 
@@ -4421,6 +4451,7 @@ function fillSelect(select, values, allLabel = null) {
 
 let studioToolsUi = null;
 let subclassCatalogUi = null;
+let studioSaveUi = null;
 let cardSelectionUi = null;
 let cardEditorDockUi = null;
 let deckListPanelUi = null;
@@ -4645,6 +4676,23 @@ function setupStudioMenubar() {
   const group = (name, text) => { const heading = document.createElement('div'); heading.className = 'studio-menu-group-label'; heading.textContent = text; panel(name).append(heading); };
   const command = (name, id, text, action) => { const button = document.createElement('button'); button.id = id; button.type = 'button'; button.className = 'menu-item'; button.setAttribute('role', 'menuitem'); button.textContent = text; button.addEventListener('click', action); panel(name).append(button); };
   const click = id => () => document.getElementById(id)?.click();
+  const studioSaveLabel = isLocalServer
+    ? StudioSaveMenuLabel.Local
+    : StudioSaveMenuLabel.Web;
+  command(
+    fileMenu,
+    studioSaveMenuId,
+    studioSaveLabel,
+    () =>
+    {
+      // Focus goes back to the File heading, as Escape and the other menu commands do.
+      closeMenus();
+      document.getElementById(fileMenuHeadingId).focus();
+      studioSaveUi.save();
+    },
+  );
+  const studioSaveMenuItem = document.getElementById(studioSaveMenuId);
+  studioSaveMenuItem.setAttribute(ariaKeyShortcutsAttribute, studioSaveShortcutAria);
   move('file', 'btn-new-card', 'New card');
   command('file', 'menu-new-deck-selection', 'New deck from selected cards…', () => cardSelectionUi?.createDeckFromSelection());
   group('file', 'Subclass catalogs');
@@ -4764,9 +4812,17 @@ function setupShortcuts() {
     }
     const modifier = e.ctrlKey || e.metaKey;
     if (!modifier) return;
+    const key = e.key.toLowerCase();
+    // Ctrl+S saves from anywhere, a text field included,
+    // and never opens the browser's Save page dialog.
+    if (key === saveShortcutKey && !e.altKey)
+    {
+      e.preventDefault();
+      studioSaveUi?.save();
+      return;
+    }
     // Inside a text field, leave undo to the browser so typing can be undone natively.
     if (isTextEntry(e.target)) return;
-    const key = e.key.toLowerCase();
     if (key === 'z' && !e.shiftKey) {
       e.preventDefault();
       document.getElementById('btn-undo').click();
@@ -5721,6 +5777,21 @@ async function boot() {
     if (ab) { state.abSlots.A = ab.A || null; state.abSlots.B = ab.B || null; }
   } catch { /* ignore */ }
 
+  studioSaveUi = InitStudioSaveUi({
+    state,
+    editedCards,
+    removedCoreIds,
+    mergeStudioCards,
+    isLocalServer,
+    isTextEntry,
+    flushDraft,
+    writeDraftNow,
+    storeDraft,
+    refreshDirtyStatus,
+    toast,
+    download: downloadJsonFile,
+    clone,
+  });
   initSandboxEnemies();
   setupStudioMenubar();
   wireEvents();
@@ -5813,12 +5884,16 @@ async function boot() {
   await loadFromRepo(state.repoPath);
   state.coreCardIds = state.cards.map((c) => c.id);
   state.coreShape = MeasurePoolShape(state.cards, { rankOf: (c) => state.baselineRanks[c.id] ?? 0, scoring: state.repoScoring });
+  // The Studio's own saved files load after the game content and before the draft.
+  await studioSaveUi.loadSavedFiles();
 
   // Restore local draft temp copy if present. Everything is checked first; state changes only after.
   let restoredDraft = false;
   try {
     const draft = JSON.parse(localStorage.getItem(DRAFT_STORAGE_KEY) || 'null');
     if (draft?.scoring && ValidateScoringConfig(draft.scoring).length === 0) {
+      await studioSaveUi.reconcileDraft(draft);
+      studioSaveUi.applySavedFiles({ draftApplies: true });
       const draftArtLayers = Array.isArray(draft.artLayers?.layers) ? draft.artLayers : null;
       const draftCards = (Array.isArray(draft.customCards) ? draft.customCards : [])
         .filter((card) => card && typeof card === 'object' && !Array.isArray(card) && typeof card.id === 'string' && card.id);
@@ -5853,23 +5928,23 @@ async function boot() {
         else state.items.unshift(draftItem);
       }
       if (draft.generatorSettings && typeof draft.generatorSettings === 'object') state.generatorSettings = draft.generatorSettings;
-      if (Array.isArray(draft.removedCardIds) && draft.removedCardIds.length) {
-        const removed = new Set(draft.removedCardIds);
-        state.cards = state.cards.filter((c) => !removed.has(c.id));
-      }
-      for (const draftCard of draftCards) {
-        const i = state.cards.findIndex((c) => c.id === draftCard.id);
-        if (i >= 0) state.cards[i] = draftCard;
-        else state.cards.unshift(draftCard);
-      }
+      const draftRemovedIds = Array.isArray(draft.removedCardIds)
+        ? draft.removedCardIds
+        : [];
+      mergeStudioCards(draftCards, draftRemovedIds);
       syncAllViews();
       refreshDirtyStatus();
-      if (isDirty()) document.getElementById('draft-status').textContent = 'Restored local draft temp copy';
+      if (isDirty() && !studioSaveUi.hasStatus())
+      {
+        document.getElementById(draftStatusId).textContent = restoredDraftText;
+      }
       restoredDraft = true;
     }
   } catch { /* ignore */ }
   if (!restoredDraft)
   {
+    studioSaveUi.applySavedFiles({ draftApplies: false });
+    syncAllViews();
     refreshDirtyStatus();
   }
   restoreWorkingContext();
@@ -5906,6 +5981,31 @@ function restoreWorkingContext()
   }
   workingContextReady = true;
   saveWorkingContext();
+}
+
+// Puts saved or drafted cards over the loaded list:
+// removes the removed Core ids, then replaces by id or adds.
+function mergeStudioCards(cards, removedCardIds)
+{
+  if (removedCardIds.length)
+  {
+    const removed = new Set(removedCardIds);
+    state.cards = state.cards.filter((card) => !removed.has(card.id));
+  }
+  const addedCards = [];
+  for (const studioCard of cards)
+  {
+    const index = state.cards.findIndex((card) => card.id === studioCard.id);
+    if (index >= 0)
+    {
+      state.cards[index] = studioCard;
+    }
+    else
+    {
+      addedCards.push(studioCard);
+    }
+  }
+  state.cards.unshift(...addedCards);
 }
 
 boot()

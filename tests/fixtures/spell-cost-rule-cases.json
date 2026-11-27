@@ -1,0 +1,145 @@
+[
+  {
+    "name": "no rules keep the price",
+    "rules": [],
+    "conditions": [],
+    "exceptions": [],
+    "price": { "stamina": 2, "mana": 3 },
+    "expected": { "stamina": 2, "mana": 3 }
+  },
+  {
+    "name": "an unconditional change applies to its own resource only",
+    "rules": [
+      { "id": "plusMana", "enabled": true, "resource": "mana", "change": 2 }
+    ],
+    "conditions": [],
+    "exceptions": [],
+    "price": { "stamina": 2, "mana": 3 },
+    "expected": { "stamina": 2, "mana": 5 }
+  },
+  {
+    "name": "a disabled rule does nothing",
+    "rules": [
+      { "id": "plusMana", "enabled": false, "resource": "mana", "change": 2 },
+      { "id": "plusStamina", "enabled": false, "resource": "stamina", "change": 1 }
+    ],
+    "conditions": [],
+    "exceptions": [],
+    "price": { "stamina": 2, "mana": 3 },
+    "expected": { "stamina": 2, "mana": 3 }
+  },
+  {
+    "name": "a conditional rule waits for its condition",
+    "rules": [
+      { "id": "preparedCut", "enabled": true, "resource": "stamina", "change": -1, "when": "prepared" }
+    ],
+    "conditions": ["legacyFocusHeld"],
+    "exceptions": [],
+    "price": { "stamina": 2, "mana": 3 },
+    "expected": { "stamina": 2, "mana": 3 }
+  },
+  {
+    "name": "a conditional rule applies when its condition holds",
+    "rules": [
+      { "id": "preparedCut", "enabled": true, "resource": "stamina", "change": -1, "when": "prepared" }
+    ],
+    "conditions": ["prepared"],
+    "exceptions": [],
+    "price": { "stamina": 2, "mana": 3 },
+    "expected": { "stamina": 1, "mana": 3 }
+  },
+  {
+    "name": "a card with a skipped exception is left alone",
+    "rules": [
+      { "id": "plusStamina", "enabled": true, "resource": "stamina", "change": 1, "skip": ["cantrip", "xCost"] }
+    ],
+    "conditions": [],
+    "exceptions": ["xCost"],
+    "price": { "stamina": 2, "mana": 3 },
+    "expected": { "stamina": 2, "mana": 3 }
+  },
+  {
+    "name": "an exception the rule does not skip changes nothing",
+    "rules": [
+      { "id": "plusStamina", "enabled": true, "resource": "stamina", "change": 1, "skip": ["cantrip"] }
+    ],
+    "conditions": [],
+    "exceptions": ["manaOnly"],
+    "price": { "stamina": 2, "mana": 3 },
+    "expected": { "stamina": 3, "mana": 3 }
+  },
+  {
+    "name": "a minimum stops a cut",
+    "rules": [
+      { "id": "bigCut", "enabled": true, "resource": "stamina", "change": -3, "minimum": 1 }
+    ],
+    "conditions": [],
+    "exceptions": [],
+    "price": { "stamina": 2, "mana": 3 },
+    "expected": { "stamina": 1, "mana": 3 }
+  },
+  {
+    "name": "a minimum raises a price below it unless kept",
+    "rules": [
+      { "id": "flooredCut", "enabled": true, "resource": "stamina", "change": -1, "minimum": 1 }
+    ],
+    "conditions": [],
+    "exceptions": [],
+    "price": { "stamina": 0, "mana": 3 },
+    "expected": { "stamina": 1, "mana": 3 }
+  },
+  {
+    "name": "keepAtOrBelowMinimum leaves a price under the minimum unchanged",
+    "rules": [
+      { "id": "keptCut", "enabled": true, "resource": "stamina", "change": -1, "minimum": 1, "keepAtOrBelowMinimum": true }
+    ],
+    "conditions": [],
+    "exceptions": [],
+    "price": { "stamina": 0, "mana": 3 },
+    "expected": { "stamina": 0, "mana": 3 }
+  },
+  {
+    "name": "keepAtOrBelowMinimum leaves a price at the minimum unchanged",
+    "rules": [
+      { "id": "keptCut", "enabled": true, "resource": "stamina", "change": -1, "minimum": 1, "keepAtOrBelowMinimum": true }
+    ],
+    "conditions": [],
+    "exceptions": [],
+    "price": { "stamina": 1, "mana": 3 },
+    "expected": { "stamina": 1, "mana": 3 }
+  },
+  {
+    "name": "rules apply in list order: raise then floored cut",
+    "rules": [
+      { "id": "raise", "enabled": true, "resource": "stamina", "change": 1 },
+      { "id": "keptCut", "enabled": true, "resource": "stamina", "change": -1, "minimum": 1, "keepAtOrBelowMinimum": true }
+    ],
+    "conditions": [],
+    "exceptions": [],
+    "price": { "stamina": 1, "mana": 3 },
+    "expected": { "stamina": 1, "mana": 3 }
+  },
+  {
+    "name": "rules apply in list order: floored cut then raise",
+    "rules": [
+      { "id": "keptCut", "enabled": true, "resource": "stamina", "change": -1, "minimum": 1, "keepAtOrBelowMinimum": true },
+      { "id": "raise", "enabled": true, "resource": "stamina", "change": 1 }
+    ],
+    "conditions": [],
+    "exceptions": [],
+    "price": { "stamina": 1, "mana": 3 },
+    "expected": { "stamina": 2, "mana": 3 }
+  },
+  {
+    "name": "changes on both resources add up and only the engine floors at zero",
+    "rules": [
+      { "id": "manaCut", "enabled": true, "resource": "mana", "change": -2 },
+      { "id": "focusCut", "enabled": true, "resource": "mana", "change": -2, "when": "legacyFocusHeld" },
+      { "id": "staminaCut", "enabled": true, "resource": "stamina", "change": -1 }
+    ],
+    "conditions": ["legacyFocusHeld"],
+    "exceptions": [],
+    "price": { "stamina": 2, "mana": 3 },
+    "expected": { "stamina": 1, "mana": -1 }
+  }
+]

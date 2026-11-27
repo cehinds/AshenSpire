@@ -26,6 +26,9 @@
       "failLine": "FAIL {file}: {problem}",
       "advice": "Edit those cards, or raise the limit in content/source/actionCosts.json (CARD_LIMITS)."
     },
+    "drawbackOpRequires": {
+      "addCard": "pile"
+    },
     "selfDebuffStatuses": [
       "weak",
       "vulnerable",

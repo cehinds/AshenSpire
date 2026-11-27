@@ -116,9 +116,7 @@
     "staff": {
       "label": "Staff",
       "poiseDamage": 2,
-      "mods": [
-        "spell@stance:prepared.cardMana=-1"
-      ]
+      "mods": []
     },
     "sceptre": {
       "label": "Sceptre",
@@ -162,7 +160,6 @@
     "unarmoured": {
       "label": "Unarmoured (robes)",
       "mods": [
-        "spell@stance:prepared.cardMana=-1",
         "self.vulnMelee=+1"
       ]
     },
@@ -404,6 +401,12 @@
         "camp:spell"
       ],
       "spellCategory": "divine"
+    },
+    "schoolSpell": {
+      "allTags": [
+        "camp:spell"
+      ],
+      "argSchool": true
     }
   },
   "conditions": {

@@ -614,3 +614,6 @@ build/windows-installer/
 
 # Owner sync backups of unshipped edits
 .owner-backup/
+
+# Score Studio temp drafts (SS-003); never committed.
+.studio-temp/

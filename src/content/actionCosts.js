@@ -24,6 +24,7 @@ export const CARD_LIMITS = freeze({
   cardFiles: freeze(source.CARD_LIMITS.cardFiles),
   selfDebuffStatuses: freeze(source.CARD_LIMITS.selfDebuffStatuses),
   text: freeze(source.CARD_LIMITS.text),
+  drawbackOpRequires: freeze(source.CARD_LIMITS.drawbackOpRequires),
 });
 export const RANGE_WEIGHTS = freeze(source.RANGE_WEIGHTS);
 export const RANGE_TAGS = freeze(source.RANGE_TAGS);

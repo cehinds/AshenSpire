@@ -120,6 +120,20 @@ test('the upgraded face is checked too', () =>
     ]);
 });
 
+test('an op with a required field is a drawback only when the field is set', () =>
+{
+    Object.entries(RULES.drawbackOpRequires).forEach(([op, field]) =>
+    {
+        const toEnemy = { op };
+        const toOwnPile = {
+            op,
+            [field]: 'discard',
+        };
+        assert.deepEqual(CountCardParts({ effects: [toEnemy] }).drawbacks, []);
+        assert.deepEqual(CountCardParts({ effects: [toOwnPile] }).drawbacks, [op]);
+    });
+});
+
 test('a missing cap means no limit', () =>
 {
     const unlimited = {
