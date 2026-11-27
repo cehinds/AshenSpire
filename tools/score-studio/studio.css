@@ -295,7 +295,7 @@ body.studio-body .item-filter-fields > label { display: flex; flex-direction: co
 body.studio-body .item-filter-fields select { width: 100%; }
 @media (max-width: 600px) {
   body.studio-body .studio-menubar .studio-menu-heading { min-height: 36px; padding-inline: 6px; font-size: 12px; }
-  body.studio-body .studio-brand .studio-pill { display: none; }
+  body.studio-body .studio-brand .studio-pill { max-width: 88px; padding-inline: 6px; font-size: 11px; }
   body.studio-body .studio-title { font-size: 13px; }
   body.studio-body .studio-menubar > .studio-menu > .studio-menu-panel { position: fixed; top: 44px; left: 8px; right: 8px; width: auto; max-width: none; max-height: calc(100dvh - 56px); }
   body.studio-body #tab-cards .filter-bar > .filter-row { flex-wrap: wrap; }
