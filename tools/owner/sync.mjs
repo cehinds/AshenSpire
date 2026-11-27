@@ -122,15 +122,26 @@ function clearDerivedOrFindBlocking(keptPaths)
     return blocking;
 }
 
+/** Points the owner's own work branch at the newest dev; refuses if it holds commits dev lacks. */
 function moveToNewestBase()
 {
-    const { remote, baseBranch } = OWNER_TOOLS.git;
-    const hasLocalBase = Boolean(RunGit(['branch', '--list', baseBranch]));
-    const switchArgs = hasLocalBase
-        ? ['switch', baseBranch]
-        : ['switch', '-c', baseBranch, '--track', `${remote}/${baseBranch}`];
-    RunGit(switchArgs);
-    RunGit(['merge', '--ff-only', `${remote}/${baseBranch}`]);
+    const { remote, baseBranch, workBranch } = OWNER_TOOLS.git;
+    const newest = `${remote}/${baseBranch}`;
+    const exists = Boolean(RunGit(['branch', '--list', workBranch]));
+    const unmerged = exists
+        ? RunGit(['log', '--oneline', `${newest}..${workBranch}`])
+        : '';
+    if (unmerged)
+    {
+        throw new Error(`${workBranch} has commits that are not in ${baseBranch}:\n${unmerged}\nShip them, or ask for help before syncing.`);
+    }
+    RunGit([
+        'switch',
+        '--no-track',
+        '-C',
+        workBranch,
+        newest,
+    ]);
 }
 
 function main()
@@ -172,7 +183,7 @@ function main()
         RunSteps(OWNER_TOOLS.buildSteps);
         reportKept(saved, clashed, backupRoot);
     }
-    console.log(`\nYou are on the newest ${baseBranch}.`);
+    console.log(`\nYou are on ${OWNER_TOOLS.git.workBranch}, the newest ${baseBranch}.`);
     return 0;
 }
 

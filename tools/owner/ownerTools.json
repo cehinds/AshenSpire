@@ -4,7 +4,8 @@
     "remote": "origin",
     "baseBranch": "dev",
     "branchPrefix": "feature/Owner",
-    "repositoryUrl": "https://github.com/cehinds/AshenSpire"
+    "repositoryUrl": "https://github.com/cehinds/AshenSpire",
+    "workBranch": "owner/editing"
   },
   "editableRoots": [
     "content/source/",
