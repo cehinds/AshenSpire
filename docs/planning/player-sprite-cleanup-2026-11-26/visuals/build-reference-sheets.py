@@ -1,8 +1,5 @@
-"""Diagnostic BEFORE-only composites of immutable pinned rasters, not new art.
-
-Run collect-visual-inputs.mjs first, then this script with --cache pointing to
-the pinned v30 directory. Static placement mirrors the baseline renderer's
-body registration only; no aura, recoil, travel, timing, HUD or viewport fit.
+"""BEFORE-only pinned-raster composites; no new artwork or gameplay capture.
+Run the input collector first, then pass the v30 directory through --cache.
 """
 import argparse
 import hashlib
@@ -11,183 +8,513 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 HERE = Path(__file__).resolve().parent
-args = argparse.ArgumentParser()
-args.add_argument('--cache', type=Path, required=True)
-opts = args.parse_args()
-data = json.loads((HERE / 'visual-inputs.json').read_text())
 BASELINE = '49eca254d795d06266aa23941cb2b31fe77b27bf'
 RELEASE = 'ashenspire-hd-assets-v30'
-# Snapshot retained evidence before any regeneration. Candidate hashes not in
-# the wider measurement inventory must still match this retained input receipt.
-retained = json.loads((HERE / 'image-manifest.json').read_text())
-raster_index = json.loads((HERE.parent / 'measurements' / 'raster-hashes.json').read_text())
-if data.get('source') != BASELINE or data.get('art') != RELEASE:
-    raise ValueError('Unexpected visual-inputs source/art identity; refusing output overwrite')
-if retained.get('sourceCommit') != BASELINE or retained.get('artTag') != RELEASE:
-    raise ValueError('Unexpected retained visual baseline; refusing output overwrite')
-if raster_index.get('baseline') != BASELINE or raster_index.get('release') != RELEASE:
-    raise ValueError('Unexpected measurement raster baseline; refusing output overwrite')
-if opts.cache.name != RELEASE:
-    raise ValueError(f'Cache directory must identify {RELEASE}, not {opts.cache.name}')
-records = {}
-loaded = {}
-HURT_ALTERNATIVES = ['assets/animations/unarmed-magic/starseer/HURT.webp','assets/animations/unarmed/starseer/HURT.webp',
-                     'assets/animations/greatsword-outfits/starseer/HURT.webp','assets/painted-outfits/starseer/hit.webp']
-font_path = Path('C:/Windows/Fonts/consola.ttf')
-FONT = ImageFont.truetype(str(font_path), 13) if font_path.exists() else ImageFont.load_default()
-TITLE = ImageFont.truetype(str(font_path), 19) if font_path.exists() else FONT
+DEFAULT_CANVAS_SIZE = [512, 512]
+DEFAULT_DRAW_OFFSET = [128, 0]
+FRAME_TOP_OFFSET = 16
+STAGE_CENTER_X = 384
+STAGE_FLOOR_Y = 480
+ALPHA_THRESHOLD = 128
+OPAQUE_ALPHA = 255
+PANEL_HEIGHT = 475
+DEFAULT_PANEL_WIDTH = 560
+DEFAULT_COLUMNS = 3
+DEFAULT_STAGE_SCALE = .68
+SHEET_HEADER_HEIGHT = 91
+SHEET_BODY_GROUND_Y = 372
+SHEET_TITLE_ORIGIN = (18, 12)
+SHEET_SUBTITLE_ORIGIN = (18, 41)
+SHEET_BASELINE_ORIGIN = (18, 62)
+GRID_FIRST_Y = 80
+GRID_LAST_Y_EXCLUSIVE = 601
+GRID_INTERVAL = 80
+GRID_VISIBLE_TOP = 66
+GRID_VISIBLE_BOTTOM = 389
+GRID_LABEL_OFFSET_Y = 15
+GRID_LABEL_INSET_X = 10
+CENTER_GUIDE_TOP = 61
+CENTER_GUIDE_BOTTOM = 399
+PANEL_BORDER_INSET = 3
+MIN_ALPHA_REACH_INSET = 4
+PANEL_RULE_INSET = 8
+PANEL_LABEL_INSET = 12
+PANEL_TITLE_Y = 12
+PANEL_SCALE_Y = 39
+PANEL_FACTOR_Y = 405
+PANEL_ASSET_Y = 426
+PANEL_RASTER_Y = 446
+ASSET_LABEL_LENGTH = 51
+SELECTED_SCALE = .58
+SELECTED_COLUMNS = 4
+HIT_REFERENCE_SCALE = .9
+SWEEP_SCALE = .60
+SWEEP_PANEL_WIDTH = 680
+CANDIDATE_SHEET_SIZE = (1180, 730)
+CANDIDATE_PANEL_WIDTH = 590
+CANDIDATE_PANEL_HEIGHT = 325
+CANDIDATE_START_Y = 80
+CANDIDATE_GROUND_Y = 285
+CANDIDATE_SOURCE_SCALE = .72
+CANDIDATE_COLUMNS = 2
+CANDIDATE_CENTER_X = 295
+CANDIDATE_TITLE_ORIGIN = (18, 14)
+CANDIDATE_SUBTITLE_ORIGIN = (18, 43)
+CANDIDATE_LABEL_Y = 9
+CANDIDATE_RASTER_LABEL_Y = 302
+PAINTED_SOURCE_FLOOR_Y = 600
+BODY_FONT_SIZE = 13
+TITLE_FONT_SIZE = 19
+JSON_INDENT = 2
+BACKGROUND = (24, 30, 39, 255)
 INK = (232, 235, 240, 255)
 MUTED = (169, 183, 199, 255)
+PANEL_OUTLINE = (62, 75, 91, 255)
+GRID_INK = (36, 46, 60, 255)
+GRID_LABEL_INK = (85, 101, 120, 255)
+GROUND_INK = (70, 198, 153, 255)
+CENTER_GUIDE_INK = (65, 81, 100, 255)
+TRANSPARENT = (0, 0, 0, 0)
+HURT_ALTERNATIVES = [
+    'assets/animations/unarmed-magic/starseer/HURT.webp',
+    'assets/animations/unarmed/starseer/HURT.webp',
+    'assets/animations/greatsword-outfits/starseer/HURT.webp',
+    'assets/painted-outfits/starseer/hit.webp',
+]
+HELD_POSE_NAMES = [
+    'ready',
+    'offensive',
+    'defensive',
+    'casting',
+    'counter',
+    'sweep',
+    'smash',
+    'evade',
+    'defend',
+]
+SELECTED_POSE_NAMES = [
+    'ready',
+    'offensive',
+    'defensive',
+    'casting',
+    'counter',
+    'sweep',
+    'smash',
+]
+SWEEP_POSE_NAMES = [
+    'ready',
+    'sweep',
+    'pilot-sweep-windup',
+    'pilot-sweep-contact',
+    'pilot-sweep-finish',
+    'ready',
+]
+SWEEP_ACTION_NAMES = [
+    'pilot-sweep-windup',
+    'pilot-sweep-contact',
+    'pilot-sweep-finish',
+]
 
-def image_for(path):
+parser = argparse.ArgumentParser()
+parser.add_argument('--cache', type=Path, required=True)
+options = parser.parse_args()
+data = json.loads((HERE / 'visual-inputs.json').read_text())
+retained = json.loads((HERE / 'image-manifest.json').read_text())
+rasterIndex = json.loads(
+    (HERE.parent / 'measurements' / 'raster-hashes.json').read_text()
+)
+
+if data.get('source') != BASELINE or data.get('art') != RELEASE:
+    raise ValueError('Unexpected visual-inputs source/art identity; refusing output overwrite')
+
+if retained.get('sourceCommit') != BASELINE or retained.get('artTag') != RELEASE:
+    raise ValueError('Unexpected retained visual baseline; refusing output overwrite')
+
+if rasterIndex.get('baseline') != BASELINE or rasterIndex.get('release') != RELEASE:
+    raise ValueError('Unexpected measurement raster baseline; refusing output overwrite')
+
+if options.cache.name != RELEASE:
+    raise ValueError(
+        f'Cache directory must identify {RELEASE}, not {options.cache.name}'
+    )
+
+records = {}
+loaded = {}
+fontPath = Path('C:/Windows/Fonts/consola.ttf')
+FONT = (
+    ImageFont.truetype(str(fontPath), BODY_FONT_SIZE)
+    if fontPath.exists()
+    else ImageFont.load_default()
+)
+TITLE = (
+    ImageFont.truetype(str(fontPath), TITLE_FONT_SIZE)
+    if fontPath.exists()
+    else FONT
+)
+
+
+def alphaThreshold(value):
+    return OPAQUE_ALPHA if value >= ALPHA_THRESHOLD else 0
+
+
+def imageFor(path):
     if path in loaded:
         return loaded[path]
-    candidates = [opts.cache / tier / path for tier in ('common', 'high')]
-    found = next((p for p in candidates if p.exists()), None)
+
+    candidates = [options.cache / tier / path for tier in ('common', 'high')]
+    found = next((candidate for candidate in candidates if candidate.exists()), None)
+
     if not found:
         raise FileNotFoundError(path)
-    resolved = found.relative_to(opts.cache).as_posix()
-    observed_hash = hashlib.sha256(found.read_bytes()).hexdigest()
-    matches = [x for x in raster_index['assets'].get(path, [])
-               if x.get('exists') and x['pack']+'/'+x['path'] == resolved]
-    expected_hash = matches[0]['sha256'] if matches else None
-    if expected_hash is None:
+
+    resolved = found.relative_to(options.cache).as_posix()
+    observedHash = hashlib.sha256(found.read_bytes()).hexdigest()
+    matches = [
+        entry
+        for entry in rasterIndex['assets'].get(path, [])
+        if entry.get('exists') and entry['pack'] + '/' + entry['path'] == resolved
+    ]
+    expectedHash = matches[0]['sha256'] if matches else None
+
+    if expectedHash is None:
         candidate = retained['inputAssets'].get(path)
+
         if candidate and candidate['resolvedPack'] == resolved:
-            expected_hash = candidate['sha256']
-    if not expected_hash or observed_hash != expected_hash:
-        raise ValueError(f'Pinned raster mismatch: {resolved}; refusing output overwrite')
+            expectedHash = candidate['sha256']
+
+    if not expectedHash or observedHash != expectedHash:
+        raise ValueError(
+            f'Pinned raster mismatch: {resolved}; refusing output overwrite'
+        )
+
     image = Image.open(found).convert('RGBA')
-    alpha = image.getchannel('A').point(lambda x: 255 if x >= 128 else 0)
-    records[path] = {'resolvedPack': resolved,
-                     'rasterSize': list(image.size), 'alpha128Bounds': alpha.getbbox(),
-                     'sha256': observed_hash}
+    alpha = image.getchannel('A').point(alphaThreshold)
+    records[path] = {
+        'resolvedPack': resolved,
+        'rasterSize': list(image.size),
+        'alpha128Bounds': alpha.getbbox(),
+        'sha256': observedHash,
+    }
     loaded[path] = image
     return image
 
-def placement(cls, name, mode='current'):
-    c = data['classes'][cls]
+
+def placement(classId, name, mode='current'):
+    classData = data['classes'][classId]
+
     if name == 'HURT':
-        h = c['hurt']
-        return h['file'], (128 + h['dx'], 16 + h['dy'], 512*h['scale'], 512*h['scale']), None, None
-    frame = c['poses'][name]
-    logical = frame.get('size', [512, 512]) if frame.get('drawOffset') is not None else [512, 512]
-    offset = frame.get('drawOffset', [128, 0])
-    left, top, width, height = offset[0], 16 + offset[1], logical[0], logical[1]
+        hurt = classData['hurt']
+        dimensions = (
+            DEFAULT_DRAW_OFFSET[0] + hurt['dx'],
+            FRAME_TOP_OFFSET + hurt['dy'],
+            DEFAULT_CANVAS_SIZE[0] * hurt['scale'],
+            DEFAULT_CANVAS_SIZE[1] * hurt['scale'],
+        )
+        return hurt['file'], dimensions, None, None
+
+    frame = classData['poses'][name]
+    logicalSize = (
+        frame.get('size', DEFAULT_CANVAS_SIZE)
+        if frame.get('drawOffset') is not None
+        else DEFAULT_CANVAS_SIZE
+    )
+    offset = frame.get('drawOffset', DEFAULT_DRAW_OFFSET)
+    left = offset[0]
+    top = FRAME_TOP_OFFSET + offset[1]
+    width = logicalSize[0]
+    height = logicalSize[1]
     body = data['landmarks'].get(frame['path'])
-    ready = data['landmarks'].get(c['poses']['ready']['path'])
+    ready = data['landmarks'].get(classData['poses']['ready']['path'])
     factor = 1.0
+
     if body and ready and mode == 'current':
-        ready_h = c['poses']['ready'].get('size', [512, 512])[1]
-        target = (ready['feetY'] - ready['headY']) * ready_h / ready['height']
+        readyHeight = classData['poses']['ready'].get('size', DEFAULT_CANVAS_SIZE)[1]
+        target = (ready['feetY'] - ready['headY']) * readyHeight / ready['height']
         feet = top + body['feetY'] * height / body['height']
-        source_h = (body['feetY'] - body['headY']) * height / body['height']
-        factor = target / source_h
-        # All pictured stance/ready cards are held: bodyPlacement targets floor480.
-        # Pictured action frames are unmeasured; future measured action frames
-        # must use bodyResize and retain their authored feet rather than this.
-        target_feet = 480 if name in ['ready', 'offensive', 'defensive', 'casting', 'counter', 'sweep', 'smash', 'evade', 'defend'] else feet
-        left = 384 + (left - 384) * factor
-        top = target_feet + (top - feet) * factor
+        sourceHeight = (body['feetY'] - body['headY']) * height / body['height']
+        factor = target / sourceHeight
+        # Held cards use floor480; measured future action frames must retain their own feet.
+        targetFeet = STAGE_FLOOR_Y if name in HELD_POSE_NAMES else feet
+        left = STAGE_CENTER_X + (left - STAGE_CENTER_X) * factor
+        top = targetFeet + (top - feet) * factor
         width *= factor
         height *= factor
+
     return frame['path'], (left, top, width, height), body, factor
 
-def write_sheet(filename, title, subtitle, cells, columns=3, s=.68, pw=560):
-    ph = 475
-    rows = (len(cells) + columns - 1)//columns
-    out = Image.new('RGBA', (pw*columns, 91+ph*rows), (24, 30, 39, 255))
-    draw = ImageDraw.Draw(out)
-    draw.text((18, 12), title, font=TITLE, fill=INK)
-    draw.text((18, 41), subtitle, font=FONT, fill=MUTED)
-    draw.text((18, 62), 'BEFORE only | baseline 49eca254d795 | art v30 | same stage scale within sheet',font=FONT,fill=MUTED)
-    for i, (cls, name, mode) in enumerate(cells):
-        x, y = (i%columns)*pw, 91+(i//columns)*ph
-        path, (left, top, w, h), body, factor = placement(cls,name,mode)
-        img = image_for(path)
-        # Fixed mapping of stage pixels: no per-frame bounds-based fitting.
-        ox, oy = x+pw/2-384*s, y+372-480*s
-        draw.rectangle((x+3,y+3,x+pw-3,y+ph-3), outline=(62,75,91,255),width=1)
-        for yy in range(80,601,80):
-            py=round(oy+yy*s)
-            if not (y+66 <= py <= y+389):
+
+def writeSheet(
+    filename,
+    title,
+    subtitle,
+    cells,
+    columns=DEFAULT_COLUMNS,
+    scale=DEFAULT_STAGE_SCALE,
+    panelWidth=DEFAULT_PANEL_WIDTH,
+):
+    rows = (len(cells) + columns - 1) // columns
+    sheetSize = (
+        panelWidth * columns,
+        SHEET_HEADER_HEIGHT + PANEL_HEIGHT * rows,
+    )
+    output = Image.new('RGBA', sheetSize, BACKGROUND)
+    draw = ImageDraw.Draw(output)
+    draw.text(SHEET_TITLE_ORIGIN, title, font=TITLE, fill=INK)
+    draw.text(SHEET_SUBTITLE_ORIGIN, subtitle, font=FONT, fill=MUTED)
+    draw.text(
+        SHEET_BASELINE_ORIGIN,
+        'BEFORE only | baseline 49eca254d795 | art v30 | same stage scale within sheet',
+        font=FONT,
+        fill=MUTED,
+    )
+
+    for index, (classId, name, mode) in enumerate(cells):
+        panelX = (index % columns) * panelWidth
+        panelY = SHEET_HEADER_HEIGHT + (index // columns) * PANEL_HEIGHT
+        path, (left, top, width, height), body, factor = placement(classId, name, mode)
+        image = imageFor(path)
+        originX = panelX + panelWidth / 2 - STAGE_CENTER_X * scale
+        originY = panelY + SHEET_BODY_GROUND_Y - STAGE_FLOOR_Y * scale
+        panelBorder = (
+            panelX + PANEL_BORDER_INSET,
+            panelY + PANEL_BORDER_INSET,
+            panelX + panelWidth - PANEL_BORDER_INSET,
+            panelY + PANEL_HEIGHT - PANEL_BORDER_INSET,
+        )
+        draw.rectangle(panelBorder, outline=PANEL_OUTLINE, width=1)
+
+        for gridY in range(GRID_FIRST_Y, GRID_LAST_Y_EXCLUSIVE, GRID_INTERVAL):
+            projectedY = round(originY + gridY * scale)
+
+            if not (panelY + GRID_VISIBLE_TOP <= projectedY <= panelY + GRID_VISIBLE_BOTTOM):
                 continue
-            draw.line((x+8,py,x+pw-8,py),fill=(36,46,60,255))
-            draw.text((x+10,py-15),str(yy),font=FONT,fill=(85,101,120,255))
-        ground=round(oy+480*s)
-        draw.line((x+8,ground,x+pw-8,ground),fill=(70,198,153,255),width=2)
-        draw.line((round(ox+384*s),y+61,round(ox+384*s),y+399),fill=(65,81,100,255))
-        drawn=img.resize((max(1,round(w*s)),max(1,round(h*s))),Image.Resampling.LANCZOS)
-        # Composite into its own panel so no bitmap can obscure an adjacent
-        # cell's annotation. Dimensions reserve the full opaque reach below.
-        panel=Image.new('RGBA',(pw,ph),(0,0,0,0))
-        panel.alpha_composite(drawn,(round(ox+left*s)-x,round(oy+top*s)-y))
-        alpha=img.getchannel('A').getbbox()
+
+            draw.line(
+                (
+                    panelX + PANEL_RULE_INSET,
+                    projectedY,
+                    panelX + panelWidth - PANEL_RULE_INSET,
+                    projectedY,
+                ),
+                fill=GRID_INK,
+            )
+            draw.text(
+                (panelX + GRID_LABEL_INSET_X, projectedY - GRID_LABEL_OFFSET_Y),
+                str(gridY),
+                font=FONT,
+                fill=GRID_LABEL_INK,
+            )
+
+        ground = round(originY + STAGE_FLOOR_Y * scale)
+        centerGuideX = round(originX + STAGE_CENTER_X * scale)
+        draw.line(
+            (
+                panelX + PANEL_RULE_INSET,
+                ground,
+                panelX + panelWidth - PANEL_RULE_INSET,
+                ground,
+            ),
+            fill=GROUND_INK,
+            width=2,
+        )
+        draw.line(
+            (
+                centerGuideX,
+                panelY + CENTER_GUIDE_TOP,
+                centerGuideX,
+                panelY + CENTER_GUIDE_BOTTOM,
+            ),
+            fill=CENTER_GUIDE_INK,
+        )
+        drawnSize = (
+            max(1, round(width * scale)),
+            max(1, round(height * scale)),
+        )
+        drawn = image.resize(drawnSize, Image.Resampling.LANCZOS)
+        panel = Image.new('RGBA', (panelWidth, PANEL_HEIGHT), TRANSPARENT)
+        panel.alpha_composite(
+            drawn,
+            (
+                round(originX + left * scale) - panelX,
+                round(originY + top * scale) - panelY,
+            ),
+        )
+        alpha = image.getchannel('A').getbbox()
+
         if alpha:
-            projected=(pw/2+(left+alpha[0]*w/img.width-384)*s,
-                       pw/2+(left+alpha[2]*w/img.width-384)*s)
-            if projected[0]<4 or projected[1]>pw-4:
-                raise ValueError(f'Panel too narrow for full alpha reach: {cls}/{name} {projected}')
-        out.alpha_composite(panel,(x,y))
-        draw.text((x+12,y+12),f'{cls.upper()} / {name}',font=TITLE,fill=INK)
-        draw.text((x+12,y+39),f'{mode}; {s:g} output px / stage px',font=FONT,fill=MUTED)
-        if factor is not None:
-            draw.text((x+12,y+405),f'body normalization x{factor:.6f}',font=FONT,fill=INK)
-        else:
-            draw.text((x+12,y+405),'HURT registration; no body landmarks',font=FONT,fill=INK)
-        # Asset basename plus stable record lookup keeps labels readable.
-        base=Path(path).name
-        draw.text((x+12,y+426),base[:51],font=FONT,fill=MUTED)
-        draw.text((x+12,y+446),f'source raster {img.width}x{img.height}; floor=480',font=FONT,fill=MUTED)
-    out.convert('RGB').save(HERE/filename,optimize=True)
+            projected = (
+                panelWidth / 2 + (left + alpha[0] * width / image.width - STAGE_CENTER_X) * scale,
+                panelWidth / 2 + (left + alpha[2] * width / image.width - STAGE_CENTER_X) * scale,
+            )
 
-# Preflight EVERY asset before the first PNG or manifest can be overwritten.
-# A corrupt/mis-pinned later frame must not leave a partly regenerated baseline.
+            if projected[0] < MIN_ALPHA_REACH_INSET or projected[1] > panelWidth - MIN_ALPHA_REACH_INSET:
+                raise ValueError(
+                    f'Panel too narrow for full alpha reach: {classId}/{name} {projected}'
+                )
+
+        output.alpha_composite(panel, (panelX, panelY))
+        labelX = panelX + PANEL_LABEL_INSET
+        draw.text(
+            (labelX, panelY + PANEL_TITLE_Y),
+            f'{classId.upper()} / {name}',
+            font=TITLE,
+            fill=INK,
+        )
+        draw.text(
+            (labelX, panelY + PANEL_SCALE_Y),
+            f'{mode}; {scale:g} output px / stage px',
+            font=FONT,
+            fill=MUTED,
+        )
+        factorLabel = (
+            f'body normalization x{factor:.6f}'
+            if factor is not None
+            else 'HURT registration; no body landmarks'
+        )
+        draw.text(
+            (labelX, panelY + PANEL_FACTOR_Y),
+            factorLabel,
+            font=FONT,
+            fill=INK,
+        )
+        basename = Path(path).name
+        draw.text(
+            (labelX, panelY + PANEL_ASSET_Y),
+            basename[:ASSET_LABEL_LENGTH],
+            font=FONT,
+            fill=MUTED,
+        )
+        draw.text(
+            (labelX, panelY + PANEL_RASTER_Y),
+            f'source raster {image.width}x{image.height}; floor=480',
+            font=FONT,
+            fill=MUTED,
+        )
+
+    output.convert('RGB').save(HERE / filename, optimize=True)
+
+
+# Verify every input before producing any PNG or manifest, avoiding partial regeneration.
 required = []
-for cls, c in data['classes'].items():
-    required.extend(c['poses'][n]['path'] for n in ['ready','offensive','defensive','casting','counter','sweep','smash'])
-    required.append(c['hurt']['file'])
-required.extend(data['classes']['reaver']['poses'][n]['path'] for n in ['pilot-sweep-windup','pilot-sweep-contact','pilot-sweep-finish'])
+
+for classId, classData in data['classes'].items():
+    required.extend(
+        classData['poses'][name]['path']
+        for name in SELECTED_POSE_NAMES
+    )
+    required.append(classData['hurt']['file'])
+
+required.extend(
+    data['classes']['reaver']['poses'][name]['path']
+    for name in SWEEP_ACTION_NAMES
+)
 required.extend(HURT_ALTERNATIVES)
+
 for path in dict.fromkeys(required):
-    image_for(path)
+    imageFor(path)
 
-for cls in data['classes']:
-    write_sheet(f'{cls}-selected-before.png', f'{cls.title()}: selected identity audit',
-                'Static current-registration reconstruction, NOT a gameplay screenshot; effects/timing omitted.',
-                [(cls,n,'current') for n in ['ready','offensive','defensive','casting','counter','sweep','smash','HURT']],4,s=.58)
+for classId in data['classes']:
+    cells = [(classId, name, 'current') for name in SELECTED_POSE_NAMES + ['HURT']]
+    writeSheet(
+        f'{classId}-selected-before.png',
+        f'{classId.title()}: selected identity audit',
+        'Static current-registration reconstruction, NOT a gameplay screenshot; effects/timing omitted.',
+        cells,
+        SELECTED_COLUMNS,
+        scale=SELECTED_SCALE,
+    )
 
-write_sheet('starseer-hit-reference.png', 'Primary case: Starseer receives a hit',
-            'Current source selection and registration; static hit image without recoil/red flash.',
-            [('starseer','ready','current'),('starseer','HURT','current')],2,s=.9)
+writeSheet(
+    'starseer-hit-reference.png',
+    'Primary case: Starseer receives a hit',
+    'Current source selection and registration; static hit image without recoil/red flash.',
+    [('starseer', 'ready', 'current'), ('starseer', 'HURT', 'current')],
+    2,
+    scale=HIT_REFERENCE_SCALE,
+)
+writeSheet(
+    'reaver-sweep-current-before.png',
+    'Primary case: Reaver selected SW09 Sweep',
+    'Current held normalization and unmeasured action placement; all panels share one stage scale.',
+    [('reaver', name, 'current') for name in SWEEP_POSE_NAMES],
+    3,
+    scale=SWEEP_SCALE,
+    panelWidth=SWEEP_PANEL_WIDTH,
+)
+writeSheet(
+    'reaver-sweep-authored-reference.png',
+    'Reaver authored logical placements: BEFORE reference',
+    'Normalization omitted for diagnosis only. NOT a proposed fix or after-image.',
+    [('reaver', name, 'authored') for name in SWEEP_POSE_NAMES],
+    3,
+    scale=SWEEP_SCALE,
+    panelWidth=SWEEP_PANEL_WIDTH,
+)
 
-write_sheet('reaver-sweep-current-before.png', 'Primary case: Reaver selected SW09 Sweep',
-            'Current held normalization and unmeasured action placement; all panels share one stage scale.',
-            [('reaver',n,'current') for n in ['ready','sweep','pilot-sweep-windup','pilot-sweep-contact','pilot-sweep-finish','ready']],3,s=.60,pw=680)
+output = Image.new('RGBA', CANDIDATE_SHEET_SIZE, BACKGROUND)
+draw = ImageDraw.Draw(output)
+draw.text(
+    CANDIDATE_TITLE_ORIGIN,
+    'Starseer existing HURT candidates — none establishes a matching hooded staff reaction',
+    font=TITLE,
+    fill=INK,
+)
+draw.text(
+    CANDIDATE_SUBTITLE_ORIGIN,
+    'Pinned v30 inputs at one common 0.72 source-pixel scale; no per-image fit. NOT runtime scale.',
+    font=FONT,
+    fill=MUTED,
+)
 
-write_sheet('reaver-sweep-authored-reference.png', 'Reaver authored logical placements: BEFORE reference',
-            'Normalization omitted for diagnosis only. NOT a proposed fix or after-image.',
-            [('reaver',n,'authored') for n in ['ready','sweep','pilot-sweep-windup','pilot-sweep-contact','pilot-sweep-finish','ready']],3,s=.60,pw=680)
+# Candidate source rasters share one scale and floor; they are not runtime selections.
+for index, path in enumerate(HURT_ALTERNATIVES):
+    image = imageFor(path)
+    panelX = (index % CANDIDATE_COLUMNS) * CANDIDATE_PANEL_WIDTH
+    panelY = CANDIDATE_START_Y + (index // CANDIDATE_COLUMNS) * CANDIDATE_PANEL_HEIGHT
+    floor = PAINTED_SOURCE_FLOOR_Y if 'painted-outfits' in path else STAGE_FLOOR_Y
+    candidateSize = (
+        round(image.width * CANDIDATE_SOURCE_SCALE),
+        round(image.height * CANDIDATE_SOURCE_SCALE),
+    )
+    candidatePosition = (
+        round(panelX + CANDIDATE_CENTER_X - image.width * CANDIDATE_SOURCE_SCALE / 2),
+        round(panelY + CANDIDATE_GROUND_Y - floor * CANDIDATE_SOURCE_SCALE),
+    )
+    output.alpha_composite(
+        image.resize(candidateSize, Image.Resampling.LANCZOS),
+        candidatePosition,
+    )
+    draw.text(
+        (panelX + PANEL_LABEL_INSET, panelY + CANDIDATE_LABEL_Y),
+        path.replace('assets/animations/', ''),
+        font=FONT,
+        fill=INK,
+    )
+    draw.text(
+        (panelX + PANEL_LABEL_INSET, panelY + CANDIDATE_RASTER_LABEL_Y),
+        f'{image.width}x{image.height}; source floor reference {floor}',
+        font=FONT,
+        fill=MUTED,
+    )
 
-# Existing pinned alternatives, at the same source raster pixel scale. These
-# are candidate inspection references, never implied to be selected in combat.
-alts=HURT_ALTERNATIVES
-out=Image.new('RGBA',(1180,730),(24,30,39,255));d=ImageDraw.Draw(out)
-d.text((18,14),'Starseer existing HURT candidates — none establishes a matching hooded staff reaction',font=TITLE,fill=INK)
-d.text((18,43),'Pinned v30 inputs at one common 0.72 source-pixel scale; no per-image fit. NOT runtime scale.',font=FONT,fill=MUTED)
-for i,path in enumerate(alts):
-    image=image_for(path)
-    x,y=(i%2)*590,80+(i//2)*325
-    # Entire 640 raster may exceed panel height, but painted-outfit candidate
-    # visible character sits at the bottom; place every source floor at y+285.
-    floor=600 if 'painted-outfits' in path else 480
-    s=.72
-    out.alpha_composite(image.resize((round(image.width*s),round(image.height*s)),Image.Resampling.LANCZOS),(round(x+295-image.width*s/2),round(y+285-floor*s)))
-    d.text((x+12,y+9),path.replace('assets/animations/',''),font=FONT,fill=INK)
-    d.text((x+12,y+302),f'{image.width}x{image.height}; source floor reference {floor}',font=FONT,fill=MUTED)
-out.convert('RGB').save(HERE/'starseer-existing-hurt-candidates.png',optimize=True)
+output.convert('RGB').save(HERE / 'starseer-existing-hurt-candidates.png', optimize=True)
+outputImages = {}
 
-manifest={'sourceCommit':data['source'],'artTag':data['art'],'kind':'before-only static diagnostic reconstruction; not gameplay capture',
-          'inputAssets':records,'outputImages':{p.name:{'sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'bytes':p.stat().st_size} for p in sorted(HERE.glob('*.png'))}}
-(HERE/'image-manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
-print(f'Verified all {len(records)} pinned raster hashes before output; wrote {len(manifest["outputImages"])} sheets.')
+for imagePath in sorted(HERE.glob('*.png')):
+    outputImages[imagePath.name] = {
+        'sha256': hashlib.sha256(imagePath.read_bytes()).hexdigest(),
+        'bytes': imagePath.stat().st_size,
+    }
+
+manifest = {
+    'sourceCommit': data['source'],
+    'artTag': data['art'],
+    'kind': 'before-only static diagnostic reconstruction; not gameplay capture',
+    'inputAssets': records,
+    'outputImages': outputImages,
+}
+(HERE / 'image-manifest.json').write_text(json.dumps(manifest, indent=JSON_INDENT) + '\n')
+print(
+    f'Verified all {len(records)} pinned raster hashes before output; '
+    f'wrote {len(manifest["outputImages"])} sheets.'
+)

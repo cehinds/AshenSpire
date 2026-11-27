@@ -1,250 +1,1002 @@
-// PLAN-ONLY audit. Reads game catalogs and immutable pinned rasters; writes only
-// sibling evidence files. Run from any directory; requires Node and Python/Pillow.
+// Planning audit: read game catalogs and pinned rasters; write sibling evidence.
+// Run from any directory with Node and Python/Pillow.
 import { readFileSync, writeFileSync, statSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 
-const out = dirname(fileURLToPath(import.meta.url));
-const root = resolve(out, '../../../..');
+const outputDirectory = dirname(fileURLToPath(import.meta.url));
+const repositoryRoot = resolve(outputDirectory, '../../../..');
 const baseline = '49eca254d795d06266aa23941cb2b31fe77b27bf';
 const release = 'ashenspire-hd-assets-v30';
 const snapshotAnchor = '94f46215e72';
+const snapshotFilename = 'raster-hashes.json';
 const snapshotRelative = 'docs/planning/player-sprite-cleanup-2026-11-26/measurements/raster-hashes.json';
-const snapshotBytes = readFileSync(join(out,'raster-hashes.json'),'utf8');
-const anchoredSnapshot = execFileSync('git', ['-c',`safe.directory=${root}`,'show',`${snapshotAnchor}:${snapshotRelative}`], {cwd:root,encoding:'utf8'});
-if (snapshotBytes.replaceAll('\r\n','\n') !== anchoredSnapshot.replaceAll('\r\n','\n'))
-  throw Error(`Retained raster snapshot changed; restore the evidence from planning commit ${snapshotAnchor} before rerunning.`);
-const expectedSnapshot = JSON.parse(snapshotBytes);
+const expectedRasterCount = 330;
+const sha256HexLength = 64;
+const sha256Pattern = /^[a-f0-9]{64}$/;
+const coordinatePrecision = 9;
+const jsonIndentation = 2;
+const maxEvidenceBytes = 256 * 1024;
+const maxPythonOutputBytes = 8 * 1024 * 1024;
+const defaultCacheDirectory = 'C:/repos/AshenSpire/.art-cache/ashenspire-hd-assets-v30';
+const classIds =
+[
+  'reaver',
+  'rogue',
+  'starseer',
+  'herald',
+];
+const reactionKinds =
+[
+  'evade',
+  'guard-break',
+  'fully-defended',
+  'defend',
+];
+const stageGeometry =
+{
+  readyFloor: 464,
+  cssHeight: 190,
+  defaultFrameSize: 512,
+  defaultFrameLeft: 128,
+  frameTop: 16,
+  canvasWidth: 768,
+  canvasHeight: 544,
+  supportFloor: 480,
+  anchorX: 384,
+  sweepMargin: 16,
+};
 
-// Compare physical pack/path identities, including catalog entries without an
-// export hash. The checked-in snapshot is fixed evidence, never refreshed here.
-function verifyRasterSnapshot(expected, actual) {
-  for(const [label,snapshot] of [['retained',expected],['measured',actual]]) {
-    if(snapshot.baseline!==baseline || snapshot.release!==release)
-      throw Error(`${label} raster snapshot baseline/release mismatch`);
-  }
-  const flatten = (snapshot,label) => {
-    const indexed=new Map();
-    for(const entries of Object.values(snapshot.assets || {})) for(const r of entries) {
-      const key=`${r.pack}/${r.path}`;
-      if(!r.exists || !/^[a-f0-9]{64}$/.test(r.sha256 || ''))
+function normalizeLineEndings(bytes)
+{
+  return bytes.toString('utf8').replaceAll('\r\n', '\n');
+}
+
+function readGitFile(revision, path)
+{
+  const argumentsList =
+  [
+    '-c',
+    `safe.directory=${repositoryRoot}`,
+    'show',
+    `${revision}:${path}`,
+  ];
+
+  return execFileSync('git', argumentsList, { cwd: repositoryRoot });
+}
+
+function hashBytes(bytes)
+{
+  return createHash('sha256').update(bytes).digest('hex');
+}
+
+function roundCoordinate(value)
+{
+  return value == null
+    ? null
+    : Number(value.toFixed(coordinatePrecision));
+}
+
+function placementCoordinates(placement)
+{
+  const coordinateNames =
+  [
+    'left',
+    'top',
+    'width',
+    'height',
+  ];
+
+  return Object.fromEntries(coordinateNames.map(name =>
+  {
+    return [name, roundCoordinate(placement[name])];
+  }));
+}
+
+function indexPhysicalRasters(snapshot, label)
+{
+  const indexedRasters = new Map();
+
+  for (const entries of Object.values(snapshot.assets || {}))
+  {
+    for (const raster of entries)
+    {
+      const key = `${raster.pack}/${raster.path}`;
+
+      if (!raster.exists || !sha256Pattern.test(raster.sha256 || ''))
+      {
         throw Error(`${label} raster missing or invalid: ${key}`);
-      if(indexed.has(key)) throw Error(`${label} duplicate raster identity: ${key}`);
-      indexed.set(key,r.sha256);
+      }
+
+      if (indexedRasters.has(key))
+      {
+        throw Error(`${label} duplicate raster identity: ${key}`);
+      }
+
+      indexedRasters.set(key, raster.sha256);
     }
-    return indexed;
-  };
-  const expectedFiles=flatten(expected,'retained'), actualFiles=flatten(actual,'measured');
-  if(expectedFiles.size!==330) throw Error('Retained raster snapshot must contain the original 330 physical files');
-  for(const [key,hash] of expectedFiles) {
-    if(!actualFiles.has(key)) throw Error(`Measured raster missing from pinned snapshot coverage: ${key}`);
-    if(actualFiles.get(key)!==hash) throw Error(`Measured raster SHA-256 differs from retained v30 snapshot: ${key}`);
   }
-  for(const key of actualFiles.keys()) if(!expectedFiles.has(key))
-    throw Error(`Measured raster has no retained v30 snapshot identity: ${key}`);
+
+  return indexedRasters;
+}
+
+// Hashless catalog entries also use the retained physical-file snapshot.
+// The snapshot is fixed evidence and is never refreshed by this script.
+function verifyRasterSnapshot(expected, actual)
+{
+  const labeledSnapshots =
+  [
+    ['retained', expected],
+    ['measured', actual],
+  ];
+
+  for (const [label, snapshot] of labeledSnapshots)
+  {
+    if (snapshot.baseline !== baseline || snapshot.release !== release)
+    {
+      throw Error(`${label} raster snapshot baseline/release mismatch`);
+    }
+  }
+
+  const expectedFiles = indexPhysicalRasters(expected, 'retained');
+  const actualFiles = indexPhysicalRasters(actual, 'measured');
+
+  if (expectedFiles.size !== expectedRasterCount)
+  {
+    throw Error('Retained raster snapshot must contain the original 330 physical files');
+  }
+
+  for (const [key, expectedHash] of expectedFiles)
+  {
+    if (!actualFiles.has(key))
+    {
+      throw Error(`Measured raster missing from pinned snapshot coverage: ${key}`);
+    }
+
+    if (actualFiles.get(key) !== expectedHash)
+    {
+      throw Error(`Measured raster SHA-256 differs from retained v30 snapshot: ${key}`);
+    }
+  }
+
+  for (const key of actualFiles.keys())
+  {
+    if (!expectedFiles.has(key))
+    {
+      throw Error(`Measured raster has no retained v30 snapshot identity: ${key}`);
+    }
+  }
+
   return expectedFiles.size;
 }
-if(process.argv.includes('--selftest-snapshot-guard')) {
-  const clone = () => structuredClone(expectedSnapshot);
-  const first = snapshot => Object.values(snapshot.assets)[0][0];
-  const checked=verifyRasterSnapshot(expectedSnapshot,expectedSnapshot);
-  const cases=[
-    ['manipulated expected hash',() => {const e=clone();first(e).sha256='0'.repeat(64);return[e,clone()];}],
-    ['missing measured file',() => {const a=clone();Object.values(a.assets)[0].shift();return[clone(),a];}],
-    ['missing physical raster',() => {const a=clone();first(a).exists=false;return[clone(),a];}],
-    ['different source baseline',() => {const a=clone();a.baseline='different';return[clone(),a];}],
-    ['different art release',() => {const a=clone();a.release='ashenspire-hd-assets-v29';return[clone(),a];}],
-    ['unexpected physical path',() => {const a=clone();first(a).path+='-unexpected';return[clone(),a];}],
+
+function firstRaster(snapshot)
+{
+  return Object.values(snapshot.assets)[0][0];
+}
+
+function runSnapshotGuardSelftest(expectedSnapshot)
+{
+  const cloneSnapshot = () =>
+  {
+    return structuredClone(expectedSnapshot);
+  };
+  const checkedFiles = verifyRasterSnapshot(expectedSnapshot, expectedSnapshot);
+  const testCases =
+  [
+    ['manipulated expected hash', () =>
+    {
+      const expected = cloneSnapshot();
+      firstRaster(expected).sha256 = '0'.repeat(sha256HexLength);
+      return [expected, cloneSnapshot()];
+    }],
+    ['missing measured file', () =>
+    {
+      const actual = cloneSnapshot();
+      Object.values(actual.assets)[0].shift();
+      return [cloneSnapshot(), actual];
+    }],
+    ['missing physical raster', () =>
+    {
+      const actual = cloneSnapshot();
+      firstRaster(actual).exists = false;
+      return [cloneSnapshot(), actual];
+    }],
+    ['different source baseline', () =>
+    {
+      const actual = cloneSnapshot();
+      actual.baseline = 'different';
+      return [cloneSnapshot(), actual];
+    }],
+    ['different art release', () =>
+    {
+      const actual = cloneSnapshot();
+      actual.release = 'ashenspire-hd-assets-v29';
+      return [cloneSnapshot(), actual];
+    }],
+    ['unexpected physical path', () =>
+    {
+      const actual = cloneSnapshot();
+      firstRaster(actual).path += '-unexpected';
+      return [cloneSnapshot(), actual];
+    }],
   ];
-  for(const [name,fixture] of cases) {
-    let rejected=false;
-    try {verifyRasterSnapshot(...fixture());} catch {rejected=true;}
-    if(!rejected) throw Error(`Snapshot guard failed to reject ${name}`);
+
+  for (const [name, createFixture] of testCases)
+  {
+    let rejected = false;
+
+    try
+    {
+      verifyRasterSnapshot(...createFixture());
+    }
+    catch
+    {
+      rejected = true;
+    }
+
+    if (!rejected)
+    {
+      throw Error(`Snapshot guard failed to reject ${name}`);
+    }
   }
-  console.log(`PASS retained snapshot ${snapshotAnchor}: ${checked} identical files accepted; ${cases.length} manipulated in-memory fixtures rejected; no files written.`);
+
+  console.log(`PASS retained snapshot ${snapshotAnchor}: ${checkedFiles} identical files accepted; ${testCases.length} manipulated in-memory fixtures rejected; no files written.`);
+}
+
+function argumentValue(name)
+{
+  const argumentIndex = process.argv.indexOf(name);
+
+  return argumentIndex < 0
+    ? null
+    : process.argv[argumentIndex + 1];
+}
+
+function importRepositoryModule(path)
+{
+  return import(pathToFileURL(join(repositoryRoot, path)).href);
+}
+
+function addPoseRole(rolesByPose, key, role)
+{
+  if (!rolesByPose.has(key))
+  {
+    rolesByPose.set(key, []);
+  }
+
+  rolesByPose.get(key).push(role);
+}
+
+function csvCell(value)
+{
+  const text = value == null
+    ? ''
+    : typeof value === 'object'
+      ? JSON.stringify(value)
+      : String(value);
+
+  return '"' + text.replaceAll('"', '""') + '"';
+}
+
+function writeJsonEvidence(name, value)
+{
+  const bytes = JSON.stringify(value, null, jsonIndentation) + '\n';
+
+  if (Buffer.byteLength(bytes) > maxEvidenceBytes)
+  {
+    throw Error(name + ' exceeds evidence limit');
+  }
+
+  writeFileSync(join(outputDirectory, name), bytes);
+}
+
+function isCatalogPose(row)
+{
+  return !row.key.startsWith('$');
+}
+
+function mismatchRecord(row, path)
+{
+  return (
+  {
+    classId: row.classId,
+    key: row.key,
+    path,
+  });
+}
+
+const snapshotBytes = readFileSync(join(outputDirectory, snapshotFilename), 'utf8');
+const anchoredSnapshot = readGitFile(snapshotAnchor, snapshotRelative);
+
+if (normalizeLineEndings(snapshotBytes) !== normalizeLineEndings(anchoredSnapshot))
+{
+  throw Error(`Retained raster snapshot changed; restore the evidence from planning commit ${snapshotAnchor} before rerunning.`);
+}
+
+const expectedSnapshot = JSON.parse(snapshotBytes);
+
+if (process.argv.includes('--selftest-snapshot-guard'))
+{
+  runSnapshotGuardSelftest(expectedSnapshot);
   process.exit(0);
 }
-const arg = name => { const i = process.argv.indexOf(name); return i < 0 ? null : process.argv[i + 1]; };
-const cache = resolve(arg('--cache') || 'C:/repos/AshenSpire/.art-cache/ashenspire-hd-assets-v30');
-const python = arg('--python') || 'python';
-const get = path => import(pathToFileURL(join(root, path)).href);
-const { alternativeCardAnimationFamily } = await get('src/model/cardAnimationFamily.js');
-const { combatWeaponProfilesFor, DEFAULT_COMBAT_WEAPONS } = await get('src/model/combatWeaponPresentation.js');
-const { COMBAT_BODY_LANDMARKS: landmarks } = await get('src/content/combatBodyLandmarks.js');
-const { bodyPlacement, bodyResize } = await get('src/ui/models/CombatBodyModel.js');
-const { selectedWeaponSequence } = await get('src/model/selectedWeaponSequences.js');
-const { playerHurtFrames } = await get('src/content/playerHurtFrames.js');
-const { DEFEATED_ART } = await get('src/content/defeatedArt.js');
-const { alternativeCardAnimations } = await get('src/content/alternativeCardAnimations.js');
-const pin = JSON.parse(readFileSync(join(root, 'art-release.json'), 'utf8'));
-if (pin.tag !== 'ashenspire-hd-assets-v30') throw Error('This snapshot is pinned to v30; choose a new evidence baseline before rerunning.');
-const sha = bytes => createHash('sha256').update(bytes).digest('hex');
-const round = n => n == null ? null : Number(n.toFixed(9));
-const coordinates = p => Object.fromEntries(['left','top','width','height'].map(k => [k, round(p[k])]));
-const sourceFiles = [
-  'art-release.json','src/ui/assets.js','src/ui/alternativeCardStage.js',
-  'src/ui/models/CombatBodyModel.js','src/ui/models/CombatViewportSizeModel.js',
-  'src/ui/components/combatSpriteGeometry.js','src/model/cardAnimationFamily.js',
-  'src/model/combatAnimation.js','src/model/alternativeCardAnimation.js',
-  'src/model/combatWeaponPresentation.js','src/model/selectedWeaponStances.js',
-  'src/model/selectedWeaponSequences.js','src/model/classSmashAnimations.js',
-  'src/content/alternativeCardAnimations.js','src/content/alternativeSelectedStances.js',
-  'src/content/playerCounterSweepSprites.js','src/content/playerAttackSprites.js',
-  'src/content/classSmashAnimations.js','src/content/playerHurtFrames.js',
-  'src/content/combatBodyLandmarks.js','src/content/defeatedArt.js',
-  'src/content/generated/defeatedArt.js','tools/player-hurt-registration.py',
+
+const cache = resolve(argumentValue('--cache') || defaultCacheDirectory);
+const python = argumentValue('--python') || 'python';
+const { alternativeCardAnimationFamily } = await importRepositoryModule('src/model/cardAnimationFamily.js');
+const
+{
+  combatWeaponProfilesFor,
+  DEFAULT_COMBAT_WEAPONS: defaultCombatWeapons,
+} = await importRepositoryModule('src/model/combatWeaponPresentation.js');
+const { COMBAT_BODY_LANDMARKS: landmarks } = await importRepositoryModule('src/content/combatBodyLandmarks.js');
+const { bodyPlacement, bodyResize } = await importRepositoryModule('src/ui/models/CombatBodyModel.js');
+const { selectedWeaponSequence } = await importRepositoryModule('src/model/selectedWeaponSequences.js');
+const { playerHurtFrames } = await importRepositoryModule('src/content/playerHurtFrames.js');
+const { DEFEATED_ART: defeatedArt } = await importRepositoryModule('src/content/defeatedArt.js');
+const { alternativeCardAnimations } = await importRepositoryModule('src/content/alternativeCardAnimations.js');
+const pin = JSON.parse(readFileSync(join(repositoryRoot, 'art-release.json'), 'utf8'));
+
+if (pin.tag !== release)
+{
+  throw Error('This snapshot is pinned to v30; choose a new evidence baseline before rerunning.');
+}
+
+const sourceFiles =
+[
+  'art-release.json',
+  'src/ui/assets.js',
+  'src/ui/alternativeCardStage.js',
+  'src/ui/models/CombatBodyModel.js',
+  'src/ui/models/CombatViewportSizeModel.js',
+  'src/ui/components/combatSpriteGeometry.js',
+  'src/model/cardAnimationFamily.js',
+  'src/model/combatAnimation.js',
+  'src/model/alternativeCardAnimation.js',
+  'src/model/combatWeaponPresentation.js',
+  'src/model/selectedWeaponStances.js',
+  'src/model/selectedWeaponSequences.js',
+  'src/model/classSmashAnimations.js',
+  'src/content/alternativeCardAnimations.js',
+  'src/content/alternativeSelectedStances.js',
+  'src/content/playerCounterSweepSprites.js',
+  'src/content/playerAttackSprites.js',
+  'src/content/classSmashAnimations.js',
+  'src/content/playerHurtFrames.js',
+  'src/content/combatBodyLandmarks.js',
+  'src/content/defeatedArt.js',
+  'src/content/generated/defeatedArt.js',
+  'tools/player-hurt-registration.py',
 ];
-const sourceHashes = sourceFiles.map(path => {
-  const local = readFileSync(join(root, path));
-  const blob = execFileSync('git', ['-c', `safe.directory=${root}`, 'show', `${baseline}:${path}`], { cwd: root });
-  const lf = b => b.toString('utf8').replaceAll('\r\n','\n');
-  if (lf(local) !== lf(blob)) throw Error(`Runtime/source drift since selected baseline: ${path}`);
-  return {path,sha256:sha(local),baselineBlobSha256:sha(blob),lfNormalizedSha256:sha(lf(local)),baselineMatchIgnoringCrlf:true};
+const sourceHashes = sourceFiles.map(path =>
+{
+  const localBytes = readFileSync(join(repositoryRoot, path));
+  const baselineBytes = readGitFile(baseline, path);
+
+  if (normalizeLineEndings(localBytes) !== normalizeLineEndings(baselineBytes))
+  {
+    throw Error(`Runtime/source drift since selected baseline: ${path}`);
+  }
+
+  return (
+  {
+    path,
+    sha256: hashBytes(localBytes),
+    baselineBlobSha256: hashBytes(baselineBytes),
+    lfNormalizedSha256: hashBytes(normalizeLineEndings(localBytes)),
+    baselineMatchIgnoringCrlf: true,
+  });
 });
-const rows = [], mappings = {}, references = {};
+const rows = [];
+const mappings = {};
+const references = {};
 const sourcePaths = new Set();
-for (const classId of ['reaver','rogue','starseer','herald']) {
-  const profiles = combatWeaponProfilesFor({classId});
-  const a = alternativeCardAnimationFamily(classId, profiles);
-  const { frames, family, heldFrames, pilotFrames } = a;
-  const ready = frames.ready, readyBody = landmarks[ready.path];
-  const stageHeightReference = 464 - ready.bounds[1];
-  const cssScale = 190 / stageHeightReference;
-  const reference = (readyBody.feetY-readyBody.headY) * (ready.size?.[1] || 512) / readyBody.height;
-  const topPadding = Math.max(0, -Math.min(...Object.values(frames).map(f => (f.stageBounds || f.bounds)[1])));
-  const margin = pilotFrames?.['sweep-contact'] ? 16 : 0;
-  const leftPadding = Math.max(0, margin - Math.min(...Object.values(frames).map(f => (f.stageBounds || f.bounds)[0])));
-  const rightPadding = Math.max(0, Math.max(...Object.values(frames).map(f => (f.stageBounds || f.bounds)[2])) - (768-margin));
-  references[classId] = {profiles,ready:ready.path,readyRasterBody:readyBody,referenceBodyStage:reference,
-    cssPixelsPerStageUnit:cssScale,cssReadyBodyPx:reference*cssScale,
-    requestedCanvas:[768+leftPadding+rightPadding,544+topPadding],
-    canvas:[Math.trunc(768+leftPadding+rightPadding),Math.trunc(544+topPadding)],
-    padding:{left:leftPadding,top:topPadding,right:rightPadding},normalFloor:480+topPadding};
-  const uses = new Map();
-  const use = (key, role) => { if (!uses.has(key)) uses.set(key, []); uses.get(key).push(role); };
-  for (const [action, sequence] of Object.entries(family.sequences)) {
-    for (const key of sequence.poses) if (key !== 'origin') use(key, `sequence:${action}`);
+
+for (const classId of classIds)
+{
+  const profiles = combatWeaponProfilesFor({ classId });
+  const assembledFamily = alternativeCardAnimationFamily(classId, profiles);
+  const
+  {
+    frames,
+    family,
+    heldFrames,
+    pilotFrames,
+  } = assembledFamily;
+  const readyFrame = frames.ready;
+  const readyBody = landmarks[readyFrame.path];
+  const stageHeightReference = stageGeometry.readyFloor - readyFrame.bounds[1];
+  const cssScale = stageGeometry.cssHeight / stageHeightReference;
+  const referenceBodyHeight = (readyBody.feetY - readyBody.headY)
+    * (readyFrame.size?.[1] || stageGeometry.defaultFrameSize) / readyBody.height;
+  const frameBounds = Object.values(frames).map(frame =>
+  {
+    return frame.stageBounds || frame.bounds;
+  });
+  const boundsTopEdges = frameBounds.map(bounds =>
+  {
+    return bounds[1];
+  });
+  const boundsLeftEdges = frameBounds.map(bounds =>
+  {
+    return bounds[0];
+  });
+  const boundsRightEdges = frameBounds.map(bounds =>
+  {
+    return bounds[2];
+  });
+  const topPadding = Math.max(0, -Math.min(...boundsTopEdges));
+  const horizontalMargin = pilotFrames?.['sweep-contact']
+    ? stageGeometry.sweepMargin
+    : 0;
+  const leftPadding = Math.max(0, horizontalMargin - Math.min(...boundsLeftEdges));
+  const rightPadding = Math.max(0, Math.max(...boundsRightEdges)
+    - (stageGeometry.canvasWidth - horizontalMargin));
+
+  references[classId] =
+  {
+    profiles,
+    ready: readyFrame.path,
+    readyRasterBody: readyBody,
+    referenceBodyStage: referenceBodyHeight,
+    cssPixelsPerStageUnit: cssScale,
+    cssReadyBodyPx: referenceBodyHeight * cssScale,
+    requestedCanvas:
+    [
+      stageGeometry.canvasWidth + leftPadding + rightPadding,
+      stageGeometry.canvasHeight + topPadding,
+    ],
+    canvas:
+    [
+      Math.trunc(stageGeometry.canvasWidth + leftPadding + rightPadding),
+      Math.trunc(stageGeometry.canvasHeight + topPadding),
+    ],
+    padding:
+    {
+      left: leftPadding,
+      top: topPadding,
+      right: rightPadding,
+    },
+    normalFloor: stageGeometry.supportFloor + topPadding,
+  };
+
+  const rolesByPose = new Map();
+
+  for (const [action, sequence] of Object.entries(family.sequences))
+  {
+    for (const key of sequence.poses)
+    {
+      if (key !== 'origin')
+      {
+        addPoseRole(rolesByPose, key, `sequence:${action}`);
+      }
+    }
   }
-  use('ready','rest:idle'); use('guard-brace','rest:defend/guard/evade-fallback');
-  for (const stance of Object.keys(heldFrames)) use(`stance-${stance}`, `held:${stance}`);
-  const seq = Object.fromEntries(Object.entries(family.sequences).map(([action,s]) => [action,{
-    poses:s.poses.map(key => ({key,path:key === 'origin' ? null : frames[key]?.path || null,
-      resolution:key === 'origin' ? 'current held/rest pose at sampling time' : frames[key] ? 'assembled catalog frame' : 'missing frame; painter falls back to ready'})),
-    durations:s.durations,impact:s.impact,travel:s.travel,hold:s.hold ?? false,pilot:!!s.pilot,
-  }]));
+
+  addPoseRole(rolesByPose, 'ready', 'rest:idle');
+  addPoseRole(rolesByPose, 'guard-brace', 'rest:defend/guard/evade-fallback');
+
+  for (const stance of Object.keys(heldFrames))
+  {
+    addPoseRole(rolesByPose, `stance-${stance}`, `held:${stance}`);
+  }
+
+  const sequences = Object.fromEntries(Object.entries(family.sequences).map(([action, sequence]) =>
+  {
+    const poses = sequence.poses.map(key =>
+    {
+      return (
+      {
+        key,
+        path: key === 'origin'
+          ? null
+          : frames[key]?.path || null,
+        resolution: key === 'origin'
+          ? 'current held/rest pose at sampling time'
+          : frames[key]
+            ? 'assembled catalog frame'
+            : 'missing frame; painter falls back to ready',
+      });
+    });
+
+    const sequenceRecord =
+    {
+      poses,
+      durations: sequence.durations,
+      impact: sequence.impact,
+      travel: sequence.travel,
+      hold: sequence.hold ?? false,
+      pilot: !!sequence.pilot,
+    };
+
+    return [action, sequenceRecord];
+  }));
   const targetReactions = {};
-  if (pilotFrames) for (const kind of ['evade','guard-break','fully-defended','defend']) {
-    const s = selectedWeaponSequence(kind);
-    if (!s.poses.every(key=>frames[key])) continue;
-    targetReactions[kind] = s.poses.map(key=>({key,path:frames[key].path}));
-    for(const key of s.poses) use(key,`target-reaction:${kind}`);
+
+  if (pilotFrames)
+  {
+    for (const kind of reactionKinds)
+    {
+      const sequence = selectedWeaponSequence(kind);
+
+      const hasEveryFrame = sequence.poses.every(key =>
+      {
+        return frames[key];
+      });
+
+      if (!hasEveryFrame)
+      {
+        continue;
+      }
+
+      targetReactions[kind] = sequence.poses.map(key =>
+      {
+        return (
+        {
+          key,
+          path: frames[key].path,
+        });
+      });
+
+      for (const key of sequence.poses)
+      {
+        addPoseRole(rolesByPose, key, `target-reaction:${kind}`);
+      }
+    }
   }
-  mappings[classId] = {profiles,sequences:seq,held:Object.fromEntries(Object.entries(heldFrames).map(([k,f])=>[k,f.path])),
+
+  const heldPaths = Object.fromEntries(Object.entries(heldFrames).map(([key, frame]) =>
+  {
+    return [key, frame.path];
+  }));
+
+  mappings[classId] =
+  {
+    profiles,
+    sequences,
+    held: heldPaths,
     targetReactions,
-    baseReady:ready.path,baseSweepOverridden:alternativeCardAnimations.classes[classId].sequences.sweep.poses,
-    originPolicy:'current restPose(); idle->ready, current stance->stance-<stance>, counter->pilot-counter or selected counter stance, defend/guard/evade->guard-brace',
-    hurt:playerHurtFrames[classId],defeated:DEFEATED_ART[classId]?.file || null};
-  for (const [key, f] of Object.entries(frames)) {
-    const dims = f.drawOffset ? f.size : [512,512], offset = f.drawOffset || [128,0];
-    const authored = {left:leftPadding+offset[0],top:16+topPadding+offset[1],width:dims[0],height:dims[1],anchorX:leftPadding+384};
-    const b = landmarks[f.path];
-    const before = b ? (b.feetY-b.headY)*dims[1]/b.height : null;
-    const held = b ? bodyPlacement(authored,b,reference,480+topPadding) : authored;
-    const action = b ? bodyResize(authored,b,reference) : authored;
-    const roles = uses.get(key) || [];
-    rows.push({classId,key,path:f.path,lite:f.lite || null,roles:roles.join(';'),
-      selection:roles.length?'available through active assembled family':'assembled but no selected sequence/held/rest role identified',
-      rasterDeclared:f.rasterSize || null,mobileRasterDeclared:f.mobileRasterSize || null,
-      drawSize:dims,drawOffset:offset,catalogBounds:f.bounds,stageBounds:f.stageBounds || null,
-      bodyRaster:b || null,referenceBodyStage:reference,authoredSpanStage:before,
-      normalizationFactor:before ? reference/before : 1,heldPlacement:coordinates(held),actionPlacement:coordinates(action),
-      normalizedSpanStage:b?reference:null,cssPixelsPerStageUnit:cssScale,
-      cssDrawSizeHeld:[round(held.width*cssScale),round(held.height*cssScale)],
-      cssDrawSizeAction:[round(action.width*cssScale),round(action.height*cssScale)],
-      declaredSha256:f.sha256 || null,declaredLiteSha256:f.liteSha256 || null,
-      source:f.source || null,sourceCrop:f.sourceCrop || null,provenance:f.provenance || null});
-    sourcePaths.add(f.path); if (f.lite) sourcePaths.add(f.lite);
+    baseReady: readyFrame.path,
+    baseSweepOverridden: alternativeCardAnimations.classes[classId].sequences.sweep.poses,
+    originPolicy: 'current restPose(); idle->ready, current stance->stance-<stance>, counter->pilot-counter or selected counter stance, defend/guard/evade->guard-brace',
+    hurt: playerHurtFrames[classId],
+    defeated: defeatedArt[classId]?.file || null,
+  };
+
+  for (const [key, frame] of Object.entries(frames))
+  {
+    const drawSize = frame.drawOffset
+      ? frame.size
+      : [stageGeometry.defaultFrameSize, stageGeometry.defaultFrameSize];
+    const drawOffset = frame.drawOffset || [stageGeometry.defaultFrameLeft, 0];
+    const authoredPlacement =
+    {
+      left: leftPadding + drawOffset[0],
+      top: stageGeometry.frameTop + topPadding + drawOffset[1],
+      width: drawSize[0],
+      height: drawSize[1],
+      anchorX: leftPadding + stageGeometry.anchorX,
+    };
+    const bodyLandmarks = landmarks[frame.path];
+    const authoredSpan = bodyLandmarks
+      ? (bodyLandmarks.feetY - bodyLandmarks.headY) * drawSize[1] / bodyLandmarks.height
+      : null;
+    const heldPlacement = bodyLandmarks
+      ? bodyPlacement(
+        authoredPlacement,
+        bodyLandmarks,
+        referenceBodyHeight,
+        stageGeometry.supportFloor + topPadding)
+      : authoredPlacement;
+    const actionPlacement = bodyLandmarks
+      ? bodyResize(authoredPlacement, bodyLandmarks, referenceBodyHeight)
+      : authoredPlacement;
+    const roles = rolesByPose.get(key) || [];
+
+    rows.push(
+    {
+      classId,
+      key,
+      path: frame.path,
+      lite: frame.lite || null,
+      roles: roles.join(';'),
+      selection: roles.length
+        ? 'available through active assembled family'
+        : 'assembled but no selected sequence/held/rest role identified',
+      rasterDeclared: frame.rasterSize || null,
+      mobileRasterDeclared: frame.mobileRasterSize || null,
+      drawSize,
+      drawOffset,
+      catalogBounds: frame.bounds,
+      stageBounds: frame.stageBounds || null,
+      bodyRaster: bodyLandmarks || null,
+      referenceBodyStage: referenceBodyHeight,
+      authoredSpanStage: authoredSpan,
+      normalizationFactor: authoredSpan
+        ? referenceBodyHeight / authoredSpan
+        : 1,
+      heldPlacement: placementCoordinates(heldPlacement),
+      actionPlacement: placementCoordinates(actionPlacement),
+      normalizedSpanStage: bodyLandmarks
+        ? referenceBodyHeight
+        : null,
+      cssPixelsPerStageUnit: cssScale,
+      cssDrawSizeHeld:
+      [
+        roundCoordinate(heldPlacement.width * cssScale),
+        roundCoordinate(heldPlacement.height * cssScale),
+      ],
+      cssDrawSizeAction:
+      [
+        roundCoordinate(actionPlacement.width * cssScale),
+        roundCoordinate(actionPlacement.height * cssScale),
+      ],
+      declaredSha256: frame.sha256 || null,
+      declaredLiteSha256: frame.liteSha256 || null,
+      source: frame.source || null,
+      sourceCrop: frame.sourceCrop || null,
+      provenance: frame.provenance || null,
+    });
+    sourcePaths.add(frame.path);
+
+    if (frame.lite)
+    {
+      sourcePaths.add(frame.lite);
+    }
   }
-  const h = playerHurtFrames[classId];
-  rows.push({classId,key:'$hurt',path:h.file,roles:'target:hit',selection:'separate hurt raster; ordinary motion only',
-    drawSize:[512*h.scale,512*h.scale],drawOffset:[128+h.dx,16+h.dy],normalizationFactor:1,
-    heldPlacement:null,actionPlacement:{left:leftPadding+128+h.dx,top:16+topPadding+h.dy,width:512*h.scale,height:512*h.scale},
-    source:'src/content/playerHurtFrames.js',hurtScale:h.scale,hurtDx:h.dx,hurtDy:h.dy,
-    referenceBodyStage:reference,cssPixelsPerStageUnit:cssScale});
-  sourcePaths.add(h.file);
-  if (DEFEATED_ART[classId]?.file) {
-    const path=DEFEATED_ART[classId].file;
+
+  const hurtFrame = playerHurtFrames[classId];
+
+  rows.push(
+  {
+    classId,
+    key: '$hurt',
+    path: hurtFrame.file,
+    roles: 'target:hit',
+    selection: 'separate hurt raster; ordinary motion only',
+    drawSize:
+    [
+      stageGeometry.defaultFrameSize * hurtFrame.scale,
+      stageGeometry.defaultFrameSize * hurtFrame.scale,
+    ],
+    drawOffset:
+    [
+      stageGeometry.defaultFrameLeft + hurtFrame.dx,
+      stageGeometry.frameTop + hurtFrame.dy,
+    ],
+    normalizationFactor: 1,
+    heldPlacement: null,
+    actionPlacement:
+    {
+      left: leftPadding + stageGeometry.defaultFrameLeft + hurtFrame.dx,
+      top: stageGeometry.frameTop + topPadding + hurtFrame.dy,
+      width: stageGeometry.defaultFrameSize * hurtFrame.scale,
+      height: stageGeometry.defaultFrameSize * hurtFrame.scale,
+    },
+    source: 'src/content/playerHurtFrames.js',
+    hurtScale: hurtFrame.scale,
+    hurtDx: hurtFrame.dx,
+    hurtDy: hurtFrame.dy,
+    referenceBodyStage: referenceBodyHeight,
+    cssPixelsPerStageUnit: cssScale,
+  });
+  sourcePaths.add(hurtFrame.file);
+
+  if (defeatedArt[classId]?.file)
+  {
+    const path = defeatedArt[classId].file;
     sourcePaths.add(path);
-    rows.push({classId,key:'$defeated',path,roles:'rest:defeated',selection:'separate defeated raster; fixed 512 square draw',
-      drawSize:[512,512],drawOffset:[128,16],normalizationFactor:1,
-      actionPlacement:{left:leftPadding+128,top:16+topPadding,width:512,height:512},
-      source:'src/content/generated/defeatedArt.js',referenceBodyStage:reference,cssPixelsPerStageUnit:cssScale});
+    rows.push(
+    {
+      classId,
+      key: '$defeated',
+      path,
+      roles: 'rest:defeated',
+      selection: 'separate defeated raster; fixed 512 square draw',
+      drawSize: [stageGeometry.defaultFrameSize, stageGeometry.defaultFrameSize],
+      drawOffset: [stageGeometry.defaultFrameLeft, stageGeometry.frameTop],
+      normalizationFactor: 1,
+      actionPlacement:
+      {
+        left: leftPadding + stageGeometry.defaultFrameLeft,
+        top: stageGeometry.frameTop + topPadding,
+        width: stageGeometry.defaultFrameSize,
+        height: stageGeometry.defaultFrameSize,
+      },
+      source: 'src/content/generated/defeatedArt.js',
+      referenceBodyStage: referenceBodyHeight,
+      cssPixelsPerStageUnit: cssScale,
+    });
   }
 }
-// Read actual rasters using Pillow. Alpha >=128 is a silhouette measurement,
-// NOT semantic anatomy; it may include weapons/effects. Never writes an image.
-const pythonCode = String.raw`import sys,json,hashlib,os
+
+// Pillow reads alpha >=128 as silhouette bounds, not anatomical landmarks.
+// This subprocess decodes and hashes images without writing any image files.
+const pythonCode = String.raw`import sys
+import json
+import hashlib
+import os
 from PIL import Image
-cache=sys.argv[1]
-result={}
-for p in json.load(sys.stdin):
-    if p.startswith('assets-display/'):
-        candidates=[('common',p)]
-    elif p.startswith('assets/'):
-        candidates=[('high',p),('light',p.replace('assets/','assets-mobile/',1))]
+
+cache = sys.argv[1]
+alphaThreshold = 128
+result = {}
+
+for assetPath in json.load(sys.stdin):
+    if assetPath.startswith('assets-display/'):
+        candidates = [('common', assetPath)]
+    elif assetPath.startswith('assets/'):
+        candidates = [
+            ('high', assetPath),
+            ('light', assetPath.replace('assets/', 'assets-mobile/', 1))
+        ]
     else:
-        candidates=[('common',p)]
-    entries=[]
-    for pack,relative in candidates:
-        file=os.path.join(cache,pack,relative)
-        if not os.path.isfile(file):
-            entries.append(dict(pack=pack,path=relative,exists=False));continue
-        with open(file,'rb') as stream: data=stream.read()
-        with Image.open(file) as im:
-            alpha=im.convert('RGBA').getchannel('A').point(lambda a:255 if a>=128 else 0)
-            entries.append(dict(pack=pack,path=relative,exists=True,bytes=len(data),sha256=hashlib.sha256(data).hexdigest(),raster=list(im.size),alphaBox128=alpha.getbbox()))
-    result[p]=entries
-print(json.dumps(result,separators=(',',':')))`;
-const rasters = JSON.parse(execFileSync(python, ['-c',pythonCode,cache], {input:JSON.stringify([...sourcePaths].sort()),encoding:'utf8',maxBuffer:8*1024*1024}));
-const verifiedRasters=verifyRasterSnapshot(expectedSnapshot,{baseline,release:pin.tag,assets:rasters});
+        candidates = [('common', assetPath)]
+
+    entries = []
+
+    for pack, relativePath in candidates:
+        filePath = os.path.join(cache, pack, relativePath)
+
+        if not os.path.isfile(filePath):
+            entries.append(dict(pack=pack, path=relativePath, exists=False))
+            continue
+
+        with open(filePath, 'rb') as stream:
+            imageBytes = stream.read()
+
+        with Image.open(filePath) as image:
+            alpha = image.convert('RGBA').getchannel('A').point(
+                lambda value: 255 if value >= alphaThreshold else 0
+            )
+            entries.append(dict(
+                pack=pack,
+                path=relativePath,
+                exists=True,
+                bytes=len(imageBytes),
+                sha256=hashlib.sha256(imageBytes).hexdigest(),
+                raster=list(image.size),
+                alphaBox128=alpha.getbbox()
+            ))
+
+    result[assetPath] = entries
+
+print(json.dumps(result, separators=(',', ':')))`;
+const rasterOutput = execFileSync(python, ['-c', pythonCode, cache],
+{
+  input: JSON.stringify([...sourcePaths].sort()),
+  encoding: 'utf8',
+  maxBuffer: maxPythonOutputBytes,
+});
+const rasters = JSON.parse(rasterOutput);
+const verifiedRasters = verifyRasterSnapshot(expectedSnapshot,
+{
+  baseline,
+  release: pin.tag,
+  assets: rasters,
+});
+
 console.log(`PASS retained v30 raster snapshot: ${verifiedRasters} physical pack/path SHA-256 values match planning commit ${snapshotAnchor}.`);
-const csvColumns = ['classId','key','path','lite','roles','selection','rasterDeclared','mobileRasterDeclared','actualRasters',
-  'drawSize','drawOffset','catalogBounds','stageBounds','bodyRaster','referenceBodyStage','authoredSpanStage','normalizationFactor',
-  'heldPlacement','actionPlacement','normalizedSpanStage','cssPixelsPerStageUnit','cssDrawSizeHeld','cssDrawSizeAction',
-  'declaredSha256','declaredLiteSha256','source','sourceCrop','provenance','hurtScale','hurtDx','hurtDy'];
-for (const r of rows) r.actualRasters = {path:rasters[r.path],lite:r.lite?rasters[r.lite]:null};
-const cell = x => '"' + (x == null?'':typeof x==='object'?JSON.stringify(x):String(x)).replaceAll('"','""') + '"';
-writeFileSync(join(out,'inventory.csv'),[csvColumns.join(','),...rows.map(r=>csvColumns.map(k=>cell(r[k])).join(','))].join('\n')+'\n');
-const uniqueFrames = [...new Map(rows.filter(r=>!r.key.startsWith('$')).map(r=>[r.classId+'|'+r.path,r])).values()];
-const available = uniqueFrames.filter(r=>rows.some(a=>a.classId===r.classId&&a.path===r.path&&a.roles));
-const missing = Object.values(rasters).flat().filter(r=>!r.exists);
-const hashMismatches = rows.flatMap(r=>[
-  r.declaredSha256&&rasters[r.path]?.[0]?.exists&&r.declaredSha256!==rasters[r.path][0].sha256?{classId:r.classId,key:r.key,path:r.path}:null,
-  r.declaredLiteSha256&&rasters[r.lite]?.[0]?.exists&&r.declaredLiteSha256!==rasters[r.lite][0].sha256?{classId:r.classId,key:r.key,path:r.lite}:null,
-]).filter(Boolean);
-const summaries = Object.fromEntries(Object.keys(references).map(classId=>{
-  const r=uniqueFrames.filter(r=>r.classId===classId), a=available.filter(r=>r.classId===classId);
-  return [classId,{catalogPoseRows:rows.filter(r=>r.classId===classId&&!r.key.startsWith('$')).length,
-    uniqueFramePaths:r.length,uniqueAvailablePaths:a.length,landmarkedUniqueFrames:r.filter(r=>r.bodyRaster).length,
-    landmarkedAvailableFrames:a.filter(r=>r.bodyRaster).length,
-    missingLandmarkPaths:a.filter(r=>!r.bodyRaster).map(r=>r.path)}];
+
+const csvColumns =
+[
+  'classId',
+  'key',
+  'path',
+  'lite',
+  'roles',
+  'selection',
+  'rasterDeclared',
+  'mobileRasterDeclared',
+  'actualRasters',
+  'drawSize',
+  'drawOffset',
+  'catalogBounds',
+  'stageBounds',
+  'bodyRaster',
+  'referenceBodyStage',
+  'authoredSpanStage',
+  'normalizationFactor',
+  'heldPlacement',
+  'actionPlacement',
+  'normalizedSpanStage',
+  'cssPixelsPerStageUnit',
+  'cssDrawSizeHeld',
+  'cssDrawSizeAction',
+  'declaredSha256',
+  'declaredLiteSha256',
+  'source',
+  'sourceCrop',
+  'provenance',
+  'hurtScale',
+  'hurtDx',
+  'hurtDy',
+];
+
+for (const row of rows)
+{
+  row.actualRasters =
+  {
+    path: rasters[row.path],
+    lite: row.lite
+      ? rasters[row.lite]
+      : null,
+  };
+}
+
+const csvRows = rows.map(row =>
+{
+  const cells = csvColumns.map(column =>
+  {
+    return csvCell(row[column]);
+  });
+
+  return cells.join(',');
+});
+const csvOutput = [csvColumns.join(','), ...csvRows].join('\n') + '\n';
+writeFileSync(join(outputDirectory, 'inventory.csv'), csvOutput);
+
+const keyedFrames = rows
+  .filter(isCatalogPose)
+  .map(row =>
+  {
+    return [row.classId + '|' + row.path, row];
+  });
+const uniqueFrames = [...new Map(keyedFrames).values()];
+const availableFrames = uniqueFrames.filter(frame =>
+{
+  return rows.some(row =>
+  {
+    return row.classId === frame.classId && row.path === frame.path && row.roles;
+  });
+});
+const physicalRasters = Object.values(rasters).flat();
+const missingRasters = physicalRasters.filter(raster =>
+{
+  return !raster.exists;
+});
+const existingRasterCount = physicalRasters.filter(raster =>
+{
+  return raster.exists;
+}).length;
+const hashMismatches = rows.flatMap(row =>
+{
+  const fullRaster = rasters[row.path]?.[0];
+  const liteRaster = rasters[row.lite]?.[0];
+  const fullMismatch = row.declaredSha256 && fullRaster?.exists
+    && row.declaredSha256 !== fullRaster.sha256;
+  const liteMismatch = row.declaredLiteSha256 && liteRaster?.exists
+    && row.declaredLiteSha256 !== liteRaster.sha256;
+
+  return [
+    fullMismatch
+      ? mismatchRecord(row, row.path)
+      : null,
+    liteMismatch
+      ? mismatchRecord(row, row.lite)
+      : null,
+  ];
+}).filter(Boolean);
+const summaries = Object.fromEntries(Object.keys(references).map(classId =>
+{
+  const classFrames = uniqueFrames.filter(frame =>
+  {
+    return frame.classId === classId;
+  });
+  const classAvailableFrames = availableFrames.filter(frame =>
+  {
+    return frame.classId === classId;
+  });
+  const classPoseCount = rows.filter(row =>
+  {
+    return row.classId === classId && isCatalogPose(row);
+  }).length;
+  const landmarkedFrameCount = classFrames.filter(frame =>
+  {
+    return frame.bodyRaster;
+  }).length;
+  const landmarkedAvailableFrameCount = classAvailableFrames.filter(frame =>
+  {
+    return frame.bodyRaster;
+  }).length;
+  const missingLandmarkPaths = classAvailableFrames
+    .filter(frame =>
+    {
+      return !frame.bodyRaster;
+    })
+    .map(frame =>
+    {
+      return frame.path;
+    });
+
+  const classSummary =
+  {
+    catalogPoseRows: classPoseCount,
+    uniqueFramePaths: classFrames.length,
+    uniqueAvailablePaths: classAvailableFrames.length,
+    landmarkedUniqueFrames: landmarkedFrameCount,
+    landmarkedAvailableFrames: landmarkedAvailableFrameCount,
+    missingLandmarkPaths,
+  };
+
+  return [classId, classSummary];
 }));
-const json = (name,value) => {const bytes=JSON.stringify(value,null,2)+'\n';if(Buffer.byteLength(bytes)>256*1024)throw Error(name+' exceeds evidence limit');writeFileSync(join(out,name),bytes);};
-json('summary.json',{baseline,artRelease:pin.repo+'/'+pin.tag,cache,defaultCombatWeapons:DEFAULT_COMBAT_WEAPONS,
-  measurementScope:'Static baseline reconstruction at zero action travel/recoil; no browser/viewport assertion and no anatomical inference from vertical spans.',
-  references,counts:{rows:rows.length,uniqueFramePaths:uniqueFrames.length,uniqueAvailableFramePaths:available.length,
-    assetIdentifiers:sourcePaths.size,rasterFiles:Object.values(rasters).flat().filter(r=>r.exists).length,
-    missingRasterFiles:missing.length,catalogHashMismatches:hashMismatches.length},classes:summaries,
-  missingRasters:missing,hashMismatches});
-json('action-mappings.json',{baseline,classes:mappings});
-json('source-hashes.json',{baseline,files:sourceHashes});
-// raster-hashes.json is the immutable comparison snapshot from snapshotAnchor.
-// Never replace it with the files supplied to --cache, even on a matching run.
-console.log(JSON.stringify({counts:{rows:rows.length,uniqueFramePaths:uniqueFrames.length,available:available.length,
-  rasters:Object.values(rasters).flat().filter(r=>r.exists).length,missing:missing.length,hashMismatches:hashMismatches.length},
-  classes:summaries,outputs:['inventory.csv','summary.json','action-mappings.json','source-hashes.json'],
-  retainedSnapshot:{path:'raster-hashes.json',planningCommit:snapshotAnchor,verifiedFiles:verifiedRasters}},null,2));
-for(const name of ['summary.json','action-mappings.json','source-hashes.json','raster-hashes.json'])
-  console.log(`${name}: ${statSync(join(out,name)).size} bytes`);
+
+writeJsonEvidence('summary.json',
+{
+  baseline,
+  artRelease: pin.repo + '/' + pin.tag,
+  cache,
+  defaultCombatWeapons,
+  measurementScope: 'Static baseline reconstruction at zero action travel/recoil; no browser/viewport assertion and no anatomical inference from vertical spans.',
+  references,
+  counts:
+  {
+    rows: rows.length,
+    uniqueFramePaths: uniqueFrames.length,
+    uniqueAvailableFramePaths: availableFrames.length,
+    assetIdentifiers: sourcePaths.size,
+    rasterFiles: existingRasterCount,
+    missingRasterFiles: missingRasters.length,
+    catalogHashMismatches: hashMismatches.length,
+  },
+  classes: summaries,
+  missingRasters,
+  hashMismatches,
+});
+writeJsonEvidence('action-mappings.json',
+{
+  baseline,
+  classes: mappings,
+});
+writeJsonEvidence('source-hashes.json',
+{
+  baseline,
+  files: sourceHashes,
+});
+
+// Never replace the retained snapshot, even when supplied cache files match.
+const generatedOutputs =
+[
+  'inventory.csv',
+  'summary.json',
+  'action-mappings.json',
+  'source-hashes.json',
+];
+const consoleSummary =
+{
+  counts:
+  {
+    rows: rows.length,
+    uniqueFramePaths: uniqueFrames.length,
+    available: availableFrames.length,
+    rasters: existingRasterCount,
+    missing: missingRasters.length,
+    hashMismatches: hashMismatches.length,
+  },
+  classes: summaries,
+  outputs: generatedOutputs,
+  retainedSnapshot:
+  {
+    path: snapshotFilename,
+    planningCommit: snapshotAnchor,
+    verifiedFiles: verifiedRasters,
+  },
+};
+console.log(JSON.stringify(consoleSummary, null, jsonIndentation));
+
+const measuredJsonFiles =
+[
+  'summary.json',
+  'action-mappings.json',
+  'source-hashes.json',
+  snapshotFilename,
+];
+
+for (const name of measuredJsonFiles)
+{
+  console.log(`${name}: ${statSync(join(outputDirectory, name)).size} bytes`);
+}

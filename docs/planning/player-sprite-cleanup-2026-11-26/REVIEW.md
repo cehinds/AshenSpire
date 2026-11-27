@@ -1,86 +1,91 @@
-# Review and verification record
+# Review and verification
 
-Date: 2026-11-26, America/Anchorage. Scope: planning documents, measurements,
-diagnostic images, reproduction scripts, and status accuracy. No game/art fix
-or full build readiness is asserted.
+Baseline review: 2026-11-26. Readability review: 2026-11-27, America/Anchorage.
+Scope: planning documents, measurements, images, scripts, and status accuracy.
+No sprite fix or full-build acceptance is claimed.
 
-## Concurrent contributors
+## Planning review
 
-- Worker A (`sprite_survey`): runtime inventory, measured factors, source/raster
-  hashes, and shared-consumer analysis under `measurements/`.
-- Worker B (`sprite_identity`): identity audit, canonical proposals, existing
-  pinned reaction candidates, and eight inspected static reference sheets under
-  `visuals/`.
-- Worker C (`sprite_verification`): published metadata, focused tests, production
-  stage samples, capture receipts, and coverage limitations under `verification/`.
-- Coordinator: baseline, integration, source/visual verification, plan, stories,
-  checklist, continuation notes, commits, and pushes.
+| Contributor | Work |
+| --- | --- |
+| A: sprite_survey | Inventory/measurements; independent review of visual/runtime evidence and integrated documents. |
+| B: sprite_identity | Identity audit, canonical proposals, source candidates, eight reference sheets. |
+| C: sprite_verification | Published metadata, tests, production-stage captures, coverage limits. |
+| Coordinator | Baseline, integration, source/image checks, plan/status, commits, pushes. |
 
-## Independent review
+One P2 finding was accepted: reproduction could label changed inputs as the
+fixed baseline. The images were correct; input guards needed strengthening.
 
-Worker A reviewed Worker B's artifacts, Worker C's final artifacts, and the
-integrated plan/status/checklist. Review was read-only, separate from the authored
-identity/capture work. The coordinator independently inspected relevant owning
-source lines, calculations, primary images, and all four class reference sheets.
+| Guard | Verified input |
+| --- | --- |
+| Visual collector | 23 sources against retained hashes and baseline Git blobs. |
+| Reference builder | Baseline/pin identity and 38 image hashes before output. |
+| Measurement audit | 330 raster rows against immutable snapshot in 94f46215e72; snapshot never overwritten. |
+| Runtime capture | 23 sources, 330 rasters, actual HTTP-loaded bytes against retained evidence. |
 
-One actionable P2 finding was accepted: initial visual reproduction scripts
-could label changed source/cache inputs as the fixed baseline. The outputs
-themselves were correct, but reproduction needed fail-fast identity checks.
+Positive reproduction passed. Six manipulated in-memory cases and a temporary
+corrupted raster were rejected without changing canonical outputs. Final
+independent review found **no outstanding consequential issues**.
 
-Remedy:
+## Baseline checks
 
-- Collector verifies 23 owning source files against retained hashes and actual
-  baseline Git blobs before dynamic imports/output.
-- Visual builder preflights baseline/pin identity and all 38 resolved image
-  hashes before writing images or manifest.
-- Measurement reruns compare all 330 raster rows against the immutable snapshot
-  anchored in planning commit `94f46215e72`, including images whose original
-  catalogs omit export hashes. That snapshot is not overwritten by reruns.
-- Runtime capture checks the 23 owning source hashes, 330 retained raster rows,
-  and the actual HTTP-loaded bytes against the retained snapshot.
+- Coordinator reran the audit: 184 rows, 117 available selected-family paths,
+  330 rasters, no missing files or provided-catalog hash mismatches.
+- Reaver's **261 / 345 = 0.756521739** and inverse **1.321839080** were
+  independently checked. This is an applied-scale ratio, not anatomical growth.
+- Coordinator inspected the primary images, four class sheets, and desktop
+  runtime scenes. Starseer's middle runtime panel shows the pointed-hat HURT.
+- All 11 focused test files were independently rerun: **68 passed, zero failed**.
+- Independent review verified four runtime PNG hashes and 12 matching
+  HTTP/cache/retained-baseline receipts.
+- [Evidence verifier](verify-evidence.mjs) checks links, source lines, compact
+  JSON, 12 image hashes, and 12 image receipts. [Latest result](VALIDATION.json).
 
-Positive reproduction passed. The measurement guard accepted identical input
-and rejected six manipulated in-memory cases without writing. Worker B's
-temporary corrupted raster was rejected before canonical output writes; the
-eight PNG hashes remained unchanged. No immutable cache or source master was
-changed to test rejection.
+These are baseline checks, not completed sprite fixes. Exact commands and
+capture conditions: [verification report](verification/VERIFICATION.md).
 
-Final independent review reported **no outstanding consequential findings**.
-It also verified four runtime PNG hashes and 12 HTTP/cache/retained-baseline
-receipts and inspected both desktop primary scenes. Pending continuation/status
-markers identified during review were subsequently finalized by the coordinator.
+## Readability cleanup
 
-## Coordinator checks
+Apply the owner's global style to touched planning scripts: Allman JS braces,
+expanded blocks, one declaration per line, descriptive helpers, named config,
+and short necessary comments. Python retains valid Python syntax.
 
-- Independently ran `measurements/audit.mjs` against the pinned cache: 184 rows,
-  117 available selected-family paths, 330 raster files, zero missing files and
-  zero mismatches against provided catalog hashes.
-- Verified Reaver's selected profile and computed `261 / 345 = 0.756521739`
-  and inverse `1.321839080` directly from source. The document states this is a
-  scale-policy ratio, not a proved anatomical growth percentage.
-- Inspected Starseer ready/HURT, Reaver SW09 current placement, all four class
-  sheets, and final desktop runtime scenes. The synthetic Starseer hit sample
-  shows the pointed-hat reaction, with hooded ready before and after.
-- Independently reran the 11 named test files listed in the verification report:
-  **68 passed, zero failed**. These are unchanged baseline tests, not evidence
-  that cleanup has been implemented.
-- Ran the six-case snapshot guard self-check; all manipulation cases rejected.
-- Validated compact JSON, local document/image links, source-line references,
-  12 output image hashes, and 12 loaded-image receipts using
-  [verify-evidence.mjs](verify-evidence.mjs). The machine-readable latest result
-  is [VALIDATION.json](VALIDATION.json).
-- Checked staged whitespace and that the planning diff contains only files
-  inside this documentation/evidence directory.
+Acceptance for this pass:
 
-## Limits retained after review
+- Preserve measurements, task IDs, checkbox states, CLI options, output schemas,
+  guards, and baseline/implementation distinctions.
+- Keep image and measurement artifacts unchanged. Only the validation result
+  may change to reflect current links and check time.
+- Compare regenerated artifacts with f72cf9bae19; check syntax, provenance
+  guards, and the final diff before committing.
 
-These captures are synthetic posed states of the production renderer. Actual
-engine damage receipts, full battlefield/HUD context, reduced motion, full tier
-selection, interruptions/repeated hits, and exhaustive variants are not accepted
-from this evidence. The full-game readiness-selector timeout remains a capture
-limitation. Published game Git SHA/art pin parity remains unknown. Canonical
-AI-Art history search and replacement selection remain future work.
+Readability checks completed:
 
-The [implementation checklist](EVIDENCE-CHECKLIST.md) intentionally leaves all
-future fix, after-image, candidate-preview, and player-behavior acceptance items
-unchecked.
+- Overview reduced from 1,314 to 761 words; details remain in linked reports.
+- All 72 story/task IDs and 90 checkbox states retained across the six main reports.
+- All seven standalone/embedded script syntax checks passed.
+- Full audit reproduced the same 184 rows, 117 paths, and 330 rasters; all four
+  generated CSV/JSON artifacts match the prior planning commit.
+- All 21 retained image/data artifacts are byte-identical. Only VALIDATION.json
+  is refreshed for current link counts and check time.
+- Six snapshot-guard rejection cases passed.
+- Original and reformatted evidence verifiers produced identical results apart
+  from check time. Independent review found no behavior changes.
+- Independent capture/harness diff review found no changes to profiles, timing,
+  frozen-clock ordering, CSS values, receipts, defaults, or cleanup behavior.
+- Original/reformatted browser snapshots matched exactly for Reaver and Starseer
+  at 1280×800 and 390×844: PNG bytes, computed CSS, and geometry were identical.
+  Receipts matched after excluding only the wall-clock presentation.savedAt field.
+- Collector and reference builder regenerated identical inputs, manifest, and
+  eight PNGs. Capture guards retained positive/negative behavior; a mocked
+  published observation produced identical output without refreshing live data.
+
+## Limits
+
+Synthetic stage captures do not establish full combat/HUD, actual damage
+integration, reduced motion, complete tier/variant coverage, or interruptions.
+The full-game selector timeout remains a capture limitation. Published Git
+SHA/art pin parity and canonical AI-Art replacement selection remain open.
+
+All future fix, after-image, preview, and behavior acceptance items stay
+unchecked in the [evidence checklist](EVIDENCE-CHECKLIST.md).

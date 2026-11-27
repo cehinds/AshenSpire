@@ -1,21 +1,26 @@
 # Verification and capture record — before only
 
-Source baseline: `49eca254d795d06266aa23941cb2b31fe77b27bf` (2026-11-26,
-America/Anchorage). Pin: `cehinds/AI-Art`, `ashenspire-hd-assets-v30`.
-No gameplay, art, registration metadata, or existing tests were changed.
+**Primary stage captures were inspected, and 68 focused assertions passed.**
+Full-game combat/HUD acceptance, device/motion coverage, and after-images remain
+open. No gameplay, art, registration metadata, or existing tests were changed.
+
+Source: `49eca254d795d06266aa23941cb2b31fe77b27bf` (2026-11-26,
+America/Anchorage). Art: `cehinds/AI-Art`, `ashenspire-hd-assets-v30`.
 
 ## Primary runtime evidence
 
-The following are **synthetic posed snapshots of the unchanged production
-`createAlternativeCardStage` renderer**, not a full combat playthrough and not
-screenshots of the deployed game. They use the pinned high/common pack bytes
-through the ordinary game server. Each loaded source URL is HTTP-read and its
-SHA-256 compared against the file resolved by the owning `artPath` function.
-All 12 sampled image loads were HTTP 200 and matched their resolved cache bytes
-and retained v30 hashes. Before producing outputs, the capture script checks
-all 23 retained owning-source hashes (LF-normalized) and 330 retained raster rows;
-changed source, pin, or cached raster bytes fail rather than relabeling new data
-as the old baseline.
+These are **synthetic posed snapshots of the unchanged production
+`createAlternativeCardStage` renderer**. They use pinned high/common pack bytes
+through the ordinary game server; they are not deployed-game screenshots or
+combat playthroughs.
+
+All **12 sampled image loads** returned HTTP 200 and matched both the resolved
+cache bytes and retained v30 hashes. Each URL was read over HTTP and its SHA-256
+compared with the file resolved by `artPath`.
+
+Before producing outputs, the capture script checks **23 owning-source hashes**
+(LF-normalized) and **330 retained raster rows**. Changed source, pins, or cache
+bytes fail instead of being relabeled as the old baseline.
 
 | Primary case | Desktop | Phone viewport, full-page strip |
 | --- | --- | --- |
@@ -29,14 +34,18 @@ measurement of battlefield/player scale. Green rulers identify the shared stage
 ground, not a claim that all source poses have identical supporting-foot contact.
 Canvas draw values shown on the images are unzoomed production canvas units.
 
-For deterministic timing the harness substitutes `performance.now` and queues
-RAF callbacks, then invokes the production stage methods. Each sampled stage's
-RAF queue is frozen before constructing/advancing the next stage; this prevents a
-later return sample from advancing the previous hit sample. No production paint
-code or source image pixels are altered. Reaver contact is sampled with
-`seek('sweep', 270, 600)`. Starseer hit is sampled 100 ms after `play('hit', 600)`;
-the return sample advances 650 ms. These are diagnostic timing choices, not the
-ordinary game pace.
+For deterministic timing, the harness substitutes `performance.now`, queues RAF
+callbacks, and invokes production stage methods. Each sampled stage's RAF queue
+is frozen before the next stage advances, so the return sample cannot advance
+the earlier hit sample. Production paint code and image pixels are unchanged.
+
+| Sample | Deterministic timing |
+| --- | --- |
+| Reaver Sweep contact | `seek('sweep', 270, 600)` |
+| Starseer hit | 100 ms after `play('hit', 600)` |
+| Starseer return | Advance 650 ms |
+
+These timings are diagnostic choices, not the ordinary game pace.
 
 The four final PNGs were inspected. Starseer's middle panel visibly shows the
 pointed-hat HURT character, while ready/return show the hooded staff character.
@@ -126,7 +135,6 @@ an exact numerical implementation mirror for visual anatomy acceptance.
 | Owner's published target/settings | Public Dev/Test metadata observed; exact owner session unknown | Confirm target build/settings if implementation differs |
 
 The full-game timeout is a capture limitation, not a proven game failure. No
-gameplay test was changed to work around it. The successful stage snapshots
-prove the production selection/draw path for the recorded states; they do not
-prove battlefield fit, HUD clearance, targeting, responsive game layout, or
-successful playthroughs. Those acceptance tasks remain unchecked.
+gameplay test was changed to work around it. Successful stage snapshots
+establish the recorded selection/draw path; battlefield fit, HUD clearance,
+targeting, responsive game layout, and playthrough acceptance remain unchecked.

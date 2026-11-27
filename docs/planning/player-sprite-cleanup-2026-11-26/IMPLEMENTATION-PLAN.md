@@ -1,9 +1,19 @@
 # Proposed implementation and acceptance
 
-Status: proposal for work after this planning delivery. No item below is a claim
-that a runtime or art fix has shipped. The first cases are **Starseer hit reaction**
-and **Reaver Sweep**. See [story status and evidence index](README.md) and
-[task checklist](EVIDENCE-CHECKLIST.md).
+**Ready for the bounded pilot to be designed; implementation has not started.**
+The first cases are **Starseer taking a hit** and **Reaver performing Sweep**.
+Use the [story status](README.md#user-stories-and-status) and
+[evidence checklist](EVIDENCE-CHECKLIST.md) to track delivery separately from fixes.
+
+## Method and readiness
+
+| Step | Status | Required next result |
+| --- | --- | --- |
+| Identify the baseline and active assets | Investigation delivered | Reconfirm them before implementation. |
+| Measure placement and inspect character identity | Investigation delivered | Agree on canonical appearance and anatomical calibration. |
+| Correct the two primary cases | Open | Integrate matching artwork and player-scale behavior. |
+| Verify motion and shared geometry | Open | Pass the pilot with measurements, before/after evidence, and applicable tests. |
+| Expand to the other classes and polish | Open | Apply the verified method to the remaining reachable combinations. |
 
 ## Outcome and standards
 
@@ -66,17 +76,24 @@ full-game coverage is an explicit verification gap, not proof of a regression.
 
 ## Phases and worker ownership
 
-Three workers can operate concurrently under one coordinator. One file owner
-per wave; no worker independently edits a shared/generated catalog.
+Three workers can run concurrently under one coordinator. Assign one owner per
+file in each wave; shared/generated catalogs stay with the coordinator.
 
-| Phase | Worker A: rendering/measurements | Worker B: identity/art | Worker C: tests/evidence | Coordinator gate |
-| --- | --- | --- | --- | --- |
-| 0 — baseline | Verify selection and units. | Locate the exact pinned images. | Identify published vs source builds. | One named source baseline and art pin; preserve existing edits. |
-| 1 — audit | Inventory, factors, coverage gaps, shared consumers. | Before-only sheets; character continuity; source candidates. | Test assumptions, capture harness, device/settings matrix. | Recheck key lines, measurements, images; agree on proposed standards. |
-| 2 — authorized pilot | Fix player-specific calibration/registration selection. | Find or author matching Starseer HURT; preserve references. | Prepare regression assertions and capture automation against the agreed contract. | Disjoint ownership; final export waits for source correction; assemble exact candidate. |
-| 3 — pilot acceptance | Inspect measured stage placement and shared effects. | Review visual identity/anatomy and adjacent frames. | Run automated checks, motion captures, mobile/desktop geometry checks. | Accept both primary cases only with inspected evidence. |
-| 4 — rollout | Extend confirmed approach to affected player source families. | Correct prioritized class/action gaps. | Run coverage matrix and review evidence per slice. | Parallel class work allowed after common renderer contract settles. |
-| 5 — polish/handoff | Resolve remaining measured issues. | P3 palette/lighting/export edges. | Final reproducible evidence, tests, preview checks. | All finished items linked; others visibly unchecked. |
+| Owner | Responsibility |
+| --- | --- |
+| **Worker A — rendering and measurements** | Selection, units, inventory, scale factors, shared consumers, then player calibration/registration changes and measured verification. |
+| **Worker B — character identity and art** | Pinned-image audit, visual references, source search, then matching artwork and adjacent-frame review. |
+| **Worker C — tests and evidence** | Published/source distinction, test assumptions, capture harness, coverage matrix, then regression tests and candidate captures. |
+| **Coordinator** | Resolve standards and dependencies, own shared files, inspect findings and diffs, integrate the exact candidate, and review acceptance evidence. |
+
+| Phase | Parallel work | Gate before proceeding |
+| --- | --- | --- |
+| **0 — baseline** | A verifies selection/units; B locates pinned images; C identifies published/source builds. | One source baseline and art pin; existing edits preserved. |
+| **1 — audit** | A measures; B reviews identity; C maps tests and captures. | Key lines, numbers, and images reviewed; proposed standards agreed. |
+| **2 — authorized pilot** | A corrects player calibration; B finds/authors matching HURT; C prepares tests and captures. | Separate file ownership; source correction before final export; matching candidate assembled. |
+| **3 — pilot acceptance** | A checks placement/shared effects; B checks anatomy/identity; C runs tests and device/motion captures. | Both primary cases pass with inspected evidence. |
+| **4 — rollout** | Class/source-family corrections and coverage can run in parallel. | Common renderer contract settled; each slice reviewed. |
+| **5 — polish and handoff** | Remaining measured issues, P3 artwork polish, final tests/captures/preview checks. | Finished tasks have evidence; unfinished tasks remain unchecked. |
 
 ### Wave-specific files and traps
 

@@ -4,43 +4,355 @@
 <base href="/">
 <title>Before-only sprite baseline — production stage</title>
 <style>
-*{box-sizing:border-box}body{margin:0;background:#252d36;color:#f2f1e9;font:16px/1.4 Arial,sans-serif}header{padding:18px 24px;background:#18222b}h1{margin:0;font-size:23px}p{margin:7px 0;font-size:13px}#mount{display:flex;justify-content:center;gap:20px;padding:45px 20px 20px}.cell{width:370px;height:550px;background:#35414d;border:1px solid #82909b;position:relative;overflow:hidden}.label{position:absolute;top:12px;left:15px;right:10px;font-size:14px}.stage-slot{position:absolute;top:310px;left:50%;transform:translateX(-50%)}.ground{position:absolute;left:0;right:0;top:500px;border-top:1px solid #7cf9c5}.ground:after{content:'shared stage ground';font:11px Arial;position:absolute;top:3px;left:8px;color:#9ee2c8}.details{position:absolute;left:14px;right:10px;top:55px;font:12px/1.5 monospace;white-space:pre-wrap}.marker{position:absolute;left:0;right:0;border-top:1px dashed #e6c36b;pointer-events:none}footer{padding:8px 24px;font-size:12px;color:#c2cbd3}@media(max-width:600px){header{padding:12px}h1{font-size:18px}#mount{padding:10px;gap:8px;flex-direction:column;align-items:center}.cell{width:370px;height:550px}footer{padding:10px}}
-</style>
-<header><h1>BEFORE baseline · actual production sprite renderer</h1><p>Source 49eca254d795 · art v30 · synthetic posed states · no corrections applied</p><p id="case">Loading production modules and pinned images…</p></header>
-<style>.stage-slot{transform:translateX(-50%) scale(.52);transform-origin:50% 100%}</style>
-<div id="mount"></div><footer>Identical 0.52 diagnostic zoom on every stage, to include full action reach. Ground ruler belongs to this harness. Battlefield fit/HUD are not represented. Unchanged production canvas renderer.</footer>
-<script type="module">
-let virtualNow=1000, next=0;const rafs=new Map();
-Object.defineProperty(performance,'now',{value:()=>virtualNow});
-window.requestAnimationFrame=callback=>{rafs.set(++next,callback);return next;};
-window.cancelAnimationFrame=id=>rafs.delete(id);
-window.advance=ms=>{virtualNow+=ms;const pending=[...rafs.values()];rafs.clear();for(const cb of pending)cb(virtualNow);};
-const {createAlternativeCardStage}=await import('/src/ui/alternativeCardStage.js');
-const requested=new URLSearchParams(location.search).get('case')||'reaver';
-document.documentElement.dataset.effects='off';
-const descriptors=requested==='starseer'
- ? [{label:'Starseer · ready',kind:'ready'},{label:'Starseer · taking hit (100 / 600ms)',kind:'hurt'},{label:'Starseer · returned to ready',kind:'return'}]
- : [{label:'Reaver · ready',kind:'ready'},{label:'Reaver · held Sweep',kind:'held'},{label:'Reaver · Sweep contact (270 / 600ms)',kind:'contact'}];
-window.stages=[];window.receipts=[];
-for(const descriptor of descriptors){
- const cls=requested==='starseer'?'starseer':'reaver';
- const stage=createAlternativeCardStage(cls,{weaponProfile:cls==='reaver'?'reaver-greatsword-pilot':null,smashProfile:cls==='starseer'?'starseer':null});
- const cell=document.createElement('section');cell.className='cell';cell.innerHTML=`<div class="label">${descriptor.label}</div><div class="details"></div><div class="ground"></div>`;
- const slot=document.createElement('div');slot.className='stage-slot';slot.append(stage.el);cell.append(slot);document.querySelector('#mount').append(cell);
- await stage.ready;await new Promise(resolve=>setTimeout(resolve,150));
- stage.setRestPose('idle',{immediate:true});
- if(descriptor.kind==='held')stage.setStance('sweep');
- if(descriptor.kind==='contact'){stage.setStance('sweep');stage.seek('sweep',270,600);}
- if(descriptor.kind==='hurt'){stage.play('hit',600);window.advance(100);}
- if(descriptor.kind==='return'){stage.play('hit',600);window.advance(650);}
- const art=stage.currentArt, rect=stage.el.getBoundingClientRect(),canvasRect=art.canvas.getBoundingClientRect();
- const receipt={label:descriptor.label,classId:cls,kind:descriptor.kind,pose:stage.pose,stance:stage.stance,src:art.image.currentSrc,sourceRaster:[art.image.naturalWidth,art.image.naturalHeight],drawCanvas:[art.left,art.top,art.width,art.height],body:art.body||null,canvas:[art.canvas.width,art.canvas.height],stageCss:[rect.width,rect.height],canvasCss:[canvasRect.width,canvasRect.height],presentation:stage.presentation};
- cell.querySelector('.details').textContent=`pose: ${receipt.pose}\nraster: ${receipt.sourceRaster.join(' × ')}\ncanvas draw: ${receipt.drawCanvas.map(x=>x.toFixed(2)).join(', ')}\n${receipt.body?'body span: '+(receipt.body.feetY-receipt.body.headY).toFixed(2)+' canvas px':'body: unmeasured in runtime metadata'}`;
- // Freeze each sampled stage before a later stage advances the shared test clock.
- // This affects scheduling only; the production paint code and pixels are unchanged.
- rafs.clear();
- window.stages.push(stage);window.receipts.push(receipt);
+*
+{
+    box-sizing: border-box;
 }
-document.querySelector('#case').textContent=requested==='starseer'?'Primary case: Starseer receiving damage; normal-motion HURT replacement, effects off for readability.':'Primary case: Reaver selected greatsword pilot; ready, held Sweep, authored Sweep contact.';
-window.captureReady=true;
+
+body
+{
+    margin: 0;
+    background: #252d36;
+    color: #f2f1e9;
+    font: 16px/1.4 Arial,sans-serif;
+}
+
+header
+{
+    padding: 18px 24px;
+    background: #18222b;
+}
+
+h1
+{
+    margin: 0;
+    font-size: 23px;
+}
+
+p
+{
+    margin: 7px 0;
+    font-size: 13px;
+}
+
+#mount
+{
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 45px 20px 20px;
+}
+
+.cell
+{
+    width: 370px;
+    height: 550px;
+    background: #35414d;
+    border: 1px solid #82909b;
+    position: relative;
+    overflow: hidden;
+}
+
+.label
+{
+    position: absolute;
+    top: 12px;
+    left: 15px;
+    right: 10px;
+    font-size: 14px;
+}
+
+.stage-slot
+{
+    position: absolute;
+    top: 310px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.ground
+{
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 500px;
+    border-top: 1px solid #7cf9c5;
+}
+
+.ground:after
+{
+    content: 'shared stage ground';
+    font: 11px Arial;
+    position: absolute;
+    top: 3px;
+    left: 8px;
+    color: #9ee2c8;
+}
+
+.details
+{
+    position: absolute;
+    left: 14px;
+    right: 10px;
+    top: 55px;
+    font: 12px/1.5 monospace;
+    white-space: pre-wrap;
+}
+
+.marker
+{
+    position: absolute;
+    left: 0;
+    right: 0;
+    border-top: 1px dashed #e6c36b;
+    pointer-events: none;
+}
+
+footer
+{
+    padding: 8px 24px;
+    font-size: 12px;
+    color: #c2cbd3;
+}
+
+@media (max-width: 600px)
+{
+    header
+    {
+        padding: 12px;
+    }
+
+    h1
+    {
+        font-size: 18px;
+    }
+
+    #mount
+    {
+        padding: 10px;
+        gap: 8px;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .cell
+    {
+        width: 370px;
+        height: 550px;
+    }
+
+    footer
+    {
+        padding: 10px;
+    }
+}
+</style>
+<header>
+    <h1>BEFORE baseline · actual production sprite renderer</h1>
+    <p>Source 49eca254d795 · art v30 · synthetic posed states · no corrections applied</p>
+    <p id="case">Loading production modules and pinned images…</p>
+</header>
+<style>
+.stage-slot
+{
+    transform: translateX(-50%) scale(.52);
+    transform-origin: 50% 100%;
+}
+</style>
+<div id="mount"></div>
+<footer>Identical 0.52 diagnostic zoom on every stage, to include full action reach. Ground ruler belongs to this harness. Battlefield fit/HUD are not represented. Unchanged production canvas renderer.</footer>
+<script type="module">
+const sampleConfig =
+{
+    initialTimeMs: 1000,
+    stageWarmupMs: 150,
+    actionDurationMs: 600,
+    sweepContactMs: 270,
+    hitSampleMs: 100,
+    returnedReadyMs: 650,
+    printedDecimalPlaces: 2,
+};
+
+let virtualNow = sampleConfig.initialTimeMs;
+let nextRequestId = 0;
+const queuedAnimationFrames = new Map();
+
+Object.defineProperty(performance, 'now',
+{
+    value: () =>
+    {
+        return virtualNow;
+    },
+});
+
+window.requestAnimationFrame = (callback) =>
+{
+    queuedAnimationFrames.set(++nextRequestId, callback);
+    return nextRequestId;
+};
+
+window.cancelAnimationFrame = (requestId) =>
+{
+    return queuedAnimationFrames.delete(requestId);
+};
+
+window.advance = (milliseconds) =>
+{
+    virtualNow += milliseconds;
+
+    const pendingCallbacks = [...queuedAnimationFrames.values()];
+
+    queuedAnimationFrames.clear();
+
+    for (const callback of pendingCallbacks)
+    {
+        callback(virtualNow);
+    }
+};
+
+function descriptorsFor(requestedCase)
+{
+    return requestedCase === 'starseer'
+        ?
+        [
+            { label: 'Starseer · ready', kind: 'ready' },
+            { label: 'Starseer · taking hit (100 / 600ms)', kind: 'hurt' },
+            { label: 'Starseer · returned to ready', kind: 'return' },
+        ]
+        :
+        [
+            { label: 'Reaver · ready', kind: 'ready' },
+            { label: 'Reaver · held Sweep', kind: 'held' },
+            { label: 'Reaver · Sweep contact (270 / 600ms)', kind: 'contact' },
+        ];
+}
+
+function applySamplePose(stage, kind)
+{
+    if (kind === 'held')
+    {
+        stage.setStance('sweep');
+    }
+
+    if (kind === 'contact')
+    {
+        stage.setStance('sweep');
+        stage.seek('sweep', sampleConfig.sweepContactMs, sampleConfig.actionDurationMs);
+    }
+
+    if (kind === 'hurt')
+    {
+        stage.play('hit', sampleConfig.actionDurationMs);
+        window.advance(sampleConfig.hitSampleMs);
+    }
+
+    if (kind === 'return')
+    {
+        stage.play('hit', sampleConfig.actionDurationMs);
+        window.advance(sampleConfig.returnedReadyMs);
+    }
+}
+
+function describeReceipt(receipt)
+{
+    const drawValues = receipt.drawCanvas.map((value) =>
+    {
+        return value.toFixed(sampleConfig.printedDecimalPlaces);
+    });
+    const bodyDescription = receipt.body
+        ? 'body span: ' + (receipt.body.feetY - receipt.body.headY).toFixed(sampleConfig.printedDecimalPlaces) + ' canvas px'
+        : 'body: unmeasured in runtime metadata';
+
+    return [
+        `pose: ${receipt.pose}`,
+        `raster: ${receipt.sourceRaster.join(' × ')}`,
+        `canvas draw: ${drawValues.join(', ')}`,
+        bodyDescription,
+    ].join('\n');
+}
+
+const { createAlternativeCardStage } = await import('/src/ui/alternativeCardStage.js');
+const requestedCase = new URLSearchParams(location.search).get('case') || 'reaver';
+
+document.documentElement.dataset.effects = 'off';
+
+const descriptors = descriptorsFor(requestedCase);
+
+window.stages = [];
+window.receipts = [];
+
+for (const descriptor of descriptors)
+{
+    const classId = requestedCase === 'starseer'
+        ? 'starseer'
+        : 'reaver';
+    const stage = createAlternativeCardStage(classId,
+    {
+        weaponProfile: classId === 'reaver'
+            ? 'reaver-greatsword-pilot'
+            : null,
+        smashProfile: classId === 'starseer'
+            ? 'starseer'
+            : null,
+    });
+    const cell = document.createElement('section');
+
+    cell.className = 'cell';
+    cell.innerHTML = `<div class="label">${descriptor.label}</div><div class="details"></div><div class="ground"></div>`;
+
+    const slot = document.createElement('div');
+
+    slot.className = 'stage-slot';
+    slot.append(stage.el);
+    cell.append(slot);
+    document.querySelector('#mount').append(cell);
+
+    await stage.ready;
+    await new Promise((resolve) =>
+    {
+        setTimeout(resolve, sampleConfig.stageWarmupMs);
+    });
+
+    stage.setRestPose('idle', { immediate: true });
+    applySamplePose(stage, descriptor.kind);
+
+    const art = stage.currentArt;
+    const stageRect = stage.el.getBoundingClientRect();
+    const canvasRect = art.canvas.getBoundingClientRect();
+    const receipt =
+    {
+        label: descriptor.label,
+        classId,
+        kind: descriptor.kind,
+        pose: stage.pose,
+        stance: stage.stance,
+        src: art.image.currentSrc,
+        sourceRaster: [art.image.naturalWidth, art.image.naturalHeight],
+        drawCanvas:
+        [
+            art.left,
+            art.top,
+            art.width,
+            art.height,
+        ],
+        body: art.body || null,
+        canvas: [art.canvas.width, art.canvas.height],
+        stageCss: [stageRect.width, stageRect.height],
+        canvasCss: [canvasRect.width, canvasRect.height],
+        presentation: stage.presentation,
+    };
+
+    cell.querySelector('.details').textContent = describeReceipt(receipt);
+
+    // Freeze this stage before a later sample advances the shared diagnostic clock.
+    queuedAnimationFrames.clear();
+    window.stages.push(stage);
+    window.receipts.push(receipt);
+}
+
+document.querySelector('#case').textContent = requestedCase === 'starseer'
+    ? 'Primary case: Starseer receiving damage; normal-motion HURT replacement, effects off for readability.'
+    : 'Primary case: Reaver selected greatsword pilot; ready, held Sweep, authored Sweep contact.';
+
+window.captureReady = true;
 </script>

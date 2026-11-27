@@ -1,12 +1,15 @@
 # Player sprite identity and visual baseline
 
-Source baseline: `49eca254d795d06266aa23941cb2b31fe77b27bf` (dev source selected
-for this investigation). Pinned art: `ashenspire-hd-assets-v30`. Capture task date:
-2026-11-26, America/Anchorage. **Before-only investigation; no artwork or game
-behavior has been changed.** The owner's primary examples are **Starseer taking
-a hit** and **Reaver performing Sweep**.
+**Starseer's hit image changes character design. Reaver's selected Sweep images
+receive different scale treatment.** These before-only references document both
+issues; they contain no replacement artwork or implemented fix.
+
+Source: `49eca254d795d06266aa23941cb2b31fe77b27bf` (selected dev baseline).
+Art: `ashenspire-hd-assets-v30`. Capture date: 2026-11-26, America/Anchorage.
 
 ## What the images establish
+
+### Starseer taking a hit: character identity
 
 ![Starseer ready and selected hit artwork](starseer-hit-reference.png)
 
@@ -23,9 +26,11 @@ The primary source selection is in [playerHurtFrames.js](../../../../src/content
 `assets/animations/unarmed-magic/starseer/HURT.webp`, registered with scale
 `0.8125`, dx `49.41`, dy `72`. The baseline renderer substitutes it during the
 ordinary hit path in [alternativeCardStage.js](../../../../src/ui/alternativeCardStage.js#L153).
-These are image-source and renderer facts, not proof that an unverified live
-published build uses identical bytes. Worker C's runtime capture record supplies
-the separate browser observation.
+This identifies the source and renderer selection. The separate
+[runtime capture record](../verification/runtime-capture-record.json) documents
+browser observations; it does not establish identical bytes in the published game.
+
+### Reaver performing Sweep: scale treatment
 
 ![Reaver selected Sweep current static placements](reaver-sweep-current-before.png)
 
@@ -44,11 +49,10 @@ bitmap, before any differences between drawings. This is a **32.18% change in
 the applied scale multiplier**, not an independently measured 32.18% increase in
 anatomical size. Perspective, drawn anatomy, and poses still require calibration.
 
-Important correction to the initial broad hypothesis: normalization **shrinks**
-the selected Reaver held SW09 frame. Removing that normalization alone would
-make the held body larger. The plan must calibrate the whole selected SW09 family
-and ready reference, then preserve a consistent physical-scale contract through
-held/action transitions. It must not simply remove all resizing globally.
+Normalization **shrinks** the selected Reaver held SW09 frame. Removing it alone
+would enlarge that body. Calibrate ready and the whole SW09 family together,
+then preserve physical scale through held/action transitions. A global removal
+of resizing is not an established fix.
 
 ![Reaver authored logical placement diagnostic](reaver-sweep-authored-reference.png)
 
@@ -59,9 +63,8 @@ pixels within each sheet. Neither sheet independently fits characters to cells.
 
 ## Canonical appearance proposals and wider findings
 
-The following are proposals based on the current ready art, not owner-approved
-redesign decisions. Class stature must remain independent; do not force equal
-height between classes.
+Use the current ready art as each class's proposed reference. These are not
+owner-approved redesign decisions, and classes retain their own stature.
 
 | Class | Proposed visual reference | Features to preserve | Confirmed visual concerns and priority |
 | --- | --- | --- | --- |
@@ -155,17 +158,19 @@ A missing, changed, or mis-pinned input fails before any output overwrite. The
 guard does not establish original master provenance or archive integrity beyond
 the retained file evidence; it prevents mislabeled regeneration from other bytes.
 
-Guard verification after independent review: the collector passed all 23 source
-checks; the builder passed all 38 raster checks; all eight PNGs remained
-byte-identical to their retained versions (`git diff` showed no PNG/manifest/input
-changes). A negative test copied only the first ready raster into an isolated
-temporary `ashenspire-hd-assets-v30` cache, flipped one byte, and invoked the
-builder. It failed with `Pinned raster mismatch` before decoding or output
-writes. Before/after hashes confirmed all eight canonical PNGs and both input/
-image manifests were untouched. Canonical cache and source files were not edited.
+Guard verification passed after independent review:
 
-The reference builder mirrors static local registration with shared floor480
-and center384 coordinates. Uniform canvas padding is omitted because it shifts
+- All **23 source checks** and **38 raster checks** passed.
+- All **eight PNGs** remained byte-identical; `git diff` showed no PNG,
+  manifest, or input changes.
+- A copied ready raster in a temporary `ashenspire-hd-assets-v30` cache was
+  changed by one byte. The builder rejected it with `Pinned raster mismatch`
+  before decoding or writing outputs.
+- Before/after hashes confirmed that all eight canonical PNGs and both input/
+  image manifests were untouched. Canonical source and cache files were not edited.
+
+The reference builder mirrors static registration with a shared floor at
+**y = 480** and centre at **x = 384** stage units. Uniform canvas padding is omitted because it shifts
 the whole stage and its floor together. Held measured frames use the baseline's
 ready-body normalization. The pictured unmeasured SW09 actions retain authored
 placement. HURT uses its separately generated registration. The builder checks

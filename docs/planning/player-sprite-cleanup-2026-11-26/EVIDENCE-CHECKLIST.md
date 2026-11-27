@@ -1,13 +1,18 @@
 # Evidence checklist and story acceptance
 
-Planning checklist: checked means the investigation artifact was delivered and
-reviewed. Implementation checklist: checked would mean the changed player
-behavior was verified in a matching candidate. **No implementation items are
-complete in this planning delivery.**
+**Investigation evidence is delivered. All implementation tasks remain open.**
+A checked investigation task means its artifact was delivered and reviewed.
+A checked implementation task must instead demonstrate corrected player behavior
+in a matching candidate build.
 
 Each future implementation task must link its changed files/asset IDs, rationale,
 measurements and units, matched before/after visuals, motion evidence where
-applicable, test command/results, candidate identity, and limitations.
+applicable, test commands/results, candidate identity, and limitations.
+
+Start implementation with **B-01–B-03**, then run the **US-02 Reaver Sweep** and
+**US-03 Starseer hit** work in parallel under the file ownership in the
+[implementation plan](IMPLEMENTATION-PLAN.md#phases-and-worker-ownership).
+**AC-01–AC-04** must pass before expanding the approach to the remaining classes.
 
 ## Investigation delivery
 
