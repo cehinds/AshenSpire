@@ -180,7 +180,6 @@ body.studio-body .customization-entity .customization-quick-fields { display: gr
 body.studio-body .customization-quick-fields[hidden] { display: none !important; }
 body.studio-body .customization-quick-fields > * { min-width: 0; font-size: 12px; }
 body.studio-body .customization-quick-fields > .form-wide { grid-column: 1 / -1; }
-body.studio-body .customization-quick-fields .name-input-row .studio-switch { flex-direction: row; flex: 0 0 auto; white-space: nowrap; }
 body.studio-body .customization-quick-fields .name-hint { display: none; }
 body.studio-body .customization-quick-fields :is(input:not([type="checkbox"]), select) { width: 100%; min-width: 0; }
 /* A dragged height keeps the fields reachable without growing the header. */
@@ -204,3 +203,13 @@ body.studio-body .cp-trend.is-down { color: var(--st-good, #4caf50); }
 body.studio-body .cp-trend.is-up { color: var(--st-bad, #e05252); }
 body.studio-body .customization-entity-name .inspector-score-big:has(+ .cp-trend.is-down) { color: var(--st-good, #4caf50); }
 body.studio-body .customization-entity-name .inspector-score-big:has(+ .cp-trend.is-up) { color: var(--st-bad, #e05252); }
+/* Name block as a two-column grid: "Name" over the input, "Auto-name" over its toggle, labels level. */
+body.studio-body .customization-quick-fields > .form-wide { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 10px; row-gap: 4px; align-items: end; }
+body.studio-body .customization-quick-fields > .form-wide > label[for="edit-name"] { grid-column: 1; grid-row: 1; }
+body.studio-body .customization-quick-fields .name-input-row { display: contents; }
+body.studio-body .customization-quick-fields .name-input-row > input { grid-column: 1; grid-row: 2; }
+body.studio-body .customization-quick-fields .name-input-row .studio-switch {
+  grid-column: 2; grid-row: 1 / 3; align-self: stretch; display: flex; flex-direction: column-reverse;
+  justify-content: space-between; align-items: center; gap: 4px; white-space: nowrap; color: inherit; font-size: inherit;
+}
+body.studio-body .customization-quick-fields .name-input-row .studio-switch input { margin-bottom: 8px; }
