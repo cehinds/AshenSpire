@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-27
 
-- **Steadier timing checks and a lighter Blacksmith picker** ([#3016](https://github.com/cehinds/AshenSpire/pull/3016), `0.7.5.161`). Timing checks skip a one-time test-machine disk wait. The Blacksmith opens faster, and card upgrade rules now live in config.
+- **Steadier timing checks and a lighter Blacksmith picker** ([#3016](https://github.com/cehinds/AshenSpire/pull/3016), `0.7.5.163`). Timing checks skip a one-time test-machine disk wait. The Blacksmith opens faster, and card upgrade rules now live in config.
 
 - **Spell costs match their cards** ([#3022](https://github.com/cehinds/AshenSpire/pull/3022), `0.7.5.161`). A spell now costs the Mana and Stamina printed on it; the hidden extra Mana on every spell is gone. Prepared stance takes 1 Stamina off a spell, never below 1, and no Mana; Mana cuts in Prepared come from a staff or robes. Arcane Strike and Mana Rite cost Stamina only.
 - **Owner editing commands** ([#3021](https://github.com/cehinds/AshenSpire/pull/3021), `0.7.5.159`). New npm run play, check, ship and sync let the owner edit JSON, test with live reload, and open a pull request with one commit per file.
