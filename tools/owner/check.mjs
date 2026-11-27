@@ -1,33 +1,41 @@
 #!/usr/bin/env node
 // npm run check: rebuilds the game data from your JSON and runs the content checks.
-// Add --full to also run the core tests (about two minutes).
-import { resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { OWNER_TOOLS, RunSteps } from './ownerSteps.mjs';
+// Add the full flag from ownerTools.json to also run the core tests.
+import {
+    IsMainModule,
+    OWNER_TEXT,
+    OWNER_TOOLS,
+} from './ownerConfig.mjs';
+import { RunSteps } from './ownerProcess.mjs';
 
-const FULL_FLAG = '--full';
+const TEXT = OWNER_TEXT.check;
+const EXIT = Object.freeze({
+    ok: 0,
+    failed: 1,
+});
 
 /** Builds, then checks; returns true when every step passed. */
 export function BuildAndCheck({ full = false } = {})
 {
+    const tests = full
+        ? OWNER_TOOLS.testSteps
+        : [];
     const steps = [
         ...OWNER_TOOLS.buildSteps,
         ...OWNER_TOOLS.checkSteps,
-        ...(full
-            ? OWNER_TOOLS.testSteps
-            : []),
+        ...tests,
     ];
     return RunSteps(steps).ok;
 }
 
-const invoked = process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1]);
-if (invoked)
+if (IsMainModule(import.meta.url))
 {
-    const passed = BuildAndCheck({ full: process.argv.includes(FULL_FLAG) });
+    const full = process.argv.includes(OWNER_TOOLS.flags.full);
+    const passed = BuildAndCheck({ full });
     console.log(passed
-        ? '\nAll checks passed.'
-        : '\nA check failed. Fix the file it names, save, and run "npm run check" again.');
+        ? TEXT.passed
+        : TEXT.failed);
     process.exitCode = passed
-        ? 0
-        : 1;
+        ? EXIT.ok
+        : EXIT.failed;
 }

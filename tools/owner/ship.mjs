@@ -1,450 +1,373 @@
 #!/usr/bin/env node
-// npm run ship -- "Title": puts your JSON edits on a new feature branch from origin/dev,
-// one commit per file, then pushes and opens a pull request into dev. --local skips the push.
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync, copyFileSync, mkdirSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+// npm run ship -- "Title": puts your JSON edits on a feature branch cut from origin/dev, one
+// commit per file, then pushes and opens a pull request. Flags are in ownerTools.json.
 import { DescribeFileChange } from './contentDiff.mjs';
 import {
+    FormatText,
+    IsMainModule,
+    OWNER_TEXT,
     OWNER_TOOLS,
-    REPO_ROOT,
-    ApplyPatch,
-    CapturePatch,
+} from './ownerConfig.mjs';
+import {
+    AddDetachedWorktree,
+    ChangedContentFiles,
     ChangedPaths,
-    IsEditableContentPath,
-    IsNeverCommitPath,
+    ReadAtRef,
+    ReadWorking,
+    RemoveWorktree,
+} from './ownerGit.mjs';
+import { IsRebuiltPath } from './ownerPaths.mjs';
+import {
     RunGit,
-    RunNode,
-    RunProgram,
+    RunGitHub,
     RunSteps,
-    SameText,
-} from './ownerSteps.mjs';
-import { mergeReceiptLines } from '../pr-restamp.mjs';
+} from './ownerProcess.mjs';
+import { CarryFile, OwnerRebuiltEdits } from './shipCarry.mjs';
+import {
+    Commit,
+    GeneratedPaths,
+    OpenPullRequest,
+    UniqueBranchName,
+    WriteReceipt,
+} from './shipPublish.mjs';
+import { FetchShippedRefs, ShippedIn } from './shipRefs.mjs';
+import { ReceiptSummary } from './shipText.mjs';
 
-const QUICK_FLAG = '--quick';
-const DRY_RUN_FLAG = '--dry-run';
-const LOCAL_FLAG = '--local';
-const WORKTREE_PREFIX = 'ashenspire-ship-';
-const REGENERATE_SUBJECT = 'Regenerate game data from the edited files';
-const RECEIPT_SUBJECT = 'Add the changelog receipt';
-const OPEN_PULL_LIMIT = '200';
-const BASELINE_SUBJECT = 'Owner rebuild baseline';
-const PULL_NUMBER_PATTERN = /\/pull\/(\d+)/;
-const TITLE_WORD_PATTERN = /[A-Za-z0-9]+/g;
-const BRANCH_TITLE_LIMIT = 40;
+const HEAD_REF = 'HEAD';
+const FLAGS = OWNER_TOOLS.flags;
+const GIT = OWNER_TOOLS.git;
+const TEXT = OWNER_TEXT.ship;
+const EXIT = Object.freeze({
+    ok: 0,
+    failed: 1,
+});
 
-/** The owner-editable files changed in the working tree: [{ path, deleted }]. */
-export function ChangedContentFiles(workingDirectory = REPO_ROOT)
+function say(key, values)
 {
-    return ChangedPaths(workingDirectory).filter((file) => IsEditableContentPath(file.path));
+    console.log(FormatText(TEXT[key], values));
 }
 
-/** Turns a free-text title into a CamelCase branch name under feature/Owner. */
-export function BranchNameFor(title, settings = OWNER_TOOLS)
+function parseOptions(argv)
 {
-    const words = title.match(TITLE_WORD_PATTERN) || ['Content'];
-    const camel = words
-        .map((word) => `${word[0].toUpperCase()}${word.slice(1)}`)
-        .join('')
-        .slice(0, BRANCH_TITLE_LIMIT);
-    return `${settings.git.branchPrefix}${camel}`;
-}
-
-function uniqueBranchName(baseName)
-{
-    const remote = OWNER_TOOLS.git.remote;
-    let candidate = baseName;
-    let suffix = 2;
-    while (RunGit(['ls-remote', '--heads', remote, candidate]) || RunGit(['branch', '--list', candidate]))
-    {
-        candidate = `${baseName}${suffix}`;
-        suffix++;
-    }
-    return candidate;
-}
-
-function readAtHead(path, workingDirectory)
-{
-    const text = RunGit(['show', `HEAD:${path}`], workingDirectory, { allowFailure: true });
-    return text || null;
-}
-
-function readWorking(path, workingDirectory)
-{
-    const full = join(workingDirectory, path);
-    return existsSync(full)
-        ? readFileSync(full, 'utf8')
-        : null;
-}
-
-function copyIntoWorktree(path, worktree)
-{
-    const source = join(REPO_ROOT, path);
-    const target = join(worktree, path);
-    if (!existsSync(source))
-    {
-        rmSync(target, { force: true });
-        return;
-    }
-    mkdirSync(dirname(target), { recursive: true });
-    copyFileSync(source, target);
-}
-
-/** Brings one file's edit into the ship worktree with a three-way apply; untracked files are copied. */
-function carryFile(file, worktree)
-{
-    if (file.untracked)
-    {
-        copyIntoWorktree(file.path, worktree);
-        return;
-    }
-    const patch = file.patch || CapturePatch(file.path);
-    if (!ApplyPatch(patch, file.path, worktree))
-    {
-        throw new Error(`${file.path} also changed on dev and the edits clash. Run "npm run sync", redo the edit, then ship again.`);
-    }
-}
-
-function commit(worktree, paths, subject, bodyLines)
-{
-    RunGit(['add', '--', ...paths], worktree);
-    const bodyRepeatsSubject = bodyLines.length === 1 && bodyLines[0] === subject;
-    const body = bodyLines.length && !bodyRepeatsSubject
-        ? `\n\n${bodyLines.map((line) => `- ${line}`).join('\n')}`
-        : '';
-    RunGit(['commit', '--quiet', '-m', `${subject}${body}`], worktree);
-}
-
-function stageGenerated(worktree)
-{
-    return ChangedPaths(worktree)
-        .map((file) => file.path)
-        .filter((path) => !IsNeverCommitPath(path));
-}
-
-function pullRequestBody(described, checkSummary)
-{
-    const sections = described.map((item) =>
-    {
-        const lines = item.lines.length
-            ? item.lines
-            : [item.subject];
-        return `**${item.path}**\n${lines.map((line) => `- ${line}`).join('\n')}`;
-    });
-    return [
-        '## What changed',
-        '',
-        sections.join('\n\n'),
-        '',
-        '## Checks run before pushing',
-        '',
-        checkSummary,
-        '',
-        '## Try it',
-        '',
-        'Check out this branch, then run `npm run play`.',
-        '',
-        'Opened by `npm run ship` (docs/OWNER-EDITING.md).',
-    ].join('\n');
-}
-
-function receiptLine(title, pullNumber, stamp, summary)
-{
-    const url = `${OWNER_TOOLS.git.repositoryUrl}/pull/${pullNumber}`;
-    return `- **${title}** ([#${pullNumber}](${url}), \`${stamp}\`). ${summary}`;
-}
-
-/** Adds the CHANGELOG receipt for the pull request and commits it with the in-game changelog. */
-export function WriteReceipt(worktree, title, pullNumber, summary)
-{
-    const settings = OWNER_TOOLS.changelog;
-    const box = JSON.parse(readFileSync(join(worktree, settings.buildOrdinalFile), 'utf8'));
-    const stamp = `${box.release}.${box.ordinal}`;
-    const changelogPath = join(worktree, settings.file);
-    const base = readFileSync(changelogPath, 'utf8');
-    const line = receiptLine(title, pullNumber, stamp, summary);
-    writeFileSync(changelogPath, mergeReceiptLines(base, line, pullNumber, stamp));
-    const projection = RunNode(settings.projectionArgs, worktree);
-    if (!projection.ok)
-    {
-        throw new Error(`Writing the changelog failed:\n${projection.output}`);
-    }
-    commit(worktree, [settings.file, settings.generatedModule], RECEIPT_SUBJECT, []);
-}
-
-function receiptSummary(described)
-{
-    const lines = described.flatMap((item) => item.lines);
-    const shown = lines.slice(0, 2).join('. ');
-    return shown.endsWith('.')
-        ? shown
-        : `${shown}.`;
-}
-
-function captureLog()
-{
-    const lines = [];
+    const words = argv.filter((arg) => !arg.startsWith(FLAGS.prefix));
     return {
-        lines,
-        log: (line) =>
-        {
-            console.log(line);
-            lines.push(line);
-        },
+        quick: argv.includes(FLAGS.quick),
+        dryRun: argv.includes(FLAGS.dryRun),
+        local: argv.includes(FLAGS.local),
+        title: words.join(' ').trim(),
     };
-}
-
-function openOwnerBranches()
-{
-    const { baseBranch, branchPrefix } = OWNER_TOOLS.git;
-    try
-    {
-        const listed = RunProgram('gh', [
-            'pr',
-            'list',
-            '--state',
-            'open',
-            '--base',
-            baseBranch,
-            '--limit',
-            OPEN_PULL_LIMIT,
-            '--json',
-            'headRefName',
-        ]);
-        return JSON.parse(listed)
-            .map((pull) => pull.headRefName)
-            .filter((name) => name.startsWith(branchPrefix));
-    }
-    catch
-    {
-        console.log('Could not list open pull requests, so only dev is checked for edits already shipped.');
-        return [];
-    }
-}
-
-/** dev plus every open owner pull request branch, fetched fresh. */
-function fetchShippedRefs()
-{
-    const { remote, baseBranch } = OWNER_TOOLS.git;
-    const branches = openOwnerBranches();
-    const refspecs = branches.map((name) => `+refs/heads/${name}:refs/remotes/${remote}/${name}`);
-    RunGit([
-        'fetch',
-        '--quiet',
-        remote,
-        baseBranch,
-        ...refspecs,
-    ]);
-    return [
-        `${remote}/${baseBranch}`,
-        ...branches.map((name) => `${remote}/${name}`),
-    ];
-}
-
-/** The ref (dev or an earlier owner branch) that already holds this exact file text, or null. */
-function shippedIn(path, refs)
-{
-    const text = readWorking(path, REPO_ROOT);
-    return refs.find((ref) => SameText(RunGit(['show', `${ref}:${path}`], REPO_ROOT, { allowFailure: true }), text)) || null;
 }
 
 function describe(file)
 {
-    const before = file.baseline
-        ? RunGit(['show', `${file.baseline}:${file.path}`], REPO_ROOT, { allowFailure: true }) || null
-        : readAtHead(file.path, REPO_ROOT);
-    const change = DescribeFileChange(file.path, before, readWorking(file.path, REPO_ROOT));
+    const beforeRef = file.baseline || HEAD_REF;
+    const before = ReadAtRef(beforeRef, file.path);
+    const change = DescribeFileChange(
+        file.path,
+        before,
+        ReadWorking(file.path),
+    );
     return {
         ...change,
         path: file.path,
     };
 }
 
-function isRebuilt(file)
+function unshippedFiles()
 {
-    return OWNER_TOOLS.rebuiltContentFiles.includes(file.path);
-}
-
-/** Commits a rebuild of the owner's own HEAD plus their direct edits; returns its commit. */
-function rebuildBaseline(direct)
-{
-    const baseline = mkdtempSync(join(tmpdir(), WORKTREE_PREFIX));
-    RunGit(['worktree', 'add', '--quiet', '--detach', baseline, 'HEAD']);
-    try
+    const refs = FetchShippedRefs();
+    return ChangedContentFiles().filter((file) =>
     {
-        direct.forEach((file) => copyIntoWorktree(file.path, baseline));
-        const built = RunSteps(OWNER_TOOLS.buildSteps, baseline, () => {});
-        if (!built.ok)
+        const ref = ShippedIn(file.path, refs);
+        if (ref)
         {
-            throw new Error(`The rebuild failed at "${built.failedStep}". Run "npm run check" to see why.`);
+            say('skipping', {
+                path: file.path,
+                ref,
+            });
         }
-        RunGit(['add', '--all'], baseline);
-        RunGit(['commit', '--quiet', '--allow-empty', '-m', BASELINE_SUBJECT], baseline);
-        return RunGit(['rev-parse', 'HEAD'], baseline);
-    }
-    finally
-    {
-        RunGit(['worktree', 'remove', '--force', baseline], REPO_ROOT, { allowFailure: true });
-    }
+        return !ref;
+    });
 }
 
-/** A rebuilt file is an owner edit only where it differs from that rebuild; the patch is that difference. */
-function ownerRebuiltEdits(rebuilt, direct)
+/** The edits to ship: plain files, plus the owner's own part of rebuilt files. */
+function selectEdits()
 {
-    if (!rebuilt.length)
-    {
-        return [];
-    }
-    const baseline = rebuildBaseline(direct);
-    return rebuilt
-        .map((file) => ({
-            ...file,
-            baseline,
-            patch: RunGit(['diff', '--binary', baseline, '--', file.path], REPO_ROOT, { raw: true }),
-        }))
-        .filter((file) => file.patch);
+    const fresh = unshippedFiles();
+    const direct = fresh.filter((file) => !IsRebuiltPath(file.path));
+    const rebuilt = fresh.filter((file) => IsRebuiltPath(file.path));
+    const carried = [
+        ...direct,
+        ...OwnerRebuiltEdits(rebuilt, direct),
+    ];
+    return carried.map((file) => ({
+        file,
+        described: describe(file),
+    }));
 }
 
-function commitEach(described, worktree)
+/** Carries every edit; keeps only those that still change something on dev. */
+function carryEdits(worktree, edits)
 {
-    for (const item of described)
+    edits.forEach((edit) => CarryFile(edit.file, worktree));
+    const changed = new Set(ChangedPaths(worktree).map((file) => file.path));
+    return edits.filter((edit) =>
     {
-        commit(worktree, [item.path], item.subject, item.lines);
-    }
+        const landed = changed.has(edit.file.path);
+        if (!landed)
+        {
+            say('alreadyInDev', { path: edit.file.path });
+        }
+        return landed;
+    });
 }
 
-function openPullRequest(worktree, branch, title, described, checkLines)
+function runGates(
+    worktree,
+    quick,
+    log,
+)
 {
-    const { baseBranch } = OWNER_TOOLS.git;
+    const tests = quick
+        ? []
+        : OWNER_TOOLS.testSteps;
+    const gates = [
+        OWNER_TOOLS.buildSteps,
+        OWNER_TOOLS.checkSteps,
+        tests,
+    ];
+    return gates.every((steps) => RunSteps(
+        steps,
+        worktree,
+        log,
+    ).ok);
+}
+
+function commitGenerated(worktree)
+{
+    const generated = GeneratedPaths(worktree);
+    if (!generated.length)
+    {
+        return;
+    }
+    Commit(worktree, generated, {
+        subject: OWNER_TEXT.commits.regenerate,
+        lines: [],
+    });
+}
+
+/** Commits each edit, runs the gates, commits generated data; null when a gate fails. */
+function buildBranch(
+    worktree,
+    edits,
+    quick,
+)
+{
+    const checkLines = [];
+    const log = (line) =>
+    {
+        console.log(line);
+        checkLines.push(line);
+    };
+    edits.forEach((edit) => Commit(
+        worktree,
+        [edit.file.path],
+        edit.described,
+    ));
+    const passed = runGates(
+        worktree,
+        quick,
+        log,
+    );
+    if (!passed)
+    {
+        return null;
+    }
+    commitGenerated(worktree);
+    return checkLines;
+}
+
+function push(worktree, branch)
+{
+    const args = [
+        'push',
+        '--quiet',
+        '-u',
+        GIT.remote,
+        branch,
+    ];
+    RunGit(args, { cwd: worktree });
+}
+
+function addReceipt(
+    worktree,
+    pull,
+    pullNumber,
+)
+{
     try
     {
-        return RunProgram('gh', [
-            'pr',
-            'create',
-            '--base',
-            baseBranch,
-            '--head',
-            branch,
-            '--title',
-            title,
-            '--body',
-            pullRequestBody(described, checkLines.join('\n')),
-        ], worktree);
+        WriteReceipt(worktree, {
+            title: pull.title,
+            pullNumber,
+            summary: ReceiptSummary(pull.described),
+        });
+        push(worktree, pull.branch);
     }
     catch (error)
     {
-        throw new Error(`Branch ${branch} is on GitHub, but the pull request did not open. Open it by hand:\n  gh pr create --base ${baseBranch} --head ${branch} --fill\n${error.message}`);
+        say('receiptFailed', { error: error.message });
+    }
+}
+
+/** Pushes, opens the pull request, then adds its receipt. */
+function publish(
+    worktree,
+    pull,
+    state,
+)
+{
+    push(worktree, pull.branch);
+    state.unpushedBranch = null;
+    const opened = OpenPullRequest(worktree, pull);
+    addReceipt(
+        worktree,
+        pull,
+        opened.pullNumber,
+    );
+    say('pullRequest', { url: opened.url });
+    say('afterMerge');
+}
+
+function listEdits(edits)
+{
+    say('shipping');
+    edits.forEach((edit) => say('shippingLine', {
+        path: edit.file.path,
+        subject: edit.described.subject,
+    }));
+}
+
+function startBranch(
+    worktree,
+    edits,
+    state,
+)
+{
+    const described = edits.map((edit) => edit.described);
+    const title = state.options.title || described[0].subject;
+    const branch = UniqueBranchName(title);
+    RunGit([
+        'switch',
+        '--quiet',
+        '-c',
+        branch,
+    ], { cwd: worktree });
+    return {
+        branch,
+        title,
+        described,
+    };
+}
+
+/** Builds the branch in `worktree`, then keeps it local or publishes it; returns an exit code. */
+function shipFrom(
+    worktree,
+    edits,
+    state,
+)
+{
+    const landed = carryEdits(worktree, edits);
+    if (!landed.length)
+    {
+        say('allInDev');
+        return EXIT.ok;
+    }
+    const checkLines = buildBranch(
+        worktree,
+        landed,
+        state.options.quick,
+    );
+    if (!checkLines)
+    {
+        say('stopped');
+        return EXIT.failed;
+    }
+    const pull = startBranch(
+        worktree,
+        landed,
+        state,
+    );
+    if (state.options.local)
+    {
+        say('localOnly', { branch: pull.branch });
+        return EXIT.ok;
+    }
+    state.unpushedBranch = pull.branch;
+    publish(worktree, {
+        ...pull,
+        checkLines,
+    }, state);
+    return EXIT.ok;
+}
+
+function cleanUp(worktree, state)
+{
+    RemoveWorktree(worktree);
+    if (!state.unpushedBranch)
+    {
+        return;
+    }
+    RunGit([
+        'branch',
+        '-D',
+        state.unpushedBranch,
+    ], { allowFailure: true });
+}
+
+function shipInWorktree(edits, options)
+{
+    const worktree = AddDetachedWorktree(`${GIT.remote}/${GIT.baseBranch}`);
+    const state = {
+        options,
+        unpushedBranch: null,
+    };
+    try
+    {
+        return shipFrom(
+            worktree,
+            edits,
+            state,
+        );
+    }
+    finally
+    {
+        cleanUp(worktree, state);
     }
 }
 
 function main(argv)
 {
-    const quick = argv.includes(QUICK_FLAG);
-    const dryRun = argv.includes(DRY_RUN_FLAG);
-    const local = argv.includes(LOCAL_FLAG);
-    const titleArgument = argv.filter((arg) => !arg.startsWith('--')).join(' ').trim();
-    const refs = fetchShippedRefs();
-    const fresh = [];
-    for (const file of ChangedContentFiles())
+    const options = parseOptions(argv);
+    const edits = selectEdits();
+    if (!edits.length)
     {
-        const ref = shippedIn(file.path, refs);
-        if (ref)
-        {
-            console.log(`Skipping ${file.path}: already in ${ref}.`);
-            continue;
-        }
-        fresh.push(file);
+        say('nothingNew');
+        return EXIT.ok;
     }
-    if (!fresh.length)
+    listEdits(edits);
+    if (options.dryRun)
     {
-        console.log('Nothing new to ship.');
-        return 0;
+        return EXIT.ok;
     }
-    const direct = fresh.filter((file) => !isRebuilt(file));
-    const carried = [
-        ...direct,
-        ...ownerRebuiltEdits(fresh.filter(isRebuilt), direct),
-    ];
-    if (!carried.length)
+    if (!options.local)
     {
-        console.log('Nothing new to ship: the rebuild alone makes these changes.');
-        return 0;
+        RunGitHub(['auth', 'status']);
     }
-    const described = carried.map(describe);
-    console.log('Shipping:');
-    described.forEach((item) => console.log(`  ${item.path}: ${item.subject}`));
-    if (dryRun)
-    {
-        return 0;
-    }
-
-    if (!local)
-    {
-        RunProgram('gh', ['auth', 'status']);
-    }
-    const { remote, baseBranch } = OWNER_TOOLS.git;
-    const worktree = mkdtempSync(join(tmpdir(), WORKTREE_PREFIX));
-    RunGit(['worktree', 'add', '--quiet', '--detach', worktree, `${remote}/${baseBranch}`]);
-    let branch = null;
-    let pushed = false;
-    try
-    {
-        carried.forEach((file) => carryFile(file, worktree));
-        commitEach(described, worktree);
-        const checks = captureLog();
-        const built = RunSteps(OWNER_TOOLS.buildSteps, worktree, checks.log);
-        const checked = built.ok && RunSteps(OWNER_TOOLS.checkSteps, worktree, checks.log).ok;
-        const tested = checked && (quick || RunSteps(OWNER_TOOLS.testSteps, worktree, checks.log).ok);
-        if (!tested)
-        {
-            console.log('\nStopped: fix the error above, then run "npm run ship" again. Nothing was pushed.');
-            return 1;
-        }
-        const generated = stageGenerated(worktree);
-        if (generated.length)
-        {
-            commit(worktree, generated, REGENERATE_SUBJECT, []);
-        }
-        const title = titleArgument || described[0].subject;
-        branch = uniqueBranchName(BranchNameFor(title));
-        RunGit(['switch', '--quiet', '-c', branch], worktree);
-        if (local)
-        {
-            pushed = true;
-            console.log(`\nLocal only: branch ${branch} has the commits. Nothing was pushed.`);
-            return 0;
-        }
-
-        RunGit(['push', '--quiet', '-u', remote, branch], worktree);
-        pushed = true;
-        const url = openPullRequest(worktree, branch, title, described, checks.lines);
-        const pullNumber = Number(PULL_NUMBER_PATTERN.exec(url)?.[1]);
-        try
-        {
-            WriteReceipt(worktree, title, pullNumber, receiptSummary(described));
-            RunGit(['push', '--quiet', remote, branch], worktree);
-        }
-        catch (error)
-        {
-            console.log(`\nThe pull request is open, but its changelog entry failed:\n${error.message}`);
-        }
-        console.log(`\nPull request: ${url}`);
-        console.log('Your local edits are still here. After the pull request merges, run "npm run sync".');
-        return 0;
-    }
-    finally
-    {
-        RunGit(['worktree', 'remove', '--force', worktree], REPO_ROOT, { allowFailure: true });
-        if (branch && !pushed)
-        {
-            RunGit(['branch', '-D', branch], REPO_ROOT, { allowFailure: true });
-        }
-    }
+    return shipInWorktree(edits, options);
 }
 
-const invoked = process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1]);
-if (invoked)
+if (IsMainModule(import.meta.url))
 {
     try
     {
@@ -452,7 +375,7 @@ if (invoked)
     }
     catch (error)
     {
-        console.error(`\nship: ${error.message}`);
-        process.exitCode = 1;
+        console.error(FormatText(TEXT.errorPrefix, { error: error.message }));
+        process.exitCode = EXIT.failed;
     }
 }

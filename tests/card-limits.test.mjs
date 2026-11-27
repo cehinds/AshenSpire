@@ -1,7 +1,11 @@
 // Card effect and drawback limits (CARD_LIMITS in content/source/actionCosts.json).
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { CheckCardLimits, CountCardParts, DEFAULT_CARD_LIMIT_RULES } from '../src/model/cardLimits.js';
+import {
+    CheckCardLimits,
+    CountCardParts,
+    DEFAULT_CARD_LIMIT_RULES,
+} from '../src/model/cardLimits.js';
 import { CheckCardFiles } from '../tools/card-limits.mjs';
 
 const TIGHT_RULES = {
@@ -96,5 +100,6 @@ test('the upgraded face is checked too', () =>
 
 test('every shipped card is within CARD_LIMITS', () =>
 {
-    assert.deepEqual(CheckCardFiles(), []);
+    const problems = CheckCardFiles().map((entry) => `${entry.file}: ${entry.problem}`);
+    assert.deepEqual(problems, []);
 });

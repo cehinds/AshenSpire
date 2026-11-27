@@ -1,39 +1,58 @@
 #!/usr/bin/env node
-// node tools/card-limits.mjs --check: fails, naming each card, when a card has more
-// effects or drawbacks than CARD_LIMITS in content/source/actionCosts.json allows.
+// node tools/card-limits.mjs --check: fails, naming each card, when a card has more effects
+// or drawbacks than CARD_LIMITS in content/source/actionCosts.json allows.
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CARD_LIMITS } from '../src/content/actionCosts.js';
 import { CheckCardLimits } from '../src/model/cardLimits.js';
+import { FillTemplate } from '../src/model/textTemplate.js';
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
-const SETTINGS_FILE = 'content/source/actionCosts.json';
+const TEXT = CARD_LIMITS.text;
+const TEXT_ENCODING = 'utf8';
+const EXIT = Object.freeze({
+    ok: 0,
+    failed: 1,
+});
 
-/** Problems across every file CARD_LIMITS.cardFiles names, each prefixed with its file. */
-export function CheckCardFiles(root = ROOT)
+function isMainModule()
 {
-    const problems = [];
-    for (const file of CARD_LIMITS.cardFiles)
-    {
-        const cards = JSON.parse(readFileSync(resolve(root, file), 'utf8'));
-        CheckCardLimits(cards).forEach((problem) => problems.push(`${file}: ${problem}`));
-    }
-    return problems;
+    const started = process.argv[1];
+    return Boolean(started) && fileURLToPath(import.meta.url) === resolve(started);
 }
 
-const invoked = process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1]);
-if (invoked)
+function report(problems)
 {
-    const problems = CheckCardFiles();
-    if (problems.length)
+    if (!problems.length)
     {
-        problems.forEach((problem) => console.log(`FAIL ${problem}`));
-        console.log(`\nEdit those cards, or raise the limit in ${SETTINGS_FILE} (CARD_LIMITS).`);
-        process.exitCode = 1;
+        console.log(FillTemplate(TEXT.ok, {
+            effects: CARD_LIMITS.maxEffects,
+            drawbacks: CARD_LIMITS.maxDrawbacks,
+        }));
+        return EXIT.ok;
     }
-    else
-    {
-        console.log(`card-limits: ok (max ${CARD_LIMITS.maxEffects} effects, ${CARD_LIMITS.maxDrawbacks} drawbacks)`);
-    }
+    problems.forEach((problem) => console.log(FillTemplate(TEXT.failLine, problem)));
+    console.log(`\n${TEXT.advice}`);
+    return EXIT.failed;
+}
+
+function fileProblems(root, file)
+{
+    const cards = JSON.parse(readFileSync(resolve(root, file), TEXT_ENCODING));
+    return CheckCardLimits(cards).map((problem) => ({
+        file,
+        problem,
+    }));
+}
+
+/** Problems across every file CARD_LIMITS.cardFiles names: [{ file, problem }]. */
+export function CheckCardFiles(root = ROOT)
+{
+    return CARD_LIMITS.cardFiles.flatMap((file) => fileProblems(root, file));
+}
+
+if (isMainModule())
+{
+    process.exitCode = report(CheckCardFiles());
 }

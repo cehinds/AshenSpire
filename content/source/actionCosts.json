@@ -14,6 +14,17 @@
       "games/ashenspire/packs/core/cards.json",
       "games/ashenspire/packs/core/enemyCards.json"
     ],
+    "text": {
+      "tooManyEffects": "{name} has {count} effects. The limit is {limit} (maxEffects).",
+      "tooManyDrawbacks": "{name} has {count} drawbacks: {listed}. The limit is {limit} (maxDrawbacks).",
+      "cardName": "{id} ({name}){face}",
+      "upgradedFace": " upgraded",
+      "selfDebuff": "{status} on self",
+      "listJoiner": ", ",
+      "ok": "card-limits: ok (max {effects} effects, {drawbacks} drawbacks)",
+      "failLine": "FAIL {file}: {problem}",
+      "advice": "Edit those cards, or raise the limit in content/source/actionCosts.json (CARD_LIMITS)."
+    },
     "selfDebuffStatuses": [
       "weak",
       "vulnerable",

@@ -1,9 +1,15 @@
-// Effect and drawback limits per card, read from CARD_LIMITS in content/source/actionCosts.json.
-import { CARD_LIMITS, DRAWBACK_KEYWORD_TAGS, DRAWBACK_OPS, KEYWORD_TAGS } from '../content/actionCosts.js';
+// Effect and drawback limits per card, read from CARD_LIMITS in actionCosts.json.
+import {
+    CARD_LIMITS,
+    DRAWBACK_KEYWORD_TAGS,
+    DRAWBACK_OPS,
+    KEYWORD_TAGS,
+} from '../content/actionCosts.js';
+import { FillTemplate } from './textTemplate.js';
 
 const APPLY_STATUS_OP = 'applyStatus';
 const SELF_TARGET = 'self';
-const SELF_SUFFIX = ' on self';
+const NO_FACE = '';
 
 /** The rules the checks use; tests and the Studio pass their own to try other limits. */
 export const DEFAULT_CARD_LIMIT_RULES = Object.freeze({
@@ -13,7 +19,15 @@ export const DEFAULT_CARD_LIMIT_RULES = Object.freeze({
     drawbackOps: DRAWBACK_OPS,
     drawbackKeywordTags: DRAWBACK_KEYWORD_TAGS,
     keywordTags: KEYWORD_TAGS,
+    text: CARD_LIMITS.text,
 });
+
+function listOf(value)
+{
+    return Array.isArray(value)
+        ? value
+        : [];
+}
 
 function effectDrawback(effect, rules)
 {
@@ -24,24 +38,90 @@ function effectDrawback(effect, rules)
     const isSelfDebuff = effect.op === APPLY_STATUS_OP
         && effect.target === SELF_TARGET
         && rules.selfDebuffStatuses.includes(effect.status);
-    return isSelfDebuff
-        ? `${effect.status}${SELF_SUFFIX}`
-        : null;
+    if (!isSelfDebuff)
+    {
+        return null;
+    }
+    return FillTemplate(rules.text.selfDebuff, { status: effect.status });
+}
+
+function isDrawbackKeyword(keyword, rules)
+{
+    const tag = rules.keywordTags[keyword];
+    return rules.drawbackKeywordTags.includes(tag);
+}
+
+function effectsProblem(
+    name,
+    count,
+    rules,
+)
+{
+    if (count <= rules.maxEffects)
+    {
+        return null;
+    }
+    return FillTemplate(rules.text.tooManyEffects, {
+        name,
+        count,
+        limit: rules.maxEffects,
+    });
+}
+
+function drawbacksProblem(
+    name,
+    drawbacks,
+    rules,
+)
+{
+    if (drawbacks.length <= rules.maxDrawbacks)
+    {
+        return null;
+    }
+    return FillTemplate(rules.text.tooManyDrawbacks, {
+        name,
+        count: drawbacks.length,
+        listed: drawbacks.join(rules.text.listJoiner),
+        limit: rules.maxDrawbacks,
+    });
+}
+
+function faceProblems(
+    face,
+    faceLabel,
+    rules,
+)
+{
+    const parts = CountCardParts(face, rules);
+    const name = FillTemplate(rules.text.cardName, {
+        id: face.id,
+        name: face.name || face.id,
+        face: faceLabel,
+    });
+    const problems = [
+        effectsProblem(
+            name,
+            parts.effects,
+            rules,
+        ),
+        drawbacksProblem(
+            name,
+            parts.drawbacks,
+            rules,
+        ),
+    ];
+    return problems.filter(Boolean);
 }
 
 /** Counts one card face: { effects, drawbacks } where drawbacks lists what counted. */
 export function CountCardParts(card, rules = DEFAULT_CARD_LIMIT_RULES)
 {
-    const effects = Array.isArray(card.effects)
-        ? card.effects
-        : [];
-    const keywords = Array.isArray(card.keywords)
-        ? card.keywords
-        : [];
+    const effects = listOf(card.effects);
     const fromEffects = effects
         .map((effect) => effectDrawback(effect, rules))
         .filter(Boolean);
-    const fromKeywords = keywords.filter((keyword) => rules.drawbackKeywordTags.includes(rules.keywordTags[keyword]));
+    const fromKeywords = listOf(card.keywords)
+        .filter((keyword) => isDrawbackKeyword(keyword, rules));
     return {
         effects: effects.length,
         drawbacks: [
@@ -51,37 +131,30 @@ export function CountCardParts(card, rules = DEFAULT_CARD_LIMIT_RULES)
     };
 }
 
-function faceProblems(card, face, label, rules)
-{
-    const parts = CountCardParts(face, rules);
-    const name = `${card.id} (${card.name || card.id})${label}`;
-    const problems = [];
-    if (parts.effects > rules.maxEffects)
-    {
-        problems.push(`${name} has ${parts.effects} effects. The limit is ${rules.maxEffects} (maxEffects).`);
-    }
-    if (parts.drawbacks.length > rules.maxDrawbacks)
-    {
-        problems.push(`${name} has ${parts.drawbacks.length} drawbacks: ${parts.drawbacks.join(', ')}. The limit is ${rules.maxDrawbacks} (maxDrawbacks).`);
-    }
-    return problems;
-}
-
 /** Every card over a limit, as plain sentences; the upgraded face is checked too. */
 export function CheckCardLimits(cards, rules = DEFAULT_CARD_LIMIT_RULES)
 {
     const problems = [];
     for (const card of cards)
     {
-        problems.push(...faceProblems(card, card, '', rules));
-        if (card.upgrade)
+        problems.push(...faceProblems(
+            card,
+            NO_FACE,
+            rules,
+        ));
+        if (!card.upgrade)
         {
-            const upgraded = {
-                ...card,
-                ...card.upgrade,
-            };
-            problems.push(...faceProblems(card, upgraded, ' upgraded', rules));
+            continue;
         }
+        const upgraded = {
+            ...card,
+            ...card.upgrade,
+        };
+        problems.push(...faceProblems(
+            upgraded,
+            rules.text.upgradedFace,
+            rules,
+        ));
     }
     return problems;
 }

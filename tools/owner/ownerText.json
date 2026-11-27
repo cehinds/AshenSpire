@@ -1,0 +1,85 @@
+{
+  "$note": "Every word the owner commands print or write. {name} is filled in by the tool.",
+  "marks": {
+    "pass": "ok  ",
+    "fail": "FAIL",
+    "bullet": "- ",
+    "indent": "  "
+  },
+  "process": {
+    "couldNotRun": "Could not run {program}: {error}",
+    "failed": "{command} failed:\n{detail}"
+  },
+  "check": {
+    "passed": "\nAll checks passed.",
+    "failed": "\nA check failed. Fix the file it names, save, and run \"npm run check\" again."
+  },
+  "play": {
+    "failed": "\nA check failed. The game still opens, but fix the file named above first.",
+    "ready": [
+      "\nThe game opens in your browser. Score Studio: /tools/score-studio/",
+      "Edit a JSON file and save: the page reloads. Press Ctrl+C here to stop."
+    ],
+    "sheetRebuilt": "play: enemy sheet {file} rebuilt",
+    "sheetError": "play: enemy sheet {file} has an error:\n{output}"
+  },
+  "ship": {
+    "shipping": "Shipping:",
+    "shippingLine": "  {path}: {subject}",
+    "skipping": "Skipping {path}: already in {ref}.",
+    "alreadyInDev": "Skipping {path}: dev already has this edit.",
+    "nothingNew": "Nothing new to ship.",
+    "allInDev": "Nothing new to ship: dev already has these edits.",
+    "stopped": "\nStopped: fix the error above, then run \"npm run ship\" again. Nothing was pushed.",
+    "localOnly": "\nLocal only: branch {branch} has the commits. Nothing was pushed.",
+    "pullRequest": "\nPull request: {url}",
+    "afterMerge": "Your edits are still here. After the pull request merges, run \"npm run sync\".",
+    "receiptFailed": "\nThe pull request is open, but its changelog entry failed:\n{error}",
+    "clash": "{path} also changed on dev and the edits clash. Run \"npm run sync\", redo the edit, then ship again.",
+    "rebuildFailed": "The rebuild failed at \"{step}\". Run \"npm run check\".",
+    "noPullList": "Could not list open pull requests, so only dev is checked for shipped edits.",
+    "pullNotOpened": "Branch {branch} is on GitHub, but the pull request did not open. Run:\n  gh pr create --base {base} --head {branch} --fill\n{error}",
+    "changelogFailed": "Writing the changelog failed:\n{output}",
+    "errorPrefix": "\nship: {error}"
+  },
+  "sync": {
+    "blocked": "sync stopped. These files changed and are not game content:",
+    "blockedAdvice": "Ship or undo them first. Nothing was switched.",
+    "kept": "\nEdits not yet shipped, kept for you:",
+    "backup": "A backup copy of each is in {folder}",
+    "clashed": "\nChanged on dev too, so these now hold the dev version. Yours is in the backup:",
+    "unmerged": "{branch} has commits not in {base}:\n{commits}\nShip them, or ask for help before syncing.",
+    "done": "\nYou are on {branch}, the newest {base}.",
+    "errorPrefix": "\nsync: {error}"
+  },
+  "commits": {
+    "regenerate": "Regenerate game data from the edited files",
+    "receipt": "Add the changelog receipt",
+    "baseline": "Owner rebuild baseline"
+  },
+  "branch": {
+    "defaultTitleWord": "Content"
+  },
+  "pullRequestBody": [
+    "## What changed",
+    "",
+    "{sections}",
+    "",
+    "## Checks run before pushing",
+    "",
+    "{checks}",
+    "",
+    "## Try it",
+    "",
+    "Check out this branch, then run `npm run play`.",
+    "",
+    "Opened by `npm run ship` (docs/OWNER-EDITING.md)."
+  ],
+  "pullRequestSection": "**{path}**\n{lines}",
+  "receipt": {
+    "line": "- **{title}** ([#{pull}]({url}), `{stamp}`). {summary}",
+    "sentenceEnd": ".",
+    "sentenceJoiner": ". ",
+    "$note": "Keep \"- **{title}** ([#{pull}]({url}), `{stamp}`)\" at the start: the changelog checks find a receipt by that shape."
+  }
+}
