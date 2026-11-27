@@ -1,0 +1,23 @@
+{
+  "$note": "The /__content/ API shared by tools/content-editor-save.mjs and the Score Studio Game content tab.",
+  "prefix": "/__content/",
+  "routes": {
+    "file": "/__content/file",
+    "list": "/__content/list",
+    "check": "/__content/check"
+  },
+  "maxBodyBytes": 8388608,
+  "listExtension": ".json",
+  "hiddenPrefix": "_",
+  "messages": {
+    "notLocal": "Game content editing needs `npm run play` on this computer.",
+    "notFromStudio": "Save from the local Score Studio.",
+    "noSuchRoute": "Unknown content request.",
+    "tooLarge": "The file is too large to save.",
+    "notRepoPath": "Not a repo path: {path}",
+    "notEditable": "This file cannot be edited here: {path}",
+    "notListable": "This folder cannot be listed here: {path}",
+    "notJson": "Not valid JSON, nothing saved: {error}",
+    "noServer": "Game content needs `npm run play`. Start it and open Score Studio from it."
+  }
+}
