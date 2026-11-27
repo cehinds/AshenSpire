@@ -2089,8 +2089,11 @@ function applyCardJson() {
 
 // The card as it ships in the game, scored with the game's weights; null for cards the game does not have.
 function inGameScore(def) {
+  if (!registries.cards.has(def.id))
+  {
+    return null;
+  }
   const original = registries.cards.get(def.id);
-  if (!original) return null;
   const sc = scoreCardEntry(clone(original), state.repoScoring);
   return { cp: sc.cp, rank: sc.rank, rarity: original.rarity || sc.rarity };
 }
