@@ -14,9 +14,9 @@ A full restructuring pass follows [docs/ai/CLEAN-CODE-PROMPT.md](docs/ai/CLEAN-C
 - **Ternaries:** the `?` and `:` parts each on their own line; a nested ternary indents one more level.
 
 ```js
-const MaxCachedProjections = 512;
+export const MaxCachedProjections = 512;
 
-function ReferenceClassId(definition)
+export function ReferenceClassId(definition)
 {
   if (classes.includes(definition?.class))
   {
@@ -44,7 +44,7 @@ function ReferenceClassId(definition)
 
 - **Few comments, at most 2 lines each,** saying why, not what. Names explain the code.
 - No history, dates, issue numbers or owner quotes, and no comments about code that no longer exists.
-- **CHANGELOG receipts:** 2 lines at most.
+- **CHANGELOG receipts:** 2 short sentences at most.
 
 ## Scope
 
