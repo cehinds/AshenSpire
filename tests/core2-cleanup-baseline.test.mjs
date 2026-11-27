@@ -16,12 +16,36 @@ const native = Object.assign({}, ...await Promise.all(moduleIds.map(id => import
 const require = productionBundle({ additionalModules: moduleIds });
 const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
-// Historical action-policy behavior is compared to its immutable recorded profile.
-// Current-runtime mechanics use small controlled cards/moves and compare native,
-// shipped bundle, saved snapshot and continuation behavior without balance hashes.
+// Three kinds of lane:
+// - historical: the 73ef action-policy profile, compared to its immutable capture.
+// - archived ('current' in the capture): the saved 10911 default profile (runtime
+//   c77d, hash 9b5f7a...) is replayed and compared to the pinned JS01 capture, so
+//   events, RNG, receipts and continuations stay an oracle of engine behaviour.
+// - controlled: small controlled cards/moves on today's default profile, comparing
+//   native, shipped bundle, saved snapshot and continuation without balance hashes.
 const fixture = JSON.parse(readFileSync(new URL('./fixtures/core2-cleanup-baseline.json', import.meta.url), 'utf8'));
 const previousFixture = JSON.parse(readFileSync(new URL('./fixtures/core2-cleanup-baseline-521250.json', import.meta.url), 'utf8'));
+// The archived lanes use the pre-feature Dev capture, backed by the archived
+// source tree and the same JS01 scenario bodies. Their raw checkpoints agree
+// with this tree; the historical action-policy lane keeps the original pin.
+const currentFixture = JSON.parse(readFileSync(new URL('./fixtures/core2-cleanup-current-7dff4b03.json', import.meta.url), 'utf8'));
+const currentIdentity = JSON.parse(readFileSync(new URL('./fixtures/core2-cleanup-current-reward-fallback-identity.json', import.meta.url), 'utf8'));
 const archivedCurrentSave = readFileSync(new URL('./fixtures/pre-registry-dev-7dff4b03-save.json.gz', import.meta.url));
+const archivedCurrentGear = JSON.parse(gunzipSync(archivedCurrentSave)).gameProfile;
+// Source 10911b810d5: the default profile used by the unchanged identity oracle.
+// Current authored cards may change independently; this saved-profile replay
+// must keep testing the original profile, including every identity hash.
+const capturedDefaultBytes = readFileSync(new URL('./fixtures/core2-cleanup-profile-10911.json.gz', import.meta.url));
+const capturedDefaultJson = gunzipSync(capturedDefaultBytes).toString('utf8');
+// The compiled runtime and profile commitments move through registry and
+// startup changes. Gear inputs stay pinned below. Only identity leaves are
+// advanced here; the independent 7dff4b03 behavior digests remain the oracle.
+const expectedScenarios = { ...fixture.scenarios };
+for (const [name, original] of Object.entries(currentFixture.scenarios)) {
+  const { snapshots, save } = currentIdentity.scenarios[name];
+  const checkpoints = Object.fromEntries(Object.entries(snapshots).map(([phase, snapshot]) => [phase, { ...original[phase], snapshot }]));
+  expectedScenarios[name] = { ...original, ...checkpoints, profile: { ...original.profile, ...currentIdentity.profile }, save };
+}
 const historicalBytes = readFileSync(new URL('./fixtures/dev-profile-73ef.json.gz', import.meta.url));
 const historicalJson = gunzipSync(historicalBytes).toString('utf8');
 const historicalHash = JSON.parse(historicalJson).hash;
@@ -31,6 +55,14 @@ const historicalHash = JSON.parse(historicalJson).hash;
 const historicalDerivedStatsBytes = readFileSync(new URL('./fixtures/js01-pre-equipment-derived-stat-rules.json', import.meta.url));
 const historicalDerivedStats = JSON.parse(historicalDerivedStatsBytes);
 const historicalPoiseRules = { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1, breakStatusStacks: 2 };
+// The level reward rules the archived lanes' saves were captured with.
+const archivedLevelRewards = {
+  version: 1,
+  classPrimary: { firstLevel: 2, every: 4, amount: 1 },
+  classPrimaryAttribute: { reaver: 'strength', rogue: 'dexterity', starseer: 'intelligence', herald: 'wisdom' },
+  freeAttribute: { firstLevel: 4, every: 8, amount: 1 },
+  cardRankUpsPerLevel: 1,
+};
 const seed = 511;
 const plain = value => JSON.parse(JSON.stringify(value));
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -70,6 +102,9 @@ function controlledEnemies() {
 
 function openFight(api, enemyId, encounterId, profileId, contentVersion) {
   const historical = profileId === 'historical';
+  const archived = profileId === 'current';
+  const controlled = profileId === 'controlled';
+  assert.ok(historical || archived || controlled, `known lane ${profileId}`);
   let profile;
   if (historical) {
     const storage = memoryStorage();
@@ -78,6 +113,21 @@ function openFight(api, enemyId, encounterId, profileId, contentVersion) {
     storage.setItem(api.runKey(1), `{"gameProfile":${historicalJson}}`);
     profile = api.resolveGameProfile(api.createSaveManager(storage).peekRunGameProfile(1));
     assert.equal(profile.hash, historicalHash);
+  } else if (archived) {
+    const capturedStorage = memoryStorage();
+    capturedStorage.setItem(api.runKey(1), `{"gameProfile":${capturedDefaultJson}}`);
+    profile = plain(api.resolveGameProfile(api.createSaveManager(capturedStorage).peekRunGameProfile(1)));
+    assert.equal(profile.hash, 'sha256:9b5f7a725112f76a65f8037f4313f886b95a2d4ad3b8b705eb63d59a820c65a5');
+    // The archived lanes replay their archived gear inputs. Modern equipment
+    // tuning and typed equipment effects are covered by the gear suites.
+    profile.modules.gear.statPoints = plain(archivedCurrentGear.modules.gear.statPoints);
+    profile.content.gear = plain(archivedCurrentGear.content.gear);
+    delete profile.modules.gear.typeEffectsVersion;
+    const { hash: _hash, ...payload } = profile;
+    profile.hash = `sha256:${hashJson(payload)}`;
+    const storage = memoryStorage();
+    storage.setItem(api.runKey(1), JSON.stringify({ gameProfile: profile }));
+    profile = api.resolveGameProfile(api.createSaveManager(storage).peekRunGameProfile(1));
   } else {
     profile = plain(api.resolveGameProfile('default'));
     // A compact carrier controls only this scenario's player card and recipe.
@@ -104,7 +154,7 @@ function openFight(api, enemyId, encounterId, profileId, contentVersion) {
   const content = contentVersion === undefined ? applied : { ...applied, version: contentVersion };
   const baseRegistries = api.bindGameProfileRegistries(api.createRegistries(content), profile);
   const fixtures = controlledEnemies();
-  const registries = historical ? baseRegistries : { ...baseRegistries, enemies: { ...baseRegistries.enemies,
+  const registries = !controlled ? baseRegistries : { ...baseRegistries, enemies: { ...baseRegistries.enemies,
     get: id => fixtures[id] || baseRegistries.enemies.get(id) } };
   if (contentVersion !== undefined) assert.equal(registries.contentVersion, contentVersion);
   const run = api.createRunState({ registries, classId: 'reaver', seed, runId: `js01-${profileId}-${enemyId}` });
@@ -112,7 +162,7 @@ function openFight(api, enemyId, encounterId, profileId, contentVersion) {
     run.classLevelBonusVersion = 1;
     delete run.levelRewardRuleSnapshot;
   }
-  const encounter = historical ? registries.encounters.get(encounterId) : { id: encounterId, enemies: [enemyId] };
+  const encounter = !controlled ? registries.encounters.get(encounterId) : { id: encounterId, enemies: [enemyId] };
   assert.deepEqual(plain(encounter.enemies), [enemyId]);
   // W25-BANDS legacy fixture: this baseline pins the arithmetic before front/back rows, so the fight is made without the `bands` rules (as one saved before them), in whichever module realm `api` is.
   const shippedBands = api.fixCoreMechanics.bands;
@@ -138,7 +188,7 @@ function openFight(api, enemyId, encounterId, profileId, contentVersion) {
   delete combat.fixCoreRules?.bands;
   // This scenario pins an actual pre-override combat, not today's new-fight defaults.
   if (profileId === 'historical') delete combat.fixCoreRules?.smashVsDefensive?.defendDamageMultiplier;
-  if (!historical) {
+  if (controlled) {
     for (const enemy of combat.enemies) {
       const pool = fixtures[enemy.enemyId].spPool;
       Object.assign(enemy, { hp: 1000, maxHp: 1000, stamina: pool, maxStamina: pool, fixCoreStaminaRemaining: pool, block: 0, statuses: {}, ratings: { ar: 0, pr: 0, dr: 0, poise: 0, ward: 0 } });
@@ -152,7 +202,7 @@ function openFight(api, enemyId, encounterId, profileId, contentVersion) {
     combat.piles.draw.push(...run.deck.filter(card => !hand.some(held => held.instanceId === card.instanceId)).map(plain));
   }
   assert.equal(combat.core2ActionRulesVersion, profileId === 'historical' ? 1 : 2);
-  return { api, profile, registries, run, combat, encounter, historical };
+  return { api, profile, registries, run, combat, encounter, historical, archived };
 }
 
 function settle(api, combat) {
@@ -187,7 +237,7 @@ function hashRun(json, contentVersion, levelRewards) {
 }
 
 let lastStoredContentVersion;
-function saveAndRestore({ api, profile, registries, run, combat, encounter, historical }) {
+function saveAndRestore({ api, profile, registries, run, combat, encounter, historical, archived }) {
   const storage = memoryStorage();
   const manager = api.createSaveManager(storage);
   api.commitCombatSnapshot({
@@ -197,7 +247,7 @@ function saveAndRestore({ api, profile, registries, run, combat, encounter, hist
   const storedJson = storage.getItem(api.runKey(1));
   assert.equal(JSON.parse(storedJson).contentVersion, registries.contentVersion);
   lastStoredContentVersion = JSON.parse(storedJson).contentVersion;
-  const levelRewards = historical ? undefined : plain(run.levelRewardRuleSnapshot);
+  const levelRewards = historical ? undefined : archived ? archivedLevelRewards : plain(run.levelRewardRuleSnapshot);
   const stored = hashRun(storedJson, registries.contentVersion, levelRewards);
   const loaded = manager.loadRun(registries);
   assert.ok(loaded, manager.runStatus().reason);
@@ -247,14 +297,18 @@ function baseline(api, profileId, enemyId, encounterId, prepare, action, { conte
 
 const endTurn = (api, combat) => api.dispatch(combat, { type: 'endTurn' });
 
-const scenarios = [
-  ['paid reaction', 'current', 'gildedKnight', 'a2_knight', ({ api, combat, registries }) => {
+// Each mechanics scenario runs twice: on the archived profile against the pinned
+// capture ('current' lane, named as in the capture), and on the controlled carrier.
+const mechanics = [
+  ['paid reaction', 'gildedKnight', 'a2_knight', ({ api, combat, registries, archived }) => {
     const [enemy] = combat.enemies;
     combat.rangeState.engagements[Object.keys(combat.rangeState.engagements)[0]] = 1;
     const quote = api.enemyMoveQuote(registries.enemies.get(enemy.enemyId).moves.gildedGuard, { enemy, moveId: 'gildedGuard', combat });
     assert.deepEqual([quote.sp, quote.advanceSp, quote.totalSp], [1, 1, 2]);
     const strike = combat.piles.hand.find(row => row.cardId === 'core.strike');
     assert.ok(strike);
+    // The archived knight reacts to a hit of 8 or more (minIncoming); Core's x0.7 player side scale (owner, 2026-11-18) leaves a bare Strike below it.
+    if (archived) combat.player.ratings = { ...combat.player.ratings, ar: (combat.player.ratings?.ar || 0) + 8 };
     const before = checkpoint(api, combat);
     const { cost, manaCost, staminaCost, values, damageSequences } = api.previewCard(combat, strike.instanceId, enemy.id);
     assert.deepEqual(checkpoint(api, combat), before, 'preview does not mutate the save or draw RNG');
@@ -269,7 +323,7 @@ const scenarios = [
     assert.equal(combat.enemies[0].stamina, 1);
     assert.ok(combat.enemies[0].performedMoves.includes('gildedGuard'));
   }],
-  ['paid delayed charge', 'current', 'bellKeeper', 'bossBellKeeper', ({ api, combat, registries }) => {
+  ['paid delayed charge', 'bellKeeper', 'bossBellKeeper', ({ api, combat, registries }) => {
     const [enemy] = combat.enemies;
     combat.rangeState.engagements[Object.keys(combat.rangeState.engagements)[0]] = 1;
     const quote = api.enemyMoveQuote(registries.enemies.get(enemy.enemyId).moves.bronzeToll, { enemy, moveId: 'bronzeToll', combat });
@@ -286,7 +340,7 @@ const scenarios = [
     assert.equal(enemy.stamina, enemy.maxStamina);
     assert.equal(enemy.performedMoves.filter(id => id === 'bronzeToll').length, 1);
   }],
-  ['ordered enemy plan', 'current', 'fellWarden', 'bossOmen', ({ api, combat }) => {
+  ['ordered enemy plan', 'fellWarden', 'bossOmen', ({ api, combat }) => {
     const [enemy] = combat.enemies;
     combat.normalPreview = { ...combat.normalPreview, multiAction: false };
     const before = checkpoint(api, combat);
@@ -303,6 +357,11 @@ const scenarios = [
     assert.equal(enemy.pendingMove.spPayment.totalSp, 1);
     assert.equal(enemy.stamina, 0);
   }],
+];
+
+const scenarios = [
+  ...mechanics.map(([name, ...rest]) => [name, 'current', ...rest]),
+  ...mechanics.map(([name, ...rest]) => [`controlled ${name}`, 'controlled', ...rest]),
   ['historical action policy', 'historical', 'ashheartDragon', 'a3_bossAshheartDragon', ({ api, combat, registries }) => {
     const [enemy] = combat.enemies;
     const move = registries.enemies.get(enemy.enemyId).moves.ashBreath;
@@ -319,6 +378,7 @@ test('the original historical profile fixture keeps its provenance', () => {
   assert.equal(digest(historicalBytes), fixture.historicalProfileSha256);
   assert.equal(digest(archivedCurrentSave), 'fb2cdb88f5072d509738716968fed042977e75d2cc8c36eb2af17543a00a14e5');
   assert.equal(digest(historicalDerivedStatsBytes), '236c8e3c474ca126884f5edf1acaa8b57e9d02b8c00c9bea5e4d4a030bc7a4a5');
+  assert.equal(digest(capturedDefaultBytes), '2d23a93ffc5c778f08c86bd6a76914a51347df0a62ca8adab362cd95b5a2cd2d');
 });
 
 test('the tradition-policy recapture preserves preceding events, RNG, receipts and continuations', () => {
@@ -341,7 +401,7 @@ for (const [name, ...scenario] of scenarios) {
     const source = baseline(native, ...scenario);
     const bundle = baseline(bundled, ...scenario);
     assert.deepEqual(bundle, source, 'the production module transform preserves source behavior');
-    if (scenario[0] === 'historical') assert.deepEqual(source, fixture.scenarios[name], 'compare against the immutable historical capture');
+    if (scenario[0] !== 'controlled') assert.deepEqual(source, expectedScenarios[name], 'compare against its pinned JS01 capture');
   });
 }
 
@@ -350,7 +410,7 @@ test('the saved-run baseline does not depend on the content version', () => {
     lastStoredContentVersion = undefined;
     const result = baseline(native, ...scenario, { contentVersion: '9.99.99' });
     assert.equal(lastStoredContentVersion, '9.99.99', `${name}: the save recorded the overridden version`);
-    const expected = scenario[0] === 'historical' ? fixture.scenarios[name] : baseline(native, ...scenario);
+    const expected = scenario[0] === 'controlled' ? baseline(native, ...scenario) : expectedScenarios[name];
     assert.deepEqual(result, expected, name);
   }
 });
