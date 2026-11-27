@@ -81,13 +81,15 @@ const COUNT_RULE_MULTIPLIER_STEP = 0.05;
 /** One Weights row for a count rule (effectCount, drawbackCount): weight, multiplier and on/off. */
 function CountRuleRow(state, R, id, label)
 {
-  const rule = () => (state.scoring[id] ||= {});
+  // An old draft without this block shows and edits the shipped rule, not an implicit "on".
+  const rule = () => (state.scoring[id] ||= structuredClone(R[id] || {}));
+  const current = () => state.scoring[id] ?? R[id];
   const fallback = COUNT_RULE_FALLBACKS[id];
-  const isMultiplier = state.scoring[id]?.multiplier === true;
+  const isMultiplier = current()?.multiplier === true;
   return {
     id,
     label,
-    val: state.scoring[id]?.weight ?? fallback,
+    val: current()?.weight ?? fallback,
     base: R[id]?.weight ?? fallback,
     step: isMultiplier
       ? COUNT_RULE_MULTIPLIER_STEP
@@ -99,7 +101,7 @@ function CountRuleRow(state, R, id, label)
       set: (on) => { SetWeightForm(rule(), R[id], on); },
     },
     surcharge: {
-      value: state.scoring[id]?.surchargeEnabled !== false,
+      value: current()?.surchargeEnabled !== false,
       base: R[id]?.surchargeEnabled !== false,
       set: (on) => { rule().surchargeEnabled = Boolean(on); },
     },
@@ -3031,6 +3033,7 @@ function scorePartWeightKey(def, part) {
   if (part === 'SP' || part === 'MP') return `costs:${part.toLowerCase()}`;
   if (part.startsWith('category:')) return `categories:${part.slice('category:'.length)}`;
   if (part === 'effect count') return 'rank:effectCount';
+  if (part === 'drawback count') return 'rank:drawbackCount';
   if (state.scoring.statuses?.[part]) return `statuses:${part}`;
   const effect = SCORE_PART_EFFECT_WEIGHTS[part] || Object.values(EFFECT_SCORE_KEYS).find((keys) => keys.part === part)?.weight;
   if (effect) return `effects:${effect}`;
