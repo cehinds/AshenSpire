@@ -1,16 +1,6 @@
 # AshenSpire
 
-<!-- feature-preview:start -->
-## Feature preview — Score Studio persistent workspace
 
-[Play this feature build](https://cehinds.github.io/AshenSpire/branches/feature/ScoreStudioPersistentWorkspace/latest/) (Score Studio itself runs locally: `npm run studio`).
-
-The card library, the selected card's preview and its editor now stay together in one pane (SS-001, PR #3008).
-
-| Mobile | Desktop | Wide | Tablet |
-| --- | --- | --- | --- |
-| ![Mobile: card panel with preview and editor](docs/preview/features/score-studio-persistent-workspace/mobile.png) | ![Desktop: library, preview and editor side by side](docs/preview/features/score-studio-persistent-workspace/desktop.png) | ![Wide: same layout at 1920 wide](docs/preview/features/score-studio-persistent-workspace/wide.png) | ![Tablet: card panel](docs/preview/features/score-studio-persistent-workspace/tablet.png) |
-<!-- feature-preview:end -->
 
 
 
