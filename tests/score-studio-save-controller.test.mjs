@@ -639,8 +639,10 @@ test('studio save: deleting a saved card back to the game baseline still counts 
 
 test('studio save: Revert to in-game is stored as a draft, so a reload keeps it', () =>
 {
-  const studioUrl = new URL('../tools/score-studio/studio.js', import.meta.url);
-  const source = readFileSync(studioUrl, 'utf8');
+  const source = readFileSync(
+    new URL('../tools/score-studio/studio.js', import.meta.url),
+    'utf8',
+  );
   const start = source.indexOf('async function revertToRepo()');
   const end = source.indexOf('\n}', start);
   assert.ok(start > 0 && end > start);
