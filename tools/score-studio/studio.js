@@ -16,7 +16,7 @@ import { itemArtLayers as shippedItemArtLayers } from '../../src/content/generat
 import { cardShapeCssProperties } from '../../src/ui/models/CardSizeModel.js';
 import { reviewedCardArtCatalog } from '../../src/content/reviewedCardArt.generated.js';
 import { scoring as shippedScoring } from '../../src/content/generated/scoring.js';
-import { CardKind, CardCategories, ScoreCard, CombatPower, RankOf, RankName, CardName, CardNameParts, ApplyScoringOverride } from '../../src/model/combatPower.js';
+import { CardKind, CardCategories, ScoreCard, CombatPower, RankOf, RankName, CardName, CardNameParts, ApplyScoringOverride, ParseUpgradeTag, UpgradeTagLabel } from '../../src/model/combatPower.js';
 import { ValidateScoringConfig, NAME_LIMIT_PARTS } from '../../src/model/activeScoring.js';
 import { EffectiveWardHp } from '../../src/model/fixCoreMechanics.js';
 import { staticCardTokens } from '../../src/model/playingCard.js';
@@ -2529,18 +2529,23 @@ function renderWeights({ shifts = true } = {}) {
   renderDescriptionGaps();
   updateWeightsToolbar();
   if (shifts) computeShiftCount();
+  // The rows beside the card show the same staged values as this list.
+  if (cardEditorDockUi?.getView?.() === 'weights') cardEditorDockUi.refreshContextFields?.();
 }
 
 // One weight row: label, the number box and its per / multiply / surcharge controls, reset and a worked example.
 // Edits are staged through applyWeightEdit; the main list and the rows beside the card share this code.
-function buildWeightRow(g, r, appliedGroups) {
+function buildWeightRow(g, r, appliedGroups, { compact = false } = {}) {
   const numVal = safeNum(r.val, 0);
   const baseNum = r.base !== undefined ? safeNum(r.base, 0) : undefined;
   const applied = weightEntryIn(appliedGroups, g.key, r.id);
   const row = document.createElement('div');
-  row.className = 'weight-row' + (r.per || r.mult || r.surcharge ? ' has-per' : '');
+  row.className = 'weight-row' + (r.per || r.mult || r.surcharge ? ' has-per' : '') + (compact ? ' is-compact' : '');
+  // Rows for the same weight (the main list and the one beside the card) share this key and re-sync each other.
+  row.dataset.weightKey = `${g.key}:${r.id}`;
   const kind = WEIGHT_GROUP_KINDS[g.key];
-  const info = kind ? describeFeature(kind, r.id) : null;
+  // A compact row (beside the card) leaves the description and worked example to the main list.
+  const info = kind && !compact ? describeFeature(kind, r.id) : null;
   const labelHtml = info
     ? `<span class="feature-label" title="${esc(featureTitleText(info))}">${esc(r.label)} ${infoButtonHtml()}</span>`
     : `<span>${esc(r.label)}</span>`;
@@ -2549,7 +2554,7 @@ function buildWeightRow(g, r, appliedGroups) {
   const shownScoring = () => stagedScoring() || state.scoring;
   const words = weightSentence(g.key, r.id, shownScoring(), r.label);
   const weightBox = `<input type="number" class="weight-input" step="${esc(safeNum(r.step, 1))}" value="${esc(numVal)}" aria-label="${esc(`${r.label} points`)}" />`;
-  row.innerHTML = `${labelHtml}<span class="weight-sentence"><span class="weight-words" data-part="before">${esc(words.before)}</span>${weightBox}<span class="weight-words" data-part="mid">${esc(words.mid)}</span>${perControlHtml(r)}<span class="weight-words" data-part="after">${esc(words.after)}</span>${multControlHtml(r)}${surchargeControlHtml(r)}<button type="button" class="weight-reset-btn" title="${esc(resetTitle)}">↺</button></span><div class="weight-example"></div>`;
+  row.innerHTML = `${labelHtml}<span class="weight-sentence"><span class="weight-words" data-part="before">${esc(words.before)}</span>${weightBox}<span class="weight-words" data-part="mid">${esc(words.mid)}</span>${perControlHtml(r)}<span class="weight-words" data-part="after">${esc(words.after)}</span>${multControlHtml(r)}${surchargeControlHtml(r)}<button type="button" class="weight-reset-btn" title="${esc(resetTitle)}" aria-label="${esc(`${r.label}: ${resetTitle}`)}">↺</button></span>${compact ? '' : '<div class="weight-example"></div>'}`;
   const input = row.querySelector('.weight-input');
   const perInput = row.querySelector('.weight-per');
   const multInput = row.querySelector('.weight-mult');
@@ -2573,7 +2578,7 @@ function buildWeightRow(g, r, appliedGroups) {
   const showExample = (scoring = shownScoring()) => {
     const now = weightSentence(g.key, r.id, scoring, r.label);
     for (const part of row.querySelectorAll('.weight-sentence > .weight-words')) part.textContent = now[part.dataset.part];
-    exampleEl.textContent = weightExample(g.key, r.id, scoring, r.label);
+    if (exampleEl) exampleEl.textContent = weightExample(g.key, r.id, scoring, r.label);
   };
   showExample();
   input.addEventListener('input', () => showExample(typedScoring()));
@@ -2603,26 +2608,28 @@ function buildWeightRow(g, r, appliedGroups) {
     markRow();
     showExample();
   };
+  row.weightSync = showStored;
+  const afterEdit = () => { showStored(); syncWeightTwins(row); };
   markRow();
   input.addEventListener('change', () => {
     const n = Number(input.value);
     if (!Number.isFinite(n)) return;
     applyWeightEdit(() => r.set(n));
-    showStored();
+    afterEdit();
   });
   perInput?.addEventListener('change', () => {
     const next = r.per.options ? perInput.value : Math.max(1, Math.round(Number(perInput.value)));
     if (!r.per.options && !Number.isFinite(next)) return;
     applyWeightEdit(() => r.per.set(next));
-    showStored();
+    afterEdit();
   });
   multInput?.addEventListener('change', () => {
     applyWeightEdit(() => r.mult.set(multInput.checked));
-    showStored();
+    afterEdit();
   });
   surchargeInput?.addEventListener('change', () => {
     applyWeightEdit(() => r.surcharge.set(surchargeInput.checked));
-    showStored();
+    afterEdit();
   });
   resetBtn.addEventListener('click', () => {
     const perChanged = perDiffers(r.per?.base) || multDiffers(r.mult?.base) || surchargeDiffers(r.surcharge?.base);
@@ -2637,10 +2644,84 @@ function buildWeightRow(g, r, appliedGroups) {
       if (baseNum !== undefined) r.set(baseNum);
       if (resetPer) r.per.set(r.per.base);
     });
-    showStored();
+    afterEdit();
   });
   if (info) row.insertAdjacentHTML('beforeend', infoLineHtml(info));
   return row;
+}
+
+// The weight row each effect op is scored by: its EFFECT_SCORE_KEYS weight, else an effects entry of its own name.
+function effectWeightKey(op) {
+  const weight = EFFECT_SCORE_KEYS[op]?.weight ?? (state.scoring.effects?.[op] ? op : null);
+  return weight ? `effects:${weight}` : null;
+}
+
+// The weight row a ScoreCard part is scored by, for one card (upgrade parts are named by the card's tags).
+const SCORE_PART_EFFECT_WEIGHTS = Object.freeze({ 'HP cost': 'loseHp', counter: 'counterStack', blockBreak: 'blockBreak' });
+function scorePartWeightKey(def, part) {
+  if (part === 'SP' || part === 'MP') return `costs:${part.toLowerCase()}`;
+  if (part.startsWith('category:')) return `categories:${part.slice('category:'.length)}`;
+  if (part === 'effect count') return 'rank:effectCount';
+  if (state.scoring.statuses?.[part]) return `statuses:${part}`;
+  const effect = SCORE_PART_EFFECT_WEIGHTS[part] || Object.values(EFFECT_SCORE_KEYS).find((keys) => keys.part === part)?.weight;
+  if (effect) return `effects:${effect}`;
+  if (state.scoring.keywords?.[part]) return `keywords:${part}`;
+  if (state.scoring.tags?.[part]) return `tags:${part}`;
+  const upgrade = (def.tags || []).map(ParseUpgradeTag).find((parsed, i) => parsed && UpgradeTagLabel(def.tags[i]) === part);
+  return upgrade ? `upgradeTags:${upgrade.family}` : null;
+}
+
+// The weights most edited for one card (owner, 2026-11-26): SP and MP cost, its card type, damage, then what
+// its own effects and statuses are multiplied by in effect order; fewer than four of those are topped up with
+// its largest other score parts.
+const CONTEXT_FEATURE_ROWS = 4;
+function cardWeightKeys(def) {
+  const head = ['costs:sp', 'costs:mp'];
+  const kind = cardKindOf(def);
+  if (CATEGORY_KEYS.includes(kind)) head.push(`categories:${kind}`);
+  const features = [];
+  const effects = def.effects || [];
+  if (effects.some((eff) => eff.op === 'damage')) features.push('effects:damage');
+  for (const eff of effects) {
+    const key = eff.op === 'applyStatus' ? `statuses:${eff.status}` : eff.op === 'gainBarrier' ? 'statuses:barrier' : effectWeightKey(eff.op);
+    if (key && !features.includes(key)) features.push(key);
+  }
+  if (features.length < CONTEXT_FEATURE_ROWS) {
+    const parts = Object.entries(scoreCardEntry(def).parts || {}).filter(([, value]) => value).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
+    for (const [part] of parts) {
+      if (features.length >= CONTEXT_FEATURE_ROWS) break;
+      const key = scorePartWeightKey(def, part);
+      if (key && !head.includes(key) && !features.includes(key)) features.push(key);
+    }
+  }
+  return [...head, ...features];
+}
+
+// The Weights view's rows beside the card: the same rows as the main list (staged, synced with their twins).
+function renderCardWeightFields(container, def) {
+  const { appliedGroups, groups } = weightGroupsShown();
+  for (const key of cardWeightKeys(def)) {
+    const split = key.indexOf(':');
+    const g = groups.find((group) => group.key === key.slice(0, split));
+    const r = g && weightEntryIn(groups, g.key, key.slice(split + 1));
+    if (r) container.append(buildWeightRow(g, r, appliedGroups, { compact: true }));
+  }
+  return container.children.length > 0;
+}
+
+// Fields beside the card in the Customize views other than Properties.
+function renderContextFields(view, container, cardId) {
+  const def = state.cards.find((card) => card.id === cardId);
+  if (!def) return false;
+  if (view === 'weights') return renderCardWeightFields(container, def);
+  return false;
+}
+
+// After an edit in one row, every other row for the same weight shows the stored value too.
+function syncWeightTwins(source) {
+  for (const row of document.querySelectorAll('.weight-row[data-weight-key]')) {
+    if (row !== source && row.dataset.weightKey === source.dataset.weightKey) row.weightSync?.();
+  }
 }
 
 // Score categories (ScoreCard's scoring.categories): Martial, Magic and each Card Type.
@@ -5079,6 +5160,7 @@ async function boot() {
     renameItem: () => { const input = document.getElementById('item-edit-name'); input?.focus(); input?.select(); },
     balanceItem: key => studioToolsUi.openBalanceItems([key]),
     views: { design: document.getElementById('tab-art'), weights: document.getElementById('tab-weights'), decks: () => deckListPanelUi?.element },
+    renderContextFields,
     onViewChange: view => { if (view === 'design') renderArtTab(); else if (view === 'weights') renderWeights(); else if (view === 'decks') deckListPanelUi?.refresh(); },
   });
   document.getElementById('btn-open-decks').addEventListener('click', () => { setCustomizationView('decks'); deckListPanelUi?.refresh(); });

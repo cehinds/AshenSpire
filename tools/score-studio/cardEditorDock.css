@@ -235,3 +235,13 @@ body.studio-body .customization-card-menu-button.s-btn:focus-visible { color: va
 
 /* Beside the fields the card is exactly as tall as they are, keeping its 2:3 shape. */
 body.studio-body .customization-preview-body[data-fit="fields"] .inspector-card-preview { width: max(60px, calc(var(--entity-card-h) * 2 / 3)); }
+
+/* Outside Properties: the view's most-used fields for this card, compact beside the card. */
+body.studio-body .customization-context-fields { display: flex; flex-direction: column; gap: 2px; min-width: 0; font-size: 12px; }
+body.studio-body .customization-context-fields[hidden] { display: none !important; }
+body.studio-body .customization-context-fields .weight-row.is-compact { flex-wrap: wrap; gap: 2px 4px; margin: 0; padding: 2px 4px; border-bottom: 0; border-radius: 4px; }
+body.studio-body .customization-context-fields .weight-row.is-compact > :first-child { flex: 1 1 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+body.studio-body .customization-context-fields .weight-row.is-compact .weight-sentence { gap: 2px 4px; font-size: 11px; color: var(--st-muted); }
+body.studio-body .customization-context-fields .weight-row.is-compact input.weight-input { width: 52px; padding: 1px 4px; }
+body.studio-body .customization-context-fields .weight-row.is-compact .weight-per-label input:not([type="checkbox"]) { width: 44px; padding: 1px 4px; }
+body.studio-body .customization-context-fields .weight-row.is-compact .weight-per-label select { width: 60px; padding: 1px 2px; }
