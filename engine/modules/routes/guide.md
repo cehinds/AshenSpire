@@ -58,7 +58,8 @@ Settings live in `engine/modules/routes/settings.schema.json`; shipped defaults 
 - `/minimumThreatFloor` (type integer; default `3`; range 1..101): Earliest depth eligible for elites or the final boss. Earlier branching depths draw only non-elite types; the final boss depth (`prebossNodes + 1`) must meet this minimum.
 - `/mapMode` (type enum; default `"fog"`; allowed "fog", "path"): Configured route visibility policy. It takes precedence over the viewer's legacy Map reveal setting; `"path"` explicitly draws the whole map. The Core preview route authors `"path"`, so the whole map is visible from the first screen (owner, 2026-10-18).
 - `/firstFloor` (type enum; default `null`; allowed "fight", "event", "treasure", "shop", "elite", null): Node type every lane on depth 1 is forced to, so a run can open on that activity instead of the ordinary draw. `null` leaves depth 1 to the draw. Must be one of the route's alternatives (never `rest` or `boss`); `elite` needs `minimumThreatFloor` of 1; depth 1 must not be in `restFloors`. A forced node is drawn as what it is even when `hideUnknownNodes` would show its type as `?`. Forcing depth 1 skips that depth's `map` stream draws, so every later depth of a seed draws differently from a route without it. The Core preview route authors `"fight"` (owner, 2026-10-18).
-- `/floorTypes` (type object or null; Core authors `{}`): Depth to room type, like `{ "4": "shop", "8": "elite" }`. Every node on that depth is that type, in every act (one table, not one per act). A pinned depth skips the type draw like `firstFloor`; a pinned elite or shop depth counts as the lane's guaranteed elite or the branch's guaranteed shop. The depth is a whole number from 1 to `prebossNodes` and never a depth a rest can land on (`restFloors`, widened by `restFloorSpread` when `restGap` is set; in Core that rules out 1, 5, 6, 7 and 11); depth 1 is refused while `firstFloor` is set. The type is one of the route's types, never `rest` or `boss`; an elite needs `minimumThreatFloor` or later. On a branched route the pins must leave every lane a floor for its elite: one depth from the full-lane depth (`prebossNodes - 3`, at least 3) or `minimumThreatFloor`, whichever is later, to each depth a lane can end on (`prebossNodes - 2` to `prebossNodes`) stays unpinned or is pinned to elite (in Core, depth 8 or 9). With `shopsPerBranch`, they must likewise leave each branch a depth 4 to 8 for its shop, or pin a shop; when the elites can use the same depths, two must stay free. A rest that can move leaves the rest of its window free, so in Core the middle rest's window (5 to 7) always holds two free depths. `{}` or `null` pins nothing and draws every map exactly as before (owner, 2026-11-27).
+- `/floorTypes` (object or null; Core authors `{}`): pins a floor's room type. See [Pinning a floor's room type](#pinning-a-floors-room-type).
+- `/routeShape` (object): branch-shape numbers the map and the `floorTypes` checks share. See [Branch shape numbers](#branch-shape-numbers).
 
 The exact provenance is recorded in `games/ashenspire/bundles/core/bundle.json`: module defaults are the base, selected bundle settings and `policyBindings` apply next, and the author object applies last. Arrays replace the inherited array. If a field has no bundle binding, its module default is inherited unchanged. `false` disables; `true` selects inherited defaults; null has no removal meaning. Unknown keys and invalid values fail validation.
 
@@ -93,3 +94,45 @@ The core route keeps the opening fight, a rest at depth 3, and the final rest at
 boss predecessor is a shrine. The resolver refuses incompatible overrides
 before starting the run; the map generator checks the same invariant.
 Older snapshots without this field keep their authored route policy.
+
+## Pinning a floor's room type
+
+`floorTypes` maps a floor (depth) to a room type. Every node on that floor is that type, in every act.
+
+```json
+"floorTypes": {
+  "4": "shop",
+  "8": "elite"
+}
+```
+
+- `{}` or `null` pins nothing, and maps draw exactly as before.
+- A pinned floor skips the room draw, like `firstFloor`.
+- A pinned elite floor counts as each lane's guaranteed elite.
+- A pinned shop floor counts as each branch's guaranteed shop.
+- One table covers every act.
+
+### Refused when
+
+- The floor is not a whole number from 1 to `prebossNodes`.
+- The type is not in the route's `visibleTypes` or `hiddenTypes`.
+- The type is one the map places itself (`routeShape.placedTypes`: rest, boss).
+- A rest can land on the floor (`restFloors`, widened by `restFloorSpread`).
+- It is an elite before `minimumThreatFloor`.
+- It is floor 1 while `firstFloor` is set.
+- It leaves a lane no free floor for its elite.
+- It leaves a branch no free floor for its shop (with `shopsPerBranch`).
+- It leaves a branch's shop only floors its elites can take.
+
+The error names the floors to keep free. A moving rest lands on one floor of its window, so the other floors there always count as free.
+
+## Branch shape numbers
+
+`routeShape` holds the numbers the branched map uses. The defaults keep today's maps.
+
+- `placedTypes`: types the map places itself. Fixed.
+- `firstBranchDepth`: first floor of each branch's own lanes. Fixed at 2; floor 1 is the shared start.
+- `earliestFullDepth`: earliest floor by which every lane is open.
+- `fullDepthsBeforeBoss`: every lane is open this many floors before the boss, or at `earliestFullDepth` if later.
+- `narrowDepthsBeforeBoss`: a wide branch may close one lane this close to the boss.
+- `guaranteedShopDepths`: `first` and `last` floor of each branch's guaranteed shop.
