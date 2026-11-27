@@ -3,7 +3,7 @@
 <!-- feature-preview:start -->
 ## Feature preview — Score Studio persistent workspace
 
-[Download the feature game build](https://github.com/cehinds/AshenSpire/actions/runs/45923237379/artifacts/15165776165) (Score Studio itself runs locally: `npm run studio`).
+[Play this feature build](https://cehinds.github.io/AshenSpire/branches/feature/ScoreStudioPersistentWorkspace/latest/) (Score Studio itself runs locally: `npm run studio`).
 
 The card library, the selected card's preview and its editor now stay together in one pane (SS-001, PR #3008).
 
