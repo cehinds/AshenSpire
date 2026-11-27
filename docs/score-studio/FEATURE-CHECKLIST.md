@@ -8,7 +8,7 @@ All unchecked items are requested/planned scope, not implementation claims. See 
 ## First delivery tool features
 
 - [ ] Connect the existing library, native preview and inspector in one usable workspace (SS-001).
-- [ ] Keep the selected entity and immediate working context coordinated between supported surfaces.
+- [ ] Keep the selected entity and immediate working context coordinated between supported surfaces ([SS-002](stories/SS-002-shared-working-context.md)).
 - [ ] Expose separate Camp, School, Tradition and Stance controls.
 - [ ] Create, duplicate and edit supported cards with clear validation and derived values.
 - [ ] Add gallery/table views, explicit sorting/filtering and stable-ID selection.
@@ -16,8 +16,8 @@ All unchecked items are requested/planned scope, not implementation claims. See 
 - [ ] Build a two-pane deck/starter editor with quantities and validated assignment.
 - [ ] Add group drag/drop, Copy/Move, manual ordering and distinct removal/Trash.
 - [ ] Unify honest generation results and scoped repeatable rebalance.
-- [ ] Expose naming rules, independent tool/section presets and consistent state memory.
-- [ ] Make source scope, Draft/Applied/Saved/Loaded state, Undo and import/export explicit.
+- [ ] Expose naming rules, independent tool/section presets and consistent state memory (card templates: [SS-004](stories/SS-004-card-templates.md)).
+- [ ] Make source scope, Draft/Applied/Saved/Loaded state, Undo and import/export explicit (Save tier: [SS-003](stories/SS-003-studio-save.md)).
 - [ ] Connect the actual local-game configuration and normal/scenario launch paths.
 - [ ] Add supported feature/mechanic authoring with reversible registry migration.
 - [ ] Reuse native card/HUD/effects tools, then add validated motion/sprite adapters.
@@ -186,8 +186,8 @@ REQ numbers preserve the original 180-item reference. Package mappings are plann
 - [ ] REQ-123 Consistent Cancel semantics. (W09, W12, W23)
 - [ ] REQ-124 Close/reload persistence. (W03, W05, W12)
 - [ ] REQ-125 Dirty-preset indicator and active-preset name. (W12)
-- [ ] REQ-126 Draft/Applied/Saved/Loaded-in-game states. (W01, W02, W07, W09)
-- [ ] REQ-127 Exact Save/Import/Export scope and destination. (W01, W02, W09, W20)
+- [ ] REQ-126 Draft/Applied/Saved/Loaded-in-game states. (W01, W02, W07, W09) First slice: [SS-003](stories/SS-003-studio-save.md).
+- [ ] REQ-127 Exact Save/Import/Export scope and destination. (W01, W02, W09, W20) First slice: [SS-003](stories/SS-003-studio-save.md).
 
 ### Local testing
 

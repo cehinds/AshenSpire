@@ -76,12 +76,15 @@ export function combatProfileFor(carrier = {}) {
   if (typeof carrier === 'string') carrier = { id: carrier };
   const enemyId = carrier.enemyId || carrier.enemyDefinitionId;
   const id = carrier.moveId || carrier.cardId || carrier.id || carrier.abilityFamily || '';
-  const authored = objectTagIds(enemyId ? 'enemyMove' : 'card', id, enemyId || '');
+  // Resolved tags need no junction lookup. Keep its existing coercion/error
+  // order for malformed keys before reading any caller-provided tag getters.
+  const plainKey = typeof id === 'string' && (!enemyId || typeof enemyId === 'string');
+  const authored = plainKey ? undefined : objectTagIds(enemyId ? 'enemyMove' : 'card', id, enemyId || '');
   // Resolved registries and equipment projections remain authoritative,
   // including an explicitly empty tag list in a custom content bundle.
   // Equipment projections retain the base definition's tags alongside their
   // replacement cardTags. The replacement is the resolved action identity.
-  const tags = carrier.cardTags ?? carrier.tags ?? authored;
+  const tags = carrier.cardTags ?? carrier.tags ?? authored ?? objectTagIds(enemyId ? 'enemyMove' : 'card', id, enemyId || '');
   const camp = identity(tags, 'camp:', CAMP, id);
   const maneuver = identity(tags, 'maneuver:', MANEUVER, id);
   const school = identity(tags, 'school:', SCHOOL, id);
