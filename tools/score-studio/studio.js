@@ -2259,7 +2259,8 @@ function renderWeights({ shifts = true } = {}) {
       { id: 'unrankedMax', label: 'Unranked Max CP', val: state.scoring.rank.unrankedMax, base: R.rank?.unrankedMax, set: (n) => { state.scoring.rank.unrankedMax = n; } },
       { id: 'width', label: 'Band Width', val: state.scoring.rank.width, base: R.rank?.width, set: (n) => { state.scoring.rank.width = Math.max(1, n); } },
       { id: 'maxRank', label: 'Max Rank', val: state.scoring.rank.maxRank, base: R.rank?.maxRank, set: (n) => { state.scoring.rank.maxRank = Math.max(1, Math.round(n)); } },
-      { id: 'effectCount', label: 'Multi-Effect Bonus', val: state.scoring.effectCount?.weight ?? 5, base: R.effectCount?.weight ?? 5, set: (n) => { (state.scoring.effectCount ||= {}).weight = n; }, surcharge: { value: state.scoring.effectCount?.surchargeEnabled !== false, base: R.effectCount?.surchargeEnabled !== false, set: (on) => { (state.scoring.effectCount ||= {}).surchargeEnabled = Boolean(on); } } },
+      { id: 'effectCount', label: 'Multi-Effect Bonus', val: state.scoring.effectCount?.weight ?? 5, base: R.effectCount?.weight ?? 5, step: state.scoring.effectCount?.multiplier === true ? 0.05 : 1, set: (n) => { (state.scoring.effectCount ||= {}).weight = n; },
+        mult: { value: state.scoring.effectCount?.multiplier === true, base: R.effectCount?.multiplier === true, set: (on) => { SetWeightForm(state.scoring.effectCount ||= {}, R.effectCount, on); } }, surcharge: { value: state.scoring.effectCount?.surchargeEnabled !== false, base: R.effectCount?.surchargeEnabled !== false, set: (on) => { (state.scoring.effectCount ||= {}).surchargeEnabled = Boolean(on); } } },
     ] },
     { key: 'categories', title: 'Categories', entries: CATEGORY_KEYS.map((k) => {
       const v = categoryWeight(state.scoring, k);
@@ -2426,7 +2427,8 @@ function renderWeights({ shifts = true } = {}) {
         const now = weightSentence(g.key, r.id, scoring, r.label);
         for (const part of row.querySelectorAll('.weight-sentence > .weight-words')) part.textContent = now[part.dataset.part];
         // Only a multiplier-form cost, effect or status reads the selected card's positive score.
-        const card = WEIGHT_FORM_GROUPS.has(g.key) && scoring[g.key]?.[r.id]?.multiplier === true ? exampleCard(scoring) : null;
+        const multForm = WEIGHT_FORM_GROUPS.has(g.key) ? scoring[g.key]?.[r.id]?.multiplier === true : (g.key === 'rank' && r.id === 'effectCount' && scoring.effectCount?.multiplier === true);
+        const card = multForm ? exampleCard(scoring) : null;
         exampleEl.textContent = weightExample(g.key, r.id, scoring, r.label, card);
       };
       showExample();

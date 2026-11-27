@@ -98,7 +98,7 @@ export function weightSentence(groupKey, id, scoring, label)
     case 'rarity':
       return { before: '', mid: `pts off a ${id} card`, after: '' };
     case 'rank':
-      return rankSentence(id);
+      return rankSentence(id, scoring);
     case 'categories':
       return scoring.categories?.[id]?.multiplier
         ? { before: '×', mid: 'positive score', after: '' }
@@ -141,14 +141,14 @@ function upgradeTagSentence(id, scoring)
   return { before: 'starts at', mid: 'pts (doubles per stack)', after: '' };
 }
 
-function rankSentence(id)
+function rankSentence(id, scoring)
 {
   switch (id)
   {
     case 'unrankedMax': return { before: 'Unranked up to', mid: 'CP', after: '' };
     case 'width': return { before: 'Each rank spans', mid: 'CP', after: '' };
     case 'maxRank': return { before: 'Highest rank', mid: '', after: '' };
-    case 'effectCount': return { before: '', mid: 'pts per extra effect', after: '' };
+    case 'effectCount': return { before: '', mid: `${scoring?.effectCount?.multiplier === true ? '× P' : 'pts'} per extra effect`, after: '' };
     default: return { before: '', mid: '', after: '' };
   }
 }
@@ -193,7 +193,7 @@ export function weightExample(groupKey, id, scoring, label, card = null)
     case 'rarity':
       return rarityExample(id, scoring);
     case 'rank':
-      return rankExample(id, scoring);
+      return rankExample(id, scoring, example);
     case 'categories':
       return categoryExample(id, scoring, label);
     case 'tags':
@@ -337,7 +337,7 @@ function rarityExample(id, scoring)
   return `Score ${EXAMPLE_RAW_SCORE} = CP ${num(cp)} = ${RankName(RankOf(cp, scoring))}`;
 }
 
-function rankExample(id, scoring)
+function rankExample(id, scoring, example)
 {
   const rank = scoring.rank || {};
   switch (id)
@@ -355,7 +355,9 @@ function rankExample(id, scoring)
     {
       if (scoring.effectCount?.surchargeEnabled === false) return 'Surcharge disabled (0 pts)';
       const extra = Math.max(0, EXAMPLE_EFFECTS - (scoring.effectCount?.skipFirst ? 1 : 0));
-      return `${EXAMPLE_EFFECTS} effects = ${pts((Number(scoring.effectCount?.weight) || 0) * extra)}`;
+      const weight = Number(scoring.effectCount?.weight) || 0;
+      if (scoring.effectCount?.multiplier === true) return `${positiveLead(example)}: ${EXAMPLE_EFFECTS} effects = ${pts(example.positive * weight * extra)}`;
+      return `${EXAMPLE_EFFECTS} effects = ${pts(weight * extra)}`;
     }
     default:
       return '';

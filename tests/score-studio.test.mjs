@@ -309,6 +309,14 @@ test('weights tab: cost, effect and status rows switch to the multiplier form an
   assert.equal(weightExample('costs', 'sp', merged, 'SP'), 'Positive score 20: 2 SP = -4 pts');
   assert.equal(weightExample('costs', 'sp', merged, 'SP', { name: 'Strike', positive: 14 }), 'Strike (positive score 14): 2 SP = -2.8 pts');
   assert.equal(weightSentence('costs', 'mp', merged).mid, 'pts per MP', 'a flat row keeps its words');
+  // The multi-effect bonus switches the same way.
+  const counted = structuredClone(applied);
+  SetWeightForm(counted.effectCount, repo.effectCount, true);
+  counted.effectCount.weight = 0.1;
+  assert.equal(weightSentence('rank', 'effectCount', counted).mid, '× P per extra effect');
+  assert.equal(weightExample('rank', 'effectCount', counted, 'Multi-Effect Bonus', { name: 'Strike', positive: 10 }), 'Strike (positive score 10): 3 effects = 2 pts');
+  SetWeightForm(counted.effectCount, repo.effectCount, false);
+  assert.deepEqual(counted, applied);
   // Switching back restores the repo's flat weight and drops the flag, so nothing is left staged.
   SetWeightForm(pending.costs.sp, repo.costs.sp, false);
   SetWeightForm(pending.effects.block, repo.effects.block, false);
