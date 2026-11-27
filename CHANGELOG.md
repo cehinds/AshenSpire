@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-27
 
+- **Behind the scenes: mana-only mechanic notes refreshed** ([#3031](https://github.com/cehinds/AshenSpire/pull/3031), `0.7.5.163`). Generated mechanic notes now name the spell cost rules as the mana-only reader. Nothing you play changes.
 - **Card limits and drawback cost** ([#3030](https://github.com/cehinds/AshenSpire/pull/3030), `0.7.5.163`). Card effect and drawback caps are set in actionCosts.json; none means no limit. Drawbacks can cost Combat Power, flat or as a multiplier, off by default.
 - **Steadier timing checks and a lighter Blacksmith picker** ([#3016](https://github.com/cehinds/AshenSpire/pull/3016), `0.7.5.163`). Timing checks skip a one-time test-machine disk wait. The Blacksmith opens faster, and card upgrade rules now live in config.
 
