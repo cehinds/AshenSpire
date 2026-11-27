@@ -2,10 +2,37 @@
 // each on a free depth. Elites are placed first and a shop never takes an elite's slot. Each
 // promise is a requirement: it holds when a pin covers it or one of its spans has enough free
 // depths. Pins are refused only when they break a requirement that held without them.
-import { BranchFullDepth, LaneLastDepths, PinnableDepths, SureFreeCount } from './routeDepths.js';
-import { ELITE_ROOM, SHOP_ROOM, HasPinnedRoom } from './routeFloorPins.js';
+import {
+  BranchFullDepth,
+  LaneLastDepths,
+  PinnableDepths,
+  SureFreeCount,
+} from './routeDepths.js';
+import {
+  ELITE_ROOM,
+  SHOP_ROOM,
+  HasPinnedRoom,
+} from './routeFloorPins.js';
 
 const NO_PINS = new Map();
+
+// A span of depths that must hold `needed` free floors.
+function freeSpan(first, last, needed) {
+  return {
+    first,
+    last,
+    needed,
+  };
+}
+
+// A pinned `room` from first to last that keeps a promise on its own.
+function pinCover(room, first, last) {
+  return {
+    room,
+    first,
+    last,
+  };
+}
 
 function laneEliteRequirements(routes, shape) {
   const fullDepth = BranchFullDepth(routes.prebossNodes, shape);
@@ -15,8 +42,8 @@ function laneEliteRequirements(routes, shape) {
     group: ELITE_ROOM,
     subject: 'a lane no free floor for its elite',
     fix: 'an elite',
-    spans: [{ first, last, needed: 1 }],
-    coveredBy: [{ room: ELITE_ROOM, first: fullDepth, last }],
+    spans: [freeSpan(first, last, 1)],
+    coveredBy: [pinCover(ELITE_ROOM, fullDepth, last)],
   }));
 }
 
@@ -31,8 +58,8 @@ function branchShopRequirement(routes, shape) {
     group: SHOP_ROOM,
     subject: 'a branch no free floor for its shop',
     fix: 'a shop',
-    spans: [{ ...shop, needed: 1 }],
-    coveredBy: [{ room: SHOP_ROOM, first: shape.firstBranchDepth, last: routes.prebossNodes }],
+    spans: [freeSpan(shop.first, shop.last, 1)],
+    coveredBy: [pinCover(SHOP_ROOM, shape.firstBranchDepth, routes.prebossNodes)],
   };
 }
 
@@ -48,12 +75,12 @@ function sharedSlotRequirement(routes, shape) {
     subject: "a branch's shop only floors its elites can take",
     fix: 'a shop',
     spans: [
-      { first: shop.first, last: Math.min(shop.last, openLast), needed: 2 },
-      { first: shop.first, last: earliestElite - 1, needed: 1 },
+      freeSpan(shop.first, Math.min(shop.last, openLast), 2),
+      freeSpan(shop.first, earliestElite - 1, 1),
     ],
     coveredBy: [
-      { room: SHOP_ROOM, first: shape.firstBranchDepth, last: routes.prebossNodes },
-      { room: ELITE_ROOM, first: eliteFirst, last: openLast },
+      pinCover(SHOP_ROOM, shape.firstBranchDepth, routes.prebossNodes),
+      pinCover(ELITE_ROOM, eliteFirst, openLast),
     ],
   };
 }

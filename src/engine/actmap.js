@@ -29,7 +29,11 @@ import { MAP_SHAPE_LIMITS, LEGACY_ACT_BOSSES } from '../content/mapconfig.js';
 import { defaultSeatOrder, encounterFitsSeat, finalTier } from '../model/seats.js';
 import { bossDestinationLabel } from '../model/bossDestinationLabels.js';
 import { RouteFloorTypeProblems } from '../../engine/kernel/routeFloorTypes.js';
-import { PinnedFloorTypes, ELITE_ROOM, SHOP_ROOM } from '../../engine/kernel/routeFloorPins.js';
+import {
+  PinnedFloorTypes,
+  ELITE_ROOM,
+  SHOP_ROOM,
+} from '../../engine/kernel/routeFloorPins.js';
 import { BranchFullDepth } from '../../engine/kernel/routeDepths.js';
 import { RouteShapeOf } from '../model/routeShape.js';
 

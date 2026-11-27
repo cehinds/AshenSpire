@@ -25,7 +25,7 @@ const preRegistryRuntime = 'sha256:777939d6ee4065a02491fcd7ff21fc2d9f44271a0d7f1
 const registryRuntime = 'sha256:c77d4f30494cb821fc66b9b9ef19b91fbb2c699633fe0137b72ab89d261ec831';
 const preScalingRuntime = 'sha256:eff6f5c38dcdba3c78d012bf55c8baf6fe703f664bc3f3416244b15d1fa07216';
 // Re-pinned 2026-11-27: routes.floorTypes moves the kernel; 659730... is now in PREVIOUS_RUNTIMES.
-const catalogRuntime = 'sha256:b4a0c8259097d523be5e5cb251a47e65b24902c625d3f3d911c00f3322a268ed';
+const catalogRuntime = 'sha256:253cf6400fee87eae5910ce88c6bbf8de82906dbb0b2345fd54503062a4eeaa6';
 const preRegistrySave = () => gunzipSync(readFileSync(new URL('./fixtures/pre-registry-dev-7dff4b03-save.json.gz', import.meta.url))).toString('utf8');
 
 test('the real Dev 7dff4b03 save resumes its active fight without changing the old profile or policy', () => {

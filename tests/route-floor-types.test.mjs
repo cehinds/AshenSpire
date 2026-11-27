@@ -19,7 +19,11 @@ import {
   PinnableDepths,
   BranchFullDepth,
 } from '../engine/kernel/routeDepths.js';
-import { RouteRoomTypes, ELITE_ROOM, SHOP_ROOM } from '../engine/kernel/routeFloorPins.js';
+import {
+  RouteRoomTypes,
+  ELITE_ROOM,
+  SHOP_ROOM,
+} from '../engine/kernel/routeFloorPins.js';
 
 const SEEDS = [
   1,
@@ -34,11 +38,19 @@ const LANE_ID = /^n(\d+)_(\d+)$/;
 
 function SetupCore(routes = {})
 {
-  const author = { formatVersion: 1, core: 'ashen.core@2.0.0', modules: { routes } };
+  const author = {
+    formatVersion: 1,
+    core: 'ashen.core@2.0.0',
+    modules: { routes },
+  };
   const profile = resolveGameProfile(author);
   const content = applyGameProfileToContent(contentBundle, profile);
   const registries = bindGameProfileRegistries(createRegistries(content), profile);
-  const run = createRunState({ seed: 73, classId: 'reaver', registries });
+  const run = createRunState({
+    seed: 73,
+    classId: 'reaver',
+    registries,
+  });
   return { registries, run };
 }
 
@@ -219,7 +231,11 @@ test('every branch keeps its shop when pins leave it two free floors', () =>
 {
   const config = FixedRestConfig();
   const floorTypes = PinAll(config.shopSpan.slice(0, -2), config.plain);
-  const routes = { restFloorSpread: 0, ...NoRandomShops(config), floorTypes };
+  const routes = {
+    restFloorSpread: 0,
+    ...NoRandomShops(config),
+    floorTypes,
+  };
   EachMap(SetupCore(routes), config.acts, (map, label) =>
   {
     const shops = BranchesWith(map, SHOP_ROOM);
@@ -245,7 +261,13 @@ test('pins that leave a branch no shop floor, alone or beside its elites, are re
 
 function InvalidTables(config)
 {
-  const { count, plain, types, settings, restDepths } = config;
+  const {
+    count,
+    plain,
+    types,
+    settings,
+    restDepths,
+  } = config;
   const restDepth = [...restDepths].find(depth => depth > 1 && depth < count);
   const unknown = `${types.all.join('')}x`;
   const earlyDepth = config.branchDepths.find(depth => depth < settings.minimumThreatFloor);

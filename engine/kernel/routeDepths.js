@@ -38,7 +38,11 @@ export function RestSpans(routes, shape) {
       previous.rests += 1;
       continue;
     }
-    spans.push({ first, last, rests: 1 });
+    spans.push({
+      first,
+      last,
+      rests: 1,
+    });
   }
   return spans;
 }
