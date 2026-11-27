@@ -3334,10 +3334,13 @@ function applyArtLayerInput(control, layer, isItems) {
 
 // The Design view's rows beside the card: each card art layer that applies to it, with Show and Opacity bound to
 // the layer (the same edit path as the Art layers list) and Edit to find it in that list.
-let keepArtContextRows = false;
+let artContextHold = false;
 function renderCardArtFields(container, def) {
-  // An edit from these rows re-renders the inspector; the row being dragged is kept, not rebuilt under the pointer.
-  if (keepArtContextRows && container.firstChild) return true;
+  // While a row's control is in use (focused, or a pointer is down on it) the rows are kept, so an edit's
+  // queued gallery refresh never rebuilds the slider under the pointer or takes keyboard focus away.
+  const inUse = container.contains(document.activeElement) && document.activeElement.matches('input');
+  if (container.firstChild && container.dataset.cardId === def.id && (artContextHold || inUse)) return true;
+  container.dataset.cardId = def.id;
   const allLayers = state.artLayers.layers || [];
   const layers = matchingCustomLayers(def, { includeDisabled: true });
   const list = document.createElement('div');
@@ -3366,10 +3369,13 @@ function renderCardArtFields(container, def) {
     const layer = allLayers[idx];
     if (!layer) return;
     if (!historyPushed) { pushHistory(); historyPushed = true; }
-    keepArtContextRows = true;
-    try { applyArtLayerInput(e.target, layer, false); } finally { keepArtContextRows = false; }
+    applyArtLayerInput(e.target, layer, false);
     e.target.closest('.art-context-row')?.classList.toggle('is-off', layer.enabled === false);
     mirrorArtListControls(idx, layer);
+  });
+  list.addEventListener('pointerdown', () => {
+    artContextHold = true;
+    window.addEventListener('pointerup', () => { artContextHold = false; }, { once: true });
   });
   list.addEventListener('change', () => { historyPushed = false; renderCardsGrid(); });
   list.addEventListener('click', (e) => {
