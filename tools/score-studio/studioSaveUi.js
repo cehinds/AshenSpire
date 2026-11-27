@@ -25,6 +25,11 @@ export const StudioSaveMenuLabel = Object.freeze({
 const draftStatusId = 'draft-status';
 const dirtyClass = 'is-dirty';
 const loadingClass = 'is-loading';
+const pillTextClass = Object.freeze({
+  long: 'pill-long',
+  short: 'pill-short',
+});
+const spanTag = 'span';
 const failedPillMs = 2500;
 const draftCarriedFiles = Object.freeze([
   StudioSaveFileNames.Cards,
@@ -66,12 +71,29 @@ function arrayOrEmpty(value)
     : [];
 }
 
+function renderPillText(className, text)
+{
+  const span = document.createElement(spanTag);
+  span.className = className;
+  span.textContent = text;
+  return span;
+}
+
+// A description with shortText gets both texts; the CSS shows the short one on narrow screens.
 function paintPill(pill, description)
 {
   pill.classList.remove(loadingClass);
   pill.classList.toggle(dirtyClass, description.dirty);
-  pill.textContent = description.text;
   pill.title = description.title;
+  if (!description.shortText)
+  {
+    pill.textContent = description.text;
+    return;
+  }
+  pill.replaceChildren(
+    renderPillText(pillTextClass.long, description.text),
+    renderPillText(pillTextClass.short, description.shortText),
+  );
 }
 
 // Blurring and refocusing the field commits its value and ends its edit burst.

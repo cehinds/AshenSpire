@@ -130,6 +130,7 @@ body.studio-body .studio-pill {
   min-width: 0;
 }
 body.studio-body .studio-pill.is-dirty { border-color: var(--st-warn); color: var(--st-warn); }
+body.studio-body .studio-pill .pill-short { display: none; }
 
 body.studio-body .studio-tabs { grid-area: tabs; display: flex; justify-content: center; gap: var(--studio-gap-1); min-width: 0; }
 body.studio-body .studio-tab {
@@ -1539,6 +1540,18 @@ body.studio-body .studio-card-tile.is-art-loading .studio-card-stage {
   body.studio-body .studio-loading-progress {
     max-width: none;
   }
+}
+/* Phones: the menus keep their width, and the Save pill takes its short text and wraps
+   above the title when both do not fit on one line. */
+@media (max-width: 600px) {
+  body.studio-body .studio-topbar { grid-template-columns: auto minmax(0, 1fr); }
+  body.studio-body .studio-brand {
+    flex-wrap: wrap;
+    row-gap: 0;
+  }
+  body.studio-body .studio-brand .studio-pill { max-width: 100%; }
+  body.studio-body .studio-pill .pill-long { display: none; }
+  body.studio-body .studio-pill .pill-short { display: inline; }
 }
 @media (prefers-reduced-motion: reduce) {
   body.studio-body .studio-loading-spinner,

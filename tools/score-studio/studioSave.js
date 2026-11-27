@@ -38,6 +38,7 @@ export const StudioSavePillText = Object.freeze({
   Saving: 'Saving…',
   Failed: 'Save failed',
   Web: 'Web mode · Download',
+  WebShort: 'Web · Download',
 });
 
 const draftTitle = 'Studio edits are in the local draft only. File > Save (Ctrl+S) writes:';
@@ -275,7 +276,8 @@ class StudioSaveController
       : StudioSaveStatus.None;
   }
 
-  /** The pill's text and title for the Save scope, or null when there is no file and no edit. */
+  // The pill's text, optional narrow-screen shortText and title for the Save scope,
+  // or null when there is no file and no edit.
   describe()
   {
     const describers = {
@@ -350,6 +352,7 @@ class StudioSaveController
   {
     return {
       text: StudioSavePillText.Web,
+      shortText: StudioSavePillText.WebShort,
       title: webTitle,
       dirty: this.#changedFiles().length > 0,
     };

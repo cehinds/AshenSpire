@@ -8,6 +8,7 @@ import {
   CreateStudioSave,
   RegisterStudioSaveFile,
   StudioSaveChoice,
+  StudioSavePillText,
   StudioSaveResult,
   StudioSaveStatus,
 } from '../tools/score-studio/studioSave.js';
@@ -357,6 +358,11 @@ test('studio save: web mode downloads one file with both sections and sends no r
   studio.cards = [qaCard];
   assert.equal(controller.status(), StudioSaveStatus.Web);
   assert.match(controller.describe().text, /Web mode/);
+  assert.equal(
+    controller.describe().shortText,
+    StudioSavePillText.WebShort,
+    'narrow screens get a short web-mode label',
+  );
   assert.equal((await controller.save()).result, StudioSaveResult.Downloaded);
   assert.equal(requests.length, 0);
   assert.equal(downloads.length, 1);
