@@ -16,9 +16,18 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { request } from 'node:http';
 import { fileURLToPath } from 'node:url';
-import { buildToolFor, buildToolsFor, reloadLabel } from '../tools/serve.mjs';
+import { buildToolFor, buildToolsFor, reloadLabel, STUDIO_SAVE_DIR } from '../tools/serve.mjs';
 
 const SERVE = fileURLToPath(new URL('../tools/serve.mjs', import.meta.url));
+const STUDIO_SAVE_FILE_NAMES = [
+  'cards.json',
+  'artLayers.json',
+  'templates.json',
+];
+const CONTENT_BUILD_TOOL = 'content-build.mjs';
+const BUILD_LOG_LINE = 'content-build';
+const QUIET_WINDOW_MS = 800;
+const RELOAD_WAIT_MS = 3000;
 const INDEX = '<!doctype html>\n<html><head><meta charset="utf-8"><title>t</title></head>\n<body><p>hello</p></body></html>\n';
 const cleanups = [];
 after(() => { for (const fn of cleanups.reverse()) { try { fn(); } catch { /* already gone */ } } });
@@ -278,34 +287,44 @@ test('--watch: an edit saved while a build runs is not dropped (error, then relo
   child.kill();
 });
 
-test('Score Studio Save files under content/source/studio/ owe no build', () => {
-  for (const rel of ['content/source/studio', 'content/source/studio/cards.json', 'content/source/studio/artLayers.json', 'content/source/studio/templates.json']) {
-    assert.equal(buildToolFor(rel), null, rel);
-    assert.deepEqual(buildToolsFor(rel), [], rel);
+test('Score Studio Save files under content/source/studio/ owe no build', () =>
+{
+  const studioPaths = [
+    STUDIO_SAVE_DIR,
+    ...STUDIO_SAVE_FILE_NAMES.map((fileName) => `${STUDIO_SAVE_DIR}/${fileName}`),
+  ];
+  for (const studioPath of studioPaths)
+  {
+    assert.equal(buildToolFor(studioPath), null, studioPath);
+    assert.deepEqual(buildToolsFor(studioPath), [], studioPath);
   }
-  assert.equal(buildToolFor('content/source/studioDecks.json'), 'content-build.mjs', 'a sibling name is still game source');
-  assert.equal(buildToolFor('content/source/studio-backup/x.json'), 'content-build.mjs', 'only the exact folder is excluded');
+  assert.equal(buildToolFor('content/source/studioDecks.json'), CONTENT_BUILD_TOOL, 'a sibling name is still game source');
+  assert.equal(buildToolFor(`${STUDIO_SAVE_DIR}-backup/notes.json`), CONTENT_BUILD_TOOL, 'only the exact folder is excluded');
 });
 
-test('--watch: a Studio Save under content/source/studio/ runs no build and sends no reload', async () => {
+test('--watch: a Studio Save under content/source/studio/ runs no build and sends no reload', async () =>
+{
   const root = makeTree();
-  const log = join(root, 'build.log');
-  writeFileSync(join(root, 'tools', 'content-build.mjs'),
+  const buildLogPath = join(root, 'build.log');
+  const studioDir = join(root, ...STUDIO_SAVE_DIR.split('/'));
+  const gameSourceFile = 'content/source/cards.json';
+  writeFileSync(join(root, 'tools', CONTENT_BUILD_TOOL),
     "import { appendFileSync } from 'node:fs';\n" +
-    `appendFileSync(${JSON.stringify(log)}, 'content-build\\n');\n`);
+    `appendFileSync(${JSON.stringify(buildLogPath)}, '${BUILD_LOG_LINE}\\n');\n`);
   const { port, child } = await start(root, ['--watch']);
   const stream = await events(port);
-  mkdirSync(join(root, 'content', 'source', 'studio'));
-  writeFileSync(join(root, 'content', 'source', 'studio', 'cards.json'), '{}\n');
-  writeFileSync(join(root, 'content', 'source', 'studio', 'artLayers.json'), '{}\n');
-  await new Promise((r) => setTimeout(r, 800));
+  mkdirSync(studioDir);
+  for (const fileName of STUDIO_SAVE_FILE_NAMES)
+  {
+    writeFileSync(join(studioDir, fileName), '{}\n');
+  }
+  await new Promise((resume) => setTimeout(resume, QUIET_WINDOW_MS));
   assert.ok(!stream.seen.length, `no event for a Studio Save (got ${JSON.stringify(stream.seen)})`);
-  assert.ok(!existsSync(log), 'content-build did not run');
-  // A real content/source edit still builds and reloads.
-  const reload = stream.next('reload', 3000);
-  writeFileSync(join(root, 'content', 'source', 'cards.json'), '{}\n');
-  assert.equal(await reload, 'content/source/cards.json');
-  assert.equal(readFileSync(log, 'utf8'), 'content-build\n');
+  assert.ok(!existsSync(buildLogPath), 'content-build did not run');
+  const reload = stream.next('reload', RELOAD_WAIT_MS);
+  writeFileSync(join(root, ...gameSourceFile.split('/')), '{}\n');
+  assert.equal(await reload, gameSourceFile);
+  assert.equal(readFileSync(buildLogPath, 'utf8'), `${BUILD_LOG_LINE}\n`);
   stream.close();
   child.kill();
 });
