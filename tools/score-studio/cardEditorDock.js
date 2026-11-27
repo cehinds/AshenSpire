@@ -7,6 +7,8 @@ const VIEWS = ['properties', 'design', 'weights', 'decks'];
 // What an edit in each view reaches: the selected card only, shared art rules,
 // global scoring or one deck's membership.
 // What the column beside the card holds outside Properties.
+// Below this the fields are too short to size the card by.
+const MIN_FIT_HEIGHT = 120;
 const CONTEXT_LABELS = { design: 'Art layers on this card', weights: 'Weights for this card', decks: 'Decks with this card' };
 const VIEW_SCOPES = { properties: 'card', design: 'shared', weights: 'global', decks: 'deck' };
 const SCOPE_TEXT = {
@@ -90,7 +92,8 @@ export function initCardEditorDock(ctx) {
   function fitCardToFields() {
     const fields = previewBody.hidden ? null : [quick, contextFields].find(node => !node.hidden);
     const height = fields ? Math.round(fields.getBoundingClientRect().height) : 0;
-    if (height > 0) { previewBody.style.setProperty('--entity-card-h', `${height}px`); previewBody.dataset.fit = 'fields'; }
+    // A short column (one line such as "nothing here") keeps the card's own size rather than shrinking it.
+    if (height >= MIN_FIT_HEIGHT) { previewBody.style.setProperty('--entity-card-h', `${height}px`); previewBody.dataset.fit = 'fields'; }
     else { previewBody.style.removeProperty('--entity-card-h'); delete previewBody.dataset.fit; }
   }
   const fieldsObserver = typeof (doc.defaultView || globalThis).ResizeObserver === 'function'
