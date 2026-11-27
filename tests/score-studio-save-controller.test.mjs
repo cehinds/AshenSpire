@@ -556,3 +556,50 @@ test('studio save: a failed save gives a plain message, and the full detail',
       'EACCES: open \'artLayers.json\'',
     );
   });
+
+test('studio save: an edit made while a save is in flight stays Draft and is sent next time',
+  async () =>
+  {
+    const { studio } = setup();
+    let releaseReply = null;
+    const fetchJson = async (url, init = {}) =>
+    {
+      if (init.method !== postMethod)
+      {
+        return {
+          status: httpOk,
+          json: {
+            ok: true,
+            revision: revisionOne,
+            files: {},
+          },
+        };
+      }
+      await new Promise((resolve) =>
+      {
+        releaseReply = resolve;
+      });
+      return postReply(httpOk);
+    };
+    const controller = CreateStudioSave({
+      isLocalServer: true,
+      fetchJson,
+      download: () => undefined,
+    });
+    await loadWithBaseline(controller);
+    studio.cards = [qaCard];
+    const pendingSave = controller.save();
+    const laterCard = {
+      ...qaCard,
+      name: 'QA card edited during save',
+    };
+    studio.cards = [laterCard];
+    releaseReply();
+    const outcome = await pendingSave;
+    assert.equal(outcome.result, StudioSaveResult.Saved);
+    assert.equal(
+      controller.status(),
+      StudioSaveStatus.Draft,
+      'the edit made in flight is not marked as saved',
+    );
+  });

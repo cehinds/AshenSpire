@@ -99,6 +99,15 @@ function currentJson(file)
   return StableJson(file.read());
 }
 
+function currentJsonByName()
+{
+  const entries = RegisteredStudioSaveFiles().map((file) => [
+    file.name,
+    currentJson(file),
+  ]);
+  return new Map(entries);
+}
+
 function pathList()
 {
   return RegisteredStudioSaveFiles().map((file) => file.path).join(lineBreak);
@@ -330,6 +339,7 @@ class StudioSaveController
     {
       return { result: StudioSaveResult.Unchanged };
     }
+    const submittedJson = currentJsonByName();
     const reply = await this.#postAll();
     if (reply.status === httpConflict)
     {
@@ -344,7 +354,10 @@ class StudioSaveController
         detail,
       };
     }
-    return this.#acceptSaved(reply.json);
+    return this.#acceptSaved(
+      reply.json,
+      submittedJson,
+    );
   }
 
   revision()
@@ -406,20 +419,24 @@ class StudioSaveController
     };
   }
 
-  #markSaved(savedAt)
+  // submittedJson holds what the request sent; edits made while it was in flight stay Draft.
+  #markSaved(savedAt, submittedJson)
   {
-    for (const file of RegisteredStudioSaveFiles())
+    for (const [name, json] of submittedJson)
     {
-      this.#lastSavedJson.set(file.name, currentJson(file));
-      this.#onDisk.set(file.name, true);
+      this.#lastSavedJson.set(name, json);
+      this.#onDisk.set(name, true);
     }
     this.#lastSavedAt = savedAt ?? this.#lastSavedAt;
   }
 
-  #acceptSaved(replyJson)
+  #acceptSaved(replyJson, submittedJson)
   {
     this.#revision = replyJson.revision;
-    this.#markSaved(replyJson.savedAt);
+    this.#markSaved(
+      replyJson.savedAt,
+      submittedJson,
+    );
     return {
       result: replyJson.written.length
         ? StudioSaveResult.Saved
