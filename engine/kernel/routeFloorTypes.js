@@ -134,17 +134,34 @@ function hasPinnedType(pinned, type, first, last) {
     pinnedType === type && depth >= first && depth <= last);
 }
 
-// A branched route gives every lane one elite on a free depth. Pins must leave one free
-// (or pin an elite) on the depths where every lane is open.
+// The last depth a lane can reach: a wide branch may close a lane two, one or no depths before
+// the boss, so a lane opened at the full depth may end on any of them.
+function laneLastDepths(prebossNodes) {
+  const lastDepths = [];
+  for (let before = NARROW_DEPTHS_BEFORE_BOSS; before >= 0; before--) {
+    lastDepths.push(prebossNodes - before);
+  }
+  return lastDepths;
+}
+
+// A branched route gives every lane one elite on a free depth at or past minimumThreatFloor.
+// The latest lane opens on the full depth, so for each depth it may end on, pins must leave one
+// free (or pin an elite) from the first elite depth to there.
 function laneEliteProblem(context, pinned) {
   const { routes, types } = context;
   if (routes.maxBranches == null || !types.pinnable.includes(ELITE_TYPE)) return null;
-  const { first, last } = eliteDepths(routes);
-  if (hasPinnedType(pinned, ELITE_TYPE, first, last)) return null;
-  if (!pinsUseUp(context, pinned, first, last, 1)) return null;
-  const choices = pinnableDepths(context, first, last).join(', ');
-  return `floorTypes leaves a lane no floor for its elite. Keep one of depths ${choices} unpinned`
-    + ' or pin it to elite';
+  const fullDepth = BranchFullDepth(routes.prebossNodes);
+  const first = Math.max(fullDepth, routes.minimumThreatFloor);
+  for (const last of laneLastDepths(routes.prebossNodes)) {
+    if (last < first || hasPinnedType(pinned, ELITE_TYPE, fullDepth, last)) continue;
+    if (!pinsUseUp(context, pinned, first, last, 1)) continue;
+    const choices = pinnableDepths(context, first, last);
+    const keep = choices.length === 1
+      ? `Keep depth ${choices[0]}`
+      : `Keep one of depths ${choices.join(', ')}`;
+    return `floorTypes leaves a lane no floor for its elite. ${keep} unpinned or pin it to elite`;
+  }
+  return null;
 }
 
 // shopsPerBranch gives every branch one shop on a free depth of GUARANTEED_SHOP_DEPTHS. Pins

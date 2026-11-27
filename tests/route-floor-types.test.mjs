@@ -83,6 +83,10 @@ const FIXED_RESTS_SHARED_SLOT = {
     10: 'fight',
   },
 };
+// Elites only from depth 10: lanes may end on 9, 10 or 11, so depth 10 is the only sure elite
+// floor before the pre-boss rest (PR #3025 review).
+const LATE_THREAT = { prebossNodes: 11, minimumThreatFloor: 10 };
+const LATE_THREAT_NO_ELITE = { ...LATE_THREAT, floorTypes: { 10: 'fight' } };
 const LANE_ID = /^n(\d+)_(\d+)$/;
 // Core maps of seeds 3 and 7 (acts 1 and 3) rolled before floorTypes existed (dev 72a5ca42565).
 // A retune of routes.json or the boss roster moves them: reprint with PRINT_GOLDEN=1.
@@ -198,6 +202,12 @@ test('every lane keeps its elite when pins leave it one free floor', () =>
   const refusal = /leaves a lane no floor for its elite\. Keep one of depths 8, 9 unpinned/;
   const isLaneError = error => error.path === FLOOR_TYPES_PATH && refusal.test(error.message);
   assert.throws(() => SetupCore({ floorTypes: NO_LANE_ELITE }), isLaneError);
+  const lateThreat = BuildMap(SetupCore(LATE_THREAT), 1, 1).map;
+  const lateElites = Object.values(lateThreat.nodes).filter(node => node.actualType === 'elite');
+  assert.ok(lateElites.length > 0, 'without pins the late-threat route has elites');
+  const lateRefusal = /leaves a lane no floor for its elite\. Keep depth 10 unpinned/;
+  const isLateError = error => error.path === FLOOR_TYPES_PATH && lateRefusal.test(error.message);
+  assert.throws(() => SetupCore(LATE_THREAT_NO_ELITE), isLateError);
 });
 
 test('every branch keeps its shop when pins leave it room', () =>
