@@ -1,5 +1,8 @@
 # Generate subclass card lists
 
+This is the current operating guide. Future editor workflow and workbench
+requirements are consolidated in [Editor tool specification](EDITOR-SPEC.md).
+
 Score Studio can generate fifteen named cards for each of twelve playstyles:
 
 | Class | Subclasses |
