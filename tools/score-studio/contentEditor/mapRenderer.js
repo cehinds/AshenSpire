@@ -1,6 +1,7 @@
 // The renderer for name to value pairs, such as room odds.
 import { El } from './dom.js';
 import { FieldRenderer, TEXT_TYPE } from './fieldRenderer.js';
+import { UnusedKey } from './unusedKey.js';
 
 /** An object of name to value pairs, such as room odds; renaming keeps the line in place. */
 export class MapRenderer extends FieldRenderer
@@ -13,7 +14,7 @@ export class MapRenderer extends FieldRenderer
         const rows = Object.keys(current).map((key) => this.PairRow(field, current, key, context));
         return this.RowList(rows, () => this.Change(context, current, () =>
         {
-            current[this.ui.newMapKey] = '';
+            current[UnusedKey(current, this.ui.newMapKey)] = '';
         }));
     }
 
