@@ -1,5 +1,4 @@
-// The active card, the active item and the designer's place in the library.
-// Headless helpers: the composition root (studio.js) owns the DOM and wires these in.
+// Headless helpers for the active card and item and the library view state; studio.js wires them in.
 
 export const GalleryKind = Object.freeze({
   Cards: 'cards',
@@ -10,7 +9,7 @@ export const GALLERIES = Object.freeze([GalleryKind.Cards, GalleryKind.Items]);
 // View state only, kept apart from the draft, snapshots and Studio bundles.
 export const WORKING_CONTEXT_KEY = 'ashenspire:scoreStudioWorkingContext:v1';
 
-// The data attribute (without its data- prefix) that carries each gallery tile's stable id.
+// Each gallery tile's id data attribute, without the data- prefix.
 export const TileIdAttribute = Object.freeze({
   [GalleryKind.Cards]: 'card-id',
   [GalleryKind.Items]: 'item-key',
@@ -37,9 +36,8 @@ function isKnownEntity(state, kind, id)
   return id !== null && id !== undefined && EntityExists[kind](state, id);
 }
 
-/** The one writer of state.selectedCardId and state.selectedItemKey. An id that no
- * longer exists becomes null (the empty state), never the first card or item.
- * onChange runs once per real change, so open edit bursts end before the next edit. */
+/** The one writer of the active card and item. A missing id gives null, never the first entity.
+ * onChange runs once per real change. */
 export function createActiveEntities({ state, onChange } = {})
 {
   const committed = { [GalleryKind.Cards]: undefined, [GalleryKind.Items]: undefined };
@@ -60,8 +58,7 @@ export function createActiveEntities({ state, onChange } = {})
     }
     return { id: next, changed };
   }
-  // Content changes (undo, revert, import, removal) call this: a still-valid entity
-  // is kept, a removed one clears to the empty state.
+  // After a content change: keep a still-valid entity, clear a removed one.
   function reconcile()
   {
     return GALLERIES.map(kind => set(kind, state[SelectedField[kind]]));
@@ -73,8 +70,7 @@ export function createActiveEntities({ state, onChange } = {})
   return { set, reconcile, get };
 }
 
-/** Delete selects the next entity in displayed order, else the one before it. A
- * removed entity hidden by filters falls back to the full list order. */
+/** The next entity in displayed order, else the previous one. A hidden one uses the full order. */
 export function nextInDisplayedOrder(displayedIds, removedId, fullOrder = displayedIds)
 {
   const isDisplayed = (displayedIds || []).includes(removedId);
@@ -87,8 +83,7 @@ export function nextInDisplayedOrder(displayedIds, removedId, fullOrder = displa
   return order[removedIndex + 1] ?? order[removedIndex - 1] ?? null;
 }
 
-/** One undo step per typing burst. Every burst registers here so a change of the
- * active entity can end them all: one Undo never spans two cards. */
+/** One undo step per typing burst. endAll lets an entity change end every open burst. */
 export function createEditBursts({
   pushHistory,
   delayMs = DEFAULT_BURST_DELAY_MS,
@@ -240,8 +235,7 @@ function focusTarget(tile, part, fallback)
   return tile?.querySelector(FOCUSABLE_DESCENDANT_SELECTOR) || fallback || null;
 }
 
-/** After the rebuild: focus the same-id tile (or the same part of it), or a named
- * gallery control when that tile is gone. Never leaves focus on the page body. */
+/** After the rebuild: focus the same tile or part, else the fallback; never the page body. */
 export function restoreTileFocus(
   grid,
   attribute,

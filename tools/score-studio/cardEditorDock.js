@@ -191,7 +191,7 @@ export function initCardEditorDock(ctx) {
   }
   const entityHead = doc.createElement('div'); entityHead.className = 'customization-entity-head';
   entityHead.append(entityHeading);
-  // Filters never change the active entity. When they hide it, one short line says so and clears them.
+  // When filters hide the active entity, one line says so and offers to clear them.
   const filterNote = doc.createElement('p');
   filterNote.id = FilterNoteId.Note;
   filterNote.className = FilterNoteClass.Note;

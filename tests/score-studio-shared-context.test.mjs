@@ -71,7 +71,7 @@ test('a removed or unknown entity clears to the empty state, never the first car
   assert.deepEqual(active.set(GalleryKind.Cards, 'missing'), { id: null, changed: true });
   assert.equal(state.selectedCardId, null, 'an unknown id is not replaced by the first card');
   active.set(GalleryKind.Cards, 'c');
-  // Undo of New, Revert or an import that drops the card: content changes, then reconcile.
+  // Content that drops the active card, then reconcile.
   state.cards = state.cards.filter(card => card.id !== 'c');
   active.reconcile();
   assert.equal(state.selectedCardId, null);

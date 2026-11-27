@@ -630,7 +630,7 @@ function restoreSnapshot(snapStr) {
   if (Array.isArray(snap.customDecks)) state.customDecks = snap.customDecks;
   state.subclassCatalog = snap.subclassCatalog || null;
   studioCardOverrides.clear();
-  // The snapshot holds content only: syncAllViews keeps a still-valid active entity and clears a removed one.
+  // syncAllViews reconciles the active card and item with the restored content.
   syncAllViews();
   saveDraft();
 }
@@ -1540,7 +1540,7 @@ function renderCardsGrid() {
   grid.classList.toggle('is-single', state.viewMode === 'single');
   const filtered = getFilteredCards();
   displayedIds[GalleryKind.Cards] = filtered.map((def) => def.id);
-  // The rebuild destroys the tiles: keep the focused tile (by id) and the scroll position.
+  // The rebuild destroys the tiles, so keep focus and scroll.
   const focused = captureTileFocus(grid, TileIdAttribute[GalleryKind.Cards]);
   const scrollTop = grid.scrollTop;
 
@@ -1587,12 +1587,8 @@ function renderCardsGrid() {
   consumeReveal(GalleryKind.Cards);
 }
 
-// ---------------------------------------------------------------------------
-// One active card and one active item
-// ---------------------------------------------------------------------------
-// selectStudioCard and selectStudioItem are the only writers of state.selectedCardId and
-// state.selectedItemKey. An id that is gone gives the empty state, never the first card.
-// Filters never call them. Content changes reconcile through them in syncAllViews.
+// selectStudioCard and selectStudioItem are the only writers of the active card and item.
+// A missing id gives the empty state, never the first card.
 const activeEntities = createActiveEntities({
   state,
   onChange: () =>
@@ -1602,8 +1598,7 @@ const activeEntities = createActiveEntities({
   },
 });
 
-// Reload restore: the gallery and the active card and item, under their own key (never in the draft, snapshots
-// or bundles). Writes start once boot has restored them.
+// View state for reload, under its own key. Writes start once boot has restored it.
 let workingContextReady = false;
 function saveWorkingContext()
 {
@@ -1613,16 +1608,14 @@ function saveWorkingContext()
   }
   writeWorkingContext(localStorage, { gallery: activeGallery, cardId: state.selectedCardId, itemKey: state.selectedItemKey });
 }
-// The ids each gallery shows, in displayed order, as of its last render (null before the first).
+// Each gallery's ids in displayed order, as of its last render.
 const displayedIds = { [GalleryKind.Cards]: null, [GalleryKind.Items]: null };
 
-// Filters never change the active entity; this only says whether they hide its tile.
 function isHiddenByFilters(kind, id)
 {
   return Boolean(id) && Array.isArray(displayedIds[kind]) && !displayedIds[kind].includes(id);
 }
 
-// The banner's Clear: every filter of that gallery back to All, then one re-render.
 function clearGalleryFilters(kind)
 {
   if (kind === GalleryKind.Items)
@@ -1658,7 +1651,7 @@ function revealActiveTile(kind)
   activeTile(kind)?.scrollIntoView?.(REVEAL_SCROLL_OPTIONS);
 }
 
-// A setter called before a gallery render asks for its tile to be shown once that render lands.
+// A setter called before a render shows its tile once that render lands.
 function consumeReveal(kind)
 {
   if (!pendingReveal.delete(kind))
@@ -1791,7 +1784,7 @@ function renderAddFeatureOptions({ pickBest = false } = {}) {
 function renderInspector() {
   const def = selectedCardDef();
   if (!def) {
-    // No active card: clear the stale preview and let the pane show its empty state. Never pick the first card.
+    // No active card: clear the stale preview; never fall back to the first card.
     document.getElementById('inspector-card-preview').replaceChildren();
     document.getElementById('inspector-sheet-title').textContent = '';
     cardEditorDockUi?.refresh();
@@ -2439,8 +2432,7 @@ function selectedCardDef() {
   return state.cards.find((c) => c.id === state.selectedCardId);
 }
 
-// One undo step per burst of typing or spinner ticks; the burst ends after a pause, a new focus or a
-// change of active entity (the setters end every open burst, so one Undo never spans two cards).
+// One undo step per typing burst. A change of active entity ends every open burst.
 const editBursts = createEditBursts({ pushHistory: () => pushHistory(), delayMs: TEXT_EDIT_BURST_MS });
 function createEditBurst()
 {
@@ -3662,7 +3654,6 @@ function renderArtPreviewOnly()
 {
   const sel = document.getElementById('art-preview-card-select');
   const host = document.getElementById('art-live-preview');
-  // The picker shows the active entity; with none active the preview is empty, not the first card.
   if (state.artTarget === GalleryKind.Items)
   {
     const item = state.items.find((entry) => entry.key === sel.value);
@@ -3704,7 +3695,7 @@ function renderArtTab() {
       : 'Assign PNG assets to card components, set priority match rules (tag, school, status, type, or default), reorder Z-index layers, and adjust position, scale, opacity, and blend mode. Changes reflect live on the selected card and gallery.';
   }
 
-  // Preview picker: it always shows the gallery's active card or item, and choosing one makes it active everywhere.
+  // The picker follows the gallery's active card or item.
   const cardSel = document.getElementById('art-preview-card-select');
   cardSel.innerHTML = '';
   const pickerKind = isItems ? GalleryKind.Items : GalleryKind.Cards;
@@ -4243,7 +4234,7 @@ async function revertToRepo() {
   const roster = buildItemRoster(contentBundle);
   state.items = roster.items;
   state.itemRules = roster.rules;
-  // A still-valid active card or item is kept; an added one that Revert removes gives the empty state.
+  // syncAllViews keeps a still-valid active card or item and clears a removed one.
   state.undoStack = [];
   state.redoStack = [];
   updateUndoButtons();
@@ -4296,8 +4287,7 @@ let subclassCatalogUi = null;
 let cardSelectionUi = null;
 let cardEditorDockUi = null;
 let deckListPanelUi = null;
-// One gallery context: activeGallery, state.artTarget and the dock's context are set together by the
-// Cards and Items tabs, so the Design target and picker never point at the other kind.
+// The Cards and Items tabs set activeGallery, state.artTarget and the dock context together.
 let activeGallery = GalleryKind.Cards;
 let artGalleryFrame = null;
 
@@ -4364,7 +4354,7 @@ function populateCardOptions() {
 }
 
 function syncAllViews() {
-  // Content changed: keep each still-valid active entity, clear a removed one (never a silent first card).
+  // Content changed: keep a still-valid active entity, clear a removed one.
   activeEntities.reconcile();
   populateRebalanceStatusOptions();
   populateRankFilter();
@@ -4648,7 +4638,7 @@ function updateFilterCount() {
   badge.classList.toggle('hidden', count === 0);
 }
 
-// Every card filter back to All and the search empty. The caller re-renders the gallery.
+// The caller re-renders the gallery.
 function resetCardFilters()
 {
   document.getElementById(GallerySearchId[GalleryKind.Cards]).value = '';
@@ -4807,7 +4797,6 @@ function wireEvents() {
         cardEditorDockUi?.setContext?.(tab);
         renderArtTab();
         deckListPanelUi?.refresh();
-        // Returning to a gallery puts it back where it was, with its active tile in view.
         if (previousTab !== tab)
         {
           restoreGalleryScroll(tab);
@@ -4900,7 +4889,6 @@ function wireEvents() {
     if (idx < 0 || !isAddedCard(state.cards[idx])) return;
     const removed = state.cards[idx], plan = removeAddedCardsFromState(state, [removed.id]);
     if (!plan.removedIds.length) { toast('Original cards are protected.'); return; }
-    // The next card in displayed order (else the one before), named in the toast.
     const nextId = nextInDisplayedOrder(displayedIds[GalleryKind.Cards] || [], removed.id, state.cards.map((card) => card.id));
     pushHistory();
     Object.assign(state, plan.nextState);
@@ -5312,7 +5300,7 @@ function wireEvents() {
   document.getElementById('item-override-cp')?.addEventListener('change', updateItemOverride);
 
   // Art & Layers events (supports both Combat Cards and Equipment & Relics)
-  // The Design target is the gallery context: Combat Cards or Equipment & Relics switches the gallery too.
+  // The Design target is the gallery context, so it switches the gallery too.
   document.querySelectorAll('[data-art-target]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const kind = btn.dataset.artTarget === GalleryKind.Items ? GalleryKind.Items : GalleryKind.Cards;
@@ -5324,7 +5312,7 @@ function wireEvents() {
       {
         renderArtTab();
       }
-      // The pane moved with the gallery; keep focus on the target button rather than the page body.
+      // The pane moved with the gallery; keep focus on the button, not the page body.
       if (document.activeElement !== btn)
       {
         btn.focus({ preventScroll: true });
@@ -5344,7 +5332,6 @@ function wireEvents() {
     if (state.artTarget === 'items') { renderItemsGrid(); renderItemInspector(); }
     saveDraft();
   });
-  // Choosing in the picker changes the active entity everywhere: banner, Properties, tile and deck rows.
   document.getElementById('art-preview-card-select').addEventListener('change', (event) => {
     if (!event.target.value)
     {
@@ -5570,7 +5557,7 @@ async function boot() {
   state.items = roster.items;
   state.itemRules = roster.rules;
   state.defaultItemNames = Object.fromEntries(state.items.map((it) => [it.key, it.name]));
-  // Boot's default: the first card and item, until restoreWorkingContext runs after the draft.
+  // The first card and item until restoreWorkingContext runs after the draft.
   selectStudioItem(state.items[0]?.key, { render: false });
   // Default names are the repo's authored names, taken before any draft is restored.
   state.defaultNameSet = DefaultNameSet(state.cards);
@@ -5658,7 +5645,7 @@ async function boot() {
     renderContextFields,
     isHiddenByFilters,
     clearFilters: clearGalleryFilters,
-    // A context change from inside the dock (its Undock or resize controls) moves the gallery with it.
+    // A context change from inside the dock moves the gallery with it.
     onContextChange: kind => showGallery(kind),
     onViewChange: view => { if (view === 'design') renderArtTab(); else if (view === 'weights') renderWeights(); else if (view === 'decks') deckListPanelUi?.refresh(); },
   });
@@ -5738,8 +5725,7 @@ async function boot() {
   restoreWorkingContext();
 }
 
-// After boot: the stored gallery, card and item, or the existing default (first card and item) for a stored id
-// that is gone. Restoring takes no activation.
+// After boot: the stored gallery, card and item. A stored id that is gone falls back to the default.
 function restoreWorkingContext()
 {
   const saved = readWorkingContext(localStorage);
