@@ -61,6 +61,20 @@ All paths are from the repo folder. `core` means `games/ashenspire/packs/core/`.
 | `gh auth status failed` | Run `gh auth login` once. |
 | `ship` stops before pushing | Nothing went to GitHub. Fix the error and run it again. |
 
+## Change the commands themselves
+
+The four commands read three JSON files in `tools/owner/`. No code edit is needed.
+
+| To change | Edit |
+| --- | --- |
+| Which build, check and test steps run, and in what order | `ownerTools.json` (`buildSteps`, `checkSteps`, `testSteps`) |
+| Branch prefix, base branch, flags, limits, backup folder | `ownerTools.json` (`git`, `flags`, `limits`, `files`) |
+| Which folders count as game content | `ownerTools.json` (`editableRoots`, `editableExtensions`) |
+| Any message the commands print, the pull request text, the changelog line | `ownerText.json` |
+| How a commit names a change ("Raise X 5→6") | `ownerDiff.json` (`phrases`) |
+
+`{name}` in a message is filled in by the command. Keep the names; change the words around them.
+
 ## Rules that still apply
 
 - Never commit built HTML or `buildordinal.json`. `ship` already leaves them out.
