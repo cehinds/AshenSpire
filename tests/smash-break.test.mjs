@@ -75,7 +75,10 @@ test('the receipt lists a Poise break once, beside the hit\'s own Poise damage',
   assert.equal(entry.poiseBroken, 4);
   assert.equal(entry.poiseDamage, plain.poiseDrain);
   assert.equal(entry.poiseBroken + entry.poiseDamage, receipt.poiseDrain);
-  const summary = damageReceiptLines(receipt.damageReceipt).find(line => line.includes('Break Poise −'));
+  const lines = damageReceiptLines(receipt.damageReceipt);
+  const breakLines = lines.filter(line => line.includes('Break Poise'));
+  assert.equal(breakLines.length, 1, 'the break prints once across the whole receipt');
+  const summary = lines.find(line => line.includes('Break Poise −'));
   assert.equal(summary.match(/Break Poise −4/g).length, 1);
   assert.equal(summary.includes(`Poise damage ${plain.poiseDrain}`), true);
 });
