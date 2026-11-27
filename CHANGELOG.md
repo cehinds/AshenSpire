@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-27
 
+- **Weights can multiply with a card's strength** ([#3013](https://github.com/cehinds/AshenSpire/pull/3013), `0.7.5.137`). Cost, effect, status, multi-effect and tag weights can each switch to a multiply form that scales with the card's positive score, so stronger cards pay more per SP. Every switch is off, so no card's CP or rank changes.
 - **Score Studio keeps the library, card preview and editor together** ([#3008](https://github.com/cehinds/AshenSpire/pull/3008), `0.7.5.137`). The customization pane now shows the selected card's name, preview and what an edit will change in every view, Edit and deck-list rows open the card's properties in place instead of a dialog, an empty state replaces stale content when no card is selected, and narrow screens get a Library / Card switch. The resize handle works with Home, End and arrow keys.
 - **Faster card checks** ([#3009](https://github.com/cehinds/AshenSpire/pull/3009), `0.7.5.134`). Avoid unused authored tag lookups when cards already have resolved tags, while preserving card identity and validation.
 
