@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { deckCatalogOptions, resolveStudioDeck, filterMembership } from '../tools/score-studio/deckCatalog.js';
-import { copyDeckList, groupedDeckCards, groupedDeckItems, removeSelectedItemsFromDeck } from '../tools/score-studio/deckListPanel.js';
+import { copyDeckList, groupedDeckCards, groupedDeckItems, removeSelectedItemsFromDeck, initDeckListPanel } from '../tools/score-studio/deckListPanel.js';
+import { withKitDom } from './helpers/dom.mjs';
 import { removeSelectedCardsFromDeck } from '../tools/score-studio/cardSelection.js';
 import { GenerateSubclassCatalog } from '../src/model/subclassCardGenerator.js';
 
@@ -83,3 +84,17 @@ test('missing IDs are reported without losing references; invalid/deleted filter
   assert.equal(resolveStudioDeck(state, 'deleted'), null); assert.deepEqual([...filterMembership(state, 'deleted')], []);
   assert.deepEqual([...filterMembership(state, 'class:invented', 'items')], []);
 });
+
+test('a deck row selects its card and then asks for the properties it promises', () => withKitDom(dom => {
+  const state = { cards: [{ id: 'a', name: 'Alpha', class: 'colorless', type: 'skill' }, { id: 'b', name: 'Beta', class: 'colorless', type: 'skill' }], items: [],
+    customDecks: [{ id: 'mine', name: 'Mine', cardIds: ['a', 'b'], itemKeys: [] }], selectedCardId: 'a' };
+  const calls = [];
+  const panel = initDeckListPanel({ document: dom.document, state, pushHistory() {},
+    selectCard: id => { state.selectedCardId = id; calls.push(['select', id]); },
+    onRowSelect: (id, isItem) => calls.push(['row', id, isItem, state.selectedCardId]) });
+  assert.match(panel.element.querySelector('[data-deck-note]').textContent, /Rows open card properties/);
+  const row = panel.element.querySelector('[data-deck-card-id="b"] .deck-list-card-main');
+  row.click();
+  assert.deepEqual(calls, [['select', 'b'], ['row', 'b', false, 'b']]);
+  assert.equal(panel.element.querySelector('[data-deck-card-id="b"] .deck-list-card-main').getAttribute('aria-current'), 'true');
+}));
