@@ -5,7 +5,7 @@ import {
     DEFAULT_CARD_LIMIT_RULES,
 } from '../../../src/model/cardLimits.js';
 import { El } from './dom.js';
-import { FillTemplate } from './textTemplate.js';
+import { FillTemplate } from '../../../src/model/textTemplate.js';
 
 /** Fills `host` with the counter and any limit sentences for `card`; words come from `ui`. */
 export function RenderCardLimits(host, card, ui)

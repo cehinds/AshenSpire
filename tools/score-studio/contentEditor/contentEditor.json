@@ -101,7 +101,7 @@
       "folder": "games/ashenspire/packs/core/enemies",
       "labelField": "name",
       "listValue": "Lv {stats.levelProfile.min}-{stats.levelProfile.max}",
-      "listDetail": "Poise {stats.poiseMax}, deck {deck}",
+      "listDetail": "Poise {stats.poiseMax}, deck {count:deck}",
       "lockedKeys": ["derived"],
       "fields": [
         { "path": "name", "label": "Name", "type": "text" },

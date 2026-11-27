@@ -15,7 +15,7 @@ import {
     WithLockedKeys,
     WithoutLockedKeys,
 } from '../tools/score-studio/contentEditor/lockedKeys.js';
-import { FillTemplate } from '../tools/score-studio/contentEditor/textTemplate.js';
+import { FillTemplate } from '../src/model/textTemplate.js';
 
 const JSON_INDENT = 2;
 const LOCKED = ['derived'];
@@ -212,10 +212,12 @@ test('list and message templates fill paths, list lengths and sums', () =>
     assert.equal(FillTemplate('{sum:copies}', deck), '5');
     const levels = 'Lv {stats.levelProfile.min}-{stats.levelProfile.max}';
     assert.equal(FillTemplate(levels, huskBrute()), 'Lv 1-3');
-    assert.equal(FillTemplate('{type} {cost}', { cost: 1 }), '1');
+    assert.equal(FillTemplate('{type} {cost}', { cost: 1 }), '{type} 1');
+    assert.equal(FillTemplate('{type} {cost}', { cost: 1 }, { missing: '' }), ' 1');
+    assert.equal(FillTemplate('{a}', { a: undefined }), 'undefined');
     assert.equal(FillTemplate('Saved {files}.', { files: 'cards.json' }), 'Saved cards.json.');
-    assert.equal(FillTemplate('deck {deck}', { deck: ['a', 'b'] }), 'deck 2');
-    assert.equal(FillTemplate(undefined, {}), '');
+    assert.equal(FillTemplate('deck {count:deck}', { deck: ['a', 'b'] }), 'deck 2');
+    assert.equal(FillTemplate('{count:name}', { name: 'x' }), '{count:name}');
 });
 
 test('the JSON view hides locked keys and an edit puts them back in place', () =>

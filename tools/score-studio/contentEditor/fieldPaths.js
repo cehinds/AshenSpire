@@ -1,4 +1,7 @@
 // Reads and writes one field of a content entry by its dot path, keeping key order.
+// GetFieldValue is the shared dot-path reader; an empty path is the entry itself.
+export { ValueAtPath as GetFieldValue } from '../../../src/model/valuePath.js';
+
 const PATH_SEPARATOR = '.';
 const NUMBER_FIELD = 'number';
 
@@ -12,21 +15,6 @@ function pathParts(path)
 function isContainer(value)
 {
     return value !== null && typeof value === 'object';
-}
-
-/** The value at `path` inside `entry`; an empty path is the entry itself. */
-export function GetFieldValue(entry, path)
-{
-    let value = entry;
-    for (const key of pathParts(path))
-    {
-        if (!isContainer(value))
-        {
-            return undefined;
-        }
-        value = value[key];
-    }
-    return value;
 }
 
 /** Sets `path` in place; an existing key keeps its position and undefined removes the key. */

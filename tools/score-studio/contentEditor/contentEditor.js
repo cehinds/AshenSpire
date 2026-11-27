@@ -6,7 +6,7 @@ import { ContentSection } from './contentSection.js';
 import { ContentStore } from './contentStore.js';
 import { Button, El, TextInput } from './dom.js';
 import { CreateFieldRenderers } from './fieldRenderers.js';
-import { FillTemplate } from './textTemplate.js';
+import { FillTemplate } from '../../../src/model/textTemplate.js';
 
 const OPENED_FLAG = 'contentEditorOpened';
 const LISTBOX_ROLE = 'listbox';

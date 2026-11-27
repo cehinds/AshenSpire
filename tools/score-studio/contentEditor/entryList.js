@@ -1,8 +1,11 @@
 // The searchable entry list: dense one-line rows, value right-aligned, details on hover.
 import { El } from './dom.js';
-import { FillTemplate } from './textTemplate.js';
+import { FillTemplate } from '../../../src/model/textTemplate.js';
 
 const OPTION_ROLE = 'option';
+const BLANK_MISSING = {
+    missing: '',
+};
 const FOCUSABLE = '0';
 
 export class EntryList
@@ -18,14 +21,24 @@ export class EntryList
         this.filterText = '';
     }
 
+    /** A list template filled from the entry; tokens the entry lacks show as nothing. */
+    Fill(template, entry)
+    {
+        if (!template)
+        {
+            return '';
+        }
+        return FillTemplate(template, entry.Read(), BLANK_MISSING).trim();
+    }
+
     Value(entry)
     {
-        return FillTemplate(this.section.listValue, entry.Read());
+        return this.Fill(this.section.listValue, entry);
     }
 
     Row(entry, selected)
     {
-        const detail = FillTemplate(this.section.listDetail, entry.Read());
+        const detail = this.Fill(this.section.listDetail, entry);
         const name = El('span', { className: this.classes.entryName, text: entry.Label() });
         const value = El('span', { className: this.classes.entryValue, text: this.Value(entry) });
         const row = El('div', {

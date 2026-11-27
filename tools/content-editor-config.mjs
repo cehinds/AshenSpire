@@ -1,7 +1,7 @@
 // The /__content/ API settings, shared with the Score Studio Game content tab.
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { FillTemplate } from './score-studio/contentEditor/textTemplate.js';
+import { FillTemplate } from '../src/model/textTemplate.js';
 
 const API_CONFIG_PATH = fileURLToPath(
     new URL('./score-studio/contentEditor/contentApi.json', import.meta.url),
