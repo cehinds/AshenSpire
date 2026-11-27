@@ -41,6 +41,10 @@
 // Prepared-only Focus wording and the shared Evade grant source reference move only the runtime artifact identity.
 // The 2026-11-19 deferred Axe Strength grant repoints its generated mechanic reader to finishAbilityPlay; the preceding runtime keeps its own snapshotted rules.
 const PREVIOUS_RUNTIMES = new Set([
+  // Before catalog regeneration 7c32f9ef4bc: keep the exact recorded profile and its tradition tags.
+  'sha256:c77d4f30494cb821fc66b9b9ef19b91fbb2c699633fe0137b72ab89d261ec831',
+  // Dev c5c5ec4a before #3002: no enemyLevelScaling table or enemy level-card lists.
+  'sha256:eff6f5c38dcdba3c78d012bf55c8baf6fe703f664bc3f3416244b15d1fa07216',
   'sha256:0c4e9eae226108858dcb937000b0992a33b778f650bb3e3e17a1c369ba51a0b3',
   'sha256:b49503d593056a588d5ae9a25ac214fc801c7b7eaea22093d601f76afe9d27f8',
   'sha256:d2993c77a6e8a5ff16dc1b5edf11d30cb924d790e7875af0452a4e8f0183ef63',
@@ -144,7 +148,6 @@ const PREVIOUS_RUNTIMES = new Set([
   'sha256:58cd1d56ba6007b40be607b77077ca7df0ac3f29e14600f32aabd48c41cc4085',
   'sha256:6ef5d30c3d03a486ab6dafa5756463219cd801324544beedfa76d170066865eb',
   'sha256:edb03b160d360fcbd7ac312134fc535bc1e2b90ad45d6bcbfcff780c6dc8ec06',
-  'sha256:c77d4f30494cb821fc66b9b9ef19b91fbb2c699633fe0137b72ab89d261ec831',
 ]);
 // Moved by the rankUpCard row (batch 3), then the spellCosts/elementFlux rules (W25-F), Ward routing (W25-W), the cost.manaOnly tag and its spells (W25-MS);
 // the statusCaps rule key (W25-NC); the Counter stack rule (batch 5); the bands rules (W25-BANDS) with the swapRows op, Upset the Ranks, formation Block and spell lanes (rules 6-9). Then W25-EvadeCards (Evade card data, card modes, the self Advance). Then the Evade card faces, the Quickstep Counter stack and the Evade-grant face phrase (src/model/fixCoreMechanics.js, playingCard.js). Pinned once at the batch-5 + bands + Evade cards merge; 8c57f3... is now in PREVIOUS_RUNTIMES.

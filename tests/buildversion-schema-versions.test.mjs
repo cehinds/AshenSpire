@@ -18,6 +18,10 @@ const formats = [
   ['CRLF', value => JSON.stringify(value, null, 2).replaceAll('\n', '\r\n')],
 ];
 const moduleText = (catalog, format) => 'export const gameProfileCatalog = ' + format(catalog) + ';\n';
+const packedContentTables = [
+  ['nodes', rows => rows], ['uiStrings', rows => rows],
+  ['scoring', rows => ({ rows })], ['sharedOutfitArt', rows => ({ rows })],
+];
 
 test('catalog protocol versions clear only their schema sites, including when equal to the release', () => {
   const root = mkdtempSync(join(tmpdir(), 'buildversion-schema-'));
@@ -62,6 +66,26 @@ test('catalog protocol versions clear only their schema sites, including when eq
       assert.equal(row().ok, false, 'encoded tagging cannot hide a version or malformed payload');
     }
     writeFileSync(resolve(root, taggingFile), cleanTagging);
+    // One complete-tree scan proves every newly packed file remains in row B.
+    // The pure per-file corpus below covers malformed payloads and wrappers
+    // without repeating this expensive repository traversal for each shape.
+    writeFileSync(resolve(root, file), original);
+    const cleanTables = [];
+    for (const [name, wrap] of packedContentTables) {
+      const tableFile = `src/content/generated/${name}.js`;
+      cleanTables.push([tableFile, readFileSync(resolve(root, tableFile), 'utf8')]);
+      const rows = Array.from({ length: 20 }, () => ({ repeatedProperty: 'repeated value' }));
+      rows[0].version = '9.9.z';
+      const packed = catalogJSONExpression(wrap(rows));
+      assert.equal(packed.encoded, true);
+      writeFileSync(resolve(root, tableFile), `export const ${name} = ${packed.expression};`);
+    }
+    const hiddenVersions = row();
+    assert.equal(hiddenVersions.ok, false, 'packed content tables cannot hide release-version declarations');
+    for (const [tableFile, text] of cleanTables) {
+      assert.ok(hiddenVersions.detail.includes(tableFile), tableFile);
+      writeFileSync(resolve(root, tableFile), text);
+    }
     for (const expression of invalidEncodedExpressions) {
       writeFileSync(resolve(root, file), 'export const gameProfileCatalog = ' + expression + ';');
       assert.equal(row().ok, false, 'invalid encoded catalog fails row B closed');
@@ -107,22 +131,29 @@ test('encoded catalogs reject malformed, unknown, and unused dictionary material
 });
 
 
-test('tagging transport exposes decoded data and surrounding JavaScript without schema exemptions', () => {
-  const taggingFile = 'src/content/generated/tagging.js';
-  const value = Array.from({ length: 20 }, () => ({ version: '9.9.z', repeatedProperty: 'quoted }; \" value' }));
+for (const [taggingFile, exportName, wrap] of [
+  ['src/content/generated/tagging.js', 'tagging', value => value],
+  ...packedContentTables.map(([name, wrap]) => [`src/content/generated/${name}.js`, name, wrap]),
+]) test(exportName + ' transport exposes decoded data and surrounding JavaScript without schema exemptions', () => {
+  const value = wrap(Array.from({ length: 20 }, () => ({ version: '9.9.z', repeatedProperty: 'quoted }; \" value' })));
   const packed = catalogJSONExpression(value);
   assert.equal(packed.encoded, true);
   for (const newline of ['\n', '\r\n']) {
     const before = "export const BEFORE_VERSION = 'latest';" + newline;
     const after = newline + "export const AFTER_VERSION = '9.9.z';";
-    const text = before + 'export const tagging = ' + packed.expression + ';' + after;
+    const text = before + 'export const ' + exportName + ' = ' + packed.expression + ';' + after;
     const decoded = catalogVersionScanText(taggingFile, text);
-    assert.equal(decoded, before + 'export const tagging = ' + JSON.stringify(value) + ';' + after);
+    assert.equal(decoded, before + 'export const ' + exportName + ' = ' + JSON.stringify(value) + ';' + after);
     assert.deepEqual(catalogSchemaVersionSpans(taggingFile, decoded), [], 'no tagging version span is exempt');
   }
   for (const expression of invalidEncodedExpressions) {
-    assert.throws(() => catalogVersionScanText(taggingFile, 'export const tagging = ' + expression + ';'));
+    assert.throws(() => catalogVersionScanText(taggingFile, 'export const ' + exportName + ' = ' + expression + ';'));
   }
+  const notedValue = Array.isArray(value) ? [{ $note: { purpose: 'authoring note' }, rows: value }]
+    : { $note: { purpose: 'authoring note' }, ...value };
+  const noted = `export const ${exportName} = withNotes(${JSON.stringify(notedValue)});`;
+  assert.equal(catalogVersionScanText(taggingFile, noted), noted, 'note symbols keep the original literal fully visible');
+  assert.deepEqual(catalogSchemaVersionSpans(taggingFile, noted), []);
 });
 
 test('generated mechanic versions exempt only registered manifest protocol fields', () => {

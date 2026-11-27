@@ -9,7 +9,7 @@ import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 import { parseStanceAdvantage } from './combatRounds/resolver.js';
 import { enemyTimelineCard, enemyMoveQuote, moveKind, stanceFor } from './combatRoundsAdapter.js';
 import { STANCE_ADVANTAGE_CSV } from '../content/combatRounds.js';
-import { enemyDefinitionOf } from '../model/enemyMoveSet.js';
+import { EnemyDefinitionOf } from '../model/enemyMoveSet.js';
 
 const STANCE_TABLE = parseStanceAdvantage(STANCE_ADVANTAGE_CSV);
 
@@ -30,7 +30,7 @@ export function multiActionOn(combat) {
 export function enemyPlanActions(combat, enemy) {
   if (!multiActionOn(combat) || !enemy?.alive) return [];
   const intent = enemy.intent;
-  const def = enemyDefinitionOf(combat.registries, enemy);
+  const def = EnemyDefinitionOf(combat.registries, enemy);
   // A Broken enemy (poise.breakRule "broken") lost only its head: the plan behind it still plays, so its follow-ups are shown after a lost head.
   if (IsBroken(enemy) && intent?.kind === 'staggered' && enemy.planDue && enemy.plannedMoves?.length) {
     return [{ id: null, instanceId: `${enemy.id}:lost`, kind: 'broken', target: 'self', sp: 0, tags: [], stance: null },
@@ -45,7 +45,7 @@ export function enemyPlanActions(combat, enemy) {
 export function enemyIntentStance(combat, enemy) {
   const intent = enemy?.intent;
   if (!intent?.moveId || intent.kind === 'staggered') return null;
-  const def = enemyDefinitionOf(combat.registries, enemy);
+  const def = EnemyDefinitionOf(combat.registries, enemy);
   const move = def?.moves?.[intent.moveId];
   return move ? stanceFor(moveKind(move), Array.isArray(move.tags) ? move.tags : []) : null;
 }

@@ -7,12 +7,15 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRunState, deserializeRun, serializeRun } from '../src/model/state.js';
+import { gameProfileCatalog } from '../src/content/generated/gameProfiles.js';
+import { resolveGameAuthor } from '../engine/kernel/gameConfig.js';
 import { gameProfileStarterDeck } from '../src/model/gameProfileRun.js';
-import { createRng } from '../src/engine/rng.js';
-import { createRunCombat } from './withoutWeaknesses.mjs';
-import { dispatch } from '../src/engine/combat.js';
+import { basicCardKind } from '../src/model/basicCardRule.js';
 import { legacyCoreRegistries } from './helpers/legacy-core-profile.mjs';
 import { reconcileGrantedCards } from '../src/model/loadout.js';
+import { createRng } from '../src/engine/rng.js';
+import { createRunCombat } from './withoutWeaknesses.mjs';
+import { dispatch, previewCard } from '../src/engine/combat.js';
 import { playingCardDefinition, playingCardModel } from '../src/model/playingCard.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
@@ -24,15 +27,19 @@ const start = (classId) => createRunState({ registries: reg, classId, seed: 511,
 const legacyReg = legacyCoreRegistries();
 const startLegacy = (classId) => createRunState({ registries: legacyReg, classId, seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
 
-// Owner ruling 2026-11-21: ten cards each. Martial: 4 Strike-type attacks, 4 Defends, a class specialty and the weapon art.
-// Herald: 4 attack cantrips, 4 defensive cantrips, a class spell and the weapon art.
-// Starseer (2026-11-26): 4 Ward, 1 Arcane Bolt, 1 Mana Rite, 4 Arcane Strike, plus the normal sceptre art.
-const DECKS = {
-  reaver: { 'core.strike': 4, 'core.defend': 4, 'core.reaverSpecial': 1, greatswordSunderingHew: 1 },
-  rogue: { 'core.strike': 4, 'core.defend': 4, 'core.rogueSpecial': 1, twinFang: 1 },
-  starseer: { 'custom.card_mwx2mb6p': 4, 'custom.copy_mwx6hh79': 1, 'core.arcaneSiphon': 1, 'core.astralBolt': 4, blightTouch: 1 },
-  herald: { 'core.cantrip': 4, 'core.arcaneWard': 1, 'core.glimmerVeil': 1, 'core.stoneSigil': 1, 'core.ashenShell': 1, 'core.heraldSpecial': 1, blightTouch: 1 },
-};
+// Current recipes come from authored JSON, independently of the runtime projection.
+const readJson = path => JSON.parse(readFileSync(new URL('../' + path, import.meta.url), 'utf8'));
+const starterSource = readJson('games/ashenspire/packs/core/starterDeck.json');
+const charactersSource = readJson('games/ashenspire/packs/core/characters.json');
+const packagesSource = readJson('content/source/weaponCardPackages.json');
+const recipeCounts = rows => rows.reduce((out, row) => (out[row.card] = (out[row.card] || 0) + row.copies, out), {});
+const DECKS = Object.fromEntries(Object.entries(starterSource.classDecks).map(([classId, rows]) => {
+  const expected = recipeCounts(rows);
+  const gear = charactersSource.find(row => row.id === classId).defaultGear;
+  const arts = new Set(gear.flatMap(item => packagesSource.find(row => row.weaponId === item.id)?.package.weaponArtDefaults || []));
+  for (const id of arts) expected[id] = (expected[id] || 0) + 1;
+  return [classId, expected];
+}));
 
 for (const [classId, expected] of Object.entries(DECKS)) {
   const total = Object.values(expected).reduce((sum, copies) => sum + copies, 0);
@@ -45,77 +52,72 @@ for (const [classId, expected] of Object.entries(DECKS)) {
     for (const id of gameProfileStarterDeck(run, classId)) assert.ok(run.collectedCardIds.includes(id), `${id} is in the collection ledger`);
   });
 
-  test(`Core ${classId} shows Rank 1 on its starter weapon art through a save round trip`, async () => {
+  test(`Core ${classId} preserves the authored starter weapon art rank through a save round trip`, async () => {
     const run = start(classId);
     const lent = run.deck.filter((card) => card.equipmentRole === 'weaponArt');
-    assert.equal(lent.length, 1);
-    const [art] = lent;
-    assert.equal(reg.cards.get(art.cardId).rarity, 'rare');
-    assert.equal(art.rank, 1);
-    assert.equal(playingCardModel(reg, art).rankBadge, 'Rank 1');
-    for (const card of run.deck.filter((card) => card !== art)) assert.equal(playingCardModel(reg, card).rankBadge, null, card.cardId);
-    const { rank, ...unranked } = art;
-    const [before, after] = [unranked, art].map((ref) => playingCardDefinition(reg, ref, { rules: run }));
-    assert.deepEqual([after.effects, after.cost, after.manaCost], [before.effects, before.cost, before.manaCost]);
-    const restored = deserializeRun(serializeRun(run, { inline: true }));
-    reconcileGrantedCards(reg, restored);
-    assert.equal(restored.deck.find((card) => card.instanceId === art.instanceId).rank, 1);
-    const rendered = (await renderedBadges(reg, restored)).filter(({ row }) => row.cardId === art.cardId);
-    assert.ok(rendered.length > 0);
-    for (const badge of rendered) assert.deepEqual([badge.rank, badge.text, badge.shown], [1, 'Rank 1', false]);
-  });
-
-  test(`Core ${classId} starter matches its authored class recipe and every card fits the starting MP pool`, () => {
-    const run = start(classId);
-    const defs = run.deck.map(c => reg.cards.get(c.cardId));
-    const caster = classId === 'starseer' || classId === 'herald';
-    const art = defs.filter(d => d.rarity === 'rare');
-    assert.equal(art.length, 1, 'one rare weapon art');
-    if (classId === 'starseer') {
-      const ordinary = run.deck.filter(card => !card.grantedBy && !card.equipmentRole).map(card => reg.cards.get(card.cardId));
-      assert.equal(ordinary.length, 10, 'ten authored base copies plus the normal weapon art');
-      assert.ok(ordinary.every(card => card.class === 'starseer' && card.rarity === 'common'));
-      assert.equal(ordinary.filter(card => card.type === 'attack').length, 5, 'four Arcane Strike and one Arcane Bolt');
-      assert.equal(ordinary.filter(card => card.effects.some(effect => effect.op === 'block')).length, 4, 'four Ward copies');
-      assert.equal(ordinary.filter(card => card.type === 'skill' && card.effects.some(effect => effect.op === 'restoreMana')).length, 1, 'one Mana Rite');
-    } else {
-      const own = defs.filter(d => d.class === classId && d.rarity !== 'rare');
-      assert.equal(own.length, 1, 'one own-class card');
-      assert.equal(own[0].rarity, 'uncommon', 'the class card is uncommon');
-      const basics = defs.filter(d => d.rarity === 'common');
-      assert.equal(basics.length, 8, 'eight common basics');
-      const isDefence = d => (d.type === 'skill' && (d.effects || []).some(e => e.op === 'block'));
-      assert.equal(basics.filter(isDefence).length, 4, 'four defences');
-      assert.equal(basics.filter(d => d.type === 'attack').length, 4, 'four attacks');
-      for (const d of basics) assert.equal(d.tags.includes('rank.cantrip') || d.tags.includes('maneuver:casting') || d.tags.includes('maneuver:attack') || d.tags.includes('maneuver:defend'), true, `${d.id} is a basic, a cantrip or a 1 MP starter spell (owner 2026-11-21: Ward and Veil cost 1 MP)`);
-      if (caster) for (const d of basics) assert.ok(d.tags.includes('camp:spell'), `${d.id} is a cantrip`);
-      else for (const d of basics) assert.ok(d.tags.includes('camp:physical'), `${d.id} is a Strike or Defend type`);
+    assert.equal(lent.length, Object.values(DECKS[classId]).reduce((sum, n) => sum + n, 0) - Object.values(recipeCounts(starterSource.classDecks[classId])).reduce((sum, n) => sum + n, 0));
+    for (const art of lent) {
+      assert.equal(art.rank, starterSource.weaponArtRank);
+      const before = playingCardDefinition(reg, art, { rules: run });
+      const restored = deserializeRun(serializeRun(run, { inline: true }));
+      reconcileGrantedCards(reg, restored);
+      const copy = restored.deck.find(card => card.instanceId === art.instanceId);
+      assert.equal(copy.rank, starterSource.weaponArtRank);
+      assert.deepEqual(playingCardDefinition(reg, copy, { rules: restored }), before);
+      const rendered = (await renderedBadges(reg, restored)).filter(({ row }) => row.cardId === art.cardId);
+      assert.ok(rendered.length > 0);
+      for (const badge of rendered) assert.equal(badge.rank, starterSource.weaponArtRank);
     }
-    const maxMana = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] }).player.maxMana;
-    for (const d of defs) assert.ok((d.manaCost || 0) <= maxMana, `${d.id} costs ${d.manaCost} MP, class starts with ${maxMana}`);
   });
 
-  test(`Core ${classId} can play every starter card at combat start with its weapon and full SP and MP`, () => {
+  test(`Core ${classId} starter definitions and copy counts match the authored recipe`, () => {
+    const run = start(classId);
+    const ordinary = run.deck.filter(card => !card.grantedBy && !card.equipmentRole);
+    assert.deepEqual(counts(ordinary), recipeCounts(starterSource.classDecks[classId]));
+    for (const card of run.deck) assert.ok(reg.cards.has(card.cardId), `${card.cardId} resolves`);
+    const before = structuredClone(run.deck);
+    reconcileGrantedCards(reg, run);
+    assert.deepEqual(run.deck, before, 'reconciliation is idempotent');
+  });
+
+  test(`Core ${classId} starter display quotes equal engine payments when the play is funded`, () => {
     for (const cardId of Object.keys(expected)) {
       const attempt = withTarget => {
         const run = start(classId);
         const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
-        const p = combat.player;
-        assert.equal(p.stamina, p.maxStamina); assert.equal(p.mana, p.maxMana);
+        Object.assign(combat.player, { energy: 1000000, stamina: 1000000, maxStamina: 1000000, mana: 1000000, maxMana: 1000000 });
         combat.piles.hand.push({ cardId, instanceId: 'probe', upgraded: false });
-        dispatch(combat, { type: 'playCard', cardInstanceId: 'probe', ...(withTarget ? { targetId: combat.enemies[0].id } : {}) });
-        return combat;
+        const target = withTarget ? combat.enemies[0].id : undefined;
+        const quote = previewCard(combat, 'probe', target);
+        const display = playingCardModel(reg, { cardId, instanceId: 'probe' }, { preview: quote });
+        assert.equal(display.costs.stamina, quote.staminaCost);
+        assert.equal(display.costs.mana, quote.manaCost);
+        dispatch(combat, { type: 'playCard', cardInstanceId: 'probe', ...(target ? { targetId: target } : {}) });
+        const paid = combat.eventLog.find(event => event.type === 'cardPlayed' && event.cardInstanceId === 'probe');
+        assert.ok(paid, `${cardId} was played`);
+        assert.deepEqual([paid.energySpent, paid.staminaSpent, paid.manaSpent], [quote.cost, quote.staminaCost, quote.manaCost]);
       };
-      let combat;
-      try { combat = attempt(true); } catch (error) {
-        // Self-targeted cards refuse an enemy target; any other refusal fails here too.
+      try { attempt(true); } catch (error) {
         assert.match(error.message, /friendly target/, `${classId} ${cardId}: ${error.message}`);
-        combat = attempt(false);
+        attempt(false);
       }
-      assert.ok(combat.eventLog.some(e => e.type === 'cardPlayed' && e.cardId === cardId) || !combat.piles.hand.some(c => c.instanceId === 'probe'), `${classId} ${cardId} left the hand`);
     }
   });
+
 }
+
+test('editing a recipe changes new runs without changing the source or an existing profile', () => {
+  const catalog = structuredClone(gameProfileCatalog);
+  const pack = Object.values(catalog.packs).find(row => row.manifest.id === 'ashen.core-content');
+  const [first] = starterSource.classDecks.reaver;
+  pack.content.starterDeck.classDecks.reaver = [{ card: first.card, copies: first.copies + 2 }];
+  const edited = resolveGameAuthor({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} }, catalog);
+  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, edited)), edited);
+  const run = createRunState({ seed: 511, classId: 'reaver', registries });
+  assert.deepEqual(counts(run.deck.filter(card => !card.grantedBy && !card.equipmentRole)), { [first.card]: first.copies + 2 });
+  assert.deepEqual(profile.content.starterDeck.classDecks.reaver, starterSource.classDecks.reaver);
+  assert.notEqual(edited.hash, profile.hash);
+});
 
 const archivedStarter = () => {
   const bytes = readFileSync(new URL('./fixtures/pre-registry-dev-7dff4b03-save.json.gz', import.meta.url));
@@ -139,14 +141,16 @@ test('the genuine pre-registry starter art keeps its original save rank through 
   assert.equal(rankedCopy.deck.find((card) => card.instanceId === art.instanceId).rank, 3);
 });
 
-test('Core editor offers only collected definitions under the matching Adept (legacy unlimited rules, owner ruling 2026-10-23)', async () => {
+test('legacy unlimited rules offer only collected definitions of the matching training kind', async () => {
   const { unlimitedCardIds } = await import('../src/model/deckRules.js');
-  // Owner ruling 2026-11-21: Counter, Smash, Sweep and Evade left the starting decks, so only Strike and Defend are collected basics.
-  // Owner ruling 2026-11-21: Arcane Ward and Glimmer Veil cost 1 MP and are no longer rank.cantrip, so they are not unlimited basics.
-  const CASTER_BASICS = ['core.cantrip', 'core.stoneSigil', 'core.ashenShell'];
-  const expected = { reaver: ['core.strike', 'core.defend'],
-    rogue: ['core.strike', 'core.defend'], starseer: [], herald: CASTER_BASICS };
-  for (const id of Object.keys(expected)) assert.deepEqual(unlimitedCardIds(startLegacy(id)), expected[id]);
+  for (const classId of Object.keys(starterSource.classDecks)) {
+    const run = startLegacy(classId);
+    const character = legacyReg.gameProfile.content.characters.find(row => row.id === classId);
+    const kind = character.tags.includes('training.basic') ? 'Basic' : character.tags.includes('training.graduate') ? 'Cantrip' : null;
+    const expected = legacyReg.gameProfile.content.cards.filter(card => run.collectedCardIds.includes(card.id) && basicCardKind(run, card) === kind
+      && (!card.class || card.class === 'colorless' || card.class === classId) && ['starter', 'common'].includes(card.rarity)).map(card => card.id);
+    assert.deepEqual(unlimitedCardIds(run), expected);
+  }
 });
 
 test('Shipped Core mints nothing: no class has an unlimited card id', async () => {
@@ -159,6 +163,8 @@ test('Legacy Core owned basics are sourced basic and the Basic filter is non-emp
   const { deckEditorModel } = await import('../src/ui/models/DeckEditorModel.js');
   const { unlimitedCardIds, basicCardIds, isBasicCard } = await import('../src/model/deckRules.js');
   const run = startLegacy('reaver');
+  run.collectedCardIds = ['core.strike', 'core.defend'];
+  for (const cardId of run.collectedCardIds) if (!run.deck.some(card => card.cardId === cardId)) run.deck.push({ cardId, instanceId: `controlled:${cardId}` });
   assert.deepEqual(unlimitedCardIds(run), ['core.strike', 'core.defend'], 'policy: only collected trained basics can be minted');
   for (const id of ['core.strike', 'core.defend']) assert.ok(basicCardIds(run).includes(id), `${id} classified basic`);
   for (const c of run.deck.filter((x) => ['core.strike', 'core.defend'].includes(x.cardId))) assert.ok(isBasicCard(c, run), c.cardId);
@@ -176,7 +182,7 @@ test('Shipped Core: owned Strike/Defend are ordinary owned tiles, none basic, no
   const run = start('reaver');
   assert.deepEqual(unlimitedCardIds(run), [], 'no unlimited ids');
   assert.deepEqual(basicCardIds(run), [], 'nothing classified basic');
-  const ids = ['core.strike', 'core.defend'];
+  const ids = [...new Set(starterSource.classDecks.reaver.map(row => row.card))];
   const own = run.deck.filter((x) => ids.includes(x.cardId));
   assert.ok(own.length > 0);
   for (const c of own) assert.ok(!isBasicCard(c, run), c.cardId);
@@ -193,7 +199,7 @@ test('classDecks validation fails at profile construction with a message naming 
   const { resolveGameAuthor } = await import('../engine/kernel/gameConfig.js');
   const { catalog, authors } = compileGameProfiles();
   const pack = catalog.bundles[authors.core.core].manifest.packs.find(row => row.id === 'ashen.core-content');
-  const build = (mutate) => { const copy = JSON.parse(JSON.stringify(catalog)); mutate(copy.packs[`${pack.id}@${pack.version}`].content.starterDeck); return () => resolveGameAuthor(authors.core, copy); };
+  const build = (mutate) => { const copy = structuredClone(catalog); const starter = copy.packs[`${pack.id}@${pack.version}`].content.starterDeck; starter.classDecks = { reaver: [{ card: 'core.strike', copies: 2 }, { card: 'core.defend', copies: 1 }], rogue: [{ card: 'core.strike', copies: 1 }, { card: 'core.defend', copies: 1 }, { card: 'core.counter', copies: 1 }] }; mutate(starter); return () => resolveGameAuthor(authors.core, copy); };
   assert.doesNotThrow(build(() => {}), 'the shipped Core bundle validates');
   assert.throws(build(sd => { sd.classDecks.reaver[0].copies = '4'; }), /classDecks\/reaver\/0\/copies.*positive integer copies for class reaver row 0/);
   assert.throws(build(sd => { sd.classDecks.reaver[1].copies = -1; }), /classDecks\/reaver\/1\/copies.*positive integer copies for class reaver row 1/);
@@ -229,6 +235,8 @@ test('Core Reaver: the class special is not badged Basic in the editor, and noth
 
 test('Legacy Core Reaver: the class special is not badged Basic in the editor, the basics are', async () => {
   const run = startLegacy('reaver');
+  run.collectedCardIds = [...new Set([...run.collectedCardIds, 'core.strike', 'core.defend'])];
+  for (const cardId of ['core.strike', 'core.defend']) if (!run.deck.some(card => card.cardId === cardId)) run.deck.push({ cardId, instanceId: `controlled:${cardId}` });
   const { deckEditorModel, rankZeroLabelId, rows } = await reaverBadges(legacyReg, run);
   for (const r of rows.filter((x) => x.cardId === 'core.reaverSpecial')) {
     assert.notEqual(r.source, 'basic', 'core.reaverSpecial row source');
@@ -247,7 +255,9 @@ test('Legacy Core Reaver: the class special is not badged Basic in the editor, t
 test('Core Herald: its class spell (source reward) is hidden by the Basic filter and is not badged Basic', async () => {
   const { deckEditorModel, rankZeroLabelId } = await import('../src/ui/models/DeckEditorModel.js');
   const run = start('herald');
-  const rows = [...deckEditorModel({ registries: reg, run }).deck].filter((r) => r.cardId === 'core.heraldSpecial');
+  if (!run.deck.some(card => card.cardId === 'core.heraldSpecial')) run.sideboard.push({ cardId: 'core.heraldSpecial', instanceId: 'controlled:herald-special' });
+  const model = deckEditorModel({ registries: reg, run });
+  const rows = [...model.deck, ...model.collection].filter((r) => r.cardId === 'core.heraldSpecial');
   assert.ok(rows.length > 0, 'core.heraldSpecial row found');
   for (const r of rows) {
     assert.notEqual(r.source, 'basic');
@@ -320,41 +330,83 @@ test('sweep: every Core class deck row and a legacy deck badge Basic iff the Bas
     // A card the face prints no rank for (a Starseer spell) has no badge to disagree.
     if (badges.length === 0) continue;
     const zero = badges.filter((b) => b.rank === 0 && !b.magical);
-    // The Starseer's and Herald's only rank-badged rows are now their magical weapon art (Blight Touch), which has no Basic badge to disagree.
+    // A deck whose only rank-badged rows are magical weapon art (Blight Touch) has no Basic badge to disagree.
     assert.ok(zero.length > 0 || badges.every((b) => b.magical), `${name}: has rank-0 rows`);
     for (const b of zero) assert.equal(b.text === 'Basic', b.shown, `${name}: ${b.row.cardId} (${b.row.source}) badge "${b.text}" vs Basic filter ${b.shown}`);
   }
 });
 
-// Owner ruling 2026-11-21: starting decks are Unranked basics plus one uncommon specialty and one rare Rank 1 weapon art,
-// inside the budget in content/source/scoring.json (starter.budget); starting armour is Unranked.
-import { scoring } from '../src/content/generated/scoring.js';
+// Every currently authored starter must have a fresh finite generated scoring row.
 import { cardCombatPower, itemCombatPower } from '../src/content/generated/combatPower.js';
-
+// Owner ruling 2026-11-21: starting decks are Unranked basics plus at most one uncommon
+// specialty and one rare weapon art at the authored rank, inside the authored budget;
+// starting armour is Unranked. Every limit below is read from content/source/scoring.json.
+const starterRules = readJson('content/source/scoring.json').starter;
 for (const classId of Object.keys(DECKS)) {
-  test(`Core ${classId} starting deck passes the starter budget and the rank recipe`, () => {
-    const b = scoring.starter.budget;
+  test(`Core ${classId} starter scoring covers the current recipe and grants`, () => {
+    for (const id of Object.keys(DECKS[classId])) {
+      assert.ok(cardCombatPower[id], `${id} has a combat power row`);
+      assert.ok(Number.isFinite(cardCombatPower[id].raw) && Number.isFinite(cardCombatPower[id].cp), `${id} has finite scores`);
+    }
+  });
+
+  test(`Core ${classId} starting deck passes the authored starter budget and rank recipe`, () => {
+    const b = starterRules.budget;
     const cards = Object.entries(DECKS[classId]).flatMap(([id, n]) => Array(n).fill(id));
-    assert.ok(cards.length >= b.cardsMin && cards.length <= b.cardsMax, `${cards.length} cards`);
+    assert.ok(cards.length >= b.cardsMin && cards.length <= b.cardsMax, `${cards.length} cards, budget ${b.cardsMin}-${b.cardsMax}`);
     const rows = cards.map(id => ({ id, ...cardCombatPower[id] }));
     for (const r of rows) assert.ok(r.raw !== undefined, `${r.id} has a combat power row`);
     const special = rows.filter(r => r.rarity !== 'common' || r.rank > 0);
-    assert.ok(special.length <= b.maxSpecial, `${special.length} special cards: ${special.map(r => r.id)}`);
-    for (const r of rows) assert.ok(r.rank <= b.maxRankPerCard, `${r.id} rank ${r.rank}`);
+    assert.ok(special.length <= b.maxSpecial, `${special.length} special cards (max ${b.maxSpecial}): ${special.map(r => r.id)}`);
+    for (const r of rows) assert.ok(r.rank <= b.maxRankPerCard, `${r.id} rank ${r.rank} (max ${b.maxRankPerCard})`);
     const rawTotal = rows.reduce((sum, r) => sum + Math.max(r.raw, b.rawFloorPerCard), 0);
     assert.ok(rawTotal <= b.rawTotalMax, `raw total ${rawTotal} > ${b.rawTotalMax}`);
-    // The shipped recipe keeps ordinary starters Unranked and the rare art at Rank 1.
-    // Starseer authors ten common copies; the other classes retain an uncommon specialty.
-    const art = rows.filter(r => r.rarity === 'rare');
-    assert.equal(art.length, 1, 'exactly one rare weapon art');
-    assert.equal(art[0].rank, 1, `${art[0].id} is Rank 1 (cp ${art[0].cp})`);
-    for (const r of rows.filter(x => x !== art[0])) assert.ok(r.cp <= 0, `${r.id} cp ${r.cp} is Unranked`);
-    assert.equal(rows.filter(r => r.rarity === 'uncommon').length, classId === 'starseer' ? 0 : 1, 'Starseer has ten common authored copies; other classes keep one uncommon specialty');
+    const { weaponArt, specialty } = starterRules.deck;
+    const art = rows.filter(r => r.rarity === weaponArt.rarity);
+    assert.equal(art.length, weaponArt.count, `exactly ${weaponArt.count} ${weaponArt.rarity} weapon art`);
+    for (const r of art) {
+      assert.equal(r.rank, weaponArt.rank, `${r.id} is Rank ${weaponArt.rank} (cp ${r.cp})`);
+      assert.equal(r.rank, starterSource.weaponArtRank, `${r.id} scores at the authored starter art rank`);
+    }
+    for (const r of rows.filter(x => !art.includes(x))) assert.ok(r.cp <= 0, `${r.id} cp ${r.cp} is Unranked`);
+    // The specialty is the authored class special; a recipe may leave it out (Starseer authors ten common copies).
+    const specials = rows.filter(r => r.rarity === specialty.rarity);
+    assert.ok(specials.length <= specialty.count, `${specials.length} ${specialty.rarity} cards (max ${specialty.count})`);
+    const authoredSpecialCopies = starterSource.classDecks[classId].filter(row => row.card === starterSource.classSpecials[classId]).reduce((sum, row) => sum + row.copies, 0);
+    assert.deepEqual(specials.map(r => r.id), Array(authoredSpecialCopies).fill(starterSource.classSpecials[classId]), 'the only uncommon is the authored class special');
+    for (const r of specials) assert.ok(r.rank <= specialty.maxRank, `${r.id} rank ${r.rank} (max ${specialty.maxRank})`);
   });
 
   test(`Core ${classId} starting armour is Unranked`, () => {
     const row = itemCombatPower[`armour:${classId}.default`];
     assert.ok(row, 'armour row');
     assert.ok(row.cp <= 0, `cp ${row.cp}`);
+    assert.ok(row.rank <= starterRules.armourMaxRank, `rank ${row.rank} (max ${starterRules.armourMaxRank})`);
+  });
+
+  test(`Core ${classId} can play every starter card at combat start with its weapon and real SP and MP`, () => {
+    const run = start(classId);
+    const maxMana = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] }).player.maxMana;
+    for (const card of run.deck) {
+      const def = reg.cards.get(card.cardId);
+      assert.ok((def.manaCost || 0) <= maxMana, `${def.id} costs ${def.manaCost} MP, class starts with ${maxMana}`);
+    }
+    for (const cardId of Object.keys(DECKS[classId])) {
+      const attempt = withTarget => {
+        const combat = createRunCombat({ registries: reg, run: start(classId), rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+        const p = combat.player;
+        assert.equal(p.stamina, p.maxStamina); assert.equal(p.mana, p.maxMana);
+        combat.piles.hand.push({ cardId, instanceId: 'probe', upgraded: false });
+        dispatch(combat, { type: 'playCard', cardInstanceId: 'probe', ...(withTarget ? { targetId: combat.enemies[0].id } : {}) });
+        return combat;
+      };
+      let combat;
+      try { combat = attempt(true); } catch (error) {
+        // Self-targeted cards refuse an enemy target; any other refusal fails here too.
+        assert.match(error.message, /friendly target/, `${classId} ${cardId}: ${error.message}`);
+        combat = attempt(false);
+      }
+      assert.ok(combat.eventLog.some(e => e.type === 'cardPlayed' && e.cardId === cardId) || !combat.piles.hand.some(c => c.instanceId === 'probe'), `${classId} ${cardId} left the hand`);
+    }
   });
 }

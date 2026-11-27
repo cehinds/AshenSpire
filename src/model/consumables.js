@@ -19,7 +19,7 @@
 //     companion one fight closer to leaving (engine/runCombat.js runCombatEnd);
 //   · the content door's checks and the Settings rows for every number.
 import { NOTE } from '../content/balance.js';
-import { awardSkillXp, skillTracks } from './skills.js';
+import * as Skills from './skills.js';
 import { uiStrings } from '../content/generated/uiStrings.js';
 import { NEW_RUN_CLAUSE } from './balanceNotes.js';
 import { bookTracks, bookLessons } from './bookLearning.js';
@@ -74,7 +74,7 @@ export function unknownCompanionId(registries, run) {
 
 /** A consumable's shelf sentence, its {tokens} filled from the row's live values. */
 export function consumableText(registries, def) {
-  const track = def.skill ? skillTracks(registries).find((row) => row.id === def.skill) : null;
+  const track = def.skill ? Skills.skillTracks(registries).find((row) => row.id === def.skill) : null;
   return String(def.blurb || '').replace(/\{(\w+)\}/g, (whole, key) => {
     if (key === 'skill') return track ? track.label : String(def.skill || '');
     return def[key] !== undefined ? String(def[key]) : whole;
@@ -118,7 +118,7 @@ export function commitSkillBookRead(registries, run, quote, { inCombat = false, 
   // copies remain available in the sideboard under the deck editor's rules.
   const destination = plan.choice.kind === 'card' && run.deck.filter((card) => card.cardId === plan.choice.id).length >= deckCopyLimit(registries, plan.choice.id, settings, run.class) ? 'sideboard' : 'deck';
   const bonuses = classBookBonuses(registries, run, plan.def);
-  const receipt = awardSkillXp(registries, run, plan.skillId, plan.def.xp);
+  const receipt = Skills.awardSkillXp(registries, run, plan.skillId, plan.def.xp);
   const classLearned = plan.choice.kind === 'class' && !learnedClassIds(run).includes(plan.choice.id);
   if (plan.choice.kind === 'class') {
     if (classLearned) learnClassCard(registries, run, plan.choice.id);
@@ -223,7 +223,7 @@ function wholeAtLeast(row, key, floor, at, err, ceiling = Infinity) {
 export function consumableTableProblems(rows, bundle, err) {
   if (!Array.isArray(rows)) { err('consumables', 'must be an array of consumable rows'); return; }
   const noted = carriesNotes(rows);
-  const tracks = new Set(skillTracks(bundle).map((row) => row.id));
+  const tracks = new Set(Skills.skillTracks(bundle).map((row) => row.id));
   const seen = new Set();
   rows.forEach((row, index) => {
     if (!object(row) || typeof row.id !== 'string' || !row.id) { err(`consumables[${index}]`, 'must be a consumable { id, kind, name, blurb, cost, sellValue, … }'); return; }

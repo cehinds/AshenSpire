@@ -1,4 +1,6 @@
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
+import { matchupRules } from './helpers/matchup-contract.mjs';
 import assert from 'node:assert/strict';
 import { combatMatchups } from '../src/content/combatMatchups.js';
 import { armCombatCounter, clearCombatCounter, prepareMatchupHit, completeMatchupHit,
@@ -12,7 +14,7 @@ function fixture() {
   const events = [], queue = [];
   const source = { id: 'enemy', kind: 'enemy', alive: true, hp: 30, block: 0, statuses: {} };
   const target = { id: 'player', kind: 'player', alive: true, hp: 30, block: 4, statuses: {} };
-  const ctx = { turn: 1, emit: (type, payload) => events.push({ type, ...payload }), enqueue: action => queue.push(action),
+  const ctx = { combatMatchupRules: matchupRules(), turn: 1, emit: (type, payload) => events.push({ type, ...payload }), enqueue: action => queue.push(action),
     registries: { statuses: new Map(['bleed', 'frost', 'burn', 'weak', 'crimsonBlight', 'necroticBlight', 'venom'].map(id => [id, { id }])) } };
   return { ctx, source, target, events, queue };
 }
@@ -147,10 +149,11 @@ test('old unprofiled carriers preserve damage; Counter state expires and survive
 
 test('combat-local rules override tactical balance without changing defaults', () => {
   const f = fixture();
-  f.ctx.combatMatchupRules = structuredClone(combatMatchups);
+  const before = JSON.stringify(combatMatchups);
+  f.ctx.combatMatchupRules = matchupRules();
   f.ctx.combatMatchupRules.smash.guardedMultiplier = 2;
   assert.equal(prepareMatchupHit(f.ctx, f.source, f.target, card('smash'), 8).amount, 16);
-  assert.equal(combatMatchups.smash.guardedMultiplier, 1.5);
+  assert.equal(JSON.stringify(combatMatchups), before);
 });
 
 test('typed status riders resolve canonical types and legacy aliases through content rules', () => {
@@ -197,4 +200,11 @@ test('lethal contact allows source cleansing while dead targets receive no rider
   }
   assert.equal(f.target.block, 4);
   assert.equal(f.target.wardBlock, 2);
+});
+
+test('current tactical rules follow the authoritative JSON', () => {
+  const source = JSON.parse(readFileSync(new URL('../content/source/combatMatchups.json', import.meta.url), 'utf8'));
+  const withoutNotes = value => Array.isArray(value) ? value.map(withoutNotes)
+    : value && typeof value === 'object' ? Object.fromEntries(Object.entries(value).filter(([key]) => !key.startsWith('$')).map(([key, entry]) => [key, withoutNotes(entry)])) : value;
+  assert.deepEqual(withoutNotes(combatMatchups), withoutNotes(source));
 });

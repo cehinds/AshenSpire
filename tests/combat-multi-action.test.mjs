@@ -39,6 +39,27 @@ function coreFight({ seed = SEED, enemyIds = ['fellWarden'] } = {}) {
   const run = createRunState({ seed, classId: 'reaver', registries: coreRegistries });
   return createRunCombat({ registries: coreRegistries, rng: createRng(seed), run, enemyIds, settings: {} });
 }
+
+// This plan/execution scenario deliberately has no charge, status rider or
+// authored level-card pool that can interrupt an otherwise payable plan.
+function uninterruptedFight() {
+  const id = 'fixture.uninterruptedPlan';
+  const move = (sp, damage) => ({ intent: 'attack', sp, damage, weight: 1,
+    tags: ['camp:physical', 'maneuver:attack', 'range:melee'] });
+  const definition = { id, name: id, hp: [1000, 1000], poiseMax: 0, spPool: 3,
+    attributes: { strength: 0, dexterity: 0, constitution: 0, wisdom: 0, intelligence: 0 },
+    levelProfile: { min: 1, max: 1 }, startingRange: 'melee', firstMove: 'quick',
+    moves: { quick: move(1, 1), heavy: move(2, 2) } };
+  const reg = { ...coreRegistries, enemies: { ...coreRegistries.enemies,
+    get: key => key === id ? definition : coreRegistries.enemies.get(key),
+    has: key => key === id || coreRegistries.enemies.has(key) } };
+  const run = createRunState({ seed: SEED, classId: 'reaver', registries: reg });
+  run.relics = [];
+  run.loadout = { sets: { rightHand: [null], leftHand: [null], armor: [null] }, active: { rightHand: 0, leftHand: 0, armor: 0 } };
+  const combat = createRunCombat({ registries: reg, rng: createRng(SEED), run, enemyIds: [id] });
+  combat.player.hp = combat.player.maxHp = 1000;
+  return combat;
+}
 // Ends the player's turn and answers any reaction pause the enemy phase raises (declined).
 function endTurn(c) {
   dispatch(c, { type: 'endTurn' });
@@ -71,7 +92,7 @@ test('a legacy fight still plans its pool of moves (action costs are always on),
 test('the planned moves are the moves the enemy plays, in order, turn after turn', () => {
   // Owner 2026-10-12: an enemy spends its pool in its turn, so the head and every follow-up play in the enemy phase,
   // in plan order. Each turn's performed moves are the plan the enemy held when the turn began.
-  const c = coreFight({ seed: SEED });
+  const c = uninterruptedFight();
   const enemy = c.enemies[0];
   assert.ok(Array.isArray(enemy.plannedMoves) && enemy.plannedMoves.length >= 1, 'the first roll plans the follow-ups');
   let turns = 0;
@@ -83,7 +104,7 @@ test('the planned moves are the moves the enemy plays, in order, turn after turn
     endTurn(c);
     const played = (live.performedMoves ?? []).slice(before);
     assert.ok(played.length >= 1, `turn ${turn}: the enemy plays at least one move`);
-    assert.deepEqual(played, plan.slice(0, played.length), `turn ${turn}: the plan plays in order`);
+    assert.deepEqual(played, plan, `turn ${turn}: the entire payable plan plays in order`);
     turns++;
   }
   assert.ok(turns >= 3, 'the fixture plays several turns');

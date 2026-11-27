@@ -27,7 +27,11 @@ export function ScalePhysicalDamage(amount, physicalFraction, multiplier) {
 }
 
 function identity(tags, prefix, allowed, name) {
-  const values = [...new Set(tags.filter(tag => tag.startsWith(prefix)).map(tag => tag.slice(prefix.length)))];
+  const values = [];
+  for (const tag of tags) if (tag.startsWith(prefix)) {
+    const value = tag.slice(prefix.length);
+    if (!values.includes(value)) values.push(value);
+  }
   if (values.length > 1) throw new Error(`${name} carries conflicting ${prefix} tags`);
   if (values.length && allowed && !allowed.has(values[0])) throw new Error(`${name} carries unknown ${prefix} tag '${values[0]}'`);
   return values[0] || null;

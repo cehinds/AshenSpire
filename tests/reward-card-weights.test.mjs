@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {readFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -7,51 +8,75 @@ import { createRng } from '../src/engine/rng.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { gameProfileRewardOffers, cardPickWeight } from '../src/model/gameProfileRewards.js';
 
-const build = modules => {
-  const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules });
-  return bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
-};
-// Module overrides merge into the defaults, so a neutral tag table names every authored tag.
-const NEUTRAL = { 'maneuver:casting': 1, 'maneuver:smash': 1, 'maneuver:counter': 1, 'maneuver:sweep': 1, default: 1 };
-// The depth bias and the recent-offer penalty (owner 2026-10-27, tests/core-reward-mix.test.mjs) are switched off here so these tests isolate ownership and tag weights.
-// skipOwned (owner 2026-11-20) would drop owned cards outright; it is off here so the owned-copy weight can be measured.
-const NO_DEPTH = { skipOwned: false, recentOfferWindow: 0, depthBias: { earlyMaxDepth: 3, early: { basicOrCantrip: 1, mana: 1 }, late: { mana: 1, highRankMin: 2, highRank: 1 } } };
-const weighted = build({ 'reward-ranks': NO_DEPTH }), uniform = build({ 'reward-ranks': { ...NO_DEPTH, ownedCopyWeight: 1, tagWeights: NEUTRAL } });
-const starter = ['core.strike', 'core.strike', 'core.strike', 'core.defend', 'core.defend', 'core.counter', 'core.smash', 'core.sweep', 'core.evade', 'base.draw', 'core.reaverSpecial'];
-function sample(registries, offers = 120, deck = starter) {
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+const cards = Array.from({ length: 8 }, (_, i) => ({ id: `fixture.weight.${i}`, class: 'colorless', type: 'attack', rarity: 'common', cost: 1, staminaCost: 1, manaCost: 0,
+  tags: [i < 4 ? 'maneuver:attack' : 'maneuver:casting'], effects: [{ op: 'damage', target: 'enemy', amount: 1 }] }));
+const neutral = { default: 1, 'maneuver:attack': 1, 'maneuver:casting': 1 };
+const rule = { ownedCopyWeight: .05, tagWeights: { ...neutral, 'maneuver:attack': 1.5 } };
+
+// These in-memory candidate fixtures exercise the real offer entry point. They
+// are never serialized as historical profiles or installed as game content.
+function sample(weights, offers = 600) {
   const picks = [];
   for (let i = 0; i < offers; i++) {
     const run = createRunState({ seed: i + 1, classId: 'reaver', registries });
-    run.deck = deck.map((cardId, n) => ({ instanceId: `d${n}`, cardId, upgraded: false }));
-    const owned = new Set(deck);
-    for (const option of gameProfileRewardOffers(registries, run, createRng(500 + i), { offerId: `w${i}` }).options) if (option.kind === 'combatCards') picks.push({ id: option.id, owned: owned.has(option.id) });
+    run.gameProfile = structuredClone(run.gameProfile);
+    const content = run.gameProfile.content;
+    content.cards = cards;
+    content.rewards = { ...content.rewards, categories:['combatCards'], offerCount: 1, combatOfferCount: { min: 1, max: 1 },
+      rewardGroups: [{ id: 'fixture.cards', weight: 1, categories: ['combatCards'] }],
+      eligibility: { ...content.rewards.eligibility, excludeCardIds: [], playableOnly: false,
+        weaponArts: { ...content.rewards.eligibility.weaponArts, cardIds: [] },
+        combatCards: { ...weights, minRank: 0, lowerRankChance: 1, skipOwned: false, skipOwnedBasics: false,
+          depthBias: null, typeWeights: {}, recentOfferWindow: 0, offeredCopyWeight: 1,
+          stanceCoverage: { enabled: false, reservedSlots: 0, preferTiers: [], excludePools: [] } } } };
+    run.gameProfile.modules.rewards.offerCount = 1;
+    run.gameProfile.modules.rewards.rewardGroups=content.rewards.rewardGroups;
+    run.gameProfile.modules.progression.cardRanks = false;
+    run.gameProfile.modules.effects.spellRewardPolicyVersion = 0;
+    run.deck = [0, 4].map(n => ({ instanceId: `owned${n}`, cardId: cards[n].id }));
+    run.sideboard = [];
+    for (const option of gameProfileRewardOffers(registries, run, createRng(500 + i), { offerId: `w${i}` }).options) {
+      if (option.kind !== 'combatCards') continue;
+      assert.ok(cards.some(card => card.id === option.id), 'only controlled candidates are offered');
+      picks.push({ id: option.id, owned: run.deck.some(card => card.cardId === option.id) });
+    }
   }
   return picks;
 }
 
-test('Core Smash and the other basic stance cards are offerable rank 1 cards', () => {
-  const cards = weighted.cards;
-  for (const id of ['core.smash', 'core.sweep', 'core.counter', 'core.strike', 'core.defend']) assert.equal(cards.get(id).rarity, 'common', id);
-  // Smash is owned by the starter deck and owned cards are now rare (owner 2026-10-27), so offerability is checked for a character without it.
-  assert.ok(sample(weighted, 200, starter.filter(id => id !== 'core.smash')).some(pick => pick.id === 'core.smash'), 'Smash appears among 200 Core offers');
+test('authored card ownership and tag weights reach the runtime rule', () => {
+  const settings = profile.modules['reward-ranks'];
+  const configured = profile.content.rewards.eligibility.combatCards;
+  const authored=JSON.parse(readFileSync(new URL('../engine/modules/reward-ranks/defaults.json',import.meta.url)));
+  assert.equal(configured.ownedCopyWeight, authored.ownedCopyWeight);
+  assert.deepEqual(configured.tagWeights, authored.tagWeights);
+  assert.equal(configured.ownedCopyWeight, settings.ownedCopyWeight);
+  assert.deepEqual(configured.tagWeights, settings.tagWeights);
+  for (const card of registries.cards.all()) for (const owned of [0, 1, 2]) {
+    const matching = (card.tags || []).filter(tag => tag !== 'default' && Number.isFinite(configured.tagWeights?.[tag]));
+    const tag = matching.length ? matching.reduce((product, key) => product * configured.tagWeights[key], 1) : configured.tagWeights?.default ?? 1;
+    assert.equal(cardPickWeight(configured, card, owned), tag * Math.pow(configured.ownedCopyWeight ?? 1, owned));
+  }
 });
-test('owned cards are weighted down, non-casting maneuvers up, and the pick is deterministic', () => {
-  const run = createRunState({ seed: 1, classId: 'reaver', registries: weighted });
-  const combat = run.gameProfile.content.rewards.eligibility.combatCards;
-  assert.equal(combat.ownedCopyWeight, 0.05);
-  assert.equal(cardPickWeight(combat, { tags: ['maneuver:casting'] }, 0), 1);
-  assert.equal(cardPickWeight(combat, { tags: ['maneuver:attack'] }, 0), 1.5);
-  assert.ok(Math.abs(cardPickWeight(combat, { tags: ['maneuver:smash'] }, 2) - 1.5 * 0.05 * 0.05) < 1e-12);
-  assert.equal(cardPickWeight({}, { tags: ['x'] }, 3), 1);
-  const a = sample(weighted, 30), b = sample(weighted, 30);
-  assert.deepEqual(a, b);
+
+test('controlled tag and per-owned-copy weights multiply without special card identities', () => {
+  assert.equal(cardPickWeight(rule, { tags: ['maneuver:casting'] }, 0), 1);
+  assert.equal(cardPickWeight(rule, { tags: ['maneuver:attack'] }, 0), 1.5);
+  assert.ok(Math.abs(cardPickWeight(rule, { tags: ['maneuver:attack'] }, 2) - 1.5 * .05 * .05) < 1e-12);
+  assert.equal(cardPickWeight({}, { tags: ['unweighted'] }, 3), 1);
+  assert.equal(cardPickWeight({ ownedCopyWeight: .5, tagWeights: { a: 2, b: 3 } }, { tags: ['a', 'b'] }, 2), 1.5);
 });
-test('weights cut the owned-card rate and raise non-casting maneuvers against uniform picks', () => {
+
+test('the real seeded offer picker reduces owned picks and raises weighted tags with controlled candidates', () => {
+  const before = sample({ ownedCopyWeight: 1, tagWeights: neutral });
+  const after = sample(rule);
+  const penaltyOnly = sample({ ownedCopyWeight: .05, tagWeights: neutral });
   const rate = picks => picks.filter(pick => pick.owned).length / picks.length;
-  const share = (registries, picks) => picks.filter(pick => !(registries.cards.get(pick.id).tags || []).includes('maneuver:casting')).length / picks.length;
-  const before = sample(uniform, 600), after = sample(weighted, 600);
-  assert.ok(share(weighted, after) > share(uniform, before), `non-casting share rises: ${share(weighted, after)} vs ${share(uniform, before)}`);
-  // Basics are favoured by tag weight, so compare owned copies of NON-basic picks too: the penalty alone must lower the rate.
-  const penaltyOnly = sample(build({ 'reward-ranks': { ...NO_DEPTH, tagWeights: NEUTRAL } }), 600);
-  assert.ok(rate(penaltyOnly) < rate(before), `owned rate ${rate(penaltyOnly)} < ${rate(before)}`);
+  const attackShare = picks => picks.filter(pick => cards.find(card => card.id === pick.id).tags.includes('maneuver:attack')).length / picks.length;
+  assert.equal(before.length, 600); assert.equal(after.length, 600);
+  assert.ok(attackShare(after) > attackShare(before), 'tag weights affect the actual picker');
+  assert.ok(rate(penaltyOnly) < rate(before), 'ownership weights affect the actual picker');
+  assert.deepEqual(sample(rule, 30), sample(rule, 30), 'same seed and candidates replay identically');
 });

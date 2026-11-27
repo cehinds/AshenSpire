@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { scoringContract } from './helpers/scoring-contract.mjs';
 import assert from 'node:assert/strict';
 import { fight } from './elementFixture.mjs';
 import { createRunCombat } from './withoutWeaknesses.mjs';
@@ -250,15 +251,17 @@ test('13c. Temporary Core attributes raise maximum HP, SP and MP without refilli
 });
 
 test('14. Recurring buff tag costs +10 CP and pairs with Exhaust', () => {
-  assert.equal(scoring.tags['trait:recurring'].weight, 10);
+  assert.equal(scoring.tags['trait:recurring'].weight, JSON.parse(readFileSync(new URL('../content/source/scoring.json',import.meta.url))).tags['trait:recurring'].weight);
   const base = { id: 'test.buff', name: 'War Stance', rarity: 'common', type: 'skill', cost: 1, staminaCost: 1, manaCost: 0, effects: [{ op: 'applyStatus', target: 'self', status: 'strength', stacks: 1 }] };
   const upgraded = applyUpgradeSteps(base, [{ k: 'fx', fx: 'recurring' }]);
   assert.ok(upgraded.tags.includes('trait:recurring'));
   assert.ok(upgraded.keywords.includes('exhaust'));
 });
 
-test('15. Card upgrades respect rank, CP, and rarity under the historical budget fixture', () => {
-  const scoring = JSON.parse(readFileSync(new URL('./fixtures/scoring-pre-starseer.json', import.meta.url), 'utf8'));
+test('15. Card upgrades respect rank, CP, and rarity under explicit budget weights', () => {
+  const scoring = scoringContract();
+  scoring.tags['trait:recurring']={weight:15};
+  scoring.statuses.strength={weight:4,target:'self'};
   // 0-rank common card at CP 0 trying to get -1 SP (+4 CP) -> bumps to uncommon (CP 2 -> Rank 1), allowed if playerLevel >= 1
   // Trying to add recurring (+15 CP) at level 1 -> even at rare (-5 discount -> CP ~10 -> Rank 3), player at level 1 cannot reach Rank 3 -> disallowed!
   const base = { id: 'test.buff', name: 'War Stance', rarity: 'common', type: 'skill', cost: 1, staminaCost: 1, manaCost: 0, effects: [{ op: 'applyStatus', target: 'self', status: 'strength', stacks: 1 }] };
@@ -353,7 +356,8 @@ test('18. Dynamic poise damage appears on the card when attacking and updates vs
 });
 
 
-test('shipped upgrade budgets retain a common step at the rank edge and promote rarity for the next damage step', () => {
+test('controlled upgrade budgets retain a common step at the rank edge and promote rarity for the next damage step', () => {
+  const scoring=scoringContract();scoring.effects.damage={weight:1,per:1};scoring.tags['trait:unavoidable']={weight:5};
   const base = { id: 'custom.rarity-budget.fixture', class: 'reaver', rarity: 'common', type: 'attack', cost: 1, staminaCost: 1, manaCost: 0,
     tags: ['camp:physical', 'source:weapon', 'maneuver:attack', 'trait:unavoidable'], effects: [{ op: 'damage', target: 'enemy', amount: 8 }] };
   const evaluate = n => EvaluateUpgradeStepCp({ baseDef: base, currentDef: base, instance: { rank: 1 }, step: { k: 'dmg', n }, playerLevel: 1, scoring });

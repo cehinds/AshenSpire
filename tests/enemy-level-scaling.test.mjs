@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { gunzipSync } from 'node:zlib';
 import { loadGameProfileCatalog } from '../tools/game-config.mjs';
-import { characterSettings, resolveGameAuthor, enemyFightLevel, enemyLevel, enemyEffectiveLevel, resolveEnemyAttributes, enemyPools, canonicalGameJSON } from '../engine/kernel/gameConfig.js';
+import { characterSettings, resolveGameAuthor, enemyFightLevel, enemyLevel, enemyEffectiveLevel, enemyScalingHpFactor, resolveEnemyAttributes, enemyPools, enemyItemBonuses, canonicalGameJSON } from '../engine/kernel/gameConfig.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries, validateGameProfileSnapshot } from '../src/model/gameProfile.js';
@@ -16,7 +16,25 @@ import { createRng } from '../src/engine/rng.js';
 
 const author = JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url)));
 const profile = resolveGameAuthor(author, loadGameProfileCatalog());
-const settings = characterSettings(profile.modules);
+const liveSettings = characterSettings(profile.modules);
+// Precise boundary, allocation and cap regressions own their small numerical
+// scenario. They do not take their inputs from today's authored balance tables.
+const settings = {
+  levelFrom: 'levelProfile.min', rounding: 'down', attributePointsPerLevel: 1,
+  attributeFill: { floor: 1, defaultPriority: ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'],
+    priorityWeights: [4, 3, 2, 1, 0], caps: {} },
+  tagRules: { 'character.player': { attributeBudget: [6, 6] }, 'character.enemy': {},
+    'tier.minion': { pools: { sp: 2 } }, 'tier.elite': { pools: { sp: 3 } }, 'tier.boss': { pools: { sp: 3 } } },
+  statRules: { hp: { constitution: 5, perLevel: 5 }, sp: { dexterity: 1 }, mp: { wisdom: 1 } },
+  enemyLevelScaling: {
+    floorsPerStep: 3, bossSteps: 2, hpPerStep: 0.08, gearPerStep: { ar: 1, dr: 1 },
+    levels: { act1: { minion: [1, 2, 3], elite: [2, 3, 4], boss: 5 },
+      act2: { minion: [3, 4, 5], elite: [4, 5, 6], boss: 8 },
+      act3: { minion: [5, 6, 7], elite: [6, 7, 8], boss: 11 } },
+    attributeCaps: { elite: { dexterity: 4, wisdom: 4 }, boss: { dexterity: 4, wisdom: 4 } },
+    spCap: { minion: 2, elite: 3, boss: 3 },
+  },
+};
 const row = (tier, extra = {}) => ({ id: `probe.${tier}`, tags: ['character.enemy', `tier.${tier}`], levelProfile: { min: 1, max: 2 }, ...extra });
 
 test('enemyFightLevel reads the act and tier row at the floor step', () => {
@@ -81,6 +99,12 @@ test('SP stops at the tier cap after gear and relics', () => {
   }
 });
 
+test('only stepped tier rows gain their configured HP factor', () => {
+  assert.deepEqual([0, 1, 2].map(step => enemyScalingHpFactor(row('minion'), settings, step)), [1, 1.08, 1.16]);
+  assert.equal(enemyScalingHpFactor(row('boss'), settings, 2), 1);
+  assert.equal(enemyScalingHpFactor(row('minion'), { ...settings, enemyLevelScaling: null }, 2), 1);
+});
+
 // Headless Core fights, built the way the live game builds them (createRunCombat).
 const coreRegistries = (gameProfile = resolveGameProfile('default')) =>
   bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, gameProfile)), gameProfile);
@@ -91,38 +115,55 @@ function fightEnemy(registries, enemyId, act, floor, seed = 77) {
   run.floor = floor;
   return createRunCombat({ registries, run, rng: createRng(seed), enemyIds: [enemyId] }).enemies[0];
 }
-const tierOf = id => profile.content.enemies.find(e => e.id === id).tier;
 
-test('an act-1 minion on floors 2, 5 and 8 is level 1, 2 and 3 with +8% HP and +1 AR and DR a step', () => {
-  assert.equal(tierOf('wanderingSoldier'), 'minion');
-  const [low, mid, high] = [2, 5, 8].map(floor => fightEnemy(core, 'wanderingSoldier', 1, floor));
-  assert.deepEqual([low, mid, high].map(e => [e.level, e.levelStep]), [[1, 0], [2, 1], [3, 2]]);
-  // Same seed, same rolled HP: only the step factor (and rounding) separates them.
-  for (const [e, ratio] of [[mid, 1.08], [high, 1.16]]) assert.ok(Math.abs(e.maxHp / low.maxHp - ratio) < 0.04, `HP ${low.maxHp} -> ${e.maxHp}`);
-  // AR and DR follow STR and DEX plus the gear step: strip the attribute part to see the step alone.
-  const gear = e => [e.ratings.ar - e.attributes.strength, e.ratings.dr - e.attributes.dexterity];
-  assert.deepEqual([low, mid, high].map(gear), [[0, 0], [1, 1], [2, 2]]);
-});
-
-test('an act-2 boss is level 8 and an act-3 boss level 11, both at the boss gear step with no HP step', () => {
-  assert.equal(tierOf('stitchedKing'), 'boss');
-  const king = fightEnemy(core, 'stitchedKing', 2, 10);
-  assert.deepEqual([king.level, king.levelStep], [8, 2]);
-  assert.equal(king.ratings.ar - king.attributes.strength, 2);
-  assert.equal(fightEnemy(core, 'ashheartDragon', 3, 10).level, 11);
-});
-
-test('no boss or elite exceeds SP 3 and no minion SP 2; elite and boss Dex and Wis stay at 4 or less before gear', () => {
-  // Act 3, floor 8 is the top of the table, so the most points and the most SP any enemy can carry.
-  for (const e of profile.content.enemies) {
-    const enemy = fightEnemy(core, e.id, 3, 8);
-    const cap = e.tier === 'minion' ? 2 : 3;
-    assert.ok(enemy.maxStamina <= cap, `${e.id} SP ${enemy.maxStamina}`);
-    if (e.tier !== 'minion') assert.ok(enemy.ownAttributes.dexterity <= 4 && enemy.ownAttributes.wisdom <= 4, `${e.id} ${JSON.stringify(enemy.ownAttributes)}`);
+test('current authored act/floor levels, gear steps and HP settings reach live fights', () => {
+  assert.deepEqual(core.gameProfile.modules.characters, profile.modules.characters, 'generated settings equal independently compiled source');
+  assert.deepEqual(core.gameProfile.content.enemies, profile.content.enemies, 'generated enemies equal independently compiled source');
+  const scaling = liveSettings.enemyLevelScaling;
+  for (const [actId, tiers] of Object.entries(scaling.levels)) {
+    const act = Number(actId.slice(3));
+    for (const [tier, levels] of Object.entries(tiers)) {
+      const definition = profile.content.enemies.find(enemy => enemy.tier === tier);
+      if (!definition) continue; // A configured tier may have no current authored members.
+      const steps = Array.isArray(levels) ? levels.map((_, step) => step) : [scaling.bossSteps || 0];
+      for (const step of steps) {
+        const floor = 1 + step * scaling.floorsPerStep;
+        const enemy = fightEnemy(core, definition.id, act, floor);
+        assert.deepEqual([enemy.level, enemy.levelStep], [Array.isArray(levels) ? levels[step] : levels, step]);
+        assert.equal(enemy.ratings.ar - enemy.attributes.strength, (scaling.gearPerStep.ar || 0) * step);
+        assert.equal(enemy.ratings.dr - enemy.attributes.dexterity, (scaling.gearPerStep.dr || 0) * step);
+        const scale = liveSettings.hpScaleByTier?.[tier] ?? 1;
+        if (liveSettings.effectiveLevelHp && enemyEffectiveLevel(definition, liveSettings, 1) !== null) {
+          const pools = enemyPools({ ...definition, resolvedAttributes: enemy.ownAttributes }, liveSettings, enemy.level,
+            enemyItemBonuses(definition, profile.content, profile.modules.gear));
+          assert.equal(enemy.maxHp, Math.max(1, Math.round(pools.hp * scale)));
+        } else {
+          const factor = Array.isArray(levels) ? 1 + scaling.hpPerStep * step : 1;
+          const [low, high] = core.enemies.get(definition.id).hp;
+          const possible = Array.from({ length: high - low + 1 }, (_, index) =>
+            Math.max(1, Math.round(Math.max(1, Math.round((low + index) * factor)) * scale)));
+          assert.ok(possible.includes(enemy.maxHp), `${definition.id} HP follows its source range, step and tier scale`);
+        }
+      }
+    }
   }
 });
 
-// An older snapshot carries no enemyLevelScaling: its fights keep today's levels and never move with the floor.
+test('current enemies follow their source SP caps and attribute caps', () => {
+  const scaling = liveSettings.enemyLevelScaling;
+  const act = Object.keys(scaling.levels).length;
+  const floor = 1 + scaling.floorsPerStep * Math.max(...Object.values(scaling.levels).flatMap(tiers =>
+    Object.values(tiers).filter(Array.isArray).map(levels => levels.length - 1)));
+  for (const definition of profile.content.enemies) {
+    const enemy = fightEnemy(core, definition.id, act, floor);
+    const cap = scaling.spCap?.[definition.tier];
+    if (Number.isSafeInteger(cap)) assert.ok(enemy.maxStamina <= cap, `${definition.id} SP ${enemy.maxStamina} <= ${cap}`);
+    const caps = { ...liveSettings.attributeFill.caps, ...scaling.attributeCaps?.[definition.tier], ...definition.attributeCaps };
+    for (const [attribute, max] of Object.entries(caps)) assert.ok(enemy.ownAttributes[attribute] <= max, `${definition.id} ${attribute} <= ${max}`);
+  }
+});
+
+// A controlled snapshot without enemyLevelScaling keeps its configured levels on every floor.
 const plain = value => JSON.parse(JSON.stringify(value));
 function withoutScaling() {
   const old = plain(resolveGameProfile('default'));
@@ -135,11 +176,11 @@ function withoutScaling() {
 test('an older snapshot without enemyLevelScaling fights as before, whatever the floor', () => {
   const old = coreRegistries(withoutScaling());
   const oldSettings = characterSettings(old.gameProfile.modules);
-  for (const [id, act] of [['wanderingSoldier', 1], ['courtDuelist', 2], ['stitchedKing', 2]]) {
+  for (const row of old.gameProfile.content.enemies.filter((enemy, index, all) => all.findIndex(other => other.tier === enemy.tier) === index)) {
+    const id = row.id, act = 2;
     const [low, high] = [2, 8].map(floor => fightEnemy(old, id, act, floor));
     assert.ok(!('levelStep' in low), `${id} has no level step`);
     assert.deepEqual(plain(high), plain(low), `${id} does not move with the floor`);
-    const row = old.gameProfile.content.enemies.find(e => e.id === id);
     assert.equal(low.level, enemyEffectiveLevel(row, oldSettings, act) ?? enemyLevel(row, oldSettings), id);
     assert.equal(low.ratings.ar, low.attributes.strength, `${id} has no gear step`);
   }

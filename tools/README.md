@@ -80,7 +80,7 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `card-components.test.mjs` | (no header comment) | tests run-node (discovered: every *.test.mjs) |
 | `card-drag-targeting.mjs` | card-drag-targeting — browser acceptance for #150 + #198 + #311 | tools hybrid-input-parity, plantsites-baseline.json |
 | `card-one-shape.mjs` | card-one-shape — THE PLAYING CARD HAS ONE SHAPE, MEASURED ON REAL | tests card-size-tuning; docs docs/COMPONENT-CATALOG.md, docs/COMPONENT-MODEL-ARCHITECTURE.md; other docs/component-catalog.html, docs/tag-model/tables/presentation/components.csv |
-| `card-value-index-oracle.mjs` | Record the independent pre-index implementation against today's content. | tests card-value-tag-index |
+| `card-value-index-oracle.mjs` | Record the independent pre-index implementation against compact controlled operands. | tests card-value-tag-index |
 | `catalog-json.mjs` | Encode repeated JSON string tokens, not JavaScript. Author JSON stays readable. | tests buildversion-schema-versions, catalog-json, game-profile-cli +1; tools content-build, game-config |
 | `character-creation-check.mjs` | Focused real-Chromium verification of character creation's stats step. | tests card-size-tuning; tools modal-shell-contract; docs DEVELOPER.md; other .gitignore, docs/architecture-handoff/pre-existing-changes.txt |
 | `characters-convert.mjs` | Players and enemies in one shape (owner 2026-10-17): games/ashenspire/packs/core/characters.json. | tools enemy-decks-convert; docs engine/modules/characters/guide.md |
@@ -127,6 +127,7 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `enemy-back-motion-normalize.py` | Conservative grid-aware export. Never redraw, mask or overwrite master artwork. | (none) |
 | `enemy-back-normalize.py` | Mechanical proposal export: fixed cells, one scale, no inferred pixels. | (none) |
 | `enemy-decks-convert.mjs` | Re-runnable conversion: legacy weighted 'moves' enemies (src/content/enemies/act1-3.js) -> enemies-module | docs docs/plans/enemy-decks.md, engine/modules/characters/guide.md, engine/modules/enemies/guide.md |
+| `enemy-level-cards.mjs` | Generate or check deterministic Core enemy level-card lists. | tests enemy-level-cards; docs plans/enemy-level-scaling.md |
 | `enemy-level-content.mjs` | Focused inert-content gate for issue #238. | tests content-validators; docs docs/FINISH.md |
 | `enemy-roster-table.mjs` | tools/enemy-roster-table.mjs - read-only markdown roster of Core enemies (default: the 32 Codex enemies). | tests alternative-art, gear-module; docs docs/content/codex-art-buildout-2026-11-18.md |
 | `enemy-sheets.mjs` | tools/enemy-sheets.mjs - one editable character sheet per Core enemy (owner request 2026-11-01). | tests enemy-sheets; tools jev; docs CONTRIBUTING.md, DEVELOPER.md, games/ashenspire/packs/core/enemies/_reference.md; other games/ashenspire/packs/core/enemies/_reference.json, games/ashenspire/packs/core/enemies/ashRevenant.json, games/ashenspire/packs/core/enemies/ashheartDragon.json +31 |
