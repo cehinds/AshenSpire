@@ -67,6 +67,7 @@ import { FORM_FACTORS as HUD_FORM_FACTORS } from './hud-layout-tokens.mjs';
 import { manifestIds } from './art-source.mjs';
 import { holdForCli } from './lib/build-lock.mjs';
 import { RANGES as WEAPON_RANGES } from '../src/model/combatRanges.js';
+import { StudioSaveDir, StudioSaveFiles } from './score-studio/studioSaveFiles.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = join(ROOT, 'content', 'source');
@@ -84,6 +85,27 @@ function balanceAt(path) {
 const CHECK = process.argv.includes('--check');
 const SELFTEST = process.argv.includes('--selftest');
 const MUTATE = process.argv.includes('--mutate');
+
+// The Studio's own Save files live in content/source/studio/ but are not game content.
+// Only these exact names pass the sweep; anything else there is stray.
+const contentSourceFolder = 'source';
+const studioSaveFolder = basename(StudioSaveDir);
+const studioSaveFileNames = Object.freeze(
+  Object.values(StudioSaveFiles).map((spec) => basename(spec.path)),
+);
+const studioSelftestFixture = Object.freeze({
+  contentFolder: 'content-studio',
+  outFolder: 'out-studio',
+  subfolder: 'sub',
+  gameSourceName: 'ok',
+  gameSourceCsv: 'a,b\n1,2\n',
+  emptyJson: '{}\n',
+  strayFiles: Object.freeze([
+    'extra.json',
+    'cards.csv',
+    'sub/cards.json',
+  ]),
+});
 
 // Parse/verify failures inside probe runs must be CATCHABLE (the corpus feeds
 // this tool known-bad files and asserts on the message); the CLI paths keep
@@ -591,6 +613,15 @@ function sweepAssets(assetsRoot, bundle) {
   return { errors, bound, artless };
 }
 
+function studioSaveDirIn(contentRoot)
+{
+  return join(
+    contentRoot,
+    contentSourceFolder,
+    studioSaveFolder,
+  );
+}
+
 /**
  * sweepStraySources(contentRoot) → errors
  *
@@ -605,18 +636,6 @@ function sweepAssets(assetsRoot, bundle) {
  * the plain-data card pools) — so both edges are stray: a *.csv/*.json one
  * level UP (beside source/) and one level DEEP (a subfolder inside source/).
  */
-/**
- * The Score Studio's own Save files (SS-003, docs/score-studio/stories/SS-003-studio-save.md).
- * They live in content/source/studio/ but are not game content: no compile reads them and the
- * game never imports them. Only these exact names pass the sweep; anything else there is stray.
- */
-const STUDIO_SAVE_FOLDER = 'studio';
-const STUDIO_SAVE_FILES = Object.freeze([
-  'cards.json',
-  'artLayers.json',
-  'templates.json',
-]);
-
 function sweepStraySources(contentRoot) {
   const errors = [];
   // content/framework/ is the SECOND authored tree, owned by
@@ -644,7 +663,10 @@ function sweepStraySources(contentRoot) {
       else if (/\.json$/i.test(ent.name) && abs.startsWith(configDir + sep)) continue;
       else if (/\.json$/i.test(ent.name) && dir === join(contentRoot, 'source', 'cards')) continue;
       else if (/\.json$/i.test(ent.name) && dir === join(contentRoot, 'source', 'mechanics')) continue;
-      else if (dir === join(contentRoot, 'source', STUDIO_SAVE_FOLDER) && STUDIO_SAVE_FILES.includes(ent.name)) continue;
+      else if (dir === studioSaveDirIn(contentRoot) && studioSaveFileNames.includes(ent.name))
+      {
+        continue;
+      }
       else if (/\.json$/i.test(ent.name) && dir === hudLayoutDir) {
         if (!HUD_FORM_FACTORS.includes(ent.name.replace(/\.json$/i, ''))) {
           errors.push(`content/hud-layout/${ent.name}: STRAY SOURCE FILE — tools/hud-layout-css.mjs reads only ${HUD_FORM_FACTORS.map((name) => `${name}.json`).join(', ')}; this file compiles to nothing`);
@@ -909,6 +931,69 @@ BOUNDARY — what this green does NOT cover (SOP 3, CI expectation 4):
 // --selftest: baseline greens + the known-bad corpus, every case red BY NAME
 // ---------------------------------------------------------------------------
 
+// K14-studio: only the Studio Save file names pass the sweep in content/source/studio/;
+// any other file there is still stray by name, and the compile reads none of them.
+function writeStudioSelftestTree(contentRoot)
+{
+  const studioDir = studioSaveDirIn(contentRoot);
+  const gameSourcePath = join(
+    contentRoot,
+    contentSourceFolder,
+    `${studioSelftestFixture.gameSourceName}.csv`,
+  );
+  mkdirSync(join(studioDir, studioSelftestFixture.subfolder), { recursive: true });
+  writeFileSync(gameSourcePath, studioSelftestFixture.gameSourceCsv);
+  for (const fileName of [...studioSaveFileNames, ...studioSelftestFixture.strayFiles])
+  {
+    writeFileSync(join(studioDir, fileName), studioSelftestFixture.emptyJson);
+  }
+}
+
+function selftestStudioSaveSweep(contentRoot, ok)
+{
+  const strayFiles = studioSelftestFixture.strayFiles;
+  const studioSourcePath = `content/source/${studioSaveFolder}`;
+  const sweepErrors = sweepStraySources(contentRoot);
+  const mentions = (fileName) =>
+  {
+    const filePath = `${studioSourcePath}/${fileName}`;
+    return sweepErrors.some((message) => message.includes(filePath));
+  };
+  const swept = sweepErrors.length === strayFiles.length
+    && strayFiles.every(mentions)
+    && !studioSaveFileNames.some(mentions);
+  const sweepDetail = swept
+    ? ''
+    : ` (got ${sweepErrors.length}: ${sweepErrors.join(' | ') || 'none'})`;
+  const passing = studioSaveFileNames.join(', ');
+  const stray = strayFiles.join(', ');
+  const label = `K14-studio [S2 m5] content/source/studio/: ${passing} pass;`
+    + ` ${stray} each red by name${sweepDetail}`;
+  ok(swept, label);
+}
+
+function selftestStudioSaveCompile(
+  contentRoot,
+  outDir,
+  ok,
+)
+{
+  const compiled = compileDir(
+    join(contentRoot, contentSourceFolder),
+    outDir,
+    { write: true },
+  );
+  const parsedKeys = [...compiled.parsed.keys()];
+  const readsStudioRow = compiled.results.some((row) => row.file.includes(studioSaveFolder));
+  const readsStudioKey = parsedKeys.some((key) => key.includes(studioSaveFolder));
+  const emitted = readdirSync(outDir, { recursive: true }).map(String);
+  const gameSourceOutput = `${studioSelftestFixture.gameSourceName}.js`;
+  const emittedOnlyGameSource = emitted.length === 1 && emitted[0] === gameSourceOutput;
+  const label = 'K14-studio [S2 m4] the compile reads nothing from content/source/studio/'
+    + ` (emitted: ${emitted.join(', ') || 'none'})`;
+  ok(!readsStudioRow && !readsStudioKey && emittedOnlyGameSource, label);
+}
+
 async function selftest() {
   console.log('content-build --selftest: the clause-6 corpus. Every known-bad below must go red for its NAMED reason.\n');
   const G = await loadGame();
@@ -1100,39 +1185,14 @@ async function selftest() {
       ok(nonArray.includes('cards/okCards.json') && nonArray.includes('JSON array'), `K14-cards [S2 m3] a card pool that is not an array — file named: ${nonArray || 'NOT CAUGHT'}`);
     }
     {
-      // K14-studio — content/source/studio/ holds the Score Studio's own Save
-      // files (SS-003). Exactly the named files pass the sweep; any other file
-      // there is still stray by name, and the compile reads none of them.
-      const contentRoot = join(tmp, 'content-studio');
-      const studioDir = join(contentRoot, 'source', STUDIO_SAVE_FOLDER);
-      const gameSourceName = 'ok';
-      const strayStudioFiles = [
-        'extra.json',
-        'cards.csv',
-        'sub/cards.json',
-      ];
-      mkdirSync(join(studioDir, 'sub'), { recursive: true });
-      writeFileSync(join(contentRoot, 'source', `${gameSourceName}.csv`), 'a,b\n1,2\n');
-      for (const fileName of [...STUDIO_SAVE_FILES, ...strayStudioFiles])
-      {
-        writeFileSync(join(studioDir, fileName), '{}\n');
-      }
-      const sweepErrors = sweepStraySources(contentRoot);
-      const mentions = (fileName) => sweepErrors.some((message) => message.includes(`content/source/${STUDIO_SAVE_FOLDER}/${fileName}`));
-      const swept = sweepErrors.length === strayStudioFiles.length
-        && strayStudioFiles.every(mentions)
-        && !STUDIO_SAVE_FILES.some(mentions);
-      const sweepDetail = swept
-        ? ''
-        : ` (got ${sweepErrors.length}: ${sweepErrors.join(' | ') || 'none'})`;
-      ok(swept, `K14-studio [S2 m5] content/source/studio/: ${STUDIO_SAVE_FILES.join(', ')} pass; ${strayStudioFiles.join(', ')} each red by name${sweepDetail}`);
-      const outDir = join(tmp, 'out-studio');
-      const compiled = compileDir(join(contentRoot, 'source'), outDir, { write: true });
-      const readsStudio = compiled.results.some((row) => row.file.includes(STUDIO_SAVE_FOLDER))
-        || [...compiled.parsed.keys()].some((key) => key.includes(STUDIO_SAVE_FOLDER));
-      const emitted = readdirSync(outDir, { recursive: true }).map(String);
-      const emittedOnlyGameSource = emitted.length === 1 && emitted[0] === `${gameSourceName}.js`;
-      ok(!readsStudio && emittedOnlyGameSource, `K14-studio [S2 m4] the compile reads nothing from content/source/studio/ (emitted: ${emitted.join(', ') || 'none'})`);
+      const contentRoot = join(tmp, studioSelftestFixture.contentFolder);
+      writeStudioSelftestTree(contentRoot);
+      selftestStudioSaveSweep(contentRoot, ok);
+      selftestStudioSaveCompile(
+        contentRoot,
+        join(tmp, studioSelftestFixture.outFolder),
+        ok,
+      );
     }
     {
       // K14-notes — a "$note" key in a source (src/content/noteKeys.js) compiles
