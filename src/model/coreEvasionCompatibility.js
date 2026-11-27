@@ -45,6 +45,9 @@ const PREVIOUS_RUNTIMES = new Set([
   'sha256:c77d4f30494cb821fc66b9b9ef19b91fbb2c699633fe0137b72ab89d261ec831',
   // Dev c5c5ec4a before #3002: no enemyLevelScaling table or enemy level-card lists.
   'sha256:eff6f5c38dcdba3c78d012bf55c8baf6fe703f664bc3f3416244b15d1fa07216',
+  // Dev before routes.floorTypes (2026-11-27): no floorTypes key; its maps draw as before.
+  'sha256:defbcd659c0fe2899a69d503916d8d739116d9928b8156c5985764b83efa755f',
+  'sha256:7ef8a89a96d4efcbc91d9af13cc735b66f9f741e66ad096d8faf9f8b979e7f28',
   'sha256:0c4e9eae226108858dcb937000b0992a33b778f650bb3e3e17a1c369ba51a0b3',
   'sha256:b49503d593056a588d5ae9a25ac214fc801c7b7eaea22093d601f76afe9d27f8',
   'sha256:d2993c77a6e8a5ff16dc1b5edf11d30cb924d790e7875af0452a4e8f0183ef63',
@@ -199,6 +202,8 @@ const COMPATIBLE_HOST_RUNTIMES = new Set([
   'sha256:defbcd659c0fe2899a69d503916d8d739116d9928b8156c5985764b83efa755f',
   // Spell cost rule list (spellCosts version 2).
   'sha256:7ef8a89a96d4efcbc91d9af13cc735b66f9f741e66ad096d8faf9f8b979e7f28',
+  // routes.floorTypes and routeShape (engine/kernel/route*.js) move the host runtime.
+  'sha256:c7da2b47b69f593f6d2a0c9fc71b0cf9c2b8721e96f1760308c41da69b24a555',
 ]);
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return COMPATIBLE_HOST_RUNTIMES.has(currentRuntime)
