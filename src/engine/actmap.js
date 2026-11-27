@@ -398,7 +398,7 @@ function buildBranchedActMap(registries, rng, seat, tier, ctx) {
       guaranteed.add(`${rng.pick('map', floors)}:${k * lanes + lane}`);
     }
   }
-  // One guaranteed shop slot per branch (shopsPerBranch): a non-rest depth 4-8 where the branch has a lane, never an elite slot.
+  // One guaranteed shop per branch on a free guaranteedShopDepths depth, never an elite slot.
   const guaranteedShop = new Set();
   if (shopsPerBranch > 0) for (let k = 0; k < branchCount; k++) {
     const slots = [];
