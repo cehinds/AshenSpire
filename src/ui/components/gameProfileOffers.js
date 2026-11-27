@@ -1043,6 +1043,10 @@ function mountCardPickDoor(appRoot, doorArgs)
     });
     const statusLine = buildStatusLine();
     statusLine.textContent = initialStatus || '';
+    const inlineConfirm = buildElement('div', {
+        class: 'reward-inline-confirm',
+        hidden: true,
+    });
     const continueButton = button({
         label: translate('common.continue'),
         id: 'reward-card-confirm',
@@ -1074,6 +1078,7 @@ function mountCardPickDoor(appRoot, doorArgs)
             spoils,
             promptLine,
             choiceStrip,
+            inlineConfirm,
             statusLine,
         ],
         foot: modalFooter({
@@ -1169,6 +1174,7 @@ function mountCardPickDoor(appRoot, doorArgs)
             return;
         }
         statusLine.textContent = '';
+        hideInlineConfirm();
         if (selected.has(optionIndex))
         {
             selected.delete(optionIndex);
@@ -1320,35 +1326,74 @@ function mountCardPickDoor(appRoot, doorArgs)
         }
         const picks = [...selected].sort((a, b) => a - b);
         const canDeck = canAllJoinDeck(picks);
-        // Owner 2026-11-20: Add to deck and Send to library are the modal's own answers (one click), not a radio group.
+        showInlineConfirm(picks, canDeck);
+    }
+
+    function hideInlineConfirm()
+    {
+        inlineConfirm.hidden = true;
+        inlineConfirm.replaceChildren();
+    }
+
+    function showInlineConfirm(picks, canDeck)
+    {
         const libraryLabel = translate('reward.configured.sendToLibrary');
-        const answers = !picks.length
-            ? { confirmLabel: translate(CONFIRM_LABEL_KEY), onConfirm: () => claimChosen(picks, 'library') }
-            : canDeck
-                ? {
-                    confirmLabel: translate('reward.configured.addToDeck'),
-                    onConfirm: () => claimChosen(picks, 'deck'),
-                    alternate: { label: libraryLabel, onSelect: () => claimChosen(picks, 'library') },
-                }
-                : { confirmLabel: libraryLabel, onConfirm: () => claimChosen(picks, 'library') };
-        OpenConfirmationModal({
-            title: translate('reward.picks.continue.title'),
-            message: picks.length
-                ? translate('reward.picks.continue.message')
-                : '',
-            detailsNode: buildPickConfirmDetails({
-                names: picks.map((optionIndex) =>
-                {
-                    return findOptionDefinition(registries, activeRun, offer.options[optionIndex])?.name
-                        || offer.options[optionIndex].id;
-                }),
-                unused: picksAllowed - picks.length,
-                canDeck,
+        const details = buildPickConfirmDetails({
+            names: picks.map((optionIndex) =>
+            {
+                return findOptionDefinition(registries, activeRun, offer.options[optionIndex])?.name
+                    || offer.options[optionIndex].id;
             }),
-            ...answers,
-            cancelLabel: translate('common.back'),
-            returnFocusElement: continueButton,
+            unused: picksAllowed - picks.length,
+            canDeck,
         });
+        const confirmLabel = !picks.length
+            ? translate(CONFIRM_LABEL_KEY)
+            : canDeck
+                ? translate('reward.configured.addToDeck')
+                : libraryLabel;
+        const confirmDest = !picks.length
+            ? 'library'
+            : canDeck
+                ? 'deck'
+                : 'library';
+        const confirmBtn = button({
+            label: confirmLabel,
+            weight: 'primary',
+            className: 'confirmation-confirm',
+        });
+        confirmBtn.addEventListener('click', () =>
+        {
+            hideInlineConfirm();
+            claimChosen(picks, confirmDest);
+        });
+        const actionButtons = [];
+        if (picks.length && canDeck)
+        {
+            const altBtn = button({
+                label: libraryLabel,
+                className: 'confirmation-alternate',
+            });
+            altBtn.addEventListener('click', () =>
+            {
+                hideInlineConfirm();
+                claimChosen(picks, 'library');
+            });
+            actionButtons.push(altBtn);
+        }
+        const backBtn = button({
+            label: translate('common.back'),
+            role: 'exit',
+        });
+        backBtn.addEventListener('click', hideInlineConfirm);
+        actionButtons.push(backBtn, confirmBtn);
+        const actionsRow = buildElement(
+            'div',
+            { class: 'reward-inline-confirm-actions' },
+            actionButtons,
+        );
+        inlineConfirm.replaceChildren(details, actionsRow);
+        inlineConfirm.hidden = false;
     }
 
     function adoptOffer(result)

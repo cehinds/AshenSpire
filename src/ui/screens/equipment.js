@@ -397,21 +397,45 @@ function buildArmoury(L, ui) {
  * missing falls back to the ordinary class sprite, so the single-file dist and
  * file:// play keep working exactly as before.
  */
+function hideBrokenPortrait(figureElement)
+{
+    const images = figureElement.querySelectorAll('img');
+    for (const img of images)
+    {
+        img.addEventListener('error', () =>
+        {
+            const pane = figureElement.closest('.armoury-sprite-pane');
+            if (pane)
+            {
+                pane.hidden = true;
+            }
+        });
+    }
+}
+
 function figureFor(registries, run, cz) {
   const el = document.createElement('div');
   el.className = 'armoury-figure';
   const painted = spritesAreEnabled() && !['classic', 'glyph'].includes(cz?.spriteStyle)
     ? paintedPresentation(run.class, figureSpec(registries, run.loadout, run.class).armourId, 'stand', equipmentAnimationForLoadout(registries, run.loadout, run.class)) : null;
-  if (painted) { el.classList.add('painted-armoury'); el.appendChild(painted); return el; }
+  if (painted)
+  {
+    el.classList.add('painted-armoury');
+    el.appendChild(painted);
+    hideBrokenPortrait(el);
+    return el;
+  }
   const reacts = CFG().spriteReacts;
   const spec = figureSpec(registries, run.loadout, run.class);
   if (reacts === 'none') {
     el.appendChild(playerSprite(cz, run.class, spec.armourId));
+    hideBrokenPortrait(el);
     return el;
   }
   if (reacts === 'hands') spec.armourId = 'default';
   const fig = equippedFigure({ classId: run.class, ...spec });
   el.appendChild(fig || playerSprite(cz, run.class, spec.armourId));
+  hideBrokenPortrait(el);
   return el;
 }
 
@@ -1503,13 +1527,23 @@ export function mountEquipment(host, {
     if (progress.pointsLabel) {
       badgePlate(node, statusText(progress.pointsLabel, { class: 'character-level-points' }), 'the waiting attribute points');
     }
-    if (onCharacterSheet) {
-      const action = button({ label: t('progression.title'), className: 'character-level-action', attrs: { 'aria-haspopup': 'dialog' } });
-      progressionTip(action, 'Open level, attributes, skills and class progression');
-      action.addEventListener('click', () => openProgression(action, 'character'));
-      node.append(action);
-    }
     return node;
+  }
+
+  function progressionTitleAction()
+  {
+    if (!onCharacterSheet)
+    {
+      return null;
+    }
+    const action = button({
+      label: t('progression.title'),
+      className: 'character-level-action',
+      attrs: { 'aria-haspopup': 'dialog' },
+    });
+    progressionTip(action, 'Open level, attributes, skills and class progression');
+    action.addEventListener('click', () => openProgression(action, 'character'));
+    return action;
   }
 
   /** One skill track as a Meter: its name and level on the plate, its XP as the fill. */
@@ -1529,9 +1563,15 @@ export function mountEquipment(host, {
   function characterSummaryPanel() {
     const cls = registries.classes.get(run.class);
     const identity = runClassIdentity(registries, run);
+    const titleChildren = [titleS(identity.name, { tag: 'h3' })];
+    const progressionButton = progressionTitleAction();
+    if (progressionButton)
+    {
+      titleChildren.push(progressionButton);
+    }
     return el('header', { class: 'character-summary as-labelstack' }, [
       eyebrow(`Forsaken · ${identity.name} · Level ${characterLevel(run)}`, { class: 'character-kicker' }),
-      titleS(identity.name, { tag: 'h3' }),
+      el('div', { class: 'character-title-row' }, titleChildren),
       subtitle(run.classUnequipped ? 'Class slot empty. Equip a learned class from your inventory.' : cls.description || ''),
       characterLevelMeter(),
     ]);

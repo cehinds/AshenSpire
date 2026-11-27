@@ -1121,7 +1121,15 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
     extra,
   });
   const modified = rowModified(settings, r);
-  const rowOpen = (extraClass = '', attrs = '') => settingRowOpenHtml({ key: r.key, extraClass, modified, attrs });
+  const noteTitle = note
+    ? ` title="${esc(stripTags(note))}"`
+    : '';
+  const rowOpen = (extraClass = '', attrs = '') => settingRowOpenHtml({
+    key: r.key,
+    extraClass,
+    modified,
+    attrs: `${noteTitle}${attrs}`,
+  });
   if (r.type === 'color') {
     const value = /^#[0-9a-f]{6}$/i.test(settings[r.key] || '') ? settings[r.key] : r.def;
     return `${rowOpen()}${stack()}<span class="r-trail"><input type="color" class="set-color" data-key="${esc(r.key)}" value="${value}" aria-label="${esc(r.label)}"></span></div>`;

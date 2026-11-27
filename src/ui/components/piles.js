@@ -23,45 +23,81 @@ import { SPENT_PILES, spentPileView } from '../models/PileViewerModel.js';
 // migrated surface: the ratchet (tools/uistrings.mjs) caught this file GROWING
 // past its baseline when the spent-pile pair landed, which is exactly the
 // regression it exists to stop.
-import { t } from '../strings.js';
+import { t as translate } from '../strings.js';
 import { MarkSelected } from '../selection.js';
 
-export function openPileModal(registries, title, cards, { shuffleForDisplay = false, rules = null, deckView = false } = {}) {
-  let list = [...cards];
-  if (shuffleForDisplay) {
-    for (let i = list.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [list[i], list[j]] = [list[j], list[i]];
-    }
-  }
-
-  const done = button({ label: t('common.close'), role: 'exit', className: 'pile-done', attrs: { 'data-focusable': 'true' } });
-
-  // The COUNT is the head's status, never part of the name. The pile's name
-  // stays put while `(5)` changes underneath it. The old markup
-  // baked the number into the <h2>, so the thing a player reads as the name
-  // of the surface changed every time a card moved.
-  const status = statusText(`${list.length} ${list.length === 1 ? 'card' : 'cards'}`, { class: 'modal-head-status' });
-
-  const shell = OpenModal({
-    size: 'xl',
-    className: deckView ? 'pile-modal deck-view-modal' : 'pile-modal',
-    eyebrow: deckView ? '' : t('piles.eyebrow'),
+export function openPileModal(
+    registries,
     title,
-    headExtras: status,
-    bodyClassName: 'pile-body',
-    body: (host) => {
-      // The body is the kit's CardGrid: the same faces the fan draws, wrapped,
-      // at one gap. An empty pile says so in Flavour rather than drawing air.
-      const grid = cardGrid(list.map((inst) => renderCard(registries, inst, { small: true, inspectReadOnly: true, rules })), { class: 'grid' });
-      if (!list.length) grid.appendChild(flavour(t('piles.empty'), { class: 'pile-empty' }));
-      host.appendChild(grid);
-    },
-    primary: done,
-    footSize: 'short',
-  });
-  done.addEventListener('click', shell.close);
-  return shell.veil;
+    cards,
+    {
+        shuffleForDisplay = false,
+        rules = null,
+        deckView = false,
+    } = {},
+)
+{
+    const list = [...cards];
+    if (shuffleForDisplay)
+    {
+        for (let currentIndex = list.length - 1; currentIndex > 0; currentIndex--)
+        {
+            const swapIndex = Math.floor(Math.random() * (currentIndex + 1));
+            [list[currentIndex], list[swapIndex]] = [list[swapIndex], list[currentIndex]];
+        }
+    }
+
+    const done = button({
+        label: translate('common.close'),
+        role: 'exit',
+        className: 'pile-done',
+        attrs: { 'data-focusable': 'true' },
+    });
+    const cardWord = list.length === 1
+        ? 'card'
+        : 'cards';
+    const status = statusText(`${list.length} ${cardWord}`, { class: 'modal-head-status' });
+    const className = deckView
+        ? 'pile-modal deck-view-modal'
+        : 'pile-modal';
+    const eyebrow = deckView
+        ? ''
+        : translate('piles.eyebrow');
+
+    const shell = OpenModal({
+        size: 'xl',
+        className,
+        eyebrow,
+        title,
+        headExtras: status,
+        bodyClassName: 'pile-body',
+        body: (host) =>
+        {
+            const faces = list.map((cardInstance) =>
+            {
+                return renderCard(registries, cardInstance, {
+                    small: true,
+                    inspectReadOnly: true,
+                    rules,
+                });
+            });
+            const grid = cardGrid(faces, { class: 'grid' });
+            if (!list.length)
+            {
+                grid.appendChild(flavour(translate('piles.empty'), { class: 'pile-empty' }));
+            }
+            host.appendChild(grid);
+        },
+        primary: deckView
+            ? null
+            : done,
+        footSize: 'short',
+    });
+    if (!deckView)
+    {
+        done.addEventListener('click', shell.close);
+    }
+    return shell.veil;
 }
 
 /**
@@ -100,14 +136,14 @@ export function openSpentPileModal(registries, piles, opener = document.activeEl
       return face;
     });
     const grid = cardGrid(faces, { class: 'grid' });
-    if (view.empty) grid.appendChild(flavour(t('piles.empty'), { class: 'pile-empty' }));
+    if (view.empty) grid.appendChild(flavour(translate('piles.empty'), { class: 'pile-empty' }));
     collection.replaceChildren(grid);
     read(view.detail);
   };
   const choose = (id) => { if (!SPENT_PILES.includes(id)) return; active = id; selectedId = null; paint(); };
-  const nav = categoryNav({ items, ariaLabel: t('piles.spent.nav'), choose });
-  const done = button({ label: t('common.close'), role: 'exit', className: 'pile-done', attrs: { 'data-focusable': 'true' } });
-  const shell = OpenModal({ title: t('piles.spent.title'), size: 'xl', className: 'pile-modal spent-pile-modal',
+  const nav = categoryNav({ items, ariaLabel: translate('piles.spent.nav'), choose });
+  const done = button({ label: translate('common.close'), role: 'exit', className: 'pile-done', attrs: { 'data-focusable': 'true' } });
+  const shell = OpenModal({ title: translate('piles.spent.title'), size: 'xl', className: 'pile-modal spent-pile-modal',
     showMenuButton: false, opener, bodyClassName: 'pile-body',
     body: (host) => host.append(railed(nav, pane)),
     primary: done, footSize: 'short',

@@ -369,8 +369,16 @@ main > .shared-hud.workspace-hud .hud-vitals-panel { max-width:28rem; padding:.5
 }
 :root[data-layout='narrow'] .gameover-door .stats-table .as-chip { white-space:normal; flex-wrap:wrap; justify-content:center; min-width:0; }
 .history-screen > .modal { background-color:#17130fe8; }
-:root[data-layout='narrow'] .rest-screen { padding:12rem 1rem 1rem; }
-:root[data-layout='narrow'] .rest-screen .rest-door { max-height:62%; }
+/* Keep phone Shrine compact without large empty gaps above or below options. */
+:root[data-layout='narrow'] .rest-screen {
+  padding: 0.6rem 0.6rem 0.5rem;
+  justify-content: flex-start;
+}
+
+:root[data-layout='narrow'] .rest-screen .rest-door {
+  max-height: 100%;
+  height: auto;
+}
 :root[data-layout='narrow'] .rest-screen .polish-scene-painting { position:absolute; aspect-ratio:auto; max-height:none; height:100%; }
 :root[data-composition='short-wide'] .rest-screen .polish-scene-painting { display:block; }
 :root[data-composition='short-wide'] .rest-screen { padding:1rem; }
@@ -628,7 +636,14 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
    All dimensions below are local CSS pixels; UI zoom keeps tap targets physical. */
 :root .shop-workspace.merchant-workspace { --merchant-gold:var(--gold); padding:7rem 2rem 1rem; }
 :root .shop-workspace.merchant-workspace .shop-railed { overflow:hidden; gap:0; }
-:root .shop-workspace.merchant-workspace .shop-pane { flex:1 1 auto; min-height:0; max-height:none; padding:0 1rem; display:flex; flex-direction:column; }
+:root .shop-workspace.merchant-workspace .shop-pane {
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: none;
+  padding: 0 1rem;
+  display: flex;
+  flex-direction: column;
+}
 :root .shop-workspace.merchant-workspace .shop-pane-head { display:flex; justify-content:space-between; align-items:center; flex:0 0 auto; min-height:2.8rem; margin:0; color:var(--gold); }
 :root .shop-workspace.merchant-workspace .shop-pane > .shop-body { height:auto; grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr); gap:0; }
 :root .shop-workspace.merchant-workspace .shop-offers { min-height:0; }
@@ -665,15 +680,69 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 .merchant-inspection > :first-child { max-width:min(100%,28rem); }
 .merchant-inspection > .book-art { width:24rem; }
 .merchant-inspection > p { white-space:pre-line; color:var(--parchment); }
-:root .shop-workspace.merchant-workspace .merchant-category-dock { flex:0 0 auto; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); grid-auto-rows:calc(44px / var(--ui-zoom,1)); max-height:calc(88px / var(--ui-zoom,1) + 19px); overflow:auto; gap:6px; padding:6px 1rem; border-top:1px solid var(--line-soft); }
-:root .shop-workspace.merchant-workspace .merchant-category-dock .shop-railitem { display:flex; flex-direction:column; justify-content:center; align-items:center; gap:2px; min-height:0; padding:2px; width:100%; font-size:calc(11px / var(--ui-zoom,1)); line-height:1.2; color:var(--ink-dim); border:1px solid var(--line-soft); background:var(--panel); }
-:root .shop-workspace.merchant-workspace .merchant-category-dock .shop-railitem.on { --gold:var(--merchant-gold); color:var(--gold); border-color:var(--gold); }
-:root .shop-workspace.merchant-workspace .merchant-category-dock .as-status { font-size:calc(9px / var(--ui-zoom,1)); line-height:1.1; color:inherit; }
-:root .shop-workspace.merchant-workspace .shop-foot .modal-foot-actions { flex-direction:row; flex-wrap:nowrap; }
-:root .shop-workspace.merchant-workspace .shop-foot .as-btn { min-height:calc(44px / var(--ui-zoom,1)); }
-:root[data-layout='narrow'] .shop-workspace.merchant-workspace { padding:6rem .8rem .5rem; }
-:root[data-layout='narrow'] .shop-workspace.merchant-workspace.blacksmith-workspace { padding-top:calc(30 * var(--view-vh, 1vh)); }
-:root[data-layout='narrow'] .merchant-workspace .shop-frame { width:100%; }
+/* Keep Merchant category tabs on one compact scrollable row without wrapping. */
+:root .shop-workspace.merchant-workspace .merchant-category-dock {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 4px;
+  padding: 4px 0.6rem;
+  border-top: 1px solid var(--line-soft);
+}
+
+:root .shop-workspace.merchant-workspace .merchant-category-dock .shop-railitem {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  flex: 1 0 auto;
+  min-height: 36px;
+  padding: 4px 6px;
+  width: auto;
+  white-space: nowrap;
+  font-size: calc(11px / var(--ui-zoom, 1));
+  line-height: 1.2;
+  color: var(--ink-dim);
+  border: 1px solid var(--line-soft);
+  background: var(--panel);
+}
+
+:root .shop-workspace.merchant-workspace .merchant-category-dock .shop-railitem.on {
+  --gold: var(--merchant-gold);
+  color: var(--gold);
+  border-color: var(--gold);
+}
+
+:root .shop-workspace.merchant-workspace .merchant-category-dock .as-status {
+  font-size: calc(9px / var(--ui-zoom, 1));
+  line-height: 1.1;
+  color: inherit;
+}
+
+:root .shop-workspace.merchant-workspace .shop-foot .modal-foot-actions {
+  flex-direction: row;
+  flex-wrap: nowrap;
+}
+
+:root .shop-workspace.merchant-workspace .shop-foot .as-btn {
+  min-height: calc(44px / var(--ui-zoom, 1));
+}
+
+:root[data-layout='narrow'] .shop-workspace.merchant-workspace {
+  padding: 0.6rem 0.6rem 0.5rem;
+}
+
+:root[data-layout='narrow'] .shop-workspace.merchant-workspace.blacksmith-workspace {
+  padding-top: 0.6rem;
+}
+
+:root[data-layout='narrow'] .merchant-workspace .shop-frame {
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+}
 :root[data-layout='narrow'] .merchant-workspace .shop-frame .modal-head { grid-template-columns:minmax(0,1fr) auto auto; gap:8px; }
 :root[data-layout='narrow'] .merchant-workspace .shop-frame .modal-head-status { grid-column:2; grid-row:1; font-size:11px; }
 :root[data-layout='narrow'] .blacksmith-workspace .shop-frame .modal-head-status { grid-column:1 / -1; grid-row:2; font-size:11px; white-space:normal; }
@@ -693,10 +762,49 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 :where(.core-rest) .rest-door .choice-body-columns { grid-template-columns: minmax(0, 1fr); row-gap: .6rem; }
 :where(.core-rest) .rest-door .rest-consequences { order: -1; gap: .2rem; }
 :where(.core-rest) .rest-door .rest-consequences .as-flavor { margin: 0; }
-:where(.core-rest) .rest-door .modal-head { padding-block: .6rem; }
-:where(.core-rest) .rest-door .rest-choices .shrine-option-list { gap: .6rem; }
-:where(.core-rest) .rest-door .rest-choices .shrine-option-list > .class-pick { height: auto; min-height: 0; padding: .7rem 1rem; gap: 1rem; }
-:where(.core-rest) .rest-door .rest-choices .class-pick > .glyph { flex-basis: 2.4rem; font-size: 1.8rem; }
+:where(.core-rest) .rest-door .modal-head {
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.6rem;
+  padding-block: 0.45rem;
+}
+
+:where(.core-rest) .rest-door .modal-head-id {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+:where(.core-rest) .rest-door .modal-head-id h2 {
+  font-size: 1.45rem;
+}
+
+:where(.core-rest) .rest-door .modal-head-status {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+:where(.core-rest) .rest-door .rest-choices .shrine-option-list {
+  gap: 0.6rem;
+}
+
+:where(.core-rest) .rest-door .rest-choices .shrine-option-list > .class-pick {
+  display: flex;
+  height: auto;
+  min-height: 0;
+  padding: 0.7rem 1rem;
+  gap: 0.8rem;
+}
+
+:where(.core-rest) .rest-door .rest-choices .class-pick > .cp-body {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Remove empty icon column that shifts Shrine option text inward. */
+:where(.core-rest) .rest-door .rest-choices .class-pick > .glyph {
+  display: none;
+}
 :where(.core-rest) .rest-door .rest-choices .class-pick h3 { font-size: 1.45rem; }
 :where(.core-rest) .rest-door .rest-choices .class-pick p { font-size: 1.2rem; line-height: 1.3; -webkit-line-clamp: 2; }
 :where(.core-rest) .rest-door .rest-choices .class-pick.rest-option-off { padding-block: .4rem; opacity: .5; }
