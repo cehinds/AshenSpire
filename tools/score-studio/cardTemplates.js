@@ -5,11 +5,23 @@
 export const CARD_TEMPLATES_KIND = 'ashenspire.studioCardTemplates';
 export const CARD_TEMPLATES_FORMAT_VERSION = 1;
 export const CARD_TEMPLATES_PATH = 'content/source/studio/templates.json';
+export const CARD_TEMPLATES_FILE_NAME = 'templates.json';
 export const TEMPLATE_NAME_LIMIT = 60;
+export const TEMPLATE_ID_PREFIX = 'template.';
+export const TEMPLATE_NAME_MISSING = 'Give the template a name.';
+export const TEMPLATE_NAME_TOO_LONG = `Keep the name to ${TEMPLATE_NAME_LIMIT} characters.`;
+export const TEMPLATE_GONE = 'That template no longer exists.';
+
+const FRESH_CARD_ID_PREFIX = 'custom.card_';
+const FRESH_CARD_ID_SUFFIX = '_new';
+const FALLBACK_SLUG = 'template';
+const SLUG_LIMIT = 40;
+const ID_BASE = 36;
+const FIRST_DUPLICATE_NUMBER = 2;
+const TEMPLATE_ID_PATTERN = /^template\.[a-z0-9][a-z0-9-]*$/;
 
 // The card fields a template keeps: type, target (tags and effect targets), school (damageSchool, magicShare
-// and the camp tag), costs, effects, tags and keywords, and rarity. Everything else is dropped: the id, the
-// name, every `_` flag, scoringOverride, class, textTemplate, upgradeMenu and any other field.
+// and the camp tag), costs, effects, tags and keywords, and rarity. Everything else is dropped.
 export const TEMPLATE_CARD_FIELDS = Object.freeze([
   'type',
   'rarity',
@@ -25,7 +37,15 @@ export const TEMPLATE_CARD_FIELDS = Object.freeze([
 ]);
 
 // Card types in the order the picker and the list group them.
-export const TEMPLATE_TYPE_ORDER = Object.freeze(['attack', 'strike', 'skill', 'guard', 'power', 'curse', 'status']);
+export const TEMPLATE_TYPE_ORDER = Object.freeze([
+  'attack',
+  'strike',
+  'skill',
+  'guard',
+  'power',
+  'curse',
+  'status',
+]);
 
 // What a card made from a template takes for the fields a template drops (New card's defaults).
 const NEW_CARD_DEFAULTS = Object.freeze({
@@ -40,8 +60,7 @@ const NEW_CARD_DEFAULTS = Object.freeze({
   damageSchool: 'physical',
 });
 
-const TEMPLATE_ID_PATTERN = /^template\.[a-z0-9][a-z0-9-]*$/;
-const SLUG_LIMIT = 40;
+export const DEFAULT_TEMPLATE_TYPE = NEW_CARD_DEFAULTS.type;
 
 const clone = value => structuredClone(value);
 const nameKey = name => String(name ?? '').trim().toLowerCase();
@@ -53,7 +72,10 @@ export function TemplateCardFields(card)
   const kept = {};
   for (const field of TEMPLATE_CARD_FIELDS)
   {
-    if (card?.[field] !== undefined) kept[field] = clone(card[field]);
+    if (card?.[field] !== undefined)
+    {
+      kept[field] = clone(card[field]);
+    }
   }
   return kept;
 }
@@ -62,8 +84,14 @@ export function TemplateCardFields(card)
 export function TemplateNameProblem(name)
 {
   const trimmed = String(name ?? '').trim();
-  if (!trimmed) return 'Give the template a name.';
-  if (trimmed.length > TEMPLATE_NAME_LIMIT) return `Keep the name to ${TEMPLATE_NAME_LIMIT} characters.`;
+  if (!trimmed)
+  {
+    return TEMPLATE_NAME_MISSING;
+  }
+  if (trimmed.length > TEMPLATE_NAME_LIMIT)
+  {
+    return TEMPLATE_NAME_TOO_LONG;
+  }
   return '';
 }
 
@@ -76,17 +104,25 @@ export function FindTemplateByName(templates, name, { exceptId = null } = {})
 
 function slugOf(name)
 {
-  const slug = String(name ?? '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, SLUG_LIMIT).replace(/-+$/, '');
-  return slug || 'template';
+  const slug = String(name ?? '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, SLUG_LIMIT)
+    .replace(/-+$/, '');
+  return slug || FALLBACK_SLUG;
 }
 
 /** A `template.<slug>` id no template in `templates` (or `takenIds`) has. */
 export function TemplateIdFor(name, templates = [], takenIds = [])
 {
   const taken = new Set([...(templates || []).map(template => template.id), ...takenIds]);
-  const base = `template.${slugOf(name)}`;
+  const base = `${TEMPLATE_ID_PREFIX}${slugOf(name)}`;
   let id = base;
-  for (let n = 2; taken.has(id); n++) id = `${base}-${n}`;
+  for (let suffix = FIRST_DUPLICATE_NUMBER; taken.has(id); suffix++)
+  {
+    id = `${base}-${suffix}`;
+  }
   return id;
 }
 
@@ -98,15 +134,21 @@ export function TemplateIdFor(name, templates = [], takenIds = [])
 export function SaveCardAsTemplate(templates, card, { name, artLayerIds = [], now = new Date().toISOString(), replace = false } = {})
 {
   const problem = TemplateNameProblem(name);
-  if (problem) return { problem };
+  if (problem)
+  {
+    return { problem };
+  }
   const trimmed = String(name).trim();
   const existing = FindTemplateByName(templates, trimmed);
-  if (existing && !replace) return { taken: existing };
+  if (existing && !replace)
+  {
+    return { taken: existing };
+  }
   const fields = TemplateCardFields(card);
   const template = {
     id: existing ? existing.id : TemplateIdFor(trimmed, templates),
     name: trimmed,
-    cardType: String(fields.type || NEW_CARD_DEFAULTS.type),
+    cardType: String(fields.type || DEFAULT_TEMPLATE_TYPE),
     createdAt: existing ? existing.createdAt : now,
     card: fields,
     artLayerIds: [...new Set((artLayerIds || []).map(String))],
@@ -121,11 +163,20 @@ export function SaveCardAsTemplate(templates, card, { name, artLayerIds = [], no
 export function RenameTemplate(templates, id, name)
 {
   const problem = TemplateNameProblem(name);
-  if (problem) return { problem };
-  if (!(templates || []).some(template => template.id === id)) return { problem: 'That template no longer exists.' };
+  if (problem)
+  {
+    return { problem };
+  }
+  if (!(templates || []).some(template => template.id === id))
+  {
+    return { problem: TEMPLATE_GONE };
+  }
   const trimmed = String(name).trim();
   const clash = FindTemplateByName(templates, trimmed, { exceptId: id });
-  if (clash) return { problem: `A template is already named "${clash.name}".` };
+  if (clash)
+  {
+    return { problem: `A template is already named "${clash.name}".` };
+  }
   return { templates: templates.map(template => (template.id === id ? { ...clone(template), name: trimmed } : clone(template))) };
 }
 
@@ -142,7 +193,10 @@ export function DeleteTemplate(templates, id)
  */
 export function CardFromTemplate(template, { id, normalize = card => card, textFor = null } = {})
 {
-  if (!id) throw new Error('A card from a template needs a fresh id.');
+  if (!id)
+  {
+    throw new Error('A card from a template needs a fresh id.');
+  }
   const card = {
     ...clone(NEW_CARD_DEFAULTS),
     effects: [],
@@ -155,7 +209,10 @@ export function CardFromTemplate(template, { id, normalize = card => card, textF
     _autoName: true,
   };
   const normalized = normalize(card) || card;
-  if (textFor) normalized.textTemplate = textFor(normalized);
+  if (textFor)
+  {
+    normalized.textTemplate = textFor(normalized);
+  }
   return normalized;
 }
 
@@ -163,8 +220,11 @@ export function CardFromTemplate(template, { id, normalize = card => card, textF
 export function FreshCardId(cards, now = Date.now())
 {
   const taken = new Set((cards || []).map(card => card.id));
-  let id = `custom.card_${Number(now).toString(36)}`;
-  while (taken.has(id)) id += '_new';
+  let id = `${FRESH_CARD_ID_PREFIX}${Number(now).toString(ID_BASE)}`;
+  while (taken.has(id))
+  {
+    id += FRESH_CARD_ID_SUFFIX;
+  }
   return id;
 }
 
@@ -175,47 +235,79 @@ export function MissingArtLayerIds(template, layers)
   return (template?.artLayerIds || []).filter(id => !present.has(id));
 }
 
+function typeRank(type)
+{
+  const index = TEMPLATE_TYPE_ORDER.indexOf(type);
+  return index < 0 ? TEMPLATE_TYPE_ORDER.length : index;
+}
+
 /** Templates grouped by card type, known types first in TEMPLATE_TYPE_ORDER, then by name. */
 export function GroupTemplatesByType(templates)
 {
   const groups = new Map();
   for (const template of templates || [])
   {
-    const type = template.cardType || template.card?.type || 'skill';
-    if (!groups.has(type)) groups.set(type, []);
+    const type = template.cardType || template.card?.type || DEFAULT_TEMPLATE_TYPE;
+    if (!groups.has(type))
+    {
+      groups.set(type, []);
+    }
     groups.get(type).push(template);
   }
-  const rank = type => {
-    const index = TEMPLATE_TYPE_ORDER.indexOf(type);
-    return index < 0 ? TEMPLATE_TYPE_ORDER.length : index;
-  };
   return [...groups.entries()]
-    .sort(([a], [b]) => rank(a) - rank(b) || a.localeCompare(b))
-    .map(([type, list]) => ({ type, templates: [...list].sort((a, b) => a.name.localeCompare(b.name)) }));
+    .sort(([leftType], [rightType]) => typeRank(leftType) - typeRank(rightType) || leftType.localeCompare(rightType))
+    .map(([type, list]) => ({ type, templates: [...list].sort((left, right) => left.name.localeCompare(right.name)) }));
 }
 
 /** The file written to templates.json and used by Export and Import. */
 export function TemplateFile(templates)
 {
-  return { kind: CARD_TEMPLATES_KIND, formatVersion: CARD_TEMPLATES_FORMAT_VERSION, templates: (templates || []).map(clone) };
+  return {
+    kind: CARD_TEMPLATES_KIND,
+    formatVersion: CARD_TEMPLATES_FORMAT_VERSION,
+    templates: (templates || []).map(clone),
+  };
 }
 
 function templateProblem(entry, index, checkCard)
 {
   const label = `Template ${index + 1}`;
-  if (!isPlainObject(entry)) return `${label} must be an object.`;
-  const named = typeof entry.name === 'string' && entry.name.trim() ? `${label} ("${entry.name.trim()}")` : label;
-  if (typeof entry.name !== 'string') return `${label} needs a "name" text.`;
+  if (!isPlainObject(entry))
+  {
+    return `${label} must be an object.`;
+  }
+  if (typeof entry.name !== 'string')
+  {
+    return `${label} needs a "name" text.`;
+  }
+  const named = entry.name.trim() ? `${label} ("${entry.name.trim()}")` : label;
   const nameProblem = TemplateNameProblem(entry.name);
-  if (nameProblem) return `${named}: ${nameProblem}`;
-  if (typeof entry.id !== 'string' || !TEMPLATE_ID_PATTERN.test(entry.id)) return `${named}: "id" must look like "template.<name>".`;
-  if (!isPlainObject(entry.card)) return `${named}: "card" must be an object.`;
-  if (typeof entry.card.type !== 'string' || !entry.card.type) return `${named}: the card needs a "type".`;
-  if (entry.artLayerIds !== undefined && (!Array.isArray(entry.artLayerIds) || entry.artLayerIds.some(id => typeof id !== 'string'))) return `${named}: "artLayerIds" must be a list of text.`;
-  if (entry.createdAt !== undefined && typeof entry.createdAt !== 'string') return `${named}: "createdAt" must be text.`;
+  if (nameProblem)
+  {
+    return `${named}: ${nameProblem}`;
+  }
+  if (typeof entry.id !== 'string' || !TEMPLATE_ID_PATTERN.test(entry.id))
+  {
+    return `${named}: "id" must look like "${TEMPLATE_ID_PREFIX}<name>".`;
+  }
+  if (!isPlainObject(entry.card))
+  {
+    return `${named}: "card" must be an object.`;
+  }
+  if (typeof entry.card.type !== 'string' || !entry.card.type)
+  {
+    return `${named}: the card needs a "type".`;
+  }
+  if (entry.artLayerIds !== undefined && (!Array.isArray(entry.artLayerIds) || entry.artLayerIds.some(id => typeof id !== 'string')))
+  {
+    return `${named}: "artLayerIds" must be a list of text.`;
+  }
+  if (entry.createdAt !== undefined && typeof entry.createdAt !== 'string')
+  {
+    return `${named}: "createdAt" must be text.`;
+  }
   const cardProblem = checkCard ? checkCard(TemplateCardFields(entry.card)) : '';
-  if (cardProblem) return `${named}: ${cardProblem}`;
-  return '';
+  return cardProblem ? `${named}: ${cardProblem}` : '';
 }
 
 /**
@@ -228,22 +320,53 @@ export function ParseTemplateFile(raw, { checkCard = null } = {})
   let data = raw;
   if (typeof raw === 'string')
   {
-    try { data = JSON.parse(raw); } catch (error) { return { problem: `Not valid JSON: ${error.message}` }; }
+    try
+    {
+      data = JSON.parse(raw);
+    }
+    catch (error)
+    {
+      return { problem: `Not valid JSON: ${error.message}` };
+    }
   }
-  if (!isPlainObject(data)) return { problem: 'The file must be one JSON object.' };
-  if (data.kind !== CARD_TEMPLATES_KIND) return { problem: `Not a card templates file: "kind" must be "${CARD_TEMPLATES_KIND}".` };
-  if (data.formatVersion !== CARD_TEMPLATES_FORMAT_VERSION) return { problem: `Format version ${JSON.stringify(data.formatVersion)} is not supported; expected ${CARD_TEMPLATES_FORMAT_VERSION}.` };
-  if (!Array.isArray(data.templates)) return { problem: '"templates" must be a list.' };
-  const ids = new Set(), names = new Set();
+  if (!isPlainObject(data))
+  {
+    return { problem: 'The file must be one JSON object.' };
+  }
+  if (data.kind !== CARD_TEMPLATES_KIND)
+  {
+    return { problem: `Not a card templates file: "kind" must be "${CARD_TEMPLATES_KIND}".` };
+  }
+  if (data.formatVersion !== CARD_TEMPLATES_FORMAT_VERSION)
+  {
+    return { problem: `Format version ${JSON.stringify(data.formatVersion)} is not supported; expected ${CARD_TEMPLATES_FORMAT_VERSION}.` };
+  }
+  if (!Array.isArray(data.templates))
+  {
+    return { problem: '"templates" must be a list.' };
+  }
+  const ids = new Set();
+  const names = new Set();
   for (const [index, entry] of data.templates.entries())
   {
     const problem = templateProblem(entry, index, checkCard);
-    if (problem) return { problem };
-    if (ids.has(entry.id)) return { problem: `Template ${index + 1}: the id "${entry.id}" is used twice.` };
-    if (names.has(nameKey(entry.name))) return { problem: `Template ${index + 1}: the name "${entry.name.trim()}" is used twice.` };
-    ids.add(entry.id); names.add(nameKey(entry.name));
+    if (problem)
+    {
+      return { problem };
+    }
+    if (ids.has(entry.id))
+    {
+      return { problem: `Template ${index + 1}: the id "${entry.id}" is used twice.` };
+    }
+    if (names.has(nameKey(entry.name)))
+    {
+      return { problem: `Template ${index + 1}: the name "${entry.name.trim()}" is used twice.` };
+    }
+    ids.add(entry.id);
+    names.add(nameKey(entry.name));
   }
-  const templates = data.templates.map(entry => {
+  const templates = data.templates.map(entry =>
+  {
     const card = TemplateCardFields(entry.card);
     return {
       id: entry.id,
@@ -259,11 +382,17 @@ export function ParseTemplateFile(raw, { checkCard = null } = {})
 
 function freeName(name, usedKeys)
 {
-  if (!usedKeys.has(nameKey(name))) return name;
-  for (let n = 2; ; n++)
+  if (!usedKeys.has(nameKey(name)))
   {
-    const candidate = `${name} ${n}`;
-    if (!usedKeys.has(nameKey(candidate))) return candidate;
+    return name;
+  }
+  for (let number = FIRST_DUPLICATE_NUMBER; ; number++)
+  {
+    const candidate = `${name} ${number}`;
+    if (!usedKeys.has(nameKey(candidate)))
+    {
+      return candidate;
+    }
   }
 }
 
@@ -296,6 +425,9 @@ export function createMemoryTemplateStore(initialFile = null)
   let stored = initialFile ? clone(initialFile) : null;
   return {
     load: () => (stored ? clone(stored) : null),
-    save: file => { stored = clone(file); },
+    save: file =>
+    {
+      stored = clone(file);
+    },
   };
 }

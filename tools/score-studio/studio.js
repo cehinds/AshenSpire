@@ -1937,21 +1937,40 @@ function renderScoreSummary(def, sc) {
 
 const RARITY_ORDER = Object.freeze(['starter', 'common', 'uncommon', 'rare', 'boss']);
 
+const CARDS_GRID_ID = 'cards-grid';
+const CARD_SEARCH_ID = 'card-search';
+const CARDS_TAB_SELECTOR = '.studio-tab[data-tab="cards"]';
+const PROPERTIES_VIEW = 'properties';
+const ALL_FILTER_VALUE = 'all';
+const NEW_CARD_FILTER_IDS = Object.freeze([
+  'filter-type',
+  'filter-class',
+  'filter-rank',
+  'filter-shift',
+  'filter-deck',
+]);
+const BLANK_CARD_NAME = 'New card';
+const BLANK_CARD_MESSAGE = 'Added a new card. Edit its properties to begin.';
+
 // Adds a card at the top of the gallery as the active card, with the filters cleared so it is in view.
 // One Undo step. `build(id)` makes the card from a fresh id (New's id loop over every card).
-function insertNewCard(build, { autoName = false, message }) {
-  const grid = document.getElementById('cards-grid');
+function insertNewCard(build, { autoName = false, message })
+{
+  const grid = document.getElementById(CARDS_GRID_ID);
   const before = CaptureCardTilePositions(grid);
   pushHistory();
   const id = FreshCardId(state.cards);
   const card = build(id);
   state.cards.unshift(card);
   state.selectedCardId = id;
-  document.getElementById('card-search').value = '';
-  for (const key of ['filter-type', 'filter-class', 'filter-rank', 'filter-shift', 'filter-deck']) document.getElementById(key).value = 'all';
+  document.getElementById(CARD_SEARCH_ID).value = '';
+  for (const filterId of NEW_CARD_FILTER_IDS)
+  {
+    document.getElementById(filterId).value = ALL_FILTER_VALUE;
+  }
   updateFilterCount();
-  document.querySelector('.studio-tab[data-tab="cards"]').click();
-  cardEditorDockUi?.setView('properties');
+  document.querySelector(CARDS_TAB_SELECTOR).click();
+  cardEditorDockUi?.setView(PROPERTIES_VIEW);
   renderCardsGrid();
   renderInspector();
   animateCardInsertion(grid, id, { before });
@@ -1960,18 +1979,41 @@ function insertNewCard(build, { autoName = false, message }) {
 }
 
 // Blank: the card New has always made.
-function createBlankCard() {
+function createBlankCard()
+{
   insertNewCard(id => normalizeStudioCard({
-    id, name: 'New card', class: 'colorless', rarity: 'common', type: 'skill', icon: 'skill',
-    cost: 1, staminaCost: 1, manaCost: 0, costRule: 'fixed', damageSchool: 'physical',
-    effects: [], keywords: [], tags: ['camp:physical', 'classification.skill', 'targeting.self'],
-    textTemplate: 'New card', _custom: true, _edited: true, _autoName: false, _autoText: false, _newDraft: true,
-  }), { autoName: false, message: 'Added a new card. Edit its properties to begin.' });
+    id,
+    name: BLANK_CARD_NAME,
+    class: 'colorless',
+    rarity: 'common',
+    type: 'skill',
+    icon: 'skill',
+    cost: 1,
+    staminaCost: 1,
+    manaCost: 0,
+    costRule: 'fixed',
+    damageSchool: 'physical',
+    effects: [],
+    keywords: [],
+    tags: [
+      'camp:physical',
+      'classification.skill',
+      'targeting.self',
+    ],
+    textTemplate: BLANK_CARD_NAME,
+    _custom: true,
+    _edited: true,
+    _autoName: false,
+    _autoText: false,
+    _newDraft: true,
+  }), { autoName: false, message: BLANK_CARD_MESSAGE });
 }
 
 // A copy of a template's mechanics with a fresh id, a generated name and automatic text; no link to the template.
-function createCardFromTemplate(template) {
-  insertNewCard(id => {
+function createCardFromTemplate(template)
+{
+  insertNewCard(id =>
+  {
     const card = CardFromTemplate(template, { id, normalize: normalizeStudioCard, textFor: textFromEffects });
     card.name = autoNameFor(card);
     return card;
@@ -1990,7 +2032,11 @@ function cardMenuActions() {
   };
   return [
     { label: 'Duplicate', run: () => document.getElementById('btn-duplicate-card').click() },
-    { label: 'Save as template…', hint: "Keep this card's mechanics to start new cards from", run: () => cardTemplatesUi?.openSaveAsTemplate(def.id) },
+    {
+      label: 'Save as template…',
+      hint: "Keep this card's mechanics to start new cards from",
+      run: () => cardTemplatesUi?.openSaveAsTemplate(def.id),
+    },
     { label: 'Delete', enabled: added, hint: added ? '' : 'Only cards you added can be deleted', run: () => document.getElementById('btn-delete-card').click() },
     { label: 'Reset to default', enabled: inGame && !!def._edited && !def._custom, hint: inGame ? (def._edited ? '' : 'No edits to reset') : 'Not a game card', run: () => document.getElementById('btn-reset-card').click() },
     { separator: true },
@@ -2043,12 +2089,25 @@ function cardJsonProblem(card) {
   return '';
 }
 
+const STUDIO_FLAG_PREFIX = '_';
+
 // The JSON dialog's checks for a card a template keeps or makes: shape first, then a scoring dry run on a copy.
-function templateCardProblem(card) {
-  const visible = Object.fromEntries(Object.entries(card || {}).filter(([key]) => !key.startsWith('_')));
+function templateCardProblem(card)
+{
+  const visible = Object.fromEntries(Object.entries(card || {}).filter(([key]) => !key.startsWith(STUDIO_FLAG_PREFIX)));
   const problem = cardJsonProblem(visible);
-  if (problem) return problem;
-  try { scoreCardEntry(normalizeStudioCard(clone(visible))); } catch (err) { return `Not a valid card: ${err.message}`; }
+  if (problem)
+  {
+    return problem;
+  }
+  try
+  {
+    scoreCardEntry(normalizeStudioCard(clone(visible)));
+  }
+  catch (error)
+  {
+    return `Not a valid card: ${error.message}`;
+  }
   return '';
 }
 
@@ -5410,10 +5469,16 @@ async function boot() {
   }
 
   // Templates load before the draft is restored over them (the in-memory store until SS-003's Save path).
-  cardTemplatesUi = initCardTemplatesUi({ state, checkCard: templateCardProblem, pushHistory, saveDraft, toast,
+  cardTemplatesUi = initCardTemplatesUi({
+    state,
+    checkCard: templateCardProblem,
+    pushHistory,
+    saveDraft,
+    toast,
     artLayerIdsFor: def => matchingCustomLayers(def).map(layer => layer.id),
     artLayers: () => state.artLayers.layers || [],
-    createBlankCard, createCardFromTemplate,
+    createBlankCard,
+    createCardFromTemplate,
   });
 
   await loadFromRepo(state.repoPath);
