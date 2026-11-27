@@ -161,7 +161,28 @@
 @container map-tray (max-width: 104rem) {
   .map-tray-row { gap: .5rem; }
 }
-:root[data-layout='narrow'] .mapscreen .map-tray-row { display: none; }
+/* Keep the map action bar visible on narrow phones and hide keycaps to fit. */
+:root[data-layout='narrow'] .mapscreen .map-tray-row {
+  padding: 0.35rem 0.5rem calc(0.35rem + env(safe-area-inset-bottom, 0px) / var(--ui-zoom, 1));
+  gap: 0.35rem;
+}
+
+:root[data-layout='narrow'] .mapscreen .map-tray-row > .hint-bar {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  gap: 0.35rem;
+}
+
+:root[data-layout='narrow'] .mapscreen .map-tray-row .hint {
+  flex: 1 1 0;
+  min-width: 0;
+  padding-inline: 0.4rem;
+}
+
+:root[data-layout='narrow'] .mapscreen .map-tray-row .hint kbd {
+  display: none;
+}
 /* Potions, as in combat's footer: a round control, its minis (the shared icon
    tray) beside it, --icon-tray-slots of them wide before the +N tile. */
 .map-potions .run-potions-btn {
@@ -236,8 +257,34 @@
 /* Back and Enter are centred on the SCREEN, not on the space left beside
    Potions: they take the row ABOVE it, so the clearance between them is
    vertical and a phone keeps two full-width buttons instead of two slivers. */
-.map-tray-pair { flex: 0 0 auto; display: flex; justify-content: center; gap: .8rem; padding: .5rem 1.4rem; }
-.map-tray-pair > .as-btn { flex: 0 1 18rem; min-width: 0; }
+.map-tray-pair {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: center;
+  gap: 0.8rem;
+  padding: 0.5rem 1.4rem;
+}
+
+.map-tray-pair > .as-btn {
+  flex: 0 1 18rem;
+  min-width: 0;
+}
+
+.map-tray-pair > .map-back {
+  flex: 0 0 auto;
+}
+
+.map-tray-pair > .map-enter {
+  flex: 1 1 auto;
+  max-width: 24rem;
+  white-space: normal;
+  text-align: center;
+}
+
+:root[data-layout='narrow'] .map-tray-pair {
+  gap: 0.5rem;
+  padding: 0.5rem 0.8rem;
+}
 .map-node.selected > circle:not(.node-halo) { stroke: var(--parchment); stroke-width: 4; }
 /* The pad cursor and hover both repaint the stroke; the glow keeps the
    selection visible under either. */
