@@ -1631,7 +1631,19 @@ const displayedIds = PerGallery(null);
 
 function isHiddenByFilters(kind, id)
 {
-  return Boolean(id) && Array.isArray(displayedIds[kind]) && !displayedIds[kind].includes(id);
+  const displayed = displayedIds[kind];
+  if (!id || !Array.isArray(displayed))
+  {
+    return false;
+  }
+  return !displayed.includes(id);
+}
+
+// An item's picker label: its kind in brackets, then its name.
+function itemOptionLabel(item)
+{
+  const kindLabel = item.kind[0].toUpperCase() + item.kind.slice(1);
+  return `[${kindLabel}] ${item.name || item.id}`;
 }
 
 // Each gallery's own renderers. Function declarations are hoisted, so they can be named here.
@@ -1651,7 +1663,7 @@ const GalleryView = Object.freeze({
       host,
       ITEM_INSPECT_LEVEL,
     ),
-    optionLabel: item => `[${item.kind[0].toUpperCase() + item.kind.slice(1)}] ${item.name || item.id}`,
+    optionLabel: itemOptionLabel,
     updateFilterCount: updateItemFilterCount,
   }),
 });
@@ -1699,7 +1711,9 @@ function finishGalleryRender(
 
 function galleryTileSelector(kind, id)
 {
-  return `.${GalleryTileClass[kind]}[${DataAttributePrefix}${TileIdAttribute[kind]}="${CSS.escape(id)}"]`;
+  const tileClass = GalleryTileClass[kind];
+  const idAttribute = `${DataAttributePrefix}${TileIdAttribute[kind]}`;
+  return `.${tileClass}[${idAttribute}="${CSS.escape(id)}"]`;
 }
 
 function activeTile(kind)
@@ -1709,12 +1723,14 @@ function activeTile(kind)
   {
     return null;
   }
-  return galleryGrid(kind)?.querySelector(galleryTileSelector(kind, id)) || null;
+  const grid = galleryGrid(kind);
+  return grid?.querySelector(galleryTileSelector(kind, id)) || null;
 }
 
 function revealActiveTile(kind)
 {
-  activeTile(kind)?.scrollIntoView?.(REVEAL_SCROLL_OPTIONS);
+  const tile = activeTile(kind);
+  tile?.scrollIntoView?.(REVEAL_SCROLL_OPTIONS);
 }
 
 // A setter called before a render shows its tile once that render lands.
@@ -3747,14 +3763,36 @@ function renderArtPreviewOnly()
     kind,
     pickerSelect.value,
   );
-  if (entity)
-  {
-    GalleryView[kind].renderPreview(entity, host);
-  }
-  else
+  if (!entity)
   {
     host.replaceChildren();
+    return;
   }
+  GalleryView[kind].renderPreview(entity, host);
+}
+
+// The Design picker follows the gallery's active card or item.
+function renderArtPicker()
+{
+  const pickerSelect = document.getElementById(ART_PREVIEW_SELECT_ID);
+  pickerSelect.innerHTML = '';
+  const pickerKind = ToGalleryKind(state.artTarget);
+  const pickerEntities = GalleryEntity[pickerKind];
+  const options = pickerEntities.list(state).map((entity) => [
+    pickerEntities.idOf(entity),
+    GalleryView[pickerKind].optionLabel(entity),
+  ]);
+  const activeId = activeEntities.get(pickerKind);
+  if (!activeId)
+  {
+    const placeholder = NoActiveEntityOption[pickerKind];
+    pickerSelect.appendChild(new Option(placeholder, NO_ENTITY_OPTION_VALUE));
+  }
+  for (const [value, text] of options)
+  {
+    pickerSelect.appendChild(new Option(text, value));
+  }
+  pickerSelect.value = activeId || NO_ENTITY_OPTION_VALUE;
 }
 
 function renderArtTab() {
@@ -3772,25 +3810,7 @@ function renderArtTab() {
       : 'Assign PNG assets to card components, set priority match rules (tag, school, status, type, or default), reorder Z-index layers, and adjust position, scale, opacity, and blend mode. Changes reflect live on the selected card and gallery.';
   }
 
-  // The picker follows the gallery's active card or item.
-  const pickerSelect = document.getElementById(ART_PREVIEW_SELECT_ID);
-  pickerSelect.innerHTML = '';
-  const pickerKind = ToGalleryKind(state.artTarget);
-  const pickerEntities = GalleryEntity[pickerKind];
-  const options = pickerEntities.list(state).map((entity) => [
-    pickerEntities.idOf(entity),
-    GalleryView[pickerKind].optionLabel(entity),
-  ]);
-  const activeId = activeEntities.get(pickerKind);
-  if (!activeId)
-  {
-    pickerSelect.appendChild(new Option(NoActiveEntityOption[pickerKind], NO_ENTITY_OPTION_VALUE));
-  }
-  for (const [value, text] of options)
-  {
-    pickerSelect.appendChild(new Option(text, value));
-  }
-  pickerSelect.value = activeId || NO_ENTITY_OPTION_VALUE;
+  renderArtPicker();
   renderArtPreviewOnly();
 
   const layersObj = activeArtLayersObj();
@@ -4372,10 +4392,12 @@ let artGalleryFrame = null;
 
 function showGallery(kind)
 {
-  if (kind !== activeGallery)
+  if (kind === activeGallery)
   {
-    document.querySelector(`${STUDIO_TAB_SELECTOR}[${STUDIO_TAB_DATA_ATTRIBUTE}="${kind}"]`)?.click();
+    return;
   }
+  const tabSelector = `${STUDIO_TAB_SELECTOR}[${STUDIO_TAB_DATA_ATTRIBUTE}="${kind}"]`;
+  document.querySelector(tabSelector)?.click();
 }
 
 // Each gallery keeps its own place: the grid scrolls on desktop, the page on narrow screens.
@@ -4388,21 +4410,31 @@ function galleryGrid(kind)
 
 function rememberGalleryScroll(kind)
 {
-  galleryScroll[kind] = { grid: galleryGrid(kind)?.scrollTop || 0, page: window.scrollY };
+  const gridScrollTop = galleryGrid(kind)?.scrollTop || 0;
+  galleryScroll[kind] = {
+    grid: gridScrollTop,
+    page: window.scrollY,
+  };
+}
+
+function restoreSavedGalleryScroll(kind)
+{
+  const saved = galleryScroll[kind];
+  const grid = galleryGrid(kind);
+  if (!saved || !grid)
+  {
+    return;
+  }
+  grid.scrollTop = saved.grid;
+  if (isNarrowLayout())
+  {
+    window.scrollTo(0, saved.page);
+  }
 }
 
 function restoreGalleryScroll(kind)
 {
-  const saved = galleryScroll[kind];
-  const grid = galleryGrid(kind);
-  if (saved && grid)
-  {
-    grid.scrollTop = saved.grid;
-    if (isNarrowLayout())
-    {
-      window.scrollTo(0, saved.page);
-    }
-  }
+  restoreSavedGalleryScroll(kind);
   revealActiveTile(kind);
 }
 
@@ -4852,7 +4884,8 @@ function wireEvents() {
         if (tab === 'art') renderArtTab(); else renderWeights();
         return;
       }
-      const previousTab = document.querySelector(ACTIVE_STUDIO_TAB_SELECTOR)?.dataset.tab;
+      const previousTabButton = document.querySelector(ACTIVE_STUDIO_TAB_SELECTOR);
+      const previousTab = previousTabButton?.dataset.tab;
       if (Galleries.includes(previousTab) && previousTab !== tab)
       {
         rememberGalleryScroll(previousTab);
@@ -4971,9 +5004,10 @@ function wireEvents() {
     const next = state.cards.find((card) => card.id === activeId);
     syncAllViews();
     saveDraft({ autoName: false });
-    toast(next
+    const deletedMessage = next
       ? DeletedCardToast.withNext(removed.name, next.name)
-      : DeletedCardToast.withoutNext(removed.name));
+      : DeletedCardToast.withoutNext(removed.name);
+    toast(deletedMessage);
   });
 
   // Card inspector edits
@@ -5800,7 +5834,8 @@ async function boot() {
   restoreWorkingContext();
 }
 
-// After boot: the stored gallery, card and item. A stored id that is gone falls back to the default.
+// After boot: the stored gallery, card and item.
+// A stored id that is gone falls back to the default.
 function restoreWorkingContext()
 {
   const saved = ReadWorkingContext(localStorage);
