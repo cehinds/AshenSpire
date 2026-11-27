@@ -1,8 +1,9 @@
 // Reads, lists and writes the owner's game JSON for the Score Studio "Game content" tab.
-import { createHash } from 'node:crypto';
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { isAbsolute, relative, resolve } from 'node:path';
 import { ApiMessage, CONTENT_API } from './content-editor-config.mjs';
+import { CONTENT_STATUS, ContentError } from './content-editor-error.mjs';
+import { TextHash } from './content-editor-hash.mjs';
 import { IsEditableContentPath, OWNER_TOOLS } from './owner/ownerSteps.mjs';
 
 const BACKSLASH = /\\/g;
@@ -11,27 +12,6 @@ const PARENT_SEGMENT = '..';
 const CARRIAGE_RETURN_LINE = /\r\n?/g;
 const NEWLINE = '\n';
 const TEXT_ENCODING = 'utf8';
-const STATUS_BAD_REQUEST = 400;
-const STATUS_FORBIDDEN = 403;
-const STATUS_CONFLICT = 409;
-const HEX_DIGEST = 'hex';
-
-/** An error with the HTTP status the handler should answer with; `stale` marks a 409. */
-export class ContentError extends Error
-{
-    constructor(status, message, stale = false)
-    {
-        super(message);
-        this.status = status;
-        this.stale = stale;
-    }
-}
-
-/** The hash of a file's text, matching the browser's WebCrypto digest of the same text. */
-export function TextHash(text)
-{
-    return createHash(CONTENT_API.hash.node).update(text, TEXT_ENCODING).digest(HEX_DIGEST);
-}
 
 function slashPath(path)
 {
@@ -49,7 +29,7 @@ function rejectUnsafe(path)
 {
     if (!path || isAbsolute(path) || path.split(FORWARD_SLASH).includes(PARENT_SEGMENT))
     {
-        throw new ContentError(STATUS_FORBIDDEN, ApiMessage('notRepoPath', { path }));
+        throw new ContentError(CONTENT_STATUS.forbidden, ApiMessage('notRepoPath', { path }));
     }
 }
 
@@ -68,12 +48,12 @@ export function ResolveEditablePath(root, requestedPath)
     rejectUnsafe(path);
     if (!IsEditableContentPath(path))
     {
-        throw new ContentError(STATUS_FORBIDDEN, ApiMessage('notEditable', { path }));
+        throw new ContentError(CONTENT_STATUS.forbidden, ApiMessage('notEditable', { path }));
     }
     const absolutePath = resolve(root, path);
     if (!insideRoot(root, absolutePath))
     {
-        throw new ContentError(STATUS_FORBIDDEN, ApiMessage('notRepoPath', { path }));
+        throw new ContentError(CONTENT_STATUS.forbidden, ApiMessage('notRepoPath', { path }));
     }
     return absolutePath;
 }
@@ -90,7 +70,7 @@ export function PrepareContentText(text)
     catch (error)
     {
         const message = ApiMessage('notJson', { error: error.message });
-        throw new ContentError(STATUS_BAD_REQUEST, message);
+        throw new ContentError(CONTENT_STATUS.badRequest, message);
     }
     return normalized;
 }
@@ -109,7 +89,7 @@ export async function SaveContentFile(root, path, text, baseHash)
     if (TextHash(onDisk) !== baseHash)
     {
         const message = ApiMessage('staleFile', { path: slashPath(path) });
-        throw new ContentError(STATUS_CONFLICT, message, true);
+        throw new ContentError(CONTENT_STATUS.conflict, message, true);
     }
     await writeFile(absolutePath, prepared, TEXT_ENCODING);
     return { path: slashPath(path) };
@@ -122,7 +102,8 @@ export async function ListContentFolder(root, requestedFolder)
     rejectUnsafe(folder);
     if (!isEditableFolder(folder) || !insideRoot(root, resolve(root, folder)))
     {
-        throw new ContentError(STATUS_FORBIDDEN, ApiMessage('notListable', { path: folder }));
+        const message = ApiMessage('notListable', { path: folder });
+        throw new ContentError(CONTENT_STATUS.forbidden, message);
     }
     const { listExtension, hiddenPrefix } = CONTENT_API;
     const names = await readdir(resolve(root, folder));
