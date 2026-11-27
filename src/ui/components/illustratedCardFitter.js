@@ -70,7 +70,7 @@ export function roomyFloor(high,low,zoom,phoneShrink=0,boxLines=Infinity){
  * True when a rendered rules row has a line of one word above its last line (owner, 2026-11-17: only the last line
  * may hold a single word). A word may span text nodes ("1" in a number span, then "."); its line is its first character's.
  */
-export function hasLoneWordLine(text){
+export function HasLoneWordLine(text){
   const doc=text?.ownerDocument;
   if(!doc?.createTreeWalker||!doc.createRange)return false;
   const nodes=[];let all='';
@@ -301,12 +301,12 @@ export function fitIllustratedCards(cards) {
   // smaller font (every such row written, then read, per step), a little under its floor if need be, and keeps its size if none helps.
   let lonely=measured.filter(row=>row.rules&&!row.fullRules);
   for(const row of lonely)row.text.style.fontSize=row.result+'px';
-  lonely=lonely.filter(row=>hasLoneWordLine(row.text));
+  lonely=lonely.filter(row=>HasLoneWordLine(row.text));
   for(const row of lonely){row.widest=row.result;row.loneFloor=Math.max(RULES_HARD_MIN_PX/zoom,row.low*LONE_WORD_FLOOR);}
   for(let step=0;step<LONE_WORD_STEPS&&lonely.length;step++){
     for(const row of lonely){row.result=Math.max(row.loneFloor,row.result*LONE_WORD_STEP);row.text.style.fontSize=row.result+'px';}
     lonely=lonely.filter(row=>{
-      if(!hasLoneWordLine(row.text))return false;
+      if(!HasLoneWordLine(row.text))return false;
       if(row.result>row.loneFloor)return true;
       row.result=row.widest;return false;
     });

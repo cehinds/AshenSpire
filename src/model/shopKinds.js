@@ -20,7 +20,7 @@ import { NEW_RUN_CLAUSE } from './balanceNotes.js';
 import { marketAdditionStockProblems, blacksmithStockProblems, MARKET_ADDITIONS } from './marketStock.js';
 import { utilityFlaskIds } from './gracerefill.js';
 import { consumableSettingsProblems } from './consumables.js';
-import { skillTracks } from './skills.js';
+import * as Skills from './skills.js';
 
 /** The kinds a shop can be (SPEC §14.2) — a closed set; a new kind is a spec change. */
 export const SHOP_KINDS = Object.freeze(['market', 'blacksmith', 'master']);
@@ -327,7 +327,7 @@ export function masterTableProblems(table, err, bundle = null) {
 
   const masters = table.masters;
   if (!Array.isArray(masters) || !masters.length) { err('shops.masters', 'must be a non-empty list of masters { id, name, speakerId, skills }'); return; }
-  const tracks = bundle ? new Map(skillTracks(bundle).map((row) => [row.id, row.kind])) : null;
+  const tracks = bundle ? new Map(Skills.skillTracks(bundle).map((row) => [row.id, row.kind])) : null;
   const speakers = bundle && Array.isArray(bundle.speakers) ? new Set(bundle.speakers.map((row) => row && row.id)) : null;
   const seen = new Set();
   masters.forEach((row, index) => {

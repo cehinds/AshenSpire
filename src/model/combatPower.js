@@ -127,7 +127,17 @@ export function UpgradeTagSurcharge(rule, stacks, positiveScore = 0) {
 
 /** Score a card face: {raw, parts, positive}. `positive` is P, the sum of the positive non-cost parts. */
 export function ScoreCard(c, scoring = GetActiveScoring(), context = null) {
-  const S = slimOf(scoring), M = S.model, CM = scoring.cardModel;
+  return scorePrepared(c, scoring, slimOf(scoring), context);
+}
+
+/** Compile only for one read-only operation; create a new scorer after edits. */
+export function PrepareCardScorer(scoring = GetActiveScoring()) {
+  const S = slimOf(scoring);
+  return (card, context = null) => scorePrepared(card, scoring, S, context);
+}
+
+function scorePrepared(c, scoring, S, context) {
+  const M = S.model, CM = scoring.cardModel;
   const parts = {};
   const add = (k, v) => { if (v) parts[k] = (parts[k] || 0) + v; };
   // `fx` mirrors only the effect parts (damage, block, statuses ...), so the effect count never mistakes a tag or keyword that

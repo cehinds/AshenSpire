@@ -95,7 +95,7 @@ import { cardKind } from '../../model/tree.js';
 import { openPileModal, openSpentPileModal } from '../components/piles.js';
 import { resolveActionAnimation } from '../../model/actionAnimation.js';
 import { enemyMoveCards } from '../../model/enemyMoveCards.js';
-import { enemyDefinitionOf, enemyMoveOf, enemyEventMoveOf } from '../../model/enemyMoveSet.js';
+import { EnemyDefinitionOf, EnemyMoveOf, EnemyEventMoveOf } from '../../model/enemyMoveSet.js';
 import { enemyMoveDamage } from '../../model/state.js';
 import { variableIntentDamage } from '../../model/intentDamage.js';
 import { ART_REDRAW_EVENT } from '../highResArt.js';
@@ -529,7 +529,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const playedInstance = played && (played.cardInstance || disp?.hand.find((card) => card.instanceId === played.cardInstanceId)
         || findInst(played.cardInstanceId) || { cardId: played.cardId });
       let definition = played ? resolvePlayedCombatCard(combat, played, playedInstance)
-        : enemyEventMoveOf(registries, { enemies: combat.enemies, instanceId: moved.sourceId, enemyId: moved.enemyId, moveId: moved.moveId });
+        : EnemyEventMoveOf(registries, { enemies: combat.enemies, instanceId: moved.sourceId, enemyId: moved.enemyId, moveId: moved.moveId });
       const selectedCounter = returned?.sourceKind === 'player' && definition
         ? selectedWeaponCounterFor(definition,selectedProfile(),registries.cards.get(played.cardId)) : null;
       if (returned && definition) {
@@ -1190,7 +1190,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
 
     // The instance's move set: its level-card moves (owner, 2026-11-20) show with its own, under the card's name.
-    const def = enemyDefinitionOf(registries, entity);
+    const def = EnemyDefinitionOf(registries, entity);
     const intent = configuredArt && !gameModule(run, 'intent') ? { hidden: true, label: t('gameProfile.combat.unreadIntent') } : disp?.ents[entity.id]?.intentPreview || projectCombatIntent(combat, entity.id);
     const moveCardOptions = { registries, combatMatchupRules: combat.combatMatchupRules,
       combatExpansionVersion: combat.combatExpansionVersion, stanceRules: combat.stanceRules };
@@ -3558,7 +3558,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         run.stats.lastHit = {
           sourceId,
           sourceName: striker?.name || (sourceId ? words(sourceId) : (cause && cause !== 'effect' ? words(cause) : 'Unknown')),
-          move: moveId ? (striker && enemyMoveOf(registries, striker, moveId)?.levelCard ? enemyMoveOf(registries, striker, moveId).name : words(moveId)) : null,
+          move: moveId ? (striker && EnemyMoveOf(registries, striker, moveId)?.levelCard ? EnemyMoveOf(registries, striker, moveId).name : words(moveId)) : null,
           amount: e.amount,
         };
       }
@@ -3672,7 +3672,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
             || findInst(event.cardInstanceId) || { cardId: event.cardId };
           return resolvePlayedCombatCard(combat, event, instance);
         },
-        resolveEnemyMove: event => enemyEventMoveOf(registries, { enemies: combat.enemies, instanceId: event.sourceId, enemyId: event.enemyId, moveId: event.moveId }),
+        resolveEnemyMove: event => EnemyEventMoveOf(registries, { enemies: combat.enemies, instanceId: event.sourceId, enemyId: event.enemyId, moveId: event.moveId }),
       });
     } catch (e) { console.warn('[combat] recipient effect decoration failed:', e && e.message); }
     playbackEvents = events;

@@ -54,7 +54,7 @@ function enemyFightScaling(run, enemyId) {
   });
 }
 // Each enemy's floor step for this fight (null without enemyLevelScaling): its gear and HP climb by it.
-export function enemyLevelStepsForFight(run, enemyIds) {
+export function EnemyLevelStepsForFight(run, enemyIds) {
   return enemyIds.map(enemyId => enemyFightScaling(run, enemyId)?.step ?? null);
 }
 export function enemyLevelsForFight(registries, run, enemyIds, encounter = null) {
@@ -193,7 +193,7 @@ export function createRunCombat({
     enemyIds,
     enemyRows: encounter?.rows || [],
     enemyLevels: enemyLevelsForFight(registries, run, enemyIds, encounter),
-    enemyLevelSteps: enemyLevelStepsForFight(run, enemyIds),
+    enemyLevelSteps: EnemyLevelStepsForFight(run, enemyIds),
     hpMult,
     enemyDamageMult,
     enemyStatuses,

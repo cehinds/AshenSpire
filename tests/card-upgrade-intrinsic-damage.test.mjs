@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { registries as customRegistries, play, outcome } from './helpers/upgrade-probe.mjs';
+import { registries as customRegistries } from './helpers/upgrade-probe.mjs';
 import { createRunState } from '../src/model/state.js';
 import { nextUpgradeOptions } from '../src/model/cardUpgradeLimits.js';
 import { applyUpgradeSteps } from '../src/model/cardUpgrade.js';
@@ -17,6 +17,9 @@ import { ProfileDamageOffense } from '../src/model/profileDamageOffense.js';
 import * as StanceRead from '../src/model/stanceBenefitsRead.js';
 import * as ElementRead from '../src/model/elementReceiptStages.js';
 import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
+import { fresh, fight, registries as contractRegistries, withScoring } from './helpers/drawback-contract.mjs';
+import { dispatch } from '../src/engine/combat.js';
+import { GetActiveScoring, SetCustomScoring } from '../src/model/activeScoring.js';
 
 const neutralReaders = {
   getAdd: () => 0, FluxMultiplier: () => 1, defensiveCombatStance: () => undefined,
@@ -64,23 +67,64 @@ test('first-play offense equals the canonical whole incoming receipt for default
   assert.ok(packets > 0, 'the shared offense includes both packet channels');
 });
 
-test('Venom Spray skips an intrinsic elemental rounding plateau and retains the effective neighboring rank', () => {
-  const { run } = fixture(customRegistries, 'reaver'), base = customRegistries.cards.get('core.venomSpray');
+test('intrinsic elemental rounding skips a damage plateau and retains the effective neighboring rank', () => withScoring(() => {
+  const scoring = structuredClone(GetActiveScoring());
+  scoring.rank.maxRank = 10; scoring.rank.maxCp = 10000;
+  assert.equal(SetCustomScoring(scoring).ok, true);
+  const run = fresh();
+  run.seed = 1;
+  run.gameProfile = structuredClone(run.gameProfile);
+  Object.assign(run.gameProfile.modules.effects, { baseDamageMultiplier: .5, playerDamageMultiplier: 1,
+    physicalDamageMultiplier: 1, strengthDamageWeight: 0, magicStatWeight: 0 });
+  run.gameProfile.modules.stats.mode = 'disabled';
+  run.relics = []; run.loadout = { sets: {}, active: {} };
+  run.attributes = { strength: 0, dexterity: 0, constitution: 0, intelligence: 0, wisdom: 0 };
+  run.fixCoreRules = structuredClone(fixCoreRules(run));
+  delete run.fixCoreRules.stanceBenefits;
+  run.fixCoreRules.elements = { version: 1,
+    fire: { spreadMultiplier: 1, spreadNeedsOtherEnemies: true, poiseIgnorePerPoint: 0, poiseIgnoreAttributes: [], burnAttribute: 'intelligence', burnMin: 0 },
+    frost: { chillDamageDealtPerStack: 0, brittleMultiplier: 1 },
+    burn: { damageTakenPerStack: 0 }, shock: { lightningTakenPerStack: 0 },
+    lightning: { chainMultiplier: 1 }, divine: { undeadMultiplier: 1 },
+    necrotic: { damageMultiplier: .5, undeadTag: 'fixture.undead', buildupAttribute: 'intelligence', buildupMin: 0 }, force: {} };
+  const base = { id: 'fixture.plateau', name: 'Rounding probe', class: 'colorless', rarity: 'common', type: 'attack',
+    costRule: 'fixed', cost: 1, staminaCost: 1, manaCost: 0, damageSchool: 'magic',
+    tags: ['camp:spell', 'maneuver:casting', 'classification.attack', 'school:decay', 'damage:necrotic'], kindIds: ['classification.attack'], keywords: [],
+    textTemplate: 'Deal {damage} damage.', effects: [{ op: 'damage', target: 'enemy', amount: 4 }],
+    upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 4 }] } };
+  const registries = { ...contractRegistries, cards: { ...contractRegistries.cards,
+    get: id => id === base.id ? base : contractRegistries.cards.get(id),
+    has: id => id === base.id || contractRegistries.cards.has(id) } };
+  const dealt = instance => {
+    const combat = fight([instance]);
+    combat.registries = { ...combat.registries, cards: registries.cards };
+    combat.gameProfile = run.gameProfile;
+    delete combat.fixCoreRules.stanceBenefits;
+    combat.fixCoreRules.elements = structuredClone(run.fixCoreRules.elements);
+    combat.player.ratings = { ar: 0, dr: 0, pr: 0, poise: 0, ward: 0 };
+    combat.player.ratingSources = [];
+    const enemy = combat.enemies[0]; enemy.ratings = { ar: 0, dr: 0, pr: 0, poise: 0, ward: 0 };
+    enemy.block = 0; enemy.persistentPoise = { value: 0, max: 0 }; delete enemy.combatStance;
+    const hp = enemy.hp;
+    dispatch(combat, { type: 'playCard', cardInstanceId: instance.instanceId, targetId: enemy.id });
+    assert.equal(combat.piles.hand.some(row => row.instanceId === instance.instanceId), false);
+    return hp - enemy.hp;
+  };
   const lead = [{ k: 'authored' }], step = { k: 'dmg', n: 2 };
   const instance = rank => ({ instanceId: 'probe-1', cardId: base.id, rank, upgraded: true, upgradeSteps: lead });
   const after = rank => ({ ...instance(rank), upgradeSteps: [...lead, step] });
-  assert.equal(outcome(play(base.id, instance(4))), outcome(play(base.id, after(4))));
-  assert.notEqual(outcome(play(base.id, instance(6))), outcome(play(base.id, after(6))));
-  const options = rank => nextUpgradeOptions(run, instance(rank), base, customRegistries, 40, { noAuthored: true, everyFamily: true });
+  assert.deepEqual([dealt(instance(4)), dealt(after(4)), dealt(instance(6)), dealt(after(6))], [2, 2, 2, 3],
+    'ceil(base × 0.5), then floor(necrotic × 0.5), makes precisely one neighboring rank plateau');
+  const options = rank => nextUpgradeOptions(run, instance(rank), base, registries, 40, { noAuthored: true, everyFamily: true });
   const snapshot = structuredClone(run), original = structuredClone(base);
   assert.ok(options(4).every(proposal => proposal.k !== 'dmg' || proposal.n !== 2));
-  assert.ok(options(6).some(proposal => proposal.k === 'dmg' && proposal.n === 2));
+  assert.ok(options(6).some(proposal => proposal.k === 'dmg' && proposal.n === 2), JSON.stringify(options(6)));
   for (const rank of [4, 6]) for (const proposal of options(rank).filter(row => row.k === 'dmg')) {
     const upgraded = { ...instance(rank), rank: proposal.nextRank ?? rank, rarityOverride: proposal.nextRarity,
       upgradeSteps: [...lead, proposal] };
-    assert.notEqual(outcome(play(base.id, instance(rank))), outcome(play(base.id, upgraded)));
+    assert.notEqual(dealt(instance(rank)), dealt(upgraded));
   }
   assert.deepEqual(run, snapshot);
   assert.deepEqual(base, original);
   assert.equal(rankedEffectsCapped(applyUpgradeSteps(base, lead), 3)[0].amount, 7);
-});
+}));

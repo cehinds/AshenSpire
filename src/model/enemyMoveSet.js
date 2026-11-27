@@ -27,7 +27,7 @@ function registryRow(registries, enemyId)
 }
 
 /** The definition an enemy instance acts from: the registry row, with the instance's extra moves after its own. */
-export function enemyDefinitionOf(registries, enemy)
+export function EnemyDefinitionOf(registries, enemy)
 {
     const def = registryRow(registries, enemy?.enemyId);
     if (!def || !hasExtraMoves(enemy))
@@ -45,13 +45,13 @@ export function enemyDefinitionOf(registries, enemy)
 }
 
 /** Every move the instance can use, its extra moves included. */
-export function enemyMovesOf(registries, enemy)
+export function EnemyMovesOf(registries, enemy)
 {
-    return enemyDefinitionOf(registries, enemy)?.moves;
+    return EnemyDefinitionOf(registries, enemy)?.moves;
 }
 
 /** One move of the instance by id, an extra move included; undefined when it has none by that id. */
-export function enemyMoveOf(registries, enemy, moveId)
+export function EnemyMoveOf(registries, enemy, moveId)
 {
     // One move by id, without walking the move set: the instance's own first, then its row's.
     if (hasExtraMoves(enemy) && Object.hasOwn(enemy.extraMoves, moveId))
@@ -65,12 +65,12 @@ export function enemyMoveOf(registries, enemy, moveId)
  * The move an event names. `enemy` is the instance when the caller has it; else the instance is found in the fight
  * by `instanceId`, and a fight without it (a replay of a finished fight) falls back to the registry row.
  */
-export function enemyEventMoveOf(registries, { enemy = null, enemies = [], instanceId = null, enemyId = null, moveId })
+export function EnemyEventMoveOf(registries, { enemy = null, enemies = [], instanceId = null, enemyId = null, moveId })
 {
     const instance = enemy || (instanceId != null ? (enemies || []).find(row => row?.id === instanceId) : null);
     if (instance && (enemyId == null || instance.enemyId === enemyId))
     {
-        return enemyMoveOf(registries, instance, moveId);
+        return EnemyMoveOf(registries, instance, moveId);
     }
     return registryRow(registries, enemyId)?.moves?.[moveId];
 }

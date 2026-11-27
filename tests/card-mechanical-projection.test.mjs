@@ -98,6 +98,35 @@ test('identical full inputs reuse the frozen final projection while source and c
   assert.notEqual(mutated,alternate);assert.ok(mutated.tokens.damage>prior);
 });
 
+test('configured and legacy fallback projections own nested metadata without freezing or aliasing their source',()=>{
+  const context=CardScoreReferenceContext(base);
+  for(const legacy of [false,true]){
+    const profile=structuredClone(context.rules.gameProfile);
+    if(legacy)profile.modules.cards.mode='legacy';
+    const rules={...context.rules,gameProfile:profile};
+    const empty=ProjectCardMechanicalValues({id:'fixture.empty',type:'skill'},{registries:context.registries,rules});
+    assert.deepEqual(empty.values,[]);assert.deepEqual(empty.tokens,{});assert.equal(Object.hasOwn(empty.card,'effects'),false);
+    const source=card(8);
+    source.effects[1].if={p:'hasStatus',of:'target',status:'bleed'};
+    source.upgrade={effects:[{op:'damage',target:'enemy',amount:12}]};
+    source.faceTemplate=['Deal {damage} damage.'];
+    const snapshot=structuredClone(source);
+    const projected=ProjectCardMechanicalValues(source,{registries:context.registries,rules});
+    assert.deepEqual(source,snapshot);
+    assert.ok(Object.isFrozen(projected.card.effects[1].if));
+    assert.ok(Object.isFrozen(projected.card.upgrade.effects[0]));
+    assert.equal(Object.isFrozen(source.tags),false);
+    assert.equal(Object.isFrozen(source.effects[1].if),false);
+    source.tags.push('fixture:edited');source.effects[1].if.status='weak';
+    source.upgrade.effects[0].amount=99;source.faceTemplate[0]='Edited';
+    assert.deepEqual(projected.card.tags,snapshot.tags);
+    assert.deepEqual(projected.card.effects[1].if,snapshot.effects[1].if);
+    assert.deepEqual(projected.card.upgrade,snapshot.upgrade);
+    assert.deepEqual(projected.card.faceTemplate,snapshot.faceTemplate);
+    assert.notEqual(ProjectCardMechanicalValues(source,{registries:context.registries,rules}),projected);
+  }
+});
+
 test('configured Evade counts and element packet channels preserve canonical mechanic units',()=>{
   const evade={...base,effects:[{op:'applyStatus',target:'self',status:'evade',stacks:{f:'metric',metric:'evadeStackGain',of:'self',per:2}}]};
   const projection=ProjectCardMechanicalValues(evade);assert.equal(projection.tokens.evade,'2');assert.equal(projection.card.effects[0].stacks,2);

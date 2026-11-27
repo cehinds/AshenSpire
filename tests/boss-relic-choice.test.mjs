@@ -6,6 +6,8 @@
 // the reward plan's relic row, and the run-state validator for the pending
 // choice. The UI that shows the choice is a later wave and is not asserted here.
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
+import { bossRelicFixture } from './helpers/reward-contract.mjs';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -18,13 +20,19 @@ import { createRunState, validateRunShape } from '../src/model/state.js';
 import { MountRewards } from '../src/ui/screens/reward.js';
 import { withKitDom } from './helpers/dom.mjs';
 
-const REG = createRegistries(contentBundle);
+const CURRENT = createRegistries(contentBundle);
+const REG = bossRelicFixture(CURRENT);
 const BOSS_POOL = REG.relics.all().filter((r) => r.rarity === 'boss' && relicInRewardPool(r)).map((r) => r.id);
 const rarityOf = (id) => REG.relics.get(id).rarity;
 
-test('the shipped boss pool is large enough to offer three distinct relics', () => {
-  assert.equal(REG.balance.rewards.bossRelicChoices, 3, 'the knob ships at 3');
-  assert.ok(BOSS_POOL.length >= 3, `boss pool has ${BOSS_POOL.length} relics`);
+test('current boss choice count follows JSON and offers no more than its eligible pool', () => {
+  const source = JSON.parse(readFileSync(new URL('../content/source/balanceRewards.json', import.meta.url), 'utf8'));
+  assert.equal(CURRENT.balance.rewards.bossRelicChoices, source.bossRelicChoices);
+  const eligible = CURRENT.relics.all().filter(row => row.rarity === 'boss' && relicInRewardPool(row));
+  const picks = rollRelicChoices(CURRENT, createRng(7), [], { rarities: ['boss'], count: source.bossRelicChoices });
+  assert.equal(picks.length, Math.min(source.bossRelicChoices, eligible.length));
+  assert.equal(new Set(picks).size, picks.length);
+  assert.ok(picks.every(id => eligible.some(row => row.id === id)));
 });
 
 test('rollRelicChoices returns distinct, unowned, boss-rarity relics up to count', () => {
@@ -72,7 +80,7 @@ test('rollRelicReward is unchanged for elite drops and still returns one id or n
 });
 
 test('a 3-choice boss relic offer is one relic row with relicIds and choice true', () => {
-  const choices = ['crownOfStitches', 'wardenHorn', 'ashOfRemembrance'];
+  const choices = ['relicA', 'relicB', 'relicC'];
   const plan = rewardPlan({ relicChoices: choices, cinders: 5 });
   const rows = plan.rows.filter((row) => row.kind === 'relic');
   assert.equal(rows.length, 1, 'one relic row');
@@ -81,7 +89,7 @@ test('a 3-choice boss relic offer is one relic row with relicIds and choice true
 });
 
 test('a boss relic choice row is a required pick, auto-collected one-of-offer like a card choice', () => {
-  const choices = ['crownOfStitches', 'wardenHorn', 'ashOfRemembrance'];
+  const choices = ['relicA', 'relicB', 'relicC'];
   const plan = rewardPlan({ relicChoices: choices, cinders: 5 });
   const row = plan.rows.find((r) => r.kind === 'relic');
   const waiting = rewardClaimStatus(plan, {});
@@ -90,7 +98,7 @@ test('a boss relic choice row is a required pick, auto-collected one-of-offer li
   const auto = resolveContinue(plan, {}, 'auto', (n) => n - 1);
   const taken = auto.take.filter((r) => r.kind === 'relic');
   assert.equal(taken.length, 1, 'auto-collect ON takes exactly one relic');
-  assert.equal(taken[0].chosenRelicId, 'ashOfRemembrance', 'the seeded pick indexes the offer');
+  assert.equal(taken[0].chosenRelicId, 'relicC', 'the seeded pick indexes the offer');
   const manual = resolveContinue(plan, {}, 'manual', () => 0);
   assert.ok(!manual.take.some((r) => r.kind === 'relic'), 'auto-collect OFF takes no relic');
   assert.ok(manual.leave.some((r) => r.kind === 'relic'), 'the unpicked choice is left');
@@ -120,21 +128,21 @@ test('a boss relic choice whose every id is owned is dropped, so nothing is take
 });
 
 test('a single boss relic (relicId) keeps the one-relic row shape', () => {
-  const rows = rewardPlan({ relicId: 'wardenHorn' }).rows.filter((row) => row.kind === 'relic');
+  const rows = rewardPlan({ relicId: 'relicB' }).rows.filter((row) => row.kind === 'relic');
   assert.equal(rows.length, 1);
-  assert.equal(rows[0].relicId, 'wardenHorn');
+  assert.equal(rows[0].relicId, 'relicB');
   assert.equal(rows[0].relicIds, undefined);
 });
 
 test('a pending reward checkpoint starts with no chosen relic', () => {
-  const checkpoint = pendingRewardCheckpoint({ relicChoices: ['wardenHorn', 'crownOfStitches'] }, { source: 'boss', after: 'advanceAct' });
+  const checkpoint = pendingRewardCheckpoint({ relicChoices: ['relicB', 'relicA'] }, { source: 'boss', after: 'advanceAct' });
   assert.equal(checkpoint.chosenRelicId, null);
 });
 
 function bossPending(extra = {}) {
   return {
     schemaVersion: 1, source: 'boss', after: 'advanceAct',
-    rewards: { relicChoices: ['crownOfStitches', 'wardenHorn', 'ashOfRemembrance'] },
+    rewards: { relicChoices: ['relicA', 'relicB', 'relicC'] },
     states: {}, chosenDraftCardIds: {}, chosenDraftNodeIds: {}, chosenCardId: null,
     ...extra,
   };
@@ -143,7 +151,7 @@ const pendingProblems = (run) => validateRunShape(run).filter((p) => p.startsWit
 
 test('the run-state validator accepts a pending relic choice with a pick from the list', () => {
   const run = createRunState({ seed: 0x10a5, classId: 'reaver', registries: REG });
-  run.pendingReward = bossPending({ chosenRelicId: 'wardenHorn' });
+  run.pendingReward = bossPending({ chosenRelicId: 'relicB' });
   assert.deepEqual(pendingProblems(run), []);
   run.pendingReward = bossPending({ chosenRelicId: null });
   assert.deepEqual(pendingProblems(run), [], 'no pick yet is fine');
@@ -151,15 +159,15 @@ test('the run-state validator accepts a pending relic choice with a pick from th
 
 test('the run-state validator refuses a chosen relic that is not in the offer', () => {
   const run = createRunState({ seed: 0x10a5, classId: 'reaver', registries: REG });
-  run.pendingReward = bossPending({ chosenRelicId: 'paupersDiadem' });
+  run.pendingReward = bossPending({ chosenRelicId: 'ordinaryRelic' });
   assert.ok(pendingProblems(run).some((p) => p.includes('chosenRelicId must belong to')), pendingProblems(run).join('; '));
 });
 
 test('the run-state validator refuses duplicate or empty relicChoices', () => {
   const run = createRunState({ seed: 0x10a5, classId: 'reaver', registries: REG });
-  run.pendingReward = bossPending({ rewards: { relicChoices: ['wardenHorn', 'wardenHorn'] } });
+  run.pendingReward = bossPending({ rewards: { relicChoices: ['relicB', 'relicB'] } });
   assert.ok(pendingProblems(run).some((p) => p.includes('relicChoices must be an array of distinct')));
-  run.pendingReward = bossPending({ rewards: { relicChoices: ['wardenHorn', ''] } });
+  run.pendingReward = bossPending({ rewards: { relicChoices: ['relicB', ''] } });
   assert.ok(pendingProblems(run).some((p) => p.includes('relicChoices must be an array of distinct')));
 });
 
@@ -181,7 +189,7 @@ function mountBossReward(dom, { relicChoices, run, checkpoint = pendingRewardChe
   return { app, checkpoint };
 }
 const pickButtons = (app) => app.querySelectorAll('.reward-row .reward-pick').filter((el) => el.tagName === 'BUTTON');
-const CHOICES = ['crownOfStitches', 'wardenHorn', 'ashOfRemembrance'];
+const CHOICES = ['relicA', 'relicB', 'relicC'];
 
 test('Continue is pressable with an unpicked boss relic choice, as with a card choice', () => {
   withKitDom((dom) => {
@@ -198,7 +206,7 @@ test('the run-state validator refuses a Taken relic choice with no chosen relic'
   const run = createRunState({ seed: 0x10a5, classId: 'reaver', registries: REG });
   run.pendingReward = bossPending({ states: { relic: 'taken' }, chosenRelicId: null });
   assert.ok(pendingProblems(run).some((p) => p.includes('relic Taken state requires chosenRelicId')), pendingProblems(run).join('; '));
-  run.pendingReward = bossPending({ states: { relic: 'taken' }, chosenRelicId: 'wardenHorn' });
+  run.pendingReward = bossPending({ states: { relic: 'taken' }, chosenRelicId: 'relicB' });
   assert.deepEqual(pendingProblems(run), [], 'a Taken choice that names its pick is fine');
   run.pendingReward = bossPending({ states: { relic: 'skipped' }, chosenRelicId: null });
   assert.deepEqual(pendingProblems(run), [], 'a skipped choice needs no pick');

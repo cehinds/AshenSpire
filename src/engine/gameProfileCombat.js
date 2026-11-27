@@ -41,7 +41,9 @@ export function isPierceHit(profile, carrier) {
 /** PierceStacks is the shared, pure Pierce count for live hits and forecasts. Stone Skin cancels one stack per stack. */
 export function PierceStacks(ctx, target, carrier, profile = carrier?.combatProfile || {}, out = null, maxSpend = Infinity) {
   if (carrier?.combatReaction) return 0;
-  const rules = fixCorePierceRules(fixCoreRules(ctx, target));
+  const effectivePierce = EffectivePierceRules(fixCoreRules(ctx, target), ctx);
+  if (!effectivePierce) return 0;
+  const rules = { ...fixCorePierceRules(fixCoreRules(ctx, target)), ...effectivePierce };
   const tags = [...(carrier?.authoredTags || []), ...(carrier?.tags || []), ...(carrier?.cardTags || []), ...(profile?.tags || [])];
   const builtIn = (rules.builtInElements || []).some(element => tags.includes(`school:${element}`) || canonicalDamageType(profile?.damageType) === element || carrier?.damageType === element);
   const tagged = isPierceHit(profile, carrier);

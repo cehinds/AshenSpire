@@ -1,9 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { rebalanceCard, rebalanceCardAsync, rebalanceItem, focusedCardMetrics, focusedCardConstraints, focusedChanges, focusedEffectOptions } from '../tools/score-studio/focusedRebalance.js';
+import { rebalanceCard as rebalanceCardImpl, rebalanceCardAsync as rebalanceCardAsyncImpl, rebalanceItem as rebalanceItemImpl, focusedCardMetrics as focusedCardMetricsImpl, focusedCardConstraints as focusedCardConstraintsImpl, focusedChanges, focusedEffectOptions } from '../tools/score-studio/focusedRebalance.js';
 import { TuneCardToTarget } from '../src/model/autoBalance.js';
 import { readFileSync } from 'node:fs';
-import { scoring } from '../src/content/generated/scoring.js';
+import { scoring as shippedScoring } from '../src/content/generated/scoring.js';
+import {scoringContract,tierContract} from './helpers/scoring-contract.mjs';
+// A deliberate 20-point band scenario: a single capped primary reaches Rank 2,
+// while higher targets require additional effects. Current policy is checked separately.
+const scoring={...shippedScoring,...scoringContract(),items:shippedScoring.items,naming:shippedScoring.naming,rank:{unrankedMax:0,width:20,maxRank:5,maxCp:100},
+  costs:{sp:{weight:-5},mp:{weight:-15}},effects:{...scoringContract().effects,damage:{weight:1,per:1},block:{weight:1,per:1}},
+  statuses:{...scoringContract().statuses,bleed:{weight:3,target:'enemy'},chill:{weight:1,target:'enemy'},shock:{weight:1,target:'enemy'},weak:{weight:3,target:'enemy'},counter:{weight:2,target:'self'},evade:{weight:2,target:'self'},prepared:{weight:2,target:'self'}},tierUnlocks:tierContract()};
 import { CardDefinitionToScoreFace } from '../src/model/cardUpgradeCp.js';
 import { ScoreCard, CombatPower, RankOf } from '../src/model/combatPower.js';
 import { GenerateSubclassCatalog } from '../src/model/subclassCardGenerator.js';
@@ -12,7 +18,14 @@ import { validateCardTemplates } from '../src/model/validate/templates.js';
 import { walkSchema } from '../src/model/validate/schemaWalk.js';
 import { SCHEMAS } from '../src/model/schemas.js';
 
-const historicalScoring = JSON.parse(readFileSync(new URL('./fixtures/scoring-pre-starseer.json', import.meta.url), 'utf8'));
+
+
+const globalFixtureScoring=scoring;
+const rebalanceCard=(card,settings={},context={})=>rebalanceCardImpl(card,settings,{scoring,...context});
+const rebalanceCardAsync=(card,settings={},context={})=>rebalanceCardAsyncImpl(card,settings,{scoring,quantum:1,...context});
+const rebalanceItem=(item,settings={},context={})=>rebalanceItemImpl(item,settings,{scoring,...context});
+const focusedCardMetrics=(card,context={})=>focusedCardMetricsImpl(card,{scoring,...context});
+const focusedCardConstraints=(card,metrics,context={})=>focusedCardConstraintsImpl(card,metrics,context.scoring??scoring);
 
 const attack = { id: 'focused.test', name: 'Hand named blade', class: 'reaver', type: 'attack', rarity: 'common', cost: 1, staminaCost: 1, manaCost: 0, costRule: 'fixed', icon: 'attack', tags: ['camp:physical', 'source:weapon', 'maneuver:attack'], keywords: [], effects: [{ op: 'damage', target: 'enemy', amount: 6 }], textTemplate: 'Deal {damage} damage.' };
 function validate(card) {
@@ -86,6 +99,10 @@ test('provided faceOf drives both tuning and final measured metrics', () => {
 });
 
 test('all twelve subclass signatures keep conditions/charges and rebase authored upgrades', () => {
+  const scoring=shippedScoring;
+  const rebalanceCard=(card,settings)=>rebalanceCardImpl(card,settings,{scoring});
+  const focusedCardMetrics=card=>focusedCardMetricsImpl(card,{scoring});
+  const focusedCardConstraints=(card,metrics)=>focusedCardConstraintsImpl(card,metrics,scoring);
   const catalog=GenerateSubclassCatalog({seed:7});
   for(const list of catalog.lists){
     const original=catalog.cards.find(c=>list.cardIds.includes(c.id)&&c.effects.some(e=>e.if||e.op==='grantCardCharge'));
@@ -170,18 +187,19 @@ test('effect and stance palettes choose seeded subsets while blank count keeps t
 test('legacy Core Force card reports its requested-tier cause without an expensive futile search', () => {
   // Historical Force identity is explicit: the live ID is now the authored Mana Rite.
   const card={id:'fixture.legacy-force',name:'Arcane Siphon',class:'colorless',rarity:'uncommon',cost:1,staminaCost:1,manaCost:1,costRule:'fixed',type:'attack',icon:'attack',keywords:[],effects:[{op:'damage',target:'enemy',amount:14},{op:'restoreMana',target:'self',amount:2}],tags:['camp:spell','source:spell','maneuver:casting','classification.attack','school:force','tradition:arcane'],textTemplate:'Deal {damage} damage. Restore {restoreMana} Mana.',damageSchool:'magic',exposureBuildupPerHit:5};
-  const scoring=historicalScoring;
+  const scoring=structuredClone(globalFixtureScoring);
+  scoring.tierUnlocks.elements.force=3;
   let measures=0;const faceOf=c=>{measures++;return CardDefinitionToScoreFace(c,{scoring});};
   const result=rebalanceCard(card,{targetRank:1,targetCp:2},{scoring,faceOf});
   assert.equal(result.feasible,false);assert.match(result.constraintErrors.join(' '),/Force school requires effective tier 3/);assert.deepEqual(result.card.effects,card.effects);assert.ok(measures<=3);
-  const live=JSON.parse(readFileSync(new URL('../games/ashenspire/packs/core/cards.json',import.meta.url))).find(c=>c.id==='core.arcaneSiphon');
-  const current=rebalanceCard(live,{targetRank:1,targetCp:2});
-  assert.doesNotMatch(current.constraintErrors.join(' '),/Force school/,'the new Mana Rite does not inherit the historical Force identity');
+  const nonForce={...card,tags:card.tags.filter(tag=>tag!=='school:force')};
+  const current=rebalanceCard(nonForce,{targetRank:1,targetCp:2},{scoring});
+  assert.doesNotMatch(current.constraintErrors.join(' '),/Force school/,'unrelated cards do not inherit a Force gate');
 });
 
 test('bounded coarse search visits later cost pairs before refining a legal magnitude', () => {
   const card={...attack,tags:['camp:spell'],damageSchool:'magic',manaCost:1};
-  const result=TuneCardToTarget(card,{targetRank:1,targetCp:2,faceOf:c=>CardDefinitionToScoreFace({...c,staminaCost:0,manaCost:0},{scoring}),scaleField:{index:0,field:'amount'},magnitudeMax:60,maxManaCost:3,searchBudget:320,coarseCostSearch:true,allowExtraEffects:false,allowHpDrawback:false,candidateAllowed:c=>c.staminaCost===3&&c.manaCost===3});
+  const result=TuneCardToTarget(card,{scoring,targetRank:1,targetCp:2,faceOf:c=>CardDefinitionToScoreFace({...c,staminaCost:0,manaCost:0},{scoring}),scaleField:{index:0,field:'amount'},magnitudeMax:60,maxManaCost:3,searchBudget:320,coarseCostSearch:true,allowExtraEffects:false,allowHpDrawback:false,candidateAllowed:c=>c.staminaCost===3&&c.manaCost===3});
   assert.equal(result.legalCandidate,true);assert.equal(result.card.staminaCost,3);assert.equal(result.card.manaCost,3);assert.equal(result.score.cp,2);assert.ok(result.searched<=320);
 });
 

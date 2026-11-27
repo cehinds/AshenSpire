@@ -1,166 +1,63 @@
-// Original wave balance/rarity/reward contract pinned to the exact pre-authoring 10911 profile.
-// Current owner-authored replacements are asserted separately below and in starseer-authored-starter.test.mjs.
-// Owner 2026-10-28 (batch 3): ten new Core mana-cost spells (four Starseer, four Herald, two colorless). Each costs mana
-// (MP >= 1), resolves at both grades, counts as a mana card for the depth 4+ reward lean, and stays in its own class.
+// Current authored card and resource projections; no old balance wave is frozen here.
 import test from 'node:test';
-import { readFileSync } from 'node:fs';
-import { gunzipSync } from 'node:zlib';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { gameProfileCatalog } from '../src/content/generated/gameProfiles.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
-import { createRunState } from '../src/model/state.js';
-import { createRng } from '../src/engine/rng.js';
-import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
-import { gameProfileRewardOffers } from '../src/model/gameProfileRewards.js';
-import { basicOrCantripMatcher } from '../src/model/stanceCoverage.js';
+import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries, projectGameCard } from '../src/model/gameProfile.js';
 
-const profile = resolveGameProfile(JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/core2-cleanup-profile-10911.json.gz', import.meta.url)))));
-const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
-const ids = list => list.map(id => `core.${id}`);
-const BY_CLASS = {
-  starseer: ids(['starfall', 'cometLance', 'searingRay', 'meteor']),
-  herald: ids(['sanctifiedWard', 'healingPrayer', 'judgment', 'dawnBulwark']),
-  colorless: ids(['arcaneSiphon', 'emberWave']),
-};
-const ALL = Object.values(BY_CLASS).flat();
-const def = id => profile.content.cards.find(card => card.id === id);
+const read = path => JSON.parse(readFileSync(new URL('../' + path, import.meta.url), 'utf8'));
+const source = read('games/ashenspire/packs/core/cards.json');
+const variants = read('games/ashenspire/packs/core/resourceVariants.json');
+const author = read('games/ashenspire/game.json');
+const profile = resolveGameProfile(author);
+const pack = Object.values(gameProfileCatalog.packs).find(row => row.manifest.id === 'ashen.core-content').content;
+const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 
-// The reward pool's playableOnly rule uses the run's maximum Mana. Stock Core runs start with 1 MP.
-const matchesTradition = (classId, id) => !def(id).tags.includes('camp:spell')
-  || def(id).tags.includes(`tradition:${classId === 'herald' ? 'divine' : 'arcane'}`);
-const payable = (classId, id) => !(def(id).manaCost > 0) || def(id).manaCost <= live(classId, 1, 1).maxMana;
-// Level lists (owner 2026-11-21): offers draw from the act's rank band, so the seeds are spread over the three acts (act 1 + seed % 3).
-const live = (classId, seed, floor) => {
-  const run = createRunState({ registries, seed, classId, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
-  run.floor = floor;
-  run.actNumber = 1 + (seed % 3);
-  return run;
-};
-const offered = (classId, seed, floor, withoutCardId) => {
-  const run = live(classId, seed, floor);
-  if (withoutCardId) run.deck = run.deck.filter(card => card.cardId !== withoutCardId);
-  return gameProfileRewardOffers(registries, run, createRng(seed + 50000), { offerId: 'b3' })
-    .options.filter(option => option.kind === 'combatCards').map(option => option.id);
-};
-
-test('historical 10911: every new spell is authored in its class, costs mana, is not a cantrip, and has a rarity of uncommon or rare', () => {
-  for (const [cls, list] of Object.entries(BY_CLASS)) for (const id of list) {
-    const card = def(id);
-    assert.equal(card.class, cls, id);
-    assert.ok(card.manaCost >= 1, `${id} costs mana`);
-    assert.ok(card.staminaCost >= 0, `${id}: no cost minimum (owner ruling 2026-11-22), so SP is only non-negative`);
-    assert.ok(['uncommon', 'rare'].includes(card.rarity), id);
-    assert.ok(!card.tags.includes('rank.cantrip'), `${id} is not a cantrip`);
-    assert.ok(card.tags.includes('camp:spell'), id);
-    // No Exposure floor on a Mana spell (owner ruling 2026-11-22): per-hit Exposure is authored per card.
-  }
-  assert.equal(ALL.length, 10);
-  assert.equal(new Set(ALL.map(id => def(id).name)).size, 10);
-});
-
-test('historical 10911: every new spell resolves at base and upgraded with its authored cost, a face and a stronger upgrade', () => {
-  for (const id of ALL) {
-    const base = resolveCard(registries, { cardId: id }), up = resolveCard(registries, { cardId: id, upgraded: true });
-    assert.equal(base.cost, def(id).staminaCost, id);
-    assert.equal(base.manaCost, def(id).manaCost, id);
-    assert.equal(up.cost, base.cost, `${id}: the upgrade keeps its SP cost`);
-    assert.equal(up.manaCost, base.manaCost, `${id}: the upgrade keeps its MP cost`);
-    assert.ok(base.textTemplate && up.textTemplate, id);
-    assert.notDeepEqual(up.effects, base.effects, `${id}: the upgrade changes numbers`);
-    assert.deepEqual(up.keywords, base.keywords, `${id}: the upgrade keeps its keywords`);
-  }
-});
-
-test('historical 10911: no authored Burn exceeds the 3-stack application cap, so the face never promises more than lands', () => {
-  for (const id of ALL) for (const effects of [def(id).effects, def(id).upgrade.effects]) for (const effect of effects) {
-    if (effect.op === 'applyStatus' && effect.status === 'burn') assert.ok(effect.stacks <= 3, `${id}: Burn ${effect.stacks} (the engine caps Burn at 3 stacks)`);
-  }
-});
-
-test('historical 10911: resource variants are authored for all four resource modes and agree with the fixed cost', () => {
-  const variants = profile.content.resourceVariants;
-  for (const id of ALL) {
-    const card = def(id), row = variants[id];
-    assert.ok(row, id);
-    assert.deepEqual(row['sp,mp'], { cost: card.staminaCost, staminaCost: card.staminaCost, manaCost: card.manaCost }, id);
-    assert.deepEqual(row.none, { cost: 0, staminaCost: 0, manaCost: 0 }, id);
-    assert.equal(row.mp.manaCost, card.manaCost, id);
-    assert.equal(row.sp.staminaCost, card.staminaCost, id);
-  }
-});
-
-test('historical 10911: Healing Prayer matches the heal-rules cheap shape and no new spell is strictly better than a same-cost same-rarity peer', () => {
-  const card = def('core.healingPrayer'), shapes = profile.modules['heal-rules'].shapes;
-  const shape = shapes.filter(s => s.tags.every(t => card.tags.includes(t))).sort((a, b) => b.tags.length - a.tags.length)[0];
-  assert.equal(shape.id, 'cheap');
-  assert.deepEqual([card.staminaCost, card.manaCost], [shape.cost.sp, shape.cost.mp]);
-  assert.ok(card.keywords.includes('exhaust'));
-  // Same rarity and same SP/MP: the effect lists differ in kind, so none dominates another.
-  const key = id => `${def(id).rarity}/${def(id).staminaCost}/${def(id).manaCost}`;
-  for (const a of ALL) for (const b of ALL) if (a !== b && key(a) === key(b)) {
-    const ops = id => def(id).effects.map(e => `${e.op}:${e.status || ''}:${e.target || ''}`).sort().join(',');
-    assert.notEqual(ops(a), ops(b), `${a} and ${b} would duplicate each other`);
-  }
-});
-
-test('historical 10911: the reward model counts each new spell as a mana card, never as a basic or cantrip', () => {
-  const matches = basicOrCantripMatcher(registries, live('starseer', 1, 1));
-  for (const id of ALL) {
-    assert.ok((def(id).manaCost || 0) > 0, `${id} is a mana card`);
-    assert.ok(!matches(id), `${id} is not a basic/cantrip`);
-  }
-});
-
-test('historical 10911: Magic classes see their new spells more often at depth 4+ than at depth 1-3 (600 seeds per class and band)', () => {
-  const report = [];
-  for (const classId of ['starseer', 'herald']) {
-    const own = new Set([...BY_CLASS[classId], ...BY_CLASS.colorless]);
-    const share = floors => {
-      let hits = 0, total = 0;
-      for (let seed = 1; seed <= 600; seed++) for (const id of offered(classId, seed, floors[seed % floors.length])) { total++; if (own.has(id)) hits++; }
-      return hits / total;
-    };
-    const early = share([1, 2, 3]), late = share([4, 5, 6]);
-    report.push(`${classId}: depth 1-3 ${(early * 100).toFixed(1)}%, depth 4+ ${(late * 100).toFixed(1)}%`);
-    assert.ok(early > 0, `${classId} sees its new spells early at all`);
-    assert.ok(late > early * 1.2, `${classId}: depth 4+ share ${late} should exceed depth 1-3 share ${early}`);
-  }
-  console.log(`new-spell share of card offers: ${report.join('; ')}`);
-});
-
-test('historical 10911: each class sees only payable spells matching its class and spell tradition', () => {
-  const magic = { starseer: BY_CLASS.starseer, herald: BY_CLASS.herald };
-  for (const classId of ['starseer', 'herald', 'reaver', 'rogue']) {
-    const seen = new Set(), counts = new Map();
-    for (let seed = 1; seed <= 600; seed++) for (const id of offered(classId, seed, 1 + (seed % 6))) { seen.add(id); counts.set(id, (counts.get(id) || 0) + 1); }
-    const starter = new Set(live(classId, 1, 1).deck.map(card => card.cardId));
-    for (const [owner, list] of Object.entries(magic)) for (const id of list) {
-      // Compare Sanctified Ward against itself on the same seeds so rarity, card type and pool changes cannot distort the ownership check.
-      if (owner !== classId) assert.ok(!seen.has(id), `${classId} was offered ${owner}'s ${id}`);
-      else if (!payable(classId, id)) assert.ok(!seen.has(id), `${classId} was offered unpayable ${id}`);
-      else if (starter.has(id)) {
-        let unownedCount = 0;
-        for (let seed = 1; seed <= 600; seed++) if (offered(classId, seed, 1 + (seed % 6), id).includes(id)) unownedCount++;
-        const ownedCount = counts.get(id) || 0;
-        assert.ok(ownedCount * 3 < unownedCount, `${classId} was offered ${id} ${ownedCount} times when owned and ${unownedCount} when unowned`);
-      }
-      else assert.ok(seen.has(id), `${classId} never offered its own payable ${id}`);
+test('current configured cards preserve source membership, class, rarity, effects and upgrade definitions', () => {
+  const manifest = read('games/ashenspire/packs/core/pack.json');
+  assert.equal(new Set(pack.cards.map(card => card.id)).size, pack.cards.length, 'compiled card IDs are unique');
+  assert.deepEqual(pack.cards.map(card => card.id).sort(), [...source.map(card => card.id), ...(manifest.sharedCardIds || [])].sort(),
+    'the compiled pack contains exactly current cards and explicitly admitted shared definitions');
+  for (const row of source) {
+    const projected = profile.content.cards.find(card => card.id === row.id);
+    for (const key of ['name', 'class', 'rarity', 'effects', 'upgrade']) {
+      assert.deepEqual(projected[key], row[key], `${row.id}.${key}`);
     }
-    for (const id of BY_CLASS.colorless) {
-      const eligible = payable(classId, id) && matchesTradition(classId, id);
-      assert.equal(seen.has(id), eligible, `${classId} colorless ${id}: offered only when payable and matching its spell tradition`);
+    const resolved = resolveCard(reg, { cardId: row.id });
+    const upgraded = resolveCard(reg, { cardId: row.id, upgraded: true });
+    const expected = projectGameCard(profile, row.id);
+    const expectedUpgrade = projectGameCard(profile, { cardId: row.id, upgraded: true });
+    for (const key of ['cost', 'manaCost', 'effects', 'keywords', 'textTemplate']) {
+      assert.deepEqual(resolved[key], expected[key], `${row.id} base ${key}`);
+      assert.deepEqual(upgraded[key], expectedUpgrade[key], `${row.id} upgraded ${key}`);
     }
   }
 });
 
-test('current authored Mana Rite and Arcane Sweep keep their new class, rarity and explicit prices', () => {
-  const current = resolveGameProfile('core');
-  for (const [id, expected] of [
-    ['core.arcaneSiphon', ['starseer', 'common', 2, 0]],
-    ['core.cometLance', ['starseer', 'common', 0, 1]],
-  ]) {
-    const card = current.content.cards.find(card => card.id === id);
-    assert.deepEqual([card.class, card.rarity, card.staminaCost, card.manaCost], expected, id);
-    assert.deepEqual(current.content.resourceVariants[id]['sp,mp'], { cost: expected[2], staminaCost: expected[2], manaCost: expected[3] });
+test('resource variant definitions reach the profile unchanged', () => {
+  for (const [id, row] of Object.entries(variants)) assert.deepEqual(pack.resourceVariants[id], row, id);
+  for (const [id, row] of Object.entries(variants)) assert.deepEqual(profile.content.resourceVariants[id], row, id);
+});
+
+test('all authored resource modes apply their own prices without mutating source definitions', () => {
+  const before = JSON.stringify([source, variants, profile]);
+  for (const include of [[], ['sp'], ['mp'], ['sp', 'mp']]) {
+    const changed = resolveGameProfile({ ...author, modules: { ...author.modules, resources: { include } } });
+    const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, changed)), changed);
+    const key = include.join(',') || 'none';
+    for (const row of source) {
+      const alternate = variants[row.id]?.[key] || {};
+      const expected = { ...row, ...alternate };
+      const projected = projectGameCard(changed, row.id);
+      assert.equal(projected.cost, expected.cost, `${row.id} ${key} SP price`);
+      assert.equal(projected.manaCost || 0, expected.manaCost || 0, `${row.id} ${key} MP price`);
+      const resolved = resolveCard(registries, { cardId: row.id });
+      assert.equal(resolved.cost, projected.cost, `${row.id} ${key} runtime SP`);
+      assert.equal(resolved.manaCost || 0, projected.manaCost || 0, `${row.id} ${key} runtime MP`);
+      assert.deepEqual(resolved.effects, projected.effects, `${row.id} ${key} effects`);
+    }
   }
+  assert.equal(JSON.stringify([source, variants, profile]), before);
 });
