@@ -23,7 +23,7 @@ import { staticCardTokens } from '../../src/model/playingCard.js';
 import { tokenRe, computeTokenBindings } from '../../src/model/validate.js';
 import { ScoringDiffPaths, MergePendingScoring, HasRankPin, WithoutRankPin, STUDIO_SAVE_PATH, RefreshRestoredNaming } from './weightsStaging.js';
 import { DEFAULT_NAME_SET_ID, DefaultNameSet, CaptureNameSet, TurnOnAutoNames, ApplyNameSet, SortedNameSets, ValidNameSets, MergeNameSets, SplitSavedConfig, JoinSavedConfig, DefaultNameSetLabel, NameSetFile, NameSetFileName, ParseNameSetFile } from './nameSets.js';
-import { weightSentence, weightExample, TagMultiplierKey, SetKeywordForm, SetTagForm } from './weightExamples.js';
+import { weightSentence, weightExample, TagMultiplierKey, SetKeywordForm, SetTagForm, SetWeightForm } from './weightExamples.js';
 import { PlanCardPool, MeasurePoolShape } from '../../src/model/cardPoolPlan.js';
 import { GenerateCard } from '../../src/model/cardGenerator.js';
 import { ScoreGeneratedItem } from '../../src/model/itemGenerator.js';
@@ -2040,8 +2040,8 @@ function scoreMathTableHtml(sc) {
   const S = state.scoring;
   const area = (sc.face.tags || []).includes(S.cardModel?.areaTag || 'targeting:area') ? (S.model?.ENEMIES || 2) : 1;
   const formulaNote = (k) => {
-    if (k === 'SP') return `${sc.face.sp} SP × ${S.costs.sp.weight}`;
-    if (k === 'MP') return `${sc.face.mp} MP × ${S.costs.mp.weight}`;
+    if (k === 'SP') return `${sc.face.sp} SP × ${S.costs.sp.weight}${S.costs.sp.multiplier === true ? ' × positive score' : ''}`;
+    if (k === 'MP') return `${sc.face.mp} MP × ${S.costs.mp.weight}${S.costs.mp.multiplier === true ? ' × positive score' : ''}`;
     if (k === 'damage') return `${sc.face.dmg} final (authored ${sc.face._meta?.authoredDmg ?? sc.face.dmg}) × ${S.effects.damage.weight}/${S.effects.damage.per}${area > 1 ? ` × ${area} AoE` : ''}`;
     if (k === 'block') return `${sc.face.blk} final (authored ${sc.face._meta?.authoredBlk ?? sc.face.blk}) × ${S.effects.block.weight}/${S.effects.block.per}`;
     if (k === 'poise') return `${sc.face.poise} Poise × ${S.effects.poiseDamage.weight}/${S.effects.poiseDamage.per}${area > 1 ? ` × ${area} AoE` : ''}`;
@@ -2229,12 +2229,20 @@ function renderWeights({ shifts = true } = {}) {
 
   const R = state.repoScoring;
   const buildGroups = () => [
-    { key: 'costs', title: 'Costs (SP / MP)', entries: Object.entries(state.scoring.costs || {}).map(([k, v]) => ({ id: k, label: k.toUpperCase(), val: v.weight, base: R.costs?.[k]?.weight, set: (n) => { state.scoring.costs[k].weight = n; } })) },
-    { key: 'effects', title: 'Effects', entries: Object.entries(state.scoring.effects || {}).map(([k, v]) => ({
-      id: k, label: k, val: v.weight, base: R.effects?.[k]?.weight, set: (n) => { state.scoring.effects[k].weight = n; },
-      per: { value: v.per, base: R.effects?.[k]?.per, set: (n) => { state.scoring.effects[k].per = n; } },
+    { key: 'costs', title: 'Costs (SP / MP)', entries: Object.entries(state.scoring.costs || {}).map(([k, v]) => ({
+      id: k, label: k.toUpperCase(), val: v.weight, base: R.costs?.[k]?.weight, step: v.multiplier === true ? 0.05 : 1, set: (n) => { state.scoring.costs[k].weight = n; },
+      mult: weightFormSwitch('costs', k, v),
     })) },
-    { key: 'statuses', title: 'Statuses', entries: Object.entries(state.scoring.statuses || {}).map(([k, v]) => ({ id: k, label: k === 'barrier' ? `Bonus Poise / barrier (${v.target})` : k === 'ward' ? `Ward (Temp HP) / ward (${v.target})` : `${k} (${v.target})`, val: v.weight, base: R.statuses?.[k]?.weight, set: (n) => { state.scoring.statuses[k].weight = n; } })) },
+    { key: 'effects', title: 'Effects', entries: Object.entries(state.scoring.effects || {}).map(([k, v]) => ({
+      id: k, label: k, val: v.weight, base: R.effects?.[k]?.weight, step: v.multiplier === true ? 0.05 : 1, set: (n) => { state.scoring.effects[k].weight = n; },
+      per: { value: v.per, base: R.effects?.[k]?.per, set: (n) => { state.scoring.effects[k].per = n; } },
+      mult: weightFormSwitch('effects', k, v),
+    })) },
+    { key: 'statuses', title: 'Statuses', entries: Object.entries(state.scoring.statuses || {}).map(([k, v]) => ({
+      id: k, label: k === 'barrier' ? `Bonus Poise / barrier (${v.target})` : k === 'ward' ? `Ward (Temp HP) / ward (${v.target})` : `${k} (${v.target})`,
+      val: v.weight, base: R.statuses?.[k]?.weight, step: v.multiplier === true ? 0.05 : 1, set: (n) => { state.scoring.statuses[k].weight = n; },
+      mult: weightFormSwitch('statuses', k, v),
+    })) },
     { key: 'keywords', title: 'Keywords', entries: Object.entries(state.scoring.keywords || {}).map(([k, v]) => {
       const bv = R.keywords?.[k];
       return {
@@ -2417,7 +2425,9 @@ function renderWeights({ shifts = true } = {}) {
       const showExample = (scoring = shownScoring()) => {
         const now = weightSentence(g.key, r.id, scoring, r.label);
         for (const part of row.querySelectorAll('.weight-sentence > .weight-words')) part.textContent = now[part.dataset.part];
-        exampleEl.textContent = weightExample(g.key, r.id, scoring, r.label);
+        // Only a multiplier-form cost, effect or status reads the selected card's positive score.
+        const card = WEIGHT_FORM_GROUPS.has(g.key) && scoring[g.key]?.[r.id]?.multiplier === true ? exampleCard(scoring) : null;
+        exampleEl.textContent = weightExample(g.key, r.id, scoring, r.label, card);
       };
       showExample();
       input.addEventListener('input', () => showExample(typedScoring()));
@@ -2492,6 +2502,21 @@ function renderWeights({ shifts = true } = {}) {
   renderDescriptionGaps();
   updateWeightsToolbar();
   if (shifts) computeShiftCount();
+}
+
+// Costs, effects and statuses switch between flat (weight per unit) and multiplier form (P x weight per unit, owner 2026-11-27).
+// Switching resets to the no-change value: weight 0 when on, the repo's flat weight when off.
+const WEIGHT_FORM_GROUPS = new Set(['costs', 'effects', 'statuses']);
+function weightFormSwitch(section, key, entry) {
+  const repo = state.repoScoring?.[section]?.[key];
+  return { value: entry.multiplier === true, base: repo ? repo.multiplier === true : undefined, set: (on) => { SetWeightForm(state.scoring[section][key], repo, on); } };
+}
+
+// The selected card's name and positive score, for the multiplier-form examples; null with no card selected.
+function exampleCard(scoringRef) {
+  const def = selectedCardDef();
+  if (!def) return null;
+  try { return { name: def.name || def.id, positive: ScoreCard(cardDefToFace(def, scoringRef), scoringRef).positive }; } catch { return null; }
 }
 
 // Score categories (ScoreCard's scoring.categories): Martial, Magic and each Card Type.
