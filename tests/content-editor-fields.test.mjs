@@ -9,7 +9,16 @@ import {
     ParseFieldInput,
     SetFieldValue,
 } from '../tools/score-studio/contentEditor/fieldPaths.js';
+import { ResolveSections } from '../tools/score-studio/contentEditor/contentConfig.js';
 import { FormatJsonLike, TopLevelItems } from '../tools/score-studio/contentEditor/jsonText.js';
+import {
+    WithLockedKeys,
+    WithoutLockedKeys,
+} from '../tools/score-studio/contentEditor/lockedKeys.js';
+import { FillTemplate } from '../tools/score-studio/contentEditor/textTemplate.js';
+
+const JSON_INDENT = 2;
+const LOCKED = ['derived'];
 
 function huskBrute()
 {
@@ -98,7 +107,8 @@ test('a file already in standard layout is written in standard layout', () =>
         ...value,
         maxBranches: 4,
     };
-    assert.equal(FormatJsonLike(original, changed), `${JSON.stringify(changed, null, 2)}\n`);
+    const expected = `${JSON.stringify(changed, null, JSON_INDENT)}\n`;
+    assert.equal(FormatJsonLike(original, changed, JSON_INDENT), expected);
 });
 
 test('unchanged items keep their own compact layout when one item changes', () =>
@@ -118,12 +128,13 @@ test('unchanged items keep their own compact layout when one item changes', () =
     ].join('\r\n');
     const value = JSON.parse(original);
     value[1].amount = 9;
-    const written = FormatJsonLike(original, value);
+    const written = FormatJsonLike(original, value, JSON_INDENT);
     assert.ok(written.includes('"faceTemplate": ["One.", "Two."]'));
     assert.ok(written.includes('    "amount": 9\n'));
     assert.ok(!written.includes('\r'));
     assert.deepEqual(JSON.parse(written), value);
-    assert.equal(FormatJsonLike(original, JSON.parse(original)), original.replace(/\r\n/g, '\n'));
+    const unchanged = FormatJsonLike(original, JSON.parse(original), JSON_INDENT);
+    assert.equal(unchanged, original.replace(/\r\n/g, '\n'));
 });
 
 test('top-level members of an object are found with their raw text', () =>
@@ -137,5 +148,90 @@ test('top-level members of an object are found with their raw text', () =>
     ]);
     const value = JSON.parse(text);
     value.a.push(3);
-    assert.ok(FormatJsonLike(text, value).includes('"b": { "c": "x,]}" }'));
+    assert.ok(FormatJsonLike(text, value, JSON_INDENT).includes('"b": { "c": "x,]}" }'));
+});
+
+test('a section takes its template keys, through a chain of extends, and its own keys win', () =>
+{
+    const editorConfig = {
+        sectionTemplates: {
+            arrayFile: {
+                keyField: 'id',
+                labelField: 'name',
+            },
+            cardFile: {
+                extends: 'arrayFile',
+                cardLimits: true,
+                listValue: '{type}',
+            },
+        },
+        sections: [
+            {
+                id: 'cards',
+                extends: 'cardFile',
+                listValue: '{cost}',
+            },
+        ],
+    };
+    const [cards] = ResolveSections(editorConfig);
+    assert.deepEqual(cards, {
+        keyField: 'id',
+        labelField: 'name',
+        cardLimits: true,
+        listValue: '{cost}',
+        id: 'cards',
+    });
+    const looping = {
+        sectionTemplates: {
+            loop: {
+                extends: 'loop',
+            },
+        },
+        sections: [
+            {
+                id: 'x',
+                extends: 'loop',
+            },
+        ],
+    };
+    assert.throws(() => ResolveSections(looping));
+});
+
+test('list and message templates fill paths, list lengths and sums', () =>
+{
+    const deck = [
+        {
+            card: 'core.strike',
+            copies: 3,
+        },
+        {
+            card: 'core.defend',
+            copies: 2,
+        },
+    ];
+    assert.equal(FillTemplate('{sum:copies}', deck), '5');
+    const levels = 'Lv {stats.levelProfile.min}-{stats.levelProfile.max}';
+    assert.equal(FillTemplate(levels, huskBrute()), 'Lv 1-3');
+    assert.equal(FillTemplate('{type} {cost}', { cost: 1 }), '1');
+    assert.equal(FillTemplate('Saved {files}.', { files: 'cards.json' }), 'Saved cards.json.');
+    assert.equal(FillTemplate('deck {deck}', { deck: ['a', 'b'] }), 'deck 2');
+    assert.equal(FillTemplate(undefined, {}), '');
+});
+
+test('the JSON view hides locked keys and an edit puts them back in place', () =>
+{
+    const enemy = huskBrute();
+    const visible = WithoutLockedKeys(enemy, LOCKED);
+    assert.deepEqual(Object.keys(visible), ['id', 'stats']);
+    const edited = {
+        ...visible,
+        name: 'Husk Brute',
+        derived: {
+            tier: 'boss',
+        },
+    };
+    const merged = WithLockedKeys(enemy, edited, LOCKED);
+    assert.deepEqual(Object.keys(merged), ['id', 'stats', 'derived', 'name']);
+    assert.deepEqual(merged.derived, enemy.derived);
+    assert.deepEqual(WithLockedKeys(enemy, [1, 2], LOCKED), [1, 2]);
 });

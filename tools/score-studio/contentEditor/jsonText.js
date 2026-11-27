@@ -1,8 +1,6 @@
 // Writes a JSON document back in its file's own layout so a save changes only the edited entries.
-const INDENT = 2;
 const NEWLINE = '\n';
-const ITEM_INDENT = ' '.repeat(INDENT);
-const ITEM_SEPARATOR = `,${NEWLINE}${ITEM_INDENT}`;
+const SPACE = ' ';
 const LINE_BREAKS = /\r\n?/g;
 const NESTED_LINE = /\n/g;
 const WHITESPACE = /\s/;
@@ -19,9 +17,9 @@ function isContainer(value)
     return value !== null && typeof value === 'object';
 }
 
-function canonicalText(value)
+function canonicalText(value, indent)
 {
-    return `${JSON.stringify(value, null, INDENT)}${NEWLINE}`;
+    return `${JSON.stringify(value, null, indent)}${NEWLINE}`;
 }
 
 function skipWhitespace(text, index)
@@ -114,17 +112,18 @@ export function TopLevelItems(text)
     };
 }
 
-function indentedJson(value)
+function indentedJson(value, indent)
 {
-    return JSON.stringify(value, null, INDENT).replace(NESTED_LINE, `${NEWLINE}${ITEM_INDENT}`);
+    const itemIndent = SPACE.repeat(indent);
+    return JSON.stringify(value, null, indent).replace(NESTED_LINE, `${NEWLINE}${itemIndent}`);
 }
 
-function reusedText(rawByCanonical, key, value)
+function reusedText(rawByCanonical, key, value, indent)
 {
-    return rawByCanonical.get(JSON.stringify([key, value])) ?? indentedJson(value);
+    return rawByCanonical.get(JSON.stringify([key, value])) ?? indentedJson(value, indent);
 }
 
-function joinItems(parts, isArray)
+function joinItems(parts, isArray, indent)
 {
     const [open, close] = isArray
         ? ['[', ']']
@@ -133,11 +132,12 @@ function joinItems(parts, isArray)
     {
         return `${open}${close}${NEWLINE}`;
     }
-    const body = parts.join(ITEM_SEPARATOR);
-    return `${open}${NEWLINE}${ITEM_INDENT}${body}${NEWLINE}${close}${NEWLINE}`;
+    const itemIndent = SPACE.repeat(indent);
+    const body = parts.join(`,${NEWLINE}${itemIndent}`);
+    return `${open}${NEWLINE}${itemIndent}${body}${NEWLINE}${close}${NEWLINE}`;
 }
 
-function spliceTopLevel(original, value)
+function spliceTopLevel(original, value, indent)
 {
     const { isArray, items } = TopLevelItems(original);
     const rawByCanonical = new Map();
@@ -147,18 +147,18 @@ function spliceTopLevel(original, value)
         rawByCanonical.set(canonicalKey, item.raw);
     }
     const parts = isArray
-        ? value.map((item) => reusedText(rawByCanonical, null, item))
+        ? value.map((item) => reusedText(rawByCanonical, null, item, indent))
         : Object.entries(value).map(([key, member]) =>
         {
-            return `${JSON.stringify(key)}: ${reusedText(rawByCanonical, key, member)}`;
+            return `${JSON.stringify(key)}: ${reusedText(rawByCanonical, key, member, indent)}`;
         });
-    return joinItems(parts, isArray);
+    return joinItems(parts, isArray, indent);
 }
 
-/** `value` as file text in the layout of `originalText`; unchanged items keep their exact text. */
-export function FormatJsonLike(originalText, value)
+/** `value` as file text in the layout of `originalText`, indented by `indent` spaces. */
+export function FormatJsonLike(originalText, value, indent)
 {
-    const fresh = canonicalText(value);
+    const fresh = canonicalText(value, indent);
     const original = String(originalText ?? '').replace(LINE_BREAKS, NEWLINE);
     let parsed;
     try
@@ -171,9 +171,9 @@ export function FormatJsonLike(originalText, value)
     }
     const bothContainers = isContainer(parsed) && isContainer(value);
     const sameShape = bothContainers && Array.isArray(parsed) === Array.isArray(value);
-    if (canonicalText(parsed) === original || !sameShape)
+    if (canonicalText(parsed, indent) === original || !sameShape)
     {
         return fresh;
     }
-    return spliceTopLevel(original, value);
+    return spliceTopLevel(original, value, indent);
 }
