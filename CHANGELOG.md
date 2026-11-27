@@ -34,8 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-27
 
-- **Initiate gear** ([#3026](https://github.com/cehinds/AshenSpire/pull/3026), `0.7.5.147`). In Prepared stance an Initiate cuts 1 Mana off matching spells, one cut per spell. the Starseer's starting robe carries Arcane Initiate and the Herald's Divine Initiate; staffs and robes no longer cut every spell.
-- **Set an enemy's HP directly** ([#3024](https://github.com/cehinds/AshenSpire/pull/3024), `0.7.5.147`). An enemy sheet can now set stats.hp, which replaces the HP its level and attributes give. Act and tier scaling still apply on top.
+- **Initiate gear** ([#3026](https://github.com/cehinds/AshenSpire/pull/3026), `0.7.5.149`). In Prepared stance an Initiate cuts 1 Mana off matching spells, one cut per spell. the Starseer's starting robe carries Arcane Initiate and the Herald's Divine Initiate; staffs and robes no longer cut every spell.
+- **Set an enemy's HP directly** ([#3024](https://github.com/cehinds/AshenSpire/pull/3024), `0.7.5.149`). An enemy sheet can now set stats.hp, which replaces the HP its level and attributes give. Act and tier scaling still apply on top.
 - **Score Studio keeps one active card and item** ([#3019](https://github.com/cehinds/AshenSpire/pull/3019), `0.7.5.147`). Every panel follows the same card, filters never switch it, and reload brings it back.
 - **A code style guide** ([#3020](https://github.com/cehinds/AshenSpire/pull/3020), `0.7.5.145`). `CODE-STYLE.md` sets how all new and changed code looks. No game changes.
 
