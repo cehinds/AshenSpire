@@ -22,20 +22,33 @@ import {
     SpellCostCondition,
 } from './helpers/spellCostRules.mjs';
 const registries = core2Registries();
-function fresh(classId = 'reaver', reg = registries) {
-  return createRunState({ seed: 73, classId, registries: reg, runId: 'mana-policy-test',
-    profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['one'] } } },
-  });
+function fresh(classId = 'reaver', reg = registries)
+{
+    return createRunState({
+        seed: 73,
+        classId,
+        registries: reg,
+        runId: 'mana-policy-test',
+        profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['one'] } } },
+    });
 }
-function fight(cardId, classId = 'reaver', reg = registries) {
-  const run = fresh(classId, reg);
-  // A caster's staff is a Focus armament (-1 MP, tests/focus-mana-discount.test.mjs); these tests price the printed Mana.
-  run.loadout.sets.rightHand[0] = 'greatsword'; run.loadout.sets.leftHand[0] = null;
-  const combat = createRunCombat({ registries: reg, rng: createRng(3), run, enemyIds: ['wanderingSoldier'], settings: {} });
-  const card = { instanceId: 'mana-test-card', cardId, upgraded: false };
-  combat.piles.hand = [card];
-  combat.enemies[0].hp = combat.enemies[0].maxHp = 1000;
-  return { combat, card };
+function fight(cardId, classId = 'reaver', reg = registries)
+{
+    const run = fresh(classId, reg);
+    // A caster's staff is a Focus armament (-1 MP, tests/focus-mana-discount.test.mjs); these tests price the printed Mana.
+    run.loadout.sets.rightHand[0] = 'greatsword';
+    run.loadout.sets.leftHand[0] = null;
+    const combat = createRunCombat({
+        registries: reg,
+        rng: createRng(3),
+        run,
+        enemyIds: ['wanderingSoldier'],
+        settings: {},
+    });
+    const card = { instanceId: 'mana-test-card', cardId, upgraded: false };
+    combat.piles.hand = [card];
+    combat.enemies[0].hp = combat.enemies[0].maxHp = 1000;
+    return { combat, card };
 }
 
 const spellCostModes = {
@@ -178,68 +191,103 @@ function assertQuotePayResume(combat, expected, label)
 }
 
 // Current Core Mana starts at 1 + Wisdom, independent of Intelligence.
-test('core Reaver Mana grows by one with each earned Wisdom, independent of Intelligence', () => {
-  // Level Up is no longer a shipped rest service; a run pinned to the pre-one-pick rests keeps it.
-  const run = pinLegacyRests(fresh()); assert.equal(run.maxMana, 2); assert.equal(run.mana, 2);
-  assert.equal(run.attributes.wisdom, 1);
-  run.attributes.intelligence = 7; run.attributes.wisdom = 3;
-  rederivePools(registries, run, 'test');
-  assert.equal(run.maxMana, 4, 'Mana is 1 + WIS 3 despite the higher Intelligence');
-  run.mapGraph = buildActMap(registries, createRng(73), run.seatOrder[0], 1); run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine').id; // the first rest of act 1 (a branch may open narrow)
-  beginGameProfileRest(run, '1:' + run.mapNodeId); run.level.unspentPoints = 1;
-  commitGameProfileRest(registries, run, 'levelUp', { attributeId: 'wisdom' });
-  assert.equal(run.maxMana, 5); assert.equal(run.mana, 5);
+test('core Reaver Mana grows by one with each earned Wisdom, independent of Intelligence', () =>
+{
+    // Level Up is no longer a shipped rest service; a run pinned to the pre-one-pick rests keeps it.
+    const run = pinLegacyRests(fresh());
+    assert.equal(run.maxMana, 2);
+    assert.equal(run.mana, 2);
+    assert.equal(run.attributes.wisdom, 1);
+    run.attributes.intelligence = 7;
+    run.attributes.wisdom = 3;
+    rederivePools(registries, run, 'test');
+    assert.equal(run.maxMana, 4, 'Mana is 1 + WIS 3 despite the higher Intelligence');
+    run.mapGraph = buildActMap(registries, createRng(73), run.seatOrder[0], 1);
+    run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine').id; // the first rest of act 1 (a branch may open narrow)
+    beginGameProfileRest(run, '1:' + run.mapNodeId);
+    run.level.unspentPoints = 1;
+    commitGameProfileRest(registries, run, 'levelUp', { attributeId: 'wisdom' });
+    assert.equal(run.maxMana, 5);
+    assert.equal(run.mana, 5);
 });
 
 // Owner ruling 2026-11-21 (starter budget): Sundering Art is Unranked, so it prints 32 (was 3x Smash = 36).
-test('core Smash is twice its same-rank Strike for one extra SP; Sundering Art is a 2 SP + 1 MP Smash printing 32', () => {
-  const strike = resolveCard(registries, { cardId: 'core.strike' });
-  const smash = resolveCard(registries, { cardId: 'core.smash' });
-  const art = resolveCard(registries, { cardId: 'core.reaverSpecial' });
-  assert.deepEqual([strike.effects[0].amount, strike.staminaCost, strike.manaCost], [6, 1, 0]);
-  assert.deepEqual([smash.effects[0].amount, smash.staminaCost, smash.manaCost], [12, 2, 0]);
-  assert.deepEqual([art.effects[0].amount, art.staminaCost, art.manaCost], [32, 2, 1]);
-  assert.ok(smash.tags.includes('maneuver:smash') && art.tags.includes('maneuver:smash'));
+test('core Smash is twice its same-rank Strike for one extra SP; Sundering Art is a 2 SP + 1 MP Smash printing 32', () =>
+{
+    const strike = resolveCard(registries, { cardId: 'core.strike' });
+    const smash = resolveCard(registries, { cardId: 'core.smash' });
+    const art = resolveCard(registries, { cardId: 'core.reaverSpecial' });
+    assert.deepEqual([strike.effects[0].amount, strike.staminaCost, strike.manaCost], [6, 1, 0]);
+    assert.deepEqual([smash.effects[0].amount, smash.staminaCost, smash.manaCost], [12, 2, 0]);
+    assert.deepEqual([art.effects[0].amount, art.staminaCost, art.manaCost], [32, 2, 1]);
+    assert.ok(smash.tags.includes('maneuver:smash') && art.tags.includes('maneuver:smash'));
 });
 
-test('Sundering Art preview, affordability and actual combat payment use the same 2 SP and 1 MP', () => {
-  const { combat, card } = fight('core.reaverSpecial');
-  assert.deepEqual(cardPlayCosts(combat, card.instanceId), { energy: 2, stamina: 2, mana: 1 });
-  combat.player.mana = 0;
-  const before = combat.player.stamina;
-  assert.throws(() => dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: combat.enemies[0].id }), /mana/i);
-  assert.equal(combat.player.stamina, before, 'refused play pays nothing');
-  combat.player.mana = 1;
-  dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: combat.enemies[0].id });
-  assert.equal(combat.player.mana, 0);
-  assert.equal(combat.player.stamina, before - 2);
-  assert.ok(combat.eventLog.some(event => event.type === 'cardPlayed' && event.cardInstanceId === card.instanceId));
+test('Sundering Art preview, affordability and actual combat payment use the same 2 SP and 1 MP', () =>
+{
+    const { combat, card } = fight('core.reaverSpecial');
+    assert.deepEqual(cardPlayCosts(combat, card.instanceId), { energy: 2, stamina: 2, mana: 1 });
+    combat.player.mana = 0;
+    const before = combat.player.stamina;
+    assert.throws(
+        () =>
+            dispatch(combat, {
+                type: 'playCard',
+                cardInstanceId: card.instanceId,
+                targetId: combat.enemies[0].id,
+            }),
+        /mana/i,
+    );
+    assert.equal(combat.player.stamina, before, 'refused play pays nothing');
+    combat.player.mana = 1;
+    dispatch(combat, {
+        type: 'playCard',
+        cardInstanceId: card.instanceId,
+        targetId: combat.enemies[0].id,
+    });
+    assert.equal(combat.player.mana, 0);
+    assert.equal(combat.player.stamina, before - 2);
+    assert.ok(
+        combat.eventLog.some(event =>
+            event.type === 'cardPlayed' && event.cardInstanceId === card.instanceId
+        ),
+    );
 });
 
 // Star Spark is Unranked, so it applies no Vulnerable; its Mana follows the spell cost rules.
-test('Star Spark pays the Mana the spell cost rules give and applies no Vulnerable', () => {
-  // This fixture predates armour-type discounts; current robe/Focus integration is exercised below.
-  const { combat, card } = fight('core.starseerSpecial', 'starseer', legacyGearRegistries(registries));
-  combat.player.maxMana = Math.max(combat.player.maxMana, 2); combat.player.mana = 2;
-  // Magic spends Poise 1:1 (owner, 2026-10-31), so the spell would empty the soldier's Poise 5 and the break's Staggered adds a third Vulnerable.
-  // A deep pool keeps this test about the card's own two stacks.
-  combat.enemies[0].persistentPoise = { value: 100, max: 100 };
-  const block = combat.fixCoreRules.spellCosts;
-  const authored = registries.gameProfile.content.cards.find(row => row.id === card.cardId);
-  const expected = ExpectedSpellPrice({
-      block,
-      exceptions: CardSpellCostExceptions(block, authored),
-      price: {
-          stamina: authored.staminaCost,
-          mana: authored.manaCost,
-      },
-  });
-  const before = combat.player.mana;
-  dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: combat.enemies[0].id });
-  assert.equal(before - combat.player.mana, expected.mana, 'the rules price the paid Mana');
-  assert.equal(getStacks(combat.enemies[0], 'vulnerable'), 0);
-  assert.equal(registries.statuses.get('vulnerable').modifiers.damageTakenMult, 1.25);
-  assert.equal(registries.statuses.get('vulnerable').decay, 'perTurnEnd');
+test('Star Spark pays the Mana the spell cost rules give and applies no Vulnerable', () =>
+{
+    // This fixture predates armour-type discounts; current robe/Focus integration is exercised below.
+    const { combat, card } = fight(
+        'core.starseerSpecial',
+        'starseer',
+        legacyGearRegistries(registries),
+    );
+    combat.player.maxMana = Math.max(combat.player.maxMana, 2);
+    combat.player.mana = 2;
+    // Magic spends Poise 1:1 (owner, 2026-10-31), so the spell would empty the soldier's Poise 5 and the break's Staggered adds a third Vulnerable.
+    // A deep pool keeps this test about the card's own two stacks.
+    combat.enemies[0].persistentPoise = { value: 100, max: 100 };
+    const block = combat.fixCoreRules.spellCosts;
+    const authored = registries.gameProfile.content.cards.find(row => row.id === card.cardId);
+    const expected = ExpectedSpellPrice({
+        block,
+        exceptions: CardSpellCostExceptions(block, authored),
+        price: {
+            stamina: authored.staminaCost,
+            mana: authored.manaCost,
+        },
+    });
+    const before = combat.player.mana;
+    dispatch(combat, {
+        type: 'playCard',
+        cardInstanceId: card.instanceId,
+        targetId: combat.enemies[0].id,
+    });
+    assert.equal(before - combat.player.mana, expected.mana, 'the rules price the paid Mana');
+    assert.equal(getStacks(combat.enemies[0], 'vulnerable'), 0);
+    assert.equal(registries.statuses.get('vulnerable').modifiers.damageTakenMult, 1.25);
+    assert.equal(registries.statuses.get('vulnerable').decay, 'perTurnEnd');
 });
 
 test('robes, Focus and Prepared: spell quote, payment and restored snapshot agree', () =>

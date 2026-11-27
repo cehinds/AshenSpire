@@ -16,33 +16,83 @@ import {
 } from './helpers/spellCostRules.mjs';
 
 const spell = {
-  id: 'qa.reach-spell', type: 'attack', cost: 1, staminaCost: 1, manaCost: 1,
-  tags: ['camp:spell', 'source:spell', 'maneuver:casting', 'school:force', 'range:reach', 'targeting:single', 'counter:spell', 'trait:reaction'],
-  effects: [{ op: 'damage', target: 'enemy', amount: 9 }], keywords: [],
+    id: 'qa.reach-spell',
+    type: 'attack',
+    cost: 1,
+    staminaCost: 1,
+    manaCost: 1,
+    tags: [
+        'camp:spell',
+        'source:spell',
+        'maneuver:casting',
+        'school:force',
+        'range:reach',
+        'targeting:single',
+        'counter:spell',
+        'trait:reaction',
+    ],
+    effects: [{ op: 'damage', target: 'enemy', amount: 9 }],
+    keywords: [],
 };
-const bonus = [{ selector: 'spell', arg: null, conds: [], stat: 'damage', mode: 'add', amount: 1, source: 'qa-focus' }];
+const bonus = [{
+    selector: 'spell',
+    arg: null,
+    conds: [],
+    stat: 'damage',
+    mode: 'add',
+    amount: 1,
+    source: 'qa-focus',
+}];
 
-test('a gear projection materializing a tagged range keeps the complete spell identity', () => {
-  const before = structuredClone(spell);
-  const projected = ApplyGearCardRules(bonus, spell);
-  assert.deepEqual(projected.combatProfile, combatProfileFor(spell));
-  assert.deepEqual(stanceOf(projected), { maneuver: 'casting', camp: 'spell', range: 'reach', school: 'force' });
-  assert.deepEqual(projected.combatProfile.traits, ['reaction']);
-  assert.equal(projected.combatProfile.counterMode, 'spell');
-  assert.equal(projected.effects[0].amount, 10);
-  assert.deepEqual(spell, before, 'identity inference and the gear bonus never mutate the source');
+test('a gear projection materializing a tagged range keeps the complete spell identity', () =>
+{
+    const before = structuredClone(spell);
+    const projected = ApplyGearCardRules(bonus, spell);
+    assert.deepEqual(projected.combatProfile, combatProfileFor(spell));
+    assert.deepEqual(stanceOf(projected), {
+        maneuver: 'casting',
+        camp: 'spell',
+        range: 'reach',
+        school: 'force',
+    });
+    assert.deepEqual(projected.combatProfile.traits, ['reaction']);
+    assert.equal(projected.combatProfile.counterMode, 'spell');
+    assert.equal(projected.effects[0].amount, 10);
+    assert.deepEqual(
+        spell,
+        before,
+        'identity inference and the gear bonus never mutate the source',
+    );
 });
 
-for (const overrides of [
-  { school: 'frost', counterCoverage: { camps: ['spell'] }, counterPayload: { ward: 2 } },
-  { camp: 'physical', maneuver: 'counter', school: 'earth', targeting: 'area', traits: ['impact'], counterMode: 'melee', range: 'melee' },
-]) test(`an authored ${overrides.camp ? 'full' : 'partial'} combat profile overrides inferred identity while the projected range wins`, () => {
-  const authored = { ...structuredClone(spell), combatProfile: structuredClone(overrides) };
-  const before = structuredClone(authored);
-  const projected = ApplyGearCardRules(bonus, authored);
-  assert.deepEqual(projected.combatProfile, { ...combatProfileFor(authored), ...overrides, range: 'reach' });
-  assert.deepEqual(authored, before);
-});
+for (
+    const overrides of [
+        { school: 'frost', counterCoverage: { camps: ['spell'] }, counterPayload: { ward: 2 } },
+        {
+            camp: 'physical',
+            maneuver: 'counter',
+            school: 'earth',
+            targeting: 'area',
+            traits: ['impact'],
+            counterMode: 'melee',
+            range: 'melee',
+        },
+    ]
+)
+{
+    test(`an authored ${overrides.camp ? 'full' : 'partial'} combat profile overrides inferred identity while the projected range wins`, () =>
+    {
+        const authored = { ...structuredClone(spell), combatProfile: structuredClone(overrides) };
+        const before = structuredClone(authored);
+        const projected = ApplyGearCardRules(bonus, authored);
+        assert.deepEqual(projected.combatProfile, {
+            ...combatProfileFor(authored),
+            ...overrides,
+            range: 'reach',
+        });
+        assert.deepEqual(authored, before);
+    });
+}
 
 const registries = core2Registries();
 const preparedCardIds = [

@@ -28,71 +28,119 @@ function galePushPrice(combat)
     });
 }
 
-test('weapon Retreat is Ethereal and Exhaust, with uncapped shared fight escalation from zero', () => {
-  const retreat = card('core.retreat');
-  assert.equal(retreat.cost, 0);
-  assert.equal(retreat.staminaCost, 0);
-  assert.ok(retreat.keywords.includes('ethereal'));
-  assert.ok(retreat.keywords.includes('exhaust'));
-  assert.deepEqual(retreat.costGrowth, { stamina: 1, perUse: 1, perCard: true, uncapped: true });
+test('weapon Retreat is Ethereal and Exhaust, with uncapped shared fight escalation from zero', () =>
+{
+    const retreat = card('core.retreat');
+    assert.equal(retreat.cost, 0);
+    assert.equal(retreat.staminaCost, 0);
+    assert.ok(retreat.keywords.includes('ethereal'));
+    assert.ok(retreat.keywords.includes('exhaust'));
+    assert.deepEqual(retreat.costGrowth, { stamina: 1, perUse: 1, perCard: true, uncapped: true });
 });
 
-test('core Backstep adds self Frail while both base Backsteps and Hit and Run Exhaust', () => {
-  const backstep = card('core.backstep');
-  assert.ok(backstep.effects.some(effect => effect.op === 'applyStatus' && effect.target === 'self' && effect.status === 'frail' && effect.stacks === 1));
-  assert.ok(backstep.upgrade.effects.some(effect => effect.op === 'applyStatus' && effect.target === 'self' && effect.status === 'frail' && effect.stacks === 1), 'the upgrade keeps self Frail');
-  assert.ok(backstep.effects.some(effect => effect.op === 'moveEngagement' && effect.target === 'self' && effect.bands === 1));
-  for (const definition of [backstep, card('core.hitAndRun'), rogue.find(row => row.id === 'backstep')]) {
-    assert.ok(definition.keywords.includes('exhaust'), `${definition.id} base drawback`);
-  }
-  assert.deepEqual(rogue.find(row => row.id === 'backstep').upgrade.keywords, [], 'the existing rogue upgrade still removes Exhaust');
+test('core Backstep adds self Frail while both base Backsteps and Hit and Run Exhaust', () =>
+{
+    const backstep = card('core.backstep');
+    assert.ok(
+        backstep.effects.some(effect =>
+            effect.op === 'applyStatus' && effect.target === 'self' && effect.status === 'frail'
+            && effect.stacks === 1
+        ),
+    );
+    assert.ok(
+        backstep.upgrade.effects.some(effect =>
+            effect.op === 'applyStatus' && effect.target === 'self' && effect.status === 'frail'
+            && effect.stacks === 1
+        ),
+        'the upgrade keeps self Frail',
+    );
+    assert.ok(
+        backstep.effects.some(effect =>
+            effect.op === 'moveEngagement' && effect.target === 'self' && effect.bands === 1
+        ),
+    );
+    for (
+        const definition of [
+            backstep,
+            card('core.hitAndRun'),
+            rogue.find(row => row.id === 'backstep'),
+        ]
+    )
+    {
+        assert.ok(definition.keywords.includes('exhaust'), `${definition.id} base drawback`);
+    }
+    assert.deepEqual(
+        rogue.find(row => row.id === 'backstep').upgrade.keywords,
+        [],
+        'the existing rogue upgrade still removes Exhaust',
+    );
 });
 
-test('Gale Push pays one Mana while Gale Pull keeps its distinct one-SP pull contract', () => {
-  assert.equal(card('core.galePush').manaCost, 1);
-  assert.equal(card('core.galePush').staminaCost, 1);
-  const pull = card('core.galePull');
-  assert.equal(pull.staminaCost, 1);
-  assert.ok(pull.tags.includes('pullRetreat'));
-  assert.ok(pull.effects.some(effect => effect.op === 'pullEnemy'));
+test('Gale Push pays one Mana while Gale Pull keeps its distinct one-SP pull contract', () =>
+{
+    assert.equal(card('core.galePush').manaCost, 1);
+    assert.equal(card('core.galePush').staminaCost, 1);
+    const pull = card('core.galePull');
+    assert.equal(pull.staminaCost, 1);
+    assert.ok(pull.tags.includes('pullRetreat'));
+    assert.ok(pull.effects.some(effect => effect.op === 'pullEnemy'));
 });
 
-test('the card rail preserves Pull and enemy-inflicted Retreat as distinct explanations', async () => {
-  const { cardSideTags } = await import('../src/ui/components/cardTagSymbols.js');
-  const tags = [{ id: 'pullRetreat', label: 'Pull', blurb: 'Removes a Retreat stack.' }, { id: 'retreat', label: 'Retreat', blurb: 'Grants a weapon card.' }];
-  const rail = cardSideTags({ tags }, { type: 'skill', effects: [{ op: 'pullEnemy', target: 'enemy' }, { op: 'moveEngagement', target: 'enemy', bands: 1 }] });
-  assert.equal(rail.find(row => row.id === 'pullRetreat')?.blurb, tags[0].blurb);
-  assert.match(rail.find(row => row.id === 'retreat')?.blurb || '', /Inflicts Retreat/);
-  assert.doesNotMatch(rail.find(row => row.id === 'retreat')?.blurb || '', /Grants a weapon card/);
+test('the card rail preserves Pull and enemy-inflicted Retreat as distinct explanations', async () =>
+{
+    const { cardSideTags } = await import('../src/ui/components/cardTagSymbols.js');
+    const tags = [
+        { id: 'pullRetreat', label: 'Pull', blurb: 'Removes a Retreat stack.' },
+        { id: 'retreat', label: 'Retreat', blurb: 'Grants a weapon card.' },
+    ];
+    const rail = cardSideTags(
+        { tags },
+        {
+            type: 'skill',
+            effects: [
+                { op: 'pullEnemy', target: 'enemy' },
+                { op: 'moveEngagement', target: 'enemy', bands: 1 },
+            ],
+        },
+    );
+    assert.equal(rail.find(row => row.id === 'pullRetreat')?.blurb, tags[0].blurb);
+    assert.match(rail.find(row => row.id === 'retreat')?.blurb || '', /Inflicts Retreat/);
+    assert.doesNotMatch(
+        rail.find(row => row.id === 'retreat')?.blurb || '',
+        /Grants a weapon card/,
+    );
 });
 
-test('playing core Backstep applies its self drawback and exhausts the actual copy', async () => {
-  const { bandsFight } = await import('./helpers/bands-fight.mjs');
-  const { dispatch, previewCard } = await import('../src/engine/combat.js');
-  const combat = bandsFight({ hand: ['core.backstep'], stamina: 6 });
-  const shown = previewCard(combat, 'qa0');
-  const before = combat.player.stamina;
-  dispatch(combat, { type: 'playCard', cardInstanceId: 'qa0' });
-  assert.equal(before - combat.player.stamina, shown.staminaCost);
-  assert.equal(combat.player.statuses.frail?.stacks, 1);
-  assert.equal(combat.piles.hand.some(row => row.instanceId === 'qa0'), false);
-  assert.equal(combat.piles.exhaust.some(row => row.instanceId === 'qa0'), true);
-  assert.equal(combat.piles.discard.some(row => row.instanceId === 'qa0'), false);
-});
-
-test('Rogue Backstep and Hit and Run exhaust their actual base copies after play', async () => {
-  const { bandsFight } = await import('./helpers/bands-fight.mjs');
-  const { dispatch, previewCard } = await import('../src/engine/combat.js');
-  for (const cardId of ['backstep', 'core.hitAndRun']) {
-    const combat = bandsFight({ hand: [cardId], enemyIds: ['wanderingSoldier'], stamina: 6 });
-    const targetId = cardId === 'core.hitAndRun' ? combat.enemies[0].id : undefined;
-    const shown = previewCard(combat, 'qa0', targetId);
+test('playing core Backstep applies its self drawback and exhausts the actual copy', async () =>
+{
+    const { bandsFight } = await import('./helpers/bands-fight.mjs');
+    const { dispatch, previewCard } = await import('../src/engine/combat.js');
+    const combat = bandsFight({ hand: ['core.backstep'], stamina: 6 });
+    const shown = previewCard(combat, 'qa0');
     const before = combat.player.stamina;
-    dispatch(combat, { type: 'playCard', cardInstanceId: 'qa0', targetId });
+    dispatch(combat, { type: 'playCard', cardInstanceId: 'qa0' });
     assert.equal(before - combat.player.stamina, shown.staminaCost);
-    assert.equal(combat.piles.exhaust.some(row => row.instanceId === 'qa0'), true, cardId);
-    assert.equal(combat.piles.discard.some(row => row.instanceId === 'qa0'), false, cardId);
-  }
+    assert.equal(combat.player.statuses.frail?.stacks, 1);
+    assert.equal(combat.piles.hand.some(row => row.instanceId === 'qa0'), false);
+    assert.equal(combat.piles.exhaust.some(row => row.instanceId === 'qa0'), true);
+    assert.equal(combat.piles.discard.some(row => row.instanceId === 'qa0'), false);
+});
+
+test('Rogue Backstep and Hit and Run exhaust their actual base copies after play', async () =>
+{
+    const { bandsFight } = await import('./helpers/bands-fight.mjs');
+    const { dispatch, previewCard } = await import('../src/engine/combat.js');
+    for (const cardId of ['backstep', 'core.hitAndRun'])
+    {
+        const combat = bandsFight({ hand: [cardId], enemyIds: ['wanderingSoldier'], stamina: 6 });
+        const targetId = cardId === 'core.hitAndRun' ? combat.enemies[0].id : undefined;
+        const shown = previewCard(combat, 'qa0', targetId);
+        const before = combat.player.stamina;
+        dispatch(combat, { type: 'playCard', cardInstanceId: 'qa0', targetId });
+        assert.equal(before - combat.player.stamina, shown.staminaCost);
+        assert.equal(combat.piles.exhaust.some(row => row.instanceId === 'qa0'), true, cardId);
+        assert.equal(combat.piles.discard.some(row => row.instanceId === 'qa0'), false, cardId);
+    }
 });
 
 test('Gale Push shows and pays its spell cost rules price with the Reaver loadout', async () =>
@@ -167,14 +215,27 @@ test('armoured or not, Gale Push keeps the rules price and refuses one Mana belo
     }
 });
 
-test('the rogue Backstep lesson card names Exhaust only when its keyword is on: legacy text has no Exhaust sentence, the current card carries the keyword', async () => {
-  const { bandsFight, registries } = await import('./helpers/bands-fight.mjs');
-  const { resolveCard } = await import('../src/model/registries.js');
-  const combat = bandsFight({ hand: ['backstep'], enemyIds: ['wanderingSoldier'] });
-  const current = resolveCard(registries, { cardId: 'backstep', instanceId: 'qa0' }, undefined, combat);
-  assert.ok(current.keywords.includes('exhaust'));
-  assert.doesNotMatch(current.textTemplate, /Exhaust/, 'the keyword is appended to the face, not duplicated in the text');
-  const legacy = resolveCard(registries, { cardId: 'backstep', instanceId: 'qa0' }, undefined, { gameProfile: null, fixCoreRules: {} });
-  assert.deepEqual(legacy.keywords, []);
-  assert.doesNotMatch(legacy.textTemplate, /Exhaust/);
+test('the rogue Backstep lesson card names Exhaust only when its keyword is on: legacy text has no Exhaust sentence, the current card carries the keyword', async () =>
+{
+    const { bandsFight, registries } = await import('./helpers/bands-fight.mjs');
+    const { resolveCard } = await import('../src/model/registries.js');
+    const combat = bandsFight({ hand: ['backstep'], enemyIds: ['wanderingSoldier'] });
+    const current = resolveCard(
+        registries,
+        { cardId: 'backstep', instanceId: 'qa0' },
+        undefined,
+        combat,
+    );
+    assert.ok(current.keywords.includes('exhaust'));
+    assert.doesNotMatch(
+        current.textTemplate,
+        /Exhaust/,
+        'the keyword is appended to the face, not duplicated in the text',
+    );
+    const legacy = resolveCard(registries, { cardId: 'backstep', instanceId: 'qa0' }, undefined, {
+        gameProfile: null,
+        fixCoreRules: {},
+    });
+    assert.deepEqual(legacy.keywords, []);
+    assert.doesNotMatch(legacy.textTemplate, /Exhaust/);
 });
