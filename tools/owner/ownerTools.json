@@ -1,0 +1,271 @@
+{
+  "$note": "Pipeline settings for npm run play, check, ship and sync (docs/OWNER-EDITING.md). Words live in ownerText.json, change wording in ownerDiff.json.",
+  "git": {
+    "remote": "origin",
+    "baseBranch": "dev",
+    "branchPrefix": "feature/Owner",
+    "repositoryUrl": "https://github.com/cehinds/AshenSpire",
+    "workBranch": "owner/editing",
+    "openPullLimit": 200,
+    "githubProgram": "gh"
+  },
+  "flags": {
+    "quick": "--quick",
+    "dryRun": "--dry-run",
+    "local": "--local",
+    "full": "--full",
+    "prefix": "--"
+  },
+  "files": {
+    "backupFolder": ".owner-backup",
+    "patchFile": ".owner-tools.patch",
+    "worktreePrefix": "ashenspire-owner-"
+  },
+  "limits": {
+    "maxOutputBytes": 67108864,
+    "outputTailLines": 25,
+    "branchTitleLimit": 40,
+    "receiptSummaryLines": 2
+  },
+  "editableRoots": [
+    "content/source/",
+    "content/config/",
+    "games/ashenspire/"
+  ],
+  "editableExtensions": [
+    ".json",
+    ".csv"
+  ],
+  "generatedNames": [
+    "game.lock.json",
+    "_reference.json",
+    "_reference.md",
+    "enemyLevelCards.json",
+    "build.summary.json"
+  ],
+  "neverCommit": [
+    "buildordinal.json",
+    ".html"
+  ],
+  "generatedLocations": [
+    "src/content/generated/",
+    "src/config/generated/",
+    "src/framework/data/",
+    "games/ashenspire/derived/",
+    "engine/ui/index.json",
+    "README.md"
+  ],
+  "generatedSuffixes": [
+    ".generated.js",
+    ".generated.css",
+    "game.lock.json",
+    "_reference.json",
+    "_reference.md",
+    "enemyLevelCards.json",
+    "build.summary.json"
+  ],
+  "rebuiltContentFiles": [
+    "games/ashenspire/packs/core/characters.json"
+  ],
+  "buildSteps": [
+    {
+      "label": "Build enemy sheets",
+      "args": [
+        "tools/enemy-sheets.mjs",
+        "--write"
+      ]
+    },
+    {
+      "label": "Build interface config",
+      "args": [
+        "tools/config-build.mjs"
+      ]
+    },
+    {
+      "label": "Build token styles",
+      "args": [
+        "tools/tokens-css.mjs",
+        "--write"
+      ]
+    },
+    {
+      "label": "Build content tables",
+      "args": [
+        "tools/content-build.mjs"
+      ]
+    },
+    {
+      "label": "Build enemy level cards",
+      "args": [
+        "tools/enemy-level-cards.mjs",
+        "--write"
+      ]
+    },
+    {
+      "label": "Build game packs",
+      "args": [
+        "tools/game-config.mjs",
+        "build"
+      ]
+    },
+    {
+      "label": "Build game summary",
+      "args": [
+        "tools/build-game.mjs"
+      ]
+    },
+    {
+      "label": "Build combat power table",
+      "args": [
+        "tools/combat-power-report.mjs"
+      ]
+    },
+    {
+      "label": "Build level lists",
+      "args": [
+        "tools/level-lists.mjs"
+      ]
+    },
+    {
+      "label": "Build derived tables",
+      "args": [
+        "tools/derived-tables.mjs"
+      ]
+    },
+    {
+      "label": "Build interface index",
+      "args": [
+        "tools/ui-validate.mjs"
+      ]
+    },
+    {
+      "label": "Build README tables",
+      "args": [
+        "tools/readme-sync.mjs",
+        "--write"
+      ]
+    }
+  ],
+  "checkSteps": [
+    {
+      "label": "Check enemy sheets",
+      "args": [
+        "tools/enemy-sheets.mjs",
+        "--check"
+      ]
+    },
+    {
+      "label": "Check interface config",
+      "args": [
+        "tools/config-build.mjs",
+        "--check"
+      ]
+    },
+    {
+      "label": "Check token styles",
+      "args": [
+        "tools/tokens-css.mjs",
+        "--check"
+      ]
+    },
+    {
+      "label": "Check content tables",
+      "args": [
+        "tools/content-build.mjs",
+        "--check"
+      ]
+    },
+    {
+      "label": "Check enemy level cards",
+      "args": [
+        "tools/enemy-level-cards.mjs",
+        "--check"
+      ]
+    },
+    {
+      "label": "Check game packs",
+      "args": [
+        "tools/game-config.mjs",
+        "check"
+      ]
+    },
+    {
+      "label": "Check game summary",
+      "args": [
+        "tools/build-game.mjs",
+        "--check"
+      ]
+    },
+    {
+      "label": "Check combat power table",
+      "args": [
+        "tools/combat-power-report.mjs",
+        "--check"
+      ]
+    },
+    {
+      "label": "Check level lists",
+      "args": [
+        "tools/level-lists.mjs",
+        "--check"
+      ]
+    },
+    {
+      "label": "Check derived tables",
+      "args": [
+        "tools/derived-tables.mjs",
+        "--check"
+      ]
+    },
+    {
+      "label": "Check interface index",
+      "args": [
+        "tools/ui-validate.mjs",
+        "--check"
+      ]
+    },
+    {
+      "label": "Check README tables",
+      "args": [
+        "tools/readme-sync.mjs",
+        "--check"
+      ]
+    }
+  ],
+  "testSteps": [
+    {
+      "label": "Core tests",
+      "args": [
+        "tests/run-node.mjs",
+        "--no-selftests",
+        "--no-discovered"
+      ]
+    }
+  ],
+  "changelog": {
+    "file": "CHANGELOG.md",
+    "projectionArgs": [
+      "tools/about-changelog.mjs",
+      "--write"
+    ],
+    "generatedModule": "src/content/changelog.generated.js",
+    "buildOrdinalFile": "buildordinal.json"
+  },
+  "play": {
+    "serverArgs": [
+      "tools/serve.mjs",
+      "--watch",
+      "--editor-write",
+      "--host",
+      "localhost"
+    ],
+    "enemySheetFolder": "games/ashenspire/packs/core/enemies",
+    "rebuildDelayMs": 200,
+    "enemySheetStep": "Build enemy sheets",
+    "enemySheetExtension": ".json",
+    "generatedSheetPrefix": "_"
+  },
+  "generatedFolders": [
+    "games/ashenspire/derived/"
+  ]
+}

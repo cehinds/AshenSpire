@@ -1,0 +1,54 @@
+{
+  "$note": "How ship names a change in a commit subject. {name} is filled in by the tool.",
+  "subjectLimit": 72,
+  "ellipsis": "...",
+  "arrow": "→",
+  "entryKeys": [
+    "id",
+    "card",
+    "ref",
+    "slot"
+  ],
+  "labelKeys": [
+    "op",
+    "id",
+    "card",
+    "slot",
+    "status",
+    "tag"
+  ],
+  "quietSegments": [
+    "effects",
+    "stats",
+    "passives",
+    "shared"
+  ],
+  "nameKey": "name",
+  "positionPrefix": "#",
+  "segmentJoiner": " ",
+  "listJoiner": ", ",
+  "partJoiner": "; ",
+  "phrases": {
+    "add": "Add {where}",
+    "remove": "Remove {where}",
+    "raise": "Raise {where} {before}{arrow}{after}",
+    "lower": "Lower {where} {before}{arrow}{after}",
+    "set": "Set {where} to {after}",
+    "clear": "Clear {where}",
+    "change": "Change {where} {before}{arrow}{after}",
+    "list": "{entity} {field}: {parts}",
+    "listAdd": "add {items}",
+    "listRemove": "remove {items}",
+    "reorder": "reorder",
+    "editOne": "Edit {entity} ({count} changes)",
+    "editMany": "Edit {count} entries in {file}",
+    "reformat": "Reformat {file}"
+  },
+  "csv": {
+    "extension": ".csv",
+    "separator": ",",
+    "quote": "\"",
+    "commentPrefix": "#",
+    "idColumn": "id"
+  }
+}
