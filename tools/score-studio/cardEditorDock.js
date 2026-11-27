@@ -69,15 +69,15 @@ export function initCardEditorDock(ctx) {
   const previewSlot = doc.createElement('div'); previewSlot.id = 'customization-entity-preview'; previewSlot.className = 'customization-entity-preview';
   const previews = { cards: properties.cards.querySelector('.inspector-preview-wrap'), items: properties.items?.querySelector('#item-preview-host') || null };
   for (const node of Object.values(previews)) if (node) { rememberHome(node); previewSlot.append(node); }
-  // Preview state is view state only: collapsed, its dragged height (null = auto size), and whether it floats.
-  let previewPrefs = { collapsed: false, height: null, floating: false, x: null, y: null };
+  // Preview state is view state only: collapsed, and its dragged height (null = auto size).
+  let previewPrefs = { collapsed: false, height: null };
   try {
     const saved = JSON.parse(storage?.getItem(PREVIEW_KEY) || '{}');
-    previewPrefs = { ...previewPrefs, ...saved, collapsed: !!(saved.collapsed ?? saved.hidden) };
+    previewPrefs = { collapsed: !!(saved.collapsed ?? saved.hidden), height: Number.isFinite(saved.height) ? saved.height : null };
   } catch { /* Optional persistence. */ }
   const savePreviewPrefs = () => {
-    const { collapsed, height, floating, x, y } = previewPrefs;
-    try { storage?.setItem(PREVIEW_KEY, JSON.stringify({ collapsed, height, floating, x, y })); } catch { /* Optional persistence. */ }
+    const { collapsed, height } = previewPrefs;
+    try { storage?.setItem(PREVIEW_KEY, JSON.stringify({ collapsed, height })); } catch { /* Optional persistence. */ }
   };
   const PREVIEW_MIN_H = 90, PREVIEW_MAX_H = 640;
   // Drag the bar under the preview to set its height; the card scales to fit. Double-click returns to auto size.
@@ -116,69 +116,35 @@ export function initCardEditorDock(ctx) {
     if (next == null) return;
     event.preventDefault(); applyPreviewHeight(next);
   });
-  // Undock: the same preview node moves into a small floating window you can drag anywhere.
-  const floatWin = doc.createElement('section'); floatWin.id = 'customization-preview-float'; floatWin.className = 'customization-preview-float'; floatWin.hidden = true;
-  floatWin.setAttribute('aria-label', 'Card preview');
-  const floatBar = doc.createElement('div'); floatBar.className = 'customization-preview-float-bar';
-  const floatTitle = doc.createElement('button'); floatTitle.type = 'button'; floatTitle.className = 'customization-preview-float-title';
-  floatTitle.setAttribute('aria-controls', previewSlot.id);
-  const floatDock = button('Dock', () => setPreviewFloating(false), 's-btn s-btn-sm'); floatDock.id = 'customization-preview-dock';
-  floatBar.append(floatTitle, floatDock); floatWin.append(floatBar); doc.body.append(floatWin);
-  const previewUndock = button('Undock preview', () => setPreviewFloating(true), 's-btn s-btn-sm customization-preview-undock');
-  previewUndock.id = 'customization-preview-undock';
   function setPreviewCollapsed(value) {
     previewPrefs.collapsed = !!value; savePreviewPrefs();
     previewBody.hidden = previewPrefs.collapsed;
-    for (const toggleNode of [entityName, floatTitle]) toggleNode.setAttribute('aria-expanded', String(!previewPrefs.collapsed));
+    entityName.setAttribute('aria-expanded', String(!previewPrefs.collapsed));
     entity.dataset.previewCollapsed = String(previewPrefs.collapsed);
+    placeQuickFields();
   }
   entityName.setAttribute('aria-controls', previewSlot.id);
   entityName.addEventListener('click', () => setPreviewCollapsed(!previewPrefs.collapsed));
-  let floatMoved = false, floatDrag = null;
-  floatTitle.addEventListener('click', event => {
-    if (floatMoved) { floatMoved = false; event.preventDefault(); return; }
-    setPreviewCollapsed(!previewPrefs.collapsed);
-  });
-  floatBar.addEventListener('pointerdown', event => {
-    if (event.target === floatDock) return;
-    const box = floatWin.getBoundingClientRect();
-    floatDrag = { dx: event.clientX - box.left, dy: event.clientY - box.top, x: event.clientX, y: event.clientY }; floatMoved = false;
-    floatBar.setPointerCapture?.(event.pointerId);
-  });
-  floatBar.addEventListener('pointermove', event => {
-    if (!floatDrag) return;
-    if (Math.abs(event.clientX - floatDrag.x) + Math.abs(event.clientY - floatDrag.y) > 4) floatMoved = true;
-    if (floatMoved) placeFloat(event.clientX - floatDrag.dx, event.clientY - floatDrag.dy, false);
-  });
-  const endFloatDrag = () => { if (!floatDrag) return; floatDrag = null; savePreviewPrefs(); };
-  floatBar.addEventListener('pointerup', endFloatDrag); floatBar.addEventListener('pointercancel', endFloatDrag);
-  function placeFloat(x, y, save = true) {
-    const win = doc.defaultView || globalThis, w = floatWin.offsetWidth || 240;
-    const maxX = Math.max(0, (win.innerWidth || 1280) - w), maxY = Math.max(0, (win.innerHeight || 800) - 48);
-    previewPrefs.x = Math.round(Math.max(0, Math.min(maxX, x ?? maxX - 24)));
-    previewPrefs.y = Math.round(Math.max(0, Math.min(maxY, y ?? 120)));
-    floatWin.style.left = `${previewPrefs.x}px`; floatWin.style.top = `${previewPrefs.y}px`;
-    if (save) savePreviewPrefs();
-  }
-  function placePreview() {
-    // Floating is a desktop choice; the narrow layout always keeps the preview in the pane.
-    const narrow = !!narrowMedia?.matches, floating = previewPrefs.floating && !narrow;
-    if (floating) {
-      if (previewBody.parentNode !== floatWin) floatWin.append(previewBody);
-      floatWin.hidden = false; placeFloat(previewPrefs.x, previewPrefs.y, false);
-    } else {
-      if (previewBody.parentNode !== entity) entity.append(previewBody);
-      floatWin.hidden = true;
+  // Card basics beside the card: the live Name, Card Type, SP and MP fields move next to CP while the
+  // preview is open in Properties, and go back to Card Basics otherwise. Moved, never cloned.
+  const quickFields = ['edit-name', 'edit-type', 'edit-sp', 'edit-mp']
+    .map(id => doc.getElementById(id)?.closest('.form-wide, label, .studio-field')).filter(Boolean);
+  for (const node of quickFields) rememberHome(node);
+  const entityDetails = doc.createElement('div'); entityDetails.className = 'customization-entity-details';
+  const quick = doc.createElement('div'); quick.className = 'form-grid customization-quick-fields'; quick.hidden = true;
+  quick.setAttribute('role', 'group'); quick.setAttribute('aria-label', 'Card basics');
+  const scoreSummary = previews.cards?.querySelector('#inspector-score-summary');
+  if (scoreSummary) { scoreSummary.before(entityDetails); entityDetails.append(scoreSummary, quick); }
+  function placeQuickFields() {
+    const inHeader = !!scoreSummary && view === 'properties' && context === 'cards' && isValid('cards') && !previewPrefs.collapsed;
+    for (const node of quickFields) {
+      if (inHeader) { if (node.parentNode !== quick) quick.append(node); }
+      else { const home = homes.get(node); if (home && home.nextSibling !== node) home.after(node); }
     }
-    entity.dataset.previewFloating = String(floating);
-    previewUndock.hidden = narrow || floating;
-  }
-  function setPreviewFloating(value) {
-    previewPrefs.floating = !!value; savePreviewPrefs(); placePreview();
-    (previewPrefs.floating ? floatDock : entityName).focus?.({ preventScroll: true });
+    quick.hidden = !inHeader;
   }
   const entityHead = doc.createElement('div'); entityHead.className = 'customization-entity-head';
-  entityHead.append(entityHeading, previewUndock);
+  entityHead.append(entityHeading);
   entity.append(entityHead, scope, previewBody);
   const content = doc.createElement('div'); content.id = 'customization-content';
   const slots = Object.fromEntries(VIEWS.map(id => {
@@ -273,7 +239,7 @@ export function initCardEditorDock(ctx) {
     setContext(kind);
     if (!docked) { openModal(); return; }
     setPanel('editor');
-    pane.scrollIntoView?.({ block: 'nearest' });
+    pane.scrollIntoView?.({ block: 'start' });
     entityName.focus?.({ preventScroll: true });
   }
   // Back to the library, with the active card in view and focused.
@@ -334,7 +300,7 @@ export function initCardEditorDock(ctx) {
   // focus to the entity heading, never into a form field.
   function showProperties() {
     setView('properties'); setPanel('editor');
-    pane.scrollIntoView?.({ block: 'nearest' });
+    pane.scrollIntoView?.({ block: 'start' });
     entityName.focus?.({ preventScroll: true });
   }
   function decorate(tile, def, kind) {
@@ -362,7 +328,6 @@ export function initCardEditorDock(ctx) {
     const noun = context === 'items' ? 'item' : 'card', valid = isValid(context), name = valid ? selectedName() || selectedId(context) : 'none';
     entity.setAttribute('aria-label', context === 'items' ? 'Active item' : 'Active card');
     entityName.textContent = valid ? name : `No ${noun} selected`;
-    floatTitle.textContent = valid ? name : `No ${noun} selected`;
     scope.textContent = SCOPE_TEXT[view](noun, name);
     if (!valid && view === 'properties') scope.textContent = `Choose a ${noun} in the library to edit it.`;
     pane.setAttribute('data-scope', VIEW_SCOPES[view]);
@@ -372,6 +337,7 @@ export function initCardEditorDock(ctx) {
     for (const [key, node] of Object.entries(properties)) if (node) node.hidden = key !== context || !valid;
     for (const [key, node] of Object.entries(previews)) if (node) node.hidden = key !== context || !valid;
     rename.disabled = balance.disabled = !valid;
+    placeQuickFields();
     for (const nav of navs) {
       const navName = isValid(nav.key) ? nameOf(nav.key) || selectedId(nav.key) : 'none';
       nav.editor.textContent = `${nav.key === 'items' ? 'Item' : 'Card'}: ${navName}`;
@@ -440,8 +406,8 @@ export function initCardEditorDock(ctx) {
     });
   }
   // Crossing the breakpoint starts on the library, so focus is never left on a hidden gallery tile.
-  narrowMedia?.addEventListener?.('change', () => { panel = 'library'; applyPanel(); placePreview(); });
+  narrowMedia?.addEventListener?.('change', () => { panel = 'library'; applyPanel(); });
   setContext('cards'); setDocked(docked); setView(view);
-  setPreviewCollapsed(previewPrefs.collapsed); applyPreviewHeight(previewPrefs.height, false); placePreview();
+  setPreviewCollapsed(previewPrefs.collapsed); applyPreviewHeight(previewPrefs.height, false);
   return { edit: id => edit(id, 'cards'), editItem: id => edit(id, 'items'), decorateTile: (tile, def) => decorate(tile, def, 'cards'), decorateItemTile: (tile, def) => decorate(tile, def, 'items'), open: openModal, refresh, refreshEntity: renderEntity, showProperties, setPanel, getPanel: () => panel, setDocked, setContext, setView, isDocked: () => docked, getView: () => view, element: pane };
 }

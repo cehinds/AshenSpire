@@ -1912,10 +1912,16 @@ function renderCostChips(def, sc) {
 function renderScoreSummary(def, sc) {
   const baseRank = state.baselineRanks[def.id];
   const shiftTxt = (baseRank !== undefined && baseRank !== sc.rank) ? ` (was ${RankName(baseRank)})` : '';
+  // CP stays large; rank and rarity sit beside it on two short lines.
+  const rarity = String(sc.rarity || '').replace(/^./, (ch) => ch.toUpperCase());
   document.getElementById('inspector-score-summary').innerHTML = `
-    <div class="inspector-score-big">CP ${sc.cp}</div>
-    <div><strong>${esc(RankName(sc.rank))}</strong> · ${esc(actForRank(sc.rank))}${esc(shiftTxt)}</div>
-    <div class="studio-muted">Raw: ${sc.raw} · Rarity: ${esc(sc.rarity)}${sc.overridden ? ' · Overridden' : ''}</div>
+    <div class="inspector-score-row">
+      <div class="inspector-score-big">CP ${sc.cp}</div>
+      <div class="inspector-score-meta">
+        <div><strong>${esc(RankName(sc.rank))}</strong>${esc(shiftTxt)}</div>
+        <div class="studio-muted">${esc(rarity)}${sc.overridden ? ' · Overridden' : ''}</div>
+      </div>
+    </div>
   `;
 }
 

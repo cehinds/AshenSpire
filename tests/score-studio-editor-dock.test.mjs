@@ -338,7 +338,7 @@ test('repeated refresh, view and context changes build the header once and add n
   assert.deepEqual([edit, navEditor, doc.getElementById('customization-view')].map(listenerCount), before);
 }));
 
-test('card name collapses the preview, the drag bar sizes it, and it can float; all view state only', () => withKitDom(dom => {
+test('card name collapses the preview and the drag bar sizes it; both are view state only', () => withKitDom(dom => {
   const stored = new Map();
   const first = fixture(dom, stored);
   const name = first.doc.getElementById('customization-entity-name');
@@ -357,17 +357,12 @@ test('card name collapses the preview, the drag bar sizes it, and it can float; 
   resizer.dispatchEvent(Object.assign(new dom.Event('keydown', { bubbles: true }), { key: 'Enter' }));
   assert.equal(body.dataset.sized, undefined, 'Enter returns to auto size');
   resizer.dispatchEvent(Object.assign(new dom.Event('keydown', { bubbles: true }), { key: 'Home' }));
-  first.doc.getElementById('customization-preview-undock').click();
-  const float = first.doc.getElementById('customization-preview-float');
-  assert.equal(float.hidden, false);
-  assert.equal(body.parentNode, float, 'the same preview node moves into the floating window');
   name.click();
   assert.deepEqual(JSON.parse(stored.get('ashenspire:scoreStudioEntityPreview:v1')).height, 90);
   const again = fixture(dom, stored);
   const againBody = again.doc.querySelector('.customization-preview-body');
   assert.equal(againBody.hidden, true, 'collapsed state survives a reload');
-  assert.equal(againBody.parentNode.id, 'customization-preview-float', 'floating survives a reload');
-  again.doc.getElementById('customization-preview-dock').click();
-  assert.equal(againBody.parentNode.id, 'customization-entity', 'Dock puts it back in the pane');
+  assert.equal(againBody.parentNode.id, 'customization-entity');
+  assert.equal(again.doc.getElementById('customization-preview-undock'), null, 'no Undock preview button');
   assert.equal(again.doc.querySelectorAll('.customization-preview-body').length, 1);
 }));
