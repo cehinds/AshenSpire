@@ -8,6 +8,7 @@ import { DAMAGE_SCHOOLS } from '../schemas.js';
 import { parseMod } from './modStrings.js';
 import { GearPieceMods, ParseGearMod } from '../gearEffects.js';
 import { GEAR_TYPES } from '../../content/gearTypes.js';
+import { ITEM_PROPERTIES } from '../../content/itemProperties.js';
 import {
   HANDS, EQUIPMENT_ROLES, armamentIntrinsicStatProblems, slotHand, pieceHand, fitsSlot,
 } from './hands.js';
@@ -57,6 +58,27 @@ function gearModProblems(id, raw) {
   if (!['start', 'end'].includes(mod.selector) && !GEAR_TYPES.selectors[mod.selector]) out.push(`${id}: '${mod.selector}' in '${raw}' is not a gear selector (add it to equipmentTypes.json)`);
   for (const cond of mod.conds) if (!GEAR_TYPES.conditions[cond.name]) out.push(`${id}: '${cond.name}' in '${raw}' is not a gear condition (add it to equipmentTypes.json)`);
   return out;
+}
+
+/** An item property's `fx.gearMods` (itemProperties.json) are card rules only: registered gear-scope fields, selectors and conditions. */
+function propertyGearModProblems(fields)
+{
+  const problems = [];
+  for (const property of ITEM_PROPERTIES)
+  {
+    const id = `itemProperties.json: '${property.id}'`;
+    for (const raw of property.fx?.gearMods || [])
+    {
+      const spec = fields[ParseGearMod(raw)?.field];
+      if (spec?.scope !== 'gear')
+      {
+        problems.push(`${id} gear mod '${raw}' must name a gear-scope field of equipMods.csv`);
+        continue;
+      }
+      problems.push(...gearModProblems(id, raw));
+    }
+  }
+  return problems;
 }
 
 function collectEquipmentProblems(registries, problems = []) {
@@ -192,6 +214,7 @@ function collectEquipmentProblems(registries, problems = []) {
       else if (spec.scope !== 'run' || mod.selector !== 'self') problems.push(`equipmentTypes.json: '${id}' mod '${raw}' must be a gear mod or a self.* run mod`);
     }
   }
+  problems.push(...propertyGearModProblems(fields));
 
   // ---- the `apply` vocabulary, which nothing checked until A8 --------------
   // equipMods.csv's header calls `apply` a closed set; `cardMods`, `runMods`

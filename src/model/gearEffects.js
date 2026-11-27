@@ -18,9 +18,16 @@ import { GEAR_TYPES } from '../content/gearTypes.js';
 import { parseMod } from './loadout/modStrings.js';
 import { equippedPieces, equippedIn } from './loadout/equipped.js';
 import { isFormula } from './formulas.js';
-import { SpellCategory, SpellTraditionsActive } from './spellTraditions.js';
+import { SpellCategory, SpellTraditionsActive, RealSpellSchool } from './spellTraditions.js';
+import { ITEM_PROPERTIES } from '../content/itemProperties.js';
+import { relics as RELICS } from '../content/relics.js';
 
 const TARGET_CONDS = new Set(['target']);
+// An Initiate mod (owner 2026-11-26) always reads Prepared stance, and a spell takes at most one Initiate cut.
+const INITIATE_FIELD = 'cardInitiate';
+const INITIATE_STANCE = 'prepared';
+const STANCE_COND = 'stance';
+const RELIC_PIECE_KIND = 'relic';
 
 /** ParseGearMod('anyAttack@target:retreating.cardAddDex=+1') -> { selector, arg, conds, field, mode, value } | null. */
 export function ParseGearMod(raw) {
@@ -55,6 +62,54 @@ export function GearPieceMods(piece, includeType = true) {
 
 const wholeNumber = (mode, value, prior = 0) => (mode === 'add' ? prior + value : value);
 
+/** An Initiate mod's conditions: its own, plus Prepared stance when it names no stance. */
+function initiateConds(conds)
+{
+  if (conds.some(cond => cond.name === STANCE_COND))
+  {
+    return conds;
+  }
+  return [
+    ...conds,
+    {
+      name: STANCE_COND,
+      arg: INITIATE_STANCE,
+    },
+  ];
+}
+
+/** The relic ids a run (`relics`) or a fight (`player.relicIds`) holds. */
+function heldRelicIds(subject)
+{
+  const relicIds = subject?.relics ?? subject?.player?.relicIds;
+  return Array.isArray(relicIds)
+    ? relicIds
+    : [];
+}
+
+/** The gear mod strings an item property carries (`fx.gearMods`, content/source/itemProperties.json). */
+const propertyGearMods = propertyId => ITEM_PROPERTIES.find(row => row.id === propertyId)?.fx?.gearMods || [];
+
+/** Each held relic whose properties carry gear mods, as a worn piece with no type row, so its rules fold like gear. */
+export function GearRelicPieces(subject, relicRows = RELICS)
+{
+  const pieces = [];
+  for (const relicId of heldRelicIds(subject))
+  {
+    const propertyIds = relicRows.find(row => row.id === relicId)?.properties || [];
+    const mods = propertyIds.flatMap(propertyGearMods);
+    if (mods.length)
+    {
+      pieces.push({
+        id: relicId,
+        kind: RELIC_PIECE_KIND,
+        mods,
+      });
+    }
+  }
+  return pieces;
+}
+
 /**
  * GearSummary(registries, loadout, classId) -> the folded effects of every worn piece.
  * `statPoints` and `pools` are read by the receipt and runMods; the rest is stamped on the player for the fight.
@@ -66,22 +121,32 @@ export function GearSummary(registries, loadout, classId, subject = registries) 
   const typeEffects = GearTypeEffectsEnabled(subject);
   const traditions = SpellTraditionsActive({ gameProfile: subject?.gameProfile });
   const fields = registries?.equipment?.modFields || {};
-  const worn = loadout ? equippedPieces(registries, loadout, classId) : [];
+  const pieces = loadout
+    ? equippedPieces(registries, loadout, classId)
+    : [];
+  const worn = [
+    ...pieces,
+    ...GearRelicPieces(subject),
+  ];
   const out = { cardRules: [], hitRules: [], turnGrants: [], playGrants: [], resist: {}, statPoints: {}, flags: {}, startStatuses: {},
     mainWeaponType: typeEffects && loadout ? GearWeaponTypeOf(equippedIn(registries, loadout, classId, 'rightHand')) : null };
   if (!typeEffects) return out;
-  let focusTaken = false;
-  for (const piece of worn) for (const [modIndex, raw] of GearPieceMods(piece, typeEffects).entries()) {
+  for (const piece of worn) for (const raw of GearPieceMods(piece, typeEffects)) {
     const mod = ParseGearMod(raw), spec = mod && fields[mod.field];
     if (!spec) continue;
     // Arcane and Divine selectors match nothing on a profile saved without spell traditions.
     if (!traditions && GEAR_TYPES.selectors[mod.selector]?.spellCategory) continue;
-    // The built-in staff/sceptre Focus is one shared effect. Piece signatures and robe discounts remain independent.
-    const type = GearTypeRow(piece);
-    const focus = modIndex < (type?.mods?.length || 0) && ['staff', 'sceptre'].includes(type?.id) && mod.field === 'cardMana' && mod.conds.some(cond => cond.name === 'stance' && cond.arg === 'prepared');
-    if (focus && focusTaken) continue;
-    if (focus) focusTaken = true;
-    const common = { selector: mod.selector, arg: mod.arg, conds: mod.conds, source: piece.id };
+    const initiate = mod.field === INITIATE_FIELD;
+    const conds = initiate
+      ? initiateConds(mod.conds)
+      : mod.conds;
+    const common = {
+      selector: mod.selector,
+      arg: mod.arg,
+      conds,
+      source: piece.id,
+      ...(initiate ? { initiate: true } : {}),
+    };
     if (spec.scope === 'run') {
       if (spec.apply === 'statPoint') out.statPoints[spec.op] = wholeNumber(mod.mode, mod.value, out.statPoints[spec.op]);
       else if (spec.apply === 'flag') out.flags[spec.op] = wholeNumber(mod.mode, mod.value, out.flags[spec.op]);
@@ -95,12 +160,6 @@ export function GearSummary(registries, loadout, classId, subject = registries) 
       else if (spec.apply === 'turnGrant') out.turnGrants.push({ phase: mod.selector, conds: mod.conds, grant: spec.op || 'status', status: spec.status || null, amount: mod.value, source: piece.id });
       else if (spec.apply === 'playGrant') out.playGrants.push({ ...common, grant: spec.op || 'status', status: spec.status || null, amount: mod.value });
     }
-  }
-  // Existing Focus-tagged pieces (Dusk Chime) retain the same Prepared-only effect even without a staff/sceptre type row.
-  const taggedFocus = !focusTaken && worn.find(piece => (piece.itemTypeTags || []).includes(registries?.balance?.mana?.focusItemType));
-  if (taggedFocus) {
-    const mod = (GEAR_TYPES.weaponTypes.staff?.mods || []).map(ParseGearMod).find(row => row?.field === 'cardMana' && row.conds.some(cond => cond.name === 'stance' && cond.arg === 'prepared'));
-    if (mod && fields[mod.field]) out.cardRules.push({ selector: mod.selector, arg: mod.arg, conds: mod.conds, source: taggedFocus.id, stat: fields[mod.field].op, amount: mod.value, mode: mod.mode });
   }
   return out;
 }
@@ -136,6 +195,10 @@ export function GearSelectorMatches(selector, arg, def) {
   if (row.hasEffect && !(def?.effects || []).some(effect => effect?.op === row.hasEffect)) return false;
   // An Arcane or Divine selector also names a Shared Spell (docs/plans/spell-categories.md, section 5).
   if (row.spellCategory && ![row.spellCategory, 'shared'].includes(SpellCategory(def))) return false;
+  if (row.argSchool && RealSpellSchool(def) !== arg)
+  {
+    return false;
+  }
   return true;
 }
 
@@ -250,7 +313,15 @@ export function ApplyGearCardRules(rules, def, state = {}) {
     const n = rule.amount;
     const note = () => common.add(rule);
     if (rule.stat === 'cost' && hasCost) { stamina = Math.max(0, adjust(stamina, rule)); note(); }
-    else if (rule.stat === 'manaCost') { manaRules.push({ mode: rule.mode, amount: n }); note(); }
+    else if (rule.stat === 'manaCost')
+    {
+      manaRules.push({
+        mode: rule.mode,
+        amount: n,
+        ...(rule.initiate ? { initiate: true } : {}),
+      });
+      note();
+    }
     else if (rule.stat === 'reach') { if (range !== 'ranged') range = 'reach'; note(); }
     else if (rule.stat === 'retain') { keywords = [...new Set([...(keywords || []), 'retain'])]; note(); }
     else if (rule.stat === 'escalate') { costGrowth ||= { perUse: 1, max: Number.MAX_SAFE_INTEGER, stamina: 1 }; note(); }
@@ -322,16 +393,39 @@ const COND_WORDS = { stance: arg => `in ${arg[0].toUpperCase()}${arg.slice(1)} s
   weapon: arg => `with a ${humanize(arg)}`, breaks: () => 'that break Poise', target: arg => ({ retreating: 'against a Retreat-stacked target', backRow: 'against a back-row enemy', frontRow: 'against a front-row enemy' })[arg] || arg };
 const SELECTOR_WORDS = { any: 'cards', attack: 'attacks', sweep: 'Sweeps', smash: 'Smashes', counter: 'Counter cards', defend: 'Defend cards', anyAttack: 'physical attacks',
   zeroCost: '0-cost attacks', blockCard: 'Block cards', spell: 'spells', healSpell: 'healing spells', arcaneSpell: 'Arcane spells', divineSpell: 'Divine spells' };
+const capitalize = text => `${text[0].toUpperCase()}${text.slice(1)}`;
+// Selectors whose argument reads as part of the noun ("Fire spells" rather than "spells (fire)").
+const SELECTOR_ARG_WORDS = {
+  schoolSpell: arg => `${capitalize(arg)} spells`,
+};
+
+/** The cards a mod names, in words. */
+function selectorWords(mod)
+{
+  const argWords = SELECTOR_ARG_WORDS[mod.selector];
+  if (argWords && mod.arg)
+  {
+    return argWords(mod.arg);
+  }
+  const noun = SELECTOR_WORDS[mod.selector] || humanize(mod.selector);
+  return mod.arg
+    ? `${noun} (${mod.arg})`
+    : noun;
+}
 
 /** GearModText(registries, raw) -> one line of item text generated from the mod string and the vocabulary row ("Smashes: +1 Poise damage"). */
 export function GearModText(registries, raw) {
   const mod = ParseGearMod(raw), spec = mod && registries?.equipment?.modFields?.[mod.field];
   if (!mod || !spec) return String(raw);
   const sign = `${mod.value >= 0 ? '+' : ''}${mod.value}`;
-  const conds = mod.conds.map(cond => (COND_WORDS[cond.name] || (() => cond.name))(cond.arg || '')).join(', ');
+  const initiate = mod.field === INITIATE_FIELD;
+  const modConds = initiate
+    ? initiateConds(mod.conds)
+    : mod.conds;
+  const conds = modConds.map(cond => (COND_WORDS[cond.name] || (() => cond.name))(cond.arg || '')).join(', ');
   const where = mod.selector === 'self' ? '' : mod.selector === 'start' ? 'Start of turn' : mod.selector === 'end' ? 'End of turn'
-    : `${SELECTOR_WORDS[mod.selector] || humanize(mod.selector)}${mod.arg ? ` (${mod.arg})` : ''}`;
-  const what = spec.apply === 'cardStat' && ['cardReach', 'cardRetain', 'cardEscalate'].includes(mod.field) ? spec.label : spec.apply === 'hitStatus' ? `apply ${mod.value} ${spec.label.replace(' on hit', '')}`
+    : selectorWords(mod);
+  const what = initiate ? `${spec.label}, ${sign} MP cost` : spec.apply === 'cardStat' && ['cardReach', 'cardRetain', 'cardEscalate'].includes(mod.field) ? spec.label : spec.apply === 'hitStatus' ? `apply ${mod.value} ${spec.label.replace(' on hit', '')}`
     : spec.apply === 'hitRemove' ? `remove ${mod.value} Retreat` : spec.apply === 'resist' ? spec.label : spec.apply === 'flag' && mod.value === 1 ? spec.label : `${sign} ${spec.label}`;
   const head = [where, conds].filter(Boolean).join(' ');
   const text = head ? `${head}: ${what}` : what;
@@ -347,7 +441,32 @@ export const GearConditionState = (entity, weaponType = null) => ({
   holding: { counter: entity?.counterStacks || 0, evade: entity?.statuses?.evade?.stacks || 0 },
 });
 
-/** Gear Mana changes apply once to the final price, after surcharges; authored prices stay intact and only the result floors. */
-export function GearManaCost(def, price) {
-  return Math.max(0, (def?.gearManaRules || []).reduce((value, rule) => adjust(value, rule), price));
+/** The one Initiate cut a spell takes: the largest of those that match, however many pieces carry one. */
+function strongestInitiate(rules)
+{
+  const initiates = rules.filter(rule => rule.initiate);
+  if (!initiates.length)
+  {
+    return [];
+  }
+  const strongest = initiates.reduce((best, rule) =>
+    rule.amount < best.amount
+      ? rule
+      : best
+  );
+  return [strongest];
+}
+
+/**
+ * Gear Mana changes apply once to the final price, after surcharges; authored prices stay intact and only the result floors.
+ * Every non-Initiate change applies, then at most one Initiate cut.
+ */
+export function GearManaCost(def, price)
+{
+  const rules = def?.gearManaRules || [];
+  const applied = [
+    ...rules.filter(rule => !rule.initiate),
+    ...strongestInitiate(rules),
+  ];
+  return Math.max(0, applied.reduce((value, rule) => adjust(value, rule), price));
 }

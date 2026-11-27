@@ -90,19 +90,20 @@ import { createRng } from '../src/engine/rng.js';
 import { cardPlayCosts, dispatch } from '../src/engine/combat.js';
 import { resolveCombatCard } from '../src/engine/combatExpansion.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
+import { GearSelectorMatches } from '../src/model/gearEffects.js';
 
 test('current deck and pile Mana faces share final gear pricing with quotes, payments and resumed fights', () => {
   for (const cardId of ['core.meteor', 'core.cantrip']) {
-    for (const [classId, right, left, robe, focus] of [
-      ['reaver', 'ashStaff', null, 0, 1],
-      ['starseer', 'greatsword', null, 1, 0],
-      ['starseer', 'ashStaff', null, 1, 1],
-      ['starseer', 'boneSceptre', 'emberlightSceptre', 1, 1],
-      ['starseer', 'emberlightSceptre', 'boneSceptre', 1, 1],
-      ['starseer', 'boneSceptre', 'blightRod', 1, 1],
-      ['starseer', 'gorefireBrand', 'emberlightSceptre', 1, 1],
-      ['starseer', 'duskChime', null, 1, 1],
-      ['starseer', 'duskChime', 'boneSceptre', 1, 1],
+    for (const [classId, right, left] of [
+      ['reaver', 'ashStaff', null],
+      ['starseer', 'greatsword', null],
+      ['starseer', 'ashStaff', null],
+      ['starseer', 'boneSceptre', 'emberlightSceptre'],
+      ['starseer', 'emberlightSceptre', 'boneSceptre'],
+      ['starseer', 'boneSceptre', 'blightRod'],
+      ['starseer', 'gorefireBrand', 'emberlightSceptre'],
+      ['starseer', 'duskChime', null],
+      ['starseer', 'duskChime', 'boneSceptre'],
     ]) {
       const run = createRunState({ registries: currentReg, classId, seed: 5, profileMeta: meta });
       run.loadout.sets.rightHand[0] = right; run.loadout.sets.leftHand[0] = left;
@@ -126,14 +127,16 @@ test('current deck and pile Mana faces share final gear pricing with quotes, pay
         const alreadyProjected = resolveCombatCard(combat, combat.piles.hand[0]);
         assert.equal(FaceCostProfile(currentReg, alreadyProjected).mana, quote.mana, `${label}: an already adjusted definition is priced once`);
         assert.equal(pile.mana, quote.mana, `${label}: Prepared pile equals the live quote`);
-        const preparedRules = combat.player.itemProps.cardRules.filter(row => row.stat === 'manaCost' && row.conds.some(cond => cond.name === 'stance'));
+        // Staffs and robes no longer cut Prepared Mana by type; the Starseer's Nightweave carries an Arcane Initiate (owner, 2026-11-27).
+        const preparedRules = (combat.player.itemProps.cardRules || []).filter(row => row.stat === 'manaCost' && row.conds.some(cond => cond.name === 'stance'));
         const wornWeaponIds = [right, left].filter(Boolean);
-        assert.equal(preparedRules.filter(row => wornWeaponIds.includes(row.source)).length, focus, `${label}: built-in Focus is one shared effect`);
-        assert.equal(preparedRules.filter(row => !wornWeaponIds.includes(row.source)).length, robe, `${label}: the robe is a separate Prepared source`);
+        assert.equal(preparedRules.filter(row => wornWeaponIds.includes(row.source)).length, 0, `${label}: weapons carry no Prepared Mana cut`);
+        assert.equal(preparedRules.filter(row => row.initiate).length, classId === 'starseer' ? 1 : 0, `${label}: the robe's Initiate`);
+        const initiate = classId === 'starseer' && GearSelectorMatches('arcaneSpell', null, def) ? 1 : 0;
         const base = classId === 'starseer' && printedMana > 0 ? Math.max(0, printedMana - 1) : printedMana; // Starseer is a Graduate; Reaver is not.
         const chainCut = cardId === 'core.cantrip' ? 1 : 0; // a mirrored cantrip takes the successive-Spell cut, and with no cost minimum (owner 2026-11-22) it may reach 0 for a non-Graduate too
         const preparedCut = 0; // Prepared itself takes no Mana; staff, robe and other gear tags own the Prepared Mana cut (owner, 2026-11-26)
-        assert.equal(pile.mana, Math.max(0, base - preparedCut - robe - focus - chainCut), `${label}: Prepared, one Focus plus independent robe`);
+        assert.equal(pile.mana, Math.max(0, base - preparedCut - initiate - chainCut), `${label}: Prepared, one Initiate cut`);
         assert.deepEqual(serializeCombatSnapshot(combat), snapshot, `${label}: faces and quotes are pure`);
         const restored = restoreCombatSnapshot({ registries: currentReg, snapshot, rng: createRng(5, counters), expectedGameProfile: combat.gameProfile });
         const play = ctx => dispatch(ctx, { type: 'playCard', cardInstanceId: 'face-mana', targetId: ctx.enemies[0].id });
