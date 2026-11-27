@@ -1603,6 +1603,7 @@ const activeEntities = CreateActiveEntities({
 
 // View state for reload, under its own key. Writes start once boot has restored it.
 let workingContextReady = false;
+
 function saveWorkingContext()
 {
   if (!workingContextReady)
@@ -1615,6 +1616,7 @@ function saveWorkingContext()
     itemKey: state.selectedItemKey,
   });
 }
+
 // Each gallery's ids in displayed order, as of its last render.
 const displayedIds = PerGallery(null);
 
@@ -1646,6 +1648,7 @@ function clearGalleryFilters(kind)
   resetGalleryFilters(kind);
   GalleryView[kind].renderGrid();
 }
+
 const pendingReveal = new Set();
 
 // The rebuild destroys the tiles, so keep focus and scroll.
@@ -1844,7 +1847,8 @@ function renderAddFeatureOptions({ pickBest = false } = {}) {
 
 function renderInspector() {
   const def = selectedCardDef();
-  if (!def) {
+  if (!def)
+  {
     // No active card: clear the stale preview; never fall back to the first card.
     document.getElementById('inspector-card-preview').replaceChildren();
     document.getElementById('inspector-sheet-title').textContent = '';
@@ -2261,14 +2265,19 @@ function applyCardJson() {
 }
 
 // The card as it ships in the game, scored with the game's weights; null for cards the game does not have.
-function inGameScore(def) {
+function inGameScore(def)
+{
   if (!registries.cards.has(def.id))
   {
     return null;
   }
   const original = registries.cards.get(def.id);
-  const sc = scoreCardEntry(clone(original), state.repoScoring);
-  return { cp: sc.cp, rank: sc.rank, rarity: original.rarity || sc.rarity };
+  const scored = scoreCardEntry(clone(original), state.repoScoring);
+  return {
+    cp: scored.cp,
+    rank: scored.rank,
+    rarity: original.rarity || scored.rarity,
+  };
 }
 
 function trendClass(now, then) {
@@ -2500,7 +2509,10 @@ function selectedCardDef() {
 }
 
 // One undo step per typing burst. A change of active entity ends every open burst.
-const editBursts = CreateEditBursts({ pushHistory: () => pushHistory(), delayMs: TEXT_EDIT_BURST_MS });
+const editBursts = CreateEditBursts({
+  pushHistory: () => pushHistory(),
+  delayMs: TEXT_EDIT_BURST_MS,
+});
 function createEditBurst()
 {
   return editBursts.create();
@@ -3447,7 +3459,8 @@ function renderItemsGrid() {
 
 function renderItemInspector() {
   const entry = FindGalleryEntity(state, GalleryKind.Items, state.selectedItemKey);
-  if (!entry) {
+  if (!entry)
+  {
     // No active item: the pane shows its empty state rather than the first item.
     document.getElementById('item-preview-host')?.replaceChildren();
     cardEditorDockUi?.refresh();
@@ -3681,10 +3694,10 @@ function showArtLayerInList(idx) {
 
 function renderArtPreviewOnly()
 {
-  const sel = document.getElementById(ART_PREVIEW_SELECT_ID);
+  const pickerSelect = document.getElementById(ART_PREVIEW_SELECT_ID);
   const host = document.getElementById(ART_LIVE_PREVIEW_ID);
   const kind = ToGalleryKind(state.artTarget);
-  const entity = FindGalleryEntity(state, kind, sel.value);
+  const entity = FindGalleryEntity(state, kind, pickerSelect.value);
   if (entity)
   {
     GalleryView[kind].renderPreview(entity, host);
@@ -3711,21 +3724,24 @@ function renderArtTab() {
   }
 
   // The picker follows the gallery's active card or item.
-  const cardSel = document.getElementById(ART_PREVIEW_SELECT_ID);
-  cardSel.innerHTML = '';
+  const pickerSelect = document.getElementById(ART_PREVIEW_SELECT_ID);
+  pickerSelect.innerHTML = '';
   const pickerKind = ToGalleryKind(state.artTarget);
   const pickerEntities = GalleryEntity[pickerKind];
-  const options = pickerEntities.list(state).map((entity) => [pickerEntities.idOf(entity), GalleryView[pickerKind].optionLabel(entity)]);
+  const options = pickerEntities.list(state).map((entity) => [
+    pickerEntities.idOf(entity),
+    GalleryView[pickerKind].optionLabel(entity),
+  ]);
   const activeId = activeEntities.get(pickerKind);
   if (!activeId)
   {
-    cardSel.appendChild(new Option(NoActiveEntityOption[pickerKind], NO_ENTITY_OPTION_VALUE));
+    pickerSelect.appendChild(new Option(NoActiveEntityOption[pickerKind], NO_ENTITY_OPTION_VALUE));
   }
   for (const [value, text] of options)
   {
-    cardSel.appendChild(new Option(text, value));
+    pickerSelect.appendChild(new Option(text, value));
   }
-  cardSel.value = activeId || NO_ENTITY_OPTION_VALUE;
+  pickerSelect.value = activeId || NO_ENTITY_OPTION_VALUE;
   renderArtPreviewOnly();
 
   const layersObj = activeArtLayersObj();
@@ -4893,7 +4909,11 @@ function wireEvents() {
     if (idx < 0 || !isAddedCard(state.cards[idx])) return;
     const removed = state.cards[idx], plan = removeAddedCardsFromState(state, [removed.id]);
     if (!plan.removedIds.length) { toast('Original cards are protected.'); return; }
-    const nextId = NextInDisplayedOrder(displayedIds[GalleryKind.Cards] || [], removed.id, state.cards.map((card) => card.id));
+    const nextId = NextInDisplayedOrder(
+      displayedIds[GalleryKind.Cards] || [],
+      removed.id,
+      state.cards.map((card) => card.id),
+    );
     pushHistory();
     Object.assign(state, plan.nextState);
     studioCardOverrides.delete(removed.id);
