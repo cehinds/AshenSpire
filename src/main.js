@@ -4,6 +4,7 @@ import { CharacterDisplayName } from './model/characterName.js';
 import { t } from './ui/strings.js';
 import { gameProfileRewardOffers, GameProfileEliteRelicOffer, ArmamentRewardStep, ArmamentRewardRule, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, gameProfileShopPurchasePlan, purchaseGameProfileShopOffer, addPurchasedCardToDeck, shopCardDeckRefusal } from './model/gameProfileRewards.js';
 import { MountGameProfileOffers } from './ui/components/gameProfileOffers.js';
+import { openPileModal } from './ui/components/piles.js';
 import { OpenRankUpCardModal } from './ui/components/rankUpCardModal.js';
 import { OpenCardCopyModal } from './ui/components/cardCopyModal.js';
 import { StartCardCopyOffer, CARD_COPY_OPTION, CARD_COPY_SOURCE } from './model/cardCopyService.js';
@@ -1448,6 +1449,14 @@ function showArmoury(request = '', returnTo = showMap) {
   // Character and Armory live in `equipView`; the Deck tab is the editor, saved there as 'deck'.
   if (route.open === 'deck') {
     showDeckEditor(returnTo, true);
+    return;
+  }
+  const isDeckShortcut = route.destination === 'cards' || route.view === 'cards';
+  if (isDeckShortcut && !deckDoors().armoury && RestOpensDeckEditor(run)) {
+    openPileModal(registries, t('armoury.hub.viewDeck'), run.deck || [], {
+      deckView: true,
+      rules: run,
+    });
     return;
   }
   const { view: initialView, destination, equipItemId } = route;

@@ -26,7 +26,11 @@ import { SPENT_PILES, spentPileView } from '../models/PileViewerModel.js';
 import { t } from '../strings.js';
 import { MarkSelected } from '../selection.js';
 
-export function openPileModal(registries, title, cards, { shuffleForDisplay = false, rules = null, deckView = false } = {}) {
+export function openPileModal(registries, title, cards, {
+  shuffleForDisplay = false,
+  rules = null,
+  deckView = false,
+} = {}) {
   let list = [...cards];
   if (shuffleForDisplay) {
     for (let i = list.length - 1; i > 0; i--) {

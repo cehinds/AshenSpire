@@ -39,6 +39,7 @@ import { registerCardArtRefresh } from '../cardArtStyle.js';
 import { assetUrl } from '../assetmap.js';
 import { t, tFull } from '../strings.js';
 import { loreLine } from './loreLine.js';
+import { buildChannel } from '../buildChannel.js';
 import { cardChoice } from '../../model/cardChoices.js';
 import { engravedIconHtml, engravedGlyphId } from './engravedIcon.js';
 import { equipmentCardArt } from '../assets.js';
@@ -53,6 +54,25 @@ import { roomyBudgetFor } from '../../model/cardFaceBudget.js';
 import { evadeGrantOnlyCard, CounterStacksForCard, FixCoreCounterStacks } from '../../model/fixCoreMechanics.js';
 import { wardReadsAsPoise, wardOffCardText } from '../../model/wardOffCardText.js';
 import { spellDefenseSplit } from '../../model/spellDefense.js';
+
+const DEV_BUILD_CHANNEL = 'dev';
+const DEV_FIXTURE_FLAVOR_PATTERN = /^Core adapter fixture\b/i;
+
+export function CardInspectorFlavor(flavor, channel = buildChannel())
+{
+    const text = typeof flavor === 'string'
+        ? flavor.trim()
+        : '';
+    if (!text)
+    {
+        return '';
+    }
+    if (DEV_FIXTURE_FLAVOR_PATTERN.test(text) && channel !== DEV_BUILD_CHANNEL)
+    {
+        return '';
+    }
+    return flavor;
+}
 
 // WCI3: rarity at the start of the band, the owned count at the end, each only
 // when the surface can state it. No domain action ever belongs in this band.
@@ -588,7 +608,7 @@ export function renderCard(registries, ref, opts = {}) {
       // one line there: the identity line. The card's full description opens
       // in the lore modal from that line (components/loreLine.js), the same
       // element the equipment card uses, so the two card kinds read alike.
-      const lore = loreLine({ text: def.flavor, title: def.name });
+      const lore = loreLine({ text: CardInspectorFlavor(def.flavor), title: def.name });
       if (lore) details.append(lore);
       const face = renderCard(registries, ref, { ...opts, tooltip: false, inspection: false, level: 'inspect', faceLineLimit: undefined });
       details.classList.add('playing-card-details');

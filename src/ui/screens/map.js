@@ -25,7 +25,7 @@ import { gameModule } from '../../model/gameProfile.js';
 
 import { passiveFlag } from '../../model/registries.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
-import { attachTooltip, esc } from '../components/tooltip.js';
+import { attachTooltip, esc, hideTooltip } from '../components/tooltip.js';
 import { veilIsOpen } from '../components/veil.js';
 import { matchAction, actionDestinationForEvent, isEngaged, focusFirst, focusElement } from '../input.js';
 import { hintBarHtml } from '../components/hints.js';
@@ -106,7 +106,7 @@ if (typeof window !== 'undefined') {
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushPendingSave(); });
 }
 // A callback that hands control away: flush the queued save first, then run it.
-const leaving = (fn) => (typeof fn === 'function' ? (...args) => { flushPendingSave(); return fn(...args); } : fn);
+const leaving = (fn) => (typeof fn === 'function' ? (...args) => { hideTooltip(); flushPendingSave(); return fn(...args); } : fn);
 // The explicit Save writes the same run the queued commit would: drop the
 // queued one instead of flushing it, so one Save is one write (PR #1830 review).
 function dropPendingSave() {
