@@ -6,7 +6,9 @@
 //   every spell                    +manaSurcharge Mana           (cantrips 0 -> 1, a 1 Mana spell -> 2)
 //   every spell but a cantrip      +staminaSurcharge Stamina     (0 since owner 2026-11-23; a cantrip stays at its own Stamina; an X-cost spell already spends all it has)
 //   a spell with the `manaOnlyTag`  pays 0 Stamina               (owner, 2026-11-15: "spells that cost 0 sp but 2 to 3 mp"; its printed Stamina is 0 and it takes no surcharge; Prepared has nothing to cut)
-//   the player is in Prepared      -preparedStaminaDiscount Stamina on every spell (cantrips included), never below 0
+//   the player is in Prepared      -preparedStaminaDiscount Stamina on every spell (cantrips included), never below preparedStaminaMinimum (owner 2026-11-26: 1)
+//                                  and never raising a price already at or under it; -preparedManaDiscount Mana (owner 2026-11-26: 1), floored at 0
+// Owner, 2026-11-26 (Star Seer hotfix): manaSurcharge is 0 so the printed Mana (creation, deck, reward faces) is the Mana combat charges.
 //   a Focus item is equipped       old saved profiles: -focusManaDiscount Mana in any stance; current gear: its data rule applies only in Prepared
 //   current gear Mana modifiers    apply after the surcharge, once, with only the final result floored at 0
 // "Spell" is the card Mana policy's reading (model/cardManaPolicy.js cardManaCategory: a spell-camp card that is not a Power, status, curse or
@@ -44,6 +46,19 @@ export function IsCantrip(rules, def) {
 }
 
 /**
+ * PreparedStamina(rules, stamina, inPrepared) -> the Stamina after the Prepared cut.
+ * Owner, 2026-11-26: Prepared is max(SP - 1, preparedStaminaMinimum) and never raises a price already at or under that floor
+ * (a 0 SP or 1 SP spell keeps its SP). A fight saved without preparedStaminaMinimum keeps the old floor of 0.
+ */
+export function PreparedStamina(rules, stamina, inPrepared) {
+  const base = Math.max(0, stamina);
+  if (!inPrepared) return base;
+  const floor = rules.preparedStaminaMinimum ?? 0;
+  if (base <= floor) return base;
+  return Math.max(floor, base - rules.preparedStaminaDiscount);
+}
+
+/**
  * SpellCostAdjust(ctx, def, price) -> the price { stamina, mana } with the spell cost rule applied (the same object when the rule is off or the card is no spell).
  * `price.stamina` is the card's Stamina as the fight already priced it (stance and relic cuts in), `price.mana` its Mana.
  */
@@ -52,9 +67,11 @@ export function SpellCostAdjust(ctx, def, price) {
   if (!rules || !IsSpellForCost(ctx, def)) return { ...price, mana: GearManaCost(def, price.mana) };
   // Gear-pass Focus is the Prepared-only data rule, applied at the same final door as other gear Mana changes.
   const focus = !GearTypeEffectsEnabled(ctx) && FocusHeld(ctx.registries, ctx.loadout, ctx.player?.classId);
-  const mana = GearManaCost(def, price.mana + rules.manaSurcharge - (focus ? rules.focusManaDiscount : 0));
+  const inPrepared = inPreparedStance(ctx.player);
+  // Owner, 2026-11-26: Prepared takes preparedManaDiscount Mana off a spell, floored at 0 (absent in fights saved before the ruling).
+  const preparedMana = inPrepared ? (rules.preparedManaDiscount ?? 0) : 0;
+  const mana = GearManaCost(def, price.mana + rules.manaSurcharge - preparedMana - (focus ? rules.focusManaDiscount : 0));
   const surcharge = def.cost === 'X' || IsCantrip(rules, def) || IsManaOnly(rules, def) ? 0 : rules.staminaSurcharge;
-  const prepared = inPreparedStance(ctx.player) ? rules.preparedStaminaDiscount : 0;
-  const stamina = def.cost === 'X' ? price.stamina : Math.max(0, price.stamina + surcharge - prepared);
+  const stamina = def.cost === 'X' ? price.stamina : PreparedStamina(rules, price.stamina + surcharge, inPrepared);
   return { stamina, mana };
 }
