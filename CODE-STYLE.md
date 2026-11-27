@@ -63,8 +63,7 @@ export function ReferenceClassId(definition, scoreReference)
 ## Names and values
 
 - **Descriptive names:** never single letters. PascalCase for public or exported names, camelCase
-  for
-  private ones.
+  for private ones.
 - **No magic values:** ids, class names, storage keys, paths and status words become named constants
   or config; tuning numbers go to config.
 
@@ -80,5 +79,4 @@ export function ReferenceClassId(definition, scoreReference)
 - Clean up only the files the change touches.
 - A style cleanup never changes behaviour; prove it with the same output before and after.
 - The pinned dprint formatter in `tools/code-quality` applies the layout, with its own 4-space
-  indent,
-  to files enrolled in its `policy.json`.
+  indent, to files enrolled in its `policy.json`.
