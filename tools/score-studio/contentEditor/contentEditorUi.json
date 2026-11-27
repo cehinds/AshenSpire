@@ -60,6 +60,9 @@
     "label": "JSON",
     "type": "json"
   },
+  "disabledDuringSave": [
+    "Save"
+  ],
   "disabledDuringCheck": [
     "Save",
     "Check"

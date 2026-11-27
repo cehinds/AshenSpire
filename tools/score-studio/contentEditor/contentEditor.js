@@ -189,16 +189,29 @@ class ContentEditor
     {
         return this.Run(async () =>
         {
-            const { saved, refused } = await this.store.SaveAll();
-            if (refused.length > 0)
+            this.toolbar.SetDisabled(this.ui.disabledDuringSave, true);
+            try
             {
-                await this.current.Open();
-                this.SetStatus(refused.join(this.text.messageSeparator), true);
-                return;
+                await this.SaveAndReport();
             }
-            this.SetStatus(this.FilesMessage(this.text.saved, this.text.nothingToSave, saved));
-            this.ScheduleReload();
+            finally
+            {
+                this.toolbar.SetDisabled(this.ui.disabledDuringSave, false);
+            }
         });
+    }
+
+    async SaveAndReport()
+    {
+        const { saved, refused } = await this.store.SaveAll();
+        if (refused.length > 0)
+        {
+            await this.current.Open();
+            this.SetStatus(refused.join(this.text.messageSeparator), true);
+            return;
+        }
+        this.SetStatus(this.FilesMessage(this.text.saved, this.text.nothingToSave, saved));
+        this.ScheduleReload();
     }
 
     Revert()

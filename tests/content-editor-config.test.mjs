@@ -113,7 +113,7 @@ test('the toolbar buttons, their classes and the check lock name only known thin
         assert.ok(UI_CONFIG.classes[button.className], button.className);
         assert.ok(button.text, button.action);
     }
-    for (const action of UI_CONFIG.disabledDuringCheck)
+    for (const action of [...UI_CONFIG.disabledDuringCheck, ...UI_CONFIG.disabledDuringSave])
     {
         assert.ok(actions.includes(action), action);
     }

@@ -41,6 +41,7 @@ export class ContentStore
         this.indent = indent;
         this.files = new Map();
         this.onChange = onChange;
+        this.saving = Promise.resolve();
     }
 
     /** The live value of a file, loaded once. */
@@ -96,13 +97,26 @@ export class ContentStore
             {
                 throw error;
             }
-            file.Reset(await this.api.ReadFile(path));
+            const onDisk = await this.api.ReadFile(path);
+            // Edits typed after the request was sent are kept; Revert reloads the file if wanted.
+            if (JSON.stringify(file.value) === shape)
+            {
+                file.Reset(onDisk);
+            }
             return error.message;
         }
     }
 
     /** Writes every changed file: { saved, refused } where refused holds plain messages. */
-    async SaveAll()
+    /** Saves run one after another, so each starts from the text the previous one wrote. */
+    SaveAll()
+    {
+        const run = this.saving.then(() => this.SaveDirty());
+        this.saving = run.catch(() => {});
+        return run;
+    }
+
+    async SaveDirty()
     {
         const saved = [];
         const refused = [];
