@@ -3494,7 +3494,7 @@ function mirrorArtListControls(idx, layer) {
 
 // Edit beside the card: select that card layer in the Art layers list, open its section and bring it into view.
 function showArtLayerInList(idx) {
-  state.artTarget = 'cards';
+  showGallery('cards');
   setActiveArtLayerIdx(idx);
   renderArtTab();
   const cardEl = document.querySelector(`#art-layers-list .layer-card[data-layer-card-idx="${idx}"]`);
@@ -3508,12 +3508,13 @@ function showArtLayerInList(idx) {
 function renderArtPreviewOnly() {
   const sel = document.getElementById('art-preview-card-select');
   const host = document.getElementById('art-live-preview');
+  // The picker shows the active entity; with none active the preview is empty, not the first card.
   if (state.artTarget === 'items') {
-    const item = state.items.find((x) => x.key === sel.value) || state.items[0];
-    if (item) renderItemCardPreview(item, host, 'inspect');
+    const item = state.items.find((x) => x.key === sel.value);
+    if (item) renderItemCardPreview(item, host, 'inspect'); else host.replaceChildren();
   } else {
-    const previewDef = state.cards.find((c) => c.id === sel.value) || state.cards[0];
-    if (previewDef) renderCardWithLayers(previewDef, host);
+    const previewDef = state.cards.find((c) => c.id === sel.value);
+    if (previewDef) renderCardWithLayers(previewDef, host); else host.replaceChildren();
   }
 }
 
@@ -3532,33 +3533,16 @@ function renderArtTab() {
       : 'Assign PNG assets to card components, set priority match rules (tag, school, status, type, or default), reorder Z-index layers, and adjust position, scale, opacity, and blend mode. Changes reflect live on the selected card and gallery.';
   }
 
-  // Preview selector (cards or items)
+  // Preview picker: it always shows the gallery's active card or item, and choosing one makes it active everywhere.
   const cardSel = document.getElementById('art-preview-card-select');
-  const prevVal = cardSel.value;
   cardSel.innerHTML = '';
-  if (isItems) {
-    for (const it of state.items) {
-      const o = document.createElement('option');
-      o.value = it.key;
-      o.textContent = `[${it.kind[0].toUpperCase() + it.kind.slice(1)}] ${it.name || it.id}`;
-      cardSel.appendChild(o);
-    }
-    const preferred = state.items.some((x) => x.key === state.selectedItemKey)
-      ? state.selectedItemKey
-      : (state.items.some((x) => x.key === prevVal) ? prevVal : (state.items[0]?.key || ''));
-    cardSel.value = preferred;
-  } else {
-    for (const c of state.cards) {
-      const o = document.createElement('option');
-      o.value = c.id;
-      o.textContent = c.name || c.id;
-      cardSel.appendChild(o);
-    }
-    const preferredId = state.cards.some((c) => c.id === state.selectedCardId)
-      ? state.selectedCardId
-      : (state.cards.some((c) => c.id === prevVal) ? prevVal : (state.cards[0]?.id || ''));
-    cardSel.value = preferredId;
-  }
+  const options = isItems
+    ? state.items.map((it) => [it.key, `[${it.kind[0].toUpperCase() + it.kind.slice(1)}] ${it.name || it.id}`])
+    : state.cards.map((c) => [c.id, c.name || c.id]);
+  const activeId = activeEntities.get(isItems ? 'items' : 'cards');
+  if (!activeId) cardSel.appendChild(new Option(isItems ? 'No item selected' : 'No card selected', ''));
+  for (const [value, text] of options) cardSel.appendChild(new Option(text, value));
+  cardSel.value = activeId || '';
   renderArtPreviewOnly();
 
   const layersObj = activeArtLayersObj();
@@ -4134,8 +4118,14 @@ let subclassCatalogUi = null;
 let cardSelectionUi = null;
 let cardEditorDockUi = null;
 let deckListPanelUi = null;
+// One gallery context: activeGallery, state.artTarget and the dock's context are set together by the
+// Cards and Items tabs, so the Design target and picker never point at the other kind.
 let activeGallery = 'cards';
 let artGalleryFrame = null;
+
+function showGallery(kind) {
+  if (kind !== activeGallery) document.querySelector(`.studio-tab[data-tab="${kind}"]`)?.click();
+}
 
 function refreshGalleryArtSoon() {
   if (artGalleryFrame !== null) return;
@@ -5086,10 +5076,11 @@ function wireEvents() {
   document.getElementById('item-override-cp')?.addEventListener('change', updateItemOverride);
 
   // Art & Layers events (supports both Combat Cards and Equipment & Relics)
+  // The Design target is the gallery context: Combat Cards or Equipment & Relics switches the gallery too.
   document.querySelectorAll('[data-art-target]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      state.artTarget = btn.dataset.artTarget === 'items' ? 'items' : 'cards';
-      renderArtTab();
+      const kind = btn.dataset.artTarget === 'items' ? 'items' : 'cards';
+      if (kind !== activeGallery) showGallery(kind); else renderArtTab();
     });
   });
   document.getElementById('btn-add-layer').addEventListener('click', () => {
@@ -5105,10 +5096,11 @@ function wireEvents() {
     if (state.artTarget === 'items') { renderItemsGrid(); renderItemInspector(); }
     saveDraft();
   });
+  // Choosing in the picker changes the active entity everywhere: banner, Properties, tile and deck rows.
   document.getElementById('art-preview-card-select').addEventListener('change', (e) => {
-    if (state.artTarget === 'items') state.selectedItemKey = e.target.value;
-    else state.selectedCardId = e.target.value;
-    renderArtPreviewOnly();
+    if (!e.target.value) return;
+    if (state.artTarget === 'items') selectStudioItem(e.target.value, { reveal: true });
+    else selectStudioCard(e.target.value, { reveal: true });
   });
   document.getElementById('asset-search').addEventListener('input', renderArtTab);
   document.getElementById('art-layers-list').addEventListener('click', (e) => {
@@ -5397,6 +5389,8 @@ async function boot() {
     balanceItem: key => studioToolsUi.openBalanceItems([key]),
     views: { design: document.getElementById('tab-art'), weights: document.getElementById('tab-weights'), decks: () => deckListPanelUi?.element },
     renderContextFields,
+    // A context change from inside the dock (its Undock or resize controls) moves the gallery with it.
+    onContextChange: kind => showGallery(kind),
     onViewChange: view => { if (view === 'design') renderArtTab(); else if (view === 'weights') renderWeights(); else if (view === 'decks') deckListPanelUi?.refresh(); },
   });
   document.getElementById('btn-open-decks').addEventListener('click', () => { setCustomizationView('decks'); deckListPanelUi?.refresh(); });
