@@ -337,3 +337,22 @@ test('repeated refresh, view and context changes build the header once and add n
   assert.equal(doc.querySelector('#cards-grid .card-editor-edit-button'), edit, 'the same Edit node is kept');
   assert.deepEqual([edit, navEditor, doc.getElementById('customization-view')].map(listenerCount), before);
 }));
+
+test('header preview can be hidden and sized, and both persist as view state only', () => withKitDom(dom => {
+  const stored = new Map();
+  const first = fixture(dom, stored);
+  const toggle = first.doc.getElementById('customization-preview-toggle');
+  const slot = first.doc.getElementById('customization-entity-preview');
+  const size = first.doc.getElementById('customization-preview-size');
+  assert.equal(toggle.textContent, 'Hide preview');
+  assert.equal(slot.hidden, false);
+  toggle.click();
+  assert.equal(slot.hidden, true, 'Hide preview hides the header preview');
+  assert.equal(toggle.getAttribute('aria-expanded'), 'false');
+  size.value = '200'; size.dispatchEvent(new dom.Event('input'));
+  assert.deepEqual(JSON.parse(stored.get('ashenspire:scoreStudioEntityPreview:v1')), { hidden: true, size: 200 });
+  const again = fixture(dom, stored);
+  assert.equal(again.doc.getElementById('customization-entity-preview').hidden, true, 'hidden state survives a reload');
+  assert.equal(again.doc.getElementById('customization-preview-size').value, '200');
+  assert.equal(again.doc.querySelectorAll('#customization-preview-toggle').length, 1);
+}));

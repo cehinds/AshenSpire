@@ -44,11 +44,18 @@ body.studio-body .customization-toolbar label { color: var(--st-muted); font-siz
 body.studio-body #customization-view { flex: 1 1 120px; min-width: 0; height: var(--studio-control-h, 32px); background: var(--st-surface-2); color: var(--st-text); border: 1px solid var(--st-border); border-radius: var(--studio-radius, 4px); }
 /* Active entity: one name, its scope and the one native preview in every view. */
 body.studio-body .customization-entity {
-  /* Capped at half the docked pane and scrolls itself, so on short screens the
-     pinned preview can never squeeze the editor below it to nothing. */
-  display: flex; flex-direction: column; flex: 0 0 auto; gap: 6px; min-width: 0; max-height: 50%; overflow-y: auto;
+  display: flex; flex-direction: column; flex: 0 0 auto; gap: 6px; min-width: 0;
   padding: 10px 12px; border-bottom: 1px solid var(--st-border); border-left: 3px solid var(--st-accent);
 }
+body.studio-body .customization-entity-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px 10px; min-width: 0; }
+body.studio-body .customization-entity-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+body.studio-body .customization-preview-size { display: inline-flex; align-items: center; gap: 6px; color: var(--st-muted); font-size: 12px; }
+body.studio-body .customization-preview-size[hidden],
+body.studio-body .customization-entity-preview[hidden] { display: none !important; }
+body.studio-body .customization-preview-size input[type="range"] { width: 90px; accent-color: var(--st-accent); }
+/* The pinned card scales with the window height, so a short screen gets a smaller
+   card instead of a scroll bar; Hide preview gives the editor all the room. */
+body.studio-body #customization-entity .inspector-card-preview { width: clamp(60px, calc((50dvh - 140px) * 2 / 3), var(--inspector-card-width, 165px)); }
 body.studio-body .customization-entity-name { margin: 0; min-width: 0; font-size: 15px; overflow-wrap: anywhere; }
 body.studio-body .customization-entity-name:focus-visible { outline: 2px solid var(--st-accent); outline-offset: 2px; border-radius: 2px; }
 body.studio-body .customization-scope { margin: 0; color: var(--st-muted); font-size: 12px; overflow-wrap: anywhere; }

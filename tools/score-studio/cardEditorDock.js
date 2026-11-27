@@ -2,6 +2,7 @@
 // docking reparents live DOM nodes, preserving inputs, listeners and selection.
 export const CARD_EDITOR_DOCK_KEY = 'ashenspire:scoreStudioEditorDocked:v1';
 const VIEW_KEY = 'ashenspire:scoreStudioCustomizationView:v1';
+const PREVIEW_KEY = 'ashenspire:scoreStudioEntityPreview:v1';
 const VIEWS = ['properties', 'design', 'weights', 'decks'];
 // What an edit in each view reaches: the selected card only, shared art rules,
 // global scoring or one deck's membership.
@@ -62,10 +63,42 @@ export function initCardEditorDock(ctx) {
   entity.setAttribute('role', 'region'); entity.setAttribute('aria-label', 'Active card');
   const entityName = doc.createElement('h2'); entityName.id = 'customization-entity-name'; entityName.className = 'customization-entity-name'; entityName.tabIndex = -1;
   const scope = doc.createElement('p'); scope.id = 'customization-scope'; scope.className = 'customization-scope';
-  const previewSlot = doc.createElement('div'); previewSlot.className = 'customization-entity-preview';
+  const previewSlot = doc.createElement('div'); previewSlot.id = 'customization-entity-preview'; previewSlot.className = 'customization-entity-preview';
   const previews = { cards: properties.cards.querySelector('.inspector-preview-wrap'), items: properties.items?.querySelector('#item-preview-host') || null };
   for (const node of Object.values(previews)) if (node) { rememberHome(node); previewSlot.append(node); }
-  entity.append(entityName, scope, previewSlot);
+  // Preview controls: hide it to give the editor the room, or size the card. Both are view state only.
+  let previewPrefs = { hidden: false, size: null };
+  try { previewPrefs = { ...previewPrefs, ...JSON.parse(storage?.getItem(PREVIEW_KEY) || '{}') }; } catch { /* Optional persistence. */ }
+  const savePreviewPrefs = () => { try { storage?.setItem(PREVIEW_KEY, JSON.stringify(previewPrefs)); } catch { /* Optional persistence. */ } };
+  const studioSizeSlider = doc.getElementById('inspector-scale-slider');
+  const sizeLabel = doc.createElement('label'); sizeLabel.className = 'customization-preview-size'; sizeLabel.textContent = 'Size ';
+  const sizeInput = doc.createElement('input'); sizeInput.type = 'range'; sizeInput.id = 'customization-preview-size';
+  sizeInput.min = studioSizeSlider?.min || '130'; sizeInput.max = studioSizeSlider?.max || '260'; sizeInput.step = '5';
+  sizeInput.value = String(previewPrefs.size || studioSizeSlider?.value || 175); sizeInput.setAttribute('aria-label', 'Preview size');
+  sizeLabel.append(sizeInput);
+  function applyPreviewSize(value, fromStudio = false) {
+    const size = Math.max(Number(sizeInput.min), Math.min(Number(sizeInput.max), Number(value) || 175));
+    sizeInput.value = String(size); previewPrefs.size = size; savePreviewPrefs();
+    if (fromStudio) return;
+    // Drive the existing Preview size slider so its card-face fitting runs as before.
+    if (studioSizeSlider) { studioSizeSlider.value = String(size); studioSizeSlider.dispatchEvent(new (doc.defaultView?.Event || Event)('input')); }
+    else doc.getElementById('inspector-card-preview')?.style.setProperty('--inspector-card-width', `${size}px`);
+  }
+  sizeInput.addEventListener('input', () => applyPreviewSize(sizeInput.value));
+  studioSizeSlider?.addEventListener('input', () => { if (studioSizeSlider.value !== sizeInput.value) applyPreviewSize(studioSizeSlider.value, true); });
+  const previewToggle = button('', () => setPreviewHidden(!previewPrefs.hidden), 's-btn s-btn-sm customization-preview-toggle');
+  previewToggle.id = 'customization-preview-toggle'; previewToggle.setAttribute('aria-controls', previewSlot.id);
+  function setPreviewHidden(value) {
+    previewPrefs.hidden = !!value; savePreviewPrefs();
+    previewSlot.hidden = previewPrefs.hidden; sizeLabel.hidden = previewPrefs.hidden || context === 'items';
+    previewToggle.textContent = previewPrefs.hidden ? 'Show preview' : 'Hide preview';
+    previewToggle.setAttribute('aria-expanded', String(!previewPrefs.hidden));
+  }
+  const entityControls = doc.createElement('div'); entityControls.className = 'customization-entity-controls';
+  entityControls.append(sizeLabel, previewToggle);
+  const entityHead = doc.createElement('div'); entityHead.className = 'customization-entity-head';
+  entityHead.append(entityName, entityControls);
+  entity.append(entityHead, scope, previewSlot);
   const content = doc.createElement('div'); content.id = 'customization-content';
   const slots = Object.fromEntries(VIEWS.map(id => {
     const slot = doc.createElement('div'); slot.className = 'customization-view'; slot.dataset.customizationView = id; content.append(slot); return [id, slot];
@@ -257,6 +290,7 @@ export function initCardEditorDock(ctx) {
     for (const [key, node] of Object.entries(properties)) if (node) node.hidden = key !== context || !valid;
     for (const [key, node] of Object.entries(previews)) if (node) node.hidden = key !== context || !valid;
     rename.disabled = balance.disabled = !valid;
+    sizeLabel.hidden = previewPrefs.hidden || context === 'items';
     for (const nav of navs) {
       const navName = isValid(nav.key) ? nameOf(nav.key) || selectedId(nav.key) : 'none';
       nav.editor.textContent = `${nav.key === 'items' ? 'Item' : 'Card'}: ${navName}`;
@@ -327,5 +361,6 @@ export function initCardEditorDock(ctx) {
   // Crossing the breakpoint starts on the library, so focus is never left on a hidden gallery tile.
   narrowMedia?.addEventListener?.('change', () => { panel = 'library'; applyPanel(); });
   setContext('cards'); setDocked(docked); setView(view);
+  setPreviewHidden(previewPrefs.hidden); applyPreviewSize(previewPrefs.size || sizeInput.value);
   return { edit: id => edit(id, 'cards'), editItem: id => edit(id, 'items'), decorateTile: (tile, def) => decorate(tile, def, 'cards'), decorateItemTile: (tile, def) => decorate(tile, def, 'items'), open: openModal, refresh, refreshEntity: renderEntity, showProperties, setPanel, getPanel: () => panel, setDocked, setContext, setView, isDocked: () => docked, getView: () => view, element: pane };
 }
