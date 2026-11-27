@@ -95,7 +95,7 @@ function propertyGearMods(propertyId)
   return property?.fx?.gearMods || [];
 }
 
-/** Each held relic whose properties carry gear mods, as a worn piece with no type row (it folds like gear). */
+/** Each held relic whose properties carry gear mods, as a worn piece with no type row. */
 export function GearRelicPieces(subject, relicRows = RELICS)
 {
   const pieces = [];
@@ -215,7 +215,12 @@ const groupTotal = (rules, category, key, field) => rules.filter(rule => categor
  * A Shared Spell draws on Arcane and Divine bonuses, but they do not stack: per field (`key`), only the larger group total counts
  * (ties keep Arcane); bonuses from every other selector still add on top (owner 2026-11-20). `rules` already match the card.
  */
-export function GearCategoryOverlap(rules, def, key = rule => rule.stat) {
+// Initiate cuts are their own group, capped in GearManaCost, so they never cancel a plain Mana change.
+const overlapField = rule => (rule.initiate
+  ? `${INITIATE_FIELD}:${rule.stat}`
+  : rule.stat);
+
+export function GearCategoryOverlap(rules, def, key = overlapField) {
   if (SpellCategory(def) !== 'shared') return rules;
   const fields = new Set(rules.filter(rule => categoryOf(rule)).map(key));
   const dropped = new Set();
@@ -418,6 +423,34 @@ function selectorWords(mod)
     : noun;
 }
 
+const LABEL_ONLY_FIELDS = new Set([
+  'cardReach',
+  'cardRetain',
+  'cardEscalate',
+]);
+
+/** What a non-Initiate mod does, in words ("+1 Damage", "apply 2 Burn"). */
+function plainModWords(spec, mod, sign)
+{
+  if (spec.apply === 'cardStat' && LABEL_ONLY_FIELDS.has(mod.field))
+  {
+    return spec.label;
+  }
+  if (spec.apply === 'hitStatus')
+  {
+    return `apply ${mod.value} ${spec.label.replace(' on hit', '')}`;
+  }
+  if (spec.apply === 'hitRemove')
+  {
+    return `remove ${mod.value} Retreat`;
+  }
+  if (spec.apply === 'resist' || (spec.apply === 'flag' && mod.value === 1))
+  {
+    return spec.label;
+  }
+  return `${sign} ${spec.label}`;
+}
+
 /** GearModText(registries, raw) -> one line of item text generated from the mod string and the vocabulary row ("Smashes: +1 Poise damage"). */
 export function GearModText(registries, raw) {
   const mod = ParseGearMod(raw), spec = mod && registries?.equipment?.modFields?.[mod.field];
@@ -433,8 +466,7 @@ export function GearModText(registries, raw) {
     : selectorWords(mod);
   const what = initiate
     ? `${spec.label}, ${sign} MP cost`
-    : spec.apply === 'cardStat' && ['cardReach', 'cardRetain', 'cardEscalate'].includes(mod.field) ? spec.label : spec.apply === 'hitStatus' ? `apply ${mod.value} ${spec.label.replace(' on hit', '')}`
-    : spec.apply === 'hitRemove' ? `remove ${mod.value} Retreat` : spec.apply === 'resist' ? spec.label : spec.apply === 'flag' && mod.value === 1 ? spec.label : `${sign} ${spec.label}`;
+    : plainModWords(spec, mod, sign);
   const head = [where, conds].filter(Boolean).join(' ');
   const text = head ? `${head}: ${what}` : what;
   return `${text[0].toUpperCase()}${text.slice(1)}`;

@@ -159,6 +159,21 @@ test('one Initiate cut per spell; other Mana changes still add; the price floors
   assert.equal(GearManaCost(fire, 0), 0, 'never below 0');
 });
 
+test('on a Shared spell an Initiate and a plain Divine Mana change both apply', () =>
+{
+  for (const [divineCut, paid] of [
+    ['divineSpell.cardMana=-1', PRINTED_MANA - 2],
+    ['divineSpell.cardMana=-2', PRINTED_MANA - 3],
+  ])
+  {
+    const rules = rulesFor([
+      [ARCANE_INITIATE],
+      [divineCut],
+    ]);
+    assert.equal(manaPaid(rules, spell('fire')), paid, divineCut);
+  }
+});
+
 test('a relic carries gear rules through its item properties', () =>
 {
   const relicRows = [
