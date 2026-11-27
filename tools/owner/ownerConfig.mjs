@@ -9,8 +9,8 @@ const REPO_URL = new URL('../..', import.meta.url);
 
 function readJson(fileName)
 {
-    const url = new URL(`./${fileName}`, import.meta.url);
-    return JSON.parse(readFileSync(url, TEXT_ENCODING));
+    const path = fileURLToPath(new URL(`./${fileName}`, import.meta.url));
+    return JSON.parse(readFileSync(path, TEXT_ENCODING));
 }
 
 export const REPO_ROOT = resolve(fileURLToPath(REPO_URL));

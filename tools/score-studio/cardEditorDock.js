@@ -17,11 +17,70 @@ const SCOPE_TEXT = {
   weights: () => 'Global scoring · changes rescore every card',
   decks: () => 'Deck membership · changes only the chosen deck',
 };
+// The filter notice and its Clear button use the same name for id and class.
+export const FilterNoteId = Object.freeze({
+  Note: 'customization-filter-note',
+  Clear: 'customization-filter-clear',
+});
+const FilterNoteCopy = Object.freeze({
+  Text: 'Hidden by current filters',
+  Separator: ' · ',
+  ClearLabel: 'Clear',
+  ClearAriaLabel: 'Clear filters',
+  NoteTitle: noun =>
+    `The current filters hide this ${noun} in the library. It stays active and editable.`,
+  ClearTitle: noun => `Clear the ${noun} filters and show this ${noun} in the library`,
+});
+const FilterNoteAria = Object.freeze({
+  HiddenAttribute: 'aria-hidden',
+  HiddenValue: 'true',
+  LabelAttribute: 'aria-label',
+});
+
+function renderFilterNotePart(doc, text)
+{
+  const part = doc.createElement('span');
+  part.textContent = text;
+  return part;
+}
+
+// The filter notice: one line saying filters hide the active entity, and a Clear button.
+function renderFilterNote(
+  doc,
+  button,
+  onClear,
+)
+{
+  const note = doc.createElement('p');
+  note.id = FilterNoteId.Note;
+  note.className = FilterNoteId.Note;
+  note.hidden = true;
+  const text = renderFilterNotePart(doc, FilterNoteCopy.Text);
+  const separator = renderFilterNotePart(doc, FilterNoteCopy.Separator);
+  separator.setAttribute(FilterNoteAria.HiddenAttribute, FilterNoteAria.HiddenValue);
+  const clear = button(
+    FilterNoteCopy.ClearLabel,
+    onClear,
+    FilterNoteId.Clear,
+  );
+  clear.id = FilterNoteId.Clear;
+  clear.setAttribute(FilterNoteAria.LabelAttribute, FilterNoteCopy.ClearAriaLabel);
+  note.append(
+    text,
+    separator,
+    clear,
+  );
+  return { note, clear };
+}
 
 export function initCardEditorDock(ctx) {
   const doc = ctx.document || document;
   const properties = { cards: doc.getElementById('card-inspector'), items: doc.getElementById('item-inspector-pane') };
   if (!properties.cards) throw new Error('Customization requires #card-inspector');
+  if (typeof ctx.selectCard !== 'function')
+  {
+    throw new Error('Customization requires ctx.selectCard');
+  }
   const homes = new Map(), layouts = {};
   function rememberHome(node) {
     if (!node || homes.has(node)) return;
@@ -175,7 +234,24 @@ export function initCardEditorDock(ctx) {
   }
   const entityHead = doc.createElement('div'); entityHead.className = 'customization-entity-head';
   entityHead.append(entityHeading);
-  entity.append(entityHead, scope, previewBody);
+  // When filters hide the active entity, one line says so and offers to clear them.
+  function clearFiltersAndShowLibrary()
+  {
+    ctx.clearFilters?.(context);
+    showLibrary(context);
+  }
+
+  const { note: filterNote, clear: clearFilters } = renderFilterNote(
+    doc,
+    button,
+    clearFiltersAndShowLibrary,
+  );
+  entity.append(
+    entityHead,
+    filterNote,
+    scope,
+    previewBody,
+  );
   const content = doc.createElement('div'); content.id = 'customization-content';
   const slots = Object.fromEntries(VIEWS.map(id => {
     const slot = doc.createElement('div'); slot.className = 'customization-view'; slot.dataset.customizationView = id; content.append(slot); return [id, slot];
@@ -339,7 +415,6 @@ export function initCardEditorDock(ctx) {
     if (!id) return;
     setContext(kind); returnTarget = { kind, id };
     (kind === 'items' ? ctx.selectItem : ctx.selectCard)?.(id);
-    if (kind === 'cards' && !ctx.selectCard && ctx.state) ctx.state.selectedCardId = id;
     if (docked) showProperties();
     else { setView('properties'); openModal(); }
   }
@@ -385,6 +460,11 @@ export function initCardEditorDock(ctx) {
     for (const [key, node] of Object.entries(properties)) if (node) node.hidden = key !== context || !valid;
     for (const [key, node] of Object.entries(previews)) if (node) node.hidden = key !== context || !valid;
     rename.disabled = balance.disabled = !valid;
+    const shownId = selectedId(context);
+    const filteredOut = valid && ctx.isHiddenByFilters?.(context, shownId) === true;
+    filterNote.hidden = !filteredOut;
+    filterNote.title = FilterNoteCopy.NoteTitle(noun);
+    clearFilters.title = FilterNoteCopy.ClearTitle(noun);
     placeQuickFields();
     for (const nav of navs) {
       const navName = isValid(nav.key) ? nameOf(nav.key) || selectedId(nav.key) : 'none';

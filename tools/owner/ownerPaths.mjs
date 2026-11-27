@@ -25,7 +25,8 @@ export function IsEditableContentPath(relativePath, settings = OWNER_TOOLS)
     const fileName = path.split(SLASH).pop();
     const inRoot = settings.editableRoots.some((root) => path.startsWith(root));
     const hasExtension = settings.editableExtensions.some((extension) => path.endsWith(extension));
-    const isGenerated = settings.generatedNames.includes(fileName);
+    const inGeneratedFolder = settings.generatedFolders.some((folder) => path.startsWith(folder));
+    const isGenerated = inGeneratedFolder || settings.generatedNames.includes(fileName);
     return inRoot && hasExtension && !isGenerated;
 }
 
