@@ -427,10 +427,16 @@ export function renderCard(registries, ref, opts = {}) {
     // Dynamic weapon poise fallback for authored-template cards when attacking.
     const weaponPoiseNote = !faceLines && opts.preview?.weaponPoise > 0 && !/Poise/i.test(authoredRules)
       ? ` <span class="val">${esc(opts.preview.weaponPoise)}</span> <span class="st-bleed">${esc(t('combat.protection.poise'))}</span>.` : '';
-    // Under version-one combat a sentence that opens "In expanded combat," does not apply, so the face need not carry it.
-    // An authored face still prints the rules its fields add (Wither, a rising cost); a generated face already has them.
-    const riderRules = allFaceLines ? '' : CardRuleRiderLines(def, opts.rules || null, model.instanceId || null).map(line => ' ' + line.html + '.').join('');
-    const appliedRules = (expanded ? authoredRules : authoredRules.replace(/\s*In expanded combat,[^.]*\./g, '')) + weaponPoiseNote + riderRules;
+    // Authored faces append field-driven riders (Wither, rising cost); generated faces already include them.
+    const riderRules = allFaceLines
+      ? ''
+      : CardRuleRiderLines(def, opts.rules || null, model.instanceId || null)
+          .map(line => ` ${line.html}.`)
+          .join('');
+    const baseRules = expanded
+      ? authoredRules
+      : authoredRules.replace(/\s*In expanded combat,[^.]*\./g, '');
+    const appliedRules = baseRules + weaponPoiseNote + riderRules;
     // An authored short summary (`faceTemplate`) stands in for the Inspect cue; same live tokens, no shared rider clauses.
     const summaryHtml = Array.isArray(def.faceTemplate) && def.faceTemplate.length
       ? def.faceTemplate.map(line => fillTemplate({ id: def.id, type: def.type, tags: def.tags, cardTags: def.cardTags, combatProfile: def.combatProfile, evade: def.evade, textTemplate: line.replace(/\[v2:([^\]]*)\]/g, expanded ? '$1' : '').replace(/,? ?(\{[\w.]+\})×/, ', $1 times'), defenseRulesVersion: def.defenseRulesVersion, minCombatExpansionVersion: def.minCombatExpansionVersion },
@@ -794,12 +800,31 @@ export function cardPlainText(registries, ref, opts = {}) {
     ? (baseCardPresentation[def.id] ? null : cardFaceLines(def, opts.preview || null, registries, opts.rules || null)) : null;
   // Plain string work only: no DOM, so it runs the same headless and in a
   // browser. Tags go first; &amp; is decoded last so "&amp;lt;" stays literal.
-  return String(lines ? lines.map(line => line.html).join(' · ') : fillTemplate(def, model.tokens, null, model.damageSequences, wardReadsAsPoise(registries) ? { preview: opts.preview || null } : null, registries, opts.rules ?? opts.preview?.faceRules ?? null)
-    + (lines ? '' : CardRuleRiderLines(def, opts.rules || null, ref?.instanceId || null).map(line => ' ' + line.html + '.').join('')))
+  const rawText = lines
+    ? lines.map(line => line.html).join(' · ')
+    : fillTemplate(
+        def,
+        model.tokens,
+        null,
+        model.damageSequences,
+        wardReadsAsPoise(registries)
+          ? { preview: opts.preview || null }
+          : null,
+        registries,
+        opts.rules ?? opts.preview?.faceRules ?? null,
+      )
+      + CardRuleRiderLines(def, opts.rules || null, ref?.instanceId || null)
+          .map(line => ` ${line.html}.`)
+          .join('');
+  return String(rawText)
     .replace(/<[^>]+>/g, '')
-    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
     .replace(/&amp;/g, '&')
-    .replace(/\s+/g, ' ').trim();
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 /**

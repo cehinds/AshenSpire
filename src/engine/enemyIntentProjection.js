@@ -222,9 +222,24 @@ function damageBounds(combat, enemy, move, base, hits, neutral, action = null, o
       };
       for (const state of states) {
         if (!(state.attacker?.hp > 0)) { add(state); continue; }
-        // Smash's flat break lands with the first hit only (once per contact), as live does.
-        const hitCarrier = hit > 0 && (carrier?.breakBlock || carrier?.blockBreak || carrier?.breakPoise) ? { ...carrier, breakBlock: undefined, blockBreak: undefined, breakPoise: undefined } : carrier;
-        const receipt = ProfileCombat.profileDamageReceipt(ctx, state.attacker || source, state.target, base, hitCarrier, { forecast: true });
+        // Flat break applies on the first hit only.
+        const hasFlatBreak = Boolean(carrier?.breakBlock || carrier?.blockBreak || carrier?.breakPoise);
+        const hitCarrier = hit > 0 && hasFlatBreak
+          ? {
+              ...carrier,
+              breakBlock: undefined,
+              blockBreak: undefined,
+              breakPoise: undefined,
+            }
+          : carrier;
+        const receipt = ProfileCombat.profileDamageReceipt(
+          ctx,
+          state.attacker || source,
+          state.target,
+          base,
+          hitCarrier,
+          { forecast: true },
+        );
         const landed = structuredClone(state.target);
         Damage.applyReceiptToPreviewTarget(ctx, landed, receipt, state.attacker || source);
         const attacker = Damage.cloneDetachedAttacker(state.attacker);

@@ -39,11 +39,15 @@ export function CardDefinitionToScoreFace(def, { scoring = GetActiveScoring(), r
     const reliability = eff.if ? (scoring.conditionals?.inlineIf ?? 0.7) : 1;
     const amount = num(eff.amount, 0) * reliability;
     switch (eff.op) {
-      case 'damage':
+      case 'damage': {
         face.dmg += amount * Math.max(1, num(eff.hits, 1));
         face.hits = Math.max(face.hits, num(eff.hits, 1));
-        if ((eff.breakBlock ?? eff.blockBreak) > 0) face.blockBreak = (face.blockBreak || 0) + num(eff.breakBlock ?? eff.blockBreak, 0) * reliability;
+        const flatBreak = eff.breakBlock ?? eff.blockBreak;
+        if (flatBreak > 0) {
+          face.blockBreak = (face.blockBreak || 0) + num(flatBreak, 0) * reliability;
+        }
         break;
+      }
       case 'block':
         face.blk += amount;
         break;

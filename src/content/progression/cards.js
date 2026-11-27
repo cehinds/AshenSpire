@@ -113,10 +113,13 @@ export const progressionCards = cardFamilies.map(family => {
     flavor: progressionCardLore[family.id.replace(/^progression-/, '')].join('\n\n'),
     abilityKind: ['starseer', 'herald'].includes(family.classId) ? 'spell' : 'maneuver',
     abilityRank: family.abilityRank, abilityFamily: family.id,
-    effects: base.effects, textTemplate: base.textTemplate, ...(base.faceTemplate ? { faceTemplate: base.faceTemplate } : {}), gradeProfiles,
+    effects: base.effects,
+    textTemplate: base.textTemplate,
+    ...(base.faceTemplate ? { faceTemplate: base.faceTemplate } : {}),
+    gradeProfiles,
     ...base.traits,
-    // Wither and a rising cost ride through from the family row (SPEC §4.3).
-    ...(family.wither ? { wither: family.wither } : {}), ...(family.costGrowth ? { costGrowth: family.costGrowth } : {}),
+    ...(family.wither ? { wither: family.wither } : {}),
+    ...(family.costGrowth ? { costGrowth: family.costGrowth } : {}),
   };
 });
 

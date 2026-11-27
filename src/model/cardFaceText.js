@@ -68,35 +68,72 @@ function esc(value) {
 /** `def` with the effect list a live preview priced: an active charge expands it (an added buildup row), and the preview's values follow that list. */
 const ATTRIBUTE_ABBREVIATION = Object.freeze({ strength: 'STR', dexterity: 'DEX', constitution: 'CON', wisdom: 'WIS', intelligence: 'INT' });
 
-/** The Wither count a face shows: the copy's remaining plays when a live combat knows it, else the authored N. */
+/** Wither count shown on face: remaining plays in live combat, else authored N. */
 export function WitherFaceCount(def, rules = null, instanceId = null) {
-  // Exhaust wins over Wither (the first play exhausts), so an Exhaust card does not print it.
-  if (!Number.isSafeInteger(def?.wither) || def.wither < 1 || def.keywords?.includes('exhaust')) return null;
-  return rules?.player?.abilityRiders && instanceId ? WitherRemaining(rules.player, { instanceId }, def) : def.wither;
+  if (!Number.isSafeInteger(def?.wither) || def.wither < 1 || def.keywords?.includes('exhaust')) {
+    return null;
+  }
+  return rules?.player?.abilityRiders && instanceId
+    ? WitherRemaining(rules.player, { instanceId }, def)
+    : def.wither;
 }
 
-/** The rising-cost rule a face prints from `costGrowth` (SPEC §4.3), or null when the cost does not rise. */
+/** Rising-cost text derived from `costGrowth`, or null when cost does not rise. */
 export function CostGrowthFaceText(growth) {
   if (!growth) return null;
-  const pools = [['stamina', 'SP'], ['mana', 'MP']].filter(([key]) => Number(growth[key]) > 0);
+  const pools = [
+    ['stamina', 'SP'],
+    ['mana', 'MP'],
+  ].filter(([key]) => Number(growth[key]) > 0);
   if (!pools.length) return null;
-  const perUse = growth.perUse > 1 ? growth.perUse : 1;
-  const when = growth.scope === 'card' || growth.perCard === true
-    ? (perUse > 1 ? `every ${perUse} times you play this card` : 'each time you play this card')
-    : (perUse > 1 ? `every ${perUse} plays` : 'each play');
-  const max = growth.uncapped ? Infinity : (growth.max ?? 3);
-  const capOf = ([key, unit]) => `+${growth[key] * max}${pools.length > 1 ? ' ' + unit : ''}`;
-  const cap = max < 100 ? ` (max ${pools.map(capOf).join(', ')})` : '';
-  return `${pools.map(([key, unit]) => `+${growth[key]} ${unit}`).join(', ')} ${when} this fight${cap}`;
+
+  const perUse = growth.perUse > 1
+    ? growth.perUse
+    : 1;
+  const isShared = growth.scope === 'card' || growth.perCard === true;
+  const when = isShared
+    ? (perUse > 1
+        ? `every ${perUse} times you play this card`
+        : 'each time you play this card')
+    : (perUse > 1
+        ? `every ${perUse} plays`
+        : 'each play');
+
+  const max = growth.uncapped
+    ? Infinity
+    : (growth.max ?? 3);
+  const capOf = ([key, unit]) => {
+    const suffix = pools.length > 1
+      ? ` ${unit}`
+      : '';
+    return `+${growth[key] * max}${suffix}`;
+  };
+  const cap = max < 100
+    ? ` (max ${pools.map(capOf).join(', ')})`
+    : '';
+  const stepText = pools
+    .map(([key, unit]) => `+${growth[key]} ${unit}`)
+    .join(', ');
+  return `${stepText} ${when} this fight${cap}`;
 }
 
-/** Rule lines a card's fields add to any face, generated or authored: Wither and a rising cost. */
+/** Rule rider lines appended to any face: Wither and rising cost. */
 export function CardRuleRiderLines(def, rules = null, instanceId = null) {
   const lines = [];
   const wither = WitherFaceCount(def, rules, instanceId);
-  if (wither !== null) lines.push({ kind: 'detail', html: `Wither <span class="val">${wither}</span>` });
+  if (wither !== null) {
+    lines.push({
+      kind: 'detail',
+      html: `Wither <span class="val">${wither}</span>`,
+    });
+  }
   const growth = CostGrowthFaceText(def?.costGrowth);
-  if (growth) lines.push({ kind: 'detail', html: esc(growth) });
+  if (growth) {
+    lines.push({
+      kind: 'detail',
+      html: esc(growth),
+    });
+  }
   return lines;
 }
 
@@ -243,9 +280,16 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
           const poiseText = `${num(wp, wpBase)} Poise${concise ? '' : ' damage'}${hits !== 1 ? ` ×${num(hits, typeof effect.hits === 'number' ? effect.hits : undefined)}` : ''}`;
           damageFrags.push({ cat: 'damage', text: poiseText + area });
         }
-        // Smash's flat break (owner, 2026-11-20) reads ahead of the damage: "Break 8 Block. Deal 8 damage."
-        const breaks = [['breakBlock', 'Block'], ['breakPoise', 'Poise']].filter(([key]) => effect[key] > 0)
-          .map(([key, label]) => ({ cat: 'break', text: `${num(effect[key], effect[key])} ${label}` }));
+        // Flat break reads ahead of damage: "Break 8 Block. Deal 8 damage."
+        const breaks = [
+          ['breakBlock', 'Block'],
+          ['breakPoise', 'Poise'],
+        ]
+          .filter(([key]) => effect[key] > 0)
+          .map(([key, label]) => ({
+            cat: 'break',
+            text: `${num(effect[key], effect[key])} ${label}`,
+          }));
         return [...breaks, ...damageFrags];
       }
       case 'poiseDamage': case 'wardDamage': {
@@ -394,9 +438,15 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
     const cost = of('cost'), damage = of('damage'), status = of('status'), remove = of('remove'), consume = of('consume'), gain = of('gain'), restore = of('restore'), bonus = [...of('bonus'), ...extraBonus], defenseRestore = of('defenseRestore');
     if (cost.length) out.push({ kind: 'cost', text: joinList(cost) });
     const breaks = of('break');
-    if (damage.length) out.push({ kind: 'damage', text: breaks.length
-      ? `Break ${breaks.join(', ')}. Deal ${joinList(damage)}`
-      : `${concise && !counter ? '' : damageVerb + ' '}${joinList(damage)}` });
+    if (damage.length) {
+      const prefix = concise && !counter
+        ? ''
+        : `${damageVerb} `;
+      const damageText = breaks.length
+        ? `Break ${breaks.join(', ')}. Deal ${joinList(damage)}`
+        : `${prefix}${joinList(damage)}`;
+      out.push({ kind: 'damage', text: damageText });
+    }
     else if (counter && isUnconditional && !def.evade) out.push({ kind: 'damage', text: def.defenseRulesVersion === 2 ? 'Prepare Counter' : damageVerb.replace(/: return$/, '') });
     if (status.length) out.push({ kind: 'status', text: `${concise ? '' : 'Inflict '}${joinList(status)}` });
     if (remove.length) out.push({ kind: 'status', text: `Remove ${joinList(remove)}` });

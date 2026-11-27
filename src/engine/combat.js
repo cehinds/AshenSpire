@@ -2441,9 +2441,18 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
           const result = isCounterReply
             ? previewCounter(e, i)
             : !configuredCombat(combat) && combat.combatExpansionVersion === 2 ? expandedPreview(e, i)
-            : previewDamageHits(combat, p, e,
-              evalPreview(combat, action, eff.amount, e) + (action.meta.abilityChargeDamage || 0) + (action.meta.abilityChargeDamageEffect || 0),
-              attackTags, HitBreakCarrier(carrier, eff), entry.hits, damagePreviewStates.get(e.id));
+            : previewDamageHits(
+                combat,
+                p,
+                e,
+                evalPreview(combat, action, eff.amount, e)
+                  + (action.meta.abilityChargeDamage || 0)
+                  + (action.meta.abilityChargeDamageEffect || 0),
+                attackTags,
+                HitBreakCarrier(carrier, eff),
+                entry.hits,
+                damagePreviewStates.get(e.id),
+              );
           entry.perTarget[e.id] = result.damage;
           entry.perTargetHitDamages[e.id] = result.hitDamages;
           if (result.poiseLoss !== undefined) entry.perTargetPoise[e.id] = { removed: result.poiseLoss, breaks: !!result.poiseBreaks };

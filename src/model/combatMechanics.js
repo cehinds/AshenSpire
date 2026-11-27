@@ -174,12 +174,12 @@ export function EffectiveBlockBreakAmount(carrier, rawAmount = 0, smashRule = nu
   return 0;
 }
 
-/**
- * Flat Poise removed on a landed hit (when `blockBreak` is enabled).
- */
+/** Flat Poise removed on a landed hit when `blockBreak` is enabled. */
 export function EffectivePoiseBreakAmount(carrier, ctx = null) {
   const rule = MechanicRule('blockBreak', ctx);
   if (rule && rule.enabled === false) return 0;
   const explicit = Number(carrier?.breakPoise);
-  return Number.isFinite(explicit) && explicit > 0 ? Math.floor(explicit) : 0;
+  return Number.isFinite(explicit) && explicit > 0
+    ? Math.floor(explicit)
+    : 0;
 }

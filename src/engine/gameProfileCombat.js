@@ -202,20 +202,31 @@ export function PacketFaceSplit(ctx, source, carrier, authoredBase, total) {
 }
 /** The factor only a packet's magic part takes: elemental flux (owner ruling, 2026-11-20). Burn, element Vulnerable and the other element stages scale the whole hit. */
 export const PacketMagicMultiplier = flux => Offense.PacketMagicMultiplier(flux);
-/** The flat break a hit's carrier holds (`breakBlock`/`blockBreak`, `breakPoise` from its damage effect), capped by what the target has; null when none. */
+/** Flat Block/Poise break capped by target's pools, or null if none. */
 export function HitBreakAmounts(target, carrier, ctx = null) {
   const blockReq = EffectiveBlockBreakAmount(carrier, 0, null, ctx);
   const poiseReq = EffectivePoiseBreakAmount(carrier, ctx);
   const block = Math.min(Math.max(0, target?.block || 0), blockReq);
   const poise = Math.min(Math.max(0, target?.persistentPoise?.value || 0), poiseReq);
-  return block > 0 || poise > 0 ? { block, poise } : null;
+  return block > 0 || poise > 0
+    ? { block, poise }
+    : null;
 }
-/** A carrier with its damage effect's flat break (first hit per target only); `hitIndex` > 0 or no break leaves the carrier without one. */
+
+/** Carrier with flat break attached on the first hit per target only. */
 export function HitBreakCarrier(carrier, effect, hitIndex = 0) {
   const { breakBlock, breakPoise, blockBreak, ...rest } = carrier || {};
-  const bb = effect?.breakBlock ?? effect?.blockBreak;
-  if (hitIndex > 0 || !effect || !(bb > 0 || effect.breakPoise > 0)) return breakBlock || breakPoise || blockBreak ? rest : carrier;
-  return { ...rest, ...(bb > 0 ? { breakBlock: bb } : {}), ...(effect.breakPoise > 0 ? { breakPoise: effect.breakPoise } : {}) };
+  const flatBlock = effect?.breakBlock ?? effect?.blockBreak;
+  const hasBreak = Boolean(effect && (flatBlock > 0 || effect.breakPoise > 0));
+  if (hitIndex > 0 || !hasBreak) {
+    return breakBlock || breakPoise || blockBreak
+      ? rest
+      : carrier;
+  }
+  const out = { ...rest };
+  if (flatBlock > 0) out.breakBlock = flatBlock;
+  if (effect.breakPoise > 0) out.breakPoise = effect.breakPoise;
+  return out;
 }
 function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { roll = null, proposal = true, forecast = false } = {}) {
   const pierceOut = { spent: 0 };
@@ -269,19 +280,49 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
   if (fixCoreEnabled(ctx)) hitChance = (attackHitPreview(ctx, source, target, carrier, forecast ? { assumeInRange: true } : {})?.hitChance ?? 100) / 100;
   const evaded = roll !== null ? roll >= hitChance : forecast && fixCoreEnabled(ctx) && hitChance === 0;
   if (evaded) amount = 0;
-  // Flat Block & Poise removal (`guardInteraction` -> `blockBreak`, owner 2026-11-20): destroys flat Block/Poise before normal mitigation (never touches Ward).
+  // Flat Block & Poise break (destroys before normal mitigation; never touches Ward).
   const initialBlockPool = Math.max(0, target?.block || 0);
-  const flatBlockBroken = !evaded && !flatReturn && flatBlockBreakRequested > 0 ? Math.min(initialBlockPool, flatBlockBreakRequested) : 0;
-  const flatPoiseBreakRequested = modern && !flatReturn ? EffectivePoiseBreakAmount(carrier, ctx) : 0;
-  const flatPoiseBroken = !evaded && !flatReturn && flatPoiseBreakRequested > 0 ? Math.min(Math.max(0, target?.persistentPoise?.value || 0), flatPoiseBreakRequested) : 0;
-  const broken = flatBlockBroken > 0 || flatPoiseBroken > 0 ? { block: flatBlockBroken, poise: flatPoiseBroken } : null;
+  const flatBlockBroken = !evaded && !flatReturn && flatBlockBreakRequested > 0
+    ? Math.min(initialBlockPool, flatBlockBreakRequested)
+    : 0;
+  const flatPoiseBreakRequested = modern && !flatReturn
+    ? EffectivePoiseBreakAmount(carrier, ctx)
+    : 0;
+  const flatPoiseBroken = !evaded && !flatReturn && flatPoiseBreakRequested > 0
+    ? Math.min(Math.max(0, target?.persistentPoise?.value || 0), flatPoiseBreakRequested)
+    : 0;
+  const broken = flatBlockBroken > 0 || flatPoiseBroken > 0
+    ? { block: flatBlockBroken, poise: flatPoiseBroken }
+    : null;
   const effectiveBlockPool = Math.max(0, initialBlockPool - flatBlockBroken);
   if (flatBlockBroken > 0) {
-    sources.push({ id: 'break-block', label: 'Break Block', amount: flatBlockBroken, requested: initialBlockPool, effective: effectiveBlockPool, stage: 'mitigation', operation: 'subtract' });
+    sources.push({
+      id: 'break-block',
+      label: 'Break Block',
+      amount: flatBlockBroken,
+      requested: initialBlockPool,
+      effective: effectiveBlockPool,
+      stage: 'mitigation',
+      operation: 'subtract',
+    });
   }
   if (flatPoiseBroken > 0) {
-    sources.push({ id: 'break-poise', label: 'Break Poise', amount: flatPoiseBroken, requested: target.persistentPoise.value, effective: target.persistentPoise.value - flatPoiseBroken, stage: 'mitigation', operation: 'subtract' });
-    target = { ...target, persistentPoise: { ...target.persistentPoise, value: target.persistentPoise.value - flatPoiseBroken } };
+    sources.push({
+      id: 'break-poise',
+      label: 'Break Poise',
+      amount: flatPoiseBroken,
+      requested: target.persistentPoise.value,
+      effective: target.persistentPoise.value - flatPoiseBroken,
+      stage: 'mitigation',
+      operation: 'subtract',
+    });
+    target = {
+      ...target,
+      persistentPoise: {
+        ...target.persistentPoise,
+        value: target.persistentPoise.value - flatPoiseBroken,
+      },
+    };
   }
   // Reflect (owner 2026-10-31, SPEC §17): the target's Reflect stacks cut this hit before Block; the stacks and the pre-cut
   // figure ride on the receipt so the landed hit can send its share back. A reflected, countered or unreflectable hit is not cut.
@@ -489,23 +530,77 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
     const poise = PoiseLossAdjust(ctx,source,carrier,defending,{taken:poiseMitigated+poiseDrain,pool:target?.persistentPoise?.value || 0});
     poiseDrain += poise.extra; poiseSpared = poise.spared;
   }
-  // The broken Poise leaves the pool with the hit's own Poise damage (the live hit subtracts poiseDrain from the real pool).
   if (broken?.poise > 0) poiseDrain += broken.poise;
-  return { ...(pierceOut.spent > 0 ? { skinSpent: pierceOut.spent } : {}), raw, rawHit, weaknesses, ...(element ? { element: { id: element.element, heal: element.heal } } : {}), pierceBypassed, piercePoise, magicPoise, wardMitigated, barrierMitigated,
-    damageReceipt: damageReceipt(target?.id, [{incoming,physical,magical,blocked,...(broken?.block ? {blockBroken:broken.block} : {}),...(broken?.poise ? {poiseBroken:broken.poise} : {}),barrierReduced:barrierMitigated,wardReduced:wardMitigated,poiseReduced:poiseMitigated,...(pierceBypassed ? {pierced:pierceBypassed,piercePoise} : {}),...(magicPoise ? {magicPoise} : {}),...(poiseDrain ? {poiseDamage:poiseDrain} : {}),hpLoss:amount,sources}]),
-    ...(reflect ? { reflect } : {}),
-    ...(wardHpMode && wardHpAbsorbed > 0 ? { wardHpBuffer: true, wardHpAbsorbed } : {}),
-    ...(wardRouted ? { wardRouted: true } : {}), ...(wardBlockFirst ? { wardBlockFirst: true } : {}),
-    hitChance, uncertain: (fixCoreEnabled(ctx) && hitChance < 1) && roll === null && !evaded,
-    hpLossBounds: (fixCoreEnabled(ctx) && hitChance < 1 && !evaded) ? [0, amount] : [amount, amount], amount: amount + blocked, hpLoss: amount, blocked, poiseMitigated, poiseDrain, ...(poiseMitigationCost !== undefined ? { poiseMitigationCost } : {}), ...(weaponPoiseDamage > 0 ? { weaponPoiseDamage } : {}), ...(poiseSpared ? { poiseSpared } : {}),
-    blockRemaining: Math.max(0, (target?.block || 0) - (blockSpent ?? (flatBlockBroken + blocked))), evaded, advantage,
-    ...(broken ? { broken } : {}),
-    ...(flatBlockBroken > 0 ? { blockBrokenFlat: flatBlockBroken } : {}),
-    ...(smashRule ? { smashVsDefensive: { poiseDamage: poiseDrain } } : {}),
-    defenseAdvantage: defense.defenseAdvantage, stanceMitigation: defense.mitigation,
-    attackStance: attacking, defenseStance: defending,
-    interrupted: advantage && stances?.staggerOnAdvantage === true
-      && (stances.staggerManeuvers || ['smash']).includes(attacking) };
+
+  const hitEntry = {
+    incoming,
+    physical,
+    magical,
+    blocked,
+    barrierReduced: barrierMitigated,
+    wardReduced: wardMitigated,
+    poiseReduced: poiseMitigated,
+    hpLoss: amount,
+    sources,
+  };
+  if (broken?.block) hitEntry.blockBroken = broken.block;
+  if (broken?.poise) hitEntry.poiseBroken = broken.poise;
+  if (pierceBypassed) {
+    hitEntry.pierced = pierceBypassed;
+    hitEntry.piercePoise = piercePoise;
+  }
+  if (magicPoise) hitEntry.magicPoise = magicPoise;
+  if (poiseDrain) hitEntry.poiseDamage = poiseDrain;
+
+  const isUncertain = fixCoreEnabled(ctx) && hitChance < 1 && roll === null && !evaded;
+  const hasMissRange = fixCoreEnabled(ctx) && hitChance < 1 && !evaded;
+  const result = {
+    raw,
+    rawHit,
+    weaknesses,
+    pierceBypassed,
+    piercePoise,
+    magicPoise,
+    wardMitigated,
+    barrierMitigated,
+    damageReceipt: damageReceipt(target?.id, [hitEntry]),
+    hitChance,
+    uncertain: isUncertain,
+    hpLossBounds: hasMissRange
+      ? [0, amount]
+      : [amount, amount],
+    amount: amount + blocked,
+    hpLoss: amount,
+    blocked,
+    poiseMitigated,
+    poiseDrain,
+    blockRemaining: Math.max(0, (target?.block || 0) - (blockSpent ?? (flatBlockBroken + blocked))),
+    evaded,
+    advantage,
+    defenseAdvantage: defense.defenseAdvantage,
+    stanceMitigation: defense.mitigation,
+    attackStance: attacking,
+    defenseStance: defending,
+    interrupted: advantage
+      && stances?.staggerOnAdvantage === true
+      && (stances.staggerManeuvers || ['smash']).includes(attacking),
+  };
+  if (pierceOut.spent > 0) result.skinSpent = pierceOut.spent;
+  if (element) result.element = { id: element.element, heal: element.heal };
+  if (reflect) result.reflect = reflect;
+  if (wardHpMode && wardHpAbsorbed > 0) {
+    result.wardHpBuffer = true;
+    result.wardHpAbsorbed = wardHpAbsorbed;
+  }
+  if (wardRouted) result.wardRouted = true;
+  if (wardBlockFirst) result.wardBlockFirst = true;
+  if (poiseMitigationCost !== undefined) result.poiseMitigationCost = poiseMitigationCost;
+  if (weaponPoiseDamage > 0) result.weaponPoiseDamage = weaponPoiseDamage;
+  if (poiseSpared) result.poiseSpared = poiseSpared;
+  if (broken) result.broken = broken;
+  if (flatBlockBroken > 0) result.blockBrokenFlat = flatBlockBroken;
+  if (smashRule) result.smashVsDefensive = { poiseDamage: poiseDrain };
+  return result;
 }
 export function profileCardCosts(ctx, def) {
   const resources = configuredModule(ctx, 'resources');

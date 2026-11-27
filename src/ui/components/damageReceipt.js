@@ -17,9 +17,18 @@ export function damageReceiptLines(receipt) {
         : `${source.amount >= 0 ? '+' : '−'}${number(Math.abs(source.amount))}`;
       lines.push(`${source.label || source.id}: ${operation}${source.stage ? ` (${source.stage})` : ''}`);
     }
-    const reductions = [['blockBroken', 'Break Block'], ['poiseBroken', 'Break Poise'], ['wardReduced', 'Ward'], ['poiseReduced', null], ['blocked', 'Block']]
+    const reductionSpecs = [
+      ['blockBroken', 'Break Block'],
+      ['poiseBroken', 'Break Poise'],
+      ['wardReduced', 'Ward'],
+      ['poiseReduced', null],
+      ['blocked', 'Block'],
+    ];
+    const reductions = reductionSpecs
       .filter(([key]) => Number.isFinite(hit[key]) && hit[key] > 0)
-      .map(([key, label]) => label ? `${label} −${number(hit[key])}` : t('combat.receipt.poiseAbsorbed', { n: number(hit[key]) }));
+      .map(([key, label]) => label
+        ? `${label} −${number(hit[key])}`
+        : t('combat.receipt.poiseAbsorbed', { n: number(hit[key]) }));
     if (hit.poiseDamage > 0) reductions.push(t('combat.receipt.poiseDamage', { n: number(hit.poiseDamage) }));
     if (reductions.length) lines.push(reductions.join('; '));
     lines.push(`Final HP damage: ${number(hit.hpLoss)}${hit.rounding ? ` (${hit.rounding})` : ''}`);
