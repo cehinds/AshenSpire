@@ -48,7 +48,7 @@ import { filterMembership, deckCatalogOptions, resolveStudioDeck } from './deckC
 import { initGalleryZoom } from './galleryZoom.js';
 import { focusedEffectOptions } from './focusedRebalance.js';
 import { createAddCardTile, CaptureCardTilePositions, animateCardInsertion } from './addCardTile.js';
-import { GALLERIES, createActiveEntities, nextInDisplayedOrder, resolveWorkingContext, captureTileFocus, restoreTileFocus } from './workingContext.js';
+import { GALLERIES, createActiveEntities, createEditBursts, nextInDisplayedOrder, resolveWorkingContext, captureTileFocus, restoreTileFocus } from './workingContext.js';
 
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
 const AB_STORAGE_KEY = 'ashenspire:scoreStudioAB:v1';
@@ -1532,7 +1532,7 @@ function renderCardsGrid() {
 // selectStudioCard and selectStudioItem are the only writers of state.selectedCardId and
 // state.selectedItemKey. An id that is gone gives the empty state, never the first card.
 // Filters never call them. Content changes reconcile through them in syncAllViews.
-const activeEntities = createActiveEntities({ state });
+const activeEntities = createActiveEntities({ state, onChange: () => editBursts.endAll() });
 // The ids each gallery shows, in displayed order, as of its last render (null before the first).
 const displayedIds = { cards: null, items: null };
 
@@ -2315,24 +2315,11 @@ function selectedCardDef() {
   return state.cards.find((c) => c.id === state.selectedCardId);
 }
 
-// One undo step per burst of typing or spinner ticks; the burst ends after a pause or a new focus.
+// One undo step per burst of typing or spinner ticks; the burst ends after a pause, a new focus or a
+// change of active entity (the setters end every open burst, so one Undo never spans two cards).
+const editBursts = createEditBursts({ pushHistory: () => pushHistory(), delayMs: TEXT_EDIT_BURST_MS });
 function createEditBurst() {
-  let open = false;
-  let timer = null;
-  return {
-    begin() {
-      if (!open) {
-        pushHistory();
-        open = true;
-      }
-      clearTimeout(timer);
-      timer = setTimeout(() => { open = false; }, TEXT_EDIT_BURST_MS);
-    },
-    end() {
-      open = false;
-      clearTimeout(timer);
-    },
-  };
+  return editBursts.create();
 }
 
 // Applies a typed or spun number without rebuilding the inspector, then rescores in place.
