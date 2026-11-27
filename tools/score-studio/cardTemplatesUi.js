@@ -15,7 +15,8 @@ import {
   createMemoryTemplateStore,
 } from './cardTemplates.js';
 
-const SAVE_FILE_LABEL = 'Card templates';
+// The Studio Save file name SS-003 lists for content/source/studio/templates.json (STUDIO_SAVE_FILE_NAMES.templates).
+const SAVE_FILE_NAME = 'templates';
 const BLANK_CHOICE = 'blank';
 const DEFAULT_COST = 0;
 const DEFAULT_RARITY = 'common';
@@ -166,9 +167,8 @@ export function initCardTemplatesUi(ctx)
 
   // The one persistence adapter. The default store is in memory, so templates last for the session and in
   // the local draft.
-  // SS-003 integration: register the committed file with the Studio Save path, roughly
-  //   registerStudioSaveFile({ name: saveFile.name, path: saveFile.path, read: saveFile.read, apply: saveFile.apply })
-  // so File > Save writes content/source/studio/templates.json, it loads on start and Draft/Saved counts it.
+  // SS-003 integration: registerStudioSaveFile(cardTemplatesUi.saveFile) in studio.js, so File > Save writes
+  // content/source/studio/templates.json, it loads on start and the Draft/Saved pill counts it.
   function connectStore(nextStore)
   {
     store = nextStore;
@@ -194,11 +194,12 @@ export function initCardTemplatesUi(ctx)
     state.savedTemplates = clone(state.templates);
   }
 
+  // The SS-003 Save file shape: read() returns the data keys, apply(data) gets them back (null when absent).
   const saveFile = Object.freeze({
-    name: SAVE_FILE_LABEL,
+    name: SAVE_FILE_NAME,
     path: CARD_TEMPLATES_PATH,
-    read: () => TemplateFile(state.templates),
-    apply: raw => applyStoredFile(raw),
+    read: () => ({ templates: clone(state.templates) }),
+    apply: data => applyStoredFile(data ? TemplateFile(data.templates) : null),
   });
 
   const changed = () => JSON.stringify(state.templates || []) !== JSON.stringify(state.savedTemplates || []);
