@@ -75,7 +75,7 @@ export function layeredEnvironmentHtml(scene) {
   recipes.set(key, scene);
   // Bound cached recipes across repeated combat mounts; live nodes retain their recipe below.
   if (recipes.size > 64) recipes.delete(recipes.keys().next().value);
-  const image = (layer, index) => `<${layer.role === 'particles' ? 'div' : 'img'} class="layered-environment-layer${layer.role === 'particles' ? ' layered-particles' : ''}" data-layer-index="${index}" data-role="${escape(layer.role)}" data-placement="${escape(layer.placement?.mode || '')}" ${layer.role === 'particles' ? `data-layer-asset="${escape(layer.asset)}" style="background-image:url('${escape(layeredArtUrl(layer.asset))}')"` : `src="${escape(layeredArtUrl(layer.asset))}" alt="" draggable="false"`}>${layer.role === 'particles' ? '</div>' : ''}`;
+  const image = (layer, index) => `<${layer.role === 'particles' ? 'div' : 'img'} class="layered-environment-layer${layer.role === 'particles' ? ' layered-particles' : ''}" data-layer-index="${index}" data-role="${escape(layer.role)}" data-placement="${escape(layer.placement?.mode || '')}" ${layer.role === 'particles' ? `data-layer-asset="${escape(layer.asset)}" style="background-image:url('${escape(layeredArtUrl(layer.asset))}')"` : `src="${escape(layeredArtUrl(layer.asset))}" alt="" draggable="false" onerror="this.hidden=true"`}>${layer.role === 'particles' ? '</div>' : ''}`;
   // The ground is followed by its mirrored continuation (see layeredEnvironmentGeometry).
   const mirror = (layer, i) => image(layer, i).replace('class="layered-environment-layer', 'data-mirror="true" class="layered-environment-layer');
   const rear = scene.layers.map((layer, i) => !['filter', 'particles'].includes(layer.role)
