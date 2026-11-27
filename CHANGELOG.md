@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-27
 
+- **Tighter modal spacing and inline reward confirm** ([#3037](https://github.com/cehinds/AshenSpire/pull/3037), `0.7.5.177`). Modal headers, footers, Settings, Armoury, Character, Merchant, Shrine, and View Deck now trim wasted space on phones. Card rewards confirm inline instead of opening a second modal.
 - **More reliable Smith and equipment checks** ([#3018](https://github.com/cehinds/AshenSpire/pull/3018), `0.7.5.177`). Smith screen checks use an explicit eligible scenario, while equipment tests follow current item availability and use controlled values for mechanics, so authored balance changes do not leave stale expectations.
 - **Evade Wither, rising cost, and Smash flat Block break** ([#3017](https://github.com/cehinds/AshenSpire/pull/3017), `0.7.5.175`). Player Evade cards gain Wither 3 and +1 SP per play (max +3); Smash cards now break flat Block before damage (`Break N Block. Deal N damage.`).
 - **Edit game content with forms in Score Studio** ([#3032](https://github.com/cehinds/AshenSpire/pull/3032), `0.7.5.173`). View > Game content edits decks, pools, cards, enemies, enemy cards, relics and map rules and saves the JSON. The game reloads by itself.
