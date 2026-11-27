@@ -2,7 +2,8 @@
 // (P = the card's positive score from the flat parts) instead of weight x units, so a high-CP card pays more per SP.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { BaseFace, ScoreCard } from '../src/model/combatPower.js';
+import { readFileSync } from 'node:fs';
+import { BaseFace, ScoreCard, PrepareCardScorer } from '../src/model/combatPower.js';
 import { ValidateScoringConfig } from '../src/model/activeScoring.js';
 import { scoringContract } from './helpers/scoring-contract.mjs';
 
@@ -139,34 +140,36 @@ test('scoring validation: multiplier on a cost, effect or status must be a boole
   assert.deepEqual(ValidateScoringConfig(badCount), ['effectCount.multiplier must be true or false.']);
 });
 
-// No shipped data uses the multiplier form, so every card and item keeps its raw, CP, rank and parts.
-test('multiplier form: the shipped scoring scores every authored card and item as before', async () => {
+test('current authored scoring reaches prepared/runtime scorers and the generated catalog stays fresh', async () => {
   const { scoring } = await import('../src/content/generated/scoring.js');
   const { cardCombatPower, itemCombatPower } = await import('../src/content/generated/combatPower.js');
-  const { buildTable, itemFaces } = await import('../tools/combat-power-report.mjs');
+  const { buildTable, measureCards, itemFaces } = await import('../tools/combat-power-report.mjs');
   const { registries } = await import('../tools/lib/cardBudgetMeasure.mjs');
   const { CardDefinitionToScoreFace } = await import('../src/model/cardUpgradeCp.js');
   const { ScoreItem } = await import('../src/model/combatPower.js');
-  for (const section of ['costs', 'effects', 'statuses']) {
-    for (const [id, entry] of Object.entries(scoring[section])) assert.ok(!(entry && 'multiplier' in entry), `${section}.${id} ships without multiplier`);
-  }
-  assert.ok(!('multiplier' in scoring.effectCount), 'effectCount ships without multiplier');
-  for (const [id, tag] of Object.entries(scoring.tags)) assert.ok(!(tag && tag.pMultiplier && tag.per !== undefined), `tags.${id}: no shipped pMultiplier tag counts per hit`);
-  // The generated table was written before the multiplier form existed: the scorer still reproduces it exactly.
+  const source = JSON.parse(readFileSync(new URL('../content/source/scoring.json', import.meta.url), 'utf8'));
+  const sourceSnapshot = structuredClone(source);
+  assert.deepEqual(scoring, source, 'authored flags and weights reach runtime unchanged');
   const table = buildTable();
   assert.deepEqual(table.cardCombatPower, cardCombatPower);
   assert.deepEqual(table.itemCombatPower, itemCombatPower);
-  // Spelling the default out (multiplier: false everywhere) changes no part of any card or item.
-  const explicit = structuredClone(scoring);
-  for (const section of ['costs', 'effects', 'statuses']) for (const entry of Object.values(explicit[section])) if (entry && typeof entry === 'object') entry.multiplier = false;
-  explicit.effectCount.multiplier = false;
-  let cards = 0;
-  for (const def of registries.cards.all()) {
+  assert.deepEqual(Object.keys(cardCombatPower).sort(), Object.keys(measureCards()).sort());
+  const definitions = registries.cards.all(), definitionsSnapshot = structuredClone(definitions);
+  assert.ok(definitions.length > 0);
+  const prepared = PrepareCardScorer(scoring);
+  for (const def of definitions) {
     const f = CardDefinitionToScoreFace(def, { scoring });
-    assert.deepEqual(ScoreCard(f, explicit), ScoreCard(f, scoring), def.id);
-    cards++;
+    const snapshot = structuredClone(f);
+    assert.deepEqual(prepared(f), ScoreCard(f, source), def.id);
+    assert.deepEqual(f, snapshot);
   }
   const { items, rules } = itemFaces();
-  for (const it of items) assert.deepEqual(ScoreItem(it, explicit, rules), ScoreItem(it, scoring, rules), `${it.kind}:${it.id}`);
-  assert.ok(cards > 100 && items.length > 100, `${cards} cards, ${items.length} items`);
+  assert.ok(items.length > 0);
+  assert.deepEqual(Object.keys(itemCombatPower).sort(), items.map(item => `${item.kind}:${item.id}`).sort());
+  const itemsSnapshot = structuredClone(items);
+  for (const it of items) assert.deepEqual(ScoreItem(it, scoring, rules), ScoreItem(it, source, rules), `${it.kind}:${it.id}`);
+  assert.deepEqual(items, itemsSnapshot);
+  assert.deepEqual(definitions, definitionsSnapshot);
+  assert.deepEqual(source, sourceSnapshot);
+  assert.deepEqual(scoring, sourceSnapshot);
 });
