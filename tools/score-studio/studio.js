@@ -48,7 +48,7 @@ import { filterMembership, deckCatalogOptions, resolveStudioDeck } from './deckC
 import { initGalleryZoom } from './galleryZoom.js';
 import { focusedEffectOptions } from './focusedRebalance.js';
 import { createAddCardTile, CaptureCardTilePositions, animateCardInsertion } from './addCardTile.js';
-import { initStudioSaveUi, STUDIO_SAVE_MENU_LABEL } from './studioSaveUi.js';
+import { InitStudioSaveUi, StudioSaveMenuLabel } from './studioSaveUi.js';
 import {
   GalleryKind,
   Galleries,
@@ -4615,8 +4615,8 @@ function setupStudioMenubar() {
   const command = (name, id, text, action) => { const button = document.createElement('button'); button.id = id; button.type = 'button'; button.className = 'menu-item'; button.setAttribute('role', 'menuitem'); button.textContent = text; button.addEventListener('click', action); panel(name).append(button); };
   const click = id => () => document.getElementById(id)?.click();
   const studioSaveLabel = isLocalServer
-    ? STUDIO_SAVE_MENU_LABEL.local
-    : STUDIO_SAVE_MENU_LABEL.web;
+    ? StudioSaveMenuLabel.Local
+    : StudioSaveMenuLabel.Web;
   command('file', STUDIO_SAVE_MENU_ID, studioSaveLabel, () =>
   {
     closeMenus();
@@ -5703,7 +5703,7 @@ async function boot() {
     if (ab) { state.abSlots.A = ab.A || null; state.abSlots.B = ab.B || null; }
   } catch { /* ignore */ }
 
-  studioSaveUi = initStudioSaveUi({
+  studioSaveUi = InitStudioSaveUi({
     state,
     editedCards,
     removedCoreIds,

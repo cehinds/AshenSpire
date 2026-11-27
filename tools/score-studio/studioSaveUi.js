@@ -1,5 +1,5 @@
-// tools/score-studio/studioSaveUi.js — the Studio side of File > Save (SS-003): registers the card and art
-// layer files, drives the #draft-status pill, settles the draft against the saved files, and runs a Save.
+// The Studio side of File > Save: registers the card and art layer files, drives the
+// #draft-status pill, settles the draft against the saved files, and runs a Save.
 
 import {
   ChooseDraftOrSavedFile,
@@ -17,31 +17,34 @@ import {
   StudioSaveFileNames,
 } from './studioSaveFiles.js';
 
-const DRAFT_STATUS_ID = 'draft-status';
-const DIRTY_CLASS = 'is-dirty';
-const LOADING_CLASS = 'is-loading';
-const FAILED_PILL_MS = 2500;
-const DRAFT_CARRIED_FILES = Object.freeze([
+export const StudioSaveMenuLabel = Object.freeze({
+  Local: 'Save Studio cards and art (Ctrl+S)',
+  Web: 'Download Studio cards and art (Ctrl+S)',
+});
+
+const draftStatusId = 'draft-status';
+const dirtyClass = 'is-dirty';
+const loadingClass = 'is-loading';
+const failedPillMs = 2500;
+const draftCarriedFiles = Object.freeze([
   StudioSaveFileNames.Cards,
   StudioSaveFileNames.ArtLayers,
 ]);
-const TOAST_TEXT = Object.freeze({
+const toastText = Object.freeze({
   [StudioSaveResult.Saved]: `Saved Studio cards and art to ${StudioSaveDir}/`,
   [StudioSaveResult.Unchanged]: 'No Studio changes since the last Save',
   [StudioSaveResult.Downloaded]: `Downloaded ${StudioSaveDownloadName}`,
   loadFailed: 'Could not read the Studio save files',
 });
 
-export const STUDIO_SAVE_MENU_LABEL = Object.freeze({
-  local: 'Save Studio cards and art (Ctrl+S)',
-  web: 'Download Studio cards and art (Ctrl+S)',
-});
-
 async function fetchJson(url, init)
 {
   const response = await fetch(url, init);
   const json = await response.json().catch(() => null);
-  return { status: response.status, json };
+  return {
+    status: response.status,
+    json,
+  };
 }
 
 function hasLayers(layerSet)
@@ -63,58 +66,80 @@ function arrayOrEmpty(value)
     : [];
 }
 
-/**
- * deps: state, editedCards, removedCoreIds, mergeStudioCards, isLocalServer, isTextEntry,
- * flushDraft, writeDraftNow, refreshDirtyStatus, toast, download and clone.
- */
-export function initStudioSaveUi(deps)
+function paintPill(pill, description)
 {
-  const { state, clone } = deps;
-  const controller = CreateStudioSave({
-    isLocalServer: deps.isLocalServer,
-    fetchJson,
-    download: deps.download,
-  });
-  let failedUntil = 0;
+  pill.classList.remove(loadingClass);
+  pill.classList.toggle(dirtyClass, description.dirty);
+  pill.textContent = description.text;
+  pill.title = description.title;
+}
 
+// Blurring and refocusing the field commits its value and ends its edit burst.
+function commitFocusedField(isTextEntry)
+{
+  const focused = document.activeElement;
+  if (isTextEntry(focused))
+  {
+    focused.blur();
+    focused.focus();
+  }
+}
+
+function registerCardsFile(deps)
+{
+  const cardsName = StudioSaveFileNames.Cards;
   RegisterStudioSaveFile({
-    name: StudioSaveFileNames.Cards,
-    path: StudioSaveFiles.cards.path,
+    name: cardsName,
+    path: StudioSaveFiles[cardsName].path,
     read: () => ({
       cards: deps.editedCards(),
       removedCardIds: deps.removedCoreIds(),
     }),
-    apply: (data) => deps.mergeStudioCards(clone(data.cards), data.removedCardIds),
+    apply: (data) => deps.mergeStudioCards(deps.clone(data.cards), data.removedCardIds),
   });
+}
+
+function registerArtLayersFile(deps)
+{
+  const artLayersName = StudioSaveFileNames.ArtLayers;
+  const { state, clone } = deps;
   RegisterStudioSaveFile({
-    name: StudioSaveFileNames.ArtLayers,
-    path: StudioSaveFiles.artLayers.path,
+    name: artLayersName,
+    path: StudioSaveFiles[artLayersName].path,
     read: () => ({
       cardArtLayers: state.artLayers,
       itemArtLayers: state.itemArtLayers,
     }),
-    apply: (data) => Object.assign(state, clone({
-      artLayers: data.cardArtLayers,
-      itemArtLayers: data.itemArtLayers,
-    })),
+    apply: (data) =>
+    {
+      Object.assign(state, clone({
+        artLayers: data.cardArtLayers,
+        itemArtLayers: data.itemArtLayers,
+      }));
+    },
   });
+}
 
-  function paintPill(pill, { text, title, dirty })
+class StudioSaveUi
+{
+  #deps;
+  #controller;
+  #failedUntil = 0;
+
+  constructor(deps, controller)
   {
-    pill.classList.remove(LOADING_CLASS);
-    pill.classList.toggle(DIRTY_CLASS, dirty);
-    pill.textContent = text;
-    pill.title = title;
+    this.#deps = deps;
+    this.#controller = controller;
   }
 
-  /** Writes the Save status into the pill; false when the Save scope has nothing to say. */
-  function decoratePill(pill)
+  // Writes the Save status into the pill; false when the Save scope has nothing to say.
+  decoratePill(pill)
   {
-    if (Date.now() < failedUntil)
+    if (Date.now() < this.#failedUntil)
     {
       return true;
     }
-    const description = controller.describe();
+    const description = this.#controller.describe();
     if (description)
     {
       paintPill(pill, description);
@@ -122,47 +147,117 @@ export function initStudioSaveUi(deps)
     return Boolean(description);
   }
 
-  async function loadSavedFiles()
+  async loadSavedFiles()
   {
     try
     {
-      await controller.load();
+      await this.#controller.load();
     }
     catch (error)
     {
-      deps.toast(`${TOAST_TEXT.loadFailed}: ${error.message}`);
+      this.#deps.toast(`${toastText.loadFailed}: ${error.message}`);
     }
-    controller.captureBaseline();
+    this.#controller.captureBaseline();
   }
 
-  function draftSaveScope(draft)
+  // A draft made from other saved content than the files hold now asks one question first.
+  async reconcileDraft(draft)
   {
+    if (!this.#draftNeedsChoice(draft))
+    {
+      return;
+    }
+    if (await ChooseDraftOrSavedFile() === StudioSaveChoice.UseSaved)
+    {
+      this.#putSavedFilesIntoDraft(draft);
+    }
+  }
+
+  // With a draft, the files it carries (cards, art layers) come from the draft.
+  applySavedFiles({ draftApplies })
+  {
+    const skipNames = draftApplies
+      ? draftCarriedFiles
+      : [];
+    this.#controller.applyLoaded(skipNames);
+  }
+
+  async save()
+  {
+    commitFocusedField(this.#deps.isTextEntry);
+    this.#deps.flushDraft();
+    const pill = document.getElementById(draftStatusId);
+    if (this.#deps.isLocalServer)
+    {
+      pill.textContent = StudioSavePillText.Saving;
+    }
+    const outcome = await this.#controller.save();
+    this.#deps.toast(outcome.message ?? toastText[outcome.result]);
+    if (outcome.result === StudioSaveResult.Failed)
+    {
+      this.#showFailed(pill, outcome.message);
+      return outcome;
+    }
+    this.#deps.writeDraftNow();
+    return outcome;
+  }
+
+  revision()
+  {
+    return this.#controller.revision();
+  }
+
+  hasStatus()
+  {
+    return this.#controller.status() !== StudioSaveStatus.None;
+  }
+
+  #draftSaveScope(draft)
+  {
+    const { state } = this.#deps;
     return {
-      cards: {
+      [StudioSaveFileNames.Cards]: {
         cards: arrayOrEmpty(draft.customCards),
         removedCardIds: arrayOrEmpty(draft.removedCardIds),
       },
-      artLayers: {
+      [StudioSaveFileNames.ArtLayers]: {
         cardArtLayers: layersOr(draft.artLayers, state.artLayers),
         itemArtLayers: layersOr(draft.itemArtLayers, state.itemArtLayers),
       },
     };
   }
 
-  function draftNeedsChoice(draft)
+  #draftMatchesSavedFiles(draft)
   {
-    const scope = draftSaveScope(draft);
-    const madeFromThisSave = Boolean(draft.studioSaveRevision) && draft.studioSaveRevision === controller.revision();
-    const noSaveYet = !draft.studioSaveRevision && !controller.anyOnDisk();
-    const sameContent = controller.matchesSaved(StudioSaveFileNames.Cards, scope.cards)
-      && controller.matchesSaved(StudioSaveFileNames.ArtLayers, scope.artLayers);
-    return deps.isLocalServer && !madeFromThisSave && !noSaveYet && !sameContent;
+    const scope = this.#draftSaveScope(draft);
+    return draftCarriedFiles.every((name) => this.#controller.matchesSaved(name, scope[name]));
   }
 
-  function putSavedFilesIntoDraft(draft)
+  #draftNeedsChoice(draft)
   {
-    const savedCards = controller.loadedFile(StudioSaveFileNames.Cards) ?? { cards: [], removedCardIds: [] };
-    const savedArt = controller.loadedFile(StudioSaveFileNames.ArtLayers) ?? {
+    if (!this.#deps.isLocalServer)
+    {
+      return false;
+    }
+    const draftRevision = draft.studioSaveRevision;
+    const madeFromThisSave = Boolean(draftRevision)
+      && draftRevision === this.#controller.revision();
+    const noSaveYet = !draftRevision && !this.#controller.anyOnDisk();
+    if (madeFromThisSave || noSaveYet)
+    {
+      return false;
+    }
+    return !this.#draftMatchesSavedFiles(draft);
+  }
+
+  #putSavedFilesIntoDraft(draft)
+  {
+    const { state, clone } = this.#deps;
+    const savedCards = this.#controller.loadedFile(StudioSaveFileNames.Cards) ?? {
+      cards: [],
+      removedCardIds: [],
+    };
+    const savedArt = this.#controller.loadedFile(StudioSaveFileNames.ArtLayers) ?? {
       cardArtLayers: state.repoArtLayers,
       itemArtLayers: state.repoItemArtLayers,
     };
@@ -174,30 +269,9 @@ export function initStudioSaveUi(deps)
     }));
   }
 
-  /** A draft made from other saved content than the files hold now asks one question before it applies. */
-  async function reconcileDraft(draft)
+  #showFailed(pill, message)
   {
-    if (!draftNeedsChoice(draft))
-    {
-      return;
-    }
-    if (await ChooseDraftOrSavedFile() === StudioSaveChoice.UseSaved)
-    {
-      putSavedFilesIntoDraft(draft);
-    }
-  }
-
-  /** With a draft, the files it carries (cards, art layers) come from the draft. */
-  function applySavedFiles({ draftApplies })
-  {
-    controller.applyLoaded(draftApplies
-      ? DRAFT_CARRIED_FILES
-      : []);
-  }
-
-  function showFailed(pill, message)
-  {
-    failedUntil = Date.now() + FAILED_PILL_MS;
+    this.#failedUntil = Date.now() + failedPillMs;
     paintPill(pill, {
       text: StudioSavePillText.Failed,
       title: message ?? '',
@@ -205,49 +279,22 @@ export function initStudioSaveUi(deps)
     });
     setTimeout(() =>
     {
-      failedUntil = 0;
-      deps.refreshDirtyStatus();
-    }, FAILED_PILL_MS);
+      this.#failedUntil = 0;
+      this.#deps.refreshDirtyStatus();
+    }, failedPillMs);
   }
+}
 
-  /** Blurring and refocusing the field commits its value and ends its edit burst. */
-  function commitFocusedField()
-  {
-    const focused = document.activeElement;
-    if (deps.isTextEntry(focused))
-    {
-      focused.blur();
-      focused.focus();
-    }
-  }
-
-  async function save()
-  {
-    commitFocusedField();
-    deps.flushDraft();
-    const pill = document.getElementById(DRAFT_STATUS_ID);
-    if (deps.isLocalServer)
-    {
-      pill.textContent = StudioSavePillText.Saving;
-    }
-    const outcome = await controller.save();
-    deps.toast(outcome.message ?? TOAST_TEXT[outcome.result]);
-    if (outcome.result === StudioSaveResult.Failed)
-    {
-      showFailed(pill, outcome.message);
-      return outcome;
-    }
-    deps.writeDraftNow();
-    return outcome;
-  }
-
-  return {
-    decoratePill,
-    loadSavedFiles,
-    reconcileDraft,
-    applySavedFiles,
-    save,
-    revision: () => controller.revision(),
-    hasStatus: () => controller.status() !== StudioSaveStatus.None,
-  };
+// deps: state, editedCards, removedCoreIds, mergeStudioCards, isLocalServer, isTextEntry,
+// flushDraft, writeDraftNow, refreshDirtyStatus, toast, download and clone.
+export function InitStudioSaveUi(deps)
+{
+  const controller = CreateStudioSave({
+    isLocalServer: deps.isLocalServer,
+    fetchJson,
+    download: deps.download,
+  });
+  registerCardsFile(deps);
+  registerArtLayersFile(deps);
+  return new StudioSaveUi(deps, controller);
 }
