@@ -29,7 +29,7 @@ import { GenerateCard } from '../../src/model/cardGenerator.js';
 import { ScoreGeneratedItem } from '../../src/model/itemGenerator.js';
 import { RenderPoolForm, ReadPoolForm, NormaliseSettings, UpdatePoolSums } from './cardPoolForm.js';
 import { buildItemRoster, typeModsForEntry, scoreItemEntry, livePieceFromEntry, describeItemMod, formatModString, ITEM_TRAIT_SELECTORS, ITEM_QUICK_TRAITS, ITEM_MOTIF_OPTIONS } from './itemStudio.js';
-import { initStudioToolsModals } from './studioToolsModal.js';
+import { initStudioToolsModals, downloadJsonFile } from './studioToolsModal.js';
 import {
   DEFAULT_ART_LOAD_TIMEOUT_MS,
   parseLoadingShotMode,
@@ -1947,6 +1947,7 @@ function cardMenuActions() {
     { separator: true },
     { label: 'Edit card art', run: () => setCustomizationView('design') },
     { label: 'View or edit JSON…', run: () => openCardJson(def.id) },
+    { label: 'Export card JSON', hint: 'Download this card as an importable JSON file', run: () => downloadJsonFile(`${def.id}.json`, Object.fromEntries(Object.entries(def).filter(([key]) => !key.startsWith('_')))) },
     { label: 'Undock', enabled: cardEditorDockUi?.isDocked?.() !== false, run: () => cardEditorDockUi?.open?.() },
   ];
 }
