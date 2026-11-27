@@ -198,7 +198,7 @@ const COMPATIBLE_HOST_RUNTIMES = new Set([
   // Owner hotfix 2026-11-26 (spellCosts: manaSurcharge 0, Prepared SP floor 1; the Prepared Mana cut is gear-only) moves the host runtime; prior saves keep their own rules.
   'sha256:defbcd659c0fe2899a69d503916d8d739116d9928b8156c5985764b83efa755f',
   // routes.floorTypes and routeShape (engine/kernel/route*.js) move the host runtime.
-  'sha256:8f63605633f32cae32238f59c53430097ac38350d7a8fce5dbb7dcabb715aca1',
+  'sha256:71ca407be49798e8df326bd759a2a9ce70956a736abfa64420d188fa62a8434d',
 ]);
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return COMPATIBLE_HOST_RUNTIMES.has(currentRuntime)

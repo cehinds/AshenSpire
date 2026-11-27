@@ -822,11 +822,18 @@ function verifyRouteFirstFloor(modules, content) {
   if (!alternatives.includes(firstFloor) || (restFloors.includes(1) && !(routes.startRestFromAct > 1)) || (firstFloor === 'elite' && minimumThreatFloor > 1)) fail('$/modules/routes/firstFloor', 'must be a non-rest, non-boss route node type, depth 1 cannot be a rest floor, and an elite needs minimumThreatFloor of 1');
 }
 // floorTypes is checked here too, by the rules the map build applies (routeFloorTypes.js).
-function verifyRouteFloorTypes(modules, content) {
+function verifyRouteFloorTypes(modules, content)
+{
   const routes = modules.routes;
-  if (routes?.mode !== 'configured' || !record(content?.routes)) return;
+  if (routes?.mode !== 'configured' || !record(content?.routes))
+  {
+    return;
+  }
   const problems = RouteFloorTypeProblems(routes, content.routes, routes.routeShape);
-  for (const problem of problems) fail('$/modules/routes/floorTypes', problem);
+  for (const problem of problems)
+  {
+    fail('$/modules/routes/floorTypes', problem);
+  }
 }
 function verifyRewardGroups(modules, content) {
   if (modules.rewards?.mode !== 'configured' || !content.rewards) return;

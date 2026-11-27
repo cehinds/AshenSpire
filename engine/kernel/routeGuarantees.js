@@ -17,7 +17,8 @@ import {
 const NO_PINS = new Map();
 
 // A span of depths that must hold `needed` free floors.
-function freeSpan(first, last, needed) {
+function freeSpan(first, last, needed)
+{
   return {
     first,
     last,
@@ -26,7 +27,8 @@ function freeSpan(first, last, needed) {
 }
 
 // A pinned `room` from first to last that keeps a promise on its own.
-function pinCover(room, first, last) {
+function pinCover(room, first, last)
+{
   return {
     room,
     first,
@@ -34,7 +36,8 @@ function pinCover(room, first, last) {
   };
 }
 
-function laneEliteRequirements(routes, shape) {
+function laneEliteRequirements(routes, shape)
+{
   const fullDepth = BranchFullDepth(routes.prebossNodes, shape);
   const first = Math.max(fullDepth, routes.minimumThreatFloor);
   const lastDepths = LaneLastDepths(routes.prebossNodes, shape).filter(last => last >= first);
@@ -47,24 +50,28 @@ function laneEliteRequirements(routes, shape) {
   }));
 }
 
-function shopSpan(routes, shape) {
+function shopSpan(routes, shape)
+{
   const { first, last } = shape.guaranteedShopDepths;
   return { first, last: Math.min(last, routes.prebossNodes) };
 }
 
-function branchShopRequirement(routes, shape) {
+// Only a shop pinned on a guaranteed shop depth stands in for the branch's shop.
+function branchShopRequirement(routes, shape)
+{
   const shop = shopSpan(routes, shape);
   return {
     group: SHOP_ROOM,
     subject: 'a branch no free floor for its shop',
     fix: 'a shop',
     spans: [freeSpan(shop.first, shop.last, 1)],
-    coveredBy: [pinCover(SHOP_ROOM, shape.firstBranchDepth, routes.prebossNodes)],
+    coveredBy: [pinCover(SHOP_ROOM, shop.first, shop.last)],
   };
 }
 
 // Two free shop depths while every lane is open, or one too early for an elite, keep the shop.
-function sharedSlotRequirement(routes, shape) {
+function sharedSlotRequirement(routes, shape)
+{
   const shop = shopSpan(routes, shape);
   const fullDepth = BranchFullDepth(routes.prebossNodes, shape);
   const eliteFirst = Math.max(fullDepth, routes.minimumThreatFloor);
@@ -79,34 +86,49 @@ function sharedSlotRequirement(routes, shape) {
       freeSpan(shop.first, earliestElite - 1, 1),
     ],
     coveredBy: [
-      pinCover(SHOP_ROOM, shape.firstBranchDepth, routes.prebossNodes),
+      pinCover(SHOP_ROOM, shop.first, shop.last),
       pinCover(ELITE_ROOM, eliteFirst, openLast),
     ],
   };
 }
 
 // The requirements this route makes, from its settings and routeShape.
-export function RouteRequirements(routes, shape, types) {
-  if (routes.maxBranches == null) return [];
+export function RouteRequirements(routes, shape, types)
+{
+  if (routes.maxBranches == null)
+  {
+    return [];
+  }
   const elites = types.pinnable.includes(ELITE_ROOM);
   const shops = routes.shopsPerBranch > 0 && types.pinnable.includes(SHOP_ROOM);
   const requirements = elites
     ? laneEliteRequirements(routes, shape)
     : [];
-  if (shops) requirements.push(branchShopRequirement(routes, shape));
-  if (shops && elites) requirements.push(sharedSlotRequirement(routes, shape));
+  if (shops)
+  {
+    requirements.push(branchShopRequirement(routes, shape));
+  }
+  if (shops && elites)
+  {
+    requirements.push(sharedSlotRequirement(routes, shape));
+  }
   return requirements;
 }
 
-function holds(requirement, depths, pinned) {
+function holds(requirement, depths, pinned)
+{
   const covered = requirement.coveredBy
     .some(cover => HasPinnedRoom(pinned, cover.room, cover.first, cover.last));
-  if (covered) return true;
+  if (covered)
+  {
+    return true;
+  }
   return requirement.spans
     .some(span => SureFreeCount(depths, pinned, span.first, span.last) >= span.needed);
 }
 
-function problemText(requirement, depths) {
+function problemText(requirement, depths)
+{
   const span = requirement.spans[0];
   const choices = PinnableDepths(depths, span.first, span.last);
   const amount = span.needed === 1
@@ -119,12 +141,17 @@ function problemText(requirement, depths) {
 }
 
 // One plain sentence per broken promise; a later requirement of a broken group is skipped.
-export function RequirementProblems(requirements, depths, pinned) {
+export function RequirementProblems(requirements, depths, pinned)
+{
   const broken = new Set();
   const problems = [];
-  for (const requirement of requirements) {
-    if (broken.has(requirement.group)) continue;
-    if (holds(requirement, depths, pinned) || !holds(requirement, depths, NO_PINS)) continue;
+  for (const requirement of requirements)
+  {
+    const skipped = broken.has(requirement.group);
+    if (skipped || holds(requirement, depths, pinned) || !holds(requirement, depths, NO_PINS))
+    {
+      continue;
+    }
     broken.add(requirement.group);
     problems.push(problemText(requirement, depths));
   }

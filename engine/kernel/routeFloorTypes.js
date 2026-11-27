@@ -13,15 +13,28 @@ const TABLE_PROBLEM = 'floorTypes must map a depth to a room type, like { "4": "
 const SHAPE_PROBLEM = 'floorTypes needs the routes routeShape settings';
 
 // Every problem with routes.floorTypes, as plain sentences. Absent, null or {} has none.
-export function RouteFloorTypeProblems(routes, routeContent, shape) {
+export function RouteFloorTypeProblems(routes, routeContent, shape)
+{
   const floorTypes = routes.floorTypes ?? null;
-  if (floorTypes === null) return [];
-  if (!IsPlainObject(floorTypes)) return [TABLE_PROBLEM];
-  if (!IsPlainObject(shape)) return [SHAPE_PROBLEM];
+  if (floorTypes === null)
+  {
+    return [];
+  }
+  if (!IsPlainObject(floorTypes))
+  {
+    return [TABLE_PROBLEM];
+  }
+  if (!IsPlainObject(shape))
+  {
+    return [SHAPE_PROBLEM];
+  }
   const types = RouteRoomTypes(routeContent, shape);
   const depths = RouteDepths(routes, shape);
   const entryProblems = FloorEntryProblems(floorTypes, routes, types, depths.restDepths);
-  if (entryProblems.length) return entryProblems;
+  if (entryProblems.length)
+  {
+    return entryProblems;
+  }
   const requirements = RouteRequirements(routes, shape, types);
   return RequirementProblems(requirements, depths, PinnedFloorTypes(floorTypes));
 }

@@ -259,6 +259,47 @@ test('pins that leave a branch no shop floor, alone or beside its elites, are re
   RefusedWith(sharedSlot, `leaves a branch's shop only floors its elites can take. ${keepTwo}`);
 });
 
+test('a shop pinned before the guaranteed shop depths does not stand in for the branch shop', () =>
+{
+  const config = RouteConfig();
+  const shopFirst = config.shape.guaranteedShopDepths.first;
+  const earlyDepth = config.branchDepths.find(depth => depth < shopFirst);
+  const floorTypes = { [earlyDepth]: SHOP_ROOM };
+  const core = SetupCore({ ...NoRandomShops(config), floorTypes });
+  EachMap(core, config.acts, (map, label) =>
+  {
+    const { first, last } = config.shape.guaranteedShopDepths;
+    const inSpan = Object.values(map.nodes).filter(node =>
+      node.actualType === SHOP_ROOM && node.floor >= first && node.floor <= last);
+    const branches = new Set(inSpan.map(node => node.branch));
+    map.bossIds.forEach((bossId, branch) =>
+    {
+      assert.ok(branches.has(branch), `${label} branch ${branch} keeps its guaranteed shop`);
+    });
+  });
+});
+
+test('a profile pinned before routeShape keeps the historical branch shape', () =>
+{
+  const legacy = { gameProfile: { modules: { routes: {} } } };
+  const shape = RouteShapeOf(legacy);
+  assert.ok(Object.isFrozen(shape));
+  assert.deepEqual(shape, {
+    placedTypes: [
+      'rest',
+      'boss',
+    ],
+    firstBranchDepth: 2,
+    earliestFullDepth: 3,
+    fullDepthsBeforeBoss: 3,
+    narrowDepthsBeforeBoss: 2,
+    guaranteedShopDepths: {
+      first: 4,
+      last: 8,
+    },
+  });
+});
+
 // A short route whose free shop floors are one too early for an elite and every lane's elite slot.
 function EarlyShopRoute(config)
 {

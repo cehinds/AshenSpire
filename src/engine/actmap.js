@@ -191,7 +191,8 @@ export function buildGameProfileActMap(registries, rng, seat, tier, { history = 
   if (firstFloor !== null && (!alternatives.includes(firstFloor) || (restFloors.includes(1) && startRestFromAct === null) || (firstFloor === 'elite' && minimumThreatFloor > 1))) throw new Error('Invalid configured firstFloor');
   const routeShape = RouteShapeOf(registries);
   const floorTypeProblems = RouteFloorTypeProblems(rules, rules, routeShape);
-  if (floorTypeProblems.length) {
+  if (floorTypeProblems.length)
+  {
     throw new Error(`Invalid configured floorTypes: ${floorTypeProblems[0]}`);
   }
   const pinnedFloors = PinnedFloorTypes(rules.floorTypes);
@@ -216,8 +217,14 @@ export function buildGameProfileActMap(registries, rng, seat, tier, { history = 
       const forced = !rest && pinnedType !== null;
       // A forced node (firstFloor, floorTypes) shows its real type even where others show '?'.
       let actual = pinnedType;
-      if (rest) actual = 'rest';
-      else if (!forced) actual = rng.pick('map', choices);
+      if (rest)
+      {
+        actual = 'rest';
+      }
+      else if (!forced)
+      {
+        actual = rng.pick('map', choices);
+      }
       // shopShare (owner ruling D9): of the randomly typed nodes (elites stay as drawn), 15% are shops and the rest keep the even
       // event/fight/treasure split. Absent shopShare keeps the old even draw, so older profiles roll the same maps.
       if (!rest && !forced && shopShare != null && alternatives.includes('shop') && actual !== 'elite') {
@@ -380,39 +387,68 @@ function buildBranchedActMap(registries, rng, seat, tier, ctx) {
   const restSet = new Set(restFloors);
   const nodeId = (floor, globalLane) => `n${floor}_${globalLane}`;
   // Every branch's tree shape is drawn first, so what a lane holds cannot depend on how its nodes roll.
-  const shapes = Array.from({ length: branchCount }, () => drawBranchShape(rng, lanes, count, forkPercent, routeShape));
+  const drawShape = () => drawBranchShape(rng, lanes, count, forkPercent, routeShape);
+  const shapes = Array.from({ length: branchCount }, drawShape);
   const laneAt = (k, floor, lane) => { const a = shapes[k].active[floor]; return !!a && lane >= a.lo && lane <= a.hi; };
   const branchAt = (k, floor) => !!shapes[k].active[floor];
   // One guaranteed elite slot per lane (owner, 2026-10-27): drawn from the depths where that lane exists, before any node rolls.
   const guaranteed = new Set();
-  if (alternatives.includes('elite')) for (let k = 0; k < branchCount; k++) for (let lane = 0; lane < lanes; lane++) {
+  const firstElite = Math.max(routeShape.firstBranchDepth, minimumThreatFloor);
+  const eliteFloorsOf = (k, lane) =>
+  {
     const floors = [];
-    const firstElite = Math.max(routeShape.firstBranchDepth, minimumThreatFloor);
-    for (let floor = firstElite; floor <= count; floor++) {
+    for (let floor = firstElite; floor <= count; floor++)
+    {
       const free = !restSet.has(floor) && !pinnedFloors.has(floor);
-      if (free && laneAt(k, floor, lane)) floors.push(floor);
+      if (free && laneAt(k, floor, lane))
+      {
+        floors.push(floor);
+      }
     }
+    return floors;
+  };
+  if (alternatives.includes('elite')) for (let k = 0; k < branchCount; k++) for (let lane = 0; lane < lanes; lane++) {
+    const floors = eliteFloorsOf(k, lane);
     // A lane that crosses a pinned elite depth (floorTypes) already holds its elite.
     const pinnedElite = hasPinnedDepth(pinnedFloors, ELITE_ROOM, floor => laneAt(k, floor, lane));
-    if (floors.length && !pinnedElite) {
+    if (floors.length && !pinnedElite)
+    {
       guaranteed.add(`${rng.pick('map', floors)}:${k * lanes + lane}`);
     }
   }
   // One guaranteed shop per branch on a free guaranteedShopDepths depth, never an elite slot.
   const guaranteedShop = new Set();
-  if (shopsPerBranch > 0) for (let k = 0; k < branchCount; k++) {
+  const shopDepths = routeShape.guaranteedShopDepths;
+  const lastShopDepth = Math.min(shopDepths.last, count);
+  const isShopDepth = floor => floor >= shopDepths.first && floor <= lastShopDepth;
+  const shopSlotsOf = k =>
+  {
     const slots = [];
-    // A branch that crosses a pinned shop depth (floorTypes) already holds its shop.
-    if (hasPinnedDepth(pinnedFloors, SHOP_ROOM, floor => branchAt(k, floor))) continue;
-    const shopDepths = routeShape.guaranteedShopDepths;
-    const lastShopDepth = Math.min(shopDepths.last, count);
-    for (let floor = shopDepths.first; floor <= lastShopDepth; floor++) {
-      if (restSet.has(floor) || pinnedFloors.has(floor)) continue;
-      for (let lane = 0; lane < lanes; lane++) {
+    for (let floor = shopDepths.first; floor <= lastShopDepth; floor++)
+    {
+      if (restSet.has(floor) || pinnedFloors.has(floor))
+      {
+        continue;
+      }
+      for (let lane = 0; lane < lanes; lane++)
+      {
         const slot = `${floor}:${k * lanes + lane}`;
-        if (laneAt(k, floor, lane) && !guaranteed.has(slot)) slots.push(slot);
+        if (laneAt(k, floor, lane) && !guaranteed.has(slot))
+        {
+          slots.push(slot);
+        }
       }
     }
+    return slots;
+  };
+  if (shopsPerBranch > 0) for (let k = 0; k < branchCount; k++) {
+    // A pinned shop on one of the branch's guaranteedShopDepths already holds its shop.
+    const pinnedShop = floor => isShopDepth(floor) && branchAt(k, floor);
+    if (hasPinnedDepth(pinnedFloors, SHOP_ROOM, pinnedShop))
+    {
+      continue;
+    }
+    const slots = shopSlotsOf(k);
     if (slots.length) guaranteedShop.add(rng.pick('map', slots));
   }
   const nodes = {}, layers = [], seenEvents = [];
@@ -431,7 +467,10 @@ function buildBranchedActMap(registries, rng, seat, tier, ctx) {
     const forced = !rest && pinnedType !== null;
     let actual;
     if (rest) actual = 'rest';
-    else if (forced) actual = pinnedType;
+    else if (forced)
+    {
+      actual = pinnedType;
+    }
     else if (guaranteed.has(`${floor}:${lane}`)) actual = 'elite';
     else if (guaranteedShop.has(`${floor}:${lane}`)) actual = 'shop';
     else if (typeWeights !== null) {
