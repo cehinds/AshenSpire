@@ -9,6 +9,7 @@ import { applyUpgradeSteps, upgradeCount, upgradeStepsOf, ApplyDrawbackSteps } f
 import { cardRank, rankedEffectsCapped } from './cardRank.js';
 import { applyRamp, playsEverOf } from './cardRamp.js';
 import { ProjectEnemyContent } from './enemyProjection.js';
+import { ApplyEnemyHpOverrides } from './enemyHpOverride.js';
 import { CardTraditionTags, SpellTraditionsActive } from './spellTraditions.js';
 export { GameConfigError };
 // Catalog profiles are deterministic, so each id is resolved and digested once per process; later
@@ -179,6 +180,8 @@ export function applyGameProfileToContent(baseBundle,profileOrAuthor = 'default'
     // own pack pins the starting poiseMax it plays with (Core 2 halved, Core 1 kept).
     const pinned=new Map((gameContent(profile,'enemies')||[]).filter(row=>Number.isInteger(row.poiseMax)).map(row=>[row.id,row.poiseMax]));
     bundle.enemies=bundle.enemies.map(def=>pinned.has(def.id)&&Number.isInteger(def.poiseMax)?{...def,poiseMax:pinned.get(def.id)}:def);
+    // An authored HP override pins the rolled range, so each enemy still draws once on 'enemyHP'.
+    bundle.enemies=ApplyEnemyHpOverrides(bundle.enemies,gameContent(profile,'enemies'));
   }
   // A profile pins the enemy roster it was authored with. A run stamped with an older profile never meets an encounter that fields an
   // enemy its pack does not carry: that enemy would have no stamina pool, stats or moves under the profile's rules (the Codex roster,
