@@ -68,10 +68,12 @@ body.studio-body .customization-entity-preview[hidden] { display: none !importan
 body.studio-body .customization-preview-body { display: flex; flex-direction: column; min-width: 0; }
 /* Auto size: the card follows the window height, so short screens get a smaller card and no scroll bar. */
 body.studio-body .customization-preview-body .inspector-card-preview { width: clamp(60px, calc((50dvh - 140px) * 2 / 3), var(--inspector-card-width, 165px)); }
-/* Dragged size: the preview takes the chosen height and the card scales to fit it. */
-body.studio-body .customization-preview-body[data-sized] .customization-entity-preview { height: var(--entity-preview-h); overflow: hidden; }
-body.studio-body .customization-preview-body[data-sized] .inspector-preview-wrap { height: 100%; box-sizing: border-box; }
-body.studio-body .customization-preview-body[data-sized] .inspector-card-preview { width: max(40px, calc((var(--entity-preview-h) - 22px) * 2 / 3)); }
+/* Dragged size sets the card only: the section is as tall as the card or the fields, whichever is taller,
+   so the fields are never clipped or scrolled. */
+body.studio-body .customization-preview-body[data-sized] .inspector-card-preview { width: max(60px, calc((var(--entity-preview-h) - 22px) * 2 / 3)); }
+/* The card never takes the room the fields need; past that it stops growing. */
+body.studio-body .customization-entity .inspector-preview-wrap { container-type: inline-size; }
+body.studio-body .customization-entity .inspector-card-preview { max-width: max(60px, calc(100cqw - 230px)); }
 body.studio-body .customization-preview-resizer {
   position: relative; flex: 0 0 auto; height: 10px; margin-top: 2px; cursor: ns-resize; border-radius: 4px; touch-action: none;
 }
@@ -81,7 +83,9 @@ body.studio-body .customization-preview-resizer::after {
 }
 body.studio-body .customization-preview-resizer:hover::after,
 body.studio-body .customization-preview-resizer.is-dragging::after { background: var(--st-accent); }
-body.studio-body .customization-preview-resizer:focus-visible { outline: 2px solid var(--st-accent); outline-offset: 1px; }
+body.studio-body .customization-preview-resizer:focus,
+body.studio-body .customization-preview-resizer:focus-visible { outline: none; }
+body.studio-body .customization-preview-resizer:focus-visible::after { background: var(--st-accent); height: 4px; top: 3px; width: 56px; margin-left: -28px; box-shadow: 0 0 0 2px rgb(106 166 255 / .35); }
 body.studio-body .customization-scope { margin: 0; color: var(--st-muted); font-size: 12px; overflow-wrap: anywhere; }
 body.studio-body .customization-entity-preview { min-width: 0; }
 body.studio-body .customization-entity-preview > [hidden] { display: none !important; }
@@ -183,7 +187,6 @@ body.studio-body .customization-quick-fields > .form-wide { grid-column: 1 / -1;
 body.studio-body .customization-quick-fields .name-hint { display: none; }
 body.studio-body .customization-quick-fields :is(input:not([type="checkbox"]), select) { width: 100%; min-width: 0; }
 /* A dragged height keeps the fields reachable without growing the header. */
-body.studio-body .customization-preview-body[data-sized] .customization-entity-details { max-height: 100%; overflow-y: auto; }
 
 body.studio-body .customization-quick-fields .cost-label { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 4px; }
 body.studio-body .customization-entity .customization-quick-fields { align-items: end; }

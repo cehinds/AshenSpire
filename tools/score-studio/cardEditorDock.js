@@ -103,7 +103,9 @@ export function initCardEditorDock(ctx) {
   }
   let previewDrag = null;
   previewResizer.addEventListener('pointerdown', event => {
-    previewDrag = { y: event.clientY, h: previewSlot.getBoundingClientRect().height };
+    // The drag sizes the card, so start from the card's own height (plus the frame's padding).
+    const card = previewSlot.querySelector('.inspector-card-preview:not([hidden])') || previewSlot;
+    previewDrag = { y: event.clientY, h: card.getBoundingClientRect().height + (card === previewSlot ? 0 : 22) };
     previewResizer.classList.add('is-dragging'); previewResizer.setPointerCapture?.(event.pointerId);
     previewResizer.focus?.({ preventScroll: true }); event.preventDefault();
   });
