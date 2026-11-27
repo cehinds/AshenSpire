@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import { DescribeFileChange } from '../tools/owner/contentDiff.mjs';
 import { BranchNameFor } from '../tools/owner/ship.mjs';
 import { IsDerivedPath } from '../tools/owner/sync.mjs';
-import { IsEditableContentPath, IsNeverCommitPath } from '../tools/owner/ownerSteps.mjs';
+import { IsEditableContentPath, IsNeverCommitPath, SameText } from '../tools/owner/ownerSteps.mjs';
 
 const ENEMY_PATH = 'games/ashenspire/packs/core/enemies/ashGolem.json';
 const CARDS_PATH = 'games/ashenspire/packs/core/cards.json';
@@ -141,4 +141,43 @@ test('path rules keep generated files and built HTML out of owner commits', () =
     assert.ok(IsDerivedPath('src/content/generated/cards.js'));
     assert.ok(IsDerivedPath('games/ashenspire/game.lock.json'));
     assert.ok(!IsDerivedPath('src/engine/combat.js'));
+});
+
+test('duplicate entries are compared by position, not merged', () =>
+{
+    const before = {
+        id: 'deck',
+        name: 'Deck',
+        cards: [
+            {
+                card: 'core.strike',
+                copies: 1,
+            },
+        ],
+    };
+    const after = {
+        ...before,
+        cards: [
+            ...before.cards,
+            {
+                card: 'core.strike',
+                copies: 1,
+            },
+        ],
+    };
+    const described = DescribeFileChange(CARDS_PATH, asText(before), asText(after));
+    assert.equal(described.lines.length, 1);
+    assert.match(described.lines[0], /^Set Deck cards core\.strike to /);
+});
+
+test('the same number written differently is a change, not a raise or lower', () =>
+{
+    const described = DescribeFileChange(WEAPONS_PATH, 'id,name,scale\nsword,Sword,1\n', 'id,name,scale\nsword,Sword,1.0\n');
+    assert.equal(described.subject, 'Change Sword scale 1→1.0');
+});
+
+test('text comparison ignores Windows line endings', () =>
+{
+    assert.ok(SameText('a\r\nb\r\n', 'a\nb'));
+    assert.ok(!SameText('a\nb', 'a\nc'));
 });

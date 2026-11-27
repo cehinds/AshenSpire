@@ -111,7 +111,9 @@ function fieldLabel(segments)
 
 function isEntryList(list)
 {
-    return list.length > 0 && list.every((item) => entryKeyOf(item) !== null);
+    const keys = list.map(entryKeyOf);
+    const allKeyed = list.length > 0 && keys.every((key) => key !== null);
+    return allKeyed && new Set(keys).size === keys.length;
 }
 
 function isPrimitiveList(list)
@@ -265,7 +267,7 @@ export function DescribeChange(change)
     }
     const beforeNumber = asNumber(change.before);
     const afterNumber = asNumber(change.after);
-    if (beforeNumber !== null && afterNumber !== null)
+    if (beforeNumber !== null && afterNumber !== null && beforeNumber !== afterNumber)
     {
         const verb = afterNumber > beforeNumber
             ? 'Raise'

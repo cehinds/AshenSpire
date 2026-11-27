@@ -132,5 +132,8 @@
     "game.lock.json",
     "_reference.json",
     "_reference.md"
+  ],
+  "rebuiltContentFiles": [
+    "games/ashenspire/packs/core/characters.json"
   ]
 }

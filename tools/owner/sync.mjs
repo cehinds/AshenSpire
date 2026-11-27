@@ -13,6 +13,7 @@ import {
     ChangedPaths,
     RunGit,
     RunSteps,
+    SameText,
 } from './ownerSteps.mjs';
 
 const BACKUP_FOLDER = '.owner-backup';
@@ -38,7 +39,7 @@ function workingText(path)
 {
     const full = join(REPO_ROOT, path);
     return existsSync(full)
-        ? readFileSync(full, 'utf8').trim()
+        ? readFileSync(full, 'utf8')
         : null;
 }
 
@@ -63,21 +64,21 @@ function copyBetween(fromRoot, toRoot, path)
     copyFileSync(source, join(toRoot, path));
 }
 
-/** Copies each unshipped edit to the backup folder and records its patch, then undoes it here. */
-function setAside(files, backupRoot)
+/** Backs up each unshipped edit and records its patch, then undoes it here; fills `saved` as it goes. */
+function setAside(files, backupRoot, saved)
 {
-    return files.map((file) =>
+    for (const file of files)
     {
         copyBetween(REPO_ROOT, backupRoot, file.path);
         const patch = file.untracked
             ? null
             : CapturePatch(file.path);
         restore(file);
-        return {
+        saved.push({
             ...file,
             patch,
-        };
-    });
+        });
+    }
 }
 
 function carryBack(saved, backupRoot)
@@ -148,11 +149,12 @@ function main()
 {
     const { remote, baseBranch } = OWNER_TOOLS.git;
     RunGit(['fetch', '--quiet', remote, baseBranch]);
+    RunGit(['reset', '--quiet']);
 
     const unshipped = [];
     for (const file of ChangedContentFiles())
     {
-        if (workingText(file.path) === devText(file.path))
+        if (SameText(workingText(file.path), devText(file.path)))
         {
             restore(file);
         }
@@ -172,9 +174,10 @@ function main()
 
     const stamp = new Date().toISOString().replace(TIMESTAMP_UNSAFE, '-');
     const backupRoot = join(REPO_ROOT, BACKUP_FOLDER, stamp);
-    const saved = setAside(unshipped, backupRoot);
+    const saved = [];
     try
     {
+        setAside(unshipped, backupRoot, saved);
         moveToNewestBase();
     }
     finally
@@ -195,10 +198,10 @@ function reportKept(saved, clashed, backupRoot)
     }
     console.log('\nEdits not yet shipped, kept for you:');
     saved.forEach((file) => console.log(`  ${file.path}`));
+    console.log(`A backup copy of each is in ${backupRoot}`);
     if (clashed.length)
     {
-        console.log('\nThese changed on dev too, so they now hold dev\'s version. Your copy is in:');
-        console.log(`  ${backupRoot}`);
+        console.log('\nThese changed on dev too, so they now hold dev\'s version. Take your edit from the backup:');
         clashed.forEach((path) => console.log(`  ${path}`));
     }
 }

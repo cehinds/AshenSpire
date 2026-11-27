@@ -8,6 +8,7 @@ export const REPO_ROOT = resolve(fileURLToPath(new URL('../..', import.meta.url)
 export const OWNER_TOOLS = JSON.parse(readFileSync(new URL('./ownerTools.json', import.meta.url), 'utf8'));
 
 const OUTPUT_TAIL_LINES = 25;
+const MAX_OUTPUT_BYTES = 64 * 1024 * 1024;
 const PASS_MARK = 'ok  ';
 const FAIL_MARK = 'FAIL';
 
@@ -17,7 +18,7 @@ export function RunNode(args, workingDirectory = REPO_ROOT)
     const result = spawnSync(process.execPath, args, {
         cwd: workingDirectory,
         encoding: 'utf8',
-        maxBuffer: 64 * 1024 * 1024,
+        maxBuffer: MAX_OUTPUT_BYTES,
     });
     return {
         ok: result.status === 0,
@@ -31,7 +32,7 @@ export function RunProgram(program, args, workingDirectory = REPO_ROOT, { allowF
     const result = spawnSync(program, args, {
         cwd: workingDirectory,
         encoding: 'utf8',
-        maxBuffer: 64 * 1024 * 1024,
+        maxBuffer: MAX_OUTPUT_BYTES,
     });
     if (result.error)
     {
@@ -108,6 +109,16 @@ export function ApplyPatch(patch, path, workingDirectory)
         rmSync(patchFile, { force: true });
         RunGit(['reset', '--quiet', '--', path], workingDirectory, { allowFailure: true });
     }
+}
+
+const LINE_ENDING_RETURN = /\r\n/g;
+const NEWLINE = '\n';
+
+/** True when two texts match once line endings and edge whitespace are ignored. */
+export function SameText(left, right)
+{
+    const normalize = (text) => (text || '').replace(LINE_ENDING_RETURN, NEWLINE).trim();
+    return normalize(left) === normalize(right);
 }
 
 function lastLines(text)
