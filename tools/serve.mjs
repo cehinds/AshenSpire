@@ -50,7 +50,17 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawn, execFile } from 'node:child_process';
 import { sourceDigest, stampSource, readOrdinal, padOrdinal, VERSION_MODULE, RUN_PATH_SERVE } from './buildversion.mjs';
 import { saveFirstStepDefaults } from './prologue-editor-save.mjs';
-import { readStudioConfig, saveStudioScoring, saveStudioArtLayers, saveStudioItemArtLayers, saveStudioDecks, saveStudioSubclassCatalog } from './score-studio-save.mjs';
+import {
+  readStudioConfig,
+  readStudioSave,
+  saveStudioArtLayers,
+  saveStudioDecks,
+  saveStudioItemArtLayers,
+  saveStudioSave,
+  saveStudioScoring,
+  saveStudioSubclassCatalog,
+} from './score-studio-save.mjs';
+import { STUDIO_SAVE_DIR, STUDIO_SAVE_ENDPOINT, STUDIO_SAVE_MAX_BYTES } from './score-studio/studioSaveFiles.js';
 import { artPath, packTreeOf, HIGH_TREE } from './art-source.mjs';
 import { authoringRoot, compositeSourcePath, isAuthoringFile } from './art-authoring.mjs';
 import { existsSync, readdirSync, statSync, watch as fsWatch } from 'node:fs';
@@ -108,7 +118,7 @@ const BUILD_ORDER = ['config-build.mjs', 'tokens-css.mjs', 'hud-layout-css.mjs',
  * The Score Studio's own Save files (SS-003). They live under content/source/ but are not
  * game content: no build reads them, so a Save there owes no build and no page reload.
  */
-export const STUDIO_SAVE_DIR = 'content/source/studio';
+export { STUDIO_SAVE_DIR };
 const STUDIO_SAVE_DIR_PREFIX = `${STUDIO_SAVE_DIR}/`;
 
 export function isStudioSavePath(relativePath)
@@ -468,7 +478,7 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, editorWrite =
         } catch (error) { reply(400, { ok: false, error: error.message }); }
         return;
       }
-      if (urlPath === '/__studio/config' || urlPath === '/__studio/scoring' || urlPath === '/__studio/art-layers' || urlPath === '/__studio/item-art-layers' || urlPath === '/__studio/custom-decks' || urlPath === '/__studio/subclass-catalog') {
+      if (urlPath === '/__studio/config' || urlPath === '/__studio/scoring' || urlPath === '/__studio/art-layers' || urlPath === '/__studio/item-art-layers' || urlPath === '/__studio/custom-decks' || urlPath === '/__studio/subclass-catalog' || urlPath === STUDIO_SAVE_ENDPOINT) {
         const remote = req.socket.remoteAddress || '';
         const local = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(remote);
         const host = req.headers.host || '';
@@ -486,12 +496,24 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, editorWrite =
           } catch (error) { reply(400, { ok: false, error: error.message }); }
           return;
         }
+        if (urlPath === STUDIO_SAVE_ENDPOINT && req.method === 'GET')
+        {
+          try
+          {
+            reply(200, { ok: true, ...readStudioSave(rootResolved) });
+          }
+          catch (error)
+          {
+            reply(400, { ok: false, error: error.message });
+          }
+          return;
+        }
         if (!editorWrite) { reply(403, { ok: false, error: 'Score Studio repo writes require --editor-write (launch via `npm run studio`).' }); return; }
         if (req.method !== 'POST' || req.headers.origin !== `http://${host}` || !String(req.headers['content-type']).startsWith('application/json')) {
           reply(403, { ok: false, error: 'Save must come from the local Score Studio.' }); return;
         }
         try {
-          const maxBytes = ['/__studio/custom-decks', '/__studio/subclass-catalog'].includes(urlPath) ? 4 * 1024 * 1024 : 1048576;
+          const maxBytes = urlPath === STUDIO_SAVE_ENDPOINT ? STUDIO_SAVE_MAX_BYTES : ['/__studio/custom-decks', '/__studio/subclass-catalog'].includes(urlPath) ? 4 * 1024 * 1024 : 1048576;
           const chunks = []; let size = 0;
           for await (const chunk of req) {
             size += chunk.length;
@@ -499,7 +521,11 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, editorWrite =
             chunks.push(chunk);
           }
           const body = JSON.parse(Buffer.concat(chunks).toString('utf8'));
-          if (urlPath === '/__studio/subclass-catalog') {
+          if (urlPath === STUDIO_SAVE_ENDPOINT)
+          {
+            reply(200, { ok: true, ...saveStudioSave(rootResolved, body) });
+          }
+          else if (urlPath === '/__studio/subclass-catalog') {
             reply(200, { ok: true, ...saveStudioSubclassCatalog(rootResolved, body) });
           } else if (urlPath === '/__studio/scoring') {
             reply(200, { ok: true, ...saveStudioScoring(rootResolved, body) });
@@ -510,7 +536,7 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, editorWrite =
           } else {
             reply(200, { ok: true, ...saveStudioArtLayers(rootResolved, body) });
           }
-        } catch (error) { reply(400, { ok: false, error: error.message }); }
+        } catch (error) { reply(error.statusCode || 400, { ok: false, error: error.message }); }
         return;
       }
       const rel = normalize(urlPath).replace(/^([/\\]|\.\.([/\\]|$))+/, '').split(sep).join('/');

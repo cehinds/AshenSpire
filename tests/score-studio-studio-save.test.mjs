@@ -6,12 +6,16 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync, mkdirSync, writeFileSync, readFileSync, existsSync, readdirSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { request as httpRequest } from 'node:http';
+import { serve } from '../tools/serve.mjs';
 import { readStudioSave, saveStudioSave, STUDIO_SAVE_STALE_MESSAGE } from '../tools/score-studio-save.mjs';
 import {
   STUDIO_SAVE_DIR,
+  STUDIO_SAVE_ENDPOINT,
   STUDIO_SAVE_FILES,
   STUDIO_SAVE_FILE_NAMES,
   STUDIO_SAVE_FORMAT_VERSION,
+  STUDIO_SAVE_MAX_BYTES,
   studioSaveDocument,
 } from '../tools/score-studio/studioSaveFiles.js';
 
@@ -236,5 +240,142 @@ test('studio save: a symbolic link on the save path is refused', (context) =>
     {
       rmSync(outside, { recursive: true, force: true });
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The endpoint, through the real server in this process.
+// ---------------------------------------------------------------------------
+
+const LOOPBACK = '127.0.0.1';
+const JSON_TYPE = 'application/json';
+const TEXT_TYPE = 'text/plain';
+const HTTP_OK = 200;
+const HTTP_BAD_REQUEST = 400;
+const HTTP_FORBIDDEN = 403;
+
+async function withServer(options, run)
+{
+  return withTempRepoAsync(async (root) =>
+  {
+    const { server, port } = await serve({
+      root,
+      port: 0,
+      open: false,
+      quiet: true,
+      host: LOOPBACK,
+      ...options,
+    });
+    try
+    {
+      return await run({ root, port });
+    }
+    finally
+    {
+      server.closeAllConnections();
+      await new Promise((resume) => server.close(resume));
+    }
+  });
+}
+
+async function withTempRepoAsync(run)
+{
+  const root = mkdtempSync(join(tmpdir(), TEMP_PREFIX));
+  try
+  {
+    return await run(root);
+  }
+  finally
+  {
+    rmSync(root, { recursive: true, force: true });
+  }
+}
+
+function send(port, { method = 'GET', path = STUDIO_SAVE_ENDPOINT, body = null, origin = `http://${LOOPBACK}:${port}`, contentType = JSON_TYPE } = {})
+{
+  return new Promise((resolveReply, rejectReply) =>
+  {
+    const headers = { Origin: origin, 'Content-Type': contentType };
+    const request = httpRequest({ host: LOOPBACK, port, path, method, headers }, (response) =>
+    {
+      const chunks = [];
+      response.on('data', (chunk) => chunks.push(chunk));
+      response.on('end', () =>
+      {
+        const text = Buffer.concat(chunks).toString('utf8');
+        let json = null;
+        try
+        {
+          json = JSON.parse(text);
+        }
+        catch
+        {
+          json = { text };
+        }
+        resolveReply({ status: response.statusCode, json });
+      });
+    });
+    request.on('error', rejectReply);
+    request.end(body === null ? undefined : (typeof body === 'string' ? body : JSON.stringify(body)));
+  });
+}
+
+test('studio save endpoint: GET reads, POST saves the two fixed files and nothing else', async () =>
+{
+  await withServer({ editorWrite: true }, async ({ root, port }) =>
+  {
+    const loaded = await send(port);
+    assert.equal(loaded.status, HTTP_OK);
+    assert.equal(loaded.json.paths.cards, STUDIO_SAVE_FILES.cards.path);
+    const saved = await send(port, { method: 'POST', body: saveBody(loaded.json.revision) });
+    assert.equal(saved.status, HTTP_OK, JSON.stringify(saved.json));
+    assert.deepEqual(saved.json.written, [STUDIO_SAVE_FILE_NAMES.cards, STUDIO_SAVE_FILE_NAMES.artLayers]);
+    assert.deepEqual(readdirSync(studioDirOf(root)).sort(), ['artLayers.json', 'cards.json']);
+    assert.deepEqual(readdirSync(root).sort(), ['content']);
+    const stale = await send(port, { method: 'POST', body: saveBody(loaded.json.revision, 'Stale tab') });
+    assert.equal(stale.status, HTTP_CONFLICT);
+    assert.equal(stale.json.error, STUDIO_SAVE_STALE_MESSAGE);
+  });
+});
+
+test('studio save endpoint: paths, .. segments, extra keys, oversize bodies and foreign requests are refused', async () =>
+{
+  await withServer({ editorWrite: true }, async ({ root, port }) =>
+  {
+    const { revision } = (await send(port)).json;
+    const oversize = JSON.stringify({ ...saveBody(revision), padding: 'x'.repeat(STUDIO_SAVE_MAX_BYTES) });
+    const refusals = [
+      { method: 'POST', body: { ...saveBody(revision), path: 'package.json' }, status: HTTP_BAD_REQUEST },
+      { method: 'POST', body: { revision, files: { '../../package.json': cardsDocument() } }, status: HTTP_BAD_REQUEST },
+      { method: 'POST', path: `${STUDIO_SAVE_ENDPOINT}?path=../package.json`, body: { revision, files: { [STUDIO_SAVE_FILE_NAMES.cards]: { ...cardsDocument(), extra: true } } }, status: HTTP_BAD_REQUEST },
+      { method: 'POST', path: `${STUDIO_SAVE_ENDPOINT}/../package.json`, body: saveBody(revision), status: null },
+      { method: 'POST', body: oversize, status: HTTP_BAD_REQUEST },
+      { method: 'POST', body: saveBody(revision), origin: 'http://evil.example', status: HTTP_FORBIDDEN },
+      { method: 'POST', body: saveBody(revision), contentType: TEXT_TYPE, status: HTTP_FORBIDDEN },
+      { method: 'PUT', body: saveBody(revision), status: HTTP_FORBIDDEN },
+    ];
+    for (const { status, ...request } of refusals)
+    {
+      const reply = await send(port, request).catch(() => ({ status: 'unparsed' }));
+      if (status !== null)
+      {
+        assert.equal(reply.status, status, `${request.method} ${request.path || ''} ${String(request.body).slice(0, 60)}`);
+      }
+      assert.notEqual(reply.status, HTTP_OK);
+    }
+    assert.equal(existsSync(studioDirOf(root)), false, 'no request wrote a file');
+    assert.deepEqual(readdirSync(root), []);
+  });
+});
+
+test('studio save endpoint: without --editor-write the save is refused but the read works', async () =>
+{
+  await withServer({ editorWrite: false }, async ({ root, port }) =>
+  {
+    const loaded = await send(port);
+    assert.equal(loaded.status, HTTP_OK);
+    const refused = await send(port, { method: 'POST', body: saveBody(loaded.json.revision) });
+    assert.equal(refused.status, HTTP_FORBIDDEN);
+    assert.equal(existsSync(studioDirOf(root)), false);
   });
 });
