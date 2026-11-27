@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { DEFAULT_PACK, check, write, extract, plan } from '../tools/enemy-sheets.mjs';
+import { DEFAULT_PACK, check, write, extract, plan, WriteSheetIfUnchanged } from '../tools/enemy-sheets.mjs';
 
 const clone = () => {
   const dir = mkdtempSync(join(tmpdir(), 'enemy-sheets-'));
@@ -157,4 +157,50 @@ test('the write command refuses cardHints shadowed under behaviour and leaves th
     assert.match(result.stderr, /ashheartDragon\.json behaviour\/cardHints: author card hints under ai/);
     assert.deepEqual(files.map(file => readFileSync(join(dir, file))), bytes);
   } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('a sheet saved while --write runs keeps the saved text', () =>
+{
+    const dir = clone();
+    try
+    {
+        const sheetPath = join(dir, 'enemies', 'huskBrute.json');
+        const saveMidBuild = () =>
+        {
+            edit(dir, 'huskBrute', (sheet) =>
+            {
+                sheet.stats.poiseMax = 9;
+            });
+        };
+        const savedText = () => readFileSync(sheetPath, 'utf8');
+        const result = write(dir, { afterPlan: saveMidBuild });
+        assert.deepEqual(result.skipped, ['huskBrute.json']);
+        assert.equal(JSON.parse(savedText()).stats.poiseMax, 9);
+        const rerun = write(dir);
+        assert.deepEqual(rerun.skipped, []);
+        assert.equal(JSON.parse(savedText()).stats.poiseMax, 9);
+        assert.deepEqual(check(dir), []);
+    }
+    finally
+    {
+        rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('WriteSheetIfUnchanged leaves an unchanged file untouched and refuses a changed one', () =>
+{
+    const dir = mkdtempSync(join(tmpdir(), 'enemy-sheet-cas-'));
+    try
+    {
+        const path = join(dir, 'sheet.json');
+        writeFileSync(path, 'A\n');
+        assert.equal(WriteSheetIfUnchanged(path, 'A\n', 'B\n'), true);
+        assert.equal(readFileSync(path, 'utf8'), 'B\n');
+        assert.equal(WriteSheetIfUnchanged(path, 'A\n', 'C\n'), false);
+        assert.equal(readFileSync(path, 'utf8'), 'B\n');
+    }
+    finally
+    {
+        rmSync(dir, { recursive: true, force: true });
+    }
 });
