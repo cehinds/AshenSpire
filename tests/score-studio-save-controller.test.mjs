@@ -3,6 +3,7 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   ClearStudioSaveFiles,
   CreateStudioSave,
@@ -635,3 +636,14 @@ test('studio save: deleting a saved card back to the game baseline still counts 
     await unsavedUi.loadSavedFiles();
     assert.equal(unsavedUi.hasUnsavedChanges(), false, 'no save files, nothing unsaved');
   });
+
+test('studio save: Revert to in-game is stored as a draft, so a reload keeps it', () =>
+{
+  const studioUrl = new URL('../tools/score-studio/studio.js', import.meta.url);
+  const source = readFileSync(studioUrl, 'utf8');
+  const start = source.indexOf('async function revertToRepo()');
+  const end = source.indexOf('
+}', start);
+  assert.ok(start > 0 && end > start);
+  assert.match(source.slice(start, end), /writeDraftNow\(\);/);
+});

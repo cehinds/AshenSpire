@@ -4371,7 +4371,8 @@ async function revertToRepo() {
   state.artLayers = clone(state.repoArtLayers);
   state.itemArtLayers = clone(state.repoItemArtLayers);
   syncAllViews();
-  refreshDirtyStatus();
+  // Keeps the revert as a draft when it differs from the Studio save files; refreshes status.
+  writeDraftNow();
   toast(reloaded ? 'Reverted to the repo version' : 'Reverted to the last loaded repo copy (server offline)');
 }
 
