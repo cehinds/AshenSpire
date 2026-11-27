@@ -28,7 +28,11 @@ import { applyRunShape } from '../model/floorplan.js';
 import { MAP_SHAPE_LIMITS, LEGACY_ACT_BOSSES } from '../content/mapconfig.js';
 import { defaultSeatOrder, encounterFitsSeat, finalTier } from '../model/seats.js';
 import { bossDestinationLabel } from '../model/bossDestinationLabels.js';
-import { RouteFloorTypeProblems, PinnedFloorTypes } from '../../engine/kernel/routeFloorTypes.js';
+import {
+  RouteFloorTypeProblems,
+  PinnedFloorTypes,
+  BranchFullDepth,
+} from '../../engine/kernel/routeFloorTypes.js';
 
 /**
  * buildActMap(registries, rng, act, mapShape, { history }) → mapGraph
@@ -264,7 +268,7 @@ function drawBranchShape(rng, lanes, count, forkPercent = FORK_PERCENT) {
   const width = lanes >= 3 && rng.chance('map', 50) ? 2 : 1;
   const lo0 = rng.int('map', Math.floor((lanes - width) / 2), Math.ceil((lanes - width) / 2));
   active[2] = { lo: lo0, hi: lo0 + width - 1 };
-  const fillBy = Math.max(3, count - 3);
+  const fillBy = BranchFullDepth(count);
   for (let floor = 2; floor < count; floor++) {
     const { lo, hi } = active[floor], next = { lo, hi };
     if (floor < fillBy) {

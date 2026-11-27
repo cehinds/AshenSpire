@@ -14,12 +14,29 @@ import { createRunState } from '../src/model/state.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import { createRng } from '../src/engine/rng.js';
 
-const ACTS = [1, 2, 3];
-const SEEDS = [1, 2, 3, 4, 5, 6, 7, 8];
+const ACTS = [
+  1,
+  2,
+  3,
+];
+const SEEDS = [
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+];
 const SHOP_DEPTH = 4;
 const ELITE_DEPTH = 8;
 const PINNED = { [SHOP_DEPTH]: 'shop', [ELITE_DEPTH]: 'elite' };
 const FLOOR_TYPES_PATH = '$/modules/routes/floorTypes';
+// Core lanes are all open on depths 8 and 9; pinning both away leaves a lane no elite floor.
+const NO_LANE_ELITE = { 3: 'shop', 4: 'event', 8: 'fight', 9: 'fight', 10: 'fight' };
+const ONE_FREE_ELITE_FLOOR = { 3: 'shop', 4: 'event', 8: 'fight', 10: 'fight' };
+const LANE_ID = /^n(\d+)_(\d+)$/;
 // Core maps of seeds 3 and 7 (acts 1 and 3) rolled before floorTypes existed (dev 72a5ca42565).
 // A retune of routes.json or the boss roster moves them: reprint with PRINT_GOLDEN=1.
 const GOLDEN = {
@@ -104,6 +121,36 @@ test('without floorTypes a known seed rolls the same Core map and the same draws
   }
   if (process.env.PRINT_GOLDEN) console.log(JSON.stringify(got));
   assert.deepEqual(got, GOLDEN);
+});
+
+function LaneTypes(map)
+{
+  const lanes = new Map();
+  for (const node of Object.values(map.nodes))
+  {
+    const match = LANE_ID.exec(node.id);
+    if (!match || node.branch == null || node.actualType === 'rest') continue;
+    const lane = `${node.branch}:${match[2]}`;
+    if (!lanes.has(lane)) lanes.set(lane, new Set());
+    lanes.get(lane).add(node.actualType);
+  }
+  return lanes;
+}
+
+test('every lane keeps its elite when pins leave it one free floor', () =>
+{
+  const core = SetupCore({ floorTypes: ONE_FREE_ELITE_FLOOR });
+  for (const seed of SEEDS) for (const act of ACTS)
+  {
+    const { map } = BuildMap(core, seed, act);
+    for (const [lane, types] of LaneTypes(map))
+    {
+      assert.ok(types.has('elite'), `seed ${seed} act ${act} lane ${lane} has an elite`);
+    }
+  }
+  const refusal = /leaves a lane no floor for its elite\. Keep one of depths 8, 9 unpinned/;
+  const isLaneError = error => error.path === FLOOR_TYPES_PATH && refusal.test(error.message);
+  assert.throws(() => SetupCore({ floorTypes: NO_LANE_ELITE }), isLaneError);
 });
 
 const INVALID = [

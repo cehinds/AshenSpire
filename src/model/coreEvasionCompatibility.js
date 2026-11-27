@@ -194,7 +194,7 @@ const COMPATIBLE_HOST_RUNTIMES = new Set([
   // Enemy level scaling (spCap in engine/kernel/gameConfig.js) moves the host runtime; prior saves keep their own rules.
   'sha256:659730689c3f0675a28b5ecbf6ef6c2bcbefa32b77c4794a5a5f9c14f0b8f07d',
   // routes.floorTypes (engine/kernel/routeFloorTypes.js) moves the host runtime; prior saves pin nothing.
-  'sha256:1fd96cc771d43fb06347ec0df872c72aec68cdad7e1ca596bb9f75e4ff9a166f',
+  'sha256:aa731d8bf66b99c950bcb4f80216a0375f491455fd26c3c11e80f8ebe07d0b28',
 ]);
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return COMPATIBLE_HOST_RUNTIMES.has(currentRuntime)
