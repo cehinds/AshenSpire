@@ -175,7 +175,14 @@ export function initCardEditorDock(ctx) {
   }
   const entityHead = doc.createElement('div'); entityHead.className = 'customization-entity-head';
   entityHead.append(entityHeading);
-  entity.append(entityHead, scope, previewBody);
+  // Filters never change the active entity. When they hide it, one short line says so and clears them.
+  const filterNote = doc.createElement('p'); filterNote.id = 'customization-filter-note'; filterNote.className = 'customization-filter-note'; filterNote.hidden = true;
+  const filterNoteText = doc.createElement('span'); filterNoteText.textContent = 'Hidden by current filters';
+  const filterNoteSep = doc.createElement('span'); filterNoteSep.setAttribute('aria-hidden', 'true'); filterNoteSep.textContent = ' · ';
+  const clearFilters = button('Clear', () => { ctx.clearFilters?.(context); showLibrary(context); }, 'customization-filter-clear');
+  clearFilters.id = 'customization-filter-clear'; clearFilters.setAttribute('aria-label', 'Clear filters');
+  filterNote.append(filterNoteText, filterNoteSep, clearFilters);
+  entity.append(entityHead, filterNote, scope, previewBody);
   const content = doc.createElement('div'); content.id = 'customization-content';
   const slots = Object.fromEntries(VIEWS.map(id => {
     const slot = doc.createElement('div'); slot.className = 'customization-view'; slot.dataset.customizationView = id; content.append(slot); return [id, slot];
@@ -385,6 +392,10 @@ export function initCardEditorDock(ctx) {
     for (const [key, node] of Object.entries(properties)) if (node) node.hidden = key !== context || !valid;
     for (const [key, node] of Object.entries(previews)) if (node) node.hidden = key !== context || !valid;
     rename.disabled = balance.disabled = !valid;
+    const filteredOut = valid && ctx.isHiddenByFilters?.(context, selectedId(context)) === true;
+    filterNote.hidden = !filteredOut;
+    filterNote.title = `The current filters hide this ${noun} in the library. It stays active and editable.`;
+    clearFilters.title = `Clear the ${noun} filters and show this ${noun} in the library`;
     placeQuickFields();
     for (const nav of navs) {
       const navName = isValid(nav.key) ? nameOf(nav.key) || selectedId(nav.key) : 'none';

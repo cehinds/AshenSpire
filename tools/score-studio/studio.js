@@ -1528,8 +1528,18 @@ function renderCardsGrid() {
 // state.selectedItemKey. An id that is gone gives the empty state, never the first card.
 // Filters never call them. Content changes reconcile through them in syncAllViews.
 const activeEntities = createActiveEntities({ state });
-// The ids each gallery shows, in displayed order, as of its last render.
-const displayedIds = { cards: [], items: [] };
+// The ids each gallery shows, in displayed order, as of its last render (null before the first).
+const displayedIds = { cards: null, items: null };
+
+// Filters never change the active entity; this only says whether they hide its tile.
+function isHiddenByFilters(kind, id) {
+  return Boolean(id) && Array.isArray(displayedIds[kind]) && !displayedIds[kind].includes(id);
+}
+
+// The banner's Clear: every filter of that gallery back to All, then one re-render.
+function clearGalleryFilters(kind) {
+  if (kind === 'items') { resetItemFilters(); renderItemsGrid(); } else { resetCardFilters(); renderCardsGrid(); }
+}
 const pendingReveal = new Set();
 
 function activeTile(kind) {
@@ -4445,6 +4455,12 @@ function resetCardFilters() {
   updateFilterCount();
 }
 
+function resetItemFilters() {
+  document.getElementById('item-filter-search').value = '';
+  for (const id of ['item-filter-kind', 'item-filter-rarity', 'item-filter-rank', 'filter-item-deck']) document.getElementById(id).value = 'all';
+  updateItemFilterCount();
+}
+
 function updateItemFilterCount() {
   const count = ['item-filter-kind', 'item-filter-rarity', 'item-filter-rank', 'filter-item-deck'].filter(id => document.getElementById(id).value !== 'all').length
     + Number(document.getElementById('item-filter-sort').value !== 'rank-desc');
@@ -4666,7 +4682,7 @@ function wireEvents() {
     const removed = state.cards[idx], plan = removeAddedCardsFromState(state, [removed.id]);
     if (!plan.removedIds.length) { toast('Original cards are protected.'); return; }
     // The next card in displayed order (else the one before), named in the toast.
-    const nextId = nextInDisplayedOrder(displayedIds.cards, removed.id, state.cards.map((c) => c.id));
+    const nextId = nextInDisplayedOrder(displayedIds.cards || [], removed.id, state.cards.map((c) => c.id));
     pushHistory();
     Object.assign(state, plan.nextState);
     studioCardOverrides.delete(removed.id);
@@ -5389,6 +5405,8 @@ async function boot() {
     balanceItem: key => studioToolsUi.openBalanceItems([key]),
     views: { design: document.getElementById('tab-art'), weights: document.getElementById('tab-weights'), decks: () => deckListPanelUi?.element },
     renderContextFields,
+    isHiddenByFilters,
+    clearFilters: clearGalleryFilters,
     // A context change from inside the dock (its Undock or resize controls) moves the gallery with it.
     onContextChange: kind => showGallery(kind),
     onViewChange: view => { if (view === 'design') renderArtTab(); else if (view === 'weights') renderWeights(); else if (view === 'decks') deckListPanelUi?.refresh(); },
