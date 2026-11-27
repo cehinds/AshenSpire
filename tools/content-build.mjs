@@ -605,6 +605,13 @@ function sweepAssets(assetsRoot, bundle) {
  * the plain-data card pools) — so both edges are stray: a *.csv/*.json one
  * level UP (beside source/) and one level DEEP (a subfolder inside source/).
  */
+/**
+ * The Score Studio's own Save files (SS-003, docs/score-studio/stories/SS-003-studio-save.md).
+ * They live in content/source/studio/ but are not game content: no compile reads them and the
+ * game never imports them. Only these exact names pass the sweep; anything else there is stray.
+ */
+const STUDIO_SAVE_FILES = Object.freeze(['cards.json', 'artLayers.json', 'templates.json']);
+
 function sweepStraySources(contentRoot) {
   const errors = [];
   // content/framework/ is the SECOND authored tree, owned by
@@ -632,6 +639,7 @@ function sweepStraySources(contentRoot) {
       else if (/\.json$/i.test(ent.name) && abs.startsWith(configDir + sep)) continue;
       else if (/\.json$/i.test(ent.name) && dir === join(contentRoot, 'source', 'cards')) continue;
       else if (/\.json$/i.test(ent.name) && dir === join(contentRoot, 'source', 'mechanics')) continue;
+      else if (dir === join(contentRoot, 'source', 'studio') && STUDIO_SAVE_FILES.includes(ent.name)) continue;
       else if (/\.json$/i.test(ent.name) && dir === hudLayoutDir) {
         if (!HUD_FORM_FACTORS.includes(ent.name.replace(/\.json$/i, ''))) {
           errors.push(`content/hud-layout/${ent.name}: STRAY SOURCE FILE — tools/hud-layout-css.mjs reads only ${HUD_FORM_FACTORS.map((name) => `${name}.json`).join(', ')}; this file compiles to nothing`);
@@ -1085,6 +1093,28 @@ async function selftest() {
       let nonArray = '';
       try { compileDir(join(c, 'source'), out, { write: false }); } catch (e) { nonArray = e.message; }
       ok(nonArray.includes('cards/okCards.json') && nonArray.includes('JSON array'), `K14-cards [S2 m3] a card pool that is not an array — file named: ${nonArray || 'NOT CAUGHT'}`);
+    }
+    {
+      // K14-studio — content/source/studio/ holds the Score Studio's own Save
+      // files (SS-003). Exactly the named files pass the sweep; any other file
+      // there is still stray by name, and the compile reads none of them.
+      const c = join(tmp, 'content-studio');
+      mkdirSync(join(c, 'source', 'studio', 'sub'), { recursive: true });
+      writeFileSync(join(c, 'source', 'ok.csv'), 'a,b\n1,2\n');
+      for (const name of STUDIO_SAVE_FILES) writeFileSync(join(c, 'source', 'studio', name), '{"kind":"x","formatVersion":1}\n');
+      writeFileSync(join(c, 'source', 'studio', 'extra.json'), '{}\n');
+      writeFileSync(join(c, 'source', 'studio', 'cards.csv'), 'a,b\n1,2\n');
+      writeFileSync(join(c, 'source', 'studio', 'sub', 'cards.json'), '{}\n');
+      const r = sweepStraySources(c);
+      const named = ['studio/extra.json', 'studio/cards.csv', 'studio/sub/cards.json'].every((rel) => r.some((m) => m.includes(`content/source/${rel}`)));
+      const allowedClean = STUDIO_SAVE_FILES.every((name) => !r.some((m) => m.includes(`content/source/studio/${name}`)));
+      const swept = r.length === 3 && named && allowedClean;
+      ok(swept, `K14-studio [S2 m5] content/source/studio/: ${STUDIO_SAVE_FILES.join(', ')} pass; extra.json, cards.csv and sub/cards.json each red by name${swept ? '' : ` (got ${r.length}: ${r.join(' | ') || 'none'})`}`);
+      const out = join(tmp, 'out-studio');
+      const cr = compileDir(join(c, 'source'), out, { write: true });
+      const readStudio = cr.results.some((row) => /studio/.test(row.file)) || [...cr.parsed.keys()].some((key) => /studio/.test(key));
+      const emitted = readdirSync(out, { recursive: true }).map(String);
+      ok(!readStudio && emitted.length === 1 && emitted[0] === 'ok.js', `K14-studio [S2 m4] the compile reads nothing from content/source/studio/ (emitted: ${emitted.join(', ') || 'none'})`);
     }
     {
       // K14-notes — a "$note" key in a source (src/content/noteKeys.js) compiles
