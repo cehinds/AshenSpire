@@ -1,0 +1,68 @@
+// routes.floorTypes (owner, 2026-11-27): pins every node on a depth to one room type, like
+// firstFloor pins depth 1. One table for every act; the map build and the resolver share it.
+const ELITE_TYPE = 'elite';
+const UNPINNABLE_TYPES = ['rest', 'boss'];
+const WHOLE_NUMBER = /^[0-9]+$/;
+const SHAPE_PROBLEM = 'floorTypes must map a depth to a room type, like { "4": "shop" }';
+
+function isPlainObject(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+// The depths a rest can land on: the authored ones, plus the restFloorSpread window of each rest
+// that PlaceRestFloors may move (src/engine/actmap.js). Depth 1 and the pre-boss depth never move.
+function possibleRestDepths(routes) {
+  const authored = routes.restFloors || [];
+  const depths = new Set(authored);
+  if (!routes.restGap) return depths;
+  const spread = routes.restFloorSpread || 0;
+  for (const floor of authored) {
+    if (floor === 1 || floor === routes.prebossNodes) continue;
+    for (let depth = floor - spread; depth <= floor + spread; depth++) depths.add(depth);
+  }
+  return depths;
+}
+
+function floorTypeProblem(depthKey, type, context) {
+  const { routes, alternatives, restDepths } = context;
+  const lastDepth = routes.prebossNodes;
+  const depth = Number(depthKey);
+  const wholeNumber = WHOLE_NUMBER.test(depthKey);
+  if (!wholeNumber || depth < 1 || depth > lastDepth) {
+    return `depth "${depthKey}" must be a whole number from 1 to ${lastDepth}`;
+  }
+  if (UNPINNABLE_TYPES.includes(type)) {
+    return `depth ${depth} cannot be "${type}". Rests come from restFloors and the boss is last`;
+  }
+  if (!alternatives.includes(type)) {
+    return `depth ${depth}: "${type}" is not a room type this route uses`;
+  }
+  if (restDepths.has(depth)) return `depth ${depth} is or can become a rest floor`;
+  if (type === ELITE_TYPE && depth < routes.minimumThreatFloor) {
+    return `depth ${depth}: an elite needs depth ${routes.minimumThreatFloor} or later`;
+  }
+  const firstFloor = routes.firstFloor ?? null;
+  if (depth === 1 && firstFloor !== null) return 'depth 1 is already set by firstFloor';
+  return null;
+}
+
+// Every problem with routes.floorTypes, as plain sentences. Absent, null or {} has none.
+// `alternatives` are the route's room types without rest and boss.
+export function RouteFloorTypeProblems(routes, alternatives) {
+  const floorTypes = routes.floorTypes ?? null;
+  if (floorTypes === null) return [];
+  if (!isPlainObject(floorTypes)) return [SHAPE_PROBLEM];
+  const context = { routes, alternatives, restDepths: possibleRestDepths(routes) };
+  const problems = [];
+  for (const [depthKey, type] of Object.entries(floorTypes)) {
+    const problem = floorTypeProblem(depthKey, type, context);
+    if (problem !== null) problems.push(problem);
+  }
+  return problems;
+}
+
+// The pinned depths as a Map of depth number to room type; empty when floorTypes is absent.
+export function PinnedFloorTypes(floorTypes) {
+  if (!isPlainObject(floorTypes)) return new Map();
+  return new Map(Object.entries(floorTypes).map(([depthKey, type]) => [Number(depthKey), type]));
+}
