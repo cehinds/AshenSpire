@@ -99,3 +99,32 @@ test('scoring validation: multiplier on a cost, effect or status must be a boole
     assert.deepEqual(ValidateScoringConfig(bad), [`${section}.${key}.multiplier must be true or false.`]);
   }
 });
+
+// No shipped data uses the multiplier form, so every card and item keeps its raw, CP, rank and parts.
+test('multiplier form: the shipped scoring scores every authored card and item as before', async () => {
+  const { scoring } = await import('../src/content/generated/scoring.js');
+  const { cardCombatPower, itemCombatPower } = await import('../src/content/generated/combatPower.js');
+  const { buildTable, itemFaces } = await import('../tools/combat-power-report.mjs');
+  const { registries } = await import('../tools/lib/cardBudgetMeasure.mjs');
+  const { CardDefinitionToScoreFace } = await import('../src/model/cardUpgradeCp.js');
+  const { ScoreItem } = await import('../src/model/combatPower.js');
+  for (const section of ['costs', 'effects', 'statuses']) {
+    for (const [id, entry] of Object.entries(scoring[section])) assert.ok(!(entry && 'multiplier' in entry), `${section}.${id} ships without multiplier`);
+  }
+  // The generated table was written before the multiplier form existed: the scorer still reproduces it exactly.
+  const table = buildTable();
+  assert.deepEqual(table.cardCombatPower, cardCombatPower);
+  assert.deepEqual(table.itemCombatPower, itemCombatPower);
+  // Spelling the default out (multiplier: false everywhere) changes no part of any card or item.
+  const explicit = structuredClone(scoring);
+  for (const section of ['costs', 'effects', 'statuses']) for (const entry of Object.values(explicit[section])) if (entry && typeof entry === 'object') entry.multiplier = false;
+  let cards = 0;
+  for (const def of registries.cards.all()) {
+    const f = CardDefinitionToScoreFace(def, { scoring });
+    assert.deepEqual(ScoreCard(f, explicit), ScoreCard(f, scoring), def.id);
+    cards++;
+  }
+  const { items, rules } = itemFaces();
+  for (const it of items) assert.deepEqual(ScoreItem(it, explicit, rules), ScoreItem(it, scoring, rules), `${it.kind}:${it.id}`);
+  assert.ok(cards > 100 && items.length > 100, `${cards} cards, ${items.length} items`);
+});
