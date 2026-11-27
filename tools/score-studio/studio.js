@@ -69,6 +69,42 @@ import {
   SelectionOptions,
 } from './workingContext.js';
 
+// Fallback weights when scoring.json has no effectCount or drawbackCount block.
+const COUNT_RULE_FALLBACKS = Object.freeze({
+  effectCount: 5,
+  drawbackCount: -5,
+});
+const COUNT_RULE_FLAT_STEP = 1;
+const COUNT_RULE_MULTIPLIER_STEP = 0.05;
+
+/** One Weights row for a count rule (effectCount, drawbackCount): weight, multiplier and on/off. */
+function CountRuleRow(state, R, id, label)
+{
+  const rule = () => (state.scoring[id] ||= {});
+  const fallback = COUNT_RULE_FALLBACKS[id];
+  const isMultiplier = state.scoring[id]?.multiplier === true;
+  return {
+    id,
+    label,
+    val: state.scoring[id]?.weight ?? fallback,
+    base: R[id]?.weight ?? fallback,
+    step: isMultiplier
+      ? COUNT_RULE_MULTIPLIER_STEP
+      : COUNT_RULE_FLAT_STEP,
+    set: (n) => { rule().weight = n; },
+    mult: {
+      value: isMultiplier,
+      base: R[id]?.multiplier === true,
+      set: (on) => { SetWeightForm(rule(), R[id], on); },
+    },
+    surcharge: {
+      value: state.scoring[id]?.surchargeEnabled !== false,
+      base: R[id]?.surchargeEnabled !== false,
+      set: (on) => { rule().surchargeEnabled = Boolean(on); },
+    },
+  };
+}
+
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
 const AB_STORAGE_KEY = 'ashenspire:scoreStudioAB:v1';
 // Saved name sets (Rename all), kept apart from the draft so they survive a clean or exported draft.
@@ -2482,7 +2518,8 @@ function scoreMathTableHtml(sc) {
     if (k === 'block') return `${sc.face.blk} final (authored ${sc.face._meta?.authoredBlk ?? sc.face.blk}) × ${S.effects.block.weight}/${S.effects.block.per}`;
     if (k === 'poise') return `${sc.face.poise} Poise × ${S.effects.poiseDamage.weight}/${S.effects.poiseDamage.per}${area > 1 ? ` × ${area} AoE` : ''}`;
     if (k.startsWith('category:')) { const w = S.categories?.[k.slice(9)]; return w?.multiplier ? `×${w.weight} of positive score` : `${capitalise(k.slice(9))} flat`; }
-    if (k === 'effect count') return `multi-effect bonus (+${S.effectCount?.weight ?? 5}/extra)`;
+    if (k === 'effect count') return `multi-effect bonus (+${S.effectCount?.weight ?? COUNT_RULE_FALLBACKS.effectCount}/extra)`;
+    if (k === 'drawback count') return `drawback cost (${S.drawbackCount?.weight ?? COUNT_RULE_FALLBACKS.drawbackCount}/drawback)`;
     if (S.keywords?.[k]) return S.keywords[k].flat !== undefined ? `flat ${S.keywords[k].flat}` : `×${S.keywords[k].multiplier}`;
     if (S.statuses?.[k]) return `status over ${S.model?.R || 3}R${area > 1 && S.statuses[k].target === 'enemy' ? ` × ${area} AoE` : ''}`;
     return 'weight';
@@ -2681,8 +2718,8 @@ function buildWeightGroups() {
       { id: 'unrankedMax', label: 'Unranked Max CP', val: state.scoring.rank.unrankedMax, base: R.rank?.unrankedMax, set: (n) => { state.scoring.rank.unrankedMax = n; } },
       { id: 'width', label: 'Band Width', val: state.scoring.rank.width, base: R.rank?.width, set: (n) => { state.scoring.rank.width = Math.max(1, n); } },
       { id: 'maxRank', label: 'Max Rank', val: state.scoring.rank.maxRank, base: R.rank?.maxRank, set: (n) => { state.scoring.rank.maxRank = Math.max(1, Math.round(n)); } },
-      { id: 'effectCount', label: 'Multi-Effect Bonus', val: state.scoring.effectCount?.weight ?? 5, base: R.effectCount?.weight ?? 5, step: state.scoring.effectCount?.multiplier === true ? 0.05 : 1, set: (n) => { (state.scoring.effectCount ||= {}).weight = n; },
-        mult: { value: state.scoring.effectCount?.multiplier === true, base: R.effectCount?.multiplier === true, set: (on) => { SetWeightForm(state.scoring.effectCount ||= {}, R.effectCount, on); } }, surcharge: { value: state.scoring.effectCount?.surchargeEnabled !== false, base: R.effectCount?.surchargeEnabled !== false, set: (on) => { (state.scoring.effectCount ||= {}).surchargeEnabled = Boolean(on); } } },
+      CountRuleRow(state, R, 'effectCount', 'Multi-Effect Bonus'),
+      CountRuleRow(state, R, 'drawbackCount', 'Drawback Cost'),
     ] },
     { key: 'categories', title: 'Categories', entries: CATEGORY_KEYS.map((k) => {
       const v = categoryWeight(state.scoring, k);
@@ -2880,7 +2917,7 @@ function buildWeightRow(g, r, appliedGroups, { compact = false } = {}) {
     const now = weightSentence(g.key, r.id, scoring, r.label);
     for (const part of row.querySelectorAll('.weight-sentence > .weight-words')) part.textContent = now[part.dataset.part];
     // Only a multiplier-form cost, effect, status, multi-effect bonus or tag reads the selected card's positive score.
-    const multForm = WEIGHT_FORM_GROUPS.has(g.key) ? scoring[g.key]?.[r.id]?.multiplier === true : (g.key === 'rank' && r.id === 'effectCount' && scoring.effectCount?.multiplier === true) || (g.key === 'tags' && scoring.tags?.[r.id]?.pMultiplier !== undefined);
+    const multForm = WEIGHT_FORM_GROUPS.has(g.key) ? scoring[g.key]?.[r.id]?.multiplier === true : (g.key === 'rank' && COUNT_RULE_FALLBACKS[r.id] !== undefined && scoring[r.id]?.multiplier === true) || (g.key === 'tags' && scoring.tags?.[r.id]?.pMultiplier !== undefined);
     const exampleText = weightExample(g.key, r.id, scoring, r.label, multForm ? exampleCard(scoring) : null);
     if (exampleEl) exampleEl.textContent = exampleText;
     // Compact rows beside the card keep only the value on the line; the full sentence and example are on hover.
