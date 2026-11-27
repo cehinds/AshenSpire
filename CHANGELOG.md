@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-27
 
-- **Game rules belong in config** ([#3028](https://github.com/cehinds/AshenSpire/pull/3028), `0.7.5.149`). `CODE-STYLE.md` now asks for rules, numbers and player text in config files instead of code. No game changes.
+- **Game rules belong in config** ([#3028](https://github.com/cehinds/AshenSpire/pull/3028), `0.7.5.151`). `CODE-STYLE.md` now asks for rules, numbers and player text in config files instead of code. No game changes.
 
 - **Set an enemy's HP directly** ([#3024](https://github.com/cehinds/AshenSpire/pull/3024), `0.7.5.149`). An enemy sheet can now set stats.hp, which replaces the HP its level and attributes give. Act and tier scaling still apply on top.
 - **Score Studio keeps one active card and item** ([#3019](https://github.com/cehinds/AshenSpire/pull/3019), `0.7.5.147`). Every panel follows the same card, filters never switch it, and reload brings it back.
