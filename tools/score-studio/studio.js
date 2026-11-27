@@ -1947,7 +1947,7 @@ function cardMenuActions() {
     { separator: true },
     { label: 'Edit card art', run: () => setCustomizationView('design') },
     { label: 'View or edit JSON…', run: () => openCardJson(def.id) },
-    { label: 'Export card JSON', hint: 'Download this card as an importable JSON file', run: () => downloadJsonFile(`${def.id}.json`, Object.fromEntries(Object.entries(def).filter(([key]) => !key.startsWith('_')))) },
+    { label: 'Export card JSON', hint: 'Download this card as an importable JSON file', run: () => downloadJsonFile(`${def.id}.json`, { name: def.name, cards: [Object.fromEntries(Object.entries(def).filter(([key]) => !key.startsWith('_')))] }) },
     { label: 'Undock', enabled: cardEditorDockUi?.isDocked?.() !== false, run: () => cardEditorDockUi?.open?.() },
   ];
 }
