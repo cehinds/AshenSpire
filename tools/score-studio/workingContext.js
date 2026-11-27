@@ -4,10 +4,14 @@ export const GalleryKind = Object.freeze({
   Cards: 'cards',
   Items: 'items',
 });
-export const GALLERIES = Object.freeze([GalleryKind.Cards, GalleryKind.Items]);
+
+export const Galleries = Object.freeze([
+  GalleryKind.Cards,
+  GalleryKind.Items,
+]);
 
 // View state only, kept apart from the draft, snapshots and Studio bundles.
-export const WORKING_CONTEXT_KEY = 'ashenspire:scoreStudioWorkingContext:v1';
+export const WorkingContextKey = 'ashenspire:scoreStudioWorkingContext:v1';
 
 // Each gallery tile's id data attribute, without the data- prefix.
 export const TileIdAttribute = Object.freeze({
@@ -33,22 +37,26 @@ export const GalleryEntity = Object.freeze({
   }),
 });
 
-const SelectedField = Object.freeze({
+export const DataAttributePrefix = 'data-';
+
+const selectedField = Object.freeze({
   [GalleryKind.Cards]: 'selectedCardId',
   [GalleryKind.Items]: 'selectedItemKey',
 });
 
-const DEFAULT_BURST_DELAY_MS = 1000;
-export const DATA_ATTRIBUTE_PREFIX = 'data-';
-const CLASS_SELECTOR_PREFIX = '.';
-const TABINDEX_ATTRIBUTE = 'tabindex';
-const FOCUSABLE_DESCENDANT_SELECTOR = 'button, [tabindex]';
-const CLASS_NAME_SEPARATOR = /\s+/;
+const defaultBurstDelayMs = 1000;
+
+const tileFocusSelectors = Object.freeze({
+  classPrefix: '.',
+  tabindexAttribute: 'tabindex',
+  focusableDescendant: 'button, [tabindex]',
+  classNameSeparator: /\s+/,
+});
 
 // One value per gallery kind, for per-gallery bookkeeping.
 export function PerGallery(value)
 {
-  return Object.fromEntries(GALLERIES.map(kind => [kind, value]));
+  return Object.fromEntries(Galleries.map(kind => [kind, value]));
 }
 
 export function ToGalleryKind(value)
@@ -67,17 +75,19 @@ export function FindGalleryEntity(state, kind, id)
 function isKnownEntity(state, kind, id)
 {
   const { list, idOf } = GalleryEntity[kind];
-  return id !== null && id !== undefined && list(state).some(entity => idOf(entity) === id);
+  const hasId = id !== null && id !== undefined;
+  return hasId && list(state).some(entity => idOf(entity) === id);
 }
 
 /** The one writer of the active card and item. A missing id gives null, never the first entity.
  * onChange runs once per real change. */
-export function createActiveEntities({ state, onChange } = {})
+export function CreateActiveEntities({ state, onChange } = {})
 {
   const committed = PerGallery(undefined);
+
   function set(kind, id)
   {
-    const field = SelectedField[kind];
+    const field = selectedField[kind];
     if (!field)
     {
       throw new Error(`Unknown entity kind '${kind}'`);
@@ -94,20 +104,23 @@ export function createActiveEntities({ state, onChange } = {})
     }
     return { id: next, changed };
   }
+
   // After a content change: keep a still-valid entity, clear a removed one.
   function reconcile()
   {
-    return GALLERIES.map(kind => set(kind, state[SelectedField[kind]]));
+    return Galleries.map(kind => set(kind, state[selectedField[kind]]));
   }
+
   function get(kind)
   {
-    return state[SelectedField[kind]] ?? null;
+    return state[selectedField[kind]] ?? null;
   }
+
   return { set, reconcile, get };
 }
 
 /** The next entity in displayed order, else the previous one. A hidden one uses the full order. */
-export function nextInDisplayedOrder(displayedIds, removedId, fullOrder = displayedIds)
+export function NextInDisplayedOrder(displayedIds, removedId, fullOrder = displayedIds)
 {
   const isDisplayed = (displayedIds || []).includes(removedId);
   const order = isDisplayed
@@ -122,14 +135,15 @@ export function nextInDisplayedOrder(displayedIds, removedId, fullOrder = displa
 }
 
 /** One undo step per typing burst. endAll lets an entity change end every open burst. */
-export function createEditBursts({
+export function CreateEditBursts({
   pushHistory,
-  delayMs = DEFAULT_BURST_DELAY_MS,
+  delayMs = defaultBurstDelayMs,
   setTimer = setTimeout,
   clearTimer = clearTimeout,
 } = {})
 {
   const openBursts = new Set();
+
   function create()
   {
     let timer = null;
@@ -153,6 +167,7 @@ export function createEditBursts({
     };
     return burst;
   }
+
   function endAll()
   {
     for (const burst of [...openBursts])
@@ -160,18 +175,20 @@ export function createEditBursts({
       burst.end();
     }
   }
+
   function openCount()
   {
     return openBursts.size;
   }
+
   return { create, endAll, openCount };
 }
 
-export function readWorkingContext(storage)
+export function ReadWorkingContext(storage)
 {
   try
   {
-    const raw = storage?.getItem(WORKING_CONTEXT_KEY);
+    const raw = storage?.getItem(WorkingContextKey);
     if (!raw)
     {
       return null;
@@ -188,12 +205,16 @@ export function readWorkingContext(storage)
   }
 }
 
-export function writeWorkingContext(storage, { gallery, cardId, itemKey })
+export function WriteWorkingContext(storage, { gallery, cardId, itemKey })
 {
-  const record = { gallery, cardId: cardId ?? null, itemKey: itemKey ?? null };
+  const record = {
+    gallery,
+    cardId: cardId ?? null,
+    itemKey: itemKey ?? null,
+  };
   try
   {
-    storage?.setItem(WORKING_CONTEXT_KEY, JSON.stringify(record));
+    storage?.setItem(WorkingContextKey, JSON.stringify(record));
   }
   catch
   {
@@ -202,7 +223,7 @@ export function writeWorkingContext(storage, { gallery, cardId, itemKey })
 }
 
 /** Reload restore: a stored id that is gone falls back to the existing default. */
-export function resolveWorkingContext(saved, state, defaults = {})
+export function ResolveWorkingContext(saved, state, defaults = {})
 {
   function pick(kind, stored, fallback)
   {
@@ -212,9 +233,10 @@ export function resolveWorkingContext(saved, state, defaults = {})
         ? fallback
         : null;
   }
-  const gallery = GALLERIES.includes(saved?.gallery)
+
+  const gallery = Galleries.includes(saved?.gallery)
     ? saved.gallery
-    : GALLERIES.includes(defaults.gallery)
+    : Galleries.includes(defaults.gallery)
       ? defaults.gallery
       : GalleryKind.Cards;
   return {
@@ -226,7 +248,7 @@ export function resolveWorkingContext(saved, state, defaults = {})
 
 function tileIdAttributeName(attribute)
 {
-  return `${DATA_ATTRIBUTE_PREFIX}${attribute}`;
+  return `${DataAttributePrefix}${attribute}`;
 }
 
 function tileIdSelector(attribute)
@@ -237,14 +259,15 @@ function tileIdSelector(attribute)
 // A focused part is found again by its first class, else by its tag.
 function focusedPart(element)
 {
-  const firstClass = String(element.className || '').split(CLASS_NAME_SEPARATOR).filter(Boolean)[0];
+  const classNames = String(element.className || '').split(tileFocusSelectors.classNameSeparator);
+  const firstClass = classNames.filter(Boolean)[0];
   return firstClass
-    ? `${CLASS_SELECTOR_PREFIX}${firstClass}`
+    ? `${tileFocusSelectors.classPrefix}${firstClass}`
     : element.tagName.toLowerCase();
 }
 
 /** Before a gallery re-render: which tile (by stable id) and which part of it had focus. */
-export function captureTileFocus(grid, attribute, doc = globalThis.document)
+export function CaptureTileFocus(grid, attribute, doc = globalThis.document)
 {
   const focused = doc?.activeElement;
   if (!grid || !focused || focused === grid || !grid.contains(focused))
@@ -266,7 +289,7 @@ export function captureTileFocus(grid, attribute, doc = globalThis.document)
 
 function isFocusableTile(tile)
 {
-  return tile.tabIndex >= 0 || tile.getAttribute(TABINDEX_ATTRIBUTE) !== null;
+  return tile.tabIndex >= 0 || tile.getAttribute(tileFocusSelectors.tabindexAttribute) !== null;
 }
 
 function focusTarget(tile, part, fallback)
@@ -282,11 +305,11 @@ function focusTarget(tile, part, fallback)
   {
     return tile;
   }
-  return tile?.querySelector(FOCUSABLE_DESCENDANT_SELECTOR) || fallback || null;
+  return tile?.querySelector(tileFocusSelectors.focusableDescendant) || fallback || null;
 }
 
 /** After the rebuild: focus the same tile or part, else the fallback; never the page body. */
-export function restoreTileFocus(
+export function RestoreTileFocus(
   grid,
   attribute,
   captured,

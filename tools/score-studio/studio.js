@@ -50,22 +50,22 @@ import { focusedEffectOptions } from './focusedRebalance.js';
 import { createAddCardTile, CaptureCardTilePositions, animateCardInsertion } from './addCardTile.js';
 import {
   GalleryKind,
-  GALLERIES,
+  Galleries,
   TileIdAttribute,
   TileIdDatasetKey,
   GalleryEntity,
   PerGallery,
   ToGalleryKind,
   FindGalleryEntity,
-  DATA_ATTRIBUTE_PREFIX,
-  createActiveEntities,
-  createEditBursts,
-  nextInDisplayedOrder,
-  readWorkingContext,
-  writeWorkingContext,
-  resolveWorkingContext,
-  captureTileFocus,
-  restoreTileFocus,
+  DataAttributePrefix,
+  CreateActiveEntities,
+  CreateEditBursts,
+  NextInDisplayedOrder,
+  ReadWorkingContext,
+  WriteWorkingContext,
+  ResolveWorkingContext,
+  CaptureTileFocus,
+  RestoreTileFocus,
 } from './workingContext.js';
 
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
@@ -1592,7 +1592,7 @@ function renderCardsGrid() {
 
 // selectStudioCard and selectStudioItem are the only writers of the active card and item.
 // A missing id gives the empty state, never the first card.
-const activeEntities = createActiveEntities({
+const activeEntities = CreateActiveEntities({
   state,
   onChange: () =>
   {
@@ -1609,7 +1609,7 @@ function saveWorkingContext()
   {
     return;
   }
-  writeWorkingContext(localStorage, {
+  WriteWorkingContext(localStorage, {
     gallery: activeGallery,
     cardId: state.selectedCardId,
     itemKey: state.selectedItemKey,
@@ -1653,7 +1653,7 @@ function beginGalleryRender(kind, grid, ids)
 {
   displayedIds[kind] = ids;
   return {
-    focused: captureTileFocus(grid, TileIdAttribute[kind]),
+    focused: CaptureTileFocus(grid, TileIdAttribute[kind]),
     scrollTop: grid.scrollTop,
   };
 }
@@ -1664,7 +1664,7 @@ function finishGalleryRender(kind, grid, { focused, scrollTop })
   {
     grid.scrollTop = scrollTop;
   }
-  restoreTileFocus(
+  RestoreTileFocus(
     grid,
     TileIdAttribute[kind],
     focused,
@@ -1675,7 +1675,7 @@ function finishGalleryRender(kind, grid, { focused, scrollTop })
 
 function galleryTileSelector(kind, id)
 {
-  return `.${GalleryTileClass[kind]}[${DATA_ATTRIBUTE_PREFIX}${TileIdAttribute[kind]}="${CSS.escape(id)}"]`;
+  return `.${GalleryTileClass[kind]}[${DataAttributePrefix}${TileIdAttribute[kind]}="${CSS.escape(id)}"]`;
 }
 
 function activeTile(kind)
@@ -2500,7 +2500,7 @@ function selectedCardDef() {
 }
 
 // One undo step per typing burst. A change of active entity ends every open burst.
-const editBursts = createEditBursts({ pushHistory: () => pushHistory(), delayMs: TEXT_EDIT_BURST_MS });
+const editBursts = CreateEditBursts({ pushHistory: () => pushHistory(), delayMs: TEXT_EDIT_BURST_MS });
 function createEditBurst()
 {
   return editBursts.create();
@@ -4788,7 +4788,7 @@ function wireEvents() {
         return;
       }
       const previousTab = document.querySelector(ACTIVE_STUDIO_TAB_SELECTOR)?.dataset.tab;
-      if (GALLERIES.includes(previousTab) && previousTab !== tab)
+      if (Galleries.includes(previousTab) && previousTab !== tab)
       {
         rememberGalleryScroll(previousTab);
       }
@@ -4893,7 +4893,7 @@ function wireEvents() {
     if (idx < 0 || !isAddedCard(state.cards[idx])) return;
     const removed = state.cards[idx], plan = removeAddedCardsFromState(state, [removed.id]);
     if (!plan.removedIds.length) { toast('Original cards are protected.'); return; }
-    const nextId = nextInDisplayedOrder(displayedIds[GalleryKind.Cards] || [], removed.id, state.cards.map((card) => card.id));
+    const nextId = NextInDisplayedOrder(displayedIds[GalleryKind.Cards] || [], removed.id, state.cards.map((card) => card.id));
     pushHistory();
     Object.assign(state, plan.nextState);
     studioCardOverrides.delete(removed.id);
@@ -5734,13 +5734,13 @@ async function boot() {
 // After boot: the stored gallery, card and item. A stored id that is gone falls back to the default.
 function restoreWorkingContext()
 {
-  const saved = readWorkingContext(localStorage);
+  const saved = ReadWorkingContext(localStorage);
   const defaults = {
     gallery: activeGallery,
     cardId: state.selectedCardId ?? state.cards[0]?.id,
     itemKey: state.selectedItemKey ?? state.items[0]?.key,
   };
-  const { gallery, cardId, itemKey } = resolveWorkingContext(saved, state, defaults);
+  const { gallery, cardId, itemKey } = ResolveWorkingContext(saved, state, defaults);
   selectStudioItem(itemKey);
   selectStudioCard(cardId);
   if (gallery !== activeGallery)
