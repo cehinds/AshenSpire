@@ -3757,12 +3757,39 @@ Owner decisions of 2026-11-15 (Ward and Barrier, "less confusing"). Presentation
 - **Bonus Poise display.** While current Poise is above the base maximum, the Poise bar's bonus part is blue and the number reads "8/8" in yellow followed by "+5" in blue, on the player's and enemies' HUDs.
 - **Gain and Restore.** "there should be a distinction between gain and restore. gain can exceed maximum, restore can go up to maximum." Gain may exceed the maximum; Restore stops at it. Any effect that only refills Poise up to its maximum reads "Restore N Poise". Mana and Stamina refills read "Restore", `gainEnergy` reads "Gain Stamina", the Ward pool refill reads "Restore N Ward", HP keeps Heal.
 - **Crystal Barrier** is renamed Crystal Aegis (card id unchanged).
-- **Spell costs.** Owner (2026-11-26): a card costs what it prints unless a modifier (a stance, a card effect, a feature effect) changes it. Both surcharges are off: `manaSurcharge: 0` (every spell cost 1 more Mana from 2026-11-15 to 2026-11-26) and `staminaSurcharge: 0` (owner 2026-11-23; it was 1 more Stamina on every non-cantrip, non-X spell from 2026-11-15). Prepared stance on a spell: Stamina is max(SP - 1, 1) and never rises (a 0 or 1 SP spell keeps its SP; `preparedStaminaMinimum: 1`), and Prepared itself takes no Mana (`preparedManaDiscount: 0`): Mana cuts in Prepared come from gear tags (a staff or robes: `spell@stance:prepared.cardMana=-1`) and from the Graduate same-stance cut; before 2026-11-26 Prepared took 1 Stamina off down to 0. Prepared still takes x1.25 melee damage (`stanceBenefits.prepared`). Current Focus gear (a sceptre or staff) also takes 1 Mana off only while Prepared (owner, 2026-11-18). Saved profiles with this spell-cost block but without gear type effects retain their earlier any-stance Focus discount. Prices floor at 0 and the cuts apply to the printed price (any surcharge in a saved fight first). Reaction spells follow the same rule (Frost Counter costs its printed 1 MP). Data: `spellCosts` in `content/source/fixCoreMechanics.json` (`manaSurcharge`, `staminaSurcharge`, `cantripTag`, `preparedStaminaDiscount`, `preparedStaminaMinimum`, `preparedManaDiscount`, `focusManaDiscount`), logic in `src/engine/spellCosts.js`; a fight or run saved without the block keeps the earlier prices, and one saved without the two optional Prepared keys keeps the old Prepared cut (Stamina to 0, no Mana).
-- **Card faces show the price paid.** Deck, rewards, shop and upgrade-picker faces outside a fight show the effective cost: the printed cost with always-on gear adjustments (and any surcharge a saved run still carries). Current Focus gear gives no discount outside combat because it requires Prepared; no Prepared Stamina discount applies either. Saved profiles with spell-cost rules but without gear type effects retain their earlier always-on Focus discount when equipped. `src/model/faceCosts.js`; a run without the `spellCosts` block shows printed costs.
+- **Spell costs.** A card costs what it prints unless a modifier changes it (a stance, a card
+  effect, a feature or gear effect).
+  - **Rules are data.** `spellCosts.rules` in `content/source/fixCoreMechanics.json` is an ordered
+    list. Each rule changes one resource (`stamina` or `mana`) by `change`, and can have:
+    - `enabled`: the on/off switch.
+    - `when`: a condition (`prepared`, `legacyFocusHeld`).
+    - `minimum` and `keepAtOrBelowMinimum`: a floor, and whether a price already at or under it
+      stays put.
+    - `skip`: card exceptions (`cantrip`, `manaOnly`, `xCost`), matched through `spellCosts.tags`.
+  - **Shipped rules.**
+    - `manaSurcharge` and `staminaSurcharge`: off.
+    - `preparedStamina`: on. In Prepared a spell costs max(SP − 1, 1); a 0 or 1 SP spell keeps its SP.
+    - `preparedMana`: off. Prepared itself takes no Mana.
+    - `legacyFocus`: −1 Mana with a Focus item, only for saved profiles without gear type effects.
+  - **Mana cuts in Prepared** come from gear tags (staff, robes:
+    `spell@stance:prepared.cardMana=-1`) and the Graduate same-stance cut.
+  - **Prepared** still takes ×1.25 melee damage (`stanceBenefits.prepared`).
+  - **Floors.** The final Stamina and Mana never go below 0; gear Mana rules apply after the spell rules.
+  - **Reactions** follow the same rules (Frost Counter costs its printed 1 MP).
+  - **Saved fights** keep their own rules: a version 1 block reads as the matching rule list, and a
+    fight without the block keeps printed prices.
+  - Code: `src/model/spellCostRules.js` (shape, validation, rule math) and `src/engine/spellCosts.js`
+    (conditions and card exceptions).
+- **Card faces show the price paid.** Deck, rewards, shop and upgrade-picker faces outside a fight
+  show the printed cost with always-on gear adjustments.
+  - No Prepared rule or Prepared-only gear tag applies outside a fight.
+  - Saved profiles without gear type effects keep their always-on Focus discount when equipped.
+  - Code: `src/model/faceCosts.js`. A run without the `spellCosts` block shows printed costs.
 - **Elemental flux.** Owner: casters get two stance icons, Prepared and the element they are casting. A spell with an element (fire, lightning, frost, divine, necrotic, force) sets the flux to it once its own effects resolve; every later card of that element this turn has its effect numbers (damage, Block, healing, status stacks) multiplied by x1.25 (`elementFlux.multiplier`), each floored ("chains while same element"). A non-elemental spell clears the flux and gets only the stance bonus; a non-spell card leaves it alone. The flux ends with the player's turn and the fight, and a Reaction on the enemy phase neither reads nor changes it. A fight saved without `elementFlux` has no flux. Logic: `src/engine/elementFlux.js`.
 - **Cantrip damage is halved back.** The x2 spell-damage bump (Wave 2 adjustments, batch 2) now applies to spells that are not cantrips; every `rank.cantrip` card, base and upgrade, deals its pre-doubling damage (floor, minimum 1). Statuses are unchanged.
-- **Mana Surge is a cantrip** (`rank.cantrip`): it pays no Stamina surcharge (1 SP) and costs its printed 0 MP since 2026-11-26 (it paid the +1 Mana surcharge before), so it restores 2 Mana for a net +2; its restore is unchanged.
-- **Mana is unchanged.** Owner: "Keep, no refill": no surcharge or new Mana refill applies and the existing Mana rules stand.
+- **Mana Surge is a cantrip** (`rank.cantrip`): it costs its printed 1 SP and 0 MP and restores
+  2 Mana, a net +2.
+- **Mana is unchanged.** No new Mana refill applies; the existing Mana rules stand.
 - **Divine Smite is in the quote.** A divine hit that breaks Poise also deals half the hit straight to HP; the card face and target quote carry that HP, so the quoted number is the HP the play takes (shown = dealt).
 - **A frost card whose own Chill (3 or more) soaks the target's whole Poise pool is offered no Poise upgrade step**: its Poise damage never gets Poise to spend, so the step would change a shown number and nothing else.
 - **Map fog.** The Core act map is fog again ("hide rests as well, just the path you traveled"). Only the entrance, the bosses, the traveled path and the nodes one step from the current node are lit (`routes.fogTrailOnly`); rest sites are not revealed early; route lines and node types beyond them stay hidden. Map nodes are spaced wider (rows +45%, columns +28%). Wave 1's map shape (more forks, more fights, a shop in reach, preselected start node, `hiddenTypes: []`) is unchanged. `routes.fogRevealRests` (true lights every rest from the start) exists but Core authors it false. Core authors `mapMode: "fog"`; a stale viewer `path` setting does not override it; a run saved before this change keeps its pinned `mapMode`.
