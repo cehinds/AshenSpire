@@ -1,46 +1,36 @@
 #!/usr/bin/env node
-// npm run sync: moves this copy to the newest dev. Edits already in dev are cleared;
-// edits not yet shipped are carried over, with a backup copy in .owner-backup/.
-import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { ChangedContentFiles } from './ship.mjs';
+// npm run sync: moves this copy to the newest dev. Edits already in dev are cleared; edits
+// not yet shipped are carried over, with a backup copy in .owner-backup/.
+import { rmSync } from 'node:fs';
+import { join } from 'node:path';
+import { IsMainModule, OWNER_TOOLS, REPO_ROOT } from './ownerConfig.mjs';
 import {
-    OWNER_TOOLS,
-    REPO_ROOT,
     ApplyPatch,
     CapturePatch,
+    ChangedContentFiles,
     ChangedPaths,
-    RunGit,
-    RunSteps,
-    SameText,
-} from './ownerSteps.mjs';
+    CopyBetween,
+    CopyOver,
+    ReadAtRef,
+    ReadWorking,
+} from './ownerGit.mjs';
+import { IsDerivedPath, SameText } from './ownerPaths.mjs';
+import { RunGit, RunSteps } from './ownerProcess.mjs';
 
 const BACKUP_FOLDER = '.owner-backup';
 const TIMESTAMP_UNSAFE = /[:.]/g;
+const TIMESTAMP_SAFE = '-';
+const HEAD_REF = 'HEAD';
+const QUIET = '--quiet';
+const BLOCKED_NOTE = 'sync stopped. These files changed and are not game content:';
+const BLOCKED_ADVICE = 'Ship or undo them first. Nothing was switched.';
+const KEPT_NOTE = 'Edits not yet shipped, kept for you:';
+const CLASH_NOTE = 'Changed on dev too, so these now hold the dev version. Yours is in the backup:';
 
-/** True for a file the build writes, which is safe to restore before switching. */
-export function IsDerivedPath(relativePath, settings = OWNER_TOOLS)
-{
-    const path = relativePath.replace(/\\/g, '/');
-    const inLocation = settings.generatedLocations.some((location) => path.startsWith(location));
-    const hasSuffix = settings.generatedSuffixes.some((suffix) => path.endsWith(suffix));
-    return inLocation || hasSuffix;
-}
-
-function devText(path)
+function newestBase()
 {
     const { remote, baseBranch } = OWNER_TOOLS.git;
-    const text = RunGit(['show', `${remote}/${baseBranch}:${path}`], REPO_ROOT, { allowFailure: true });
-    return text || null;
-}
-
-function workingText(path)
-{
-    const full = join(REPO_ROOT, path);
-    return existsSync(full)
-        ? readFileSync(full, 'utf8')
-        : null;
+    return `${remote}/${baseBranch}`;
 }
 
 function restore(file)
@@ -50,60 +40,32 @@ function restore(file)
         rmSync(join(REPO_ROOT, file.path), { force: true });
         return;
     }
-    RunGit(['checkout', 'HEAD', '--', file.path]);
+    RunGit([
+        'checkout',
+        HEAD_REF,
+        '--',
+        file.path,
+    ]);
 }
 
-function copyBetween(fromRoot, toRoot, path)
+/** Clears edits already in dev; returns the ones still unshipped. */
+function clearShipped()
 {
-    const source = join(fromRoot, path);
-    if (!existsSync(source))
+    const unshipped = [];
+    for (const file of ChangedContentFiles())
     {
-        return;
-    }
-    mkdirSync(dirname(join(toRoot, path)), { recursive: true });
-    copyFileSync(source, join(toRoot, path));
-}
-
-/** Backs up each unshipped edit and records its patch, then undoes it here; fills `saved` as it goes. */
-function setAside(files, backupRoot, saved)
-{
-    for (const file of files)
-    {
-        copyBetween(REPO_ROOT, backupRoot, file.path);
-        const patch = file.untracked
-            ? null
-            : CapturePatch(file.path);
-        restore(file);
-        saved.push({
-            ...file,
-            patch,
-        });
-    }
-}
-
-function carryBack(saved, backupRoot)
-{
-    const clashed = [];
-    for (const file of saved)
-    {
-        if (file.untracked)
+        const inDev = SameText(ReadWorking(file.path), ReadAtRef(newestBase(), file.path));
+        if (inDev)
         {
-            if (existsSync(join(REPO_ROOT, file.path)))
-            {
-                clashed.push(file.path);
-                continue;
-            }
-            copyBetween(backupRoot, REPO_ROOT, file.path);
+            restore(file);
             continue;
         }
-        if (!ApplyPatch(file.patch, file.path, REPO_ROOT))
-        {
-            clashed.push(file.path);
-        }
+        unshipped.push(file);
     }
-    return clashed;
+    return unshipped;
 }
 
+/** Restores derived files; returns any other changed path, which blocks the switch. */
 function clearDerivedOrFindBlocking(keptPaths)
 {
     const blocking = [];
@@ -123,91 +85,181 @@ function clearDerivedOrFindBlocking(keptPaths)
     return blocking;
 }
 
-/** Points the owner's own work branch at the newest dev; refuses if it holds commits dev lacks. */
+/** Backs up each unshipped edit and records its patch, then undoes it; fills `saved`. */
+function setAside(
+    files,
+    backupRoot,
+    saved,
+)
+{
+    for (const file of files)
+    {
+        CopyOver(
+            REPO_ROOT,
+            backupRoot,
+            file.path,
+        );
+        const patch = file.untracked
+            ? null
+            : CapturePatch(file.path);
+        restore(file);
+        saved.push({
+            ...file,
+            patch,
+        });
+    }
+}
+
+function carryBack(saved, backupRoot)
+{
+    const clashed = [];
+    for (const file of saved)
+    {
+        const carried = file.untracked
+            ? CopyBetween(
+                backupRoot,
+                REPO_ROOT,
+                file.path,
+            )
+            : ApplyPatch(
+                file.patch,
+                file.path,
+                REPO_ROOT,
+            );
+        if (!carried)
+        {
+            clashed.push(file.path);
+        }
+    }
+    return clashed;
+}
+
+/** Points the owner's work branch at the newest dev; refuses if it has commits dev lacks. */
 function moveToNewestBase()
 {
-    const { remote, baseBranch, workBranch } = OWNER_TOOLS.git;
-    const newest = `${remote}/${baseBranch}`;
-    const exists = Boolean(RunGit(['branch', '--list', workBranch]));
+    const { baseBranch, workBranch } = OWNER_TOOLS.git;
+    const exists = Boolean(RunGit([
+        'branch',
+        '--list',
+        workBranch,
+    ]));
     const unmerged = exists
-        ? RunGit(['log', '--oneline', `${newest}..${workBranch}`])
+        ? RunGit([
+            'log',
+            '--oneline',
+            `${newestBase()}..${workBranch}`,
+        ])
         : '';
     if (unmerged)
     {
-        throw new Error(`${workBranch} has commits that are not in ${baseBranch}:\n${unmerged}\nShip them, or ask for help before syncing.`);
+        const advice = 'Ship them, or ask for help before syncing.';
+        throw new Error(`${workBranch} has commits not in ${baseBranch}:\n${unmerged}\n${advice}`);
     }
     RunGit([
         'switch',
         '--no-track',
         '-C',
         workBranch,
-        newest,
+        newestBase(),
     ]);
 }
 
-function main()
+function reportKept(
+    saved,
+    clashed,
+    backupRoot,
+)
+{
+    if (!saved.length)
+    {
+        return;
+    }
+    console.log(`\n${KEPT_NOTE}`);
+    saved.forEach((file) => console.log(`  ${file.path}`));
+    console.log(`A backup copy of each is in ${backupRoot}`);
+    if (!clashed.length)
+    {
+        return;
+    }
+    console.log(`\n${CLASH_NOTE}`);
+    clashed.forEach((path) => console.log(`  ${path}`));
+}
+
+function backupFolder()
+{
+    const stamp = new Date()
+        .toISOString()
+        .replace(TIMESTAMP_UNSAFE, TIMESTAMP_SAFE);
+    return join(
+        REPO_ROOT,
+        BACKUP_FOLDER,
+        stamp,
+    );
+}
+
+function reportBlocking(blocking)
+{
+    console.log(BLOCKED_NOTE);
+    blocking.forEach((path) => console.log(`  ${path}`));
+    console.log(BLOCKED_ADVICE);
+}
+
+function fetchNewest()
 {
     const { remote, baseBranch } = OWNER_TOOLS.git;
-    RunGit(['fetch', '--quiet', remote, baseBranch]);
-    RunGit(['reset', '--quiet']);
+    RunGit([
+        'fetch',
+        QUIET,
+        remote,
+        baseBranch,
+    ]);
+    RunGit(['reset', QUIET]);
+}
 
-    const unshipped = [];
-    for (const file of ChangedContentFiles())
-    {
-        if (SameText(workingText(file.path), devText(file.path)))
-        {
-            restore(file);
-        }
-        else
-        {
-            unshipped.push(file);
-        }
-    }
-    const blocking = clearDerivedOrFindBlocking(new Set(unshipped.map((file) => file.path)));
-    if (blocking.length)
-    {
-        console.log('sync stopped. These files changed and are not game content:');
-        blocking.forEach((path) => console.log(`  ${path}`));
-        console.log('Ship or undo them first. Nothing was switched.');
-        return 1;
-    }
-
-    const stamp = new Date().toISOString().replace(TIMESTAMP_UNSAFE, '-');
-    const backupRoot = join(REPO_ROOT, BACKUP_FOLDER, stamp);
+/** Sets unshipped edits aside, switches, and always carries them back. */
+function switchCarrying(unshipped)
+{
+    const backupRoot = backupFolder();
     const saved = [];
     try
     {
-        setAside(unshipped, backupRoot, saved);
+        setAside(
+            unshipped,
+            backupRoot,
+            saved,
+        );
         moveToNewestBase();
     }
     finally
     {
         const clashed = carryBack(saved, backupRoot);
         RunSteps(OWNER_TOOLS.buildSteps);
-        reportKept(saved, clashed, backupRoot);
+        reportKept(
+            saved,
+            clashed,
+            backupRoot,
+        );
     }
-    console.log(`\nYou are on ${OWNER_TOOLS.git.workBranch}, the newest ${baseBranch}.`);
+}
+
+function main()
+{
+    const { baseBranch, workBranch } = OWNER_TOOLS.git;
+    fetchNewest();
+    const unshipped = clearShipped();
+    const keptPaths = new Set(unshipped.map((file) => file.path));
+    const blocking = clearDerivedOrFindBlocking(keptPaths);
+    if (blocking.length)
+    {
+        reportBlocking(blocking);
+        return 1;
+    }
+    switchCarrying(unshipped);
+    console.log(`\nYou are on ${workBranch}, the newest ${baseBranch}.`);
     return 0;
 }
 
-function reportKept(saved, clashed, backupRoot)
-{
-    if (!saved.length)
-    {
-        return;
-    }
-    console.log('\nEdits not yet shipped, kept for you:');
-    saved.forEach((file) => console.log(`  ${file.path}`));
-    console.log(`A backup copy of each is in ${backupRoot}`);
-    if (clashed.length)
-    {
-        console.log('\nThese changed on dev too, so they now hold dev\'s version. Take your edit from the backup:');
-        clashed.forEach((path) => console.log(`  ${path}`));
-    }
-}
-
-const invoked = process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1]);
-if (invoked)
+if (IsMainModule(import.meta.url))
 {
     try
     {

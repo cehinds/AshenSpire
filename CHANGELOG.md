@@ -34,8 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-27
 
-- **Owner editing commands** ([#3021](https://github.com/cehinds/AshenSpire/pull/3021), `0.7.5.143`). New npm run play, check, ship and sync let the owner edit JSON, test with live reload, and open a pull request with one commit per file.
-- **A code style guide** ([#3020](https://github.com/cehinds/AshenSpire/pull/3020), `0.7.5.143`). `CODE-STYLE.md` sets how all new and changed code looks. No game changes.
+- **Owner editing commands** ([#3021](https://github.com/cehinds/AshenSpire/pull/3021), `0.7.5.145`). New npm run play, check, ship and sync let the owner edit JSON, test with live reload, and open a pull request with one commit per file.
+- **A code style guide** ([#3020](https://github.com/cehinds/AshenSpire/pull/3020), `0.7.5.145`). `CODE-STYLE.md` sets how all new and changed code looks. No game changes.
 
 - **Faster upgrade choices and Act schedules** ([#3014](https://github.com/cehinds/AshenSpire/pull/3014), `0.7.5.143`). Upgrade offers skip unused extra candidates while preserving choices and prices. Generated map nodes use a direct text sort when preparing upgrade and reward schedules, while custom node IDs retain their existing ordering.
 
