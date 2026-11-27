@@ -4,7 +4,7 @@ import { RunContentCheck } from './content-editor-check.mjs';
 import { ApiMessage, CONTENT_API } from './content-editor-config.mjs';
 import { CONTENT_STATUS, ContentError } from './content-editor-error.mjs';
 import { ListContentFolder, ReadContentFile, SaveContentFile } from './content-editor-files.mjs';
-import { CheckGate } from './content-editor-gate.mjs';
+import { ContentGate } from './content-editor-gate.mjs';
 import {
     IsFromStudio,
     IsLocalEditorRequest,
@@ -19,7 +19,7 @@ const METHOD_PUT = 'PUT';
 const METHOD_POST = 'POST';
 const MISSING_FILE_CODE = 'ENOENT';
 const { routes } = CONTENT_API;
-const CHECK_GATE = new CheckGate();
+const GATE = new ContentGate();
 
 const ROUTES = {
     [`${METHOD_GET} ${routes.file}`]: async (req, root, query) =>
@@ -33,13 +33,12 @@ const ROUTES = {
     [`${METHOD_PUT} ${routes.file}`]: async (req, root) =>
     {
         const body = await ReadJsonBody(req);
-        CHECK_GATE.RefuseWhileRunning('checkRunning');
-        return SaveContentFile(root, body.path, body.text, body.baseHash);
+        return GATE.RunSave(() => SaveContentFile(root, body.path, body.text, body.baseHash));
     },
     [`${METHOD_POST} ${routes.check}`]: async (req, root, query, runCheck) =>
     {
         await ReadJsonBody(req);
-        return CHECK_GATE.Run(() => runCheck(root), 'checkBusy');
+        return GATE.RunCheck(() => runCheck(root), 'checkBusy');
     },
 };
 

@@ -227,7 +227,7 @@ test('a save against a file changed since it was opened is refused as stale', as
     restoreRoutes();
 });
 
-test('while a check runs, saves and a second check are refused', async () =>
+test('while a check runs, a save waits for it and a second check is refused', async () =>
 {
     let finishCheck;
     const runCheck = () => new Promise((resolve) =>
@@ -240,18 +240,15 @@ test('while a check runs, saves and a second check are refused', async () =>
     };
     const running = handle(StudioCheck(), options);
     await new Promise((resolve) => setImmediate(resolve));
-    const change = saveOf('{"maxBranches": 7}');
-    const save = await handle(StudioPut(change), options);
-    assert.equal(save.status, CONTENT_STATUS.conflict);
-    assert.equal(save.body.error, ApiMessage('checkRunning'));
+    const waitingSave = handle(StudioPut(saveOf('{"maxBranches": 7}')), options);
     const second = await handle(StudioCheck(), options);
     assert.equal(second.status, CONTENT_STATUS.conflict);
     assert.equal(second.body.error, ApiMessage('checkBusy'));
+    assert.equal(readRoutes(), ORIGINAL_TEXT);
     finishCheck({ ok: true, lines: [] });
     assert.equal((await running).status, CONTENT_STATUS.ok);
-    assert.equal(readRoutes(), ORIGINAL_TEXT);
-    const afterCheck = await handle(StudioPut(change), options);
-    assert.equal(afterCheck.status, CONTENT_STATUS.ok);
+    assert.equal((await waitingSave).status, CONTENT_STATUS.ok);
+    assert.equal(readRoutes(), '{"maxBranches": 7}\n');
     restoreRoutes();
 });
 

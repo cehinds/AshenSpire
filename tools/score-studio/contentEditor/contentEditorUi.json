@@ -62,7 +62,8 @@
   },
   "disabledDuringSave": [
     "Save",
-    "Revert"
+    "Revert",
+    "Check"
   ],
   "disabledDuringCheck": [
     "Save",

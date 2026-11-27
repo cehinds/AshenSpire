@@ -1,35 +1,62 @@
-// One check at a time: while it runs, saves and a second check are refused.
+// One gate for saves and checks: a check waits for saves in flight, saves wait for a running check.
 import { ApiMessage } from './content-editor-config.mjs';
 import { CONTENT_STATUS, ContentError } from './content-editor-error.mjs';
 
-export class CheckGate
+export class ContentGate
 {
     constructor()
     {
-        this.running = false;
+        this.check = null;
+        this.saves = 0;
+        this.drainWaiters = [];
     }
 
-    /** Throws a 409 with the configured `messageName` while a check runs. */
-    RefuseWhileRunning(messageName)
+    Drained()
     {
-        if (this.running)
+        if (this.saves === 0)
         {
-            throw new ContentError(CONTENT_STATUS.conflict, ApiMessage(messageName));
+            return Promise.resolve();
         }
+        return new Promise((resolve) => this.drainWaiters.push(resolve));
     }
 
-    /** Runs `task` as the only check, refusing with `busyMessageName` if one is already running. */
-    async Run(task, busyMessageName)
+    /** Runs a save once no check is running; a check started later waits for it to finish. */
+    async RunSave(task)
     {
-        this.RefuseWhileRunning(busyMessageName);
-        this.running = true;
+        while (this.check)
+        {
+            await this.check.catch(() => {});
+        }
+        this.saves += 1;
         try
         {
             return await task();
         }
         finally
         {
-            this.running = false;
+            this.saves -= 1;
+            if (this.saves === 0)
+            {
+                this.drainWaiters.splice(0).forEach((resolve) => resolve());
+            }
+        }
+    }
+
+    /** Runs the only check after saves in flight finish; a second check gets `busyMessageName`. */
+    async RunCheck(task, busyMessageName)
+    {
+        if (this.check)
+        {
+            throw new ContentError(CONTENT_STATUS.conflict, ApiMessage(busyMessageName));
+        }
+        this.check = this.Drained().then(task);
+        try
+        {
+            return await this.check;
+        }
+        finally
+        {
+            this.check = null;
         }
     }
 }

@@ -25,7 +25,6 @@
     "notJson": "Not valid JSON, nothing saved: {error}",
     "noServer": "Game content needs `npm run play`. Start it and open Score Studio from it.",
     "staleFile": "{path} changed on disk since you opened it, so it was not saved. It is reloaded now; make your change again.",
-    "checkRunning": "A check is running. Save again when it ends.",
     "checkBusy": "A check is already running.",
     "checkTimedOut": "FAIL The check took longer than {seconds} seconds and was stopped.",
     "checkStopped": "FAIL The check stopped before it finished (exit code {code})."
