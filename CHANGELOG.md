@@ -34,8 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-27
 
-- **Initiate gear** ([#3026](https://github.com/cehinds/AshenSpire/pull/3026), `0.7.5.145`). In Prepared stance an Initiate cuts 1 Mana off matching spells, one cut per spell. Starseer robes carry Arcane Initiate and Herald robes Divine Initiate; staffs and robes no longer cut every spell.
-- **Spell costs match their cards** ([#3022](https://github.com/cehinds/AshenSpire/pull/3022), `0.7.5.145`). A spell now costs the Mana and Stamina printed on it; the hidden extra Mana on every spell is gone. Prepared stance takes 1 Mana off a spell and 1 Stamina off only down to 1, so Arcane Strike and Mana Rite cost Stamina only.
+- **Initiate gear** ([#3026](https://github.com/cehinds/AshenSpire/pull/3026), `0.7.5.147`). In Prepared stance an Initiate cuts 1 Mana off matching spells, one cut per spell. Starseer robes carry Arcane Initiate and Herald robes Divine Initiate; staffs and robes no longer cut every spell.
+- **Score Studio keeps one active card and item** ([#3019](https://github.com/cehinds/AshenSpire/pull/3019), `0.7.5.147`). Every panel follows the same card, filters never switch it, and reload brings it back.
 - **A code style guide** ([#3020](https://github.com/cehinds/AshenSpire/pull/3020), `0.7.5.145`). `CODE-STYLE.md` sets how all new and changed code looks. No game changes.
 
 - **Faster upgrade choices and Act schedules** ([#3014](https://github.com/cehinds/AshenSpire/pull/3014), `0.7.5.143`). Upgrade offers skip unused extra candidates while preserving choices and prices. Generated map nodes use a direct text sort when preparing upgrade and reward schedules, while custom node IDs retain their existing ordering.
