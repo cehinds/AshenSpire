@@ -8,7 +8,7 @@ A full restructuring pass follows [docs/ai/CLEAN-CODE-PROMPT.md](docs/ai/CLEAN-C
 
 - **Allman braces:** every `{` on its own line, and every block braced.
 - **One thing per line:** one declaration or statement per line.
-- **Vertical lists:** a list of more than 3 items (arguments, properties, array elements) and every
+- **Vertical lists:** a list of more than 2 items (arguments, properties, array elements) and every
   nested object goes one item per line, with trailing commas.
 - **Scoped components:** each block, callback body or nested object on its own lines.
 - **Ternaries:** the `?` and `:` parts each on their own line; a nested ternary indents one more level.
