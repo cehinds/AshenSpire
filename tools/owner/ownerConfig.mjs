@@ -5,7 +5,6 @@ import { fileURLToPath } from 'node:url';
 import { FillTemplate } from '../../src/model/textTemplate.js';
 
 const TEXT_ENCODING = 'utf8';
-const PLACEHOLDER = /\{(\w+)\}/g;
 const REPO_URL = new URL('../..', import.meta.url);
 
 function readJson(fileName)
