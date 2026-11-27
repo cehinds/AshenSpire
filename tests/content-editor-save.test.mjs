@@ -300,3 +300,17 @@ test('the browser hash of a file text matches the server hash', async () =>
     const text = `${ORIGINAL_TEXT}é ·\n`;
     assert.equal(await BrowserTextHash(text, CONTENT_API.hash.web), TextHash(text));
 });
+
+test('two saves from the same opened text: the first writes, the second is stale', async () =>
+{
+    const saves = await Promise.allSettled([
+        SaveContentFile(root, ROUTES_PATH, '{"maxBranches": 5}', ORIGINAL_HASH),
+        SaveContentFile(root, ROUTES_PATH, '{"maxBranches": 6}', ORIGINAL_HASH),
+    ]);
+    assert.equal(saves[0].status, 'fulfilled');
+    assert.equal(saves[1].status, 'rejected');
+    assert.equal(saves[1].reason.status, CONTENT_STATUS.conflict);
+    assert.equal(saves[1].reason.message, ApiMessage('staleFile', { path: ROUTES_PATH }));
+    assert.equal(readRoutes(), '{"maxBranches": 5}\n');
+    restoreRoutes();
+});

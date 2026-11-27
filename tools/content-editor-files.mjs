@@ -4,6 +4,7 @@ import { isAbsolute, relative, resolve } from 'node:path';
 import { ApiMessage, CONTENT_API } from './content-editor-config.mjs';
 import { CONTENT_STATUS, ContentError } from './content-editor-error.mjs';
 import { TextHash } from './content-editor-hash.mjs';
+import { WithPathLock } from './content-editor-path-lock.mjs';
 import { IsEditableContentPath, OWNER_TOOLS } from './owner/ownerSteps.mjs';
 
 const BACKSLASH = /\\/g;
@@ -85,14 +86,17 @@ export async function SaveContentFile(root, path, text, baseHash)
 {
     const absolutePath = ResolveEditablePath(root, path);
     const prepared = PrepareContentText(text);
-    const onDisk = await readFile(absolutePath, TEXT_ENCODING);
-    if (TextHash(onDisk) !== baseHash)
+    return WithPathLock(absolutePath, async () =>
     {
-        const message = ApiMessage('staleFile', { path: slashPath(path) });
-        throw new ContentError(CONTENT_STATUS.conflict, message, true);
-    }
-    await writeFile(absolutePath, prepared, TEXT_ENCODING);
-    return { path: slashPath(path) };
+        const onDisk = await readFile(absolutePath, TEXT_ENCODING);
+        if (TextHash(onDisk) !== baseHash)
+        {
+            const message = ApiMessage('staleFile', { path: slashPath(path) });
+            throw new ContentError(CONTENT_STATUS.conflict, message, true);
+        }
+        await writeFile(absolutePath, prepared, TEXT_ENCODING);
+        return { path: slashPath(path) };
+    });
 }
 
 /** The editable *.json names in one folder, skipping generated `_` files. */

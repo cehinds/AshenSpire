@@ -1,4 +1,4 @@
-// The Game content store: an edit made while a save is in flight stays unsaved and is sent next time.
+// The Game content store: an edit made while a save is in flight stays unsaved.
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { ContentStore } from '../tools/score-studio/contentEditor/contentStore.js';
