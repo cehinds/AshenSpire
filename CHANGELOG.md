@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-27
 
-- **Card readability and cleaner combat backdrop** ([#3036](https://github.com/cehinds/AshenSpire/pull/3036), `0.7.5.179`). Card body text now uses light parchment ink for contrast on dark card faces, the ghost "Card" placeholder over the player is gone, and missing combat backdrop art no longer stretches broken-image shapes across the board.
+- **Card readability and cleaner combat backdrop** ([#3036](https://github.com/cehinds/AshenSpire/pull/3036), `0.7.5.181`). Card body text now uses light parchment ink for contrast on dark card faces, the ghost "Card" placeholder over the player is gone, and missing combat backdrop art no longer stretches broken-image shapes across the board.
 - **Starseer playtest fixes** ([#3035](https://github.com/cehinds/AshenSpire/pull/3035), `0.7.5.179`). View Deck now matches combat damage and returns to the map on close. Treasure chests grant relics, tooltips close over modals, dev notes hide outside dev builds, and phone maps keep their bottom bar.
 - **More reliable Smith and equipment checks** ([#3018](https://github.com/cehinds/AshenSpire/pull/3018), `0.7.5.177`). Smith screen checks use an explicit eligible scenario, while equipment tests follow current item availability and use controlled values for mechanics, so authored balance changes do not leave stale expectations.
 - **Evade Wither, rising cost, and Smash flat Block break** ([#3017](https://github.com/cehinds/AshenSpire/pull/3017), `0.7.5.175`). Player Evade cards gain Wither 3 and +1 SP per play (max +3); Smash cards now break flat Block before damage (`Break N Block. Deal N damage.`).
