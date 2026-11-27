@@ -17,6 +17,22 @@ const SCOPE_TEXT = {
   weights: () => 'Global scoring · changes rescore every card',
   decks: () => 'Deck membership · changes only the chosen deck',
 };
+export const FilterNoteId = Object.freeze({
+  Note: 'customization-filter-note',
+  Clear: 'customization-filter-clear',
+});
+const FilterNoteClass = Object.freeze({
+  Note: 'customization-filter-note',
+  Clear: 'customization-filter-clear',
+});
+const FilterNoteCopy = Object.freeze({
+  Text: 'Hidden by current filters',
+  Separator: ' · ',
+  ClearLabel: 'Clear',
+  ClearAriaLabel: 'Clear filters',
+  noteTitle: noun => `The current filters hide this ${noun} in the library. It stays active and editable.`,
+  clearTitle: noun => `Clear the ${noun} filters and show this ${noun} in the library`,
+});
 
 export function initCardEditorDock(ctx) {
   const doc = ctx.document || document;
@@ -176,12 +192,24 @@ export function initCardEditorDock(ctx) {
   const entityHead = doc.createElement('div'); entityHead.className = 'customization-entity-head';
   entityHead.append(entityHeading);
   // Filters never change the active entity. When they hide it, one short line says so and clears them.
-  const filterNote = doc.createElement('p'); filterNote.id = 'customization-filter-note'; filterNote.className = 'customization-filter-note'; filterNote.hidden = true;
-  const filterNoteText = doc.createElement('span'); filterNoteText.textContent = 'Hidden by current filters';
-  const filterNoteSep = doc.createElement('span'); filterNoteSep.setAttribute('aria-hidden', 'true'); filterNoteSep.textContent = ' · ';
-  const clearFilters = button('Clear', () => { ctx.clearFilters?.(context); showLibrary(context); }, 'customization-filter-clear');
-  clearFilters.id = 'customization-filter-clear'; clearFilters.setAttribute('aria-label', 'Clear filters');
-  filterNote.append(filterNoteText, filterNoteSep, clearFilters);
+  const filterNote = doc.createElement('p');
+  filterNote.id = FilterNoteId.Note;
+  filterNote.className = FilterNoteClass.Note;
+  filterNote.hidden = true;
+  const filterNoteText = doc.createElement('span');
+  filterNoteText.textContent = FilterNoteCopy.Text;
+  const filterNoteSeparator = doc.createElement('span');
+  filterNoteSeparator.setAttribute('aria-hidden', 'true');
+  filterNoteSeparator.textContent = FilterNoteCopy.Separator;
+  function clearFiltersAndShowLibrary()
+  {
+    ctx.clearFilters?.(context);
+    showLibrary(context);
+  }
+  const clearFilters = button(FilterNoteCopy.ClearLabel, clearFiltersAndShowLibrary, FilterNoteClass.Clear);
+  clearFilters.id = FilterNoteId.Clear;
+  clearFilters.setAttribute('aria-label', FilterNoteCopy.ClearAriaLabel);
+  filterNote.append(filterNoteText, filterNoteSeparator, clearFilters);
   entity.append(entityHead, filterNote, scope, previewBody);
   const content = doc.createElement('div'); content.id = 'customization-content';
   const slots = Object.fromEntries(VIEWS.map(id => {
@@ -394,8 +422,8 @@ export function initCardEditorDock(ctx) {
     rename.disabled = balance.disabled = !valid;
     const filteredOut = valid && ctx.isHiddenByFilters?.(context, selectedId(context)) === true;
     filterNote.hidden = !filteredOut;
-    filterNote.title = `The current filters hide this ${noun} in the library. It stays active and editable.`;
-    clearFilters.title = `Clear the ${noun} filters and show this ${noun} in the library`;
+    filterNote.title = FilterNoteCopy.noteTitle(noun);
+    clearFilters.title = FilterNoteCopy.clearTitle(noun);
     placeQuickFields();
     for (const nav of navs) {
       const navName = isValid(nav.key) ? nameOf(nav.key) || selectedId(nav.key) : 'none';
