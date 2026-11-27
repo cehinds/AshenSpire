@@ -17,7 +17,17 @@
     "add": "+ Add",
     "remove": "×",
     "removeTitle": "Remove this line",
-    "cardLimits": "Effects {effects}/{maxEffects} · Drawbacks {drawbacks}/{maxDrawbacks}",
+    "cardLimits": {
+      "effects": {
+        "capped": "Effects {count}/{limit}",
+        "uncapped": "Effects {count}"
+      },
+      "drawbacks": {
+        "capped": "Drawbacks {count}/{limit}",
+        "uncapped": "Drawbacks {count}"
+      },
+      "separator": " · "
+    },
     "listSeparator": ", ",
     "messageSeparator": " "
   },
