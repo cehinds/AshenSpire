@@ -1,0 +1,166 @@
+{
+  "baseline": "49eca254d795d06266aa23941cb2b31fe77b27bf",
+  "files": [
+    {
+      "path": "art-release.json",
+      "sha256": "4484761d495f5b944a2329b145c6f5da68907cb37e8978632ba58c558776c8a0",
+      "baselineBlobSha256": "4484761d495f5b944a2329b145c6f5da68907cb37e8978632ba58c558776c8a0",
+      "lfNormalizedSha256": "4484761d495f5b944a2329b145c6f5da68907cb37e8978632ba58c558776c8a0",
+      "baselineMatchIgnoringCrlf": true
+    },
+    {
+      "path": "src/ui/assets.js",
+      "sha256": "645a58ff3dc53235c18c5c43bd9c5207b2e44becce9b7a5ae63bc157263a5505",
+      "baselineBlobSha256": "645a58ff3dc53235c18c5c43bd9c5207b2e44becce9b7a5ae63bc157263a5505",
+      "lfNormalizedSha256": "645a58ff3dc53235c18c5c43bd9c5207b2e44becce9b7a5ae63bc157263a5505",
+      "baselineMatchIgnoringCrlf": true
+    },
+    {
+      "path": "src/ui/alternativeCardStage.js",
+      "sha256": "15e3c5ecb24873bc663e270e4a547d6bd032bc3bbaaf5c8926d6c26afcaeb68f",
+      "baselineBlobSha256": "15e3c5ecb24873bc663e270e4a547d6bd032bc3bbaaf5c8926d6c26afcaeb68f",
+      "lfNormalizedSha256": "15e3c5ecb24873bc663e270e4a547d6bd032bc3bbaaf5c8926d6c26afcaeb68f",
+      "baselineMatchIgnoringCrlf": true
+    },
+    {
+      "path": "src/ui/models/CombatBodyModel.js",
+      "sha256": "48dedabb363c804e2b8bf7103d586d700676ba0ebcb7a0a1b51d6a2d4ed8f5b9",
+      "baselineBlobSha256": "48dedabb363c804e2b8bf7103d586d700676ba0ebcb7a0a1b51d6a2d4ed8f5b9",
+      "lfNormalizedSha256": "48dedabb363c804e2b8bf7103d586d700676ba0ebcb7a0a1b51d6a2d4ed8f5b9",
+      "baselineMatchIgnoringCrlf": true
+    },
+    {
+      "path": "src/ui/models/CombatViewportSizeModel.js",
+      "sha256": "67d0c40b508da5e04f788b512a1a1fbc26adb027e23a1bc28617dbb52c8dc7cf",
+      "baselineBlobSha256": "67d0c40b508da5e04f788b512a1a1fbc26adb027e23a1bc28617dbb52c8dc7cf",
+      "lfNormalizedSha256": "67d0c40b508da5e04f788b512a1a1fbc26adb027e23a1bc28617dbb52c8dc7cf",
+      "baselineMatchIgnoringCrlf": true
+    },
+    {
+      "path": "src/ui/components/combatSpriteGeometry.js",
+      "sha256": "015f27110d64b83d19e25d6366f85e0cd3d8fa4a47aa6b05a690d081f8d3a639",
+      "baselineBlobSha256": "015f27110d64b83d19e25d6366f85e0cd3d8fa4a47aa6b05a690d081f8d3a639",
+      "lfNormalizedSha256": "015f27110d64b83d19e25d6366f85e0cd3d8fa4a47aa6b05a690d081f8d3a639",
+      "baselineMatchIgnoringCrlf": true
+    },
+    {
+      "path": "src/model/cardAnimationFamily.js",
+      "sha256": "820b5c28fc7552d76cad4b11a688ee22e543573e98d198556a978c06eb62c22b",
+      "baselineBlobSha256": "820b5c28fc7552d76cad4b11a688ee22e543573e98d198556a978c06eb62c22b",
+      "lfNormalizedSha256": "820b5c28fc7552d76cad4b11a688ee22e543573e98d198556a978c06eb62c22b",
+      "baselineMatchIgnoringCrlf": true
+    },
+    {
+      "path": "src/model/combatAnimation.js",
+      "sha256": "4010139ca8054ce75fd5031547c9be27cd517c91119ec003c19bc1b5dd117610",
+      "baselineBlobSha256": "4010139ca8054ce75fd5031547c9be27cd517c91119ec003c19bc1b5dd117610",
+      "lfNormalizedSha256": "4010139ca8054ce75fd5031547c9be27cd517c91119ec003c19bc1b5dd117610",
+      "baselineMatchIgnoringCrlf": true
+    },
+    {
+      "path": "src/model/alternativeCardAnimation.js",
+      "sha256": "e3186d0cef47a3f91bf5b34a9a19506402c4ec5e8c21164f1c1b9586b0dd2538",
+      "baselineBlobSha256": "e3186d0cef47a3f91bf5b34a9a19506402c4ec5e8c21164f1c1b9586b0dd2538",
+      "lfNormalizedSha256": "e3186d0cef47a3f91bf5b34a9a19506402c4ec5e8c21164f1c1b9586b0dd2538",
+      "baselineMatchIgnoringCrlf": true
+    },
+    {
+      "path": "src/model/combatWeaponPresentation.js",
+      "sha256": "fc903e954ce582fc327ef8a38a6c6f86b08813308804534d9993d68e1ed013d9",
+      "baselineBlobSha256": "fc903e954ce582fc327ef8a38a6c6f86b08813308804534d9993d68e1ed013d9",
+      "lfNormalizedSha256": "fc903e954ce582fc327ef8a38a6c6f86b08813308804534d9993d68e1ed013d9",
+      "baselineMatchIgnoringCrlf": true
+    },
+    {
+      "path": "src/model/selectedWeaponStances.js",
+      "sha256": "aeafc0f98fa02ae9922cb289025d8480aaafbd19b8cc7ae0d16fdb7eb4d44d81",
+      "baselineBlobSha256": "aeafc0f98fa02ae9922cb289025d8480aaafbd19b8cc7ae0d16fdb7eb4d44d81",
+      "lfNormalizedSha256": "aeafc0f98fa02ae9922cb289025d8480aaafbd19b8cc7ae0d16fdb7eb4d44d81",
+      "baselineMatchIgnoringCrlf": true
+    },
+    {
+      "path": "src/model/selectedWeaponSequences.js",
+      "sha256": "5214b1ac6926219f7c5e9d92e124dab54218f0e4e7f7aeb13f617502fe0a4582",
+      "baselineBlobSha256": "5214b1ac6926219f7c5e9d92e124dab54218f0e4e7f7aeb13f617502fe0a4582",
+      "lfNormalizedSha256": "5214b1ac6926219f7c5e9d92e124dab54218f0e4e7f7aeb13f617502fe0a4582",
+      "baselineMatchIgnoringCrlf": true
+    },
+    {
+      "path": "src/model/classSmashAnimations.js",
+      "sha256": "b06c232c46813a0c9c7bcf12973f9171988c391a9d8063a44220e35be0f88949",
+      "baselineBlobSha256": "b06c232c46813a0c9c7bcf12973f9171988c391a9d8063a44220e35be0f88949",
+      "lfNormalizedSha256": "b06c232c46813a0c9c7bcf12973f9171988c391a9d8063a44220e35be0f88949",
+      "baselineMatchIgnoringCrlf": true
+    },
+    {
+      "path": "src/content/alternativeCardAnimations.js",
+      "sha256": "a31ba56bc80435769dc86b9b77837bc00c2b80d4a86aaf819fdc957e8e98a456",
+      "baselineBlobSha256": "a31ba56bc80435769dc86b9b77837bc00c2b80d4a86aaf819fdc957e8e98a456",
+      "lfNormalizedSha256": "a31ba56bc80435769dc86b9b77837bc00c2b80d4a86aaf819fdc957e8e98a456",
+      "baselineMatchIgnoringCrlf": true
+    },
+    {
+      "path": "src/content/alternativeSelectedStances.js",
+      "sha256": "a11f3e3ff68331d7e838390232895c099c65c6d89751084c58de080df1a71e9f",
+      "baselineBlobSha256": "a11f3e3ff68331d7e838390232895c099c65c6d89751084c58de080df1a71e9f",
+      "lfNormalizedSha256": "a11f3e3ff68331d7e838390232895c099c65c6d89751084c58de080df1a71e9f",
+      "baselineMatchIgnoringCrlf": true
+    },
+    {
+      "path": "src/content/playerCounterSweepSprites.js",
+      "sha256": "3b47063203bad847ba9e2fe8ca9922367f3da4a06e9e95d3a3317ff79c02ee1c",
+      "baselineBlobSha256": "3b47063203bad847ba9e2fe8ca9922367f3da4a06e9e95d3a3317ff79c02ee1c",
+      "lfNormalizedSha256": "3b47063203bad847ba9e2fe8ca9922367f3da4a06e9e95d3a3317ff79c02ee1c",
+      "baselineMatchIgnoringCrlf": true
+    },
+    {
+      "path": "src/content/playerAttackSprites.js",
+      "sha256": "5308835a4d4db7813cc5adc83d2bb59ffd67f8258bb68ffd2a907a2f65d50262",
+      "baselineBlobSha256": "5308835a4d4db7813cc5adc83d2bb59ffd67f8258bb68ffd2a907a2f65d50262",
+      "lfNormalizedSha256": "5308835a4d4db7813cc5adc83d2bb59ffd67f8258bb68ffd2a907a2f65d50262",
+      "baselineMatchIgnoringCrlf": true
+    },
+    {
+      "path": "src/content/classSmashAnimations.js",
+      "sha256": "b743ae516fcd8add6d5aa21c95dfad9ec32cfbed4d58a0d4a3e1a47817fc2803",
+      "baselineBlobSha256": "b743ae516fcd8add6d5aa21c95dfad9ec32cfbed4d58a0d4a3e1a47817fc2803",
+      "lfNormalizedSha256": "b743ae516fcd8add6d5aa21c95dfad9ec32cfbed4d58a0d4a3e1a47817fc2803",
+      "baselineMatchIgnoringCrlf": true
+    },
+    {
+      "path": "src/content/playerHurtFrames.js",
+      "sha256": "71c716bfc56b1231340e08bc4ea63498e6549366c90e5374b5ff166d07913bd6",
+      "baselineBlobSha256": "71c716bfc56b1231340e08bc4ea63498e6549366c90e5374b5ff166d07913bd6",
+      "lfNormalizedSha256": "71c716bfc56b1231340e08bc4ea63498e6549366c90e5374b5ff166d07913bd6",
+      "baselineMatchIgnoringCrlf": true
+    },
+    {
+      "path": "src/content/combatBodyLandmarks.js",
+      "sha256": "79bb091110ecdc5b22cb8a2ed136a780461f00475e7d0c2a26729012111b3e44",
+      "baselineBlobSha256": "79bb091110ecdc5b22cb8a2ed136a780461f00475e7d0c2a26729012111b3e44",
+      "lfNormalizedSha256": "79bb091110ecdc5b22cb8a2ed136a780461f00475e7d0c2a26729012111b3e44",
+      "baselineMatchIgnoringCrlf": true
+    },
+    {
+      "path": "src/content/defeatedArt.js",
+      "sha256": "e1a6027042f6ccc0b9be4a0573603419d7ac547c777b5339399ded00a830f6f4",
+      "baselineBlobSha256": "e1a6027042f6ccc0b9be4a0573603419d7ac547c777b5339399ded00a830f6f4",
+      "lfNormalizedSha256": "e1a6027042f6ccc0b9be4a0573603419d7ac547c777b5339399ded00a830f6f4",
+      "baselineMatchIgnoringCrlf": true
+    },
+    {
+      "path": "src/content/generated/defeatedArt.js",
+      "sha256": "83eb470a554226ec273debf7607015c0a951634949a80daae641121edc1db3ea",
+      "baselineBlobSha256": "83eb470a554226ec273debf7607015c0a951634949a80daae641121edc1db3ea",
+      "lfNormalizedSha256": "83eb470a554226ec273debf7607015c0a951634949a80daae641121edc1db3ea",
+      "baselineMatchIgnoringCrlf": true
+    },
+    {
+      "path": "tools/player-hurt-registration.py",
+      "sha256": "d22a9a37f99eda4641512b5b429a25a8c74c6de9485d1fa78e67fca14db2a04d",
+      "baselineBlobSha256": "760490af353f9cc4bff222ec65f1d32cf597af180fd66047e3a36dff61a2c931",
+      "lfNormalizedSha256": "760490af353f9cc4bff222ec65f1d32cf597af180fd66047e3a36dff61a2c931",
+      "baselineMatchIgnoringCrlf": true
+    }
+  ]
+}

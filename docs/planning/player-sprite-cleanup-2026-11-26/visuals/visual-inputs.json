@@ -1,0 +1,1922 @@
+{
+  "source": "49eca254d795d06266aa23941cb2b31fe77b27bf",
+  "art": "ashenspire-hd-assets-v30",
+  "classes": {
+    "reaver": {
+      "profiles": {
+        "weaponProfile": "reaver-greatsword-pilot",
+        "smashProfile": null
+      },
+      "poses": {
+        "ready": {
+          "path": "assets-display/alternative/card-reaver-ready.webp",
+          "lite": "assets-display/alternative/card-reaver-ready-mobile.webp",
+          "bounds": [
+            141,
+            203,
+            379,
+            463
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "rasterSize": [
+            256,
+            256
+          ]
+        },
+        "offensive": {
+          "path": "assets-display/alternative/stances/reaver/offensive.webp",
+          "lite": "assets-display/alternative/stances/reaver/offensive-mobile.webp",
+          "size": [
+            512,
+            512
+          ],
+          "rasterSize": [
+            256,
+            256
+          ],
+          "bounds": [
+            114,
+            68,
+            399,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "7ab6090bdab58ffed228cad90f466189a147ca44d810d37c2b80b7873f9de832",
+          "liteSha256": "7ab6090bdab58ffed228cad90f466189a147ca44d810d37c2b80b7873f9de832",
+          "sourceOption": "reaver-attack-2",
+          "source": {
+            "path": "boards/reaver-attack.png",
+            "width": 1536,
+            "height": 1024,
+            "view": {
+              "x": 512,
+              "y": 0,
+              "width": 512,
+              "height": 512
+            },
+            "sha256": "840b38a5aa828a4a771eefdb03246bb7665e59fd9b5cccba2010c4f3e8f78c15"
+          },
+          "sourceBounds": [
+            99,
+            40,
+            418,
+            483
+          ],
+          "scale": 0.8936170212765957
+        },
+        "defensive": {
+          "path": "assets-display/alternative/reaver-greatsword-pilot-defend.webp",
+          "lite": "assets-display/alternative/reaver-greatsword-pilot-defend-mobile.webp",
+          "size": [
+            768,
+            512
+          ],
+          "rasterSize": [
+            768,
+            512
+          ],
+          "mobileRasterSize": [
+            256,
+            171
+          ],
+          "bounds": [
+            160,
+            116,
+            561,
+            464
+          ],
+          "anchor": [
+            384,
+            464
+          ],
+          "drawOffset": [
+            0,
+            0
+          ],
+          "stageAnchor": [
+            384,
+            464
+          ],
+          "stageBounds": [
+            160,
+            116,
+            561,
+            464
+          ],
+          "sha256": "69ff5522214d93cf6f91390e8ab37df20ceb88533df3b7918be47450c99aff43",
+          "liteSha256": "eb068b95d18037b8201fc0b57c0717902c04145638a00fec319a39e2e2a246bc",
+          "sourceOption": "greatsword-counter-12",
+          "source": {
+            "path": "pose-studio/stances/update-stances/greatsword-counter/sheet-a.png",
+            "width": 1024,
+            "height": 1536,
+            "sha256": "cdf9e317db377a672a6de09af90516bf903246cd5800727f7acf364d353d49cd"
+          },
+          "sourceBounds": [
+            592,
+            196,
+            932,
+            491
+          ],
+          "cropBounds": [
+            589,
+            193,
+            936,
+            498
+          ],
+          "scale": 1.18,
+          "approvedPreview": {
+            "id": "D",
+            "path": "pose-studio/stances/update-stances/sequence-review/preview-assets.json",
+            "manifestSha256": "7d863b6a724cbdbd8a2df31c781be4d60f459c7e542d10a10741a46fb266729d",
+            "imagePath": "frames/D.webp",
+            "sha256": "69ff5522214d93cf6f91390e8ab37df20ceb88533df3b7918be47450c99aff43"
+          },
+          "bodyRegistration": {
+            "method": "reviewed pelvis projection; no weapon-bounds scale fit",
+            "sourceAnchor": [
+              782,
+              491
+            ],
+            "pelvisLandmark": [
+              782,
+              360
+            ],
+            "stageAnchor": [
+              384,
+              464
+            ]
+          },
+          "sourceTreatment": "Existing owner-selected source pixels; approved crop, uniform scale and translation only"
+        },
+        "casting": {
+          "path": "assets-display/alternative/stances/reaver/casting.webp",
+          "lite": "assets-display/alternative/stances/reaver/casting-mobile.webp",
+          "size": [
+            512,
+            512
+          ],
+          "rasterSize": [
+            256,
+            256
+          ],
+          "bounds": [
+            74,
+            44,
+            439,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "9a6b8295963ff65e06f525cd81d83cb306d92da9962f07d841caa3c7c72d4b41",
+          "liteSha256": "9a6b8295963ff65e06f525cd81d83cb306d92da9962f07d841caa3c7c72d4b41",
+          "sourceOption": "reaver-casting-4",
+          "source": {
+            "path": "boards/reaver-casting.png",
+            "width": 1536,
+            "height": 1024,
+            "view": {
+              "x": 0,
+              "y": 512,
+              "width": 512,
+              "height": 512
+            },
+            "sha256": "a68e9049260c34a1eba2ad1e95e06e612b36225bbf711eea3b241bf90d426c16"
+          },
+          "sourceBounds": [
+            55,
+            12,
+            463,
+            482
+          ],
+          "scale": 0.8936170212765957
+        },
+        "counter": {
+          "path": "assets-display/alternative/reaver-greatsword-pilot-counter.webp",
+          "lite": "assets-display/alternative/reaver-greatsword-pilot-counter-mobile.webp",
+          "size": [
+            768,
+            512
+          ],
+          "rasterSize": [
+            768,
+            512
+          ],
+          "mobileRasterSize": [
+            256,
+            171
+          ],
+          "bounds": [
+            180,
+            112,
+            618,
+            465
+          ],
+          "anchor": [
+            384,
+            464
+          ],
+          "drawOffset": [
+            0,
+            0
+          ],
+          "stageAnchor": [
+            384,
+            464
+          ],
+          "stageBounds": [
+            180,
+            112,
+            618,
+            465
+          ],
+          "sha256": "667464ea845f0af44e2efad3c58c995661f810103c1a07ef39c65b2fdeca670e",
+          "liteSha256": "c02c34e2036a9f845d8c5644492cfb019190dfaad2385ca7169fe834035d5fcd",
+          "sourceOption": "greatsword-counter-15-original",
+          "source": {
+            "path": "pose-studio/stances/update-stances/greatsword-counter/sheet-a.png",
+            "width": 1024,
+            "height": 1536,
+            "sha256": "cdf9e317db377a672a6de09af90516bf903246cd5800727f7acf364d353d49cd"
+          },
+          "sourceBounds": [
+            91,
+            1110,
+            462,
+            1408
+          ],
+          "cropBounds": [
+            87,
+            1101,
+            466,
+            1412
+          ],
+          "scale": 1.18,
+          "approvedPreview": {
+            "id": "C",
+            "path": "pose-studio/stances/update-stances/sequence-review/preview-assets.json",
+            "manifestSha256": "7d863b6a724cbdbd8a2df31c781be4d60f459c7e542d10a10741a46fb266729d",
+            "imagePath": "frames/C.webp",
+            "sha256": "667464ea845f0af44e2efad3c58c995661f810103c1a07ef39c65b2fdeca670e"
+          },
+          "bodyRegistration": {
+            "method": "reviewed pelvis projection; no weapon-bounds scale fit",
+            "sourceAnchor": [
+              264,
+              1408
+            ],
+            "pelvisLandmark": [
+              264,
+              1252
+            ],
+            "stageAnchor": [
+              384,
+              464
+            ]
+          },
+          "sourceTreatment": "Existing owner-selected source pixels; approved crop, uniform scale and translation only"
+        },
+        "sweep": {
+          "path": "assets-display/alternative/reaver-greatsword-pilot-sweep.webp",
+          "lite": "assets-display/alternative/reaver-greatsword-pilot-sweep-mobile.webp",
+          "size": [
+            1024,
+            1024
+          ],
+          "rasterSize": [
+            1024,
+            1024
+          ],
+          "mobileRasterSize": [
+            256,
+            256
+          ],
+          "bounds": [
+            69,
+            389,
+            679,
+            759
+          ],
+          "drawOffset": [
+            -136,
+            -270
+          ],
+          "stageBounds": [
+            -67,
+            119,
+            543,
+            489
+          ],
+          "stageAnchor": [
+            384,
+            464
+          ],
+          "sha256": "81d348d0382b9a99c1f72d5d23dab4975bbe648b3db979d8f725fc250d02db7c",
+          "liteSha256": "20fd757bf9a39e06e6ba03bc265bc272d4eebd2734e1d24655000936a57bd601",
+          "sourceOption": "SW09",
+          "source": {
+            "path": "pose-studio/stances/update-stances/smash-sweep-examples/sweep/selected-sweep-sw09/SW09/frame-01.png",
+            "width": 1024,
+            "height": 1024,
+            "sha256": "faf9d5f34285dc82b0b19426aafe6debe679bec33b2f45d095b0059c5b105ac1"
+          },
+          "provenance": "pose-studio/stances/update-stances/selected-sweep-sw09/production.json"
+        },
+        "smash": {
+          "path": "assets-display/alternative/reaver-greatsword-pilot-smash.webp",
+          "lite": "assets-display/alternative/reaver-greatsword-pilot-smash-mobile.webp",
+          "size": [
+            512,
+            512
+          ],
+          "rasterSize": [
+            512,
+            512
+          ],
+          "mobileRasterSize": [
+            256,
+            256
+          ],
+          "bounds": [
+            47,
+            94,
+            465,
+            465
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "9abfefe7258a3bfa2238e7c0516396c61baa5ca009a649b8408183b91fcdf6e2",
+          "liteSha256": "7d96cbc87ccb1159befa85a192f4cdf72cea0170f7dd00b34af26074ad70a182",
+          "sourceOption": "greatsword-smash-05",
+          "source": {
+            "path": "pose-studio/stances/update-stances/greatsword-smash/sheet-a.png",
+            "width": 1536,
+            "height": 1024,
+            "sha256": "49b039cef183a248562763695d44dd2221124a801dbdc0edb8123d660d2487f7"
+          },
+          "sourceBounds": [
+            584,
+            546,
+            1071,
+            978
+          ],
+          "cropBounds": [
+            581,
+            543,
+            1074,
+            981
+          ],
+          "scale": 0.8553971486761711,
+          "drawOffset": [
+            50,
+            0
+          ],
+          "stageAnchor": [
+            384,
+            464
+          ],
+          "stageBounds": [
+            97,
+            94,
+            515,
+            465
+          ],
+          "approvedPreviewId": "S"
+        },
+        "evade": {
+          "path": "assets-display/alternative/reaver-greatsword-pilot-evade.webp",
+          "lite": "assets-display/alternative/reaver-greatsword-pilot-evade-mobile.webp",
+          "size": [
+            768,
+            512
+          ],
+          "rasterSize": [
+            768,
+            512
+          ],
+          "mobileRasterSize": [
+            256,
+            171
+          ],
+          "bounds": [
+            180,
+            234,
+            582,
+            464
+          ],
+          "anchor": [
+            384,
+            464
+          ],
+          "drawOffset": [
+            0,
+            0
+          ],
+          "stageAnchor": [
+            384,
+            464
+          ],
+          "stageBounds": [
+            180,
+            234,
+            582,
+            464
+          ],
+          "sha256": "eb500ae71c6dee7d71c8040cbf7971cc4b4bd643aedddd26f70442bd1c501f22",
+          "liteSha256": "66385959b222ced764d1926e5426822533842e55f0d5585af48cd0cc3a3e5688",
+          "sourceOption": "greatsword-evade-15",
+          "source": {
+            "path": "pose-studio/stances/update-stances/greatsword-evade/sheet-a.png",
+            "width": 1024,
+            "height": 1536,
+            "sha256": "e19fe59da17dfb2b52b07cddcd3f2400bd70145aeb6c647322ef821894665c75"
+          },
+          "sourceBounds": [
+            20,
+            1139,
+            555,
+            1445
+          ],
+          "cropBounds": [
+            16,
+            1134,
+            560,
+            1456
+          ],
+          "scale": 0.75,
+          "approvedPreview": {
+            "id": "E",
+            "path": "pose-studio/stances/update-stances/sequence-review/preview-assets.json",
+            "manifestSha256": "7d863b6a724cbdbd8a2df31c781be4d60f459c7e542d10a10741a46fb266729d",
+            "imagePath": "frames/AT5.webp",
+            "sha256": "eb500ae71c6dee7d71c8040cbf7971cc4b4bd643aedddd26f70442bd1c501f22"
+          },
+          "bodyRegistration": {
+            "method": "reviewed pelvis projection; no weapon-bounds scale fit",
+            "sourceAnchor": [
+              292,
+              1445
+            ],
+            "pelvisLandmark": [
+              292,
+              1342
+            ],
+            "stageAnchor": [
+              384,
+              464
+            ]
+          },
+          "sourceTreatment": "Existing owner-selected source pixels; approved crop, uniform scale and translation only"
+        },
+        "defend": {
+          "path": "assets-display/alternative/reaver-greatsword-pilot-defend.webp",
+          "lite": "assets-display/alternative/reaver-greatsword-pilot-defend-mobile.webp",
+          "size": [
+            768,
+            512
+          ],
+          "rasterSize": [
+            768,
+            512
+          ],
+          "mobileRasterSize": [
+            256,
+            171
+          ],
+          "bounds": [
+            160,
+            116,
+            561,
+            464
+          ],
+          "anchor": [
+            384,
+            464
+          ],
+          "drawOffset": [
+            0,
+            0
+          ],
+          "stageAnchor": [
+            384,
+            464
+          ],
+          "stageBounds": [
+            160,
+            116,
+            561,
+            464
+          ],
+          "sha256": "69ff5522214d93cf6f91390e8ab37df20ceb88533df3b7918be47450c99aff43",
+          "liteSha256": "eb068b95d18037b8201fc0b57c0717902c04145638a00fec319a39e2e2a246bc",
+          "sourceOption": "greatsword-counter-12",
+          "source": {
+            "path": "pose-studio/stances/update-stances/greatsword-counter/sheet-a.png",
+            "width": 1024,
+            "height": 1536,
+            "sha256": "cdf9e317db377a672a6de09af90516bf903246cd5800727f7acf364d353d49cd"
+          },
+          "sourceBounds": [
+            592,
+            196,
+            932,
+            491
+          ],
+          "cropBounds": [
+            589,
+            193,
+            936,
+            498
+          ],
+          "scale": 1.18,
+          "approvedPreview": {
+            "id": "D",
+            "path": "pose-studio/stances/update-stances/sequence-review/preview-assets.json",
+            "manifestSha256": "7d863b6a724cbdbd8a2df31c781be4d60f459c7e542d10a10741a46fb266729d",
+            "imagePath": "frames/D.webp",
+            "sha256": "69ff5522214d93cf6f91390e8ab37df20ceb88533df3b7918be47450c99aff43"
+          },
+          "bodyRegistration": {
+            "method": "reviewed pelvis projection; no weapon-bounds scale fit",
+            "sourceAnchor": [
+              782,
+              491
+            ],
+            "pelvisLandmark": [
+              782,
+              360
+            ],
+            "stageAnchor": [
+              384,
+              464
+            ]
+          },
+          "sourceTreatment": "Existing owner-selected source pixels; approved crop, uniform scale and translation only"
+        },
+        "pilot-sweep-windup": {
+          "path": "assets-display/alternative/reaver-greatsword-pilot-sweep-windup.webp",
+          "lite": "assets-display/alternative/reaver-greatsword-pilot-sweep-windup-mobile.webp",
+          "size": [
+            1024,
+            1024
+          ],
+          "rasterSize": [
+            1024,
+            1024
+          ],
+          "mobileRasterSize": [
+            256,
+            256
+          ],
+          "bounds": [
+            183,
+            374,
+            969,
+            743
+          ],
+          "drawOffset": [
+            -136,
+            -270
+          ],
+          "stageBounds": [
+            47,
+            104,
+            833,
+            473
+          ],
+          "stageAnchor": [
+            384,
+            464
+          ],
+          "sha256": "e42ea1976a0a162c78098cb7a13010cc1b855d5baf6f4fe0fe90e42cc9991f4d",
+          "liteSha256": "b6eeb8ecb140678365100c3f1d162c17e9852716b037283cbfb209e90f39de9c",
+          "sourceOption": "SW09",
+          "source": {
+            "path": "pose-studio/stances/update-stances/smash-sweep-examples/sweep/selected-sweep-sw09/SW09/frame-02.png",
+            "width": 1024,
+            "height": 1024,
+            "sha256": "259459c43d53d162dd6fe30132ebf6a1df00b3de62e8c3622b008dcaff875c7d"
+          },
+          "provenance": "pose-studio/stances/update-stances/selected-sweep-sw09/production.json"
+        },
+        "pilot-sweep-contact": {
+          "path": "assets-display/alternative/reaver-greatsword-pilot-sweep-contact.webp",
+          "lite": "assets-display/alternative/reaver-greatsword-pilot-sweep-contact-mobile.webp",
+          "size": [
+            1024,
+            1024
+          ],
+          "rasterSize": [
+            1024,
+            1024
+          ],
+          "mobileRasterSize": [
+            256,
+            256
+          ],
+          "bounds": [
+            178,
+            397,
+            895,
+            741
+          ],
+          "drawOffset": [
+            -136,
+            -270
+          ],
+          "stageBounds": [
+            42,
+            127,
+            759,
+            471
+          ],
+          "stageAnchor": [
+            384,
+            464
+          ],
+          "sha256": "2f57d14e2f17a7366977829957514d0a97f64adf91cb24c26ede51a25e56bbb2",
+          "liteSha256": "92efd91d23e37086a3d5d7c3e58b58b35dd48d10779dae34fd39696736abfe5f",
+          "sourceOption": "SW09",
+          "source": {
+            "path": "pose-studio/stances/update-stances/smash-sweep-examples/sweep/selected-sweep-sw09/SW09/frame-03.png",
+            "width": 1024,
+            "height": 1024,
+            "sha256": "cc7af9a81181afce091957b100cf91f699f2e89fae8de4ba092224d20e768521"
+          },
+          "provenance": "pose-studio/stances/update-stances/selected-sweep-sw09/production.json"
+        },
+        "pilot-sweep-finish": {
+          "path": "assets-display/alternative/reaver-greatsword-pilot-sweep-finish.webp",
+          "lite": "assets-display/alternative/reaver-greatsword-pilot-sweep-finish-mobile.webp",
+          "size": [
+            1024,
+            1024
+          ],
+          "rasterSize": [
+            1024,
+            1024
+          ],
+          "mobileRasterSize": [
+            256,
+            256
+          ],
+          "bounds": [
+            198,
+            421,
+            847,
+            746
+          ],
+          "drawOffset": [
+            -136,
+            -270
+          ],
+          "stageBounds": [
+            62,
+            151,
+            711,
+            476
+          ],
+          "stageAnchor": [
+            384,
+            464
+          ],
+          "sha256": "96a520910a6962ade28c268da0cc34fed5c747b309b6a60580a32ebdd58c429b",
+          "liteSha256": "266b7ccba64d2413bb02fd1f2770578f04149fcacb3b0a77f72230c2b8d24d37",
+          "sourceOption": "SW09",
+          "source": {
+            "path": "pose-studio/stances/update-stances/smash-sweep-examples/sweep/selected-sweep-sw09/SW09/frame-04.png",
+            "width": 1024,
+            "height": 1024,
+            "sha256": "edea5b2d8ad25ef6cd46a6de4543171fe263e050907f391a2fc293b02109dc6d"
+          },
+          "provenance": "pose-studio/stances/update-stances/selected-sweep-sw09/production.json"
+        }
+      },
+      "hurt": {
+        "file": "assets/animations/greatsword-outfits/reaver/HURT.webp",
+        "scale": 0.7457,
+        "dx": 89.24,
+        "dy": 107.06
+      },
+      "sweep": {
+        "poses": [
+          "origin",
+          "pilot-sweep-windup",
+          "pilot-sweep-contact",
+          "pilot-sweep-finish",
+          "origin"
+        ],
+        "durations": [
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "impact": 2,
+        "travel": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "hold": false,
+        "pilot": true,
+        "timingUnits": 5,
+        "contactCue": true
+      }
+    },
+    "rogue": {
+      "profiles": {
+        "weaponProfile": null,
+        "smashProfile": "rogue"
+      },
+      "poses": {
+        "ready": {
+          "path": "assets-display/alternative/card-rogue-ready.webp",
+          "lite": "assets-display/alternative/card-rogue-ready-mobile.webp",
+          "bounds": [
+            109,
+            138,
+            376,
+            462
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "rasterSize": [
+            256,
+            256
+          ]
+        },
+        "offensive": {
+          "path": "assets-display/alternative/stances/rogue/offensive.webp",
+          "lite": "assets-display/alternative/stances/rogue/offensive-mobile.webp",
+          "size": [
+            512,
+            512
+          ],
+          "rasterSize": [
+            256,
+            256
+          ],
+          "bounds": [
+            94,
+            144,
+            419,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "3d4e79805e4afc3c23452fda14ef5e31c16d12fe4ead8e14c27e41cce6586657",
+          "liteSha256": "3d4e79805e4afc3c23452fda14ef5e31c16d12fe4ead8e14c27e41cce6586657",
+          "sourceOption": "original-rogue-offensive",
+          "source": {
+            "path": "../frames/rogue-default/offensive.webp",
+            "width": 512,
+            "height": 512,
+            "view": {
+              "x": 0,
+              "y": 0,
+              "width": 512,
+              "height": 512
+            },
+            "sha256": "6286f0305e40b4d04f50c0c6180ad2b28fba3db1a1346303bfe18b4f1e2f34ce"
+          },
+          "sourceBounds": [
+            75,
+            107,
+            437,
+            464
+          ],
+          "scale": 0.8974358974358975
+        },
+        "defensive": {
+          "path": "assets-display/alternative/stances/rogue/defensive.webp",
+          "lite": "assets-display/alternative/stances/rogue/defensive-mobile.webp",
+          "size": [
+            512,
+            512
+          ],
+          "rasterSize": [
+            256,
+            256
+          ],
+          "bounds": [
+            60,
+            44,
+            452,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "301fab06270f119fe2fea2227e3ad9ebfaa7ab672b327413446281bb19d6644a",
+          "liteSha256": "301fab06270f119fe2fea2227e3ad9ebfaa7ab672b327413446281bb19d6644a",
+          "sourceOption": "rogue-defend-3",
+          "source": {
+            "path": "boards/rogue-defend.png",
+            "width": 1536,
+            "height": 1024,
+            "view": {
+              "x": 1024,
+              "y": 0,
+              "width": 512,
+              "height": 512
+            },
+            "sha256": "475dda5d10656e24aeafb198e3cd5d1e4b3ec7f9a09877b6f22fae9bd20f96ec"
+          },
+          "sourceBounds": [
+            20,
+            34,
+            457,
+            502
+          ],
+          "scale": 0.8974358974358975
+        },
+        "casting": {
+          "path": "assets-display/alternative/stances/rogue/casting.webp",
+          "lite": "assets-display/alternative/stances/rogue/casting-mobile.webp",
+          "size": [
+            512,
+            512
+          ],
+          "rasterSize": [
+            256,
+            256
+          ],
+          "bounds": [
+            142,
+            87,
+            371,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "6cce8547c352aa76d135c88bc2663d197a340d4e4f25f166227e620ffac02ad2",
+          "liteSha256": "6cce8547c352aa76d135c88bc2663d197a340d4e4f25f166227e620ffac02ad2",
+          "sourceOption": "original-rogue-casting",
+          "source": {
+            "path": "../frames/rogue-default/casting.webp",
+            "width": 512,
+            "height": 512,
+            "view": {
+              "x": 0,
+              "y": 0,
+              "width": 512,
+              "height": 512
+            },
+            "sha256": "e658a3e4584cbb919c5d4d236d1391553d326b7d0b6aa88c2fcbe44e053c07c7"
+          },
+          "sourceBounds": [
+            128,
+            44,
+            383,
+            464
+          ],
+          "scale": 0.8974358974358975
+        },
+        "counter": {
+          "path": "assets/animations/player-counter-sweep/rogue/counter/stance.webp",
+          "bounds": [
+            98,
+            103,
+            415,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "rasterSize": [
+            256,
+            256
+          ],
+          "sha256": "f3123d3033a2a2633a43413a9af2aff8b4810792922d033965932c0217c5bfe0"
+        },
+        "sweep": {
+          "path": "assets/animations/player-counter-sweep/rogue/sweep/stance.webp",
+          "bounds": [
+            103,
+            124,
+            408,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "rasterSize": [
+            256,
+            256
+          ],
+          "sha256": "aab7e16ac830bdc851f179efafea5b4e0d457f89958035070e3bef89443cba45"
+        },
+        "smash": {
+          "path": "assets-display/alternative/class-smash-rogue-held.webp",
+          "lite": "assets-display/alternative/class-smash-rogue-held-mobile.webp",
+          "sha256": "d3588ad741536f17f5a7cd9522245cf15e0e40f907a1c9bb900fa72fbb0b9ef1",
+          "liteSha256": "1bd5b045170e59f54a59e69030e4d60ac32f57691ce3d5601190821b67bd88df",
+          "size": [
+            257.0742857142857,
+            391.2
+          ],
+          "drawOffset": [
+            259.18857142857144,
+            84.90857142857143
+          ],
+          "bounds": [
+            261,
+            133,
+            779,
+            939
+          ],
+          "sourceCrop": [
+            244,
+            116,
+            796,
+            956
+          ],
+          "stageBounds": [
+            267.10571428571427,
+            92.8257142857143,
+            508.3457142857143,
+            468.19142857142856
+          ],
+          "stageAnchor": [
+            384,
+            464
+          ],
+          "rasterSize": [
+            276,
+            420
+          ],
+          "mobileRasterSize": [
+            138,
+            210
+          ],
+          "source": {
+            "path": "pose-studio/stances/class-smash/rogue/01-held.png",
+            "sha256": "8384178d191cd7d3e3601742ee618860537b22a7303d6c24b58f25b41ffbc2b6",
+            "width": 1024,
+            "height": 1024
+          },
+          "provenance": "pose-studio/stances/class-smash/rogue/provenance.json"
+        },
+        "rogue.sweep.stance": {
+          "path": "assets/animations/player-counter-sweep/rogue/sweep/stance.webp",
+          "bounds": [
+            103,
+            124,
+            408,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "rasterSize": [
+            256,
+            256
+          ],
+          "sha256": "aab7e16ac830bdc851f179efafea5b4e0d457f89958035070e3bef89443cba45"
+        },
+        "rogue.sweep.contact": {
+          "path": "assets/animations/player-counter-sweep/rogue/sweep/contact.webp",
+          "bounds": [
+            72,
+            172,
+            439,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "rasterSize": [
+            256,
+            256
+          ],
+          "sha256": "cd1925884661f82898aa014ae0da7b3403e8603d883b0020bf0405dc6d5dea63"
+        },
+        "rogue.sweep.recovery": {
+          "path": "assets/animations/player-counter-sweep/rogue/sweep/recovery.webp",
+          "bounds": [
+            129,
+            135,
+            384,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "rasterSize": [
+            256,
+            256
+          ],
+          "sha256": "ea740fef6093c826647de885cd026789e08d70d5ab17cd68b29d9935e170c0d9"
+        }
+      },
+      "hurt": {
+        "file": "assets/animations/twin-sword-outfits/rogue/HURT.webp",
+        "scale": 1.1418,
+        "dx": -38.89,
+        "dy": -86.09
+      },
+      "sweep": {
+        "selection": "rogue-sweep-05",
+        "label": "High dagger set → descending diagonal sweep",
+        "poses": [
+          "rogue.sweep.stance",
+          "rogue.sweep.contact",
+          "rogue.sweep.recovery",
+          "ready"
+        ],
+        "durations": [
+          55,
+          60,
+          65,
+          80
+        ],
+        "impact": 1,
+        "travel": [
+          0,
+          55,
+          28,
+          0
+        ],
+        "effects": [
+          null,
+          "rogue.sweep.effect-1",
+          "rogue.sweep.effect-2",
+          null
+        ],
+        "hold": false
+      }
+    },
+    "starseer": {
+      "profiles": {
+        "weaponProfile": null,
+        "smashProfile": "starseer"
+      },
+      "poses": {
+        "ready": {
+          "path": "assets-display/alternative/card-starseer-ready.webp",
+          "lite": "assets-display/alternative/card-starseer-ready-mobile.webp",
+          "bounds": [
+            145,
+            147,
+            342,
+            462
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "rasterSize": [
+            256,
+            256
+          ]
+        },
+        "offensive": {
+          "path": "assets-display/alternative/stances/starseer/offensive.webp",
+          "lite": "assets-display/alternative/stances/starseer/offensive-mobile.webp",
+          "size": [
+            512,
+            512
+          ],
+          "rasterSize": [
+            256,
+            256
+          ],
+          "bounds": [
+            61,
+            107,
+            452,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "ed77fe06fe5c8624410005f9cd2aae73afa9a26be21794383a2bc8580ddfdaf0",
+          "liteSha256": "ed77fe06fe5c8624410005f9cd2aae73afa9a26be21794383a2bc8580ddfdaf0",
+          "sourceOption": "earlier-starseer-attack-4",
+          "source": {
+            "path": "selected-sources/starseer-attack-earlier.png",
+            "width": 1536,
+            "height": 1024,
+            "view": {
+              "x": 0,
+              "y": 512,
+              "width": 512,
+              "height": 512
+            },
+            "sha256": "866968d509083a82656727e0287a8558a9a207b7002593e1debade9d0251d2b8"
+          },
+          "sourceBounds": [
+            22,
+            40,
+            490,
+            467
+          ],
+          "scale": 0.8349900596421471
+        },
+        "defensive": {
+          "path": "assets-display/alternative/stances/starseer/defensive.webp",
+          "lite": "assets-display/alternative/stances/starseer/defensive-mobile.webp",
+          "size": [
+            512,
+            512
+          ],
+          "rasterSize": [
+            256,
+            256
+          ],
+          "bounds": [
+            96,
+            62,
+            416,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "cc022196050cf017c7663ace9dd5cdd13f383c0bdca616320ab575db801898a8",
+          "liteSha256": "cc022196050cf017c7663ace9dd5cdd13f383c0bdca616320ab575db801898a8",
+          "sourceOption": "earlier-starseer-defend-5",
+          "source": {
+            "path": "selected-sources/starseer-defend-earlier.png",
+            "width": 1536,
+            "height": 1024,
+            "view": {
+              "x": 550,
+              "y": 512,
+              "width": 474,
+              "height": 512
+            },
+            "sha256": "75f6a36cd584555166284d7825af62118ad1a9224d4b73be6e7e1c93a0828ae8"
+          },
+          "sourceBounds": [
+            24,
+            0,
+            407,
+            481
+          ],
+          "scale": 0.8349900596421471
+        },
+        "casting": {
+          "path": "assets-display/alternative/stances/starseer/casting.webp",
+          "lite": "assets-display/alternative/stances/starseer/casting-mobile.webp",
+          "size": [
+            512,
+            512
+          ],
+          "rasterSize": [
+            256,
+            256
+          ],
+          "bounds": [
+            107,
+            44,
+            405,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "088cf317a421d51936625df8277cc21ffbe58f39b863d9dd9d02c9ef087c10ed",
+          "liteSha256": "088cf317a421d51936625df8277cc21ffbe58f39b863d9dd9d02c9ef087c10ed",
+          "sourceOption": "earlier-starseer-casting-3",
+          "source": {
+            "path": "selected-sources/starseer-casting-earlier.png",
+            "width": 1536,
+            "height": 1024,
+            "view": {
+              "x": 1024,
+              "y": 0,
+              "width": 512,
+              "height": 512
+            },
+            "sha256": "5396fde6e1feb53cc947590c8c84625458e6d5b8d2f84caa4b072ed1579afefc"
+          },
+          "sourceBounds": [
+            51,
+            9,
+            408,
+            512
+          ],
+          "scale": 0.8349900596421471
+        },
+        "counter": {
+          "path": "assets/animations/player-counter-sweep/starseer/counter/stance.webp",
+          "bounds": [
+            110,
+            155,
+            406,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "rasterSize": [
+            256,
+            256
+          ],
+          "sha256": "0b84d1f63a482a63cc88d7576d27002814107b86b0f4555e5fa5cfa9a0feffb8"
+        },
+        "sweep": {
+          "path": "assets/animations/player-counter-sweep/starseer/sweep/stance.webp",
+          "bounds": [
+            62,
+            203,
+            407,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "rasterSize": [
+            256,
+            256
+          ],
+          "sha256": "143ff2430068b5f940d0dc5353ba8bf9561e8b609fd24da9197cffc92845442c"
+        },
+        "smash": {
+          "path": "assets-display/alternative/class-smash-starseer-held.webp",
+          "lite": "assets-display/alternative/class-smash-starseer-held-mobile.webp",
+          "sha256": "578d4501ed338945e36459cb463f57d2a1f9dfb3548921284d4224859895ac05",
+          "liteSha256": "b11f6ec5d42bf1d2dd612e287c08e6b2ffbd194b55999827491730bfa49205f2",
+          "size": [
+            315.63948497854074,
+            565.9742489270386
+          ],
+          "drawOffset": [
+            215.2961373390558,
+            -28.506437768240303
+          ],
+          "bounds": [
+            283,
+            174,
+            710,
+            972
+          ],
+          "sourceCrop": [
+            264,
+            156,
+            728,
+            988
+          ],
+          "stageBounds": [
+            228.22103004291847,
+            -16.261802575107254,
+            518.6909871244635,
+            526.5836909871244
+          ],
+          "stageAnchor": [
+            384,
+            464
+          ],
+          "rasterSize": [
+            232,
+            416
+          ],
+          "mobileRasterSize": [
+            116,
+            208
+          ],
+          "source": {
+            "path": "pose-studio/stances/class-smash/starseer/01-held.png",
+            "sha256": "bbdadcbcaf9575ed6481c455780b358724c66c76d5a9188c084362a30656b70f",
+            "width": 1024,
+            "height": 1024
+          },
+          "provenance": "pose-studio/stances/class-smash/starseer/provenance.json"
+        },
+        "starseer.sweep.stance": {
+          "path": "assets/animations/player-counter-sweep/starseer/sweep/stance.webp",
+          "bounds": [
+            62,
+            203,
+            407,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "rasterSize": [
+            256,
+            256
+          ],
+          "sha256": "143ff2430068b5f940d0dc5353ba8bf9561e8b609fd24da9197cffc92845442c"
+        },
+        "starseer.sweep.contact": {
+          "path": "assets/animations/player-counter-sweep/starseer/sweep/contact.webp",
+          "bounds": [
+            67,
+            195,
+            509,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "rasterSize": [
+            256,
+            256
+          ],
+          "sha256": "2de8d69fd0d00adf0e60227aa0aa76568e9d19c3f0eb5d05e30d7db468f87675"
+        },
+        "starseer.sweep.recovery": {
+          "path": "assets/animations/player-counter-sweep/starseer/sweep/recovery.webp",
+          "bounds": [
+            107,
+            143,
+            390,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "rasterSize": [
+            256,
+            256
+          ],
+          "sha256": "744bb1cee7b11e85fc2782b856d41884e1aec5d9674bbf9f650dba0c6f8f76aa"
+        }
+      },
+      "hurt": {
+        "file": "assets/animations/unarmed-magic/starseer/HURT.webp",
+        "scale": 0.8125,
+        "dx": 49.41,
+        "dy": 72
+      },
+      "sweep": {
+        "selection": "starseer-sweep-01",
+        "label": "Existing painted sweep",
+        "poses": [
+          "starseer.sweep.stance",
+          "starseer.sweep.contact",
+          "starseer.sweep.recovery",
+          "ready"
+        ],
+        "durations": [
+          55,
+          60,
+          65,
+          80
+        ],
+        "impact": 1,
+        "travel": [
+          0,
+          55,
+          28,
+          0
+        ],
+        "effects": [
+          null,
+          "starseer.sweep.effect-1",
+          "starseer.sweep.effect-2",
+          null
+        ],
+        "hold": false
+      }
+    },
+    "herald": {
+      "profiles": {
+        "weaponProfile": null,
+        "smashProfile": "herald"
+      },
+      "poses": {
+        "ready": {
+          "path": "assets-display/alternative/card-herald-ready.webp",
+          "lite": "assets-display/alternative/card-herald-ready-mobile.webp",
+          "bounds": [
+            104,
+            161,
+            361,
+            462
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "rasterSize": [
+            256,
+            256
+          ]
+        },
+        "offensive": {
+          "path": "assets-display/alternative/stances/herald/offensive.webp",
+          "lite": "assets-display/alternative/stances/herald/offensive-mobile.webp",
+          "size": [
+            512,
+            512
+          ],
+          "rasterSize": [
+            256,
+            256
+          ],
+          "bounds": [
+            80,
+            47,
+            432,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "8bc808afae8a43deb4bbec908c02ad37bc9ddf6462755332399df81d88564a0f",
+          "liteSha256": "8bc808afae8a43deb4bbec908c02ad37bc9ddf6462755332399df81d88564a0f",
+          "sourceOption": "herald-attack-5",
+          "source": {
+            "path": "boards/herald-attack.png",
+            "width": 1536,
+            "height": 1024,
+            "view": {
+              "x": 512,
+              "y": 512,
+              "width": 512,
+              "height": 512
+            },
+            "sha256": "57ba42551afe73fd2b48b6850e876b5caff68a022056a3e3fc0977c8c57e2208"
+          },
+          "sourceBounds": [
+            57,
+            24,
+            451,
+            491
+          ],
+          "scale": 0.8936170212765957
+        },
+        "defensive": {
+          "path": "assets-display/alternative/stances/herald/defensive.webp",
+          "lite": "assets-display/alternative/stances/herald/defensive-mobile.webp",
+          "size": [
+            512,
+            512
+          ],
+          "rasterSize": [
+            256,
+            256
+          ],
+          "bounds": [
+            99,
+            57,
+            414,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "90550d3667cbfbf786054230e39449c030aa68b1f4c5f29930837de6c7d20737",
+          "liteSha256": "90550d3667cbfbf786054230e39449c030aa68b1f4c5f29930837de6c7d20737",
+          "sourceOption": "herald-defend-2",
+          "source": {
+            "path": "boards/herald-defend.png",
+            "width": 1536,
+            "height": 1024,
+            "view": {
+              "x": 512,
+              "y": 0,
+              "width": 512,
+              "height": 512
+            },
+            "sha256": "878822d559541c34595c09ef9ea44bc3ab1b55f735ac1a25da7ed24e0f3a04a0"
+          },
+          "sourceBounds": [
+            83,
+            38,
+            436,
+            494
+          ],
+          "scale": 0.8936170212765957
+        },
+        "casting": {
+          "path": "assets-display/alternative/stances/herald/casting.webp",
+          "lite": "assets-display/alternative/stances/herald/casting-mobile.webp",
+          "size": [
+            512,
+            512
+          ],
+          "rasterSize": [
+            256,
+            256
+          ],
+          "bounds": [
+            96,
+            44,
+            417,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "9e07fb484c03998ce69ebabb3bb5f60ca47c9f6ea4d4224e11359a0e0491682a",
+          "liteSha256": "9e07fb484c03998ce69ebabb3bb5f60ca47c9f6ea4d4224e11359a0e0491682a",
+          "sourceOption": "herald-casting-1",
+          "source": {
+            "path": "boards/herald-casting.png",
+            "width": 1536,
+            "height": 1024,
+            "view": {
+              "x": 0,
+              "y": 0,
+              "width": 512,
+              "height": 512
+            },
+            "sha256": "173809c0ab589d58f3c2f7e46049c48772130d414ebc4e37722177fcfff06e0a"
+          },
+          "sourceBounds": [
+            72,
+            23,
+            431,
+            493
+          ],
+          "scale": 0.8936170212765957
+        },
+        "counter": {
+          "path": "assets/animations/player-counter-sweep/herald/counter/stance.webp",
+          "bounds": [
+            58,
+            149,
+            372,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "rasterSize": [
+            256,
+            256
+          ],
+          "sha256": "17bfb14c6a366168a91024e0c88cab8b1cb06d498bc8335ed441ef988810a4f1"
+        },
+        "sweep": {
+          "path": "assets/animations/player-counter-sweep/herald/sweep/stance.webp",
+          "bounds": [
+            169,
+            164,
+            341,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "rasterSize": [
+            256,
+            256
+          ],
+          "sha256": "fe8cfde08acb11a35814401785e51aba6ea67d87c4201ad9b8a573808c0a6d06"
+        },
+        "smash": {
+          "path": "assets-display/alternative/class-smash-herald-held.webp",
+          "lite": "assets-display/alternative/class-smash-herald-held-mobile.webp",
+          "sha256": "5d788369c03c56489d8a1d1b0e3163b6f88ee8a2fb44298a9728bdf837894f90",
+          "liteSha256": "4793dd19f1f2bdf74ae86eba19657bb22a662340082c1571e153c91626f0ccde",
+          "size": [
+            333.668016194332,
+            397.4574898785425
+          ],
+          "drawOffset": [
+            217.165991902834,
+            76.35627530364371
+          ],
+          "bounds": [
+            259,
+            287,
+            765,
+            900
+          ],
+          "sourceCrop": [
+            240,
+            268,
+            784,
+            916
+          ],
+          "stageBounds": [
+            228.81983805668017,
+            88.01012145748987,
+            539.1801619433198,
+            464
+          ],
+          "stageAnchor": [
+            384,
+            464
+          ],
+          "rasterSize": [
+            272,
+            324
+          ],
+          "mobileRasterSize": [
+            136,
+            162
+          ],
+          "source": {
+            "path": "pose-studio/stances/class-smash/herald/frames/01-held.png",
+            "sha256": "1ec50550ef3547a0a3127e26003fac86c60e9ce1d73b846d319824fd88f36b13",
+            "width": 1024,
+            "height": 1024
+          },
+          "provenance": "pose-studio/stances/class-smash/herald/provenance.json"
+        },
+        "herald.sweep.stance": {
+          "path": "assets/animations/player-counter-sweep/herald/sweep/stance.webp",
+          "bounds": [
+            169,
+            164,
+            341,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "rasterSize": [
+            256,
+            256
+          ],
+          "sha256": "fe8cfde08acb11a35814401785e51aba6ea67d87c4201ad9b8a573808c0a6d06"
+        },
+        "herald.sweep.contact": {
+          "path": "assets/animations/player-counter-sweep/herald/sweep/contact.webp",
+          "bounds": [
+            149,
+            169,
+            364,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "rasterSize": [
+            256,
+            256
+          ],
+          "sha256": "af7172f72b9a6093c5727293358fd8ec191cf5ed488776e8780af4e2d31d4469"
+        },
+        "herald.sweep.recovery": {
+          "path": "assets/animations/player-counter-sweep/herald/sweep/recovery.webp",
+          "bounds": [
+            172,
+            160,
+            340,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "rasterSize": [
+            256,
+            256
+          ],
+          "sha256": "24f1710cf2f4e36d704eee89d9313270bc264dff0eaef0f9ac3eca2fdee8eee1"
+        }
+      },
+      "hurt": {
+        "file": "assets/animations/unarmed/herald/HURT.webp",
+        "scale": 0.8475,
+        "dx": 32.58,
+        "dy": 56.07
+      },
+      "sweep": {
+        "selection": "herald-sweep-03",
+        "label": "Open palm set → broad palm sweep",
+        "poses": [
+          "herald.sweep.stance",
+          "herald.sweep.contact",
+          "herald.sweep.recovery",
+          "ready"
+        ],
+        "durations": [
+          55,
+          60,
+          65,
+          80
+        ],
+        "impact": 1,
+        "travel": [
+          0,
+          55,
+          28,
+          0
+        ],
+        "effects": [
+          null,
+          "herald.sweep.effect-1",
+          "herald.sweep.effect-2",
+          null
+        ],
+        "hold": false
+      }
+    }
+  },
+  "landmarks": {
+    "assets-display/alternative/card-reaver-ready.webp": {
+      "headY": 101.5,
+      "feetY": 232,
+      "width": 256,
+      "height": 256
+    },
+    "assets-display/alternative/stances/reaver/offensive.webp": {
+      "headY": 79,
+      "feetY": 232,
+      "width": 256,
+      "height": 256
+    },
+    "assets-display/alternative/reaver-greatsword-pilot-defend.webp": {
+      "headY": 116,
+      "feetY": 464,
+      "width": 768,
+      "height": 512
+    },
+    "assets-display/alternative/stances/reaver/casting.webp": {
+      "headY": 36,
+      "feetY": 232,
+      "width": 256,
+      "height": 256
+    },
+    "assets-display/alternative/reaver-greatsword-pilot-counter.webp": {
+      "headY": 112,
+      "feetY": 465,
+      "width": 768,
+      "height": 512
+    },
+    "assets-display/alternative/reaver-greatsword-pilot-sweep.webp": {
+      "headY": 414,
+      "feetY": 759,
+      "width": 1024,
+      "height": 1024
+    },
+    "assets-display/alternative/reaver-greatsword-pilot-smash.webp": {
+      "headY": 140,
+      "feetY": 465,
+      "width": 512,
+      "height": 512
+    },
+    "assets-display/alternative/reaver-greatsword-pilot-evade.webp": {
+      "headY": 234,
+      "feetY": 464,
+      "width": 768,
+      "height": 512
+    },
+    "assets-display/alternative/card-rogue-ready.webp": {
+      "headY": 69,
+      "feetY": 232,
+      "width": 256,
+      "height": 256
+    },
+    "assets-display/alternative/stances/rogue/offensive.webp": {
+      "headY": 72,
+      "feetY": 232,
+      "width": 256,
+      "height": 256
+    },
+    "assets-display/alternative/stances/rogue/defensive.webp": {
+      "headY": 22,
+      "feetY": 232,
+      "width": 256,
+      "height": 256
+    },
+    "assets-display/alternative/stances/rogue/casting.webp": {
+      "headY": 43.5,
+      "feetY": 232,
+      "width": 256,
+      "height": 256
+    },
+    "assets/animations/player-counter-sweep/rogue/counter/stance.webp": {
+      "headY": 68,
+      "feetY": 232,
+      "width": 256,
+      "height": 256
+    },
+    "assets/animations/player-counter-sweep/rogue/sweep/stance.webp": {
+      "headY": 70,
+      "feetY": 232,
+      "width": 256,
+      "height": 256
+    },
+    "assets-display/alternative/class-smash-rogue-held.webp": {
+      "headY": 148,
+      "feetY": 408,
+      "width": 276,
+      "height": 420
+    },
+    "assets-display/alternative/card-starseer-ready.webp": {
+      "headY": 85,
+      "feetY": 232,
+      "width": 256,
+      "height": 256
+    },
+    "assets-display/alternative/stances/starseer/offensive.webp": {
+      "headY": 66,
+      "feetY": 232,
+      "width": 256,
+      "height": 256
+    },
+    "assets-display/alternative/stances/starseer/defensive.webp": {
+      "headY": 62,
+      "feetY": 232,
+      "width": 256,
+      "height": 256
+    },
+    "assets-display/alternative/stances/starseer/casting.webp": {
+      "headY": 70,
+      "feetY": 232,
+      "width": 256,
+      "height": 256
+    },
+    "assets/animations/player-counter-sweep/starseer/counter/stance.webp": {
+      "headY": 92,
+      "feetY": 232,
+      "width": 256,
+      "height": 256
+    },
+    "assets/animations/player-counter-sweep/starseer/sweep/stance.webp": {
+      "headY": 103.5,
+      "feetY": 232,
+      "width": 256,
+      "height": 256
+    },
+    "assets-display/alternative/class-smash-starseer-held.webp": {
+      "headY": 175,
+      "feetY": 361,
+      "width": 232,
+      "height": 416
+    },
+    "assets-display/alternative/card-herald-ready.webp": {
+      "headY": 80.5,
+      "feetY": 232,
+      "width": 256,
+      "height": 256
+    },
+    "assets-display/alternative/stances/herald/offensive.webp": {
+      "headY": 23.5,
+      "feetY": 232,
+      "width": 256,
+      "height": 256
+    },
+    "assets-display/alternative/stances/herald/defensive.webp": {
+      "headY": 28.5,
+      "feetY": 232,
+      "width": 256,
+      "height": 256
+    },
+    "assets-display/alternative/stances/herald/casting.webp": {
+      "headY": 22,
+      "feetY": 232,
+      "width": 256,
+      "height": 256
+    },
+    "assets/animations/player-counter-sweep/herald/counter/stance.webp": {
+      "headY": 74.5,
+      "feetY": 232,
+      "width": 256,
+      "height": 256
+    },
+    "assets/animations/player-counter-sweep/herald/sweep/stance.webp": {
+      "headY": 82,
+      "feetY": 232,
+      "width": 256,
+      "height": 256
+    },
+    "assets-display/alternative/class-smash-herald-held.webp": {
+      "headY": 70,
+      "feetY": 315,
+      "width": 272,
+      "height": 324
+    }
+  }
+}

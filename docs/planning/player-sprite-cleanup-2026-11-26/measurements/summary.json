@@ -1,0 +1,262 @@
+{
+  "baseline": "49eca254d795d06266aa23941cb2b31fe77b27bf",
+  "artRelease": "cehinds/AI-Art/ashenspire-hd-assets-v30",
+  "cache": "C:\\repos\\AshenSpire\\.art-cache\\ashenspire-hd-assets-v30",
+  "defaultCombatWeapons": true,
+  "measurementScope": "Static baseline reconstruction at zero action travel/recoil; no browser/viewport assertion and no anatomical inference from vertical spans.",
+  "references": {
+    "reaver": {
+      "profiles": {
+        "weaponProfile": "reaver-greatsword-pilot",
+        "smashProfile": null
+      },
+      "ready": "assets-display/alternative/card-reaver-ready.webp",
+      "readyRasterBody": {
+        "headY": 101.5,
+        "feetY": 232,
+        "width": 256,
+        "height": 256
+      },
+      "referenceBodyStage": 261,
+      "cssPixelsPerStageUnit": 0.7279693486590039,
+      "cssReadyBodyPx": 190,
+      "requestedCanvas": [
+        932,
+        625
+      ],
+      "canvas": [
+        932,
+        625
+      ],
+      "padding": {
+        "left": 83,
+        "top": 81,
+        "right": 81
+      },
+      "normalFloor": 561
+    },
+    "rogue": {
+      "profiles": {
+        "weaponProfile": null,
+        "smashProfile": "rogue"
+      },
+      "ready": "assets-display/alternative/card-rogue-ready.webp",
+      "readyRasterBody": {
+        "headY": 69,
+        "feetY": 232,
+        "width": 256,
+        "height": 256
+      },
+      "referenceBodyStage": 326,
+      "cssPixelsPerStageUnit": 0.5828220858895705,
+      "cssReadyBodyPx": 190,
+      "requestedCanvas": [
+        768,
+        544
+      ],
+      "canvas": [
+        768,
+        544
+      ],
+      "padding": {
+        "left": 0,
+        "top": 0,
+        "right": 0
+      },
+      "normalFloor": 480
+    },
+    "starseer": {
+      "profiles": {
+        "weaponProfile": null,
+        "smashProfile": "starseer"
+      },
+      "ready": "assets-display/alternative/card-starseer-ready.webp",
+      "readyRasterBody": {
+        "headY": 85,
+        "feetY": 232,
+        "width": 256,
+        "height": 256
+      },
+      "referenceBodyStage": 294,
+      "cssPixelsPerStageUnit": 0.5993690851735016,
+      "cssReadyBodyPx": 176.21451104100947,
+      "requestedCanvas": [
+        768,
+        581.3497854077252
+      ],
+      "canvas": [
+        768,
+        581
+      ],
+      "padding": {
+        "left": 0,
+        "top": 37.34978540772528,
+        "right": 0
+      },
+      "normalFloor": 517.3497854077252
+    },
+    "herald": {
+      "profiles": {
+        "weaponProfile": null,
+        "smashProfile": "herald"
+      },
+      "ready": "assets-display/alternative/card-herald-ready.webp",
+      "readyRasterBody": {
+        "headY": 80.5,
+        "feetY": 232,
+        "width": 256,
+        "height": 256
+      },
+      "referenceBodyStage": 303,
+      "cssPixelsPerStageUnit": 0.6270627062706271,
+      "cssReadyBodyPx": 190,
+      "requestedCanvas": [
+        768,
+        584.1821862348178
+      ],
+      "canvas": [
+        768,
+        584
+      ],
+      "padding": {
+        "left": 0,
+        "top": 40.182186234817806,
+        "right": 0
+      },
+      "normalFloor": 520.1821862348178
+    }
+  },
+  "counts": {
+    "rows": 184,
+    "uniqueFramePaths": 157,
+    "uniqueAvailableFramePaths": 117,
+    "assetIdentifiers": 298,
+    "rasterFiles": 330,
+    "missingRasterFiles": 0,
+    "catalogHashMismatches": 0
+  },
+  "classes": {
+    "reaver": {
+      "catalogPoseRows": 62,
+      "uniqueFramePaths": 52,
+      "uniqueAvailablePaths": 39,
+      "landmarkedUniqueFrames": 9,
+      "landmarkedAvailableFrames": 9,
+      "missingLandmarkPaths": [
+        "assets-display/alternative/card-reaver-guard-rise.webp",
+        "assets-display/alternative/card-reaver-guard-return.webp",
+        "assets-display/alternative/card-reaver-spell-load.webp",
+        "assets-display/alternative/card-reaver-spell-release.webp",
+        "assets-display/alternative/card-reaver-spell-return.webp",
+        "assets-display/alternative/card-reaver-ranged-load.webp",
+        "assets-display/alternative/card-reaver-ranged-aim.webp",
+        "assets-display/alternative/card-reaver-ranged-release.webp",
+        "assets-display/alternative/card-reaver-magic-load.webp",
+        "assets-display/alternative/card-reaver-magic-release.webp",
+        "assets-display/alternative/card-reaver-magic-return.webp",
+        "assets/animations/player-counter-sweep/reaver/counter/stance.webp",
+        "assets/animations/player-counter-sweep/reaver/counter/contact.webp",
+        "assets/animations/player-counter-sweep/reaver/counter/recovery.webp",
+        "assets-display/alternative/reaver-greatsword-pilot-guard-break.webp",
+        "assets-display/alternative/reaver-greatsword-pilot-impact-v.webp",
+        "assets-display/alternative/reaver-greatsword-pilot-impact-g.webp",
+        "assets-display/alternative/reaver-greatsword-pilot-impact-h.webp",
+        "assets-display/alternative/reaver-greatsword-pilot-evade-1.webp",
+        "assets-display/alternative/reaver-greatsword-pilot-evade-2.webp",
+        "assets-display/alternative/reaver-greatsword-pilot-evade-3.webp",
+        "assets-display/alternative/reaver-greatsword-pilot-attack-2.webp",
+        "assets-display/alternative/reaver-greatsword-pilot-attack-3.webp",
+        "assets-display/alternative/reaver-greatsword-pilot-attack-4.webp",
+        "assets-display/alternative/reaver-greatsword-pilot-smash-takeoff.webp",
+        "assets-display/alternative/reaver-greatsword-pilot-smash-airborne.webp",
+        "assets-display/alternative/reaver-greatsword-pilot-smash-impact.webp",
+        "assets-display/alternative/reaver-greatsword-pilot-sweep-windup.webp",
+        "assets-display/alternative/reaver-greatsword-pilot-sweep-contact.webp",
+        "assets-display/alternative/reaver-greatsword-pilot-sweep-finish.webp"
+      ]
+    },
+    "rogue": {
+      "catalogPoseRows": 40,
+      "uniqueFramePaths": 37,
+      "uniqueAvailablePaths": 28,
+      "landmarkedUniqueFrames": 8,
+      "landmarkedAvailableFrames": 8,
+      "missingLandmarkPaths": [
+        "assets-display/alternative/card-rogue-attack-load.webp",
+        "assets-display/alternative/card-rogue-attack-contact.webp",
+        "assets-display/alternative/card-rogue-guard-rise.webp",
+        "assets-display/alternative/card-rogue-guard-return.webp",
+        "assets-display/alternative/card-rogue-spell-load.webp",
+        "assets-display/alternative/card-rogue-spell-release.webp",
+        "assets-display/alternative/card-rogue-spell-return.webp",
+        "assets-display/alternative/card-rogue-ranged-load.webp",
+        "assets-display/alternative/card-rogue-ranged-aim.webp",
+        "assets-display/alternative/card-rogue-ranged-release.webp",
+        "assets-display/alternative/card-rogue-magic-load.webp",
+        "assets-display/alternative/card-rogue-magic-release.webp",
+        "assets-display/alternative/card-rogue-magic-return.webp",
+        "assets/animations/player-counter-sweep/rogue/counter/contact.webp",
+        "assets/animations/player-counter-sweep/rogue/counter/recovery.webp",
+        "assets/animations/player-counter-sweep/rogue/sweep/contact.webp",
+        "assets/animations/player-counter-sweep/rogue/sweep/recovery.webp",
+        "assets-display/alternative/class-smash-rogue-takeoff.webp",
+        "assets-display/alternative/class-smash-rogue-airborne.webp",
+        "assets-display/alternative/class-smash-rogue-impact.webp"
+      ]
+    },
+    "starseer": {
+      "catalogPoseRows": 37,
+      "uniqueFramePaths": 34,
+      "uniqueAvailablePaths": 25,
+      "landmarkedUniqueFrames": 8,
+      "landmarkedAvailableFrames": 8,
+      "missingLandmarkPaths": [
+        "assets-display/alternative/card-starseer-attack-load.webp",
+        "assets-display/alternative/card-starseer-attack-contact.webp",
+        "assets-display/alternative/card-starseer-guard-rise.webp",
+        "assets-display/alternative/card-starseer-guard-return.webp",
+        "assets-display/alternative/card-starseer-spell-load.webp",
+        "assets-display/alternative/card-starseer-spell-release.webp",
+        "assets-display/alternative/card-starseer-spell-return.webp",
+        "assets-display/alternative/card-starseer-ranged-load.webp",
+        "assets-display/alternative/card-starseer-ranged-aim.webp",
+        "assets-display/alternative/card-starseer-ranged-release.webp",
+        "assets/animations/player-counter-sweep/starseer/counter/contact.webp",
+        "assets/animations/player-counter-sweep/starseer/counter/recovery.webp",
+        "assets/animations/player-counter-sweep/starseer/sweep/contact.webp",
+        "assets/animations/player-counter-sweep/starseer/sweep/recovery.webp",
+        "assets-display/alternative/class-smash-starseer-takeoff.webp",
+        "assets-display/alternative/class-smash-starseer-airborne.webp",
+        "assets-display/alternative/class-smash-starseer-impact.webp"
+      ]
+    },
+    "herald": {
+      "catalogPoseRows": 37,
+      "uniqueFramePaths": 34,
+      "uniqueAvailablePaths": 25,
+      "landmarkedUniqueFrames": 8,
+      "landmarkedAvailableFrames": 8,
+      "missingLandmarkPaths": [
+        "assets-display/alternative/card-herald-attack-load.webp",
+        "assets-display/alternative/card-herald-attack-contact.webp",
+        "assets-display/alternative/card-herald-guard-rise.webp",
+        "assets-display/alternative/card-herald-guard-return.webp",
+        "assets-display/alternative/card-herald-spell-load.webp",
+        "assets-display/alternative/card-herald-spell-release.webp",
+        "assets-display/alternative/card-herald-spell-return.webp",
+        "assets-display/alternative/card-herald-ranged-load.webp",
+        "assets-display/alternative/card-herald-ranged-aim.webp",
+        "assets-display/alternative/card-herald-ranged-release.webp",
+        "assets/animations/player-counter-sweep/herald/counter/contact.webp",
+        "assets/animations/player-counter-sweep/herald/counter/recovery.webp",
+        "assets/animations/player-counter-sweep/herald/sweep/contact.webp",
+        "assets/animations/player-counter-sweep/herald/sweep/recovery.webp",
+        "assets-display/alternative/class-smash-herald-takeoff.webp",
+        "assets-display/alternative/class-smash-herald-airborne.webp",
+        "assets-display/alternative/class-smash-herald-impact.webp"
+      ]
+    }
+  },
+  "missingRasters": [],
+  "hashMismatches": []
+}

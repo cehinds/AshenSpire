@@ -1,0 +1,2040 @@
+{
+  "baseline": "49eca254d795d06266aa23941cb2b31fe77b27bf",
+  "classes": {
+    "reaver": {
+      "profiles": {
+        "weaponProfile": "reaver-greatsword-pilot",
+        "smashProfile": null
+      },
+      "sequences": {
+        "attack": {
+          "poses": [
+            {
+              "key": "pilot-attack-1",
+              "path": "assets-display/alternative/reaver-greatsword-pilot-smash.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "pilot-attack-2",
+              "path": "assets-display/alternative/reaver-greatsword-pilot-attack-2.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "pilot-attack-3",
+              "path": "assets-display/alternative/reaver-greatsword-pilot-attack-3.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "pilot-attack-4",
+              "path": "assets-display/alternative/reaver-greatsword-pilot-attack-4.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "pilot-attack-5",
+              "path": "assets-display/alternative/reaver-greatsword-pilot-evade.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "pilot-attack-6",
+              "path": "assets-display/alternative/reaver-greatsword-pilot-evade-3.webp",
+              "resolution": "assembled catalog frame"
+            }
+          ],
+          "durations": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "impact": 3,
+          "travel": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "hold": false,
+          "pilot": true
+        },
+        "smash": {
+          "poses": [
+            {
+              "key": "origin",
+              "path": null,
+              "resolution": "current held/rest pose at sampling time"
+            },
+            {
+              "key": "pilot-smash-takeoff",
+              "path": "assets-display/alternative/reaver-greatsword-pilot-smash-takeoff.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "pilot-smash-airborne",
+              "path": "assets-display/alternative/reaver-greatsword-pilot-smash-airborne.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "pilot-smash-impact",
+              "path": "assets-display/alternative/reaver-greatsword-pilot-smash-impact.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "origin",
+              "path": null,
+              "resolution": "current held/rest pose at sampling time"
+            }
+          ],
+          "durations": [
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "impact": 3,
+          "travel": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "hold": false,
+          "pilot": true
+        },
+        "sweep": {
+          "poses": [
+            {
+              "key": "origin",
+              "path": null,
+              "resolution": "current held/rest pose at sampling time"
+            },
+            {
+              "key": "pilot-sweep-windup",
+              "path": "assets-display/alternative/reaver-greatsword-pilot-sweep-windup.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "pilot-sweep-contact",
+              "path": "assets-display/alternative/reaver-greatsword-pilot-sweep-contact.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "pilot-sweep-finish",
+              "path": "assets-display/alternative/reaver-greatsword-pilot-sweep-finish.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "origin",
+              "path": null,
+              "resolution": "current held/rest pose at sampling time"
+            }
+          ],
+          "durations": [
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "impact": 2,
+          "travel": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "hold": false,
+          "pilot": true
+        },
+        "counter": {
+          "poses": [
+            {
+              "key": "reaver.counter.stance",
+              "path": "assets/animations/player-counter-sweep/reaver/counter/stance.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "reaver.counter.contact",
+              "path": "assets/animations/player-counter-sweep/reaver/counter/contact.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "reaver.counter.recovery",
+              "path": "assets/animations/player-counter-sweep/reaver/counter/recovery.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ready",
+              "path": "assets-display/alternative/card-reaver-ready.webp",
+              "resolution": "assembled catalog frame"
+            }
+          ],
+          "durations": [
+            55,
+            60,
+            65,
+            80
+          ],
+          "impact": 1,
+          "travel": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "hold": false,
+          "pilot": false
+        },
+        "defend": {
+          "poses": [
+            {
+              "key": "ready",
+              "path": "assets-display/alternative/card-reaver-ready.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "guard-rise",
+              "path": "assets-display/alternative/card-reaver-guard-rise.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "guard-brace",
+              "path": "assets-display/alternative/card-reaver-guard-brace.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "guard-return",
+              "path": "assets-display/alternative/card-reaver-guard-return.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ready",
+              "path": "assets-display/alternative/card-reaver-ready.webp",
+              "resolution": "assembled catalog frame"
+            }
+          ],
+          "durations": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "impact": 2,
+          "travel": [
+            0,
+            -3,
+            -6,
+            -3,
+            0
+          ],
+          "hold": false,
+          "pilot": false
+        },
+        "spell": {
+          "poses": [
+            {
+              "key": "spell-return",
+              "path": "assets-display/alternative/card-reaver-spell-return.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "spell-load",
+              "path": "assets-display/alternative/card-reaver-spell-load.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "spell-release",
+              "path": "assets-display/alternative/card-reaver-spell-release.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "spell-release",
+              "path": "assets-display/alternative/card-reaver-spell-release.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "spell-return",
+              "path": "assets-display/alternative/card-reaver-spell-return.webp",
+              "resolution": "assembled catalog frame"
+            }
+          ],
+          "durations": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "impact": 2,
+          "travel": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "hold": false,
+          "pilot": false
+        },
+        "ranged": {
+          "poses": [
+            {
+              "key": "ranged-load",
+              "path": "assets-display/alternative/card-reaver-ranged-load.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ranged-aim",
+              "path": "assets-display/alternative/card-reaver-ranged-aim.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ranged-release",
+              "path": "assets-display/alternative/card-reaver-ranged-release.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ranged-release",
+              "path": "assets-display/alternative/card-reaver-ranged-release.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ranged-load",
+              "path": "assets-display/alternative/card-reaver-ranged-load.webp",
+              "resolution": "assembled catalog frame"
+            }
+          ],
+          "durations": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "impact": 2,
+          "travel": [
+            0,
+            0,
+            -4,
+            -2,
+            0
+          ],
+          "hold": false,
+          "pilot": false
+        },
+        "rangedMagic": {
+          "poses": [
+            {
+              "key": "magic-return",
+              "path": "assets-display/alternative/card-reaver-magic-return.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "magic-load",
+              "path": "assets-display/alternative/card-reaver-magic-load.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "magic-release",
+              "path": "assets-display/alternative/card-reaver-magic-release.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "magic-release",
+              "path": "assets-display/alternative/card-reaver-magic-release.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "magic-return",
+              "path": "assets-display/alternative/card-reaver-magic-return.webp",
+              "resolution": "assembled catalog frame"
+            }
+          ],
+          "durations": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "impact": 2,
+          "travel": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "hold": false,
+          "pilot": false
+        },
+        "counterPrepare": {
+          "poses": [
+            {
+              "key": "pilot-counter",
+              "path": "assets-display/alternative/reaver-greatsword-pilot-counter.webp",
+              "resolution": "assembled catalog frame"
+            }
+          ],
+          "durations": [
+            260
+          ],
+          "impact": 0,
+          "travel": [
+            0
+          ],
+          "hold": true,
+          "pilot": false
+        },
+        "counter-guard": {
+          "poses": [
+            {
+              "key": "pilot-defend",
+              "path": "assets-display/alternative/reaver-greatsword-pilot-defend.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "pilot-impact-v",
+              "path": "assets-display/alternative/reaver-greatsword-pilot-impact-v.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "pilot-impact-g",
+              "path": "assets-display/alternative/reaver-greatsword-pilot-impact-g.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "pilot-impact-h",
+              "path": "assets-display/alternative/reaver-greatsword-pilot-impact-h.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "pilot-counter",
+              "path": "assets-display/alternative/reaver-greatsword-pilot-counter.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "pilot-defend",
+              "path": "assets-display/alternative/reaver-greatsword-pilot-defend.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "pilot-smash",
+              "path": "assets-display/alternative/reaver-greatsword-pilot-smash.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "pilot-attack-1",
+              "path": "assets-display/alternative/reaver-greatsword-pilot-smash.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "pilot-attack-2",
+              "path": "assets-display/alternative/reaver-greatsword-pilot-attack-2.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "pilot-attack-3",
+              "path": "assets-display/alternative/reaver-greatsword-pilot-attack-3.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "pilot-attack-4",
+              "path": "assets-display/alternative/reaver-greatsword-pilot-attack-4.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "pilot-attack-5",
+              "path": "assets-display/alternative/reaver-greatsword-pilot-evade.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "pilot-attack-6",
+              "path": "assets-display/alternative/reaver-greatsword-pilot-evade-3.webp",
+              "resolution": "assembled catalog frame"
+            }
+          ],
+          "durations": [
+            2,
+            3,
+            1,
+            2,
+            3,
+            2,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "impact": 10,
+          "travel": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "hold": false,
+          "pilot": true
+        },
+        "counter-evade": {
+          "poses": [
+            {
+              "key": "pilot-evade-1",
+              "path": "assets-display/alternative/reaver-greatsword-pilot-evade-1.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "pilot-evade-2",
+              "path": "assets-display/alternative/reaver-greatsword-pilot-evade-2.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "pilot-evade-3",
+              "path": "assets-display/alternative/reaver-greatsword-pilot-evade-3.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "pilot-attack-1",
+              "path": "assets-display/alternative/reaver-greatsword-pilot-smash.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "pilot-attack-2",
+              "path": "assets-display/alternative/reaver-greatsword-pilot-attack-2.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "pilot-attack-3",
+              "path": "assets-display/alternative/reaver-greatsword-pilot-attack-3.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "pilot-attack-4",
+              "path": "assets-display/alternative/reaver-greatsword-pilot-attack-4.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "pilot-attack-5",
+              "path": "assets-display/alternative/reaver-greatsword-pilot-evade.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "pilot-attack-6",
+              "path": "assets-display/alternative/reaver-greatsword-pilot-evade-3.webp",
+              "resolution": "assembled catalog frame"
+            }
+          ],
+          "durations": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "impact": 6,
+          "travel": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "hold": false,
+          "pilot": true
+        },
+        "evade": {
+          "poses": [
+            {
+              "key": "pilot-evade-1",
+              "path": "assets-display/alternative/reaver-greatsword-pilot-evade-1.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "pilot-evade-2",
+              "path": "assets-display/alternative/reaver-greatsword-pilot-evade-2.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "pilot-evade-3",
+              "path": "assets-display/alternative/reaver-greatsword-pilot-evade-3.webp",
+              "resolution": "assembled catalog frame"
+            }
+          ],
+          "durations": [
+            1,
+            1,
+            1
+          ],
+          "impact": 0,
+          "travel": [
+            0,
+            0,
+            0
+          ],
+          "hold": false,
+          "pilot": true
+        }
+      },
+      "held": {
+        "offensive": "assets-display/alternative/stances/reaver/offensive.webp",
+        "defensive": "assets-display/alternative/reaver-greatsword-pilot-defend.webp",
+        "casting": "assets-display/alternative/stances/reaver/casting.webp",
+        "counter": "assets-display/alternative/reaver-greatsword-pilot-counter.webp",
+        "sweep": "assets-display/alternative/reaver-greatsword-pilot-sweep.webp",
+        "smash": "assets-display/alternative/reaver-greatsword-pilot-smash.webp",
+        "evade": "assets-display/alternative/reaver-greatsword-pilot-evade.webp",
+        "defend": "assets-display/alternative/reaver-greatsword-pilot-defend.webp"
+      },
+      "targetReactions": {
+        "evade": [
+          {
+            "key": "pilot-evade-1",
+            "path": "assets-display/alternative/reaver-greatsword-pilot-evade-1.webp"
+          },
+          {
+            "key": "pilot-evade-2",
+            "path": "assets-display/alternative/reaver-greatsword-pilot-evade-2.webp"
+          },
+          {
+            "key": "pilot-evade-3",
+            "path": "assets-display/alternative/reaver-greatsword-pilot-evade-3.webp"
+          }
+        ],
+        "guard-break": [
+          {
+            "key": "pilot-guard-break",
+            "path": "assets-display/alternative/reaver-greatsword-pilot-guard-break.webp"
+          }
+        ],
+        "fully-defended": [
+          {
+            "key": "pilot-defend",
+            "path": "assets-display/alternative/reaver-greatsword-pilot-defend.webp"
+          },
+          {
+            "key": "pilot-impact-v",
+            "path": "assets-display/alternative/reaver-greatsword-pilot-impact-v.webp"
+          },
+          {
+            "key": "pilot-impact-g",
+            "path": "assets-display/alternative/reaver-greatsword-pilot-impact-g.webp"
+          },
+          {
+            "key": "pilot-impact-h",
+            "path": "assets-display/alternative/reaver-greatsword-pilot-impact-h.webp"
+          },
+          {
+            "key": "pilot-counter",
+            "path": "assets-display/alternative/reaver-greatsword-pilot-counter.webp"
+          },
+          {
+            "key": "pilot-defend",
+            "path": "assets-display/alternative/reaver-greatsword-pilot-defend.webp"
+          }
+        ],
+        "defend": [
+          {
+            "key": "pilot-defend",
+            "path": "assets-display/alternative/reaver-greatsword-pilot-defend.webp"
+          }
+        ]
+      },
+      "baseReady": "assets-display/alternative/card-reaver-ready.webp",
+      "baseSweepOverridden": [
+        "ready",
+        "sweep-load",
+        "sweep-contact",
+        "sweep-return",
+        "ready"
+      ],
+      "originPolicy": "current restPose(); idle->ready, current stance->stance-<stance>, counter->pilot-counter or selected counter stance, defend/guard/evade->guard-brace",
+      "hurt": {
+        "file": "assets/animations/greatsword-outfits/reaver/HURT.webp",
+        "scale": 0.7457,
+        "dx": 89.24,
+        "dy": 107.06
+      },
+      "defeated": "assets/defeated-poses/reaver.webp"
+    },
+    "rogue": {
+      "profiles": {
+        "weaponProfile": null,
+        "smashProfile": "rogue"
+      },
+      "sequences": {
+        "attack": {
+          "poses": [
+            {
+              "key": "ready",
+              "path": "assets-display/alternative/card-rogue-ready.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "attack-load",
+              "path": "assets-display/alternative/card-rogue-attack-load.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "attack-contact",
+              "path": "assets-display/alternative/card-rogue-attack-contact.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "attack-contact",
+              "path": "assets-display/alternative/card-rogue-attack-contact.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ready",
+              "path": "assets-display/alternative/card-rogue-ready.webp",
+              "resolution": "assembled catalog frame"
+            }
+          ],
+          "durations": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "impact": 2,
+          "travel": [
+            0,
+            0,
+            80,
+            50,
+            0
+          ],
+          "hold": false,
+          "pilot": false
+        },
+        "smash": {
+          "poses": [
+            {
+              "key": "origin",
+              "path": null,
+              "resolution": "current held/rest pose at sampling time"
+            },
+            {
+              "key": "class-smash-takeoff",
+              "path": "assets-display/alternative/class-smash-rogue-takeoff.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "class-smash-airborne",
+              "path": "assets-display/alternative/class-smash-rogue-airborne.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "class-smash-impact",
+              "path": "assets-display/alternative/class-smash-rogue-impact.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "origin",
+              "path": null,
+              "resolution": "current held/rest pose at sampling time"
+            }
+          ],
+          "durations": [
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "impact": 3,
+          "travel": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "hold": false,
+          "pilot": false
+        },
+        "sweep": {
+          "poses": [
+            {
+              "key": "rogue.sweep.stance",
+              "path": "assets/animations/player-counter-sweep/rogue/sweep/stance.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "rogue.sweep.contact",
+              "path": "assets/animations/player-counter-sweep/rogue/sweep/contact.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "rogue.sweep.recovery",
+              "path": "assets/animations/player-counter-sweep/rogue/sweep/recovery.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ready",
+              "path": "assets-display/alternative/card-rogue-ready.webp",
+              "resolution": "assembled catalog frame"
+            }
+          ],
+          "durations": [
+            55,
+            60,
+            65,
+            80
+          ],
+          "impact": 1,
+          "travel": [
+            0,
+            55,
+            28,
+            0
+          ],
+          "hold": false,
+          "pilot": false
+        },
+        "counter": {
+          "poses": [
+            {
+              "key": "rogue.counter.stance",
+              "path": "assets/animations/player-counter-sweep/rogue/counter/stance.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "rogue.counter.contact",
+              "path": "assets/animations/player-counter-sweep/rogue/counter/contact.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "rogue.counter.recovery",
+              "path": "assets/animations/player-counter-sweep/rogue/counter/recovery.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ready",
+              "path": "assets-display/alternative/card-rogue-ready.webp",
+              "resolution": "assembled catalog frame"
+            }
+          ],
+          "durations": [
+            55,
+            60,
+            65,
+            80
+          ],
+          "impact": 1,
+          "travel": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "hold": false,
+          "pilot": false
+        },
+        "defend": {
+          "poses": [
+            {
+              "key": "ready",
+              "path": "assets-display/alternative/card-rogue-ready.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "guard-rise",
+              "path": "assets-display/alternative/card-rogue-guard-rise.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "guard-brace",
+              "path": "assets-display/alternative/card-rogue-guard-brace.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "guard-return",
+              "path": "assets-display/alternative/card-rogue-guard-return.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ready",
+              "path": "assets-display/alternative/card-rogue-ready.webp",
+              "resolution": "assembled catalog frame"
+            }
+          ],
+          "durations": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "impact": 2,
+          "travel": [
+            0,
+            -3,
+            -6,
+            -3,
+            0
+          ],
+          "hold": false,
+          "pilot": false
+        },
+        "spell": {
+          "poses": [
+            {
+              "key": "spell-return",
+              "path": "assets-display/alternative/card-rogue-spell-return.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "spell-load",
+              "path": "assets-display/alternative/card-rogue-spell-load.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "spell-release",
+              "path": "assets-display/alternative/card-rogue-spell-release.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "spell-release",
+              "path": "assets-display/alternative/card-rogue-spell-release.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "spell-return",
+              "path": "assets-display/alternative/card-rogue-spell-return.webp",
+              "resolution": "assembled catalog frame"
+            }
+          ],
+          "durations": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "impact": 2,
+          "travel": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "hold": false,
+          "pilot": false
+        },
+        "ranged": {
+          "poses": [
+            {
+              "key": "ranged-load",
+              "path": "assets-display/alternative/card-rogue-ranged-load.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ranged-aim",
+              "path": "assets-display/alternative/card-rogue-ranged-aim.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ranged-release",
+              "path": "assets-display/alternative/card-rogue-ranged-release.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ranged-release",
+              "path": "assets-display/alternative/card-rogue-ranged-release.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ranged-load",
+              "path": "assets-display/alternative/card-rogue-ranged-load.webp",
+              "resolution": "assembled catalog frame"
+            }
+          ],
+          "durations": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "impact": 2,
+          "travel": [
+            0,
+            0,
+            -4,
+            -2,
+            0
+          ],
+          "hold": false,
+          "pilot": false
+        },
+        "rangedMagic": {
+          "poses": [
+            {
+              "key": "magic-return",
+              "path": "assets-display/alternative/card-rogue-magic-return.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "magic-load",
+              "path": "assets-display/alternative/card-rogue-magic-load.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "magic-release",
+              "path": "assets-display/alternative/card-rogue-magic-release.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "magic-release",
+              "path": "assets-display/alternative/card-rogue-magic-release.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "magic-return",
+              "path": "assets-display/alternative/card-rogue-magic-return.webp",
+              "resolution": "assembled catalog frame"
+            }
+          ],
+          "durations": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "impact": 2,
+          "travel": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "hold": false,
+          "pilot": false
+        },
+        "counterPrepare": {
+          "poses": [
+            {
+              "key": "rogue.counter.stance",
+              "path": "assets/animations/player-counter-sweep/rogue/counter/stance.webp",
+              "resolution": "assembled catalog frame"
+            }
+          ],
+          "durations": [
+            260
+          ],
+          "impact": 0,
+          "travel": [
+            0
+          ],
+          "hold": true,
+          "pilot": false
+        },
+        "evade": {
+          "poses": [
+            {
+              "key": "ready",
+              "path": "assets-display/alternative/card-rogue-ready.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "guard-rise",
+              "path": "assets-display/alternative/card-rogue-guard-rise.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "guard-brace",
+              "path": "assets-display/alternative/card-rogue-guard-brace.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "guard-return",
+              "path": "assets-display/alternative/card-rogue-guard-return.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ready",
+              "path": "assets-display/alternative/card-rogue-ready.webp",
+              "resolution": "assembled catalog frame"
+            }
+          ],
+          "durations": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "impact": 2,
+          "travel": [
+            0,
+            -3,
+            -6,
+            -3,
+            0
+          ],
+          "hold": false,
+          "pilot": false
+        }
+      },
+      "held": {
+        "offensive": "assets-display/alternative/stances/rogue/offensive.webp",
+        "defensive": "assets-display/alternative/stances/rogue/defensive.webp",
+        "casting": "assets-display/alternative/stances/rogue/casting.webp",
+        "counter": "assets/animations/player-counter-sweep/rogue/counter/stance.webp",
+        "sweep": "assets/animations/player-counter-sweep/rogue/sweep/stance.webp",
+        "smash": "assets-display/alternative/class-smash-rogue-held.webp"
+      },
+      "targetReactions": {},
+      "baseReady": "assets-display/alternative/card-rogue-ready.webp",
+      "baseSweepOverridden": [
+        "ready",
+        "sweep-load",
+        "sweep-contact",
+        "sweep-return",
+        "ready"
+      ],
+      "originPolicy": "current restPose(); idle->ready, current stance->stance-<stance>, counter->pilot-counter or selected counter stance, defend/guard/evade->guard-brace",
+      "hurt": {
+        "file": "assets/animations/twin-sword-outfits/rogue/HURT.webp",
+        "scale": 1.1418,
+        "dx": -38.89,
+        "dy": -86.09
+      },
+      "defeated": "assets/defeated-poses/rogue.webp"
+    },
+    "starseer": {
+      "profiles": {
+        "weaponProfile": null,
+        "smashProfile": "starseer"
+      },
+      "sequences": {
+        "attack": {
+          "poses": [
+            {
+              "key": "ready",
+              "path": "assets-display/alternative/card-starseer-ready.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "attack-load",
+              "path": "assets-display/alternative/card-starseer-attack-load.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "attack-contact",
+              "path": "assets-display/alternative/card-starseer-attack-contact.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "attack-contact",
+              "path": "assets-display/alternative/card-starseer-attack-contact.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ready",
+              "path": "assets-display/alternative/card-starseer-ready.webp",
+              "resolution": "assembled catalog frame"
+            }
+          ],
+          "durations": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "impact": 2,
+          "travel": [
+            0,
+            0,
+            80,
+            50,
+            0
+          ],
+          "hold": false,
+          "pilot": false
+        },
+        "smash": {
+          "poses": [
+            {
+              "key": "origin",
+              "path": null,
+              "resolution": "current held/rest pose at sampling time"
+            },
+            {
+              "key": "class-smash-takeoff",
+              "path": "assets-display/alternative/class-smash-starseer-takeoff.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "class-smash-airborne",
+              "path": "assets-display/alternative/class-smash-starseer-airborne.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "class-smash-impact",
+              "path": "assets-display/alternative/class-smash-starseer-impact.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "origin",
+              "path": null,
+              "resolution": "current held/rest pose at sampling time"
+            }
+          ],
+          "durations": [
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "impact": 3,
+          "travel": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "hold": false,
+          "pilot": false
+        },
+        "sweep": {
+          "poses": [
+            {
+              "key": "starseer.sweep.stance",
+              "path": "assets/animations/player-counter-sweep/starseer/sweep/stance.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "starseer.sweep.contact",
+              "path": "assets/animations/player-counter-sweep/starseer/sweep/contact.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "starseer.sweep.recovery",
+              "path": "assets/animations/player-counter-sweep/starseer/sweep/recovery.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ready",
+              "path": "assets-display/alternative/card-starseer-ready.webp",
+              "resolution": "assembled catalog frame"
+            }
+          ],
+          "durations": [
+            55,
+            60,
+            65,
+            80
+          ],
+          "impact": 1,
+          "travel": [
+            0,
+            55,
+            28,
+            0
+          ],
+          "hold": false,
+          "pilot": false
+        },
+        "counter": {
+          "poses": [
+            {
+              "key": "starseer.counter.stance",
+              "path": "assets/animations/player-counter-sweep/starseer/counter/stance.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "starseer.counter.contact",
+              "path": "assets/animations/player-counter-sweep/starseer/counter/contact.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "starseer.counter.recovery",
+              "path": "assets/animations/player-counter-sweep/starseer/counter/recovery.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ready",
+              "path": "assets-display/alternative/card-starseer-ready.webp",
+              "resolution": "assembled catalog frame"
+            }
+          ],
+          "durations": [
+            55,
+            60,
+            65,
+            80
+          ],
+          "impact": 1,
+          "travel": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "hold": false,
+          "pilot": false
+        },
+        "defend": {
+          "poses": [
+            {
+              "key": "ready",
+              "path": "assets-display/alternative/card-starseer-ready.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "guard-rise",
+              "path": "assets-display/alternative/card-starseer-guard-rise.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "guard-brace",
+              "path": "assets-display/alternative/card-starseer-guard-brace.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "guard-return",
+              "path": "assets-display/alternative/card-starseer-guard-return.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ready",
+              "path": "assets-display/alternative/card-starseer-ready.webp",
+              "resolution": "assembled catalog frame"
+            }
+          ],
+          "durations": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "impact": 2,
+          "travel": [
+            0,
+            -3,
+            -6,
+            -3,
+            0
+          ],
+          "hold": false,
+          "pilot": false
+        },
+        "spell": {
+          "poses": [
+            {
+              "key": "spell-return",
+              "path": "assets-display/alternative/card-starseer-spell-return.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "spell-load",
+              "path": "assets-display/alternative/card-starseer-spell-load.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "spell-release",
+              "path": "assets-display/alternative/card-starseer-spell-release.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "spell-release",
+              "path": "assets-display/alternative/card-starseer-spell-release.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "spell-return",
+              "path": "assets-display/alternative/card-starseer-spell-return.webp",
+              "resolution": "assembled catalog frame"
+            }
+          ],
+          "durations": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "impact": 2,
+          "travel": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "hold": false,
+          "pilot": false
+        },
+        "ranged": {
+          "poses": [
+            {
+              "key": "ranged-load",
+              "path": "assets-display/alternative/card-starseer-ranged-load.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ranged-load",
+              "path": "assets-display/alternative/card-starseer-ranged-load.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ranged-aim",
+              "path": "assets-display/alternative/card-starseer-ranged-aim.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ranged-release",
+              "path": "assets-display/alternative/card-starseer-ranged-release.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ranged-load",
+              "path": "assets-display/alternative/card-starseer-ranged-load.webp",
+              "resolution": "assembled catalog frame"
+            }
+          ],
+          "durations": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "impact": 2,
+          "travel": [
+            0,
+            0,
+            -4,
+            -2,
+            0
+          ],
+          "hold": false,
+          "pilot": false
+        },
+        "rangedMagic": {
+          "poses": [
+            {
+              "key": "ranged-load",
+              "path": "assets-display/alternative/card-starseer-ranged-load.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ranged-load",
+              "path": "assets-display/alternative/card-starseer-ranged-load.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ranged-aim",
+              "path": "assets-display/alternative/card-starseer-ranged-aim.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ranged-release",
+              "path": "assets-display/alternative/card-starseer-ranged-release.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ranged-load",
+              "path": "assets-display/alternative/card-starseer-ranged-load.webp",
+              "resolution": "assembled catalog frame"
+            }
+          ],
+          "durations": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "impact": 2,
+          "travel": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "hold": false,
+          "pilot": false
+        },
+        "counterPrepare": {
+          "poses": [
+            {
+              "key": "starseer.counter.stance",
+              "path": "assets/animations/player-counter-sweep/starseer/counter/stance.webp",
+              "resolution": "assembled catalog frame"
+            }
+          ],
+          "durations": [
+            260
+          ],
+          "impact": 0,
+          "travel": [
+            0
+          ],
+          "hold": true,
+          "pilot": false
+        },
+        "evade": {
+          "poses": [
+            {
+              "key": "ready",
+              "path": "assets-display/alternative/card-starseer-ready.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "guard-rise",
+              "path": "assets-display/alternative/card-starseer-guard-rise.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "guard-brace",
+              "path": "assets-display/alternative/card-starseer-guard-brace.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "guard-return",
+              "path": "assets-display/alternative/card-starseer-guard-return.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ready",
+              "path": "assets-display/alternative/card-starseer-ready.webp",
+              "resolution": "assembled catalog frame"
+            }
+          ],
+          "durations": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "impact": 2,
+          "travel": [
+            0,
+            -3,
+            -6,
+            -3,
+            0
+          ],
+          "hold": false,
+          "pilot": false
+        }
+      },
+      "held": {
+        "offensive": "assets-display/alternative/stances/starseer/offensive.webp",
+        "defensive": "assets-display/alternative/stances/starseer/defensive.webp",
+        "casting": "assets-display/alternative/stances/starseer/casting.webp",
+        "counter": "assets/animations/player-counter-sweep/starseer/counter/stance.webp",
+        "sweep": "assets/animations/player-counter-sweep/starseer/sweep/stance.webp",
+        "smash": "assets-display/alternative/class-smash-starseer-held.webp"
+      },
+      "targetReactions": {},
+      "baseReady": "assets-display/alternative/card-starseer-ready.webp",
+      "baseSweepOverridden": [
+        "ready",
+        "sweep-load",
+        "sweep-contact",
+        "sweep-return",
+        "ready"
+      ],
+      "originPolicy": "current restPose(); idle->ready, current stance->stance-<stance>, counter->pilot-counter or selected counter stance, defend/guard/evade->guard-brace",
+      "hurt": {
+        "file": "assets/animations/unarmed-magic/starseer/HURT.webp",
+        "scale": 0.8125,
+        "dx": 49.41,
+        "dy": 72
+      },
+      "defeated": "assets/defeated-poses/starseer.webp"
+    },
+    "herald": {
+      "profiles": {
+        "weaponProfile": null,
+        "smashProfile": "herald"
+      },
+      "sequences": {
+        "attack": {
+          "poses": [
+            {
+              "key": "ready",
+              "path": "assets-display/alternative/card-herald-ready.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "attack-load",
+              "path": "assets-display/alternative/card-herald-attack-load.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "attack-contact",
+              "path": "assets-display/alternative/card-herald-attack-contact.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "attack-contact",
+              "path": "assets-display/alternative/card-herald-attack-contact.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ready",
+              "path": "assets-display/alternative/card-herald-ready.webp",
+              "resolution": "assembled catalog frame"
+            }
+          ],
+          "durations": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "impact": 2,
+          "travel": [
+            0,
+            0,
+            80,
+            50,
+            0
+          ],
+          "hold": false,
+          "pilot": false
+        },
+        "smash": {
+          "poses": [
+            {
+              "key": "origin",
+              "path": null,
+              "resolution": "current held/rest pose at sampling time"
+            },
+            {
+              "key": "class-smash-takeoff",
+              "path": "assets-display/alternative/class-smash-herald-takeoff.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "class-smash-airborne",
+              "path": "assets-display/alternative/class-smash-herald-airborne.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "class-smash-impact",
+              "path": "assets-display/alternative/class-smash-herald-impact.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "origin",
+              "path": null,
+              "resolution": "current held/rest pose at sampling time"
+            }
+          ],
+          "durations": [
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "impact": 3,
+          "travel": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "hold": false,
+          "pilot": false
+        },
+        "sweep": {
+          "poses": [
+            {
+              "key": "herald.sweep.stance",
+              "path": "assets/animations/player-counter-sweep/herald/sweep/stance.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "herald.sweep.contact",
+              "path": "assets/animations/player-counter-sweep/herald/sweep/contact.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "herald.sweep.recovery",
+              "path": "assets/animations/player-counter-sweep/herald/sweep/recovery.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ready",
+              "path": "assets-display/alternative/card-herald-ready.webp",
+              "resolution": "assembled catalog frame"
+            }
+          ],
+          "durations": [
+            55,
+            60,
+            65,
+            80
+          ],
+          "impact": 1,
+          "travel": [
+            0,
+            55,
+            28,
+            0
+          ],
+          "hold": false,
+          "pilot": false
+        },
+        "counter": {
+          "poses": [
+            {
+              "key": "herald.counter.stance",
+              "path": "assets/animations/player-counter-sweep/herald/counter/stance.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "herald.counter.contact",
+              "path": "assets/animations/player-counter-sweep/herald/counter/contact.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "herald.counter.recovery",
+              "path": "assets/animations/player-counter-sweep/herald/counter/recovery.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ready",
+              "path": "assets-display/alternative/card-herald-ready.webp",
+              "resolution": "assembled catalog frame"
+            }
+          ],
+          "durations": [
+            55,
+            60,
+            65,
+            80
+          ],
+          "impact": 1,
+          "travel": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "hold": false,
+          "pilot": false
+        },
+        "defend": {
+          "poses": [
+            {
+              "key": "ready",
+              "path": "assets-display/alternative/card-herald-ready.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "guard-rise",
+              "path": "assets-display/alternative/card-herald-guard-rise.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "guard-brace",
+              "path": "assets-display/alternative/card-herald-guard-brace.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "guard-return",
+              "path": "assets-display/alternative/card-herald-guard-return.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ready",
+              "path": "assets-display/alternative/card-herald-ready.webp",
+              "resolution": "assembled catalog frame"
+            }
+          ],
+          "durations": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "impact": 2,
+          "travel": [
+            0,
+            -3,
+            -6,
+            -3,
+            0
+          ],
+          "hold": false,
+          "pilot": false
+        },
+        "spell": {
+          "poses": [
+            {
+              "key": "spell-return",
+              "path": "assets-display/alternative/card-herald-spell-return.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "spell-load",
+              "path": "assets-display/alternative/card-herald-spell-load.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "spell-release",
+              "path": "assets-display/alternative/card-herald-spell-release.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "spell-release",
+              "path": "assets-display/alternative/card-herald-spell-release.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "spell-return",
+              "path": "assets-display/alternative/card-herald-spell-return.webp",
+              "resolution": "assembled catalog frame"
+            }
+          ],
+          "durations": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "impact": 2,
+          "travel": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "hold": false,
+          "pilot": false
+        },
+        "ranged": {
+          "poses": [
+            {
+              "key": "ranged-load",
+              "path": "assets-display/alternative/card-herald-ranged-load.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ranged-load",
+              "path": "assets-display/alternative/card-herald-ranged-load.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ranged-aim",
+              "path": "assets-display/alternative/card-herald-ranged-aim.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ranged-release",
+              "path": "assets-display/alternative/card-herald-ranged-release.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ranged-load",
+              "path": "assets-display/alternative/card-herald-ranged-load.webp",
+              "resolution": "assembled catalog frame"
+            }
+          ],
+          "durations": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "impact": 2,
+          "travel": [
+            0,
+            0,
+            -4,
+            -2,
+            0
+          ],
+          "hold": false,
+          "pilot": false
+        },
+        "rangedMagic": {
+          "poses": [
+            {
+              "key": "ranged-load",
+              "path": "assets-display/alternative/card-herald-ranged-load.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ranged-load",
+              "path": "assets-display/alternative/card-herald-ranged-load.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ranged-aim",
+              "path": "assets-display/alternative/card-herald-ranged-aim.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ranged-release",
+              "path": "assets-display/alternative/card-herald-ranged-release.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ranged-load",
+              "path": "assets-display/alternative/card-herald-ranged-load.webp",
+              "resolution": "assembled catalog frame"
+            }
+          ],
+          "durations": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "impact": 2,
+          "travel": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "hold": false,
+          "pilot": false
+        },
+        "counterPrepare": {
+          "poses": [
+            {
+              "key": "herald.counter.stance",
+              "path": "assets/animations/player-counter-sweep/herald/counter/stance.webp",
+              "resolution": "assembled catalog frame"
+            }
+          ],
+          "durations": [
+            260
+          ],
+          "impact": 0,
+          "travel": [
+            0
+          ],
+          "hold": true,
+          "pilot": false
+        },
+        "evade": {
+          "poses": [
+            {
+              "key": "ready",
+              "path": "assets-display/alternative/card-herald-ready.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "guard-rise",
+              "path": "assets-display/alternative/card-herald-guard-rise.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "guard-brace",
+              "path": "assets-display/alternative/card-herald-guard-brace.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "guard-return",
+              "path": "assets-display/alternative/card-herald-guard-return.webp",
+              "resolution": "assembled catalog frame"
+            },
+            {
+              "key": "ready",
+              "path": "assets-display/alternative/card-herald-ready.webp",
+              "resolution": "assembled catalog frame"
+            }
+          ],
+          "durations": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "impact": 2,
+          "travel": [
+            0,
+            -3,
+            -6,
+            -3,
+            0
+          ],
+          "hold": false,
+          "pilot": false
+        }
+      },
+      "held": {
+        "offensive": "assets-display/alternative/stances/herald/offensive.webp",
+        "defensive": "assets-display/alternative/stances/herald/defensive.webp",
+        "casting": "assets-display/alternative/stances/herald/casting.webp",
+        "counter": "assets/animations/player-counter-sweep/herald/counter/stance.webp",
+        "sweep": "assets/animations/player-counter-sweep/herald/sweep/stance.webp",
+        "smash": "assets-display/alternative/class-smash-herald-held.webp"
+      },
+      "targetReactions": {},
+      "baseReady": "assets-display/alternative/card-herald-ready.webp",
+      "baseSweepOverridden": [
+        "ready",
+        "sweep-load",
+        "sweep-contact",
+        "sweep-return",
+        "ready"
+      ],
+      "originPolicy": "current restPose(); idle->ready, current stance->stance-<stance>, counter->pilot-counter or selected counter stance, defend/guard/evade->guard-brace",
+      "hurt": {
+        "file": "assets/animations/unarmed/herald/HURT.webp",
+        "scale": 0.8475,
+        "dx": 32.58,
+        "dy": 56.07
+      },
+      "defeated": "assets/defeated-poses/herald.webp"
+    }
+  }
+}

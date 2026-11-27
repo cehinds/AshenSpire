@@ -1,0 +1,6212 @@
+{
+  "baseline": "49eca254d795d06266aa23941cb2b31fe77b27bf",
+  "release": "ashenspire-hd-assets-v30",
+  "assets": {
+    "assets-display/alternative/card-herald-attack-contact-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-attack-contact-mobile.webp",
+        "exists": true,
+        "bytes": 10102,
+        "sha256": "120670a08cdc5572e9a7de0f218abdfed033a86531eca1255ef1455688725f78",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          47,
+          86,
+          208,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-attack-contact.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-attack-contact.webp",
+        "exists": true,
+        "bytes": 10102,
+        "sha256": "120670a08cdc5572e9a7de0f218abdfed033a86531eca1255ef1455688725f78",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          47,
+          86,
+          208,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-attack-load-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-attack-load-mobile.webp",
+        "exists": true,
+        "bytes": 9050,
+        "sha256": "f3a86a332e0b87536e6be3038d553cb4cfec5d73d49d828011e2db90d5bb694c",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          56,
+          83,
+          181,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-attack-load.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-attack-load.webp",
+        "exists": true,
+        "bytes": 9050,
+        "sha256": "f3a86a332e0b87536e6be3038d553cb4cfec5d73d49d828011e2db90d5bb694c",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          56,
+          83,
+          181,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-counter-contact-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-counter-contact-mobile.webp",
+        "exists": true,
+        "bytes": 9704,
+        "sha256": "0b1c92fde00ebe941c2907e5eb256ffd939cd82035d68ce36f99df49100c5f7e",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          48,
+          90,
+          196,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-counter-contact.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-counter-contact.webp",
+        "exists": true,
+        "bytes": 9704,
+        "sha256": "0b1c92fde00ebe941c2907e5eb256ffd939cd82035d68ce36f99df49100c5f7e",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          48,
+          90,
+          196,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-counter-load-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-counter-load-mobile.webp",
+        "exists": true,
+        "bytes": 9220,
+        "sha256": "73b9425f6d6768cfda86d8304329912cce6af4dc76a48399e5fc5018ab2e045f",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          48,
+          94,
+          181,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-counter-load.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-counter-load.webp",
+        "exists": true,
+        "bytes": 9220,
+        "sha256": "73b9425f6d6768cfda86d8304329912cce6af4dc76a48399e5fc5018ab2e045f",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          48,
+          94,
+          181,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-counter-parry-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-counter-parry-mobile.webp",
+        "exists": true,
+        "bytes": 9758,
+        "sha256": "76353778fb362e59bc3d53c5c9b34d046e85154feefa2de146d0c0b0c957fcf0",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          40,
+          89,
+          180,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-counter-parry.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-counter-parry.webp",
+        "exists": true,
+        "bytes": 9758,
+        "sha256": "76353778fb362e59bc3d53c5c9b34d046e85154feefa2de146d0c0b0c957fcf0",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          40,
+          89,
+          180,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-guard-brace-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-guard-brace-mobile.webp",
+        "exists": true,
+        "bytes": 9374,
+        "sha256": "b1a7177b22ac34a00269593bb5f2b8f43fc4d2c20b7a2da268a071315f3f6e52",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          52,
+          85,
+          174,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-guard-brace.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-guard-brace.webp",
+        "exists": true,
+        "bytes": 9374,
+        "sha256": "b1a7177b22ac34a00269593bb5f2b8f43fc4d2c20b7a2da268a071315f3f6e52",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          52,
+          85,
+          174,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-guard-return-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-guard-return-mobile.webp",
+        "exists": true,
+        "bytes": 9586,
+        "sha256": "236e58546561bb91eb1bdd8a52ab8ccc9f12a1cac448191053b26c1190d4dba9",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          47,
+          81,
+          179,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-guard-return.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-guard-return.webp",
+        "exists": true,
+        "bytes": 9586,
+        "sha256": "236e58546561bb91eb1bdd8a52ab8ccc9f12a1cac448191053b26c1190d4dba9",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          47,
+          81,
+          179,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-guard-rise-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-guard-rise-mobile.webp",
+        "exists": true,
+        "bytes": 9596,
+        "sha256": "0b3522328e13d29563314b3d25d77e80a11c0657782c9f047dca61f4e65d63c3",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          47,
+          79,
+          174,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-guard-rise.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-guard-rise.webp",
+        "exists": true,
+        "bytes": 9596,
+        "sha256": "0b3522328e13d29563314b3d25d77e80a11c0657782c9f047dca61f4e65d63c3",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          47,
+          79,
+          174,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-ranged-aim-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-ranged-aim-mobile.webp",
+        "exists": true,
+        "bytes": 10568,
+        "sha256": "c2b2ca1c0aca2246f9613ca124884f12d7be52689d35ebb4f18ee3afb6e04ba5",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          48,
+          81,
+          195,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-ranged-aim.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-ranged-aim.webp",
+        "exists": true,
+        "bytes": 10568,
+        "sha256": "c2b2ca1c0aca2246f9613ca124884f12d7be52689d35ebb4f18ee3afb6e04ba5",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          48,
+          81,
+          195,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-ranged-load-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-ranged-load-mobile.webp",
+        "exists": true,
+        "bytes": 10112,
+        "sha256": "b00debfc817c2bcbf969b918990e70c5d74dbd36274fabc57a43d7b7a76ca748",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          51,
+          81,
+          177,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-ranged-load.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-ranged-load.webp",
+        "exists": true,
+        "bytes": 10112,
+        "sha256": "b00debfc817c2bcbf969b918990e70c5d74dbd36274fabc57a43d7b7a76ca748",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          51,
+          81,
+          177,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-ranged-release-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-ranged-release-mobile.webp",
+        "exists": true,
+        "bytes": 9868,
+        "sha256": "63d8ca7d7ee20702c3072fe79086fbcbcda91c03f92ba6a093529e07f18fbb0a",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          50,
+          83,
+          176,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-ranged-release.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-ranged-release.webp",
+        "exists": true,
+        "bytes": 9868,
+        "sha256": "63d8ca7d7ee20702c3072fe79086fbcbcda91c03f92ba6a093529e07f18fbb0a",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          50,
+          83,
+          176,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-ready-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-ready-mobile.webp",
+        "exists": true,
+        "bytes": 9002,
+        "sha256": "bff8a93491651ce5f103871170e7e85245eaae6665e01eed6f4024af132e4e29",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          53,
+          81,
+          180,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-ready.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-ready.webp",
+        "exists": true,
+        "bytes": 9002,
+        "sha256": "bff8a93491651ce5f103871170e7e85245eaae6665e01eed6f4024af132e4e29",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          53,
+          81,
+          180,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-smash-contact-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-smash-contact-mobile.webp",
+        "exists": true,
+        "bytes": 9064,
+        "sha256": "4c45a5db2773a4d46ceff4ebae3aec6c41aed9ce67e4f38011457dcf4d582a3c",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          48,
+          103,
+          189,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-smash-contact.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-smash-contact.webp",
+        "exists": true,
+        "bytes": 9064,
+        "sha256": "4c45a5db2773a4d46ceff4ebae3aec6c41aed9ce67e4f38011457dcf4d582a3c",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          48,
+          103,
+          189,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-smash-load-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-smash-load-mobile.webp",
+        "exists": true,
+        "bytes": 9494,
+        "sha256": "f38131ed6af96e460dc83ab9893a7344d53d5e03f43f02a2ad942a8c241f7865",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          55,
+          67,
+          184,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-smash-load.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-smash-load.webp",
+        "exists": true,
+        "bytes": 9494,
+        "sha256": "f38131ed6af96e460dc83ab9893a7344d53d5e03f43f02a2ad942a8c241f7865",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          55,
+          67,
+          184,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-smash-return-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-smash-return-mobile.webp",
+        "exists": true,
+        "bytes": 8854,
+        "sha256": "ac1a4355d1916887268eb1d2752b1eec4883fae772ba7cf675822ee636eb92c0",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          55,
+          85,
+          179,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-smash-return.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-smash-return.webp",
+        "exists": true,
+        "bytes": 8854,
+        "sha256": "ac1a4355d1916887268eb1d2752b1eec4883fae772ba7cf675822ee636eb92c0",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          55,
+          85,
+          179,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-spell-load-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-spell-load-mobile.webp",
+        "exists": true,
+        "bytes": 9918,
+        "sha256": "bbc453955d393a38af11124634afc31b3a87653ed04cb83ba9afa87d78bc2581",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          55,
+          78,
+          183,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-spell-load.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-spell-load.webp",
+        "exists": true,
+        "bytes": 9918,
+        "sha256": "bbc453955d393a38af11124634afc31b3a87653ed04cb83ba9afa87d78bc2581",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          55,
+          78,
+          183,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-spell-release-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-spell-release-mobile.webp",
+        "exists": true,
+        "bytes": 10576,
+        "sha256": "07c967bd55d11eb343c6d6a563ed7a2e2fb4ce8557795fb8b2137736804dd474",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          54,
+          73,
+          177,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-spell-release.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-spell-release.webp",
+        "exists": true,
+        "bytes": 10576,
+        "sha256": "07c967bd55d11eb343c6d6a563ed7a2e2fb4ce8557795fb8b2137736804dd474",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          54,
+          73,
+          177,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-spell-return-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-spell-return-mobile.webp",
+        "exists": true,
+        "bytes": 9762,
+        "sha256": "4b444d05f532e74ef3e1f9508a0ff0a9aa87060fa1d826f6b2252c6c1a4e983f",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          55,
+          82,
+          181,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-spell-return.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-spell-return.webp",
+        "exists": true,
+        "bytes": 9762,
+        "sha256": "4b444d05f532e74ef3e1f9508a0ff0a9aa87060fa1d826f6b2252c6c1a4e983f",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          55,
+          82,
+          181,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-sweep-contact-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-sweep-contact-mobile.webp",
+        "exists": true,
+        "bytes": 9312,
+        "sha256": "2397401d64677f042a306979edc2e9ee03fd479e847659381183896d462f3cb9",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          74,
+          98,
+          246,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-sweep-contact.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-sweep-contact.webp",
+        "exists": true,
+        "bytes": 9312,
+        "sha256": "2397401d64677f042a306979edc2e9ee03fd479e847659381183896d462f3cb9",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          74,
+          98,
+          246,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-sweep-load-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-sweep-load-mobile.webp",
+        "exists": true,
+        "bytes": 8090,
+        "sha256": "d3fc1afa54d656adcd5a322af5438a69c65b708f0b043dab70b0e8ecdcbd8742",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          82,
+          93,
+          190,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-sweep-load.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-sweep-load.webp",
+        "exists": true,
+        "bytes": 8090,
+        "sha256": "d3fc1afa54d656adcd5a322af5438a69c65b708f0b043dab70b0e8ecdcbd8742",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          82,
+          93,
+          190,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-sweep-return-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-sweep-return-mobile.webp",
+        "exists": true,
+        "bytes": 8546,
+        "sha256": "c6ad61c8e3d6603a895771e01241e3a2e7a347f8908678ba606194a28f948118",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          53,
+          86,
+          178,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-herald-sweep-return.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-herald-sweep-return.webp",
+        "exists": true,
+        "bytes": 8546,
+        "sha256": "c6ad61c8e3d6603a895771e01241e3a2e7a347f8908678ba606194a28f948118",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          53,
+          86,
+          178,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-attack-contact-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-attack-contact-mobile.webp",
+        "exists": true,
+        "bytes": 8052,
+        "sha256": "b251f607c9bbd05659964babe1494a101441fcd9d762c76e866593f75842227c",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          50,
+          111,
+          245,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-attack-contact.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-attack-contact.webp",
+        "exists": true,
+        "bytes": 8052,
+        "sha256": "b251f607c9bbd05659964babe1494a101441fcd9d762c76e866593f75842227c",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          50,
+          111,
+          245,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-attack-load-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-attack-load-mobile.webp",
+        "exists": true,
+        "bytes": 7684,
+        "sha256": "cc4b77ca51d02300db188b38c927051269f4b349e3228e6453d13a88599fe48b",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          40,
+          86,
+          172,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-attack-load.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-attack-load.webp",
+        "exists": true,
+        "bytes": 7684,
+        "sha256": "cc4b77ca51d02300db188b38c927051269f4b349e3228e6453d13a88599fe48b",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          40,
+          86,
+          172,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-counter-contact-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-counter-contact-mobile.webp",
+        "exists": true,
+        "bytes": 6458,
+        "sha256": "47c74885177c3bac05b4e54de8d93989e621dd7b896b036382584fd75802c084",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          58,
+          124,
+          217,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-counter-contact.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-counter-contact.webp",
+        "exists": true,
+        "bytes": 6458,
+        "sha256": "47c74885177c3bac05b4e54de8d93989e621dd7b896b036382584fd75802c084",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          58,
+          124,
+          217,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-counter-load-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-counter-load-mobile.webp",
+        "exists": true,
+        "bytes": 6456,
+        "sha256": "cdfb79dd4d5756fc51a07df207d31cdc10d83309e20666a81d4081b99c07135c",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          68,
+          101,
+          171,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-counter-load.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-counter-load.webp",
+        "exists": true,
+        "bytes": 6456,
+        "sha256": "cdfb79dd4d5756fc51a07df207d31cdc10d83309e20666a81d4081b99c07135c",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          68,
+          101,
+          171,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-counter-parry-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-counter-parry-mobile.webp",
+        "exists": true,
+        "bytes": 7064,
+        "sha256": "28b0741df4ba0c3f8c8f54427f671b3944f6fe77b1f7f13d3e131d997ece0bee",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          53,
+          117,
+          220,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-counter-parry.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-counter-parry.webp",
+        "exists": true,
+        "bytes": 7064,
+        "sha256": "28b0741df4ba0c3f8c8f54427f671b3944f6fe77b1f7f13d3e131d997ece0bee",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          53,
+          117,
+          220,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-guard-brace-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-guard-brace-mobile.webp",
+        "exists": true,
+        "bytes": 7366,
+        "sha256": "63d4bfb21cec147b78b67dc216fdef0244b517c11042586c6cab94d8edaec223",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          60,
+          87,
+          172,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-guard-brace.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-guard-brace.webp",
+        "exists": true,
+        "bytes": 7366,
+        "sha256": "63d4bfb21cec147b78b67dc216fdef0244b517c11042586c6cab94d8edaec223",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          60,
+          87,
+          172,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-guard-return-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-guard-return-mobile.webp",
+        "exists": true,
+        "bytes": 7118,
+        "sha256": "3390fa60fbc24639f6ec3ffffd55ca6d764986790b18f8452f266eb2ed533e81",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          63,
+          102,
+          208,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-guard-return.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-guard-return.webp",
+        "exists": true,
+        "bytes": 7118,
+        "sha256": "3390fa60fbc24639f6ec3ffffd55ca6d764986790b18f8452f266eb2ed533e81",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          63,
+          102,
+          208,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-guard-rise-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-guard-rise-mobile.webp",
+        "exists": true,
+        "bytes": 7438,
+        "sha256": "33a5e317f2bae5a6208e697c1af9655109f2b814697d6c6798157377292f2c16",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          61,
+          94,
+          172,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-guard-rise.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-guard-rise.webp",
+        "exists": true,
+        "bytes": 7438,
+        "sha256": "33a5e317f2bae5a6208e697c1af9655109f2b814697d6c6798157377292f2c16",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          61,
+          94,
+          172,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-magic-load-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-magic-load-mobile.webp",
+        "exists": true,
+        "bytes": 6288,
+        "sha256": "37be5d5b40b2a2cb35f9e2e4c574c1916a9e5d11b12be901f016db21877de337",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          61,
+          102,
+          165,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-magic-load.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-magic-load.webp",
+        "exists": true,
+        "bytes": 6288,
+        "sha256": "37be5d5b40b2a2cb35f9e2e4c574c1916a9e5d11b12be901f016db21877de337",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          61,
+          102,
+          165,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-magic-release-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-magic-release-mobile.webp",
+        "exists": true,
+        "bytes": 6336,
+        "sha256": "67212b098d72c26c26f87f5085add60cf6d6a668a292e0a55daed24760a68da8",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          63,
+          103,
+          176,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-magic-release.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-magic-release.webp",
+        "exists": true,
+        "bytes": 6336,
+        "sha256": "67212b098d72c26c26f87f5085add60cf6d6a668a292e0a55daed24760a68da8",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          63,
+          103,
+          176,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-magic-return-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-magic-return-mobile.webp",
+        "exists": true,
+        "bytes": 5808,
+        "sha256": "8d1c07b091ad59ae5b7d8a8bcfae9d842b72cbf767bf99b3f1c6f4fc9284caa2",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          62,
+          103,
+          166,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-magic-return.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-magic-return.webp",
+        "exists": true,
+        "bytes": 5808,
+        "sha256": "8d1c07b091ad59ae5b7d8a8bcfae9d842b72cbf767bf99b3f1c6f4fc9284caa2",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          62,
+          103,
+          166,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-ranged-aim-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-ranged-aim-mobile.webp",
+        "exists": true,
+        "bytes": 6530,
+        "sha256": "d6617a41928870746a4d7b809f160ead1d14d48349cd72bcd413183f4aedcd26",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          65,
+          103,
+          182,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-ranged-aim.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-ranged-aim.webp",
+        "exists": true,
+        "bytes": 6530,
+        "sha256": "d6617a41928870746a4d7b809f160ead1d14d48349cd72bcd413183f4aedcd26",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          65,
+          103,
+          182,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-ranged-load-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-ranged-load-mobile.webp",
+        "exists": true,
+        "bytes": 6368,
+        "sha256": "2da0f6ddaf81ab2aa3f20ccf86c75405c6ed347bffb59680f72ae7f1cb8ee4e5",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          65,
+          102,
+          177,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-ranged-load.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-ranged-load.webp",
+        "exists": true,
+        "bytes": 6368,
+        "sha256": "2da0f6ddaf81ab2aa3f20ccf86c75405c6ed347bffb59680f72ae7f1cb8ee4e5",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          65,
+          102,
+          177,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-ranged-release-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-ranged-release-mobile.webp",
+        "exists": true,
+        "bytes": 6484,
+        "sha256": "83abdba242208c9d66f79b4f3afbf79091ab2c5d67c70e97688c90356b06cac6",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          65,
+          102,
+          183,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-ranged-release.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-ranged-release.webp",
+        "exists": true,
+        "bytes": 6484,
+        "sha256": "83abdba242208c9d66f79b4f3afbf79091ab2c5d67c70e97688c90356b06cac6",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          65,
+          102,
+          183,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-ready-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-ready-mobile.webp",
+        "exists": true,
+        "bytes": 6980,
+        "sha256": "2bacbe2b5f1ee3fc418a0f6754fefd6d50e8db861b3e1fb764c103c18de88e17",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          71,
+          102,
+          189,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-ready.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-ready.webp",
+        "exists": true,
+        "bytes": 6980,
+        "sha256": "2bacbe2b5f1ee3fc418a0f6754fefd6d50e8db861b3e1fb764c103c18de88e17",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          71,
+          102,
+          189,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-smash-contact-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-smash-contact-mobile.webp",
+        "exists": true,
+        "bytes": 7600,
+        "sha256": "871155250e2a85a2c8f70d03a98c9ddeeaf533f2877fe8446c4a7f095ad91253",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          45,
+          118,
+          215,
+          230
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-smash-contact.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-smash-contact.webp",
+        "exists": true,
+        "bytes": 7600,
+        "sha256": "871155250e2a85a2c8f70d03a98c9ddeeaf533f2877fe8446c4a7f095ad91253",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          45,
+          118,
+          215,
+          230
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-smash-return-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-smash-return-mobile.webp",
+        "exists": true,
+        "bytes": 7104,
+        "sha256": "52d1a2fdd41673705fb441bcc24c377070fdaadb12c362d6cd72ad62c7a24357",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          71,
+          73,
+          168,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-smash-return.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-smash-return.webp",
+        "exists": true,
+        "bytes": 7104,
+        "sha256": "52d1a2fdd41673705fb441bcc24c377070fdaadb12c362d6cd72ad62c7a24357",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          71,
+          73,
+          168,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-spell-load-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-spell-load-mobile.webp",
+        "exists": true,
+        "bytes": 5678,
+        "sha256": "19a3095b85fdfe8dc35c76303de56cf187c4d59b3fcbda3c12a832bf8e71bac3",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          67,
+          103,
+          162,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-spell-load.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-spell-load.webp",
+        "exists": true,
+        "bytes": 5678,
+        "sha256": "19a3095b85fdfe8dc35c76303de56cf187c4d59b3fcbda3c12a832bf8e71bac3",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          67,
+          103,
+          162,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-spell-release-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-spell-release-mobile.webp",
+        "exists": true,
+        "bytes": 6052,
+        "sha256": "b8824026bdc2e2e1e7e49c37b973a6168e56352dd21c8067028bd01f2a528a60",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          67,
+          98,
+          163,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-spell-release.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-spell-release.webp",
+        "exists": true,
+        "bytes": 6052,
+        "sha256": "b8824026bdc2e2e1e7e49c37b973a6168e56352dd21c8067028bd01f2a528a60",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          67,
+          98,
+          163,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-spell-return-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-spell-return-mobile.webp",
+        "exists": true,
+        "bytes": 6080,
+        "sha256": "890e59095dab560eca88beb0ca8b86e6d364d30a3edd5d9e6aca12d465f50e99",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          68,
+          103,
+          163,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-spell-return.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-spell-return.webp",
+        "exists": true,
+        "bytes": 6080,
+        "sha256": "890e59095dab560eca88beb0ca8b86e6d364d30a3edd5d9e6aca12d465f50e99",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          68,
+          103,
+          163,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-sweep-contact-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-sweep-contact-mobile.webp",
+        "exists": true,
+        "bytes": 7482,
+        "sha256": "3ee0c773d944b625ce0584e97e4b00c7fc88f8fe277660e8de75766690488dee",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          57,
+          124,
+          244,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-sweep-contact.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-sweep-contact.webp",
+        "exists": true,
+        "bytes": 7482,
+        "sha256": "3ee0c773d944b625ce0584e97e4b00c7fc88f8fe277660e8de75766690488dee",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          57,
+          124,
+          244,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-sweep-load-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-sweep-load-mobile.webp",
+        "exists": true,
+        "bytes": 7272,
+        "sha256": "7114bbd4685185ef14b72e04389e84038d66741d4d1e4ce1197dc7dc0b649d4f",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          40,
+          121,
+          183,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-sweep-load.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-sweep-load.webp",
+        "exists": true,
+        "bytes": 7272,
+        "sha256": "7114bbd4685185ef14b72e04389e84038d66741d4d1e4ce1197dc7dc0b649d4f",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          40,
+          121,
+          183,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-sweep-return-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-sweep-return-mobile.webp",
+        "exists": true,
+        "bytes": 6376,
+        "sha256": "7a2bf10ff116f9966547893a821a8d6abb96328df0f55e3490aa4090aa1eb340",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          67,
+          118,
+          186,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-reaver-sweep-return.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-reaver-sweep-return.webp",
+        "exists": true,
+        "bytes": 6376,
+        "sha256": "7a2bf10ff116f9966547893a821a8d6abb96328df0f55e3490aa4090aa1eb340",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          67,
+          118,
+          186,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-attack-contact-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-attack-contact-mobile.webp",
+        "exists": true,
+        "bytes": 12450,
+        "sha256": "8da06d05a7668010063c8a3ec27d397daf1a05c85c4cf2bb762be7641f04e08b",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          39,
+          82,
+          222,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-attack-contact.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-attack-contact.webp",
+        "exists": true,
+        "bytes": 12450,
+        "sha256": "8da06d05a7668010063c8a3ec27d397daf1a05c85c4cf2bb762be7641f04e08b",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          39,
+          82,
+          222,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-attack-load-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-attack-load-mobile.webp",
+        "exists": true,
+        "bytes": 11686,
+        "sha256": "5815819d1dc9682000b922be3a9435db3ed7da6c64193c316c4fad2d1dba1d8f",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          40,
+          83,
+          192,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-attack-load.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-attack-load.webp",
+        "exists": true,
+        "bytes": 11686,
+        "sha256": "5815819d1dc9682000b922be3a9435db3ed7da6c64193c316c4fad2d1dba1d8f",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          40,
+          83,
+          192,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-counter-contact-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-counter-contact-mobile.webp",
+        "exists": true,
+        "bytes": 11534,
+        "sha256": "02357da4752f47b8f184c97c095e14eacbf56d533c77d84632a6ae97ed19457e",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          39,
+          76,
+          211,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-counter-contact.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-counter-contact.webp",
+        "exists": true,
+        "bytes": 11534,
+        "sha256": "02357da4752f47b8f184c97c095e14eacbf56d533c77d84632a6ae97ed19457e",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          39,
+          76,
+          211,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-counter-load-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-counter-load-mobile.webp",
+        "exists": true,
+        "bytes": 10666,
+        "sha256": "47ae410a4766d26dd85179e6a26757345d9f2d61340a039959e0eda82373a78b",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          47,
+          85,
+          186,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-counter-load.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-counter-load.webp",
+        "exists": true,
+        "bytes": 10666,
+        "sha256": "47ae410a4766d26dd85179e6a26757345d9f2d61340a039959e0eda82373a78b",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          47,
+          85,
+          186,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-counter-parry-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-counter-parry-mobile.webp",
+        "exists": true,
+        "bytes": 11660,
+        "sha256": "8b07fe538433480704e7b966f1359c0a266228aa8f575e88b99222216bcb67b1",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          39,
+          75,
+          200,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-counter-parry.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-counter-parry.webp",
+        "exists": true,
+        "bytes": 11660,
+        "sha256": "8b07fe538433480704e7b966f1359c0a266228aa8f575e88b99222216bcb67b1",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          39,
+          75,
+          200,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-guard-brace-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-guard-brace-mobile.webp",
+        "exists": true,
+        "bytes": 10754,
+        "sha256": "246275a9ce3a99d12e7aee1c78ff14d50c6ec2ff6392f4106b993c307a579158",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          49,
+          70,
+          184,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-guard-brace.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-guard-brace.webp",
+        "exists": true,
+        "bytes": 10754,
+        "sha256": "246275a9ce3a99d12e7aee1c78ff14d50c6ec2ff6392f4106b993c307a579158",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          49,
+          70,
+          184,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-guard-return-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-guard-return-mobile.webp",
+        "exists": true,
+        "bytes": 11806,
+        "sha256": "79255402e030edec472b72047543c6819483f62fbb141e46b81cb745f81222ed",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          42,
+          70,
+          189,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-guard-return.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-guard-return.webp",
+        "exists": true,
+        "bytes": 11806,
+        "sha256": "79255402e030edec472b72047543c6819483f62fbb141e46b81cb745f81222ed",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          42,
+          70,
+          189,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-guard-rise-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-guard-rise-mobile.webp",
+        "exists": true,
+        "bytes": 11796,
+        "sha256": "ab77f004cc5987c1d05097c919123e12324ef87cdab60744fcfecbd15de8c871",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          42,
+          70,
+          184,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-guard-rise.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-guard-rise.webp",
+        "exists": true,
+        "bytes": 11796,
+        "sha256": "ab77f004cc5987c1d05097c919123e12324ef87cdab60744fcfecbd15de8c871",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          42,
+          70,
+          184,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-magic-load-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-magic-load-mobile.webp",
+        "exists": true,
+        "bytes": 11102,
+        "sha256": "0c197dcddce86fe6006e653f288354a245ec44391eb6be0c4e852da39575160a",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          47,
+          77,
+          186,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-magic-load.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-magic-load.webp",
+        "exists": true,
+        "bytes": 11102,
+        "sha256": "0c197dcddce86fe6006e653f288354a245ec44391eb6be0c4e852da39575160a",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          47,
+          77,
+          186,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-magic-release-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-magic-release-mobile.webp",
+        "exists": true,
+        "bytes": 11534,
+        "sha256": "abba45a1b225fb4624bb9b7ac8d96315f5211f8868aea5d2efbd9e2d32b4f229",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          50,
+          77,
+          201,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-magic-release.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-magic-release.webp",
+        "exists": true,
+        "bytes": 11534,
+        "sha256": "abba45a1b225fb4624bb9b7ac8d96315f5211f8868aea5d2efbd9e2d32b4f229",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          50,
+          77,
+          201,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-magic-return-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-magic-return-mobile.webp",
+        "exists": true,
+        "bytes": 10482,
+        "sha256": "59429656c07ef70f60d897db5837c5658aea36dbd271ef0080ccd275b8014c21",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          48,
+          75,
+          186,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-magic-return.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-magic-return.webp",
+        "exists": true,
+        "bytes": 10482,
+        "sha256": "59429656c07ef70f60d897db5837c5658aea36dbd271ef0080ccd275b8014c21",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          48,
+          75,
+          186,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-ranged-aim-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-ranged-aim-mobile.webp",
+        "exists": true,
+        "bytes": 13458,
+        "sha256": "2143929cc6d2ff73da5dc9fd152b878606b6d50a3999c20329dcc21b13541ce4",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          46,
+          53,
+          201,
+          230
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-ranged-aim.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-ranged-aim.webp",
+        "exists": true,
+        "bytes": 13458,
+        "sha256": "2143929cc6d2ff73da5dc9fd152b878606b6d50a3999c20329dcc21b13541ce4",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          46,
+          53,
+          201,
+          230
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-ranged-load-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-ranged-load-mobile.webp",
+        "exists": true,
+        "bytes": 13328,
+        "sha256": "feb23ed771e5501d34e6f44865fba4ae4d2b8d02a3a508bb8da8982d129c4efd",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          51,
+          53,
+          202,
+          230
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-ranged-load.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-ranged-load.webp",
+        "exists": true,
+        "bytes": 13328,
+        "sha256": "feb23ed771e5501d34e6f44865fba4ae4d2b8d02a3a508bb8da8982d129c4efd",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          51,
+          53,
+          202,
+          230
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-ranged-release-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-ranged-release-mobile.webp",
+        "exists": true,
+        "bytes": 12852,
+        "sha256": "f2f5ad521dcbcc578dec1281e80ffedef96e53554780d6ae16d299bf7d4ded0e",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          46,
+          52,
+          186,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-ranged-release.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-ranged-release.webp",
+        "exists": true,
+        "bytes": 12852,
+        "sha256": "f2f5ad521dcbcc578dec1281e80ffedef96e53554780d6ae16d299bf7d4ded0e",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          46,
+          52,
+          186,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-ready-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-ready-mobile.webp",
+        "exists": true,
+        "bytes": 11324,
+        "sha256": "689dd8d9f6f4b938a55d99ecfca450bdb73bf43df76cf8120a89ac41c8ed3b00",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          55,
+          70,
+          187,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-ready.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-ready.webp",
+        "exists": true,
+        "bytes": 11324,
+        "sha256": "689dd8d9f6f4b938a55d99ecfca450bdb73bf43df76cf8120a89ac41c8ed3b00",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          55,
+          70,
+          187,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-smash-contact-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-smash-contact-mobile.webp",
+        "exists": true,
+        "bytes": 12150,
+        "sha256": "5dcd4961b249b7518a0d28a81277dc21f4ad7e085686b69947a6c50748dac470",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          36,
+          106,
+          195,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-smash-contact.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-smash-contact.webp",
+        "exists": true,
+        "bytes": 12150,
+        "sha256": "5dcd4961b249b7518a0d28a81277dc21f4ad7e085686b69947a6c50748dac470",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          36,
+          106,
+          195,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-smash-load-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-smash-load-mobile.webp",
+        "exists": true,
+        "bytes": 13422,
+        "sha256": "dcf86eab9b7d55aacc628517439b4e8dcaa3a0622f09c73e1808a75a4c027f7e",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          39,
+          43,
+          188,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-smash-load.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-smash-load.webp",
+        "exists": true,
+        "bytes": 13422,
+        "sha256": "dcf86eab9b7d55aacc628517439b4e8dcaa3a0622f09c73e1808a75a4c027f7e",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          39,
+          43,
+          188,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-smash-return-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-smash-return-mobile.webp",
+        "exists": true,
+        "bytes": 12062,
+        "sha256": "20120cf7183ca5a5bd182bca770b2ff7dc7463fc24929364ae9e884c41a72c2f",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          44,
+          62,
+          183,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-smash-return.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-smash-return.webp",
+        "exists": true,
+        "bytes": 12062,
+        "sha256": "20120cf7183ca5a5bd182bca770b2ff7dc7463fc24929364ae9e884c41a72c2f",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          44,
+          62,
+          183,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-spell-load-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-spell-load-mobile.webp",
+        "exists": true,
+        "bytes": 10372,
+        "sha256": "463882eb88295a4acc2dcf632174998f138fc12ae21197c50739eb2da57e48b6",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          48,
+          69,
+          186,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-spell-load.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-spell-load.webp",
+        "exists": true,
+        "bytes": 10372,
+        "sha256": "463882eb88295a4acc2dcf632174998f138fc12ae21197c50739eb2da57e48b6",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          48,
+          69,
+          186,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-spell-release-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-spell-release-mobile.webp",
+        "exists": true,
+        "bytes": 11262,
+        "sha256": "885fbf016a6be847d331c17cd0c742f6f99b3645ec80fb0a9a784dfd56e3bb0d",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          50,
+          64,
+          185,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-spell-release.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-spell-release.webp",
+        "exists": true,
+        "bytes": 11262,
+        "sha256": "885fbf016a6be847d331c17cd0c742f6f99b3645ec80fb0a9a784dfd56e3bb0d",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          50,
+          64,
+          185,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-spell-return-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-spell-return-mobile.webp",
+        "exists": true,
+        "bytes": 11136,
+        "sha256": "6a6003cb18bce1a433b0c43e7f1c0382c7e2958bda83eab8355b3f2aca83046e",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          49,
+          70,
+          184,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-spell-return.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-spell-return.webp",
+        "exists": true,
+        "bytes": 11136,
+        "sha256": "6a6003cb18bce1a433b0c43e7f1c0382c7e2958bda83eab8355b3f2aca83046e",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          49,
+          70,
+          184,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-sweep-contact-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-sweep-contact-mobile.webp",
+        "exists": true,
+        "bytes": 13504,
+        "sha256": "76c5aed33a60347266ae99c17f60b558eaad56562bae90ea975e8f075132627b",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          11,
+          98,
+          209,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-sweep-contact.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-sweep-contact.webp",
+        "exists": true,
+        "bytes": 13504,
+        "sha256": "76c5aed33a60347266ae99c17f60b558eaad56562bae90ea975e8f075132627b",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          11,
+          98,
+          209,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-sweep-load-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-sweep-load-mobile.webp",
+        "exists": true,
+        "bytes": 11016,
+        "sha256": "75290481b0e33fc14bec009b157613b0d0bb8ae446eea13562b10aaec607ebae",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          38,
+          95,
+          195,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-sweep-load.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-sweep-load.webp",
+        "exists": true,
+        "bytes": 11016,
+        "sha256": "75290481b0e33fc14bec009b157613b0d0bb8ae446eea13562b10aaec607ebae",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          38,
+          95,
+          195,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-sweep-return-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-sweep-return-mobile.webp",
+        "exists": true,
+        "bytes": 11410,
+        "sha256": "434b4bf8c6e6429d9d14c6dba8da4eb18e2a580854643d8e2796d6f943e016ce",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          48,
+          73,
+          183,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-rogue-sweep-return.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-rogue-sweep-return.webp",
+        "exists": true,
+        "bytes": 11410,
+        "sha256": "434b4bf8c6e6429d9d14c6dba8da4eb18e2a580854643d8e2796d6f943e016ce",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          48,
+          73,
+          183,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-attack-contact-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-attack-contact-mobile.webp",
+        "exists": true,
+        "bytes": 10354,
+        "sha256": "8e0213cc5fbc53ddb91d3c25f8666256497b0ebd4e42de25a05dbf331066c11b",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          45,
+          100,
+          246,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-attack-contact.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-attack-contact.webp",
+        "exists": true,
+        "bytes": 10354,
+        "sha256": "8e0213cc5fbc53ddb91d3c25f8666256497b0ebd4e42de25a05dbf331066c11b",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          45,
+          100,
+          246,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-attack-load-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-attack-load-mobile.webp",
+        "exists": true,
+        "bytes": 9618,
+        "sha256": "eeb3af71eff027382503f9fec71db5005a58f5d9eba5c92bdca109fa5bdbf040",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          58,
+          67,
+          178,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-attack-load.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-attack-load.webp",
+        "exists": true,
+        "bytes": 9618,
+        "sha256": "eeb3af71eff027382503f9fec71db5005a58f5d9eba5c92bdca109fa5bdbf040",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          58,
+          67,
+          178,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-counter-contact-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-counter-contact-mobile.webp",
+        "exists": true,
+        "bytes": 11028,
+        "sha256": "e0a8671d85ac59c0f503c8447c9d74d135b3e2d436843d3f9b5a40bd193428a4",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          55,
+          84,
+          246,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-counter-contact.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-counter-contact.webp",
+        "exists": true,
+        "bytes": 11028,
+        "sha256": "e0a8671d85ac59c0f503c8447c9d74d135b3e2d436843d3f9b5a40bd193428a4",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          55,
+          84,
+          246,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-counter-load-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-counter-load-mobile.webp",
+        "exists": true,
+        "bytes": 10810,
+        "sha256": "ba5b70ab4f5ef52c71597e86fa75d45a137e965fc608831747e39fe3f83fa252",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          66,
+          77,
+          189,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-counter-load.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-counter-load.webp",
+        "exists": true,
+        "bytes": 10810,
+        "sha256": "ba5b70ab4f5ef52c71597e86fa75d45a137e965fc608831747e39fe3f83fa252",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          66,
+          77,
+          189,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-counter-parry-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-counter-parry-mobile.webp",
+        "exists": true,
+        "bytes": 10630,
+        "sha256": "f230bbf794be0793dc37ad2b25d00b053c43e1865e698f2ef13a5d109225b8d9",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          58,
+          82,
+          200,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-counter-parry.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-counter-parry.webp",
+        "exists": true,
+        "bytes": 10630,
+        "sha256": "f230bbf794be0793dc37ad2b25d00b053c43e1865e698f2ef13a5d109225b8d9",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          58,
+          82,
+          200,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-guard-brace-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-guard-brace-mobile.webp",
+        "exists": true,
+        "bytes": 11002,
+        "sha256": "f03a74fbe5fd061fccaac6f109ae7ce88e108b782ef328b5c97837e438122cce",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          51,
+          74,
+          183,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-guard-brace.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-guard-brace.webp",
+        "exists": true,
+        "bytes": 11002,
+        "sha256": "f03a74fbe5fd061fccaac6f109ae7ce88e108b782ef328b5c97837e438122cce",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          51,
+          74,
+          183,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-guard-return-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-guard-return-mobile.webp",
+        "exists": true,
+        "bytes": 10864,
+        "sha256": "769f9749a1caac46224bd2ef9456cdbfa60633178d852c5a5fe1583385e10855",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          55,
+          74,
+          208,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-guard-return.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-guard-return.webp",
+        "exists": true,
+        "bytes": 10864,
+        "sha256": "769f9749a1caac46224bd2ef9456cdbfa60633178d852c5a5fe1583385e10855",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          55,
+          74,
+          208,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-guard-rise-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-guard-rise-mobile.webp",
+        "exists": true,
+        "bytes": 11746,
+        "sha256": "c60bf79fc2295d411f29c8f9d3029a448e42f9ec99b469314d8135213a47401d",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          54,
+          65,
+          199,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-guard-rise.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-guard-rise.webp",
+        "exists": true,
+        "bytes": 11746,
+        "sha256": "c60bf79fc2295d411f29c8f9d3029a448e42f9ec99b469314d8135213a47401d",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          54,
+          65,
+          199,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-ranged-aim-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-ranged-aim-mobile.webp",
+        "exists": true,
+        "bytes": 10342,
+        "sha256": "b20186c2f60f70ce233e8aaa07e626f4a115a62b46a567a1d2a24ad7e36aaac9",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          69,
+          64,
+          186,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-ranged-aim.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-ranged-aim.webp",
+        "exists": true,
+        "bytes": 10342,
+        "sha256": "b20186c2f60f70ce233e8aaa07e626f4a115a62b46a567a1d2a24ad7e36aaac9",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          69,
+          64,
+          186,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-ranged-load-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-ranged-load-mobile.webp",
+        "exists": true,
+        "bytes": 9684,
+        "sha256": "7291b049a83500bc7b076c2443674df8fa517427aa2367fdce751d0c45594826",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          76,
+          75,
+          183,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-ranged-load.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-ranged-load.webp",
+        "exists": true,
+        "bytes": 9684,
+        "sha256": "7291b049a83500bc7b076c2443674df8fa517427aa2367fdce751d0c45594826",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          76,
+          75,
+          183,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-ranged-release-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-ranged-release-mobile.webp",
+        "exists": true,
+        "bytes": 9726,
+        "sha256": "2bcf88a5c01de2c6386aedbd6dafd85a147aeab18d0de79a648490d7d19ee632",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          74,
+          76,
+          183,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-ranged-release.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-ranged-release.webp",
+        "exists": true,
+        "bytes": 9726,
+        "sha256": "2bcf88a5c01de2c6386aedbd6dafd85a147aeab18d0de79a648490d7d19ee632",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          74,
+          76,
+          183,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-ready-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-ready-mobile.webp",
+        "exists": true,
+        "bytes": 9316,
+        "sha256": "33f34a784254ca1494d793c3d9c806f63f96620ae002359d82ac1246c3c7972c",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          73,
+          75,
+          171,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-ready.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-ready.webp",
+        "exists": true,
+        "bytes": 9316,
+        "sha256": "33f34a784254ca1494d793c3d9c806f63f96620ae002359d82ac1246c3c7972c",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          73,
+          75,
+          171,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-smash-contact-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-smash-contact-mobile.webp",
+        "exists": true,
+        "bytes": 9204,
+        "sha256": "cf60ae3028f3f2447bc17faa34021d8b91bc88c7e7b1bb2f70e6b244c72ac67e",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          52,
+          115,
+          213,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-smash-contact.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-smash-contact.webp",
+        "exists": true,
+        "bytes": 9204,
+        "sha256": "cf60ae3028f3f2447bc17faa34021d8b91bc88c7e7b1bb2f70e6b244c72ac67e",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          52,
+          115,
+          213,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-smash-load-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-smash-load-mobile.webp",
+        "exists": true,
+        "bytes": 10306,
+        "sha256": "eb033e39fae14d2d991f5b1c7b6a8c1c5a9780d00476ceb3d087a1c90149791a",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          53,
+          60,
+          181,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-smash-load.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-smash-load.webp",
+        "exists": true,
+        "bytes": 10306,
+        "sha256": "eb033e39fae14d2d991f5b1c7b6a8c1c5a9780d00476ceb3d087a1c90149791a",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          53,
+          60,
+          181,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-smash-return-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-smash-return-mobile.webp",
+        "exists": true,
+        "bytes": 9034,
+        "sha256": "8f8635181b709644bfd98d2cac86da2504e77a6dcb8f0d48f643e5c3b2645b7c",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          61,
+          56,
+          182,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-smash-return.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-smash-return.webp",
+        "exists": true,
+        "bytes": 9034,
+        "sha256": "8f8635181b709644bfd98d2cac86da2504e77a6dcb8f0d48f643e5c3b2645b7c",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          61,
+          56,
+          182,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-spell-load-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-spell-load-mobile.webp",
+        "exists": true,
+        "bytes": 9794,
+        "sha256": "cbfff06077f94687031cc97058601d1aed2c8c999eb240a182035e1b04fd7138",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          76,
+          74,
+          184,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-spell-load.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-spell-load.webp",
+        "exists": true,
+        "bytes": 9794,
+        "sha256": "cbfff06077f94687031cc97058601d1aed2c8c999eb240a182035e1b04fd7138",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          76,
+          74,
+          184,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-spell-release-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-spell-release-mobile.webp",
+        "exists": true,
+        "bytes": 10018,
+        "sha256": "f369c513f4f48d97e0d643bd7e3a0abdc9c8de6f70ec8577bfba5f4996cbd8b9",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          75,
+          65,
+          185,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-spell-release.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-spell-release.webp",
+        "exists": true,
+        "bytes": 10018,
+        "sha256": "f369c513f4f48d97e0d643bd7e3a0abdc9c8de6f70ec8577bfba5f4996cbd8b9",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          75,
+          65,
+          185,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-spell-return-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-spell-return-mobile.webp",
+        "exists": true,
+        "bytes": 9780,
+        "sha256": "45f0bdb3c4cd91904aef3777e2e13e227815f6ad782e9fc562fabd1ede6f0513",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          75,
+          75,
+          184,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-spell-return.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-spell-return.webp",
+        "exists": true,
+        "bytes": 9780,
+        "sha256": "45f0bdb3c4cd91904aef3777e2e13e227815f6ad782e9fc562fabd1ede6f0513",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          75,
+          75,
+          184,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-sweep-contact-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-sweep-contact-mobile.webp",
+        "exists": true,
+        "bytes": 9454,
+        "sha256": "b212c0405ec07f2451ab37523cfbb4a7b628474c127227329d2cec62b62ab553",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          46,
+          114,
+          238,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-sweep-contact.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-sweep-contact.webp",
+        "exists": true,
+        "bytes": 9454,
+        "sha256": "b212c0405ec07f2451ab37523cfbb4a7b628474c127227329d2cec62b62ab553",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          46,
+          114,
+          238,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-sweep-load-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-sweep-load-mobile.webp",
+        "exists": true,
+        "bytes": 8418,
+        "sha256": "b1debbdce5bc3d823535b3f635a98a098e32611ae7020f43e23be5186c51999b",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          44,
+          118,
+          194,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-sweep-load.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-sweep-load.webp",
+        "exists": true,
+        "bytes": 8418,
+        "sha256": "b1debbdce5bc3d823535b3f635a98a098e32611ae7020f43e23be5186c51999b",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          44,
+          118,
+          194,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-sweep-return-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-sweep-return-mobile.webp",
+        "exists": true,
+        "bytes": 8714,
+        "sha256": "502cf13afd0e6bf51fa3509faa74a5718a12ea7dbdc1f5e9b9763da6462de32c",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          63,
+          92,
+          186,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/card-starseer-sweep-return.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/card-starseer-sweep-return.webp",
+        "exists": true,
+        "bytes": 8714,
+        "sha256": "502cf13afd0e6bf51fa3509faa74a5718a12ea7dbdc1f5e9b9763da6462de32c",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          63,
+          92,
+          186,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/class-smash-herald-airborne-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/class-smash-herald-airborne-mobile.webp",
+        "exists": true,
+        "bytes": 25782,
+        "sha256": "19924611fc40d6f02316a7b9052e134ef77e93286cd2e34a6d91573203030e8a",
+        "raster": [
+          130,
+          173
+        ],
+        "alphaBox128": [
+          5,
+          5,
+          125,
+          168
+        ]
+      }
+    ],
+    "assets-display/alternative/class-smash-herald-airborne.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/class-smash-herald-airborne.webp",
+        "exists": true,
+        "bytes": 85920,
+        "sha256": "2021e999f207aff3ac8ed1e09dc2127dc59cf6bc8aa61a96d93ae1d06eb6fd77",
+        "raster": [
+          260,
+          346
+        ],
+        "alphaBox128": [
+          10,
+          10,
+          251,
+          336
+        ]
+      }
+    ],
+    "assets-display/alternative/class-smash-herald-held-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/class-smash-herald-held-mobile.webp",
+        "exists": true,
+        "bytes": 27360,
+        "sha256": "4793dd19f1f2bdf74ae86eba19657bb22a662340082c1571e153c91626f0ccde",
+        "raster": [
+          136,
+          162
+        ],
+        "alphaBox128": [
+          5,
+          5,
+          131,
+          158
+        ]
+      }
+    ],
+    "assets-display/alternative/class-smash-herald-held.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/class-smash-herald-held.webp",
+        "exists": true,
+        "bytes": 92288,
+        "sha256": "5d788369c03c56489d8a1d1b0e3163b6f88ee8a2fb44298a9728bdf837894f90",
+        "raster": [
+          272,
+          324
+        ],
+        "alphaBox128": [
+          10,
+          10,
+          262,
+          315
+        ]
+      }
+    ],
+    "assets-display/alternative/class-smash-herald-impact-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/class-smash-herald-impact-mobile.webp",
+        "exists": true,
+        "bytes": 30734,
+        "sha256": "9f567fae86dc2f33394c207ad4c3ef8e710a73daa3e035bb104f33ffcf85d47f",
+        "raster": [
+          174,
+          128
+        ],
+        "alphaBox128": [
+          5,
+          5,
+          164,
+          121
+        ]
+      }
+    ],
+    "assets-display/alternative/class-smash-herald-impact.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/class-smash-herald-impact.webp",
+        "exists": true,
+        "bytes": 104998,
+        "sha256": "a6666342ad94ded122ec473bb0fb07d1ded2d1ff76ac661ff739a75fc53f98d8",
+        "raster": [
+          348,
+          256
+        ],
+        "alphaBox128": [
+          9,
+          10,
+          327,
+          242
+        ]
+      }
+    ],
+    "assets-display/alternative/class-smash-herald-takeoff-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/class-smash-herald-takeoff-mobile.webp",
+        "exists": true,
+        "bytes": 25930,
+        "sha256": "7b911722fbbb6c267357e0a37ebb051a9c9b6c0855cf77feef7681e5f2033709",
+        "raster": [
+          132,
+          170
+        ],
+        "alphaBox128": [
+          5,
+          5,
+          127,
+          165
+        ]
+      }
+    ],
+    "assets-display/alternative/class-smash-herald-takeoff.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/class-smash-herald-takeoff.webp",
+        "exists": true,
+        "bytes": 87108,
+        "sha256": "c6f18707ac621845043934d6dc3cef84e66b75a47691f97b27c2c8a390c4151e",
+        "raster": [
+          264,
+          340
+        ],
+        "alphaBox128": [
+          10,
+          9,
+          254,
+          331
+        ]
+      }
+    ],
+    "assets-display/alternative/class-smash-rogue-airborne-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/class-smash-rogue-airborne-mobile.webp",
+        "exists": true,
+        "bytes": 24772,
+        "sha256": "81efd2879eb697ca1d082f0c887f3674357c184adec718838a6dabeedaba348b",
+        "raster": [
+          137,
+          186
+        ],
+        "alphaBox128": [
+          8,
+          6,
+          131,
+          141
+        ]
+      }
+    ],
+    "assets-display/alternative/class-smash-rogue-airborne.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/class-smash-rogue-airborne.webp",
+        "exists": true,
+        "bytes": 86300,
+        "sha256": "239640730defbcf35a149950cff37bc99726ccc655684d0af025c6cf2be1646e",
+        "raster": [
+          274,
+          372
+        ],
+        "alphaBox128": [
+          16,
+          11,
+          262,
+          283
+        ]
+      }
+    ],
+    "assets-display/alternative/class-smash-rogue-held-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/class-smash-rogue-held-mobile.webp",
+        "exists": true,
+        "bytes": 26592,
+        "sha256": "1bd5b045170e59f54a59e69030e4d60ac32f57691ce3d5601190821b67bd88df",
+        "raster": [
+          138,
+          210
+        ],
+        "alphaBox128": [
+          5,
+          69,
+          131,
+          204
+        ]
+      }
+    ],
+    "assets-display/alternative/class-smash-rogue-held.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/class-smash-rogue-held.webp",
+        "exists": true,
+        "bytes": 92356,
+        "sha256": "d3588ad741536f17f5a7cd9522245cf15e0e40f907a1c9bb900fa72fbb0b9ef1",
+        "raster": [
+          276,
+          420
+        ],
+        "alphaBox128": [
+          10,
+          138,
+          263,
+          408
+        ]
+      }
+    ],
+    "assets-display/alternative/class-smash-rogue-impact-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/class-smash-rogue-impact-mobile.webp",
+        "exists": true,
+        "bytes": 28170,
+        "sha256": "6d37677aaf7c3f4a43d55862a1322032fc07a11e028f0187177d10f567569d4c",
+        "raster": [
+          160,
+          173
+        ],
+        "alphaBox128": [
+          6,
+          52,
+          154,
+          166
+        ]
+      }
+    ],
+    "assets-display/alternative/class-smash-rogue-impact.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/class-smash-rogue-impact.webp",
+        "exists": true,
+        "bytes": 98838,
+        "sha256": "0c2b737bb7ab4971763e8d7cc2c46975abfc55da01c0e0fd44388da8b6f16930",
+        "raster": [
+          320,
+          346
+        ],
+        "alphaBox128": [
+          12,
+          103,
+          308,
+          332
+        ]
+      }
+    ],
+    "assets-display/alternative/class-smash-rogue-takeoff-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/class-smash-rogue-takeoff-mobile.webp",
+        "exists": true,
+        "bytes": 27500,
+        "sha256": "e305e61baac4f0218a83845eaf9baf14541c3b3e1340e9b80920149b0eea0494",
+        "raster": [
+          141,
+          214
+        ],
+        "alphaBox128": [
+          6,
+          34,
+          135,
+          208
+        ]
+      }
+    ],
+    "assets-display/alternative/class-smash-rogue-takeoff.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/class-smash-rogue-takeoff.webp",
+        "exists": true,
+        "bytes": 95282,
+        "sha256": "2391f084f65b77ad948cfe26ddabd14f52980bc0016325dde9d9f3158090408d",
+        "raster": [
+          282,
+          428
+        ],
+        "alphaBox128": [
+          11,
+          67,
+          271,
+          417
+        ]
+      }
+    ],
+    "assets-display/alternative/class-smash-starseer-airborne-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/class-smash-starseer-airborne-mobile.webp",
+        "exists": true,
+        "bytes": 16212,
+        "sha256": "d1b59b52aa507f0448b3730c244846d1a078b6a9a1c0238ca9de6cc46a5c5c7d",
+        "raster": [
+          108,
+          213
+        ],
+        "alphaBox128": [
+          11,
+          6,
+          101,
+          150
+        ]
+      }
+    ],
+    "assets-display/alternative/class-smash-starseer-airborne.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/class-smash-starseer-airborne.webp",
+        "exists": true,
+        "bytes": 51368,
+        "sha256": "b4c625ee4b7aa8055304f00b2db9811713ffde650079bb7cee2e646a551a6c36",
+        "raster": [
+          216,
+          426
+        ],
+        "alphaBox128": [
+          21,
+          12,
+          202,
+          299
+        ]
+      }
+    ],
+    "assets-display/alternative/class-smash-starseer-held-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/class-smash-starseer-held-mobile.webp",
+        "exists": true,
+        "bytes": 17878,
+        "sha256": "b11f6ec5d42bf1d2dd612e287c08e6b2ffbd194b55999827491730bfa49205f2",
+        "raster": [
+          116,
+          208
+        ],
+        "alphaBox128": [
+          7,
+          52,
+          106,
+          180
+        ]
+      }
+    ],
+    "assets-display/alternative/class-smash-starseer-held.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/class-smash-starseer-held.webp",
+        "exists": true,
+        "bytes": 58546,
+        "sha256": "578d4501ed338945e36459cb463f57d2a1f9dfb3548921284d4224859895ac05",
+        "raster": [
+          232,
+          416
+        ],
+        "alphaBox128": [
+          14,
+          103,
+          213,
+          361
+        ]
+      }
+    ],
+    "assets-display/alternative/class-smash-starseer-impact-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/class-smash-starseer-impact-mobile.webp",
+        "exists": true,
+        "bytes": 21774,
+        "sha256": "70c2ba9acbf1f940354fdaee39d3ff9c9c82353892fdd86dd0ffe9d3377d4874",
+        "raster": [
+          147,
+          193
+        ],
+        "alphaBox128": [
+          5,
+          67,
+          137,
+          186
+        ]
+      }
+    ],
+    "assets-display/alternative/class-smash-starseer-impact.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/class-smash-starseer-impact.webp",
+        "exists": true,
+        "bytes": 74724,
+        "sha256": "522593e530d6c67cf34c27990b1cc661b7f17f4ddcf77385b666b31736f08950",
+        "raster": [
+          294,
+          386
+        ],
+        "alphaBox128": [
+          9,
+          134,
+          274,
+          371
+        ]
+      }
+    ],
+    "assets-display/alternative/class-smash-starseer-takeoff-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/class-smash-starseer-takeoff-mobile.webp",
+        "exists": true,
+        "bytes": 16494,
+        "sha256": "82a081d60d460f220c488ea895af2b802eef20b78fe89adf562ca0ddcecd75f7",
+        "raster": [
+          100,
+          200
+        ],
+        "alphaBox128": [
+          10,
+          6,
+          93,
+          178
+        ]
+      }
+    ],
+    "assets-display/alternative/class-smash-starseer-takeoff.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/class-smash-starseer-takeoff.webp",
+        "exists": true,
+        "bytes": 54350,
+        "sha256": "5c8307c8e78a4f6ac8c99670470619cbafb97b3beac4efaa755b96f517879593",
+        "raster": [
+          200,
+          400
+        ],
+        "alphaBox128": [
+          19,
+          12,
+          187,
+          356
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-attack-2-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-attack-2-mobile.webp",
+        "exists": true,
+        "bytes": 8122,
+        "sha256": "32bd3bc1efce5f7816f34d94a1edc3c7e275d70b16c3578a54775711f33f020c",
+        "raster": [
+          256,
+          171
+        ],
+        "alphaBox128": [
+          40,
+          51,
+          167,
+          155
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-attack-2.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-attack-2.webp",
+        "exists": true,
+        "bytes": 53878,
+        "sha256": "186b0ef5763abf0de84c9795be6559c503e3cc598ac7008a5ee8200defe486a1",
+        "raster": [
+          768,
+          512
+        ],
+        "alphaBox128": [
+          120,
+          154,
+          501,
+          464
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-attack-3-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-attack-3-mobile.webp",
+        "exists": true,
+        "bytes": 14532,
+        "sha256": "271989dcccd688d66ff7d88858be7003d8247c812ee0d245429dce375d42127e",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          45,
+          22,
+          211,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-attack-3.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-attack-3.webp",
+        "exists": true,
+        "bytes": 53278,
+        "sha256": "fba5777cc513b41e7c714d635ff1231cb9282b6f9e070e255ceb89df8ab1a05d",
+        "raster": [
+          512,
+          512
+        ],
+        "alphaBox128": [
+          89,
+          44,
+          423,
+          463
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-attack-4-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-attack-4-mobile.webp",
+        "exists": true,
+        "bytes": 7536,
+        "sha256": "0d082922c4d86f04dd53befaa110b3889ebc2df71af747edbb4a07f916dce776",
+        "raster": [
+          256,
+          171
+        ],
+        "alphaBox128": [
+          50,
+          52,
+          191,
+          155
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-attack-4.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-attack-4.webp",
+        "exists": true,
+        "bytes": 50328,
+        "sha256": "71e8895ec8fcfa062965e20d67b49b74c7ebc4a89dc443dcf4ffd7bda7e40366",
+        "raster": [
+          768,
+          512
+        ],
+        "alphaBox128": [
+          147,
+          157,
+          576,
+          463
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-counter-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-counter-mobile.webp",
+        "exists": true,
+        "bytes": 8070,
+        "sha256": "c02c34e2036a9f845d8c5644492cfb019190dfaad2385ca7169fe834035d5fcd",
+        "raster": [
+          256,
+          171
+        ],
+        "alphaBox128": [
+          62,
+          38,
+          205,
+          155
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-counter.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-counter.webp",
+        "exists": true,
+        "bytes": 51308,
+        "sha256": "667464ea845f0af44e2efad3c58c995661f810103c1a07ef39c65b2fdeca670e",
+        "raster": [
+          768,
+          512
+        ],
+        "alphaBox128": [
+          183,
+          113,
+          617,
+          464
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-defend-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-defend-mobile.webp",
+        "exists": true,
+        "bytes": 7696,
+        "sha256": "eb068b95d18037b8201fc0b57c0717902c04145638a00fec319a39e2e2a246bc",
+        "raster": [
+          256,
+          171
+        ],
+        "alphaBox128": [
+          56,
+          40,
+          186,
+          155
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-defend.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-defend.webp",
+        "exists": true,
+        "bytes": 48990,
+        "sha256": "69ff5522214d93cf6f91390e8ab37df20ceb88533df3b7918be47450c99aff43",
+        "raster": [
+          768,
+          512
+        ],
+        "alphaBox128": [
+          161,
+          117,
+          560,
+          463
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-evade-1-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-evade-1-mobile.webp",
+        "exists": true,
+        "bytes": 7370,
+        "sha256": "b45fb302e3854307a7047f5fef7ad83e92d9a9e8fc102296781b246f968e02f5",
+        "raster": [
+          256,
+          171
+        ],
+        "alphaBox128": [
+          46,
+          15,
+          179,
+          155
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-evade-1.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-evade-1.webp",
+        "exists": true,
+        "bytes": 45984,
+        "sha256": "eb3ea191823f185e726de9fd1d622ee693b77e3f6fec129223ac85482525af51",
+        "raster": [
+          768,
+          512
+        ],
+        "alphaBox128": [
+          135,
+          43,
+          538,
+          464
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-evade-2-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-evade-2-mobile.webp",
+        "exists": true,
+        "bytes": 7024,
+        "sha256": "ce79cab75c8852bb78b1d7968543917091e25420025dc315cb3144d7c6aad4bc",
+        "raster": [
+          256,
+          171
+        ],
+        "alphaBox128": [
+          49,
+          62,
+          188,
+          155
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-evade-2.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-evade-2.webp",
+        "exists": true,
+        "bytes": 49458,
+        "sha256": "ba2a1f889be43fefc0803d85604847edd694190b090161fd2683cdec347929a9",
+        "raster": [
+          768,
+          512
+        ],
+        "alphaBox128": [
+          144,
+          185,
+          564,
+          464
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-evade-3-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-evade-3-mobile.webp",
+        "exists": true,
+        "bytes": 7560,
+        "sha256": "84d46dfa123f6d51df1a6885502b15e38d2418b0f87c229702ccdf96955891d8",
+        "raster": [
+          256,
+          171
+        ],
+        "alphaBox128": [
+          47,
+          50,
+          177,
+          155
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-evade-3.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-evade-3.webp",
+        "exists": true,
+        "bytes": 49982,
+        "sha256": "5afa126afe772c37faad04753d602e43a132652255ce75e26d6ab33bdecb09f6",
+        "raster": [
+          768,
+          512
+        ],
+        "alphaBox128": [
+          141,
+          149,
+          533,
+          464
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-evade-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-evade-mobile.webp",
+        "exists": true,
+        "bytes": 6476,
+        "sha256": "66385959b222ced764d1926e5426822533842e55f0d5585af48cd0cc3a3e5688",
+        "raster": [
+          256,
+          171
+        ],
+        "alphaBox128": [
+          61,
+          79,
+          193,
+          155
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-evade.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-evade.webp",
+        "exists": true,
+        "bytes": 40620,
+        "sha256": "eb500ae71c6dee7d71c8040cbf7971cc4b4bd643aedddd26f70442bd1c501f22",
+        "raster": [
+          768,
+          512
+        ],
+        "alphaBox128": [
+          181,
+          235,
+          581,
+          463
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-guard-break-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-guard-break-mobile.webp",
+        "exists": true,
+        "bytes": 14038,
+        "sha256": "d9bc33e53b598710b46150efd22fdf9103ce48149a4c6cefecda58c65433f6d5",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          19,
+          69,
+          236,
+          248
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-guard-break.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-guard-break.webp",
+        "exists": true,
+        "bytes": 49556,
+        "sha256": "74957dcadbbdcc3565168c32edc43bacd08f0ade78519233c6bbc6c2d8032deb",
+        "raster": [
+          512,
+          512
+        ],
+        "alphaBox128": [
+          38,
+          139,
+          473,
+          496
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-impact-g-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-impact-g-mobile.webp",
+        "exists": true,
+        "bytes": 7718,
+        "sha256": "e957b1ab6634bad3a019ccfc02dd9d93ecd266eae4c91c0c3930f185fb6d5a91",
+        "raster": [
+          256,
+          171
+        ],
+        "alphaBox128": [
+          61,
+          31,
+          183,
+          155
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-impact-g.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-impact-g.webp",
+        "exists": true,
+        "bytes": 49594,
+        "sha256": "96b7d0dabbf60110d5e3f7a6c5225a231e1e70a6d8da156fa8e90234f7ab8e7e",
+        "raster": [
+          768,
+          512
+        ],
+        "alphaBox128": [
+          181,
+          92,
+          551,
+          464
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-impact-h-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-impact-h-mobile.webp",
+        "exists": true,
+        "bytes": 7360,
+        "sha256": "cc9f77ee938bc3566c9354b329c918344324716b7c71ac1aab6a5b678f1f8d73",
+        "raster": [
+          256,
+          171
+        ],
+        "alphaBox128": [
+          65,
+          40,
+          193,
+          155
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-impact-h.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-impact-h.webp",
+        "exists": true,
+        "bytes": 47096,
+        "sha256": "91425e5d5cdf1fcb52e84d14d49e8ea1501a2887a9bc5092a8d2536c4c97b7a9",
+        "raster": [
+          768,
+          512
+        ],
+        "alphaBox128": [
+          192,
+          120,
+          583,
+          464
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-impact-v-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-impact-v-mobile.webp",
+        "exists": true,
+        "bytes": 6968,
+        "sha256": "dd6544a91e6a1e9d8c9bfeba05026c23b56d6edaf2914ce095bab51507233227",
+        "raster": [
+          256,
+          171
+        ],
+        "alphaBox128": [
+          52,
+          35,
+          165,
+          155
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-impact-v.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-impact-v.webp",
+        "exists": true,
+        "bytes": 45792,
+        "sha256": "034649efb97e8fe63368c393ff1843217aac02a83d7bcb7676ad96edecbab593",
+        "raster": [
+          768,
+          512
+        ],
+        "alphaBox128": [
+          153,
+          102,
+          494,
+          463
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-smash-airborne-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-smash-airborne-mobile.webp",
+        "exists": true,
+        "bytes": 20986,
+        "sha256": "b37bf6f1f0358eb4acf23efc6d0404e4bd0e2a9485c05a55659fbd0fb9aa826b",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          71,
+          39,
+          181,
+          193
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-smash-airborne.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-smash-airborne.webp",
+        "exists": true,
+        "bytes": 143002,
+        "sha256": "c4ac87cae60eba72c3ecfdb3b2ece7361d7134b22818f56362d353e0a86b0041",
+        "raster": [
+          768,
+          768
+        ],
+        "alphaBox128": [
+          211,
+          117,
+          544,
+          578
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-smash-impact-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-smash-impact-mobile.webp",
+        "exists": true,
+        "bytes": 30572,
+        "sha256": "914b99ad6d332d7674108dfec5587a4a66a8250ee651a19e062218d1e2831b81",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          34,
+          134,
+          218,
+          228
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-smash-impact.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-smash-impact.webp",
+        "exists": true,
+        "bytes": 212390,
+        "sha256": "3962cbdeccb8dae3c2a93e4f84c60bf7172bdda56c26c42ad521d167e13ca945",
+        "raster": [
+          768,
+          768
+        ],
+        "alphaBox128": [
+          101,
+          403,
+          653,
+          684
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-smash-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-smash-mobile.webp",
+        "exists": true,
+        "bytes": 15464,
+        "sha256": "7d96cbc87ccb1159befa85a192f4cdf72cea0170f7dd00b34af26074ad70a182",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          25,
+          48,
+          232,
+          232
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-smash-takeoff-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-smash-takeoff-mobile.webp",
+        "exists": true,
+        "bytes": 21902,
+        "sha256": "d9c9de71f491b36bd492148ffa427b520a4ba830c3c7fecb363e69897b14620d",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          74,
+          61,
+          183,
+          218
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-smash-takeoff.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-smash-takeoff.webp",
+        "exists": true,
+        "bytes": 150152,
+        "sha256": "3ea4253510405611871fecb84d896f251a16d0acfcf7fd3bf03875ab1a2be5ba",
+        "raster": [
+          768,
+          768
+        ],
+        "alphaBox128": [
+          220,
+          182,
+          550,
+          654
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-smash.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-smash.webp",
+        "exists": true,
+        "bytes": 53668,
+        "sha256": "9abfefe7258a3bfa2238e7c0516396c61baa5ca009a649b8408183b91fcdf6e2",
+        "raster": [
+          512,
+          512
+        ],
+        "alphaBox128": [
+          48,
+          95,
+          464,
+          464
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-sweep-contact-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-sweep-contact-mobile.webp",
+        "exists": true,
+        "bytes": 22360,
+        "sha256": "92efd91d23e37086a3d5d7c3e58b58b35dd48d10779dae34fd39696736abfe5f",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          47,
+          101,
+          214,
+          183
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-sweep-contact.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-sweep-contact.webp",
+        "exists": true,
+        "bytes": 226646,
+        "sha256": "2f57d14e2f17a7366977829957514d0a97f64adf91cb24c26ede51a25e56bbb2",
+        "raster": [
+          1024,
+          1024
+        ],
+        "alphaBox128": [
+          185,
+          404,
+          856,
+          732
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-sweep-finish-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-sweep-finish-mobile.webp",
+        "exists": true,
+        "bytes": 19994,
+        "sha256": "266b7ccba64d2413bb02fd1f2770578f04149fcacb3b0a77f72230c2b8d24d37",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          58,
+          111,
+          208,
+          183
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-sweep-finish.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-sweep-finish.webp",
+        "exists": true,
+        "bytes": 205162,
+        "sha256": "96a520910a6962ade28c268da0cc34fed5c747b309b6a60580a32ebdd58c429b",
+        "raster": [
+          1024,
+          1024
+        ],
+        "alphaBox128": [
+          234,
+          444,
+          832,
+          733
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-sweep-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-sweep-mobile.webp",
+        "exists": true,
+        "bytes": 16570,
+        "sha256": "20fd757bf9a39e06e6ba03bc265bc272d4eebd2734e1d24655000936a57bd601",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          19,
+          101,
+          169,
+          184
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-sweep-windup-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-sweep-windup-mobile.webp",
+        "exists": true,
+        "bytes": 22722,
+        "sha256": "b6eeb8ecb140678365100c3f1d162c17e9852716b037283cbfb209e90f39de9c",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          52,
+          98,
+          237,
+          183
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-sweep-windup.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-sweep-windup.webp",
+        "exists": true,
+        "bytes": 231178,
+        "sha256": "e42ea1976a0a162c78098cb7a13010cc1b855d5baf6f4fe0fe90e42cc9991f4d",
+        "raster": [
+          1024,
+          1024
+        ],
+        "alphaBox128": [
+          206,
+          393,
+          952,
+          732
+        ]
+      }
+    ],
+    "assets-display/alternative/reaver-greatsword-pilot-sweep.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/reaver-greatsword-pilot-sweep.webp",
+        "exists": true,
+        "bytes": 192832,
+        "sha256": "81d348d0382b9a99c1f72d5d23dab4975bbe648b3db979d8f725fc250d02db7c",
+        "raster": [
+          1024,
+          1024
+        ],
+        "alphaBox128": [
+          71,
+          404,
+          678,
+          736
+        ]
+      }
+    ],
+    "assets-display/alternative/stances/herald/casting-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/stances/herald/casting-mobile.webp",
+        "exists": true,
+        "bytes": 18784,
+        "sha256": "9e07fb484c03998ce69ebabb3bb5f60ca47c9f6ea4d4224e11359a0e0491682a",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          49,
+          22,
+          208,
+          232
+        ]
+      }
+    ],
+    "assets-display/alternative/stances/herald/casting.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/stances/herald/casting.webp",
+        "exists": true,
+        "bytes": 18784,
+        "sha256": "9e07fb484c03998ce69ebabb3bb5f60ca47c9f6ea4d4224e11359a0e0491682a",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          49,
+          22,
+          208,
+          232
+        ]
+      }
+    ],
+    "assets-display/alternative/stances/herald/defensive-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/stances/herald/defensive-mobile.webp",
+        "exists": true,
+        "bytes": 15082,
+        "sha256": "90550d3667cbfbf786054230e39449c030aa68b1f4c5f29930837de6c7d20737",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          51,
+          29,
+          207,
+          232
+        ]
+      }
+    ],
+    "assets-display/alternative/stances/herald/defensive.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/stances/herald/defensive.webp",
+        "exists": true,
+        "bytes": 15082,
+        "sha256": "90550d3667cbfbf786054230e39449c030aa68b1f4c5f29930837de6c7d20737",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          51,
+          29,
+          207,
+          232
+        ]
+      }
+    ],
+    "assets-display/alternative/stances/herald/offensive-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/stances/herald/offensive-mobile.webp",
+        "exists": true,
+        "bytes": 16094,
+        "sha256": "8bc808afae8a43deb4bbec908c02ad37bc9ddf6462755332399df81d88564a0f",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          41,
+          24,
+          216,
+          232
+        ]
+      }
+    ],
+    "assets-display/alternative/stances/herald/offensive.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/stances/herald/offensive.webp",
+        "exists": true,
+        "bytes": 16094,
+        "sha256": "8bc808afae8a43deb4bbec908c02ad37bc9ddf6462755332399df81d88564a0f",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          41,
+          24,
+          216,
+          232
+        ]
+      }
+    ],
+    "assets-display/alternative/stances/reaver/casting-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/stances/reaver/casting-mobile.webp",
+        "exists": true,
+        "bytes": 14826,
+        "sha256": "9a6b8295963ff65e06f525cd81d83cb306d92da9962f07d841caa3c7c72d4b41",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          37,
+          23,
+          219,
+          232
+        ]
+      }
+    ],
+    "assets-display/alternative/stances/reaver/casting.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/stances/reaver/casting.webp",
+        "exists": true,
+        "bytes": 14826,
+        "sha256": "9a6b8295963ff65e06f525cd81d83cb306d92da9962f07d841caa3c7c72d4b41",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          37,
+          23,
+          219,
+          232
+        ]
+      }
+    ],
+    "assets-display/alternative/stances/reaver/offensive-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/stances/reaver/offensive-mobile.webp",
+        "exists": true,
+        "bytes": 11230,
+        "sha256": "7ab6090bdab58ffed228cad90f466189a147ca44d810d37c2b80b7873f9de832",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          57,
+          34,
+          199,
+          232
+        ]
+      }
+    ],
+    "assets-display/alternative/stances/reaver/offensive.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/stances/reaver/offensive.webp",
+        "exists": true,
+        "bytes": 11230,
+        "sha256": "7ab6090bdab58ffed228cad90f466189a147ca44d810d37c2b80b7873f9de832",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          57,
+          34,
+          199,
+          232
+        ]
+      }
+    ],
+    "assets-display/alternative/stances/rogue/casting-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/stances/rogue/casting-mobile.webp",
+        "exists": true,
+        "bytes": 11938,
+        "sha256": "6cce8547c352aa76d135c88bc2663d197a340d4e4f25f166227e620ffac02ad2",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          71,
+          44,
+          185,
+          232
+        ]
+      }
+    ],
+    "assets-display/alternative/stances/rogue/casting.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/stances/rogue/casting.webp",
+        "exists": true,
+        "bytes": 11938,
+        "sha256": "6cce8547c352aa76d135c88bc2663d197a340d4e4f25f166227e620ffac02ad2",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          71,
+          44,
+          185,
+          232
+        ]
+      }
+    ],
+    "assets-display/alternative/stances/rogue/defensive-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/stances/rogue/defensive-mobile.webp",
+        "exists": true,
+        "bytes": 19458,
+        "sha256": "301fab06270f119fe2fea2227e3ad9ebfaa7ab672b327413446281bb19d6644a",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          31,
+          22,
+          226,
+          232
+        ]
+      }
+    ],
+    "assets-display/alternative/stances/rogue/defensive.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/stances/rogue/defensive.webp",
+        "exists": true,
+        "bytes": 19458,
+        "sha256": "301fab06270f119fe2fea2227e3ad9ebfaa7ab672b327413446281bb19d6644a",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          31,
+          22,
+          226,
+          232
+        ]
+      }
+    ],
+    "assets-display/alternative/stances/rogue/offensive-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/stances/rogue/offensive-mobile.webp",
+        "exists": true,
+        "bytes": 12386,
+        "sha256": "3d4e79805e4afc3c23452fda14ef5e31c16d12fe4ead8e14c27e41cce6586657",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          48,
+          72,
+          209,
+          232
+        ]
+      }
+    ],
+    "assets-display/alternative/stances/rogue/offensive.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/stances/rogue/offensive.webp",
+        "exists": true,
+        "bytes": 12386,
+        "sha256": "3d4e79805e4afc3c23452fda14ef5e31c16d12fe4ead8e14c27e41cce6586657",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          48,
+          72,
+          209,
+          232
+        ]
+      }
+    ],
+    "assets-display/alternative/stances/starseer/casting-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/stances/starseer/casting-mobile.webp",
+        "exists": true,
+        "bytes": 13916,
+        "sha256": "088cf317a421d51936625df8277cc21ffbe58f39b863d9dd9d02c9ef087c10ed",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          54,
+          23,
+          202,
+          232
+        ]
+      }
+    ],
+    "assets-display/alternative/stances/starseer/casting.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/stances/starseer/casting.webp",
+        "exists": true,
+        "bytes": 13916,
+        "sha256": "088cf317a421d51936625df8277cc21ffbe58f39b863d9dd9d02c9ef087c10ed",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          54,
+          23,
+          202,
+          232
+        ]
+      }
+    ],
+    "assets-display/alternative/stances/starseer/defensive-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/stances/starseer/defensive-mobile.webp",
+        "exists": true,
+        "bytes": 16668,
+        "sha256": "cc022196050cf017c7663ace9dd5cdd13f383c0bdca616320ab575db801898a8",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          48,
+          31,
+          208,
+          232
+        ]
+      }
+    ],
+    "assets-display/alternative/stances/starseer/defensive.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/stances/starseer/defensive.webp",
+        "exists": true,
+        "bytes": 16668,
+        "sha256": "cc022196050cf017c7663ace9dd5cdd13f383c0bdca616320ab575db801898a8",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          48,
+          31,
+          208,
+          232
+        ]
+      }
+    ],
+    "assets-display/alternative/stances/starseer/offensive-mobile.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/stances/starseer/offensive-mobile.webp",
+        "exists": true,
+        "bytes": 16488,
+        "sha256": "ed77fe06fe5c8624410005f9cd2aae73afa9a26be21794383a2bc8580ddfdaf0",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          31,
+          54,
+          226,
+          231
+        ]
+      }
+    ],
+    "assets-display/alternative/stances/starseer/offensive.webp": [
+      {
+        "pack": "common",
+        "path": "assets-display/alternative/stances/starseer/offensive.webp",
+        "exists": true,
+        "bytes": 16488,
+        "sha256": "ed77fe06fe5c8624410005f9cd2aae73afa9a26be21794383a2bc8580ddfdaf0",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          31,
+          54,
+          226,
+          231
+        ]
+      }
+    ],
+    "assets/animations/greatsword-outfits/reaver/HURT.webp": [
+      {
+        "pack": "high",
+        "path": "assets/animations/greatsword-outfits/reaver/HURT.webp",
+        "exists": true,
+        "bytes": 29342,
+        "sha256": "a684352f6052c4547590ab85d461e0d4a2a82126924be66dbf738d0a44154a41",
+        "raster": [
+          512,
+          512
+        ],
+        "alphaBox128": [
+          71,
+          130,
+          387,
+          476
+        ]
+      },
+      {
+        "pack": "light",
+        "path": "assets-mobile/animations/greatsword-outfits/reaver/HURT.webp",
+        "exists": true,
+        "bytes": 3190,
+        "sha256": "2b280b82d1aaf1b9d00e2b3423f87fdc264bcf3496f37e916ec50516769d5fc0",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          35,
+          65,
+          194,
+          238
+        ]
+      }
+    ],
+    "assets/animations/player-counter-sweep/herald/counter/contact.webp": [
+      {
+        "pack": "high",
+        "path": "assets/animations/player-counter-sweep/herald/counter/contact.webp",
+        "exists": true,
+        "bytes": 14274,
+        "sha256": "dc03605cdf660d65a27bf4867da3c8aa94bb13cbce6e6028ba123d4e16376dd5",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          40,
+          76,
+          203,
+          231
+        ]
+      },
+      {
+        "pack": "light",
+        "path": "assets-mobile/animations/player-counter-sweep/herald/counter/contact.webp",
+        "exists": true,
+        "bytes": 3032,
+        "sha256": "6fcbb6c78a3f11bbd486713726ce494cf05bcdf0de81f49139eb25b8c2026295",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          41,
+          76,
+          203,
+          231
+        ]
+      }
+    ],
+    "assets/animations/player-counter-sweep/herald/counter/recovery.webp": [
+      {
+        "pack": "high",
+        "path": "assets/animations/player-counter-sweep/herald/counter/recovery.webp",
+        "exists": true,
+        "bytes": 13350,
+        "sha256": "aee8a276aae54924599fb6211597fc055032a6556ae96652ae099ec29bf323b7",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          40,
+          80,
+          186,
+          231
+        ]
+      },
+      {
+        "pack": "light",
+        "path": "assets-mobile/animations/player-counter-sweep/herald/counter/recovery.webp",
+        "exists": true,
+        "bytes": 2804,
+        "sha256": "275e1045feadde2d4ad384e29e539fb09775903b5fdf2af845d0b638b747e477",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          40,
+          80,
+          186,
+          231
+        ]
+      }
+    ],
+    "assets/animations/player-counter-sweep/herald/counter/stance.webp": [
+      {
+        "pack": "high",
+        "path": "assets/animations/player-counter-sweep/herald/counter/stance.webp",
+        "exists": true,
+        "bytes": 14066,
+        "sha256": "17bfb14c6a366168a91024e0c88cab8b1cb06d498bc8335ed441ef988810a4f1",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          31,
+          75,
+          185,
+          231
+        ]
+      },
+      {
+        "pack": "light",
+        "path": "assets-mobile/animations/player-counter-sweep/herald/counter/stance.webp",
+        "exists": true,
+        "bytes": 3028,
+        "sha256": "b7883ae9e40545dfa5ed646b77e102f4606b068550dfa49379b3255201442d6f",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          31,
+          76,
+          185,
+          231
+        ]
+      }
+    ],
+    "assets/animations/player-counter-sweep/herald/sweep/contact.webp": [
+      {
+        "pack": "high",
+        "path": "assets/animations/player-counter-sweep/herald/sweep/contact.webp",
+        "exists": true,
+        "bytes": 11310,
+        "sha256": "af7172f72b9a6093c5727293358fd8ec191cf5ed488776e8780af4e2d31d4469",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          75,
+          85,
+          181,
+          231
+        ]
+      },
+      {
+        "pack": "light",
+        "path": "assets-mobile/animations/player-counter-sweep/herald/sweep/contact.webp",
+        "exists": true,
+        "bytes": 2280,
+        "sha256": "f4e28714484b53e5de4dd3e2fd53bd61b2b4159c512ef8e1f155c121e6a529f2",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          75,
+          86,
+          181,
+          231
+        ]
+      }
+    ],
+    "assets/animations/player-counter-sweep/herald/sweep/recovery.webp": [
+      {
+        "pack": "high",
+        "path": "assets/animations/player-counter-sweep/herald/sweep/recovery.webp",
+        "exists": true,
+        "bytes": 10038,
+        "sha256": "24f1710cf2f4e36d704eee89d9313270bc264dff0eaef0f9ac3eca2fdee8eee1",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          87,
+          81,
+          169,
+          231
+        ]
+      },
+      {
+        "pack": "light",
+        "path": "assets-mobile/animations/player-counter-sweep/herald/sweep/recovery.webp",
+        "exists": true,
+        "bytes": 2060,
+        "sha256": "f156b8f28310dac5637fc55aaf35f8db6adc4d6634212b0ce0d48560af23dfda",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          87,
+          80,
+          169,
+          231
+        ]
+      }
+    ],
+    "assets/animations/player-counter-sweep/herald/sweep/stance.webp": [
+      {
+        "pack": "high",
+        "path": "assets/animations/player-counter-sweep/herald/sweep/stance.webp",
+        "exists": true,
+        "bytes": 9760,
+        "sha256": "fe8cfde08acb11a35814401785e51aba6ea67d87c4201ad9b8a573808c0a6d06",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          86,
+          83,
+          170,
+          231
+        ]
+      },
+      {
+        "pack": "light",
+        "path": "assets-mobile/animations/player-counter-sweep/herald/sweep/stance.webp",
+        "exists": true,
+        "bytes": 1992,
+        "sha256": "a66d4aa2bdcbec751ef1e8644fa8ea5ae616a783309fb5fb3a2ec51af05d9449",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          86,
+          82,
+          170,
+          231
+        ]
+      }
+    ],
+    "assets/animations/player-counter-sweep/reaver/counter/contact.webp": [
+      {
+        "pack": "high",
+        "path": "assets/animations/player-counter-sweep/reaver/counter/contact.webp",
+        "exists": true,
+        "bytes": 10740,
+        "sha256": "4a02225ef5a36c9b9aef9e1d5ab341e32c1f55aaa848341a9d72b31672beba40",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          67,
+          108,
+          190,
+          231
+        ]
+      },
+      {
+        "pack": "light",
+        "path": "assets-mobile/animations/player-counter-sweep/reaver/counter/contact.webp",
+        "exists": true,
+        "bytes": 2478,
+        "sha256": "5432e7473102c9566a370b91065e09d24dd4e53f96b1f94833d6fed22724bec9",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          67,
+          108,
+          190,
+          231
+        ]
+      }
+    ],
+    "assets/animations/player-counter-sweep/reaver/counter/recovery.webp": [
+      {
+        "pack": "high",
+        "path": "assets/animations/player-counter-sweep/reaver/counter/recovery.webp",
+        "exists": true,
+        "bytes": 8652,
+        "sha256": "2ebf375056ae2822d9cc549883e282af99e356f41ddcfdcec80402e18ae04b15",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          87,
+          102,
+          170,
+          231
+        ]
+      },
+      {
+        "pack": "light",
+        "path": "assets-mobile/animations/player-counter-sweep/reaver/counter/recovery.webp",
+        "exists": true,
+        "bytes": 1968,
+        "sha256": "828e1bea28ea2a97cdb086458632295b287e174aa1470471ddbca8d5b65137de",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          87,
+          101,
+          170,
+          231
+        ]
+      }
+    ],
+    "assets/animations/player-counter-sweep/reaver/counter/stance.webp": [
+      {
+        "pack": "high",
+        "path": "assets/animations/player-counter-sweep/reaver/counter/stance.webp",
+        "exists": true,
+        "bytes": 10808,
+        "sha256": "f5a4ccc1f9afb0df4990260fc2839f53819931328e248138390abb8574deca63",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          83,
+          67,
+          174,
+          231
+        ]
+      },
+      {
+        "pack": "light",
+        "path": "assets-mobile/animations/player-counter-sweep/reaver/counter/stance.webp",
+        "exists": true,
+        "bytes": 2464,
+        "sha256": "5fce824a2a07905a5c458657f5895c06a530996712592bd29dfdd3c2d4c9ada9",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          83,
+          67,
+          174,
+          231
+        ]
+      }
+    ],
+    "assets/animations/player-counter-sweep/reaver/sweep/contact.webp": [
+      {
+        "pack": "high",
+        "path": "assets/animations/player-counter-sweep/reaver/sweep/contact.webp",
+        "exists": true,
+        "bytes": 11086,
+        "sha256": "5e2d249c60327314e137a59371720ba5f1cd9532c732366b4cd4beca76cdc5ff",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          47,
+          108,
+          256,
+          231
+        ]
+      },
+      {
+        "pack": "light",
+        "path": "assets-mobile/animations/player-counter-sweep/reaver/sweep/contact.webp",
+        "exists": true,
+        "bytes": 2304,
+        "sha256": "319e404f3ced5d97f8be1073bd59fe93a1886410723a65d0b5edc992195d5c53",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          47,
+          108,
+          256,
+          231
+        ]
+      }
+    ],
+    "assets/animations/player-counter-sweep/reaver/sweep/recovery.webp": [
+      {
+        "pack": "high",
+        "path": "assets/animations/player-counter-sweep/reaver/sweep/recovery.webp",
+        "exists": true,
+        "bytes": 9488,
+        "sha256": "341b2bccd9bb9c18109beffb6c354e075fec898ed98c1b025aa8ca9985281063",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          58,
+          101,
+          194,
+          231
+        ]
+      },
+      {
+        "pack": "light",
+        "path": "assets-mobile/animations/player-counter-sweep/reaver/sweep/recovery.webp",
+        "exists": true,
+        "bytes": 2104,
+        "sha256": "577a4597d9ce00844e2ef9dd455ba33669d1b2c796de327088620eca12e78d8e",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          58,
+          101,
+          195,
+          231
+        ]
+      }
+    ],
+    "assets/animations/player-counter-sweep/reaver/sweep/stance.webp": [
+      {
+        "pack": "high",
+        "path": "assets/animations/player-counter-sweep/reaver/sweep/stance.webp",
+        "exists": true,
+        "bytes": 10866,
+        "sha256": "cd610642c7c2a50aa855d37565ffa8e55b8d84f67ff501560220ec87745b5d51",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          27,
+          105,
+          191,
+          231
+        ]
+      },
+      {
+        "pack": "light",
+        "path": "assets-mobile/animations/player-counter-sweep/reaver/sweep/stance.webp",
+        "exists": true,
+        "bytes": 2484,
+        "sha256": "e6325b7c72191e35135e58def186e2aeb50466174f97be9e00f5f0046120d369",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          27,
+          105,
+          191,
+          231
+        ]
+      }
+    ],
+    "assets/animations/player-counter-sweep/rogue/counter/contact.webp": [
+      {
+        "pack": "high",
+        "path": "assets/animations/player-counter-sweep/rogue/counter/contact.webp",
+        "exists": true,
+        "bytes": 15054,
+        "sha256": "9daa4bfd1033d445378ee6b51c877dc056aaef87de769e3f1f80ae4c626fcaef",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          51,
+          63,
+          205,
+          231
+        ]
+      },
+      {
+        "pack": "light",
+        "path": "assets-mobile/animations/player-counter-sweep/rogue/counter/contact.webp",
+        "exists": true,
+        "bytes": 3170,
+        "sha256": "47f96f30967aa39f4353566a8b218fb55554d5ed366f4bc89498fe5645fa18cb",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          52,
+          63,
+          205,
+          231
+        ]
+      }
+    ],
+    "assets/animations/player-counter-sweep/rogue/counter/recovery.webp": [
+      {
+        "pack": "high",
+        "path": "assets/animations/player-counter-sweep/rogue/counter/recovery.webp",
+        "exists": true,
+        "bytes": 14164,
+        "sha256": "39e70cb71c83dd3db2d747f982fb21c9de0fd1b78aa6ccbbeabe31e04e4d5b03",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          58,
+          68,
+          198,
+          231
+        ]
+      },
+      {
+        "pack": "light",
+        "path": "assets-mobile/animations/player-counter-sweep/rogue/counter/recovery.webp",
+        "exists": true,
+        "bytes": 3104,
+        "sha256": "17f079bd45d1b34c8974236f45814402216fcd113905021ba482eba2d654bc17",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          58,
+          68,
+          199,
+          231
+        ]
+      }
+    ],
+    "assets/animations/player-counter-sweep/rogue/counter/stance.webp": [
+      {
+        "pack": "high",
+        "path": "assets/animations/player-counter-sweep/rogue/counter/stance.webp",
+        "exists": true,
+        "bytes": 15594,
+        "sha256": "f3123d3033a2a2633a43413a9af2aff8b4810792922d033965932c0217c5bfe0",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          51,
+          53,
+          206,
+          231
+        ]
+      },
+      {
+        "pack": "light",
+        "path": "assets-mobile/animations/player-counter-sweep/rogue/counter/stance.webp",
+        "exists": true,
+        "bytes": 3216,
+        "sha256": "36726fe23ee8606d5013c1e72e459f2ae4fcdda851428d7509beb65b20d34b74",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          51,
+          53,
+          206,
+          231
+        ]
+      }
+    ],
+    "assets/animations/player-counter-sweep/rogue/sweep/contact.webp": [
+      {
+        "pack": "high",
+        "path": "assets/animations/player-counter-sweep/rogue/sweep/contact.webp",
+        "exists": true,
+        "bytes": 14572,
+        "sha256": "cd1925884661f82898aa014ae0da7b3403e8603d883b0020bf0405dc6d5dea63",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          38,
+          87,
+          218,
+          231
+        ]
+      },
+      {
+        "pack": "light",
+        "path": "assets-mobile/animations/player-counter-sweep/rogue/sweep/contact.webp",
+        "exists": true,
+        "bytes": 3126,
+        "sha256": "c71aadb8626138fd5dc52e27c4270c78d0606e9e19105f16aa72f2f064aa8597",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          38,
+          87,
+          218,
+          231
+        ]
+      }
+    ],
+    "assets/animations/player-counter-sweep/rogue/sweep/recovery.webp": [
+      {
+        "pack": "high",
+        "path": "assets/animations/player-counter-sweep/rogue/sweep/recovery.webp",
+        "exists": true,
+        "bytes": 13048,
+        "sha256": "ea740fef6093c826647de885cd026789e08d70d5ab17cd68b29d9935e170c0d9",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          65,
+          69,
+          191,
+          231
+        ]
+      },
+      {
+        "pack": "light",
+        "path": "assets-mobile/animations/player-counter-sweep/rogue/sweep/recovery.webp",
+        "exists": true,
+        "bytes": 2854,
+        "sha256": "b4be2378f8eead955f8a373882495bc73cddac2fba5e36b693debf195afd89c1",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          66,
+          69,
+          191,
+          231
+        ]
+      }
+    ],
+    "assets/animations/player-counter-sweep/rogue/sweep/stance.webp": [
+      {
+        "pack": "high",
+        "path": "assets/animations/player-counter-sweep/rogue/sweep/stance.webp",
+        "exists": true,
+        "bytes": 14212,
+        "sha256": "aab7e16ac830bdc851f179efafea5b4e0d457f89958035070e3bef89443cba45",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          53,
+          63,
+          203,
+          231
+        ]
+      },
+      {
+        "pack": "light",
+        "path": "assets-mobile/animations/player-counter-sweep/rogue/sweep/stance.webp",
+        "exists": true,
+        "bytes": 3138,
+        "sha256": "6fab64ef7da7bab2ee2eae4c7af868fecfa207310ad789ffc2def7acd6516861",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          53,
+          63,
+          203,
+          231
+        ]
+      }
+    ],
+    "assets/animations/player-counter-sweep/starseer/counter/contact.webp": [
+      {
+        "pack": "high",
+        "path": "assets/animations/player-counter-sweep/starseer/counter/contact.webp",
+        "exists": true,
+        "bytes": 13950,
+        "sha256": "3df795a0e7614382ed39a9013f820f7f8268af578c349f219c4b36898c8c5f4e",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          54,
+          82,
+          248,
+          231
+        ]
+      },
+      {
+        "pack": "light",
+        "path": "assets-mobile/animations/player-counter-sweep/starseer/counter/contact.webp",
+        "exists": true,
+        "bytes": 3198,
+        "sha256": "a0bf12319f8d1e9297af996db604912a6a0fe3844c55553c7901c5e14ea9b0c5",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          54,
+          81,
+          248,
+          231
+        ]
+      }
+    ],
+    "assets/animations/player-counter-sweep/starseer/counter/recovery.webp": [
+      {
+        "pack": "high",
+        "path": "assets/animations/player-counter-sweep/starseer/counter/recovery.webp",
+        "exists": true,
+        "bytes": 13588,
+        "sha256": "d4c91ff34e74c381574ff0912afec4f5e941eca60a71ed2d4192f67753a14c7c",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          65,
+          74,
+          190,
+          231
+        ]
+      },
+      {
+        "pack": "light",
+        "path": "assets-mobile/animations/player-counter-sweep/starseer/counter/recovery.webp",
+        "exists": true,
+        "bytes": 3204,
+        "sha256": "61c2fdac368bb60ccf432c8e19a64709fe6c9059e6ed42e1e7ee08f8a9de777a",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          65,
+          73,
+          190,
+          231
+        ]
+      }
+    ],
+    "assets/animations/player-counter-sweep/starseer/counter/stance.webp": [
+      {
+        "pack": "high",
+        "path": "assets/animations/player-counter-sweep/starseer/counter/stance.webp",
+        "exists": true,
+        "bytes": 13438,
+        "sha256": "0b84d1f63a482a63cc88d7576d27002814107b86b0f4555e5fa5cfa9a0feffb8",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          56,
+          79,
+          202,
+          231
+        ]
+      },
+      {
+        "pack": "light",
+        "path": "assets-mobile/animations/player-counter-sweep/starseer/counter/stance.webp",
+        "exists": true,
+        "bytes": 3130,
+        "sha256": "dd4f566aa1d7e78bce1705e3bf612de7b2200d5d86e3a1e89d956cc77e603bf9",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          56,
+          79,
+          202,
+          231
+        ]
+      }
+    ],
+    "assets/animations/player-counter-sweep/starseer/sweep/contact.webp": [
+      {
+        "pack": "high",
+        "path": "assets/animations/player-counter-sweep/starseer/sweep/contact.webp",
+        "exists": true,
+        "bytes": 13874,
+        "sha256": "2de8d69fd0d00adf0e60227aa0aa76568e9d19c3f0eb5d05e30d7db468f87675",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          36,
+          99,
+          253,
+          231
+        ]
+      },
+      {
+        "pack": "light",
+        "path": "assets-mobile/animations/player-counter-sweep/starseer/sweep/contact.webp",
+        "exists": true,
+        "bytes": 2818,
+        "sha256": "9f3f03f5f53d345155c3d51e5f21bb9258e949db739157d965d141a0696fbf9f",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          36,
+          99,
+          252,
+          231
+        ]
+      }
+    ],
+    "assets/animations/player-counter-sweep/starseer/sweep/recovery.webp": [
+      {
+        "pack": "high",
+        "path": "assets/animations/player-counter-sweep/starseer/sweep/recovery.webp",
+        "exists": true,
+        "bytes": 12682,
+        "sha256": "744bb1cee7b11e85fc2782b856d41884e1aec5d9674bbf9f650dba0c6f8f76aa",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          55,
+          74,
+          193,
+          231
+        ]
+      },
+      {
+        "pack": "light",
+        "path": "assets-mobile/animations/player-counter-sweep/starseer/sweep/recovery.webp",
+        "exists": true,
+        "bytes": 2746,
+        "sha256": "50df92b7c40b7666ee1c92dd6d9a21820890fc0804365b09c686d476de759104",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          55,
+          73,
+          193,
+          231
+        ]
+      }
+    ],
+    "assets/animations/player-counter-sweep/starseer/sweep/stance.webp": [
+      {
+        "pack": "high",
+        "path": "assets/animations/player-counter-sweep/starseer/sweep/stance.webp",
+        "exists": true,
+        "bytes": 12160,
+        "sha256": "143ff2430068b5f940d0dc5353ba8bf9561e8b609fd24da9197cffc92845442c",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          33,
+          103,
+          202,
+          231
+        ]
+      },
+      {
+        "pack": "light",
+        "path": "assets-mobile/animations/player-counter-sweep/starseer/sweep/stance.webp",
+        "exists": true,
+        "bytes": 2520,
+        "sha256": "8ecdaa7f39b62c3fe1d25e4c782d2253e374ab5909bf638359062859061b32b6",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          33,
+          103,
+          202,
+          230
+        ]
+      }
+    ],
+    "assets/animations/twin-sword-outfits/rogue/HURT.webp": [
+      {
+        "pack": "high",
+        "path": "assets/animations/twin-sword-outfits/rogue/HURT.webp",
+        "exists": true,
+        "bytes": 37044,
+        "sha256": "001a3759f02225870b47c06d10c89319d2d09efbf269d87359cd70a2d9acbc82",
+        "raster": [
+          512,
+          512
+        ],
+        "alphaBox128": [
+          93,
+          198,
+          399,
+          480
+        ]
+      },
+      {
+        "pack": "light",
+        "path": "assets-mobile/animations/twin-sword-outfits/rogue/HURT.webp",
+        "exists": true,
+        "bytes": 2744,
+        "sha256": "e5493fd1283ed668d6a0ad319a775b2c57926fc500b85a1a72f936131542a4bc",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          47,
+          99,
+          199,
+          240
+        ]
+      }
+    ],
+    "assets/animations/unarmed-magic/starseer/HURT.webp": [
+      {
+        "pack": "high",
+        "path": "assets/animations/unarmed-magic/starseer/HURT.webp",
+        "exists": true,
+        "bytes": 43888,
+        "sha256": "6014d268d24694129335242764f28a91e12ed04668b411e8195e1cf33b2c90f0",
+        "raster": [
+          512,
+          512
+        ],
+        "alphaBox128": [
+          100,
+          96,
+          379,
+          480
+        ]
+      },
+      {
+        "pack": "light",
+        "path": "assets-mobile/animations/unarmed-magic/starseer/HURT.webp",
+        "exists": true,
+        "bytes": 2772,
+        "sha256": "f0c00f4e3d66fc5ce092c3ff6ec30234edca5e5c9c15c0b9214ff31ea7f4c417",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          50,
+          48,
+          189,
+          240
+        ]
+      }
+    ],
+    "assets/animations/unarmed/herald/HURT.webp": [
+      {
+        "pack": "high",
+        "path": "assets/animations/unarmed/herald/HURT.webp",
+        "exists": true,
+        "bytes": 48128,
+        "sha256": "97112b4bd3256b0cddbf1a551c6fd267be0a212cb555c97498d39834d30abe98",
+        "raster": [
+          512,
+          512
+        ],
+        "alphaBox128": [
+          66,
+          125,
+          407,
+          479
+        ]
+      },
+      {
+        "pack": "light",
+        "path": "assets-mobile/animations/unarmed/herald/HURT.webp",
+        "exists": true,
+        "bytes": 3002,
+        "sha256": "085ad6de67544966b1ee6f871f81d158fb49949d615c41aa556686e794a303f9",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          33,
+          63,
+          203,
+          240
+        ]
+      }
+    ],
+    "assets/defeated-poses/herald.webp": [
+      {
+        "pack": "high",
+        "path": "assets/defeated-poses/herald.webp",
+        "exists": true,
+        "bytes": 15022,
+        "sha256": "264d4b37c374ba83c6c4446a6642875b5f6ad3a0b9d29c8ad399f3c9eab57d04",
+        "raster": [
+          384,
+          384
+        ],
+        "alphaBox128": [
+          23,
+          267,
+          360,
+          365
+        ]
+      },
+      {
+        "pack": "light",
+        "path": "assets-mobile/defeated-poses/herald.webp",
+        "exists": true,
+        "bytes": 1740,
+        "sha256": "17a3bddcfee8393d18fc37fd526e04bdd22d7efd0a99f600c18373219bd12fa4",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          15,
+          178,
+          240,
+          243
+        ]
+      }
+    ],
+    "assets/defeated-poses/reaver.webp": [
+      {
+        "pack": "high",
+        "path": "assets/defeated-poses/reaver.webp",
+        "exists": true,
+        "bytes": 13902,
+        "sha256": "69cb06d52035bf0778d41c4088852fc5438fe58693ea654501c712cc2ac96d94",
+        "raster": [
+          384,
+          384
+        ],
+        "alphaBox128": [
+          18,
+          249,
+          366,
+          365
+        ]
+      },
+      {
+        "pack": "light",
+        "path": "assets-mobile/defeated-poses/reaver.webp",
+        "exists": true,
+        "bytes": 2180,
+        "sha256": "40d09f9b512892f10a75e3d8041d605a96377ea17078732c2291d9276a28a971",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          12,
+          166,
+          244,
+          243
+        ]
+      }
+    ],
+    "assets/defeated-poses/rogue.webp": [
+      {
+        "pack": "high",
+        "path": "assets/defeated-poses/rogue.webp",
+        "exists": true,
+        "bytes": 10364,
+        "sha256": "d2334ffacdfdd0b3febee741652a005b27e56a2f66214724103db979a4c55e00",
+        "raster": [
+          384,
+          384
+        ],
+        "alphaBox128": [
+          18,
+          264,
+          366,
+          365
+        ]
+      },
+      {
+        "pack": "light",
+        "path": "assets-mobile/defeated-poses/rogue.webp",
+        "exists": true,
+        "bytes": 1744,
+        "sha256": "494c7aaa7e01277066ab51787ff89e54116cda4747186432c9bb2de329bca034",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          12,
+          176,
+          244,
+          243
+        ]
+      }
+    ],
+    "assets/defeated-poses/starseer.webp": [
+      {
+        "pack": "high",
+        "path": "assets/defeated-poses/starseer.webp",
+        "exists": true,
+        "bytes": 12158,
+        "sha256": "a952b75751386ba937e250a98c159bd9bb5b4e02841dfe1d12df6f431b4ab56e",
+        "raster": [
+          384,
+          384
+        ],
+        "alphaBox128": [
+          18,
+          253,
+          366,
+          365
+        ]
+      },
+      {
+        "pack": "light",
+        "path": "assets-mobile/defeated-poses/starseer.webp",
+        "exists": true,
+        "bytes": 2178,
+        "sha256": "79d2da76acb0ed506579daa0887142e48f593f46925b47e19054ae81f937d508",
+        "raster": [
+          256,
+          256
+        ],
+        "alphaBox128": [
+          12,
+          169,
+          243,
+          243
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,573 @@
+{
+  "sourceCommit": "49eca254d795d06266aa23941cb2b31fe77b27bf",
+  "artTag": "ashenspire-hd-assets-v30",
+  "kind": "before-only static diagnostic reconstruction; not gameplay capture",
+  "inputAssets": {
+    "assets-display/alternative/card-reaver-ready.webp": {
+      "resolvedPack": "common/assets-display/alternative/card-reaver-ready.webp",
+      "rasterSize": [
+        256,
+        256
+      ],
+      "alpha128Bounds": [
+        71,
+        102,
+        189,
+        231
+      ],
+      "sha256": "2bacbe2b5f1ee3fc418a0f6754fefd6d50e8db861b3e1fb764c103c18de88e17"
+    },
+    "assets-display/alternative/stances/reaver/offensive.webp": {
+      "resolvedPack": "common/assets-display/alternative/stances/reaver/offensive.webp",
+      "rasterSize": [
+        256,
+        256
+      ],
+      "alpha128Bounds": [
+        57,
+        34,
+        199,
+        232
+      ],
+      "sha256": "7ab6090bdab58ffed228cad90f466189a147ca44d810d37c2b80b7873f9de832"
+    },
+    "assets-display/alternative/reaver-greatsword-pilot-defend.webp": {
+      "resolvedPack": "common/assets-display/alternative/reaver-greatsword-pilot-defend.webp",
+      "rasterSize": [
+        768,
+        512
+      ],
+      "alpha128Bounds": [
+        161,
+        117,
+        560,
+        463
+      ],
+      "sha256": "69ff5522214d93cf6f91390e8ab37df20ceb88533df3b7918be47450c99aff43"
+    },
+    "assets-display/alternative/stances/reaver/casting.webp": {
+      "resolvedPack": "common/assets-display/alternative/stances/reaver/casting.webp",
+      "rasterSize": [
+        256,
+        256
+      ],
+      "alpha128Bounds": [
+        37,
+        23,
+        219,
+        232
+      ],
+      "sha256": "9a6b8295963ff65e06f525cd81d83cb306d92da9962f07d841caa3c7c72d4b41"
+    },
+    "assets-display/alternative/reaver-greatsword-pilot-counter.webp": {
+      "resolvedPack": "common/assets-display/alternative/reaver-greatsword-pilot-counter.webp",
+      "rasterSize": [
+        768,
+        512
+      ],
+      "alpha128Bounds": [
+        183,
+        113,
+        617,
+        464
+      ],
+      "sha256": "667464ea845f0af44e2efad3c58c995661f810103c1a07ef39c65b2fdeca670e"
+    },
+    "assets-display/alternative/reaver-greatsword-pilot-sweep.webp": {
+      "resolvedPack": "common/assets-display/alternative/reaver-greatsword-pilot-sweep.webp",
+      "rasterSize": [
+        1024,
+        1024
+      ],
+      "alpha128Bounds": [
+        71,
+        404,
+        678,
+        736
+      ],
+      "sha256": "81d348d0382b9a99c1f72d5d23dab4975bbe648b3db979d8f725fc250d02db7c"
+    },
+    "assets-display/alternative/reaver-greatsword-pilot-smash.webp": {
+      "resolvedPack": "common/assets-display/alternative/reaver-greatsword-pilot-smash.webp",
+      "rasterSize": [
+        512,
+        512
+      ],
+      "alpha128Bounds": [
+        48,
+        95,
+        464,
+        464
+      ],
+      "sha256": "9abfefe7258a3bfa2238e7c0516396c61baa5ca009a649b8408183b91fcdf6e2"
+    },
+    "assets/animations/greatsword-outfits/reaver/HURT.webp": {
+      "resolvedPack": "high/assets/animations/greatsword-outfits/reaver/HURT.webp",
+      "rasterSize": [
+        512,
+        512
+      ],
+      "alpha128Bounds": [
+        71,
+        130,
+        387,
+        476
+      ],
+      "sha256": "a684352f6052c4547590ab85d461e0d4a2a82126924be66dbf738d0a44154a41"
+    },
+    "assets-display/alternative/card-rogue-ready.webp": {
+      "resolvedPack": "common/assets-display/alternative/card-rogue-ready.webp",
+      "rasterSize": [
+        256,
+        256
+      ],
+      "alpha128Bounds": [
+        55,
+        70,
+        187,
+        231
+      ],
+      "sha256": "689dd8d9f6f4b938a55d99ecfca450bdb73bf43df76cf8120a89ac41c8ed3b00"
+    },
+    "assets-display/alternative/stances/rogue/offensive.webp": {
+      "resolvedPack": "common/assets-display/alternative/stances/rogue/offensive.webp",
+      "rasterSize": [
+        256,
+        256
+      ],
+      "alpha128Bounds": [
+        48,
+        72,
+        209,
+        232
+      ],
+      "sha256": "3d4e79805e4afc3c23452fda14ef5e31c16d12fe4ead8e14c27e41cce6586657"
+    },
+    "assets-display/alternative/stances/rogue/defensive.webp": {
+      "resolvedPack": "common/assets-display/alternative/stances/rogue/defensive.webp",
+      "rasterSize": [
+        256,
+        256
+      ],
+      "alpha128Bounds": [
+        31,
+        22,
+        226,
+        232
+      ],
+      "sha256": "301fab06270f119fe2fea2227e3ad9ebfaa7ab672b327413446281bb19d6644a"
+    },
+    "assets-display/alternative/stances/rogue/casting.webp": {
+      "resolvedPack": "common/assets-display/alternative/stances/rogue/casting.webp",
+      "rasterSize": [
+        256,
+        256
+      ],
+      "alpha128Bounds": [
+        71,
+        44,
+        185,
+        232
+      ],
+      "sha256": "6cce8547c352aa76d135c88bc2663d197a340d4e4f25f166227e620ffac02ad2"
+    },
+    "assets/animations/player-counter-sweep/rogue/counter/stance.webp": {
+      "resolvedPack": "high/assets/animations/player-counter-sweep/rogue/counter/stance.webp",
+      "rasterSize": [
+        256,
+        256
+      ],
+      "alpha128Bounds": [
+        51,
+        53,
+        206,
+        231
+      ],
+      "sha256": "f3123d3033a2a2633a43413a9af2aff8b4810792922d033965932c0217c5bfe0"
+    },
+    "assets/animations/player-counter-sweep/rogue/sweep/stance.webp": {
+      "resolvedPack": "high/assets/animations/player-counter-sweep/rogue/sweep/stance.webp",
+      "rasterSize": [
+        256,
+        256
+      ],
+      "alpha128Bounds": [
+        53,
+        63,
+        203,
+        231
+      ],
+      "sha256": "aab7e16ac830bdc851f179efafea5b4e0d457f89958035070e3bef89443cba45"
+    },
+    "assets-display/alternative/class-smash-rogue-held.webp": {
+      "resolvedPack": "common/assets-display/alternative/class-smash-rogue-held.webp",
+      "rasterSize": [
+        276,
+        420
+      ],
+      "alpha128Bounds": [
+        10,
+        138,
+        263,
+        408
+      ],
+      "sha256": "d3588ad741536f17f5a7cd9522245cf15e0e40f907a1c9bb900fa72fbb0b9ef1"
+    },
+    "assets/animations/twin-sword-outfits/rogue/HURT.webp": {
+      "resolvedPack": "high/assets/animations/twin-sword-outfits/rogue/HURT.webp",
+      "rasterSize": [
+        512,
+        512
+      ],
+      "alpha128Bounds": [
+        93,
+        198,
+        399,
+        480
+      ],
+      "sha256": "001a3759f02225870b47c06d10c89319d2d09efbf269d87359cd70a2d9acbc82"
+    },
+    "assets-display/alternative/card-starseer-ready.webp": {
+      "resolvedPack": "common/assets-display/alternative/card-starseer-ready.webp",
+      "rasterSize": [
+        256,
+        256
+      ],
+      "alpha128Bounds": [
+        73,
+        75,
+        171,
+        231
+      ],
+      "sha256": "33f34a784254ca1494d793c3d9c806f63f96620ae002359d82ac1246c3c7972c"
+    },
+    "assets-display/alternative/stances/starseer/offensive.webp": {
+      "resolvedPack": "common/assets-display/alternative/stances/starseer/offensive.webp",
+      "rasterSize": [
+        256,
+        256
+      ],
+      "alpha128Bounds": [
+        31,
+        54,
+        226,
+        231
+      ],
+      "sha256": "ed77fe06fe5c8624410005f9cd2aae73afa9a26be21794383a2bc8580ddfdaf0"
+    },
+    "assets-display/alternative/stances/starseer/defensive.webp": {
+      "resolvedPack": "common/assets-display/alternative/stances/starseer/defensive.webp",
+      "rasterSize": [
+        256,
+        256
+      ],
+      "alpha128Bounds": [
+        48,
+        31,
+        208,
+        232
+      ],
+      "sha256": "cc022196050cf017c7663ace9dd5cdd13f383c0bdca616320ab575db801898a8"
+    },
+    "assets-display/alternative/stances/starseer/casting.webp": {
+      "resolvedPack": "common/assets-display/alternative/stances/starseer/casting.webp",
+      "rasterSize": [
+        256,
+        256
+      ],
+      "alpha128Bounds": [
+        54,
+        23,
+        202,
+        232
+      ],
+      "sha256": "088cf317a421d51936625df8277cc21ffbe58f39b863d9dd9d02c9ef087c10ed"
+    },
+    "assets/animations/player-counter-sweep/starseer/counter/stance.webp": {
+      "resolvedPack": "high/assets/animations/player-counter-sweep/starseer/counter/stance.webp",
+      "rasterSize": [
+        256,
+        256
+      ],
+      "alpha128Bounds": [
+        56,
+        79,
+        202,
+        231
+      ],
+      "sha256": "0b84d1f63a482a63cc88d7576d27002814107b86b0f4555e5fa5cfa9a0feffb8"
+    },
+    "assets/animations/player-counter-sweep/starseer/sweep/stance.webp": {
+      "resolvedPack": "high/assets/animations/player-counter-sweep/starseer/sweep/stance.webp",
+      "rasterSize": [
+        256,
+        256
+      ],
+      "alpha128Bounds": [
+        33,
+        103,
+        202,
+        231
+      ],
+      "sha256": "143ff2430068b5f940d0dc5353ba8bf9561e8b609fd24da9197cffc92845442c"
+    },
+    "assets-display/alternative/class-smash-starseer-held.webp": {
+      "resolvedPack": "common/assets-display/alternative/class-smash-starseer-held.webp",
+      "rasterSize": [
+        232,
+        416
+      ],
+      "alpha128Bounds": [
+        14,
+        103,
+        213,
+        361
+      ],
+      "sha256": "578d4501ed338945e36459cb463f57d2a1f9dfb3548921284d4224859895ac05"
+    },
+    "assets/animations/unarmed-magic/starseer/HURT.webp": {
+      "resolvedPack": "high/assets/animations/unarmed-magic/starseer/HURT.webp",
+      "rasterSize": [
+        512,
+        512
+      ],
+      "alpha128Bounds": [
+        100,
+        96,
+        379,
+        480
+      ],
+      "sha256": "6014d268d24694129335242764f28a91e12ed04668b411e8195e1cf33b2c90f0"
+    },
+    "assets-display/alternative/card-herald-ready.webp": {
+      "resolvedPack": "common/assets-display/alternative/card-herald-ready.webp",
+      "rasterSize": [
+        256,
+        256
+      ],
+      "alpha128Bounds": [
+        53,
+        81,
+        180,
+        231
+      ],
+      "sha256": "bff8a93491651ce5f103871170e7e85245eaae6665e01eed6f4024af132e4e29"
+    },
+    "assets-display/alternative/stances/herald/offensive.webp": {
+      "resolvedPack": "common/assets-display/alternative/stances/herald/offensive.webp",
+      "rasterSize": [
+        256,
+        256
+      ],
+      "alpha128Bounds": [
+        41,
+        24,
+        216,
+        232
+      ],
+      "sha256": "8bc808afae8a43deb4bbec908c02ad37bc9ddf6462755332399df81d88564a0f"
+    },
+    "assets-display/alternative/stances/herald/defensive.webp": {
+      "resolvedPack": "common/assets-display/alternative/stances/herald/defensive.webp",
+      "rasterSize": [
+        256,
+        256
+      ],
+      "alpha128Bounds": [
+        51,
+        29,
+        207,
+        232
+      ],
+      "sha256": "90550d3667cbfbf786054230e39449c030aa68b1f4c5f29930837de6c7d20737"
+    },
+    "assets-display/alternative/stances/herald/casting.webp": {
+      "resolvedPack": "common/assets-display/alternative/stances/herald/casting.webp",
+      "rasterSize": [
+        256,
+        256
+      ],
+      "alpha128Bounds": [
+        49,
+        22,
+        208,
+        232
+      ],
+      "sha256": "9e07fb484c03998ce69ebabb3bb5f60ca47c9f6ea4d4224e11359a0e0491682a"
+    },
+    "assets/animations/player-counter-sweep/herald/counter/stance.webp": {
+      "resolvedPack": "high/assets/animations/player-counter-sweep/herald/counter/stance.webp",
+      "rasterSize": [
+        256,
+        256
+      ],
+      "alpha128Bounds": [
+        31,
+        75,
+        185,
+        231
+      ],
+      "sha256": "17bfb14c6a366168a91024e0c88cab8b1cb06d498bc8335ed441ef988810a4f1"
+    },
+    "assets/animations/player-counter-sweep/herald/sweep/stance.webp": {
+      "resolvedPack": "high/assets/animations/player-counter-sweep/herald/sweep/stance.webp",
+      "rasterSize": [
+        256,
+        256
+      ],
+      "alpha128Bounds": [
+        86,
+        83,
+        170,
+        231
+      ],
+      "sha256": "fe8cfde08acb11a35814401785e51aba6ea67d87c4201ad9b8a573808c0a6d06"
+    },
+    "assets-display/alternative/class-smash-herald-held.webp": {
+      "resolvedPack": "common/assets-display/alternative/class-smash-herald-held.webp",
+      "rasterSize": [
+        272,
+        324
+      ],
+      "alpha128Bounds": [
+        10,
+        10,
+        262,
+        315
+      ],
+      "sha256": "5d788369c03c56489d8a1d1b0e3163b6f88ee8a2fb44298a9728bdf837894f90"
+    },
+    "assets/animations/unarmed/herald/HURT.webp": {
+      "resolvedPack": "high/assets/animations/unarmed/herald/HURT.webp",
+      "rasterSize": [
+        512,
+        512
+      ],
+      "alpha128Bounds": [
+        66,
+        125,
+        407,
+        479
+      ],
+      "sha256": "97112b4bd3256b0cddbf1a551c6fd267be0a212cb555c97498d39834d30abe98"
+    },
+    "assets-display/alternative/reaver-greatsword-pilot-sweep-windup.webp": {
+      "resolvedPack": "common/assets-display/alternative/reaver-greatsword-pilot-sweep-windup.webp",
+      "rasterSize": [
+        1024,
+        1024
+      ],
+      "alpha128Bounds": [
+        206,
+        393,
+        952,
+        732
+      ],
+      "sha256": "e42ea1976a0a162c78098cb7a13010cc1b855d5baf6f4fe0fe90e42cc9991f4d"
+    },
+    "assets-display/alternative/reaver-greatsword-pilot-sweep-contact.webp": {
+      "resolvedPack": "common/assets-display/alternative/reaver-greatsword-pilot-sweep-contact.webp",
+      "rasterSize": [
+        1024,
+        1024
+      ],
+      "alpha128Bounds": [
+        185,
+        404,
+        856,
+        732
+      ],
+      "sha256": "2f57d14e2f17a7366977829957514d0a97f64adf91cb24c26ede51a25e56bbb2"
+    },
+    "assets-display/alternative/reaver-greatsword-pilot-sweep-finish.webp": {
+      "resolvedPack": "common/assets-display/alternative/reaver-greatsword-pilot-sweep-finish.webp",
+      "rasterSize": [
+        1024,
+        1024
+      ],
+      "alpha128Bounds": [
+        234,
+        444,
+        832,
+        733
+      ],
+      "sha256": "96a520910a6962ade28c268da0cc34fed5c747b309b6a60580a32ebdd58c429b"
+    },
+    "assets/animations/unarmed/starseer/HURT.webp": {
+      "resolvedPack": "high/assets/animations/unarmed/starseer/HURT.webp",
+      "rasterSize": [
+        512,
+        512
+      ],
+      "alpha128Bounds": [
+        58,
+        118,
+        403,
+        478
+      ],
+      "sha256": "10ae83c6c15d0cc321407eebf66b77a94864c4f0625e56cc942c3f92c0357190"
+    },
+    "assets/animations/greatsword-outfits/starseer/HURT.webp": {
+      "resolvedPack": "high/assets/animations/greatsword-outfits/starseer/HURT.webp",
+      "rasterSize": [
+        512,
+        512
+      ],
+      "alpha128Bounds": [
+        153,
+        150,
+        448,
+        455
+      ],
+      "sha256": "9068323c2cd0bfdadbbb78f831298cf2852a7fe03c43e02e41ca89c0cb53d800"
+    },
+    "assets/painted-outfits/starseer/hit.webp": {
+      "resolvedPack": "high/assets/painted-outfits/starseer/hit.webp",
+      "rasterSize": [
+        640,
+        640
+      ],
+      "alpha128Bounds": [
+        225,
+        349,
+        434,
+        601
+      ],
+      "sha256": "65ebc80fe584a60b286371ed02d18af2c0677c6a0d74ec2ed27c888ea5111ac9"
+    }
+  },
+  "outputImages": {
+    "herald-selected-before.png": {
+      "sha256": "ede91a52262283f475fb91592a4aad464ea8727227a4339ba38335f674b097c3",
+      "bytes": 365905
+    },
+    "reaver-selected-before.png": {
+      "sha256": "c4709e9717fe09178f2ab6ff81b47aa94fc876daca3a3e3786a65cc3b7629c68",
+      "bytes": 311270
+    },
+    "reaver-sweep-authored-reference.png": {
+      "sha256": "8b7fea797cd4a9c564ed394d2cef0a76af0b8ae16bc122275aa1e12587d21133",
+      "bytes": 479311
+    },
+    "reaver-sweep-current-before.png": {
+      "sha256": "8afac578cbf1df094f2f74b7d2b1a227ba83a6ae435b5373caa60d322f45d9db",
+      "bytes": 445696
+    },
+    "rogue-selected-before.png": {
+      "sha256": "e92c697b902810c959cd69a8fc75a401e0656c8a030503ddf2494a8ecdce4ccc",
+      "bytes": 397212
+    },
+    "starseer-existing-hurt-candidates.png": {
+      "sha256": "dfaed0f36a8fb810fc360aa9f1379de7570155bc2ad82dc717d5743e0dce3fe3",
+      "bytes": 259577
+    },
+    "starseer-hit-reference.png": {
+      "sha256": "2d15d04fdf2c8b820a3f0b02fadcb49b07ccc7a8a0f26db0eaef5060f9e6f770",
+      "bytes": 166407
+    },
+    "starseer-selected-before.png": {
+      "sha256": "a64925da7c9a8e4dd3f9288406f4c090b1545d3127839a66be7988e703f9115d",
+      "bytes": 399562
+    }
+  }
+}
