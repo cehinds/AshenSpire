@@ -13,6 +13,7 @@ import { pinLegacyRests } from './helpers/legacy-core-rests.mjs';
 import { withGameProfileService } from '../src/model/gameProfileRun.js';
 import { applyLevelUp, rederivePools } from '../src/model/levelup.js';
 import { legacyGearRegistries } from './helpers/legacy-gear.mjs';
+import { GearSelectorMatches } from '../src/model/gearEffects.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 const registries = core2Registries();
 function fresh(classId = 'reaver', reg = registries) {
@@ -89,18 +90,19 @@ test('Star Spark pays its printed one MP and applies no Vulnerable', () => {
 
 test('current robes, Focus and Prepared keep spell quotes, payment and restored snapshots in agreement', () => {
   // Independent worked prices. Current rules (owner, 2026-11-26): spells add no MP and no SP; the spell rule's Prepared cut takes
-  // SP to max(SP - 1, 1) without raising a price at or under 1, and takes 1 MP. Graduate pricing in Prepared also cuts positive
-  // printed MP by 1. Robes and Focus each cut another MP only while Prepared. Final MP floors at 0.
+  // SP to max(SP - 1, 1) without raising a price at or under 1, and takes no MP. Graduate pricing in Prepared cuts positive
+  // printed MP by 1. The Starseer robe's Arcane Initiate cuts one more MP off an Arcane or Shared spell while Prepared
+  // (owner, 2026-11-27: staffs and robes have no type-level cut). Final MP floors at 0.
   // 'saved' is a fight saved under the 2026-11-15 rules: +1 MP on every spell, +1 SP on non-exempt spells, Prepared SP floor 0, no Prepared MP cut.
   const cases = [
     ['core.cometLance', true], ['core.meteor', true], ['core.cantrip', true],
     ['core.meteor', false],
     ['core.cometLance', 'saved'], ['core.meteor', 'saved'], ['core.cantrip', 'saved'],
   ];
-  for (const [cardId, spellCosts] of cases) for (const [hand, stance, focus] of [
-    ['greatsword', null, 0], ['ashStaff', null, 0], ['boneSceptre', null, 0],
-    ['greatsword', 'casting', 0], ['ashStaff', 'casting', 1],
-    ['ashStaff', 'prepared', 1], ['boneSceptre', 'casting', 1],
+  for (const [cardId, spellCosts] of cases) for (const [hand, stance] of [
+    ['greatsword', null], ['ashStaff', null], ['boneSceptre', null],
+    ['greatsword', 'casting'], ['ashStaff', 'casting'],
+    ['ashStaff', 'prepared'], ['boneSceptre', 'casting'],
   ]) {
     // Prices come from this run's authored profile; discounts remain independently
     // worked expectations. New authoring changes Comet to 0 SP and Meteor to 2 SP/2 MP.
@@ -113,8 +115,14 @@ test('current robes, Focus and Prepared keep spell quotes, payment and restored 
     const staminaFloor = saved ? 0 : 1;
     const stamina = spellCosts && prepared && baseStamina > staminaFloor ? Math.max(staminaFloor, baseStamina - 1) : baseStamina;
     const graduateMana = Math.max(0, authored.manaCost - (prepared ? 1 : 0));
-    const spellMana = !spellCosts ? 0 : saved ? 1 : (prepared ? -1 : 0);
-    const mana = Math.max(0, graduateMana + spellMana - (prepared ? 1 + focus : 0));
+    const spellMana = saved
+      ? 1
+      : 0;
+    const arcane = GearSelectorMatches('arcaneSpell', null, registries.cards.get(cardId));
+    const initiate = prepared && arcane
+      ? 1
+      : 0;
+    const mana = Math.max(0, graduateMana + spellMana - initiate);
     const expected = [stamina, mana];
     const run = fresh('starseer');
     // Keep the highest quoted cost payable independently of starting gear points.
