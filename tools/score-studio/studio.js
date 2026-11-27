@@ -1948,7 +1948,7 @@ function cardMenuActions() {
   };
   return [
     { label: 'Duplicate', run: () => document.getElementById('btn-duplicate-card').click() },
-    { label: 'Save as template…', hint: 'Keep this card's mechanics to start new cards from', run: () => cardTemplatesUi?.openSaveAsTemplate(def.id) },
+    { label: 'Save as template…', hint: "Keep this card's mechanics to start new cards from", run: () => cardTemplatesUi?.openSaveAsTemplate(def.id) },
     { label: 'Delete', enabled: added, hint: added ? '' : 'Only cards you added can be deleted', run: () => document.getElementById('btn-delete-card').click() },
     { label: 'Reset to default', enabled: inGame && !!def._edited && !def._custom, hint: inGame ? (def._edited ? '' : 'No edits to reset') : 'Not a game card', run: () => document.getElementById('btn-reset-card').click() },
     { separator: true },
