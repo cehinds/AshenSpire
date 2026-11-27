@@ -1,78 +1,24 @@
 // Turns a before/after content file into plain change lines and a commit subject.
+import { ParseCsv } from './csvTable.mjs';
+import { CHANGE_KIND, DisplayNameOf, WalkChanges } from './contentWalk.mjs';
+
 const SUBJECT_LIMIT = 72;
 const ARROW = '→';
-const ENTRY_KEYS = [
-    'id',
-    'card',
-    'ref',
-    'slot',
-];
-const LABEL_KEYS = [
-    'op',
-    'id',
-    'card',
-    'slot',
-    'status',
-    'tag',
-];
-const QUIET_SEGMENTS = new Set([
-    'effects',
-    'stats',
-    'passives',
-    'shared',
-]);
-const CSV_EXTENSION = '.csv';
-const CSV_SEPARATOR = ',';
-const COMMENT_PREFIX = '#';
 const ELLIPSIS = '...';
-const NUMERIC_TEXT = /^-?\d+(\.\d+)?$/;
+const CSV_EXTENSION = '.csv';
 const FILE_EXTENSION = /\.(json|csv)$/;
+const NUMERIC_TEXT = /^-?\d+(\.\d+)?$/;
+const PATH_SEPARATOR = '/';
+const LIST_JOINER = ', ';
+const PART_JOINER = '; ';
+const REORDER_WORD = 'reorder';
 
-function isPlainObject(value)
+function fileLabel(path)
 {
-    return value !== null && typeof value === 'object' && !Array.isArray(value);
-}
-
-function entryKeyOf(value)
-{
-    if (!isPlainObject(value))
-    {
-        return null;
-    }
-    const key = ENTRY_KEYS.find((candidate) => typeof value[candidate] === 'string');
-    return key
-        ? `${key}:${value[key]}`
-        : null;
-}
-
-function displayNameOf(value, fallback)
-{
-    if (isPlainObject(value) && typeof value.name === 'string')
-    {
-        return value.name;
-    }
-    if (isPlainObject(value))
-    {
-        const key = ENTRY_KEYS.find((candidate) => typeof value[candidate] === 'string');
-        if (key)
-        {
-            return value[key];
-        }
-    }
-    return fallback;
-}
-
-function segmentLabel(value, index)
-{
-    if (isPlainObject(value))
-    {
-        const key = LABEL_KEYS.find((candidate) => typeof value[candidate] === 'string');
-        if (key)
-        {
-            return value[key];
-        }
-    }
-    return `#${index + 1}`;
+    return path
+        .split(PATH_SEPARATOR)
+        .pop()
+        .replace(FILE_EXTENSION, '');
 }
 
 function formatValue(value)
@@ -96,135 +42,32 @@ function asNumber(value)
         : null;
 }
 
-function sameValue(left, right)
+function parseContent(path, text)
 {
-    return JSON.stringify(left) === JSON.stringify(right);
-}
-
-function fieldLabel(segments)
-{
-    const shown = segments.filter((segment) => !QUIET_SEGMENTS.has(segment));
-    return shown.length
-        ? shown.join(' ')
-        : segments.join(' ');
-}
-
-function isEntryList(list)
-{
-    const keys = list.map(entryKeyOf);
-    const allKeyed = list.length > 0 && keys.every((key) => key !== null);
-    return allKeyed && new Set(keys).size === keys.length;
-}
-
-function isPrimitiveList(list)
-{
-    return list.every((item) => !isPlainObject(item) && !Array.isArray(item));
-}
-
-/** One change: { entity, field, before, after, kind } with kind 'set' | 'add' | 'remove' | 'list'. */
-function walk(before, after, entity, segments, changes)
-{
-    if (sameValue(before, after))
+    if (text === null || text === undefined)
     {
-        return;
+        return undefined;
     }
-    if (Array.isArray(before) && Array.isArray(after))
-    {
-        walkList(before, after, entity, segments, changes);
-        return;
-    }
-    if (isPlainObject(before) && isPlainObject(after))
-    {
-        const keys = new Set([
-            ...Object.keys(before),
-            ...Object.keys(after),
-        ]);
-        for (const key of keys)
+    return path.endsWith(CSV_EXTENSION)
+        ? ParseCsv(text)
+        : JSON.parse(text);
+}
+
+function wholeFileChange(
+    kind,
+    path,
+    values,
+)
+{
+    return [
         {
-            walk(before[key], after[key], entity, [...segments, key], changes);
-        }
-        return;
-    }
-    changes.push({
-        entity,
-        field: fieldLabel(segments),
-        before,
-        after,
-        kind: 'set',
-    });
-}
-
-function walkList(before, after, entity, segments, changes)
-{
-    if (isEntryList(before) && isEntryList(after))
-    {
-        walkEntryList(before, after, entity, segments, changes);
-        return;
-    }
-    if (isPrimitiveList(before) && isPrimitiveList(after))
-    {
-        changes.push({
-            entity,
-            field: fieldLabel(segments),
-            before,
-            after,
-            kind: 'list',
-        });
-        return;
-    }
-    const longest = Math.max(before.length, after.length);
-    for (let index = 0; index < longest; index++)
-    {
-        const label = segmentLabel(after[index] ?? before[index], index);
-        walk(before[index], after[index], entity, [...segments, label], changes);
-    }
-}
-
-function walkEntryList(before, after, entity, segments, changes)
-{
-    const beforeByKey = new Map(before.map((item) => [entryKeyOf(item), item]));
-    const afterByKey = new Map(after.map((item) => [entryKeyOf(item), item]));
-    const isTopLevel = segments.length === 0;
-    for (const [key, item] of afterByKey)
-    {
-        const name = displayNameOf(item, key);
-        const owner = isTopLevel
-            ? name
-            : entity;
-        const nested = isTopLevel
-            ? []
-            : [...segments, name];
-        if (!beforeByKey.has(key))
-        {
-            changes.push({
-                entity: owner,
-                field: fieldLabel(nested),
-                before: undefined,
-                after: item,
-                kind: 'add',
-            });
-            continue;
-        }
-        walk(beforeByKey.get(key), item, owner, nested, changes);
-    }
-    for (const [key, item] of beforeByKey)
-    {
-        if (afterByKey.has(key))
-        {
-            continue;
-        }
-        changes.push({
-            entity: isTopLevel
-                ? displayNameOf(item, key)
-                : entity,
-            field: fieldLabel(isTopLevel
-                ? []
-                : [...segments, displayNameOf(item, key)]),
-            before: item,
-            after: undefined,
-            kind: 'remove',
-        });
-    }
+            entity: fileLabel(path),
+            field: '',
+            before: values.before,
+            after: values.after,
+            kind,
+        },
+    ];
 }
 
 function listPhrase(change)
@@ -234,45 +77,45 @@ function listPhrase(change)
     const parts = [];
     if (added.length)
     {
-        parts.push(`add ${added.map(formatValue).join(', ')}`);
+        parts.push(`add ${added.map(formatValue).join(LIST_JOINER)}`);
     }
     if (removed.length)
     {
-        parts.push(`remove ${removed.map(formatValue).join(', ')}`);
+        parts.push(`remove ${removed.map(formatValue).join(LIST_JOINER)}`);
     }
     if (!parts.length)
     {
-        parts.push('reorder');
+        parts.push(REORDER_WORD);
     }
-    return `${change.entity} ${change.field}: ${parts.join('; ')}`;
+    return `${change.entity} ${change.field}: ${parts.join(PART_JOINER)}`;
 }
 
-/** One readable line for one change, such as "Raise Husk Brute poiseMax 5→6". */
-export function DescribeChange(change)
+function numberPhrase(
+    where,
+    before,
+    after,
+)
 {
-    const where = change.field
-        ? `${change.entity} ${change.field}`
-        : change.entity;
-    if (change.kind === 'add')
-    {
-        return `Add ${where}`;
-    }
-    if (change.kind === 'remove')
-    {
-        return `Remove ${where}`;
-    }
-    if (change.kind === 'list')
-    {
-        return listPhrase(change);
-    }
+    const verb = after > before
+        ? 'Raise'
+        : 'Lower';
+    return `${verb} ${where} ${before}${ARROW}${after}`;
+}
+
+function setPhrase(where, change)
+{
     const beforeNumber = asNumber(change.before);
     const afterNumber = asNumber(change.after);
-    if (beforeNumber !== null && afterNumber !== null && beforeNumber !== afterNumber)
+    const numbersDiffer = beforeNumber !== null
+        && afterNumber !== null
+        && beforeNumber !== afterNumber;
+    if (numbersDiffer)
     {
-        const verb = afterNumber > beforeNumber
-            ? 'Raise'
-            : 'Lower';
-        return `${verb} ${where} ${beforeNumber}${ARROW}${afterNumber}`;
+        return numberPhrase(
+            where,
+            beforeNumber,
+            afterNumber,
+        );
     }
     if (change.before === undefined)
     {
@@ -285,147 +128,109 @@ export function DescribeChange(change)
     return `Change ${where} ${formatValue(change.before)}${ARROW}${formatValue(change.after)}`;
 }
 
-function parseCsv(text)
+function subjectFor(
+    path,
+    changes,
+    lines,
+)
 {
-    const lines = text
-        .split(/\r?\n/)
-        .filter((line) => line.trim() && !line.startsWith(COMMENT_PREFIX));
-    if (!lines.length)
+    const entities = new Set(changes.map((change) => change.entity));
+    if (lines.length === 1)
     {
-        return [];
+        return lines[0];
     }
-    const header = splitCsvLine(lines[0]);
-    return lines.slice(1).map((line) =>
+    if (lines.length === 0)
     {
-        const cells = splitCsvLine(line);
-        const row = {};
-        header.forEach((column, index) =>
-        {
-            row[column] = cells[index] ?? '';
-        });
-        if (!('id' in row))
-        {
-            row.id = cells[0];
-        }
-        return row;
-    });
-}
-
-function splitCsvLine(line)
-{
-    const cells = [];
-    let current = '';
-    let quoted = false;
-    for (let index = 0; index < line.length; index++)
-    {
-        const character = line[index];
-        if (character === '"' && line[index + 1] === '"' && quoted)
-        {
-            current += '"';
-            index++;
-        }
-        else if (character === '"')
-        {
-            quoted = !quoted;
-        }
-        else if (character === CSV_SEPARATOR && !quoted)
-        {
-            cells.push(current);
-            current = '';
-        }
-        else
-        {
-            current += character;
-        }
+        return `Reformat ${fileLabel(path)}`;
     }
-    cells.push(current);
-    return cells;
-}
-
-function parseContent(path, text)
-{
-    if (text === null || text === undefined)
+    if (entities.size === 1)
     {
-        return undefined;
+        return `Edit ${[...entities][0]} (${lines.length} changes)`;
     }
-    return path.endsWith(CSV_EXTENSION)
-        ? parseCsv(text)
-        : JSON.parse(text);
-}
-
-function fileLabel(path)
-{
-    return path.split('/').pop().replace(FILE_EXTENSION, '');
-}
-
-function documentName(path, value)
-{
-    return displayNameOf(value, fileLabel(path));
-}
-
-/** Lists every change between two versions of one content file (text or null when absent). */
-export function CollectChanges(path, beforeText, afterText)
-{
-    const before = parseContent(path, beforeText);
-    const after = parseContent(path, afterText);
-    const label = fileLabel(path);
-    if (before === undefined)
-    {
-        return [{
-            entity: label,
-            field: '',
-            before: undefined,
-            after,
-            kind: 'add',
-        }];
-    }
-    if (after === undefined)
-    {
-        return [{
-            entity: label,
-            field: '',
-            before,
-            after: undefined,
-            kind: 'remove',
-        }];
-    }
-    const changes = [];
-    walk(before, after, documentName(path, after), [], changes);
-    return changes;
+    return `Edit ${entities.size} entries in ${fileLabel(path)}`;
 }
 
 function clip(text)
 {
-    return text.length > SUBJECT_LIMIT
-        ? `${text.slice(0, SUBJECT_LIMIT - ELLIPSIS.length)}${ELLIPSIS}`
-        : text;
+    if (text.length <= SUBJECT_LIMIT)
+    {
+        return text;
+    }
+    return `${text.slice(0, SUBJECT_LIMIT - ELLIPSIS.length)}${ELLIPSIS}`;
+}
+
+/** One readable line for one change, such as "Raise Husk Brute poiseMax 5→6". */
+export function DescribeChange(change)
+{
+    const where = change.field
+        ? `${change.entity} ${change.field}`
+        : change.entity;
+    if (change.kind === CHANGE_KIND.add)
+    {
+        return `Add ${where}`;
+    }
+    if (change.kind === CHANGE_KIND.remove)
+    {
+        return `Remove ${where}`;
+    }
+    if (change.kind === CHANGE_KIND.list)
+    {
+        return listPhrase(change);
+    }
+    return setPhrase(where, change);
+}
+
+/** Every change between two versions of one content file (text, or null when absent). */
+export function CollectChanges(
+    path,
+    beforeText,
+    afterText,
+)
+{
+    const before = parseContent(path, beforeText);
+    const after = parseContent(path, afterText);
+    if (before === undefined)
+    {
+        return wholeFileChange(
+            CHANGE_KIND.add,
+            path,
+            { after },
+        );
+    }
+    if (after === undefined)
+    {
+        return wholeFileChange(
+            CHANGE_KIND.remove,
+            path,
+            { before },
+        );
+    }
+    return WalkChanges(
+        before,
+        after,
+        DisplayNameOf(after, fileLabel(path)),
+    );
 }
 
 /** A commit subject (at most 72 characters) and one line per change. */
-export function DescribeFileChange(path, beforeText, afterText)
+export function DescribeFileChange(
+    path,
+    beforeText,
+    afterText,
+)
 {
-    const changes = CollectChanges(path, beforeText, afterText);
+    const changes = CollectChanges(
+        path,
+        beforeText,
+        afterText,
+    );
     const lines = changes.map(DescribeChange);
-    const entities = new Set(changes.map((change) => change.entity));
-    let subject;
-    if (lines.length === 1)
-    {
-        subject = lines[0];
-    }
-    else if (entities.size === 1)
-    {
-        subject = `Edit ${[...entities][0]} (${lines.length} changes)`;
-    }
-    else if (lines.length === 0)
-    {
-        subject = `Reformat ${fileLabel(path)}`;
-    }
-    else
-    {
-        subject = `Edit ${entities.size} entries in ${fileLabel(path)}`;
-    }
     return {
-        subject: clip(subject),
+        subject: clip(subjectFor(
+            path,
+            changes,
+            lines,
+        )),
         lines,
     };
 }
