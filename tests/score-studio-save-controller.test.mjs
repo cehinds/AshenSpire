@@ -7,6 +7,7 @@ import {
   ClearStudioSaveFiles,
   CreateStudioSave,
   RegisterStudioSaveFile,
+  ShortStudioSaveMessage,
   StudioSaveChoice,
   StudioSavePillText,
   StudioSaveResult,
@@ -509,4 +510,51 @@ test('studio save: once Keep my draft or Use the saved file is chosen, the next 
       await secondUi.reconcileDraft(storedDraft);
       assert.equal(asked.count, 1, `${choice}: the second load asks nothing`);
     }
+  });
+
+test('studio save: a failed save gives a short message without absolute paths, and the detail',
+  async () =>
+  {
+    const tempPath = String.raw`C:\Users\qa\AppData\Local\Temp\studio save\.cards.json.tmp`;
+    const detail = `Studio save failed and was rolled back: EPERM: open '${tempPath}'`;
+    const { studio } = setup();
+    const fetchJson = async (url, init = {}) =>
+    {
+      if (init.method !== postMethod)
+      {
+        return {
+          status: httpOk,
+          json: {
+            ok: true,
+            revision: revisionOne,
+            files: {},
+          },
+        };
+      }
+      return {
+        status: httpServerError,
+        json: {
+          ok: false,
+          error: detail,
+        },
+      };
+    };
+    const controller = CreateStudioSave({
+      isLocalServer: true,
+      fetchJson,
+      download: () => undefined,
+    });
+    await loadWithBaseline(controller);
+    studio.cards = [qaCard];
+    const outcome = await controller.save();
+    assert.equal(outcome.result, StudioSaveResult.Failed);
+    assert.equal(outcome.detail, detail);
+    assert.equal(
+      outcome.message,
+      "Studio save failed and was rolled back: EPERM: open '.cards.json.tmp'",
+    );
+    assert.equal(
+      ShortStudioSaveMessage('EACCES: open \'/tmp/qa/artLayers.json\''),
+      'EACCES: open \'artLayers.json\'',
+    );
   });

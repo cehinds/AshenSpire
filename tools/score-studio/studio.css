@@ -806,6 +806,11 @@ body.studio-body .export-diff { background: #0e1117; border: 1px solid var(--st-
 body.studio-body .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
 
 body.studio-body .studio-toast { position: fixed; bottom: 16px; right: 16px; background: var(--st-surface-2); border: 1px solid var(--st-accent); color: var(--st-text); padding: 8px 14px; border-radius: 8px; font-weight: 600; z-index: 9999; box-shadow: 0 6px 20px rgba(0,0,0,.5); }
+/* A long message wraps inside the viewport instead of running off its left edge. */
+body.studio-body .studio-toast {
+  max-width: calc(100vw - 32px);
+  overflow-wrap: anywhere;
+}
 
 /* NARROW SCREENS (900px and below): one column, the page scrolls instead of inner boxes,
    and the inspector opens as a full-screen sheet when a card is tapped. */

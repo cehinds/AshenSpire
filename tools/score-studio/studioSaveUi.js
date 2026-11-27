@@ -221,7 +221,7 @@ class StudioSaveUi
     this.#deps.toast(outcome.message ?? toastText[outcome.result]);
     if (outcome.result === StudioSaveResult.Failed)
     {
-      this.#showFailed(pill, outcome.message);
+      this.#showFailed(pill, outcome.detail);
       return outcome;
     }
     this.#deps.writeDraftNow();

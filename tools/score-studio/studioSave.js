@@ -75,6 +75,12 @@ const choiceDialogText = Object.freeze({
   keepDraft: 'Keep my draft',
 });
 
+// Absolute paths, quoted as Node errors quote them, or bare Windows paths.
+const quotedAbsolutePath = /'(?:[A-Za-z]:[\\/]|\/)[^']*'/g;
+const bareWindowsPath = /\b[A-Za-z]:[\\/][^\s'"]*/g;
+const pathSeparator = /[\\/]/;
+const quoteMark = "'";
+
 const registeredFiles = new Map();
 
 function isoNow()
@@ -97,6 +103,17 @@ function pathList()
   return RegisteredStudioSaveFiles().map((file) => file.path).join(lineBreak);
 }
 
+function fileNameOf(path)
+{
+  return path.split(pathSeparator).filter(Boolean).at(-1) ?? path;
+}
+
+function quotedFileNameOf(quotedPath)
+{
+  const path = quotedPath.slice(1, -1);
+  return `${quoteMark}${fileNameOf(path)}${quoteMark}`;
+}
+
 function isOkReply(reply)
 {
   return reply.status === httpOk && Boolean(reply.json?.ok);
@@ -115,6 +132,19 @@ function documentsToSave(savedAt)
     return [file.name, document];
   });
   return Object.fromEntries(entries);
+}
+
+// message is short, with each absolute path cut to its file name; detail is the full text.
+function refusedOutcome(result, detail)
+{
+  const message = detail === undefined
+    ? undefined
+    : ShortStudioSaveMessage(detail);
+  return {
+    result,
+    message,
+    detail,
+  };
 }
 
 // spec is { tag, ...properties }; the properties are set on the new element.
@@ -302,17 +332,12 @@ class StudioSaveController
     const reply = await this.#postAll();
     if (reply.status === httpConflict)
     {
-      return {
-        result: StudioSaveResult.Stale,
-        message: reply.json?.error,
-      };
+      return refusedOutcome(StudioSaveResult.Stale, reply.json?.error);
     }
     if (!isOkReply(reply))
     {
-      return {
-        result: StudioSaveResult.Failed,
-        message: reply.json?.error || `Save failed (${reply.status}).`,
-      };
+      const detail = reply.json?.error || `Save failed (${reply.status}).`;
+      return refusedOutcome(StudioSaveResult.Failed, detail);
     }
     return this.#acceptSaved(reply.json);
   }
@@ -466,6 +491,14 @@ export function RegisterStudioSaveFile(file)
       ? apply
       : null,
   });
+}
+
+/** The message with every absolute path cut to its file name, so it stays short. */
+export function ShortStudioSaveMessage(message)
+{
+  return String(message)
+    .replace(quotedAbsolutePath, quotedFileNameOf)
+    .replace(bareWindowsPath, fileNameOf);
 }
 
 export function RegisteredStudioSaveFiles()
