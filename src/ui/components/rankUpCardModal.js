@@ -39,7 +39,7 @@ function buildRankUpRow(card, registries, run, shelfPrice)
         ? RankUpPrice(shelfPrice, rank + 1)
         : null;
     // A card the full-upgrade rule holds back, or one whose price is past the purse, is shown, disabled, with its reason.
-    const blockedReason = RankUpBlock(run, card)
+    const blockedReason = RankUpBlock(run, card, registries)
         || (cost !== null && cost > cindersOf(run) ? translate('shop.refuse.cinders') : '');
     return {
         id: card.instanceId,
@@ -53,7 +53,7 @@ function buildRankUpRow(card, registries, run, shelfPrice)
             cost !== null ? translate('rankUp.pick.rowPrice', { cost }) : '',
         ].filter(Boolean).join(' '),
         disabled: !!blockedReason,
-        chip: translate('rankUp.pick.slots', { slots: UpgradeSlots(run, rankedUpCard) }),
+        chip: translate('rankUp.pick.slots', { slots: UpgradeSlots(run, rankedUpCard, registries) }),
         artAsset: cardArt?.path || null,
         artGlyph: cardArt?.path
             ? null

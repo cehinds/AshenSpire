@@ -1505,11 +1505,11 @@ export function MountRewards(appRoot, {
     function renderRankUpChooser(row)
     {
         const isTaken = () => states[row.key];
-        const rankUpCards = [...rankUpCandidates(registries, run, row.skillId)].sort((a, b) => Number(!!RankUpBlock(run, a)) - Number(!!RankUpBlock(run, b)));
+        const rankUpCards = [...rankUpCandidates(registries, run, row.skillId)].sort((a, b) => Number(!!RankUpBlock(run, a, registries)) - Number(!!RankUpBlock(run, b, registries)));
         // The full-upgrade rule (rankUpService.js): a held-back card can be looked at but not confirmed.
         const selectedBlocked = () => {
             const chosen = rankUpCards.find((instance) => instance.instanceId === selectedCardId);
-            return chosen ? RankUpBlock(run, chosen) : '';
+            return chosen ? RankUpBlock(run, chosen, registries) : '';
         };
         let selectedCardId = pendingCardIdByKey[row.key] || null;
         let confirming = false;
