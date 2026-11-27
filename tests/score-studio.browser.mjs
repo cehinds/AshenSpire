@@ -183,7 +183,11 @@ try {
     return { order, words, weightLabel, example, intro };
   });
   assert.deepEqual(sentence.order, ['weight-input', 'weight-per'], 'the weight box comes before the per box');
-  assert.equal(sentence.words, '[weight-input] pts per [weight-per] damage [weight-mult]', 'the effect row reads "[n] pts per [n] damage", then its multiply switch (PR 3013)');
+  assert.equal(
+    sentence.words,
+    '[weight-input] pts per [weight-per] damage [weight-mult]',
+    'the effect row reads "[n] pts per [n] damage", then its multiply switch (PR 3013)',
+  );
   assert.equal(sentence.weightLabel, 'damage points', 'the weight box is labelled as points');
   assert.equal(sentence.example, '10 damage = 6 pts', 'the example updates live from the typed boxes (3 pts per 5 damage)');
   assert.match(sentence.intro, /rarity discount is its CP/, 'the Weights tab explains how the parts add up');
@@ -405,7 +409,11 @@ try {
     };
   });
   assert.ok(duplicateName.autoName, 'a duplicate starts with Auto-name on');
-  assert.equal(duplicateName.banner, duplicateName.name, 'the banner shows the auto-named duplicate');
+  assert.equal(
+    duplicateName.banner,
+    duplicateName.name,
+    'the banner shows the auto-named duplicate',
+  );
   assert.doesNotMatch(duplicateName.name, /\(Copy\)/, `the duplicate's auto name has no "(Copy)" (${duplicateName.name})`);
   assert.ok(duplicateName.hint.startsWith(`Convention: ${duplicateName.name} `), `the duplicate takes its convention name (${duplicateName.hint})`);
 

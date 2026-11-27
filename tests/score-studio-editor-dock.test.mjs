@@ -1,7 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { withKitDom } from './helpers/dom.mjs';
-import { initCardEditorDock, CARD_EDITOR_DOCK_KEY, FilterNoteId } from '../tools/score-studio/cardEditorDock.js';
+import {
+  initCardEditorDock,
+  CARD_EDITOR_DOCK_KEY,
+  FilterNoteId,
+} from '../tools/score-studio/cardEditorDock.js';
 import { GalleryKind } from '../tools/score-studio/workingContext.js';
 import { createAddCardTile, CaptureCardTilePositions, animateCardInsertion } from '../tools/score-studio/addCardTile.js';
 
@@ -418,7 +422,14 @@ test('outside Properties the column beside the card holds the view fields only w
 
 test('the dock requires a selectCard callback instead of writing the active card itself', () => withKitDom(dom =>
 {
-  assert.throws(() => fixture(dom, new Map(), { selectCard: undefined }), /requires ctx\.selectCard/);
+  assert.throws(
+    () => fixture(
+      dom,
+      new Map(),
+      { selectCard: undefined },
+    ),
+    /requires ctx\.selectCard/,
+  );
 }));
 
 test('filters that hide the active card keep it active and show one short notice whose Clear brings its tile back', () => withKitDom(dom =>
@@ -433,26 +444,59 @@ test('filters that hide the active card keep it active and show one short notice
     api.refresh();
   }
 
-  const { doc, state, calls, ...rest } = fixture(dom, new Map(), {
-    isHiddenByFilters: (kind, id) => kind === GalleryKind.Cards && hidden.has(id),
-    clearFilters,
-  });
+  const {
+    doc,
+    state,
+    calls,
+    ...rest
+  } = fixture(
+    dom,
+    new Map(),
+    {
+      isHiddenByFilters: (kind, id) => kind === GalleryKind.Cards && hidden.has(id),
+      clearFilters,
+    },
+  );
   api = rest.api;
   api.refresh();
   const note = doc.getElementById(FilterNoteId.Note);
-  assert.equal(note.hidden, false, 'the banner says the active card is hidden');
+  assert.equal(
+    note.hidden,
+    false,
+    'the banner says the active card is hidden',
+  );
   assert.match(note.querySelector(FilterNoteFixture.TextSelector).textContent, /Hidden by current filters/);
-  assert.equal(state.selectedCardId, FilterNoteFixture.ActiveCardId, 'filters never change the active card');
+  assert.equal(
+    state.selectedCardId,
+    FilterNoteFixture.ActiveCardId,
+    'filters never change the active card',
+  );
   const bannerName = doc.getElementById(FilterNoteFixture.EntityNameId).querySelector(FilterNoteFixture.EntityNameTextSelector);
-  assert.equal(bannerName.textContent, FilterNoteFixture.ActiveCardName, 'the banner still shows the active card');
+  assert.equal(
+    bannerName.textContent,
+    FilterNoteFixture.ActiveCardName,
+    'the banner still shows the active card',
+  );
   const clear = doc.getElementById(FilterNoteId.Clear);
   assert.equal(clear.getAttribute(FilterNoteFixture.AriaLabelAttribute), FilterNoteFixture.ClearAriaLabel);
-  assert.equal(note.querySelectorAll(FilterNoteFixture.ButtonSelector).length, 1, 'one action, no extra controls');
+  assert.equal(
+    note.querySelectorAll(FilterNoteFixture.ButtonSelector).length,
+    1,
+    'one action, no extra controls',
+  );
   clear.click();
   const clearCalls = calls.filter(row => row[0] === FilterNoteFixture.ClearCall);
   assert.deepEqual(clearCalls, [[FilterNoteFixture.ClearCall, GalleryKind.Cards]]);
-  assert.equal(note.hidden, true, 'the notice goes once the tile is shown');
-  assert.equal(doc.activeElement?.dataset?.cardId, FilterNoteFixture.ActiveCardId, 'focus lands on the active tile, not the page body');
+  assert.equal(
+    note.hidden,
+    true,
+    'the notice goes once the tile is shown',
+  );
+  assert.equal(
+    doc.activeElement?.dataset?.cardId,
+    FilterNoteFixture.ActiveCardId,
+    'focus lands on the active tile, not the page body',
+  );
   assert.equal(state.selectedCardId, FilterNoteFixture.ActiveCardId);
   // A visible active card, or no active card, shows no notice.
   hidden.add(FilterNoteFixture.OtherCardId);
