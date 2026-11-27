@@ -1913,20 +1913,42 @@ function renderScoreSummary(def, sc) {
   const baseRank = state.baselineRanks[def.id];
   const shiftTxt = (baseRank !== undefined && baseRank !== sc.rank) ? ` (was ${RankName(baseRank)})` : '';
   // Shown in the card banner, right of the name: rank, rarity, then CP. Spans only: it sits inside a button.
+  // Each value is compared with the in-game card: higher reads red, lower reads green.
+  const before = inGameScore(def);
   const rarity = String(sc.rarity || '').replace(/^./, (ch) => ch.toUpperCase());
+  const rarityNow = RARITY_ORDER.indexOf(String(sc.rarity || '').toLowerCase());
+  const rarityThen = before ? RARITY_ORDER.indexOf(String(before.rarity || '').toLowerCase()) : -1;
   document.getElementById('inspector-score-summary').innerHTML =
-    `<span class="inspector-score-rank">${esc(RankName(sc.rank))}${esc(shiftTxt)}</span>`
-    + `<span class="inspector-score-rarity">${esc(rarity)}${sc.overridden ? ' · Overridden' : ''}</span>`
-    + `<span class="inspector-score-big">CP: ${sc.cp}</span>${cpTrendHtml(def, sc)}`;
+    `<span class="inspector-score-rank${trendClass(sc.rank, before?.rank)}"${trendTitle(before ? RankName(before.rank) : "", sc.rank, before?.rank) || (shiftTxt ? ` title="${esc(shiftTxt.trim().replace(/^\(|\)$/g, ''))} before weight changes"` : '')}>${esc(RankName(sc.rank))}</span>`
+    + `<span class="inspector-score-rarity${rarityNow >= 0 && rarityThen >= 0 ? trendClass(rarityNow, rarityThen) : ''}"${rarityNow >= 0 && rarityThen >= 0 ? trendTitle(before.rarity, rarityNow, rarityThen) : ''}>${esc(rarity)}${sc.overridden ? ' · Overridden' : ''}</span>`
+    + `<span class="inspector-score-big">CP: ${sc.cp}</span>${cpTrendHtml(sc, before)}`;
+}
+
+const RARITY_ORDER = Object.freeze(['starter', 'common', 'uncommon', 'rare', 'boss']);
+
+// The card as it ships in the game, scored with the game's weights; null for cards the game does not have.
+function inGameScore(def) {
+  const original = registries.cards.get(def.id);
+  if (!original) return null;
+  const sc = scoreCardEntry(clone(original), state.repoScoring);
+  return { cp: sc.cp, rank: sc.rank, rarity: original.rarity || sc.rarity };
+}
+
+function trendClass(now, then) {
+  if (!Number.isFinite(now) || !Number.isFinite(then) || now === then) return '';
+  return now > then ? ' is-up' : ' is-down';
+}
+
+function trendTitle(thenLabel, now, then) {
+  if (!Number.isFinite(now) || !Number.isFinite(then) || now === then) return '';
+  return ` title="${esc(`${now > then ? 'Up' : 'Down'} from ${thenLabel} in game`)}"`;
 }
 
 // Arrow after CP: green and down when CP is below the in-game card, red and up when above.
-function cpTrendHtml(def, sc) {
-  const original = registries.cards.get(def.id);
-  const before = original ? scoreCardEntry(clone(original), state.repoScoring).cp : null;
-  if (!Number.isFinite(before) || before === sc.cp) return '<span class="cp-trend" aria-hidden="true"></span>';
-  const down = sc.cp < before;
-  const words = `${down ? 'down' : 'up'} from CP ${before} in game`;
+function cpTrendHtml(sc, before) {
+  if (!Number.isFinite(before?.cp) || before.cp === sc.cp) return '<span class="cp-trend" aria-hidden="true"></span>';
+  const down = sc.cp < before.cp;
+  const words = `${down ? 'down' : 'up'} from CP ${before.cp} in game`;
   return `<span class="cp-trend ${down ? 'is-down' : 'is-up'}" title="${esc(words)}" aria-label="${esc(words)}">${down ? '▼' : '▲'}</span>`;
 }
 

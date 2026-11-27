@@ -213,3 +213,6 @@ body.studio-body .customization-quick-fields .name-input-row .studio-switch {
   justify-content: space-between; align-items: center; gap: 4px; white-space: nowrap; color: inherit; font-size: inherit;
 }
 body.studio-body .customization-quick-fields .name-input-row .studio-switch input { margin-bottom: 8px; }
+/* Rank and rarity compared with the in-game card: higher is red, lower is green. */
+body.studio-body .customization-entity-name :is(.inspector-score-rank, .inspector-score-rarity).is-up { color: var(--st-bad, #e05252); }
+body.studio-body .customization-entity-name :is(.inspector-score-rank, .inspector-score-rarity).is-down { color: var(--st-good, #4caf50); }
