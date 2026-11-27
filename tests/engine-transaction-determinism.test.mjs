@@ -73,6 +73,12 @@ function withoutGearPierce(combat) {
   delete combat.fixCoreRules.stance?.playerMinimumCost;
   // ...and they predate the dropped spell Stamina surcharge (owner ruling 2026-11-23): a fight saved before it keeps staminaSurcharge 1 in its snapshot.
   if (combat.fixCoreRules.spellCosts) combat.fixCoreRules.spellCosts.staminaSurcharge = 1;
+  // ...and the 2026-11-26 Star Seer hotfix (manaSurcharge 0, Prepared SP floor and Mana cut): a fight saved before it keeps manaSurcharge 1 and no new keys.
+  if (combat.fixCoreRules.spellCosts) {
+    combat.fixCoreRules.spellCosts.manaSurcharge = 1;
+    delete combat.fixCoreRules.spellCosts.preparedStaminaMinimum;
+    delete combat.fixCoreRules.spellCosts.preparedManaDiscount;
+  }
   return combat;
 }
 function preGearFight(setup, profile = legacyGearProfile(preRetreatProfile)) {
