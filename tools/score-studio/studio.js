@@ -4095,6 +4095,8 @@ function wireEvents() {
       if (tab === 'weights' || tab === 'art') {
         document.querySelector(`.studio-tab[data-tab="${activeGallery}"]`).click();
         cardEditorDockUi?.setView?.(tab === 'art' ? 'design' : 'weights');
+        // Import and saved-settings flows land here; on narrow screens the pane must be shown too.
+        cardEditorDockUi?.setPanel?.('editor');
         if (tab === 'art') renderArtTab(); else renderWeights();
         return;
       }
