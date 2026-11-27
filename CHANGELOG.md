@@ -34,7 +34,9 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-27
 
-- **Pin a map floor's room type** ([#3025](https://github.com/cehinds/AshenSpire/pull/3025), `0.7.5.149`). Core routes can now set floorTypes, such as floor 4 always a shop. Without it, maps are unchanged.
+- **Pin a map floor's room type** ([#3025](https://github.com/cehinds/AshenSpire/pull/3025), `0.7.5.151`). Core routes can now set floorTypes, such as floor 4 always a shop. Without it, maps are unchanged.
+- **Game rules belong in config** ([#3028](https://github.com/cehinds/AshenSpire/pull/3028), `0.7.5.151`). `CODE-STYLE.md` now asks for rules, numbers and player text in config files instead of code. No game changes.
+
 - **Set an enemy's HP directly** ([#3024](https://github.com/cehinds/AshenSpire/pull/3024), `0.7.5.149`). An enemy sheet can now set stats.hp, which replaces the HP its level and attributes give. Act and tier scaling still apply on top.
 - **Score Studio keeps one active card and item** ([#3019](https://github.com/cehinds/AshenSpire/pull/3019), `0.7.5.147`). Every panel follows the same card, filters never switch it, and reload brings it back.
 - **A code style guide** ([#3020](https://github.com/cehinds/AshenSpire/pull/3020), `0.7.5.145`). `CODE-STYLE.md` sets how all new and changed code looks. No game changes.
