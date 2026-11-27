@@ -1,4 +1,6 @@
-// Owner, 2026-11-15 (W25-F): spells cost 1 more Mana (and 1 more Stamina unless a cantrip); Prepared takes 1 SP off a spell; a Focus item takes 1 MP off;
+// Owner, 2026-11-15 (W25-F): spells cost 1 more Mana (and 1 more Stamina unless a cantrip); Prepared takes 1 SP off a spell; a Focus item takes 1 MP off.
+// Owner, 2026-11-23: no Stamina surcharge. Owner, 2026-11-26 (Star Seer hotfix): no Mana surcharge, so printed Mana is paid Mana; Prepared takes
+// SP to max(SP - 1, 1) without raising a price at or under 1, and takes 1 MP off (floored at 0). Element flux:
 // the last spell's element becomes a flux that lifts the next card of that element by x1.25 (each number floored). The numbers live in
 // fixCoreMechanics.json `spellCosts` and `elementFlux`; a fight created before the ruling has neither block and plays today's costs with no flux.
 import test from 'node:test';
@@ -7,7 +9,7 @@ import { fixCoreMechanics as shipped } from '../src/content/generated/fixCoreMec
 import { validateFixCoreRules } from '../src/model/fixCoreMechanics.js';
 
 test('shipped data holds the approved spell cost and flux numbers and the validator guards them', () => {
-  assert.deepEqual(shipped.spellCosts, { version: 1, manaSurcharge: 1, staminaSurcharge: 0, cantripTag: 'rank.cantrip', manaOnlyTag: 'cost.manaOnly', preparedStaminaDiscount: 1, focusManaDiscount: 1 });
+  assert.deepEqual(shipped.spellCosts, { version: 1, manaSurcharge: 0, staminaSurcharge: 0, cantripTag: 'rank.cantrip', manaOnlyTag: 'cost.manaOnly', preparedStaminaDiscount: 1, preparedStaminaMinimum: 1, preparedManaDiscount: 1, focusManaDiscount: 1 });
   assert.deepEqual(shipped.elementFlux, { version: 1, multiplier: 1.25 });
   assert.doesNotThrow(() => validateFixCoreRules(shipped));
   const { spellCosts, elementFlux, ...saved } = shipped;
@@ -19,6 +21,12 @@ test('shipped data holds the approved spell cost and flux numbers and the valida
   assert.throws(() => costs({ manaOnlyTag: '' }), /spellCosts/);
   const { manaOnlyTag, ...older } = shipped.spellCosts;
   assert.doesNotThrow(() => validateFixCoreRules({ ...shipped, spellCosts: older }), 'a block saved before the mana-only tag stays valid');
+  for (const key of ['preparedStaminaMinimum', 'preparedManaDiscount']) {
+    assert.throws(() => costs({ [key]: -1 }), /spellCosts/, `${key} rejects a negative number`);
+    assert.throws(() => costs({ [key]: 0.5 }), /spellCosts/, `${key} rejects a fraction`);
+  }
+  const { preparedStaminaMinimum, preparedManaDiscount, ...beforeHotfix } = shipped.spellCosts;
+  assert.doesNotThrow(() => validateFixCoreRules({ ...shipped, spellCosts: beforeHotfix }), 'a block saved before the 2026-11-26 keys stays valid');
   assert.throws(() => costs({ version: 2 }), /spellCosts/);
   const flux = patch => validateFixCoreRules({ ...shipped, elementFlux: { ...shipped.elementFlux, ...patch } });
   assert.throws(() => flux({ multiplier: 0.5 }), /elementFlux/);
@@ -36,14 +44,19 @@ const SPELLS = profile.content.cards.filter(card => cardManaCategory(reg, reg.ca
 const PREPARED = { maneuver: 'casting', camp: 'spell' };
 const fightCache = new Map();
 // One fight per (hand, stance, rules) is reused for every card: pricing reads the fight and never changes it.
-// savedSurcharge: a fight saved before the owner ruling of 2026-11-23 keeps staminaSurcharge 1 in its own rules snapshot.
+// savedSurcharge: a fight saved before the owner ruling of 2026-11-23 keeps its own rules snapshot: manaSurcharge 1, staminaSurcharge 1,
+// and none of the 2026-11-26 keys (Prepared SP floor 0, no Prepared MP cut).
 function costsIn({ hand, stance, id, legacy = false, savedSurcharge = false }) {
   const key = `${hand}|${stance ? 'prepared' : ''}|${legacy}|${savedSurcharge}`;
   if (!fightCache.has(key)) {
     // These tables isolate the spellCosts rule against its pre-gear price; live flux/payment fixtures below keep current equipment.
     const { combat } = fight({ legacy, registries: printedCostRegistries });
     if (legacy) { delete combat.fixCoreRules.spellCosts; delete combat.fixCoreRules.elementFlux; }
-    if (savedSurcharge) combat.fixCoreRules.spellCosts.staminaSurcharge = 1;
+    if (savedSurcharge) {
+      const rules = combat.fixCoreRules.spellCosts;
+      rules.manaSurcharge = 1; rules.staminaSurcharge = 1;
+      delete rules.preparedStaminaMinimum; delete rules.preparedManaDiscount;
+    }
     combat.loadout.sets.rightHand[0] = hand;
     if (stance) combat.player.combatStance = { ...stance };
     fightCache.set(key, combat);
@@ -54,21 +67,26 @@ function costsIn({ hand, stance, id, legacy = false, savedSurcharge = false }) {
   return { costs: cardPlayCosts(combat, card.instanceId), preview: previewCard(combat, card.instanceId), combat };
 }
 // The rule written out on top of the price the fight charged before the ruling (its stance cuts, such as a Graduate's same-stance Mana cut, are unchanged):
-// Mana +1; Stamina +surcharge unless a cantrip (or X-cost): 0 since the owner ruling of 2026-11-23, 1 in a fight saved before it; Prepared -1 Stamina;
-// a Focus item -1 Mana; floors at 0. `before` is the same card priced with the rule off.
-function expected(card, before, { prepared, focus, surcharge }) {
+// Current rules (owner, 2026-11-26): no surcharges; Prepared takes Stamina to max(SP - 1, 1) without raising a price at or under 1, and takes 1 Mana.
+// A fight saved before 2026-11-23: Mana +1; Stamina +1 unless a cantrip (or X-cost); Prepared -1 Stamina floored at 0; no Prepared Mana cut.
+// Both: a Focus item -1 Mana; Mana floors at 0. `before` is the same card priced with the rule off.
+function expected(card, before, { prepared, focus, saved }) {
   const cantrip = card.tags.includes('rank.cantrip'), x = card.cost === 'X', manaOnly = card.tags.includes('cost.manaOnly');
-  return { stamina: x ? null : Math.max(0, before.stamina + (cantrip || manaOnly ? 0 : surcharge) - (prepared ? 1 : 0)), mana: Math.max(0, before.mana + 1 - (focus ? 1 : 0)) };
+  const stamina = before.stamina + (saved && !cantrip && !manaOnly ? 1 : 0);
+  const staminaFloor = saved ? 0 : 1;
+  const preparedStamina = prepared && stamina > staminaFloor ? Math.max(staminaFloor, stamina - 1) : stamina;
+  const manaChange = saved ? 1 : (prepared ? -1 : 0);
+  return { stamina: x ? null : preparedStamina, mana: Math.max(0, before.mana + manaChange - (focus ? 1 : 0)) };
 }
 
 test('cost table over every shipped Core 2 spell and cantrip: base, Prepared, Focus, both (shown = paid)', () => {
   assert.ok(SPELLS.length >= 60, 'the table covers the whole shipped spell list');
   assert.ok(SPELLS.some(card => card.tags.includes('rank.cantrip')) && SPELLS.some(card => !card.tags.includes('rank.cantrip')));
-  for (const [surcharge, savedSurcharge] of [[0, false], [1, true]]) for (const card of SPELLS) {
+  for (const savedSurcharge of [false, true]) for (const card of SPELLS) {
     for (const [name, hand, stance] of [['base', 'greatsword', null], ['Prepared', 'greatsword', PREPARED], ['Focus', 'boneSceptre', null], ['both', 'boneSceptre', PREPARED]]) {
       // Before the ruling: no Focus item, so nothing but the stance's own cuts is in this price.
       const before = costsIn({ hand: 'greatsword', stance, id: card.id, legacy: true }).costs;
-      const want = expected(card, before, { prepared: !!stance, focus: hand === 'boneSceptre', surcharge });
+      const want = expected(card, before, { prepared: !!stance, focus: hand === 'boneSceptre', saved: savedSurcharge });
       const { costs, preview } = costsIn({ hand, stance, id: card.id, savedSurcharge });
       const label = `${card.id} ${name}${savedSurcharge ? ' (saved before 2026-11-23)' : ''}`;
       if (want.stamina !== null) assert.equal(costs.stamina, want.stamina, `${label} SP`);
@@ -80,7 +98,13 @@ test('cost table over every shipped Core 2 spell and cantrip: base, Prepared, Fo
 });
 
 test('literal prices preserve current Arcane Sweep zero SP and the cantrip/Focus/Prepared cuts', () => {
-  for (const [id, base, prepared, focus, both] of [['core.cometLance', [0, 2], [0, 1], [0, 1], [0, 0]] /* no Stamina surcharge since the owner ruling of 2026-11-23 */, ['core.cantrip', [1, 2], [0, 1], [1, 1], [0, 0]] /* Arcane Spark prints 1 MP (owner 2026-11-22): +1 surcharge; the Graduate's Prepared cut floors at 0 (owner 2026-11-22), like Comet Lance */, ['core.manaSurge', [1, 1], [0, 1], [1, 0], [0, 0]]]) {
+  // Printed Mana is paid Mana (owner, 2026-11-26). Prepared keeps a 0 or 1 SP price and takes 1 MP; the Graduate's own Prepared cut floors at 0 (owner 2026-11-22).
+  for (const [id, base, prepared, focus, both] of [
+    ['core.cometLance', [0, 1], [0, 0], [0, 0], [0, 0]], // 0 SP stays 0 in Prepared
+    ['core.cantrip', [1, 1], [1, 0], [1, 0], [1, 0]], // Arcane Spark prints 1 MP (owner 2026-11-22); 1 SP stays 1 in Prepared
+    ['core.manaSurge', [1, 0], [1, 0], [1, 0], [1, 0]],
+    ['core.meteor', [2, 2], [1, 0], [2, 1], [1, 0]], // 2 SP drops to the floor of 1 in Prepared
+  ]) {
     for (const [hand, stance, want] of [['greatsword', null, base], ['greatsword', PREPARED, prepared], ['boneSceptre', null, focus], ['boneSceptre', PREPARED, both]]) {
       const { costs } = costsIn({ hand, stance, id });
       assert.deepEqual([costs.stamina, costs.mana], want, `${id} ${hand} ${stance ? 'Prepared' : 'no stance'}`);
@@ -95,13 +119,13 @@ test('retaining staminaSurcharge 1 adds one SP to the current unmarked zero-SP A
   }
 });
 
-test('a cantrip after a first spell with a Focus costs 0 SP and 0 MP, and the payment equals the face', () => {
+test('a cantrip after a first spell with a Focus keeps its 1 SP and costs 0 MP, and the payment equals the face', () => {
   const { combat } = fight(); // its own fight: this test plays cards
   combat.loadout.sets.rightHand[0] = 'boneSceptre';
   const [first, second] = combat.piles.hand;
   first.cardId = 'core.cometLance'; second.cardId = 'core.mendingTouch'; // a 0 MP cantrip: Arcane Spark prints 1 MP since the owner ruling of 2026-11-22 (SPEC.md Cantrip and Basic Mana) and a Graduate's stance cut floors at 0 on the player's turn since 2026-11-22
   const open = cardPlayCosts(combat, second.instanceId);
-  assert.deepEqual([open.stamina, open.mana], [1, 1], 'before the first cast: 1 SP and the 1 MP surcharge; Focus requires Prepared');
+  assert.deepEqual([open.stamina, open.mana], [1, 0], 'before the first cast: its printed 1 SP and 0 MP; Focus requires Prepared');
   const [energy, mana] = [combat.player.energy, combat.player.mana];
   const firstCost = cardPlayCosts(combat, first.instanceId);
   assert.equal(firstCost.stamina, 0, 'the authored Arcane Sweep spends zero SP');
@@ -110,11 +134,11 @@ test('a cantrip after a first spell with a Focus costs 0 SP and 0 MP, and the pa
   assert.equal(mana - combat.player.mana, firstCost.mana);
   assert.ok(['casting', 'prepared'].includes(combat.player.combatStance?.maneuver), 'the first cast enters Prepared');
   const after = cardPlayCosts(combat, second.instanceId);
-  assert.deepEqual([after.stamina, after.mana], [0, 0]);
+  assert.deepEqual([after.stamina, after.mana], [1, 0], 'Prepared never takes a 1 SP spell below 1 (owner, 2026-11-26)');
   assert.equal(previewCard(combat, second.instanceId).manaCost, 0);
   const [e1, m1] = [combat.player.energy, combat.player.mana];
   dispatch(combat, { type: 'playCard', cardInstanceId: second.instanceId, targetId: combat.player.id });
-  assert.equal(e1 - combat.player.energy, 0, 'paid 0 SP');
+  assert.equal(e1 - combat.player.energy, 1, 'paid 1 SP');
   assert.equal(m1 - combat.player.mana, 0, 'paid 0 MP');
 });
 

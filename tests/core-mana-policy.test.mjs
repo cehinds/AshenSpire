@@ -70,10 +70,10 @@ test('Sundering Art preview, affordability and actual combat payment use the sam
   assert.ok(combat.eventLog.some(event => event.type === 'cardPlayed' && event.cardInstanceId === card.instanceId));
 });
 
-// Owner, 2026-11-15 (W25-F): every spell costs 1 more Mana, so Star Spark's printed 1 MP is paid as 2 (no Focus armament here; the Focus discount has its own test).
+// Owner, 2026-11-26 (Star Seer hotfix): printed Mana is paid Mana, so Star Spark's printed 1 MP is paid as 1 (no Focus armament here; the Focus discount has its own test).
 // Owner ruling 2026-11-21 (starter budget): Star Spark is Unranked, so it no longer applies Vulnerable (a second effect costs 5 and the stacks 8).
-test('Star Spark pays two MP (one printed, one spell surcharge) and applies no Vulnerable', () => {
-  // This intrinsic surcharge fixture predates armour-type discounts; current robe/Focus integration is exercised below.
+test('Star Spark pays its printed one MP and applies no Vulnerable', () => {
+  // This fixture predates armour-type discounts; current robe/Focus integration is exercised below.
   const { combat, card } = fight('core.starseerSpecial', 'starseer', legacyGearRegistries(registries));
   combat.player.maxMana = Math.max(combat.player.maxMana, 2); combat.player.mana = 2;
   // Magic spends Poise 1:1 (owner, 2026-10-31), so the spell would empty the soldier's Poise 5 and the break's Staggered adds a third Vulnerable.
@@ -81,15 +81,17 @@ test('Star Spark pays two MP (one printed, one spell surcharge) and applies no V
   combat.enemies[0].persistentPoise = { value: 100, max: 100 };
   const before = combat.player.mana;
   dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: combat.enemies[0].id });
-  assert.equal(combat.player.mana, before - 2);
+  assert.equal(combat.player.mana, before - 1, 'the printed 1 MP is the paid Mana');
   assert.equal(getStacks(combat.enemies[0], 'vulnerable'), 0);
   assert.equal(registries.statuses.get('vulnerable').modifiers.damageTakenMult, 1.25);
   assert.equal(registries.statuses.get('vulnerable').decay, 'perTurnEnd');
 });
 
 test('current robes, Focus and Prepared keep spell quotes, payment and restored snapshots in agreement', () => {
-  // Independent worked prices: spells add 1 MP and no SP (the +1 SP on non-cantrip spells was dropped by the owner on 2026-11-23);
-  // Prepared cuts SP by 1 (floor 0) and positive printed MP by 1. Robes and Focus each cut another MP only while Prepared.
+  // Independent worked prices. Current rules (owner, 2026-11-26): spells add no MP and no SP; the spell rule's Prepared cut takes
+  // SP to max(SP - 1, 1) without raising a price at or under 1, and takes 1 MP. Graduate pricing in Prepared also cuts positive
+  // printed MP by 1. Robes and Focus each cut another MP only while Prepared. Final MP floors at 0.
+  // 'saved' is a fight saved under the 2026-11-15 rules: +1 MP on every spell, +1 SP on non-exempt spells, Prepared SP floor 0, no Prepared MP cut.
   const cases = [
     ['core.cometLance', true], ['core.meteor', true], ['core.cantrip', true],
     ['core.meteor', false],
@@ -105,10 +107,14 @@ test('current robes, Focus and Prepared keep spell quotes, payment and restored 
     const authored = registries.gameProfile.content.cards.find(card => card.id === cardId);
     const prepared = stance !== null;
     const exempt = authored.tags.includes('rank.cantrip') || authored.tags.includes('cost.manaOnly');
-    const surcharge = spellCosts === 'saved' && !exempt ? 1 : 0;
-    const stamina = Math.max(0, authored.staminaCost + surcharge - (spellCosts && prepared ? 1 : 0));
+    const saved = spellCosts === 'saved';
+    const surcharge = saved && !exempt ? 1 : 0;
+    const baseStamina = authored.staminaCost + surcharge;
+    const staminaFloor = saved ? 0 : 1;
+    const stamina = spellCosts && prepared && baseStamina > staminaFloor ? Math.max(staminaFloor, baseStamina - 1) : baseStamina;
     const graduateMana = Math.max(0, authored.manaCost - (prepared ? 1 : 0));
-    const mana = Math.max(0, graduateMana + (spellCosts ? 1 : 0) - (prepared ? 1 + focus : 0));
+    const spellMana = !spellCosts ? 0 : saved ? 1 : (prepared ? -1 : 0);
+    const mana = Math.max(0, graduateMana + spellMana - (prepared ? 1 + focus : 0));
     const expected = [stamina, mana];
     const run = fresh('starseer');
     // Keep the highest quoted cost payable independently of starting gear points.
@@ -120,7 +126,12 @@ test('current robes, Focus and Prepared keep spell quotes, payment and restored 
     run.loadout.sets.rightHand[0] = hand; run.loadout.sets.leftHand[0] = null;
     const combat = createRunCombat({ registries, run, rng: createRng(3), enemyIds: ['wanderingSoldier'] });
     if (!spellCosts) delete combat.fixCoreRules.spellCosts;
-    if (spellCosts === 'saved') combat.fixCoreRules.spellCosts.staminaSurcharge = 1;
+    if (spellCosts === 'saved') {
+      // Rebuild the 2026-11-15 block explicitly: the 2026-11-26 keys did not exist yet.
+      const rules = combat.fixCoreRules.spellCosts;
+      rules.manaSurcharge = 1; rules.staminaSurcharge = 1;
+      delete rules.preparedStaminaMinimum; delete rules.preparedManaDiscount;
+    }
     assert.equal(combat.gameProfile.modules.gear.typeEffectsVersion, 1, 'this is current gear integration');
     assert.equal(combat.player.maxMana, 4, 'two earned Wisdom points make the 4 MP quote payable');
     assert.equal(getStacks(combat.player, 'ward'), 0, 'these weapon types have no automatic turn-start Ward');
