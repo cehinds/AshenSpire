@@ -1,0 +1,101 @@
+{
+  "$note": "Words, class names and sizes of the Score Studio Game content tab. Sections live in contentEditor.json.",
+  "stylesheet": "contentEditor.css",
+  "text": {
+    "search": "Search",
+    "notSaved": "Not saved",
+    "loading": "Loading...",
+    "nothingToSave": "Nothing to save.",
+    "saved": "Saved {files}. The game tab reloads by itself.",
+    "reverted": "Reverted {files} from disk.",
+    "nothingToRevert": "Nothing to revert.",
+    "checking": "Checking. This takes about 20 seconds.",
+    "passed": "All checks passed.",
+    "failed": "A check failed. Fix the file it names, Save, then Check again.",
+    "jsonToggle": "JSON",
+    "jsonToggleTitle": "Edit the whole entry as JSON, for anything without a field.",
+    "add": "+ Add",
+    "remove": "×",
+    "removeTitle": "Remove this line",
+    "cardLimits": "Effects {effects}/{maxEffects} · Drawbacks {drawbacks}/{maxDrawbacks}",
+    "listSeparator": ", "
+  },
+  "buttons": [
+    {
+      "action": "Save",
+      "text": "Save",
+      "className": "primaryButton",
+      "title": "Write your changes to the files"
+    },
+    {
+      "action": "Revert",
+      "text": "Revert",
+      "className": "button",
+      "title": "Drop unsaved changes"
+    },
+    {
+      "action": "Check",
+      "text": "Check",
+      "className": "button",
+      "title": "Build and check the game data"
+    }
+  ],
+  "checkLines": {
+    "failPrefix": "FAIL",
+    "passPrefix": "ok"
+  },
+  "jsonField": {
+    "path": "",
+    "label": "JSON",
+    "type": "json"
+  },
+  "newMapKey": "new",
+  "suggestListPrefix": "ce-suggest-",
+  "sizes": {
+    "jsonIndent": 2,
+    "maxTextRows": 24
+  },
+  "classes": {
+    "root": "content-editor",
+    "toolbar": "ce-toolbar",
+    "sectionSelect": "ce-section-select",
+    "status": "ce-status",
+    "error": "is-error",
+    "dirtyPill": "studio-pill is-dirty ce-dirty",
+    "button": "s-btn s-btn-sm",
+    "primaryButton": "s-btn s-btn-sm s-btn-primary",
+    "body": "ce-body",
+    "listPane": "ce-list-pane",
+    "search": "ce-search",
+    "list": "ce-list",
+    "entry": "ce-entry",
+    "entryName": "ce-entry-name",
+    "entryValue": "ce-entry-value",
+    "selected": "is-selected",
+    "formPane": "ce-form-pane",
+    "form": "ce-form",
+    "formHead": "ce-form-head",
+    "formTitle": "ce-form-title",
+    "formKey": "ce-form-key",
+    "formBody": "ce-form-body",
+    "jsonToggle": "ce-json-toggle",
+    "limitsHost": "ce-limits-host",
+    "limits": "ce-limits",
+    "limitsOver": "is-over",
+    "limitsProblem": "ce-limits-problem",
+    "check": "ce-check",
+    "checkPass": "is-pass",
+    "checkFail": "is-fail",
+    "field": "ce-field",
+    "fieldTypePrefix": "ce-field-",
+    "label": "ce-label",
+    "control": "ce-control",
+    "json": "ce-json",
+    "key": "ce-key",
+    "rows": "ce-rows",
+    "row": "ce-row",
+    "add": "s-btn s-btn-sm ce-add",
+    "remove": "s-btn s-btn-sm ce-remove",
+    "invalid": "is-invalid"
+  }
+}

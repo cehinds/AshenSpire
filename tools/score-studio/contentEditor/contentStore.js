@@ -1,0 +1,113 @@
+// Holds the game JSON files the editor has open, which ones changed, and saves them.
+import { FormatJsonLike } from './jsonText.js';
+
+const FOLDER_SEPARATOR = '/';
+
+/** One open file: its text on disk, its live value, and whether they differ. */
+class OpenFile
+{
+    constructor(text)
+    {
+        this.Reset(text);
+    }
+
+    Reset(text)
+    {
+        this.text = text;
+        this.value = JSON.parse(text);
+        this.MarkSaved(text);
+    }
+
+    MarkSaved(text)
+    {
+        this.text = text;
+        this.savedShape = JSON.stringify(this.value);
+        this.dirty = false;
+    }
+
+    Refresh()
+    {
+        this.dirty = JSON.stringify(this.value) !== this.savedShape;
+    }
+}
+
+export class ContentStore
+{
+    /** `api` is a ContentApi; `indent` is the files' JSON indent; `onChange` runs after edits. */
+    constructor(api, indent, onChange)
+    {
+        this.api = api;
+        this.indent = indent;
+        this.files = new Map();
+        this.onChange = onChange;
+    }
+
+    /** The live value of a file, loaded once. */
+    async Load(path)
+    {
+        if (!this.files.has(path))
+        {
+            this.files.set(path, new OpenFile(await this.api.ReadFile(path)));
+        }
+        return this.files.get(path).value;
+    }
+
+    /** Replaces a whole file's value, as a top-level JSON edit does. */
+    SetRoot(path, value)
+    {
+        this.files.get(path).value = value;
+        this.MarkChanged(path);
+    }
+
+    Root(path)
+    {
+        return this.files.get(path).value;
+    }
+
+    MarkChanged(path)
+    {
+        this.files.get(path).Refresh();
+        this.onChange();
+    }
+
+    DirtyPaths()
+    {
+        return [...this.files.entries()]
+            .filter(([, file]) => file.dirty)
+            .map(([path]) => path);
+    }
+
+    /** Writes every changed file; unchanged entries keep their exact text. */
+    async SaveAll()
+    {
+        const saved = [];
+        for (const path of this.DirtyPaths())
+        {
+            const file = this.files.get(path);
+            const text = FormatJsonLike(file.text, file.value, this.indent);
+            await this.api.SaveFile(path, text);
+            file.MarkSaved(text);
+            saved.push(path);
+        }
+        this.onChange();
+        return saved;
+    }
+
+    /** Reloads every changed file from disk, dropping unsaved edits. */
+    async RevertAll()
+    {
+        const reverted = this.DirtyPaths();
+        for (const path of reverted)
+        {
+            this.files.get(path).Reset(await this.api.ReadFile(path));
+        }
+        this.onChange();
+        return reverted;
+    }
+
+    /** A short name for a repo path, for status lines. */
+    static ShortName(path)
+    {
+        return path.split(FOLDER_SEPARATOR).pop();
+    }
+}
