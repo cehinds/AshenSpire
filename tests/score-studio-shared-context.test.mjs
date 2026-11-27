@@ -568,11 +568,18 @@ test('no silent first-card fallback in the inspectors, the preview, undo or reve
       `${name} never falls back to the first entity`,
     );
   }
-  assert.doesNotMatch(
-    body(studio, 'renderArtTab'),
-    /state\.(cards|items)\[0\]/,
-    'the picker follows the active entity',
-  );
+  const pickerFunctions = [
+    'renderArtTab',
+    'renderArtPicker',
+  ];
+  for (const name of pickerFunctions)
+  {
+    assert.doesNotMatch(
+      body(studio, name),
+      /state\.(cards|items)\[0\]/,
+      `${name}: the picker follows the active entity`,
+    );
+  }
 });
 
 test(
