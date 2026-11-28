@@ -218,6 +218,9 @@ test('HP, Stamina and Mana gains never refill; expiration and debuffs clamp, inc
     }
   }
   const player = restored.player;
+  // The Reaver starts with no Wisdom (owner, 2026-11-28); a fight-long point gives the debuff something to take.
+  ChangeAttribute(restored, player, 'wisdom', 1);
+  player.mana = player.maxMana;
   ChangeAttribute(restored, player, 'wisdom', -1, { thisTurn: true });
   const reduced = player.maxMana;
   assert.equal(player.mana, reduced);
