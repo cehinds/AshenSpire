@@ -18,14 +18,27 @@ const registriesFor = profile => bindGameProfileRegistries(createRegistries(appl
 const current = resolveGameProfile('default');
 const saved = validateGameProfileSnapshot(JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/dev-profile-71c50c95.json.gz', import.meta.url)))));
 
-/** The retune: enemy move -> [before, after] authored Block. */
+/** Enemy move -> [saved card, saved fight's shared move, current stored] Block. */
+// Owner ruling 2026-11-28: stored Block is 1:1; a saved fight reads the rescaled shared move.
 export const ENEMY_BLOCK_RETUNE = Object.freeze({
-  'pearlbackSnail.nacreWall': [20, 12], 'glassRegent.prismGuard': [16, 12], 'wyrmLord.goldenBulwark': [16, 12],
-  'stitchedKing.courtlyDecree': [15, 11], 'pearlbackSnail.pearlGuard': [14, 10], 'saltChoirWalrus.frozenBulwark': [14, 10],
-  'charredColossus.harden': [14, 10], 'furnaceSaint.coolingAsh': [14, 10], 'kilnshellTortoise.kilnPlate': [14, 10],
-  'kilnbackTerrapin.siegePlate': [14, 10], 'ferrumVotary.ironLitany': [14, 10], 'wyrmAspirant.goldenGuard': [12, 10],
-  'livingArmor.fortify': [12, 10], 'pallidOathCamel.oathWater': [12, 10], 'ashheartDragon.tailBastion': [12, 10],
+  'pearlbackSnail.nacreWall': [20, 14, 8],
+  'glassRegent.prismGuard': [16, 7, 5],
+  'wyrmLord.goldenBulwark': [16, 11, 8],
+  'stitchedKing.courtlyDecree': [15, 11, 8],
+  'pearlbackSnail.pearlGuard': [14, 10, 7],
+  'saltChoirWalrus.frozenBulwark': [14, 10, 7],
+  'charredColossus.harden': [14, 10, 7],
+  'furnaceSaint.coolingAsh': [14, 6, 4],
+  'kilnshellTortoise.kilnPlate': [14, 10, 7],
+  'kilnbackTerrapin.siegePlate': [14, 10, 7],
+  'ferrumVotary.ironLitany': [14, 10, 7],
+  'wyrmAspirant.goldenGuard': [12, 8, 7],
+  'livingArmor.fortify': [12, 8, 7],
+  'pallidOathCamel.oathWater': [12, 8, 7],
+  'ashheartDragon.tailBastion': [12, 8, 7],
 });
+const CURRENT_COUNTER_BLOCK = 3;
+const SAVED_COUNTER_BLOCK = 5;
 const blockOf = (profile, id) => profile.content.cards.find(card => card.id === id).effects.find(effect => effect.op === 'block').amount;
 const enemyIds = profile => new Set((profile.content.enemyCards || []).map(card => card.id));
 const corePackCards = JSON.parse(readFileSync(new URL('../games/ashenspire/packs/core/cards.json', import.meta.url), 'utf8'));
@@ -34,9 +47,9 @@ const PACK_DEFEND_BLOCK = packDefend.effects.find(effect => effect.op === 'block
 
 test('Defend authors its pack Block and every retuned enemy guard carries its new number', () => {
   assert.equal(blockOf(current, 'core.defend'), PACK_DEFEND_BLOCK);
-  assert.equal(blockOf(current, 'core.counter'), 5, 'Counter is unchanged');
-  assert.equal(blockOf(saved, 'core.counter'), 5);
-  for (const [id, [, after]] of Object.entries(ENEMY_BLOCK_RETUNE)) assert.equal(blockOf(current, id), after, id);
+  assert.equal(blockOf(current, 'core.counter'), CURRENT_COUNTER_BLOCK, 'Counter stores its 1:1 Block');
+  assert.equal(blockOf(saved, 'core.counter'), SAVED_COUNTER_BLOCK);
+  for (const [id, [, , after]] of Object.entries(ENEMY_BLOCK_RETUNE)) assert.equal(blockOf(current, id), after, id);
 });
 
 test('no Core enemy move authors more than 12 Block', () => {
@@ -66,6 +79,7 @@ function defendBlock(reg, classId, dexterity = 0) {
 test('the current starter Defend prices its neutral static Block face', async () => {
   const { measureCards } = await import('../tools/combat-power-report.mjs');
   const { cardCombatPower } = await import('../src/content/generated/combatPower.js');
+  const { ScoreCard } = await import('../src/model/combatPower.js');
   const context = CardScoreReferenceContext({ class: 'reaver' });
   const definition = context.registries.cards.get('core.defend');
   const displayed = staticCardTokens(definition, context.registries, context.rules).block;
@@ -73,14 +87,20 @@ test('the current starter Defend prices its neutral static Block face', async ()
   assert.equal(displayed, Math.floor(PACK_DEFEND_BLOCK * blockGainScale), 'the neutral static Defend face');
   assert.equal(ProjectCardMechanicalValues(definition, context).card.effects.find(effect => effect.op === 'block').amount, displayed);
   assert.equal(measureCards()['core.defend'].blk, displayed, 'the report prices the displayed Block');
-  assert.ok(cardCombatPower['core.defend'].cp > 0, `Defend cp ${cardCombatPower['core.defend'].cp} prices its Block`);
+  const defendFace = measureCards()['core.defend'];
+  const moreBlock = {
+    ...defendFace,
+    blk: defendFace.blk + 1,
+  };
+  assert.ok(ScoreCard(moreBlock).raw > ScoreCard(defendFace).raw, 'the Defend score prices its Block');
+  assert.equal(cardCombatPower['core.defend'].raw, ScoreCard(defendFace).raw, 'the table scores the face');
   const reg = registriesFor(current);
   for (const classId of ['reaver', 'rogue', 'starseer', 'herald']) {
     assert.ok(defendBlock(reg, classId, 8) < 20, `${classId} Defend with +8 Dexterity stays under 20`);
   }
 });
 
-test('the dev profile saved before the retune keeps Defend 10 and its heavy enemy guards', () => {
+test('the dev profile saved before the retune keeps Defend 10 and authors its heavy enemy guards', () => {
   assert.equal(saved.hash, 'sha256:71c50c95263d9fc671863a691fb6ffb7e4f621531e73eb4d98b0c1866a426bdf');
   assert.notEqual(current.hash, saved.hash);
   assert.equal(blockOf(saved, 'core.defend'), 10);
@@ -88,13 +108,13 @@ test('the dev profile saved before the retune keeps Defend 10 and its heavy enem
   const reg = registriesFor(saved);
   const fresh = registriesFor(current);
   // The fight reads an enemy move's Block from the shared move unless the profile's card hint opts in (coreBlock "card").
-  for (const [id, [before, after]] of Object.entries(ENEMY_BLOCK_RETUNE)) {
+  for (const [id, [, savedMove, after]] of Object.entries(ENEMY_BLOCK_RETUNE)) {
     const [enemyId] = id.split('.');
     const hints = current.content.enemies.find(row => row.id === enemyId).cardHints;
     const hint = hints[`card:${id}`] || hints[id];
     assert.equal(hint.coreBlock, 'card', `${id} opts into its card's Block`);
     assert.equal(fresh.enemies.get(enemyId).moves[hint.legacyMove].block, after, `new ${id} move Block`);
-    assert.equal(reg.enemies.get(enemyId).moves[hint.legacyMove].block, before, `saved ${id} move Block`);
+    assert.equal(reg.enemies.get(enemyId).moves[hint.legacyMove].block, savedMove, `saved ${id} move Block`);
   }
   assert.ok(defendBlock(reg, 'reaver') > 0, 'a saved run still plays its Defend 10');
 });
