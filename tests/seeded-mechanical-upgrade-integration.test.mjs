@@ -67,5 +67,6 @@ test('production classic bundle executes seeded schedule and mechanical upgrade 
   assert.ok(first.length>=1);assert.equal(JSON.stringify(run),before);
   schedule.ClearScheduleCaches();
   assert.equal(JSON.stringify(limits.nextUpgradeOptions(run,instance,base,registries,3,{vendor:'blacksmith'})),JSON.stringify(first));
-  assert.equal(projection.ProjectCardMechanicalValues({...card,effects:[{op:'damage',target:'enemy',amount:8}]}).tokens.damage,3);
+  // Authored 8 shows 2 with the reference Reaver's 1 Strength (owner, 2026-11-28).
+  assert.equal(projection.ProjectCardMechanicalValues({...card,effects:[{op:'damage',target:'enemy',amount:8}]}).tokens.damage,2);
 });

@@ -155,7 +155,8 @@ test('current catalog metadata uses rendered mechanics and refreshes raw, CP, ra
     return { damage: ProjectCardMechanicalValues(definition).tokens.damage, cp: meta.projectedCp, cost: definition.staminaCost, rarity: definition.rarity, status: definition.effects[1] };
   };
   const eight = capture(8), seven = capture(7), sixteen = capture(16);
-  assert.equal(eight.damage, 3); assert.equal(seven.damage, 3); assert.equal(sixteen.damage, 5);
+  // The reference Reaver's 1 Strength (owner, 2026-11-28) adds one point to each displayed hit.
+  assert.equal(eight.damage, 2); assert.equal(seven.damage, 2); assert.equal(sixteen.damage, 4);
   assert.equal(eight.cp, seven.cp); assert.notEqual(eight.cp, sixteen.cp);
   assert.equal(eight.cost, sixteen.cost); assert.equal(eight.rarity, sixteen.rarity); assert.deepEqual(eight.status, sixteen.status);
 });
