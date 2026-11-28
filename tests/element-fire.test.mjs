@@ -12,8 +12,9 @@ import { ElementOfHit } from '../src/model/elementIdentityRules.js';
 import { ElementTurnStart } from '../src/engine/elementIdentity.js';
 
 const FIRE = { combatProfile: { camp: 'spell', school: 'fire', damageType: 'arcane', magicShare: 1 }, tags: ['school:fire'], magicShare: 1 };
-// Base 20: Core halves card base damage (ceil, effects.baseDamageMultiplier 0.5), so the hit meets the element rules as 10.
-const hit = (combat, target, carrier = FIRE, base = 20) => profileDamageReceipt(combat, combat.player, target, base, { ...carrier, skipRatingBonus: true }, { roll: 0 });
+// Owner ruling 2026-11-28: damage is 1:1 (no base-damage scale), so the hit meets the element rules at 10.
+const HIT_DAMAGE = 10;
+const hit = (combat, target, carrier = FIRE, base = HIT_DAMAGE) => profileDamageReceipt(combat, combat.player, target, base, { ...carrier, skipRatingBonus: true }, { roll: 0 });
 const stage = (receipt, id) => receipt.damageReceipt.hits[0].sources.find(row => row.id === id);
 const archivedProfile = JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/dev-profile-6727a255.json.gz', import.meta.url))));
 
@@ -61,22 +62,22 @@ test('current Fire identifies max(INT, WIS) while an idle target uses weapon Poi
   }
 });
 
-test('archived 6727 fire retains WIS + INT ignored Poise with its original damage and spell Poise scales', () => {
+test('archived 6727 fire retains WIS + INT ignored Poise and its spell Poise scales', () => {
   const { combat, enemies } = fight({ profile: archivedProfile, enemies: 1, poise: 20, attributes: { wisdom: 2, intelligence: 4 } });
   // The standalone profile does not carry encounter rules; a fight saved on 6727a255 did.
   combat.fixCoreRules.poise = { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1, breakStatusStacks: 2 };
   combat.fixCoreRules.ward = { enabled: false, poisePerStack: 5, routing: 'blockFirst', decayPerTurn: 1, breaksAtZeroPoise: true };
   assert.equal(combat.fixCoreRules.elements.version, 1, 'elements remain enabled');
-  // The untouched archive scales player damage by 0.7: base 30 yields an integer incoming hit of 10.
-  const target = enemies[0], plain = hit(combat, target, { ...FIRE, combatProfile: { ...FIRE.combatProfile, school: 'poison', damageType: 'poison' }, tags: [] }, 30);
-  const fire = hit(combat, target, FIRE, 30);
+  // Owner ruling 2026-11-28: the archive's damage scales read as 1 too, so base 10 is the incoming hit.
+  const target = enemies[0], plain = hit(combat, target, { ...FIRE, combatProfile: { ...FIRE.combatProfile, school: 'poison', damageType: 'poison' }, tags: [] });
+  const fire = hit(combat, target, FIRE);
   assert.equal(plain.poiseMitigated, 10, 'a spell meets Poise first, 1:1');
   assert.equal(fire.poiseMitigated, 10, 'the 14 Poise above the 6 ignored ones still absorb the whole hit');
   assert.equal(fire.element.poiseIgnored, 6, 'the original WIS 2 + INT 4 ignores six');
   assert.equal(fire.poiseDrain, 10, 'six ignored points plus four extra spell Poise drain fit after mitigation');
   assert.equal(target.persistentPoise.value, 20, 'a receipt never edits the pool');
   target.persistentPoise.value = 8;
-  const small = hit(combat, target, FIRE, 30);
+  const small = hit(combat, target, FIRE);
   assert.deepEqual([small.poiseMitigated, small.poiseDrain, small.hpLoss], [2, 6, 8], 'a pool of 8: 2 absorb (the other 6 are ignored), so 8 of the 10 reaches HP and the pool is emptied');
 });
 
