@@ -56,21 +56,26 @@ function wear({ registries, run }, id) {
 
 test('a real current run keeps HP receipts aligned through XP, Wisdom allocation and armour removal', () => {
   const state = world(), { registries, run } = state;
-  assert.equal(run.attributes.constitution, 1);
+  // The Reaver starts with no Constitution (owner, 2026-11-28); each point is 5 HP and three levels are 15.
+  const HP_PER_CONSTITUTION = 5;
+  const THREE_LEVELS_HP = 15;
+  assert.equal(run.attributes.constitution, 0);
+  const unwornHp = run.maxHp;
   wear(state, 'cinderforgedPlate');
-  assert.equal(gameProfileEffectiveAttributes(registries, run).constitution, 2, 'the rare Cinderforged Plate grants one Constitution');
-  assert.equal(run.maxHp, 55);
-  assert.equal(poolsAgree(state).attributes.find(row => row.id === 'constitution').value, 1, 'attribute rows still display allocated points');
+  assert.equal(gameProfileEffectiveAttributes(registries, run).constitution, 1, 'the rare Cinderforged Plate grants one Constitution');
+  const wornHp = run.maxHp;
+  assert.equal(wornHp, unwornHp + HP_PER_CONSTITUTION);
+  assert.equal(poolsAgree(state).attributes.find(row => row.id === 'constitution').value, 0, 'attribute rows still display allocated points');
   earnPoint(state);
-  assert.equal(run.maxHp, 70);
+  assert.equal(run.maxHp, wornHp + THREE_LEVELS_HP);
   poolsAgree(state);
   allocateAttributePoint(registries, run, 'wisdom');
-  assert.equal(run.maxHp, 70, 'Wisdom does not grant Health');
+  assert.equal(run.maxHp, wornHp + THREE_LEVELS_HP, 'Wisdom does not grant Health');
   assert.equal(run.level.unspentPoints, 0);
   poolsAgree(state);
   run.loadout.sets.armor = [];
   reconcileRunLoadoutHp(registries, run, { adoptEquipmentBonuses: true });
-  assert.equal(run.maxHp, 65, 'removing the real +1 Constitution removes five maximum HP');
+  assert.equal(run.maxHp, wornHp + THREE_LEVELS_HP - HP_PER_CONSTITUTION, 'removing the real +1 Constitution removes five maximum HP');
   poolsAgree(state);
 });
 
