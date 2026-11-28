@@ -18,7 +18,8 @@ const profile = structuredClone(shippedProfile);
 Object.assign(profile.modules.effects, { baseDamageMultiplier: 0.5, playerDamageMultiplier: 0.7, enemyDamageMultiplier: 0.7,
   physicalDamageMultiplier: 0.7, blockGainMultiplier: 0.49 });
 profile.content.stats = { handBase: 3, handAttribute: 'intelligence', handPointsPerIncrease: 1,
-  attributePointTotal: 6, levelGains: { dexterity: { sp: 1 }, constitution: { hp: 5 }, wisdom: { mp: 1, poise: 1 }, intelligence: {} },
+  // The class attributes are the shipped ones, so their total is too.
+  attributePointTotal: shippedProfile.content.stats.attributePointTotal, levelGains: { dexterity: { sp: 1 }, constitution: { hp: 5 }, wisdom: { mp: 1, poise: 1 }, intelligence: {} },
   poolBases: { hp: 35, mana: 1, stamina: 3 }, levelGrowth: { hp: 5, mana: 0, stamina: 0 },
   pointsPerIncrease: { sp: 1, mp: 1 }, attributeBaseline: { sp: 0, mp: 0 }, secondaryPolicy: 'primaryOnly' };
 profile.modules.gear.statPoints = { attributes: { common: 0, uncommon: 0, rare: 1, epic: 1 }, perRank: 0, poiseMin: 1, attributeBudgetCost: 3 };
