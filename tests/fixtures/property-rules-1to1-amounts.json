@@ -1,0 +1,17 @@
+{
+  "$note": "Owner ruling 2026-11-28: relic Block and damage are stored 1:1, so each rule's first trigger effect amount moved to these numbers.",
+  "amounts": {
+    "goldFigurine": 0,
+    "whetstoneFragment": 1,
+    "goldleafCharm": 1,
+    "curedHide": 2,
+    "twinnedArmor": 2,
+    "bloodstainedChalice": 0,
+    "goldboughSapling": 1,
+    "radiantAegis": 1,
+    "carrionTalon": 1,
+    "emberIdol": 1,
+    "moonlitVial": 1,
+    "wrathCoil": 1
+  }
+}

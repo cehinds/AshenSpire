@@ -40,6 +40,19 @@ import { RELATION_KINDS, PROPERTY_VISIBILITIES, PROPERTY_DOMAINS } from '../src/
 const HERE = dirname(fileURLToPath(import.meta.url));
 const fixture = (name) => JSON.parse(readFileSync(resolve(HERE, 'fixtures', name), 'utf8'));
 const REG = createRegistries(contentBundle);
+const oneToOneAmounts = fixture('property-rules-1to1-amounts.json').amounts;
+
+// The historical triggers with the first effect's amount at its 1:1 number, when the rule was rescaled.
+function rescaledTriggers(old)
+{
+  if (!Object.hasOwn(oneToOneAmounts, old.tag)) return old.triggers;
+  const [first, ...rest] = structuredClone(old.triggers);
+  first.do[0].amount = oneToOneAmounts[old.tag];
+  return [
+    first,
+    ...rest,
+  ];
+}
 
 // The fixture is the pre-tree rules with one id re-pointed since: siphon's
 // mastery gate read `skill: focus`, a name no ledger holds, and names the focus
@@ -73,7 +86,11 @@ test('every property rule resolves to its historical values or an explicit autho
     const rule = now.get(old.tag);
     assert.ok(rule, `rule '${old.tag}' is still derived`);
     for (const field of ['requires', 'excludes', 'textTemplate', 'passives', 'triggers']) {
-      assert.deepEqual(rule[field], approvedRetunes[old.tag]?.[field] ?? old[field], `rule '${old.tag}'.${field} matches its historical or explicitly retuned value`);
+      const historical = field === 'triggers'
+        ? rescaledTriggers(old)
+        : old[field];
+      const expected = approvedRetunes[old.tag]?.[field] ?? historical;
+      assert.deepEqual(rule[field], expected, `rule '${old.tag}'.${field} matches its historical or explicitly retuned value`);
     }
   }
 });
