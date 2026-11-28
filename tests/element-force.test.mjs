@@ -9,8 +9,9 @@ import { actorRangeKey, engagementBand } from '../src/model/combatEngagement.js'
 import { ElementTurnEnd } from '../src/engine/elementIdentity.js';
 
 const FORCE = { combatProfile: { camp: 'spell', school: 'force', damageType: 'arcane' }, tags: ['school:force'] };
-// Base doubled: Core halves card base damage (ceil, effects.baseDamageMultiplier 0.5), so the hit meets the element rules at the old 10.
-const hit = (combat, target, carrier = FORCE, base = 20) => profileDamageReceipt(combat, combat.player, target, base, { ...carrier, skipRatingBonus: true }, { roll: 0 });
+// Owner ruling 2026-11-28: damage is 1:1 (no base-damage scale), so the hit meets the element rules at 10.
+const HIT_DAMAGE = 10;
+const hit = (combat, target, carrier = FORCE, base = HIT_DAMAGE) => profileDamageReceipt(combat, combat.player, target, base, { ...carrier, skipRatingBonus: true }, { roll: 0 });
 const band = (combat, enemy) => engagementBand(combat.rangeState, actorRangeKey(combat, combat.player), actorRangeKey(combat, enemy));
 test('force sends half of the post-Block damage to Poise (owner 2026-11-18, replaces the x1.5 Poise damage), never more than the pool holds', () => {
   const { combat, enemy } = fight({ enemies: 1, poise: 30 });
