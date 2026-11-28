@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-28
 
+- **Poise is off** ([#3053](https://github.com/cehinds/AshenSpire/pull/3053), `0.7.5.201`). Fights no longer use Poise: no Poise bars, no Poise on cards and no Poise breaks. A switch brings it back.
 - **New default settings** ([#3042](https://github.com/cehinds/AshenSpire/pull/3042), `0.7.5.201`). The opening plays once and a tap on the art moves it on. Music starts off, and combat, the title hold and swipes are quicker.
 - **Same-stance switch covers spells** ([#3049](https://github.com/cehinds/AshenSpire/pull/3049), `0.7.5.199`). Turning off the same-stance discount now also removes the Prepared spell SP cut. It is on, so nothing changes in play.
 
