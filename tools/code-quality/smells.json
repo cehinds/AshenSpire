@@ -1,0 +1,53 @@
+{
+    "$note": "Thresholds and exemptions for format-changed.mjs and smells.mjs.",
+    "defaultBase": "origin/dev",
+    "extensions": [
+        ".js",
+        ".mjs"
+    ],
+    "exclude": [
+        "src/content/generated/**",
+        "src/config/generated/**",
+        "src/framework/data/**",
+        "src/content/changelog.generated.js",
+        "tools/attic/**",
+        "tools/code-quality/fixtures/**",
+        "**/node_modules/**",
+        "AshenSpire.html",
+        "AshenSpire-mobile.html",
+        "build/**",
+        "dist/**"
+    ],
+    "writeExclude": [],
+    "allowedNumbers": [
+        0,
+        1,
+        -1,
+        2,
+        100
+    ],
+    "$allowedNumbersNote": "Numeric literals that never count as magic numbers.",
+    "minDuplicateTokens": 60,
+    "$minDuplicateTokensNote": "Shortest normalized token run, statement-aligned, reported as duplicated.",
+    "maxFunctionLines": 40,
+    "$maxFunctionLinesNote": "Longest function, in source lines from its first to its last line.",
+    "maxNesting": 3,
+    "$maxNestingNote": "Deepest block nesting (if, loop, switch, try) inside one function.",
+    "minRepeatedStrings": 2,
+    "$minRepeatedStringsNote": "Times one string literal must appear in function bodies of a file to count as repeated.",
+    "testPathPrefixes": [
+        "tests/"
+    ],
+    "assertionCallees": [
+        "assert",
+        "eq",
+        "check",
+        "ok",
+        "equal",
+        "deepEqual",
+        "strictEqual",
+        "notEqual",
+        "match",
+        "throws"
+    ]
+}
