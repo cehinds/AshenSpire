@@ -796,7 +796,7 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
     : 1;
   const winnerMultiplier = triangle
     ? triangle.winnerMultiplier
-    : stances.advantageMultiplier;
+    : stances?.advantageMultiplier;
   const winnerApplies = advantage && !flatReturn;
   const matchupMultiplier = smashRule
     ? smashMultiplier
