@@ -21,6 +21,17 @@ import { describe, isPlainObject } from './shared.js';
 
 const COMMON_EFFECT_FIELDS = ['op', 'target', 'amount', 'if', 'repeat', 'oncePerTurn', 'mode'];
 
+// The funded part is a whole number no larger than the restore it comes out of.
+function validateFundedPart(eff, path, err)
+{
+  const amountIsNumber = typeof eff.amount === 'number';
+  const fundedIsWhole = Number.isInteger(eff.funded) && eff.funded >= 0;
+  if (!fundedIsWhole || !amountIsNumber || eff.funded > eff.amount)
+  {
+    err(`${path}.funded`, 'must be a non-negative integer no larger than a numeric amount');
+  }
+}
+
 export function validateEffects(effects, path, vctx) {
   const { err } = vctx;
   if (!Array.isArray(effects)) {
@@ -90,6 +101,8 @@ export function validateEffects(effects, path, vctx) {
       if (named === random) err(p, `Opcode 'swapClass' takes exactly one of 'classId' or 'random: true'`);
       else if (named && typeof eff.classId !== 'string') err(`${p}.classId`, `'classId' must be a class id`);
     }
+    // A fixed-price grade states the part of its restore that pays its own price (`funded`).
+    if (eff.funded !== undefined) validateFundedPart(eff, p, err);
     // restoreMana restores BY an amount or TO a floor (plan phase 7) — one
     // selector, never neither (nothing to restore) nor both (one ignored).
     if (eff.op === 'restoreMana') {

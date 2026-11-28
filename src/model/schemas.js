@@ -604,13 +604,13 @@ export const EFFECT_SPECS = Object.freeze({
   discard: { allowed: ['random', 'choose'], required: [], refs: {} },
   exhaust: { allowed: ['random'], required: [], refs: {} },
   addCard: { allowed: ['card', 'pile', 'position', 'count'], required: ['card'], refs: { card: 'cards' } },
-  gainEnergy: { allowed: [], required: ['amount'], refs: {} },
+  gainEnergy: { allowed: ['funded'], required: ['amount'], refs: {} },
   restoreStamina: { allowed: [], required: ['amount'], refs: {} },
   // `amount` restores that much; `toFloorPct` (plan phase 7, the rest's
   // floorOrFull mode) restores TO that percent of max, or to full when the
   // pool already stands at or above the floor. Exactly one of the two —
   // validate.js refuses neither and both.
-  restoreMana: { allowed: ['toFloorPct'], required: [], refs: {} },
+  restoreMana: { allowed: ['toFloorPct', 'funded'], required: [], refs: {} },
   loseHp: { allowed: ['cause', 'nonlethal', 'offering'], required: ['amount'], refs: {} },
   heal: { allowed: [], required: ['amount'], refs: {} },
   shuffleDiscardIntoDraw: { allowed: [], required: [], refs: {} },
