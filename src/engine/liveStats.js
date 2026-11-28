@@ -81,7 +81,8 @@ function ensure(ctx, entity) {
 
 const clamp = (value, max) => Math.max(0, Math.min(max, value));
 
-// The live Poise maximum after a stat change; stagger.poise off keeps every pool at 0, bonus and all.
+// The live Poise maximum after a stat change.
+// stagger.poise off keeps every pool at 0, bonus and all.
 function livePoiseMaximum(
   ctx,
   entity,
