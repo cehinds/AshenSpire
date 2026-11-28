@@ -16,7 +16,9 @@ async function runtime(mode) {
   const require = mode === 'bundled' ? productionBundle({ additionalModules: modules }) : null;
   return Object.assign({}, ...await Promise.all(modules.map(id => require ? require(id) : import(new URL('../' + id, import.meta.url)))));
 }
-function fixture(api, cardId, { sword = false, extraStrength = 0, multiHit = 0, savedProfile = null } = {}) {
+// The Strength the Straight Sword numbers below are worked at, whatever the class starts with.
+const SWORD_REFERENCE_STRENGTH = 3;
+function fixture(api, cardId, { sword = false, strength = null, multiHit = 0, savedProfile = null } = {}) {
   // Null-prototype JSON is accepted in both native and production VM realms without changing the authored configuration.
   const author = JSON.parse(JSON.stringify({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {
     effects: { baseDamageMultiplier: 1, physicalDamageMultiplier: 1, playerDamageMultiplier: 1 },
@@ -27,7 +29,7 @@ function fixture(api, cardId, { sword = false, extraStrength = 0, multiHit = 0, 
     profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   if (sword) api.equipPiece(registries, run.loadout, 'rightHand', 0, 'straightSword', { has: () => true }, { inCombat: false, classId: run.class, attributes: run.attributes });
   run.relics = [];
-  run.attributes.strength += extraStrength;
+  if (strength !== null) run.attributes.strength = strength;
   const combat = api.createRunCombat({ registries, run, rng: api.createRng(31), enemyIds: ['wanderingSoldier'] });
   api.dispatch(combat, { type: 'setReactions', enabled: false });
   combat.player.energy = 20;
@@ -65,8 +67,8 @@ for (const mode of ['native', 'bundled']) {
   });
   test(`Straight Sword adds its flat bonus to Reprisal Growth's unevaluated formula: ${mode}`, async () => {
     // Hold the reference STR constant after the sword's flat attribute was removed.
-    const api = await runtime(mode), equipped = fixture(api, 'base.scale-damage-taken', { sword: true, extraStrength: 1 });
-    const control = fixture(api, 'base.scale-damage-taken', { sword: true, extraStrength: 1 });
+    const api = await runtime(mode), equipped = fixture(api, 'base.scale-damage-taken', { sword: true, strength: SWORD_REFERENCE_STRENGTH });
+    const control = fixture(api, 'base.scale-damage-taken', { sword: true, strength: SWORD_REFERENCE_STRENGTH });
     control.combat.player.itemProps.cardRules = control.combat.player.itemProps.cardRules.filter(rule => rule.stat !== 'damage');
     const withSword = quoteAndPlay(api, equipped), withoutBonus = quoteAndPlay(api, control);
     assert.equal(withoutBonus.damage, 16);
