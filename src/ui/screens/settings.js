@@ -103,6 +103,18 @@ let deferredCardSizeNotice = null;
 // there is nothing under their key to export or take away.
 const CONTROL_ROW_TYPES = new Set(['button', 'action', 'sceneList']);
 
+// Both Export buttons (Advanced and the Done prompt) write this same file.
+function SaveEveryChangedSetting(currentSettings)
+{
+  const includeKeys = SETTINGS_ROWS
+    .filter((row) => !CONTROL_ROW_TYPES.has(row.type))
+    .map((row) => row.key);
+  return saveAdvancedConfigFile(currentSettings, {
+    build: { contentVersion: contentBundle.version },
+    includeKeys,
+  });
+}
+
 /**
  * hiddenTuningKeys(settings, debug) → stored keys this build has no row for:
  * every row of a debug-only section (tuning or not — `creationAutoAdvance`, say),
@@ -2623,10 +2635,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     btn.addEventListener('click', async () => {
       btn.disabled = true;
       btn.textContent = 'Saving…';
-      const result = await saveAdvancedConfigFile(panelSettings || settings, {
-        build: { contentVersion: contentBundle.version },
-        includeKeys: SETTINGS_ROWS.filter((row) => row.cat === 'Advanced' && !CONTROL_ROW_TYPES.has(row.type)).map((row) => row.key),
-      });
+      const result = await SaveEveryChangedSetting(panelSettings || settings);
       btn.disabled = false;
       btn.textContent = result.ok ? (result.method === 'save-as' ? 'Saved' : 'Downloaded') : 'Unavailable';
       showSettingsNotice(result.ok
@@ -3223,10 +3232,7 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
     skip.addEventListener('click', () => { prompt.close(); door.close(); });
     exportButton.addEventListener('click', async () => {
       exportButton.disabled = true;
-      const result = await saveAdvancedConfigFile(panelSettings || settings, {
-        build: { contentVersion: contentBundle.version },
-        includeKeys: SETTINGS_ROWS.filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key),
-      });
+      const result = await SaveEveryChangedSetting(panelSettings || settings);
       exportButton.disabled = false;
       if (result.ok) { prompt.close(); door.close(); }
       else exportButton.textContent = 'Try export again';
