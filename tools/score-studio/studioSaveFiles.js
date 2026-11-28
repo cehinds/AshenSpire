@@ -23,6 +23,9 @@ export const StudioPackCardIdPrefixes = Object.freeze([
   'core.',
   'custom.',
 ]);
+// The old Studio cards file in StudioSaveDir; nothing reads it now that edits go to the game.
+export const StudioRetiredCardsFileName = 'cards.json';
+
 /** True for an id the game's card file may hold. */
 export function IsStudioPackCardId(id)
 {
