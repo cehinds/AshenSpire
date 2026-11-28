@@ -393,6 +393,10 @@ art.tier.showing,,,Showing {tier} art.,
 art.tier.notLoaded,,,Showing {tier} art: the {requested} art could not be loaded.,
 art.tier.notCarried,,,Showing {tier} art: this build carries no {requested} art.,
 art.tier.autoLight,,,"Showing {tier} art, because {reason}. Choose High to load it anyway.",
+art.tier.reason.saveData,,,Data Saver is on,
+art.tier.reason.narrow,,,the screen is narrow,
+art.tier.reason.small,,,the screen is small,
+art.tier.reason.lowMemory,,,this device has little memory,
 art.retry,,Retry,Load the art again.,Retry
 # ---- the act map (W4b) ---------------------------------------------------
 map.enter,,Enter,Travel to the selected node.,Enter

@@ -44,6 +44,16 @@ const LOAD_STATE_IDLE = 'idle';
 const LOAD_STATE_LOADING = 'loading';
 const LOAD_STATE_LOADED = 'loaded';
 const LOAD_STATE_FAILED = 'failed';
+const LAYOUT_ATTRIBUTE = 'data-layout';
+const NARROW_LAYOUT = 'narrow';
+const LIGHT_REASON_STRINGS = Object.freeze(
+  {
+    saveData: 'art.tier.reason.saveData',
+    narrow: 'art.tier.reason.narrow',
+    small: 'art.tier.reason.small',
+    lowMemory: 'art.tier.reason.lowMemory',
+  },
+);
 
 /** At or under this many GB (navigator.deviceMemory), Auto picks light. */
 export const LOW_MEMORY_GB = 2;
@@ -62,20 +72,52 @@ export function artQualityChoice(settings) {
   return ART_QUALITY_CHOICES.includes(value) ? value : ART_AUTO;
 }
 
+// The uiStrings row naming why this device should get light art, or null.
+function lightReasonId(doc, nav, scr)
+{
+  if (nav?.connection?.saveData === true)
+  {
+    return LIGHT_REASON_STRINGS.saveData;
+  }
+  const layout = doc?.documentElement?.getAttribute?.(LAYOUT_ATTRIBUTE);
+  if (layout === NARROW_LAYOUT)
+  {
+    return LIGHT_REASON_STRINGS.narrow;
+  }
+  const shortSide = Math.min(Number(scr?.width), Number(scr?.height));
+  if (Number.isFinite(shortSide) && shortSide > 0 && shortSide <= SMALL_SCREEN_PX)
+  {
+    return LIGHT_REASON_STRINGS.small;
+  }
+  const memory = Number(nav?.deviceMemory);
+  if (Number.isFinite(memory) && memory > 0 && memory <= LOW_MEMORY_GB)
+  {
+    return LIGHT_REASON_STRINGS.lowMemory;
+  }
+  return null;
+}
+
 /**
  * autoTier({ defaultTier, doc, nav }) → { tier, reason }. `reason` names why
  * Auto chose light below the build's default, else ''.
  */
-export function autoTier({ defaultTier = ASSET_PACKS?.tier, doc = globalThis.document, nav = globalThis.navigator, scr = globalThis.screen } = {}) {
-  const best = defaultTier === TIER_HIGH ? TIER_HIGH : TIER_LIGHT;
-  if (best === TIER_LIGHT) return { tier: TIER_LIGHT, reason: '' };
-  if (nav?.connection?.saveData === true) return { tier: TIER_LIGHT, reason: 'Data Saver is on' };
-  if (doc?.documentElement?.getAttribute?.('data-layout') === 'narrow') return { tier: TIER_LIGHT, reason: 'the screen is narrow' };
-  const short = Math.min(Number(scr?.width), Number(scr?.height));
-  if (Number.isFinite(short) && short > 0 && short <= SMALL_SCREEN_PX) return { tier: TIER_LIGHT, reason: 'the screen is small' };
-  const memory = Number(nav?.deviceMemory);
-  if (Number.isFinite(memory) && memory > 0 && memory <= LOW_MEMORY_GB) return { tier: TIER_LIGHT, reason: 'this device has little memory' };
-  return { tier: best, reason: '' };
+export function autoTier(
+  {
+    defaultTier = ASSET_PACKS?.tier,
+    doc = globalThis.document,
+    nav = globalThis.navigator,
+    scr = globalThis.screen,
+  } = {},
+)
+{
+  if (defaultTier !== TIER_HIGH)
+  {
+    return { tier: TIER_LIGHT, reason: '' };
+  }
+  const reasonId = lightReasonId(doc, nav, scr);
+  return reasonId
+    ? { tier: TIER_LIGHT, reason: UiFullText(reasonId) }
+    : { tier: TIER_HIGH, reason: '' };
 }
 
 /** The tier the setting asks the loader for: light or high. */
@@ -255,8 +297,10 @@ export function tierStatus(settings, { pin = ASSET_PACKS, inlineMap = ASSET_MAP,
  * has failed, or a Retry is running (the button stays, disabled, so the focus
  * the player put on it is not lost).
  */
-export function retryOffered({ pin = ASSET_PACKS, inlineMap = ASSET_MAP } = {}) {
-  return tiersAvailable(pin, inlineMap) && (retrying || (!switching && builtInArtStatus().state === LOAD_STATE_FAILED));
+export function retryOffered({ pin = ASSET_PACKS, inlineMap = ASSET_MAP } = {})
+{
+  const loadFailed = !switching && builtInArtStatus().state === LOAD_STATE_FAILED;
+  return tiersAvailable(pin, inlineMap) && (retrying || loadFailed);
 }
 
 function showTierStatus(settings, where = {}) {
@@ -284,8 +328,18 @@ function showTierStatus(settings, where = {}) {
 function stamp(result, { failed = false } = {}) {
   try {
     const root = globalThis.document?.documentElement;
-    if (root?.dataset && result.state === LOAD_STATE_LOADED) root.dataset.builtInArt = result.tier;
-    else if (root?.dataset && failed && result.state === LOAD_STATE_FAILED) root.dataset.builtInArt = LOAD_STATE_FAILED;
+    if (!root?.dataset)
+    {
+      return;
+    }
+    if (result.state === LOAD_STATE_LOADED)
+    {
+      root.dataset.builtInArt = result.tier;
+    }
+    else if (failed && result.state === LOAD_STATE_FAILED)
+    {
+      root.dataset.builtInArt = LOAD_STATE_FAILED;
+    }
   } catch { /* no document: tests */ }
 }
 
@@ -335,7 +389,12 @@ export function applyArtTier(settings, opts = {}) {
     const now = builtInArtStatus();
     // Already showing it — or asked for it before on a build that has no such
     // pack, where asking again would only fall back the same way.
-    if (now.state === LOAD_STATE_LOADED && now.requested === want && (now.tier === want || !pin.packs?.[want])) { showTierStatus(settings); return null; }
+    const fallsBackTheSameWay = now.tier === want || !pin.packs?.[want];
+    if (now.state === LOAD_STATE_LOADED && now.requested === want && fallsBackTheSameWay)
+    {
+      showTierStatus(settings);
+      return null;
+    }
     switching = true;
     showTierStatus(settings);
     try {
