@@ -267,16 +267,23 @@ function weaknessReceipt(carrier, stance, { base = 40, rules = null } = {}) {
   return profileDamageReceipt(combat, combat.player, enemy, base, { ...structuredClone(carrier), skipRatingBonus: true });
 }
 const weaknessStage = receipt => receipt.damageReceipt.hits[0].sources.find(row => row.id === 'stance-weakness');
+// Owner ruling 2026-11-28 ships Prepared neutral; these fights keep the x1.25 melee weakness to cover the mechanic.
+const PREPARED_MELEE_WEAKNESS = 1.25;
+function withPreparedWeakness(rules)
+{
+  const prepared = rules.stanceBenefits.prepared;
+  rules.stanceBenefits.prepared = { ...prepared, meleeDamageTakenMultiplier: PREPARED_MELEE_WEAKNESS };
+}
 
 test('rule 5: a Prepared target takes x1.25 from a melee hit, and nothing extra from a ranged, reach or magic hit', () => {
   // A Sweep does not beat Prepared, so the weakness is the only stance term here (Attack and Smash: the next test).
-  const melee = weaknessReceipt(SWEEP, 'casting');
+  const melee = weaknessReceipt(SWEEP, 'casting', { rules: withPreparedWeakness });
   assert.equal(weaknessStage(melee)?.multiplier, 1.25, 'the receipt lists the Stance weakness stage');
-  assert.equal(weaknessStage(weaknessReceipt(RANGED, 'casting')), undefined);
+  assert.equal(weaknessStage(weaknessReceipt(RANGED, 'casting', { rules: withPreparedWeakness })), undefined);
   const off = weaknessReceipt(SWEEP, 'casting', { rules: rules => { delete rules.stanceBenefits.prepared.meleeDamageTakenMultiplier; } });
   assert.equal(melee.hpLoss, Math.floor(off.hpLoss * 1.25), 'shown = dealt: the hit is 1.25x the same hit without the rule');
   for (const carrier of [RANGED, REACH, MAGIC]) {
-    const on = weaknessReceipt(carrier, 'casting');
+    const on = weaknessReceipt(carrier, 'casting', { rules: withPreparedWeakness });
     const without = weaknessReceipt(carrier, 'casting', { rules: rules => { delete rules.stanceBenefits.prepared.meleeDamageTakenMultiplier; } });
     assert.equal(on.hpLoss, without.hpLoss, `${carrier.combatProfile.range}/${carrier.combatProfile.camp}: no Prepared weakness`);
   }
@@ -288,6 +295,7 @@ function withAttackFactor(rules, adjust = null)
 {
   const attack = rules.stanceBenefits.attack;
   rules.stanceBenefits.attack = { ...attack, damageMultiplier: ATTACK_STANCE_FACTOR };
+  withPreparedWeakness(rules);
   adjust?.(rules);
 }
 
@@ -349,8 +357,9 @@ test('rule 5 edge: a Counter return hit never takes the weakness', () => {
   assert.equal(on.hpLoss, without.hpLoss);
 });
 
-test('rule 5: the shipped data turns the weaknesses on', () => {
-  assert.equal(shipped.stanceBenefits.prepared.meleeDamageTakenMultiplier, 1.25);
+test('rule 5: the shipped data turns the Idle weakness on and leaves Prepared neutral', () => {
+  // Owner ruling 2026-11-28: Prepared takes no extra damage; Idle keeps its weakness.
+  assert.equal(shipped.stanceBenefits.prepared.meleeDamageTakenMultiplier, 1);
   assert.equal(shipped.stanceBenefits.neutral.damageTakenMultiplier, 1.25);
 });
 
@@ -373,7 +382,7 @@ test('rule 5: the real core.strike and core.smash (no authored range: melee) mee
       dispatch(combat, { type: 'playCard', cardInstanceId: 'x', targetId: enemy.id });
       return { face: row.faceValue, quote: row.perTarget?.[enemy.id], lost: hp - enemy.hp };
     };
-    const on = fight(), off = fight(rules => { delete rules.stanceBenefits.prepared.meleeDamageTakenMultiplier; });
+    const on = fight(withPreparedWeakness), off = fight(rules => { delete rules.stanceBenefits.prepared.meleeDamageTakenMultiplier; });
     assert.ok(off.lost > 0, `${cardId} lands`);
     assert.ok(on.face > off.face, `${cardId}: the face carries the melee weakness, so the card counts as melee (${on.face} against ${off.face})`);
     assert.equal(on.lost, off.lost, `${cardId}: x1.25 in all, as with the advantage alone (not x1.5625)`);
