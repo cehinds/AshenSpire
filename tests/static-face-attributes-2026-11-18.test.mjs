@@ -1,6 +1,7 @@
 // Owner, 2026-11-18: a card face outside combat (deck editor, rewards, shop, upgrade picker) carries the run character's always-on attribute bonus,
 // so it reads the number a neutral-stance hit makes: physical damage adds STR, Block adds DEX, magic damage adds max(INT, WIS), then the same
-// multipliers as combat (all 1, owner ruling 2026-11-28), min 1. No stance, status or enemy defence is in it (those show in combat).
+// multipliers as combat (all 1, owner ruling 2026-11-28), min 1.
+// No stance, status or enemy defence is in it (those show in combat).
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -24,11 +25,13 @@ const number = text => Number(/\d+/.exec(text)[0]);
 // Defend's authored Block comes from the pack (#3039 restored it to grant Block again).
 const defendBlockEffect = registries.cards.get('core.defend').effects.find(effect => effect.op === 'block');
 const DEFEND_AUTHORED_BLOCK = defendBlockEffect.amount;
-const strikeDamageEffect = registries.cards.get('core.strike').effects.find(effect => effect.op === 'damage');
+const strikeDef = registries.cards.get('core.strike');
+const strikeDamageEffect = strikeDef.effects.find(effect => effect.op === 'damage');
 const STRIKE_AUTHORED_DAMAGE = strikeDamageEffect.amount;
 
 test('a face with no run keeps the authored number', () => {
-  assert.equal(number(cardPlainText(registries, { cardId: 'core.strike' }, {})), STRIKE_AUTHORED_DAMAGE);
+  const strikeFace = cardPlainText(registries, { cardId: 'core.strike' }, {});
+  assert.equal(number(strikeFace), STRIKE_AUTHORED_DAMAGE);
   assert.equal(number(cardPlainText(registries, { cardId: 'core.defend' }, {})), DEFEND_AUTHORED_BLOCK);
 });
 

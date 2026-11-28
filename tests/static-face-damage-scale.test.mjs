@@ -1,5 +1,5 @@
-// A card face read outside combat states the base the card deals under the active profile, for every maneuver, read with the run's
-// rules. Owner ruling 2026-11-28: the base-damage scale is 1, so the token is the stored base (+ STR), as combat's first hit starts.
+// A card face read outside combat with the run's rules states the base the card deals, for every maneuver.
+// Owner ruling 2026-11-28: the base-damage scale is 1, so it is the stored base (+ STR), as combat starts.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -37,7 +37,7 @@ test('Strike, Smash, Sweep and Counter faces outside combat state the base comba
     const authored = effects[index].amount;
     for (const rules of [run]) {
       const face = staticCardTokens(def, registries, rules)[binding.token];
-      // A Counter's armed base takes no STR (its return is final damage); the rest add the run's STR.
+      // A Counter's armed base takes no STR (its return is final damage); the rest add STR.
       const expected = id === 'core.counter'
         ? authored
         : Math.max(1, authored + STR);

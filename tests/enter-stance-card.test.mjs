@@ -85,8 +85,8 @@ test('the figure\'s pose and glyph read the stance the engine ended on, live and
   assert.equal(CardAsEnteredStance(card, [played], played), card);
 });
 
-// Non-Core (createRegistries(contentBundle), no profile): the numbers match the stored content. Owner ruling 2026-11-28 rescaled
-// the Oath Block (balanceTagMechanics.json) to 0, so the Reaver's Oath grant adds nothing here.
+// Non-Core (createRegistries(contentBundle), no profile): the numbers match the stored content.
+// Owner ruling 2026-11-28 rescaled the Oath Block (balanceTagMechanics.json) to 0, so it adds nothing.
 const plainReg = createRegistries(contentBundle);
 async function plainPlay(cardId, choice) {
   const { createCombat } = await import('../src/engine/combat.js');

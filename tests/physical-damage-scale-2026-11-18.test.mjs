@@ -1,5 +1,5 @@
-// ScalePhysicalDamage cuts only the physical share of a hit. Owner ruling 2026-11-28: physicalDamageMultiplier and
-// blockGainMultiplier read as 1 in every profile, so a profile saved with 0.7 and 0.49 plays 1:1.
+// ScalePhysicalDamage cuts only the physical share of a hit. Owner ruling 2026-11-28: the physical
+// and Block scales read as 1 in every profile, so a profile saved with 0.7 and 0.49 plays 1:1.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -158,7 +158,8 @@ test('a static card face shows the 1:1 figure under a saved physical cut, for a 
   const plain = variant({ ...neutral, physicalDamageMultiplier: 1 }), halved = variant({ ...neutral, physicalDamageMultiplier: 0.5 });
   const run = createRunState({ registries: plain.registries, classId: 'reaver', seed: 7, profileMeta: META });
   const strength = gameProfileEffectiveAttributes(plain.registries, run).strength;
-  const stored = plain.registries.cards.get('core.strike').effects.find(effect => effect.op === 'damage').amount;
+  const strikeDef = plain.registries.cards.get('core.strike');
+  const stored = strikeDef.effects.find(effect => effect.op === 'damage').amount;
   assert.equal(faceOf(plain, 'core.strike', 'reaver'), stored + strength);
   assert.equal(faceOf(halved, 'core.strike', 'reaver'), stored + strength, 'the saved cut reads as 1');
   for (const cardId of ['core.cinderDart', 'core.cantrip'])

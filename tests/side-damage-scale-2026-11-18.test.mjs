@@ -1,5 +1,5 @@
-// Owner, 2026-11-18: enemy HP is cut 30% and a player's spells take twice the Poise. Owner ruling 2026-11-28:
-// damage and Block scales are 1 in every profile, so a profile saved with the old cuts plays at 1.
+// Owner, 2026-11-18: enemy HP is cut 30% and a player's spells take twice the Poise.
+// Owner ruling 2026-11-28: damage and Block scales are 1 in every profile, saved ones included.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { gameDigest } from '../engine/kernel/gameConfig.js';

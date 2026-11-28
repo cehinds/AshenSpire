@@ -58,7 +58,7 @@ test('Core winning defense mitigates exactly once before configured Block/Poise,
 // Owner, 2026-11-14 (Wave 2.5): the enemy's Attack stance deals +20% (8 -> 9 a hit), so the shipped Core quotes and loses 17 HP (baseline 23). A fight created
 // before the stance benefits keeps the older 14 (baseline 20): `legacy` builds it without the `stanceBenefits` rules.
 // Theme B (owner, 2026-11-17): the no-stance baseline is Idle, which takes x1.25 from every hit, so the shipped baseline is 32; the Counter-stance quote is unchanged.
-// Owner ruling 2026-11-28 ships Attack's factor as 1; the fight's own rules carry the 1.2 so the stage stays covered.
+// Owner ruling 2026-11-28 ships Attack's factor as 1; the fight's rules carry 1.2 to cover the stage.
 const ATTACK_STANCE_FACTOR = 1.2;
 function withAttackFactor(combat)
 {

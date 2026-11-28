@@ -22,7 +22,7 @@ const ATTACK_STANCE = 'attack';
 const DEFEND_STANCE = 'defend';
 const NEUTRAL_STANCE = 'neutral';
 const PROBE = SimpleCombatFixture.stanceProbe;
-// Owner ruling 2026-11-28 ships the Attack and Defend factors as 1; the fight's own rules carry these.
+// Owner ruling 2026-11-28 ships the Attack and Defend factors as 1; the fight's rules carry these.
 const STANCE_FACTORS = Object.freeze({
   attackDamage: 1.2,
   defendBlock: 1.5,

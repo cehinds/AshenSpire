@@ -34,7 +34,7 @@ const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent
 const META = { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } };
 const CLASSES = ['reaver', 'rogue', 'starseer', 'herald'];
 const FIGHTS = 208;
-// The intents below read the stored move numbers, so the shown and the dealt hit start from one figure.
+// The intents below read the stored move numbers, so the shown and dealt hit share one figure.
 const SLASH_DAMAGE = reg.enemies.get('wanderingSoldier').moves.slash.damage;
 const SCYTHE_PAIR = reg.enemies.get('cinderMantis').moves.scythePair;
 const POOL = reg.encounters.all().filter(row => ['normal', 'elite'].includes(row.pool)).map(row => row.enemies);

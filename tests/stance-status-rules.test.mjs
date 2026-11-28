@@ -282,16 +282,20 @@ test('rule 5: a Prepared target takes x1.25 from a melee hit, and nothing extra 
   }
 });
 
-// Owner ruling 2026-11-28 ships Attack's damage factor as 1; this fight keeps 1.2, the arithmetic these pins were taken on.
+// Owner ruling 2026-11-28 ships Attack's damage factor as 1; this fight keeps 1.2 for these pins.
 const ATTACK_STANCE_FACTOR = 1.2;
 function withAttackFactor(rules, adjust = null)
 {
-  rules.stanceBenefits.attack = { ...rules.stanceBenefits.attack, damageMultiplier: ATTACK_STANCE_FACTOR };
+  const attack = rules.stanceBenefits.attack;
+  rules.stanceBenefits.attack = { ...attack, damageMultiplier: ATTACK_STANCE_FACTOR };
   adjust?.(rules);
 }
 
 test('decision 1: an advantage over Prepared and its melee weakness never stack; the hit takes the larger', () => {
-  const dropWeakness = rules => withAttackFactor(rules, () => { delete rules.stanceBenefits.prepared.meleeDamageTakenMultiplier; });
+  const dropWeakness = rules => withAttackFactor(rules, () =>
+  {
+    delete rules.stanceBenefits.prepared.meleeDamageTakenMultiplier;
+  });
   const setWeakness = multiplier => rules => withAttackFactor(rules, () =>
   {
     rules.stanceBenefits.prepared.meleeDamageTakenMultiplier = multiplier;
