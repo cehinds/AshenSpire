@@ -39,7 +39,7 @@ const RUN_CLASS_ID = 'reaver';
 const RUN_EXPANSION_VERSION = 2;
 const RUN_ENEMY_ID = 'wanderingSoldier';
 const AMPLE_RESOURCE = 9;
-const COMBAT_SCREEN_URL = new URL('../src/ui/screens/combat.js', import.meta.url);
+const COMBAT_SCREEN_PATH = '../src/ui/screens/combat.js';
 const AUTOMATION_SETTING_KEYS = [
     'autoCombat',
     'combatSpeed',
@@ -99,7 +99,7 @@ function settingRow(key)
 // The source between two named functions of the combat screen.
 function combatScreenSection(fromFunction, toFunction)
 {
-    const screen = readFileSync(COMBAT_SCREEN_URL, 'utf8');
+    const screen = readFileSync(new URL(COMBAT_SCREEN_PATH, import.meta.url), 'utf8');
     return screen.slice(
         screen.indexOf(`function ${fromFunction}`),
         screen.indexOf(`function ${toFunction}`),
