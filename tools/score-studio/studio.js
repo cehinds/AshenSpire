@@ -53,6 +53,8 @@ import {
   SaveShownContentEditor,
 } from './contentEditor/contentEditor.js';
 import { InitStudioSaveUi, StudioSaveMenuLabel } from './studioSaveUi.js';
+import { CreatePackCardBaseline } from './packCardChanges.js';
+import { IsStudioPackCardId } from './studioSaveFiles.js';
 import {
   GalleryKind,
   Galleries,
@@ -483,6 +485,59 @@ function pushHistory() {
 
 function editedCards() {
   return state.cards.filter((c) => c._edited || c._custom);
+}
+
+// A card as the game loaded it, normalised as the Studio list is, or null for a new card.
+function gameCardOf(id)
+{
+  if (!registries.cards.has(id))
+  {
+    return null;
+  }
+  return normalizeStudioCard(clone(registries.cards.get(id)));
+}
+
+const packCardBaseline = CreatePackCardBaseline(gameCardOf);
+
+function isEditedCard(card)
+{
+  return Boolean(card._edited || card._custom);
+}
+
+// Cards outside the game card file's id namespaces (generated, subclass) stay in the draft.
+function packNamespaceCards()
+{
+  return state.cards.filter((card) => IsStudioPackCardId(card.id));
+}
+
+// What File > Save writes into the game's card file: the keys each edit changed.
+function packCardChanges()
+{
+  return packCardBaseline.changes(packNamespaceCards(), isEditedCard);
+}
+
+function snapshotPackCards()
+{
+  return packCardBaseline.snapshot(packNamespaceCards(), isEditedCard, packRemovedIds());
+}
+
+function markPackCardsSaved(snapshot)
+{
+  packCardBaseline.markSaved(snapshot);
+}
+
+function packRemovedIds()
+{
+  return removedCoreIds().filter(IsStudioPackCardId);
+}
+
+// Edits and removals a Save cannot write to the game's card file.
+function heldBackCardCount()
+{
+  const isHeldBack = (id) => !IsStudioPackCardId(id);
+  const heldEdits = editedCards().filter((card) => isHeldBack(card.id));
+  const heldRemovals = removedCoreIds().filter(isHeldBack);
+  return heldEdits.length + heldRemovals.length;
 }
 
 function editedItems() {
@@ -5787,9 +5842,11 @@ async function boot() {
 
   studioSaveUi = InitStudioSaveUi({
     state,
-    editedCards,
-    removedCoreIds,
-    mergeStudioCards,
+    packCardChanges,
+    packRemovedIds,
+    heldBackCardCount,
+    snapshotPackCards,
+    markPackCardsSaved,
     isLocalServer,
     isTextEntry,
     flushDraft,

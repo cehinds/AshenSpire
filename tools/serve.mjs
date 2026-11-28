@@ -410,7 +410,18 @@ function startWatch(root, emit) {
  * `host` binds one address ('localhost': 127.0.0.1 and ::1); unset, every interface.
  * Bumps to the next port if the requested one is in use.
  */
-export function serve({ root = ROOT_DIR, port = 8080, open = true, editorWrite = false, quiet = false, host, watch = false, assetRoot } = {}) {
+// studioSaveSeams goes to SaveStudioSave; tests use it to stub the game rebuild.
+export function serve({
+  root = ROOT_DIR,
+  port = 8080,
+  open = true,
+  editorWrite = false,
+  quiet = false,
+  host,
+  watch = false,
+  assetRoot,
+  studioSaveSeams = {},
+} = {}) {
   const rootResolved = resolve(root);
   const checkout = existsSync(join(rootResolved, 'art-release.json'));
   const artCheckout = authoringRoot({ root: rootResolved, assetRoot, required: false });
@@ -574,7 +585,7 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, editorWrite =
           const body = JSON.parse(Buffer.concat(chunks).toString('utf8'));
           if (urlPath === StudioSaveEndpoint)
           {
-            reply(httpOk, { ok: true, ...SaveStudioSave(rootResolved, body) });
+            reply(httpOk, { ok: true, ...SaveStudioSave(rootResolved, body, studioSaveSeams) });
           }
           else if (urlPath === '/__studio/subclass-catalog') {
             reply(200, { ok: true, ...saveStudioSubclassCatalog(rootResolved, body) });

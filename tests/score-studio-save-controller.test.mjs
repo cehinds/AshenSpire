@@ -246,7 +246,7 @@ test('studio save: no file and no edits reads none; an edit reads Draft; '
   studio.cards = [qaCard];
   assert.equal(controller.status(), StudioSaveStatus.Draft);
   assert.equal(controller.describe().text, 'Draft');
-  assert.match(controller.describe().title, /content\/source\/studio\/cards\.json/);
+  assert.match(controller.describe().title, /games\/ashenspire\/packs\/core\/cards\.json/);
   const saved = await controller.save();
   assert.equal(saved.result, StudioSaveResult.Saved);
   const post = findPost(requests);
@@ -258,7 +258,6 @@ test('studio save: no file and no edits reads none; an edit reads Draft; '
   assert.deepEqual(Object.keys(body.files.cards), [
     'kind',
     'formatVersion',
-    'savedAt',
     'cards',
     'removedCardIds',
   ]);
@@ -444,9 +443,11 @@ function setupSaveUi({ savedFiles, choice, storage, asked })
       repoArtLayers: emptyLayers,
       repoItemArtLayers: emptyLayers,
     },
-    editedCards: () => [],
-    removedCoreIds: () => [],
-    mergeStudioCards: () => undefined,
+    packCardChanges: () => [],
+    packRemovedIds: () => [],
+    heldBackCardCount: () => 0,
+    snapshotPackCards: () => null,
+    markPackCardsSaved: () => undefined,
     isLocalServer: true,
     clone: structuredClone,
     toast: () => undefined,
@@ -466,20 +467,32 @@ function setupSaveUi({ savedFiles, choice, storage, asked })
 test('studio save: once Keep my draft or Use the saved file is chosen, the next load asks nothing',
   async () =>
   {
-    const savedCardsData = {
-      cards: [qaCard],
-      removedCardIds: [],
+    const savedLayers = {
+      layers: [{ id: 'savedLayer' }],
     };
     const savedFiles = {
-      cards: savedDocument(cardsName, savedCardsData),
+      artLayers: savedDocument(artLayersName, {
+        cardArtLayers: savedLayers,
+        itemArtLayers: savedLayers,
+      }),
     };
     const draftCard = {
       ...qaCard,
       name: 'Draft edit',
     };
-    const expectedCards = {
-      [StudioSaveChoice.KeepDraft]: [draftCard],
-      [StudioSaveChoice.UseSaved]: [qaCard],
+    const draftLayers = {
+      layers: [{ id: 'draftLayer' }],
+    };
+    // Saved cards are the game's, so Use the saved file drops the draft's card edits.
+    const expected = {
+      [StudioSaveChoice.KeepDraft]: {
+        customCards: [draftCard],
+        artLayers: draftLayers,
+      },
+      [StudioSaveChoice.UseSaved]: {
+        customCards: [],
+        artLayers: savedLayers,
+      },
     };
     for (const choice of Object.values(StudioSaveChoice))
     {
@@ -500,12 +513,15 @@ test('studio save: once Keep my draft or Use the saved file is chosen, the next 
       await firstUi.reconcileDraft({
         customCards: [draftCard],
         removedCardIds: [],
+        artLayers: draftLayers,
+        itemArtLayers: draftLayers,
         studioSaveRevision: revisionTwo,
       });
       assert.equal(asked.count, 1, `${choice}: the first load asks once`);
       const storedDraft = JSON.parse(storage.draft);
       assert.equal(storedDraft.studioSaveRevision, revisionOne);
-      assert.deepEqual(storedDraft.customCards, expectedCards[choice]);
+      assert.deepEqual(storedDraft.customCards, expected[choice].customCards);
+      assert.deepEqual(storedDraft.artLayers, expected[choice].artLayers);
       const secondUi = setupSaveUi(options);
       await secondUi.loadSavedFiles();
       await secondUi.reconcileDraft(storedDraft);
@@ -648,3 +664,18 @@ test('studio save: Revert to in-game is stored as a draft, so a reload keeps it'
   assert.ok(start > 0 && end > start);
   assert.match(source.slice(start, end), /writeDraftNow\(\);/);
 });
+
+test('studio save: acceptCurrent takes a file read against what was saved as Saved again',
+  async () =>
+  {
+    const { studio, controller } = setup();
+    await loadWithBaseline(controller);
+    studio.cards = [qaCard];
+    await controller.save();
+    assert.equal(controller.status(), StudioSaveStatus.Saved);
+    // The card changes read empty once the saved cards become their baseline.
+    studio.cards = [];
+    assert.equal(controller.status(), StudioSaveStatus.Draft);
+    controller.acceptCurrent(cardsName);
+    assert.equal(controller.status(), StudioSaveStatus.Saved);
+  });

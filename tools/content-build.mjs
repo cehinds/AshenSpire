@@ -67,7 +67,12 @@ import { FORM_FACTORS as HUD_FORM_FACTORS } from './hud-layout-tokens.mjs';
 import { manifestIds } from './art-source.mjs';
 import { holdForCli } from './lib/build-lock.mjs';
 import { RANGES as WEAPON_RANGES } from '../src/model/combatRanges.js';
-import { StudioSaveDir, StudioSaveFiles } from './score-studio/studioSaveFiles.js';
+import {
+  StudioSaveDir,
+  StudioSaveDirFileNames,
+  StudioSaveFiles,
+  StudioRetiredCardsFileName,
+} from './score-studio/studioSaveFiles.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = join(ROOT, 'content', 'source');
@@ -91,7 +96,7 @@ const MUTATE = process.argv.includes('--mutate');
 const contentSourceFolder = 'source';
 const studioSaveFolder = basename(StudioSaveDir);
 const studioSaveFileNames = Object.freeze(
-  Object.values(StudioSaveFiles).map((spec) => basename(spec.path)),
+  StudioSaveDirFileNames.map((name) => basename(StudioSaveFiles[name].path)),
 );
 const studioSelftestFixture = Object.freeze({
   contentFolder: 'content-studio',
@@ -613,6 +618,14 @@ function sweepAssets(assetsRoot, bundle) {
   return { errors, bound, artless };
 }
 
+// An old Studio cards file only warns: its edits must be redone and saved to the game.
+function warnRetiredStudioCards()
+{
+  const filePath = `${StudioSaveDir}/${StudioRetiredCardsFileName}`;
+  console.warn(`warning: ${filePath} is no longer read; Studio Save now writes card edits`
+    + ' to the game card file. Re-save those edits, then delete it.');
+}
+
 function studioSaveDirIn(contentRoot)
 {
   return join(
@@ -665,6 +678,11 @@ function sweepStraySources(contentRoot) {
       else if (/\.json$/i.test(ent.name) && dir === join(contentRoot, 'source', 'mechanics')) continue;
       else if (dir === studioSaveDirIn(contentRoot) && studioSaveFileNames.includes(ent.name))
       {
+        continue;
+      }
+      else if (dir === studioSaveDirIn(contentRoot) && ent.name === StudioRetiredCardsFileName)
+      {
+        warnRetiredStudioCards();
         continue;
       }
       else if (/\.json$/i.test(ent.name) && dir === hudLayoutDir) {
@@ -943,7 +961,12 @@ function writeStudioSelftestTree(contentRoot)
   );
   mkdirSync(join(studioDir, studioSelftestFixture.subfolder), { recursive: true });
   writeFileSync(gameSourcePath, studioSelftestFixture.gameSourceCsv);
-  for (const fileName of [...studioSaveFileNames, ...studioSelftestFixture.strayFiles])
+  const writtenFiles = [
+    ...studioSaveFileNames,
+    StudioRetiredCardsFileName,
+    ...studioSelftestFixture.strayFiles,
+  ];
+  for (const fileName of writtenFiles)
   {
     writeFileSync(join(studioDir, fileName), studioSelftestFixture.emptyJson);
   }
@@ -961,11 +984,15 @@ function selftestStudioSaveSweep(contentRoot, ok)
   };
   const swept = sweepErrors.length === strayFiles.length
     && strayFiles.every(mentions)
-    && !studioSaveFileNames.some(mentions);
+    && !studioSaveFileNames.some(mentions)
+    && !mentions(StudioRetiredCardsFileName);
   const sweepDetail = swept
     ? ''
     : ` (got ${sweepErrors.length}: ${sweepErrors.join(' | ') || 'none'})`;
-  const passing = studioSaveFileNames.join(', ');
+  const passing = [
+    ...studioSaveFileNames,
+    StudioRetiredCardsFileName,
+  ].join(', ');
   const stray = strayFiles.join(', ');
   const label = `K14-studio [S2 m5] content/source/studio/: ${passing} pass;`
     + ` ${stray} each red by name${sweepDetail}`;

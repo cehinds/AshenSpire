@@ -20,6 +20,12 @@ import {
   StudioSaveHeaderKeys,
   StableJson,
 } from './score-studio/studioSaveFiles.js';
+import {
+  MergedPackCardsText,
+  PackCardDataProblem,
+  RebuildFromPackCards,
+  RunPackCardsBuildStep,
+} from './score-studio-pack-cards.mjs';
 
 export const DEFAULT_SCORING_PATH = 'content/source/scoring.json';
 export const DEFAULT_ART_LAYERS_PATH = 'content/source/cardArtLayers.json';
@@ -30,6 +36,7 @@ const subclassExportLabel = 'Subclass export';
 const parentSegment = '..';
 const missingFileCode = 'ENOENT';
 const studioSaveLabel = 'Studio save';
+const studioSaveBuildLabel = 'Studio save card rebuild';
 const studioSaveRequestKeys = Object.freeze([
   'revision',
   'files',
@@ -378,16 +385,6 @@ function isPlainObject(value)
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
 
-function isNonEmptyString(value)
-{
-  return typeof value === 'string' && Boolean(value);
-}
-
-function isCardObject(card)
-{
-  return isPlainObject(card) && isNonEmptyString(card.id);
-}
-
 function refuse(message)
 {
   throw new StudioSaveError(`${studioSaveLabel} refused: ${message}`);
@@ -432,21 +429,11 @@ function requireLayerSet(value, where)
 
 function checkCardsData(data)
 {
-  requireArrayOf(
-    data.cards,
-    isCardObject,
-    'cards must be an array of card objects, each with an id.',
-  );
-  const uniqueIds = new Set(data.cards.map((card) => card.id));
-  if (uniqueIds.size !== data.cards.length)
+  const problem = PackCardDataProblem(data);
+  if (problem)
   {
-    refuse('cards holds the same id twice.');
+    refuse(problem);
   }
-  requireArrayOf(
-    data.removedCardIds,
-    isNonEmptyString,
-    'removedCardIds must be an array of card ids.',
-  );
 }
 
 function checkArtLayersData(data)
@@ -604,42 +591,151 @@ function isUnchangedData(
   return StableJson(StudioSaveData(name, prior)) === StableJson(data);
 }
 
+function studioFileBytes(
+  name,
+  data,
+  plan,
+)
+{
+  const dataUnchanged = isUnchangedData(
+    name,
+    data,
+    plan.priorBytes,
+  );
+  if (dataUnchanged)
+  {
+    return null;
+  }
+  return studioSaveSerialize(
+    name,
+    data,
+    plan.savedAt,
+  );
+}
+
+// The game's card file with the changes merged in, or null when that changes no byte.
+function gameFileBytes(
+  name,
+  data,
+  plan,
+)
+{
+  const prior = plan.priorBytes[name];
+  if (prior === null)
+  {
+    refuse(`the game card file ${StudioSaveFiles[name].path} is missing.`);
+  }
+  let merged;
+  try
+  {
+    merged = MergedPackCardsText(prior, data);
+  }
+  catch (error)
+  {
+    refuse(error.message);
+  }
+  return merged === prior
+    ? null
+    : merged;
+}
+
 /** Splits the sent files into the writes a Save owes and the names whose data is unchanged. */
 function planStudioSaveWrites(dataByName, plan)
 {
-  const {
-    priorBytes,
-    pathOf,
-    savedAt,
-  } = plan;
   const writes = [];
   const unchanged = [];
   for (const [name, data] of Object.entries(dataByName))
   {
-    const dataUnchanged = isUnchangedData(
+    const spec = StudioSaveFiles[name];
+    const bytesFor = spec.savesToGame
+      ? gameFileBytes
+      : studioFileBytes;
+    const bytes = bytesFor(
       name,
       data,
-      priorBytes,
+      plan,
     );
-    if (dataUnchanged)
+    if (bytes === null)
     {
       unchanged.push(name);
       continue;
     }
     writes.push({
       name,
-      target: pathOf(StudioSaveFiles[name].path),
-      bytes: studioSaveSerialize(
-        name,
-        data,
-        savedAt,
-      ),
+      target: plan.pathOf(spec.path),
+      bytes,
     });
   }
   return {
     writes,
     unchanged,
   };
+}
+
+function writesGameFile(writes)
+{
+  return writes.some((write) => StudioSaveFiles[write.name].savesToGame);
+}
+
+function defaultBuildStep(rootDir, env)
+{
+  return (step) => RunPackCardsBuildStep(
+    rootDir,
+    step,
+    env,
+  );
+}
+
+// Rebuild what the game reads after its card file changed; the caller holds the build lock.
+// A failed step puts the build outputs and every written file back.
+function rebuildGame(save, env)
+{
+  const runStep = save.runBuildStep ?? defaultBuildStep(save.rootDir, env);
+  try
+  {
+    return RebuildFromPackCards(save.pathOf, runStep);
+  }
+  catch (error)
+  {
+    restorePriorBytes(save.writes, save.priorBytes);
+    const rolledBack = `${studioSaveLabel} rebuild failed and was rolled back`;
+    throw new StudioSaveError(`${rolledBack}: ${error.message}`);
+  }
+}
+
+// A card write takes the build lock before it writes, so no build reads a half-saved card file.
+function writeAndRebuild(save)
+{
+  if (!writesGameFile(save.writes))
+  {
+    writeAllOrRestore(
+      save.writes,
+      save.priorBytes,
+      save.writeFile,
+    );
+    return [];
+  }
+  const release = tryAcquire(save.rootDir, studioSaveBuildLabel);
+  if (typeof release !== 'function')
+  {
+    throw new StudioSaveError(busyMessage(release.heldBy), httpConflict);
+  }
+  try
+  {
+    writeAllOrRestore(
+      save.writes,
+      save.priorBytes,
+      save.writeFile,
+    );
+    return rebuildGame(save, {
+      ...process.env,
+      ...lockEnv(release),
+    });
+  }
+  finally
+  {
+    release();
+  }
 }
 
 function writeAllOrRestore(
@@ -675,7 +771,9 @@ export function ReadStudioSave(rootDir)
   for (const [name, spec] of Object.entries(StudioSaveFiles))
   {
     paths[name] = spec.path;
-    files[name] = parseOrNull(bytesByName[name]);
+    files[name] = spec.savesToGame
+      ? null
+      : parseOrNull(bytesByName[name]);
   }
   return {
     revision: studioSaveRevisionOf(bytesByName),
@@ -685,11 +783,12 @@ export function ReadStudioSave(rootDir)
 }
 
 // Writes the files a Studio Save sent, all or none, keeping the bytes of unchanged data.
-// `writeFile` and `now` are test seams; the endpoint passes only the body.
+// Card changes go into the game's card file, then the game is rebuilt.
+// `writeFile`, `now` and `runBuildStep(step)` are test seams; the endpoint passes only the body.
 export function SaveStudioSave(
   rootDir,
   body,
-  { writeFile = writeFileAtomic, now = isoNow } = {},
+  { writeFile = writeFileAtomic, now = isoNow, runBuildStep = null } = {},
 )
 {
   const dataByName = validateStudioSaveRequest(body);
@@ -705,11 +804,14 @@ export function SaveStudioSave(
     pathOf,
     savedAt,
   });
-  writeAllOrRestore(
+  const rebuilt = writeAndRebuild({
+    rootDir,
     writes,
     priorBytes,
+    pathOf,
     writeFile,
-  );
+    runBuildStep,
+  });
   const current = ReadStudioSave(rootDir);
   return {
     revision: current.revision,
@@ -719,5 +821,6 @@ export function SaveStudioSave(
       : null,
     written: writes.map((write) => write.name),
     unchanged,
+    rebuilt,
   };
 }

@@ -301,6 +301,14 @@ class StudioSaveController
     return this.#lastSavedJson.get(name) === StableJson(data);
   }
 
+  // A file whose read() is measured against what was saved shifts after a Save;
+  // this takes what it reads now as saved.
+  acceptCurrent(name)
+  {
+    const file = registeredFiles.get(name);
+    this.#lastSavedJson.set(name, currentJson(file));
+  }
+
   status()
   {
     if (!this.#isLocalServer)
