@@ -5466,7 +5466,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 8
+        "amount": 5
       },
       {
         "op": "applyStatus",
