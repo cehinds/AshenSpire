@@ -17,6 +17,18 @@ export const StudioCardsKind = 'ashenspire.studioCards';
 export const StudioArtLayersKind = 'ashenspire.studioArtLayers';
 export const StudioCardTemplatesKind = 'ashenspire.studioCardTemplates';
 
+// Card edits go straight into the game's card file; only these id namespaces live there.
+export const StudioPackCardsPath = 'games/ashenspire/packs/core/cards.json';
+export const StudioPackCardIdPrefixes = Object.freeze([
+  'core.',
+  'custom.',
+]);
+export const StudioCardChangeKeys = Object.freeze([
+  'id',
+  'set',
+  'unset',
+]);
+
 export const StudioSaveFileNames = Object.freeze({
   Cards: 'cards',
   ArtLayers: 'artLayers',
