@@ -18,10 +18,27 @@ import { EnemyDefinitionOf } from '../src/model/enemyMoveSet.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+// Gilded Guard reacts to a hit of at least 8; a 1:1 Strike lands 5 (owner ruling 2026-11-28), so
+// the reaction tests use a knight that guards against any hit.
+const KNIGHT_REACTS_FROM = 1;
+function eagerKnight(row)
+{
+  const guard = row.moves.gildedGuard;
+  const reaction = { ...guard.reaction, minIncoming: KNIGHT_REACTS_FROM };
+  return { ...row, moves: { ...row.moves, gildedGuard: { ...guard, reaction } } };
+}
+const knightBundle = {
+  ...contentBundle,
+  enemies: contentBundle.enemies.map(row => row.id === 'gildedKnight' ? eagerKnight(row) : row),
+};
+const knightRegistries = bindGameProfileRegistries(
+  createRegistries(applyGameProfileToContent(knightBundle, profile)),
+  profile,
+);
 // `legacy` is the Staggered rule a fight saved before Wave 3 keeps (no `poise.breakRule`); the default is the shipped Broken rule.
-function fight(id, seed = 511, { legacy = false } = {}) {
-  const run = createRunState({ registries, classId: 'reaver', seed });
-  const combat = createRunCombat({ registries, run, rng: createRng(seed), enemyIds: [id] });
+function fight(id, seed = 511, { legacy = false, fightRegistries = registries } = {}) {
+  const run = createRunState({ registries: fightRegistries, classId: 'reaver', seed });
+  const combat = createRunCombat({ registries: fightRegistries, run, rng: createRng(seed), enemyIds: [id] });
   if (legacy) combat.fixCoreRules = { ...combat.fixCoreRules, poise: { drain: 'prevented' } };
   combat.player.hp = combat.player.maxHp = 100000;
   return combat;
@@ -95,8 +112,11 @@ test('a Poise break makes the enemy Broken: the head is cancelled, not owed SP, 
   assert.deepEqual([started, refused], [[], []], 'nothing is attempted and then refused');
 });
 
+// A seed whose Fell Warden plans Cane Strike, Cane Strike, Held Blade against two Defends in hand;
+// the level cards it draws decide the plan (owner ruling 2026-11-28 retuned them).
+const WARDEN_PLAN_SEED = 11;
 test('SP lost before acting drops the queued follow-ups it can no longer afford, keeping the earliest in order', () => {
-  const combat = fight('fellWarden');
+  const combat = fight('fellWarden', WARDEN_PLAN_SEED);
   const enemy = combat.enemies[0];
   assert.deepEqual(shown(enemy), ['caneStrike', 'caneStrike', 'heldBlade']);
   const history = enemy.movesHistory.slice(-3);
@@ -167,7 +187,7 @@ test('a fight saved without a committed plan loads, keeps its intent and plays i
 });
 
 test('SP an enemy spends reacting in the player turn comes out of its next turn, and the plan is trimmed visibly', () => {
-  const combat = fight('gildedKnight', 2);
+  const combat = fight('gildedKnight', 2, { fightRegistries: knightRegistries });
   const enemy = combat.enemies[0];
   assert.deepEqual(shown(enemy), ['thrust', 'thrust']);
   assert.equal(enemy.maxStamina, 2);
@@ -182,7 +202,7 @@ test('SP an enemy spends reacting in the player turn comes out of its next turn,
 });
 
 test('reaction SP is not counted twice: the next turn starts at pool minus the one reaction payment', () => {
-  const combat = fight('gildedKnight', 2);
+  const combat = fight('gildedKnight', 2, { fightRegistries: knightRegistries });
   const enemy = combat.enemies[0];
   play(combat, combat.piles.hand.find(row => row.cardId === 'core.strike'));
   assert.equal(enemy.pendingStaminaLoss, 1);
@@ -195,7 +215,7 @@ test('reaction SP is not counted twice: the next turn starts at pool minus the o
 
 // Version-1 action rules keep a player's Advance temporary to its action, so the knight's reaction still has a band to close.
 function farFight(band) {
-  const combat = fight('gildedKnight', 2);
+  const combat = fight('gildedKnight', 2, { fightRegistries: knightRegistries });
   combat.core2ActionRulesVersion = 1;
   const enemy = combat.enemies[0];
   delete combat.rangeState.policy.maxRange; combat.rangeState.engagements[rangePairKey('player:player', `enemy:${enemy.id}`)] = band;
