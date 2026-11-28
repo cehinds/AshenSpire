@@ -30,7 +30,8 @@
       "version": "1.0.0",
       "settings": {
         "builtInBenefits": true,
-        "sameStanceDiscount": true
+        "sameStanceDiscount": true,
+        "ruleset": "maneuvers"
       }
     },
     "effects": {

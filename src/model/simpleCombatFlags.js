@@ -13,11 +13,15 @@ const BUILT_IN_BENEFITS_SETTING = 'builtInBenefits';
 const SAME_STANCE_DISCOUNT_SETTING = 'sameStanceDiscount';
 const UPGRADE_MODE_SETTING = 'upgradeMode';
 const TURN_ACTIONS_SETTING = 'turnActions';
+const RULESET_SETTING = 'ruleset';
+const TRIANGLE_SETTING = 'triangle';
 
 export const UPGRADE_MODE_ROLLED = 'rolled';
 export const UPGRADE_MODE_AUTHORED = 'authored';
 export const ENEMY_TURN_SP_POOL = 'spPool';
 export const ENEMY_TURN_SINGLE = 'single';
+export const STANCE_RULESET_MANEUVERS = 'maneuvers';
+export const STANCE_RULESET_TRIANGLE = 'triangle';
 
 function settingOf(subject, moduleId, settingId)
 {
@@ -61,4 +65,22 @@ export function AuthoredUpgradesOnly(subject)
 export function SingleEnemyAction(subject)
 {
   return settingOf(subject, ENEMIES_MODULE, TURN_ACTIONS_SETTING) === ENEMY_TURN_SINGLE;
+}
+
+/** Which stance rules play (stances.ruleset): only an explicit triangle leaves the maneuvers. */
+export function StanceRuleset(subject)
+{
+  return settingOf(subject, STANCES_MODULE, RULESET_SETTING) === STANCE_RULESET_TRIANGLE
+    ? STANCE_RULESET_TRIANGLE
+    : STANCE_RULESET_MANEUVERS;
+}
+
+/** The stances.triangle block while the triangle plays, else null (also with no block). */
+export function TriangleRules(subject)
+{
+  if (StanceRuleset(subject) !== STANCE_RULESET_TRIANGLE)
+  {
+    return null;
+  }
+  return settingOf(subject, STANCES_MODULE, TRIANGLE_SETTING) || null;
 }

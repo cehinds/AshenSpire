@@ -21,6 +21,7 @@ import { WeaponPoiseDamage, StanceHasPoiseMitigation } from '../model/weaponPois
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { mirroredStance, configuredStance, armsAsCoreCounter, isSpellCounter } from '../model/profileStance.js';
 import { stanceMitigation } from './stanceMitigation.js';
+import { TriangleRules } from '../model/stanceTriangle.js';
 import { rememberCombatStance, defensiveCombatStance } from './concurrentStances.js';
 import { proposalHitPlan, proposalTargetPlan } from './proposalStatusRuntime.js';
 import { hitWeaknessTriggers, matchingHitWeaknesses, weaknessLabel } from './weaknesses.js';
@@ -98,8 +99,9 @@ export function setProfileStance(ctx, entity, carrier) {
   const entering = entity?.itemProps && !sameStance(entity,carrier);
   // A registry stance entry (enterStance) is a stance-only change: no maneuver entry grant, which the card face does not quote.
   const grants = !carrier?.registryStanceEntry && fixCoreEnabled(ctx) && !sameStance(entity,carrier) ? stanceEntryBonuses(carrier,ctx) : null;
-  const rule = configuredModule(ctx, 'stances');
-  const stance = configuredStance(carrier);
+  // Under the triangle its own include list holds, so skill stays skill.
+  const rule = TriangleRules(ctx) || configuredModule(ctx, 'stances');
+  const stance = configuredStance(carrier, ctx);
   entity.combatStance = rule?.include?.includes(stance)
     ? { maneuver: stance, camp: carrier?.combatProfile?.camp || 'physical', range: carrier?.combatProfile?.range || 'melee',
       ...(mirroredStance(carrier) ? { mirrored: true, camp: 'spell' } : {}) }
@@ -776,7 +778,12 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
   // Owner, 2026-10-19: a Smash that beats the target's stance (Defend or Prepared) deals the configured multiplier of its normal damage in place of the
   // generic advantage multiplier, plus a share of the target's Block (below), and costs Poise by a share of the total instead of the 25% absorption.
   // Controlled via content/source/mechanics/guardInteraction.json (`smashVsDefensive.mode`: "multiplier" | "flatBreak" | "both").
-  const rawSmashRule = modern && advantage && attacking === 'smash' ? EffectiveSmashGuardRules(fixCoreRules(ctx, target), ctx) : null;
+  // The triangle's winner takes only winnerMultiplier: no Smash guard rule, no weakness max.
+  const triangle = TriangleRules(ctx);
+  const smashGuard = !triangle && modern && advantage && attacking === 'smash';
+  const rawSmashRule = smashGuard
+    ? EffectiveSmashGuardRules(fixCoreRules(ctx, target), ctx)
+    : null;
   const smashRule = rawSmashRule ? { ...fixCoreSmashVsDefensiveRules(fixCoreRules(ctx, target)), ...rawSmashRule } : null;
   const smashFlatOnly = smashRule?.mode === 'flatBreak';
   const flatBlockBreakRequested = modern ? EffectiveBlockBreakAmount(carrier, raw, smashRule, ctx) : 0;
@@ -787,10 +794,21 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
   const smashMultiplier = smashRule && !smashFlatOnly
     ? (defending === 'defend' ? smashRule.defendDamageMultiplier ?? smashRule.damageMultiplier : smashRule.damageMultiplier)
     : 1;
-  const matchupMultiplier = smashRule ? smashMultiplier : advantage && !flatReturn ? stances.advantageMultiplier ?? 1 : 1;
+  const winnerMultiplier = triangle
+    ? triangle.winnerMultiplier
+    : stances?.advantageMultiplier;
+  const winnerApplies = advantage && !flatReturn;
+  const matchupMultiplier = smashRule
+    ? smashMultiplier
+    : winnerApplies
+      ? winnerMultiplier ?? 1
+      : 1;
   // Owner, 2026-11-17 (stance decisions): a stance advantage and the target's stance weakness (Attack or Smash beating Prepared, and Prepared's melee
   // weakness) never stack: the hit takes the larger of the two. The weakness already sits in `raw`, so the advantage stage adds only what it exceeds.
-  const advantageMultiplier = matchupMultiplier > 1 && weaknessMultiplier > 1 ? Math.max(matchupMultiplier, weaknessMultiplier) / weaknessMultiplier : matchupMultiplier;
+  const sharesWeakness = !triangle && matchupMultiplier > 1 && weaknessMultiplier > 1;
+  const advantageMultiplier = sharesWeakness
+    ? Math.max(matchupMultiplier, weaknessMultiplier) / weaknessMultiplier
+    : matchupMultiplier;
   let amount=smashRule ? transition('smash-vs-defensive','Smash vs defensive stance',raw,raw*advantageMultiplier,'stance',advantageMultiplier)
     : transition('stance-advantage','Offensive stance advantage',raw,raw*advantageMultiplier,'stance',advantageMultiplier);
   // Owner, 2026-11-03: the number shown ahead of a hit is the raw hit, changed only by stances and statuses (attacker Strength/Weak, defender
