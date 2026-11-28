@@ -22,7 +22,8 @@ export function mirroredManeuver(carrier) {
 // A Spell that mirrors a basic card (owner 2026-10-18) keeps that basic's stance; it is still a Spell.
 export const mirroredStance = mirroredManeuver;
 // The maneuver a carrier authors, before any ruleset reads it; null when it names none.
-function legacyStance(carrier) {
+function legacyStance(carrier)
+{
   if (mirroredStance(carrier)) return mirroredStance(carrier);
   if (cardPreparationCategory(carrier)) return 'prepared';
   const trigger = carrier?.stanceTrigger?.stance;

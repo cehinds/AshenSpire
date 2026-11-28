@@ -57,7 +57,8 @@ function triangleStanceOf(carrier, profile, subject)
   };
 }
 /** The stance a carrier enters; `subject` (the fight) lets stances.ruleset triangle resolve it. */
-export function stanceOf(carrier, entity = null, subject = null) {
+export function stanceOf(carrier, entity = null, subject = null)
+{
   if (!carrier) return null;
   const profile = profileOf(carrier);
   if (profile.stanceTrigger === false) return null;

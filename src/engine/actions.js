@@ -1150,13 +1150,7 @@ const StatusBlockAdd = (ctx, entity, card) => {
   return Number.isFinite(w) && w > 0 ? Math.floor(statuses.getAdd(ctx, entity, 'blockAdd') * w) : 0;
 };
 
-/**
- * computeBlockGain(ctx, entity, base) → final integer block gain:
- * base + the eligible rating bonus + per-stack 'blockAdd' modifiers,
- * × 'blockGainedMult' modifiers (DR scales spell Block, PR scales spell Ward),
- * floored, min 0 (SPEC §4.2). Pure. Cap NOT applied here.
- */
-// Wave 2.5: Defend +50%, Counter +25% (stanceBenefits.js); the triangle's defend winner x1.25.
+// Stance Block bonuses (stanceBenefits.js) and the triangle's defend winner multiply here.
 function configuredBlockGain(ctx, entity, base, card)
 {
   if (!configuredModule(ctx, 'defenses')?.include?.includes('block'))
@@ -1175,6 +1169,12 @@ function configuredBlockGain(ctx, entity, base, card)
     * TriangleBlockMultiplier(ctx, entity, card);
   return Math.max(0, Math.floor(scaled) + StatusBlockAdd(ctx, entity, card));
 }
+/**
+ * computeBlockGain(ctx, entity, base) → final integer block gain:
+ * base + the eligible rating bonus + per-stack 'blockAdd' modifiers,
+ * × 'blockGainedMult' modifiers (DR scales spell Block, PR scales spell Ward),
+ * floored, min 0 (SPEC §4.2). Pure. Cap NOT applied here.
+ */
 export function computeBlockGain(ctx, entity, base, card = null) {
   if (configuredCombat(ctx)) return configuredBlockGain(ctx, entity, base, card);
   const split = computeSpellDefenseGain(ctx, entity, base, card);

@@ -28,9 +28,10 @@ export function StanceBonusRules(ctx)
   return StanceBenefitRules(ctx);
 }
 
-/** The stance a unit acts from: the card or move it plays when that carries a stance (playing it enters it), else the stance it holds, else neutral.
- * `ctx` lets the triangle ruleset resolve the card. */
-export function HeldStance(entity, carrier = null, ctx = null) {
+/** The stance a unit acts from: the card or move it plays (playing it enters it), else the
+ * stance it holds, else neutral. `ctx` lets the triangle ruleset resolve the card. */
+export function HeldStance(entity, carrier = null, ctx = null)
+{
   const entered = carrier && stanceOf(carrier, entity, ctx)
     ? configuredStance(carrier, ctx)
     : null;
