@@ -149,6 +149,7 @@ function offerAssembly(pool) {
     upgradeStepsOf, applyUpgradeSteps, mulberry32, GetActiveScoring,
     cardRank: () => 1, VisibleCardRank: () => 1, EffectiveTier: () => 1,
     NodeScheduleKey: () => '', OfferSalted: (_run, id) => id,
+    AuthoredUpgradesOnly: () => false,
     UpgradeSteps: { ...UpgradeSteps, rollUpgradeOptions: (_base, _applied, _index, rng, limits, count) => {
       const options = pool.slice(0, count);
       for (const _ of options) { rng(); rng(); }

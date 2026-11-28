@@ -16,10 +16,12 @@ import { createRng } from './rng.js';
 import { stanceFor, playerKind, moveKind } from './combatRounds/stance.js';
 import { branchHitCount, multiHitFloorFor, enemyMoveSpOf, enemyPoolOf } from '../model/actionCosts.js';
 import { EnemyMoveOf } from '../model/enemyMoveSet.js';
+import { SingleEnemyAction } from '../model/simpleCombatFlags.js';
 // A move with no stance costs 1 SP unless the move defines its own `sp` (SPEC §4.6a).
 export const MOVE_SP = 1;
 // Guard for zero-cost moves, which would otherwise never run the SP pool out.
 const QUEUE_MAX = 16;
+const SINGLE_ACTION_QUEUE_MAX = 1;
 
 // A move's SP (SPEC §4.6a, owner 2026-10-12): its own `sp` when it names one, else the action-cost table price of its
 // stance (model/actionCosts.js), else MOVE_SP. Given the paying `enemy` and its expanded (v2) `combat`, a spell-camp
@@ -133,6 +135,10 @@ export const enemyPool = (def) => enemyPoolOf(def);
 // `combat` (optional) prices each move for this enemy: see moveSp().
 export function extendEnemyQueue(enemy, def, queue, { isFirstTurn = false, pick, combat = null }) {
   const policy = core2ActionPolicyEnabled(combat);
+  // enemies.turnActions "single": the plan is only the head, so the enemy plays one move a turn.
+  const queueMax = SingleEnemyAction(combat)
+    ? SINGLE_ACTION_QUEUE_MAX
+    : QUEUE_MAX;
   const pool = enemyTurnSp(enemy, def, combat);
   // Price the accepted sequence against the stance before each move; planning grants nothing.
   const pricingEnemy = { ...enemy };
@@ -144,7 +150,7 @@ export function extendEnemyQueue(enemy, def, queue, { isFirstTurn = false, pick,
     if (stance) pricingEnemy.combatStance = stance;
   }
   let spent = queue.reduce((sum, entry) => sum + entry.sp, 0);
-  while (queue.length < QUEUE_MAX) {
+  while (queue.length < queueMax) {
     if (policy && queue.some((entry) => def.moves[entry.moveId]?.delay)) break;
     if (queue.length > 0 && spent >= pool) break;
     const opener = isFirstTurn && queue.length === 0 && def.firstMove ? def.firstMove : null;

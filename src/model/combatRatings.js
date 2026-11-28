@@ -2,6 +2,7 @@ import { ChannelLabel } from './damageChannels.js';
 import { TraditionSpellPower } from './spellTraditions.js';
 import { DEFAULT_BARRIER_POISE_PER_STACK } from '../content/barrierPoise.js';
 import { fixCoreEnabled, fixCoreWardDisabled } from './fixCoreMechanics.js';
+import { PoiseEnabled } from './simpleCombatFlags.js';
 import { fixCoreRules } from './fixCoreRulesCache.js';
 import { gameProfileRatingReceipt } from './gameProfileRun.js';
 import { stanceRatingBonus } from './stanceRules.js';
@@ -856,7 +857,12 @@ export function persistentWardMaximum(ctx, entity) {
 }
 
 /** barrierPoiseBonus(ctx, entity) → the +Poise the entity's Barrier stacks give (SPEC 4.1a): `barrier.poisePerStack` per stack, 5 by default. */
-export function barrierPoiseBonus(ctx, entity) {
+export function barrierPoiseBonus(ctx, entity)
+{
+  if (!PoiseEnabled(ctx))
+  {
+    return 0;
+  }
   const per = ctx?.ratingsRules?.barrier?.poisePerStack;
   return Math.max(0, Math.floor((entity?.statuses?.barrier?.stacks || 0) * (Number.isFinite(per) ? per : DEFAULT_BARRIER_POISE_PER_STACK))) + wardPoiseBonus(ctx, entity);
 }
@@ -886,7 +892,13 @@ function wardPoiseBonus(ctx, entity) {
 }
 
 /** persistentPoiseMaximum(ctx, entity) → the Poise pool a combatant starts a fight with (physical only). */
-export function persistentPoiseMaximum(ctx, entity) {
+export function persistentPoiseMaximum(ctx, entity)
+{
+  // With stagger.poise off every pool is empty, so nothing absorbs, drains or breaks.
+  if (!PoiseEnabled(ctx))
+  {
+    return 0;
+  }
   const share = ctx?.ratingsRules?.resistance?.poisePool;
   return Math.max(0, Math.floor(ratingValue(ctx, entity, 'poise') * (Number.isFinite(share) ? share : combatRatingDefaults.resistance.poisePool)));
 }

@@ -35,6 +35,7 @@ Settings live in `engine/modules/progression/settings.schema.json`; shipped defa
 - `/mode` (type enum; default `"configured"`; allowed "legacy", "configured"): Validated setting; no configured gameplay behavior is promised unless listed in Runtime scope above.
 - `/characterLevels` (type boolean; default `true`): Whether character levels are active.
 - `/classUnlocks` (type boolean; default `true`): Whether completed runs unlock subsequent classes.
+- `/upgradeMode` (type enum; default `"rolled"`; allowed "rolled", "authored"): `authored` gives each card one upgrade, its own `upgrade` block, with no rolled steps and no rank-up bonus picks.
 - `/attributePointsPerLevel` (type integer; default `1`; range 0..1000000): Attribute points granted on a level.
 
 The exact provenance is recorded in `games/ashenspire/bundles/core/bundle.json`: module defaults are the base, selected bundle settings and `policyBindings` apply next, and the author object applies last. Arrays replace the inherited array. If a field has no bundle binding, its module default is inherited unchanged. `false` disables; `true` selects inherited defaults; null has no removal meaning. Unknown keys and invalid values fail validation.
