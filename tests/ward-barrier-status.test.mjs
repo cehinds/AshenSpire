@@ -31,8 +31,9 @@ function liveCore({ wardMode = 'blockFirst' } = {}) {
 }
 // `legacy`: a fight saved before the 2026-11-15 ruling, whose rules carry no `ward.routing` (the Poise-first Ward routing).
 // Amount 20: Core halves card base damage (ceil, effects.baseDamageMultiplier 0.5), so every hit below meets the layers as 10.
-function hit(carrier, { block = 0, poise = 0, ward = 1, amount = 20, legacy = false, wardMode = legacy ? 'legacy' : 'blockFirst' } = {}) {
+function hit(carrier, { block = 0, poise = 0, ward = 1, amount = 20, legacy = false, wardMode = legacy ? 'legacy' : 'blockFirst', casterAttributes = null } = {}) {
   const combat = liveCore({ wardMode }), target = combat.enemies[0];
+  if (casterAttributes) Object.assign(combat.player.attributes, casterAttributes);
   Object.assign(target, { block, persistentWard: null, persistentPoise: { value: poise, max: Math.max(20, poise) }, gameProfilePoise: 0, statuses: ward ? { ward: { stacks: ward } } : {} });
   if (wardMode === 'hpBuffer' && ward > 0) target.wardHp = ward * 5;
   delete target.combatStance;
@@ -44,6 +45,7 @@ const physical = { combatProfile: { camp: 'physical', damageType: 'slashing' } }
 // Arcane carries no element rule, so these cases pin the plain Ward lane. Fire's own Poise rule (it ignores Poise points) has its case below.
 const spell = { combatProfile: { camp: 'spell', damageType: 'arcane', magicShare: 1 } };
 const fireSpell = { combatProfile: { camp: 'spell', damageType: 'fire', magicShare: 1 } };
+const FIRE_CASTER = { intelligence: 1, wisdom: 1 };
 
 for (const [name, carrier] of [['physical', physical], ['magic', spell]]) {
   test(`Ward (legacy routing): a ${name} hit meets Poise first, 100%, before Block`, () => {
@@ -105,7 +107,8 @@ test('Ward (block first): Poise emptied mid-hit reports a Poise break when the h
 });
 
 test('Ward: a fire spell still takes the Ward lane, and the Poise Fire ignores leaves the pool on top of what absorbed the hit', () => {
-  const r = hit(fireSpell, { poise: 4, block: 3, legacy: true });
+  // Fire ignores Poise per casting point; the 1-point Reaver (owner, 2026-11-28) has none, so it casts with one INT and one WIS.
+  const r = hit(fireSpell, { poise: 4, block: 3, legacy: true, casterAttributes: FIRE_CASTER });
   assert.equal(r.receipt.wardRouted, true);
   assert.ok(r.receipt.element.poiseIgnored > 0, 'Fire ignores some Poise');
   assert.equal(r.poiseAfter, r.receipt.element.poiseIgnored, 'the ignored points are the only Poise left in this helper\'s sum');
