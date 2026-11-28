@@ -18,6 +18,16 @@ import { rangePairKey } from '../src/model/combatEngagement.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { withWeaponRack } from './withWeaponRack.mjs';
 import { uncappedRun } from './helpers/uncapped-range.mjs';
+import { REACTION_TAG, REACTION_CARRIER_IDS } from './helpers/reaction-carriers.mjs';
+
+function tagReactionCarriers(profile)
+{
+  for (const card of profile.content.cards)
+  {
+    const carrier = REACTION_CARRIER_IDS.includes(card.id);
+    if (carrier && !card.tags.includes(REACTION_TAG)) card.tags.push(REACTION_TAG);
+  }
+}
 const json = value => JSON.parse(JSON.stringify(value));
 function fixture({ die = 20, count = 4 } = {}) {
   const profile = structuredClone(resolveGameProfile('core'));
@@ -26,6 +36,8 @@ function fixture({ die = 20, count = 4 } = {}) {
   profile.modules.characters.tagRules['tier.minion'].pools.sp += 3; // was 4 before the level budget (owner, 2026-11-07) gave a level-1 minion one more SP
   profile.modules.characters.enemyLevelScaling.spCap.minion = 4; // and the minion SP cap (owner, 2026-11-20) is lifted to match
   profile.content.cards.find(card => card.id === 'core.counter').effects.unshift({ op: 'discard', choose: true, amount: 1 });
+  // The Counter is answered as a Reaction; shipped Core cards carry none (owner ruling 2026-11-28).
+  tagReactionCarriers(profile);
   // This suite pins seeded misses (die 1), so its profile carries the rules of one saved before the 2026-11-14 ruling: the d20 is rolled.
   profile.fixCoreRules = legacyRules(fixCoreMechanics);
   delete profile.hash; profile.hash = gameDigest(profile);
