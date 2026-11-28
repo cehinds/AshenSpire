@@ -13,9 +13,46 @@ import { enemyPlanActions } from '../src/engine/normalPreview.js';
 import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
 import { withoutBands } from './legacyBandsRules.mjs';
 import { BandsEnemyPhaseRangeState } from '../src/engine/bandRows.js';
+import { ReactionCarrierProfile } from './helpers/reaction-carriers.mjs';
 
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
-const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+// The player's pauses need a Reaction card in hand; shipped Core cards carry none (owner ruling 2026-11-28).
+const profile = ReactionCarrierProfile();
+const baseRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+const GUARD_ENEMY_ID = 'gildedKnight';
+const GUARD_MOVE_ID = 'gildedGuard';
+// These suites price the reaction, not its trigger: a 1:1 Strike no longer reaches the authored threshold.
+const ANY_INCOMING = 0;
+function withOpenGuard(row)
+{
+  const guard = row.moves[GUARD_MOVE_ID];
+  return {
+    ...row,
+    moves: {
+      ...row.moves,
+      [GUARD_MOVE_ID]: {
+        ...guard,
+        reaction: {
+          ...guard.reaction,
+          minIncoming: ANY_INCOMING,
+        },
+      },
+    },
+  };
+}
+const registries = Object.freeze({
+  ...baseRegistries,
+  enemies: {
+    ...baseRegistries.enemies,
+    has: id => baseRegistries.enemies.has(id),
+    get: id =>
+    {
+      const row = baseRegistries.enemies.get(id);
+      return id === GUARD_ENEMY_ID
+        ? withOpenGuard(row)
+        : row;
+    },
+  },
+});
 function fight(id = 'fellWarden') {
   const run = createRunState({ registries, classId: 'reaver', seed: 511 });
   const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: [id] });
