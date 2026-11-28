@@ -14,7 +14,7 @@ import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { focusElement } from '../input.js';
 import { armHold, beatArmer } from '../../framework/optionDecision.js';
 import { hideTooltip } from './tooltip.js';
-import { finishHoldOnRelease } from './holdRelease.js';
+import { FinishHoldOnRelease } from './holdRelease.js';
 import { OpenConfirmationModal } from './confirmationModal.js';
 import { registerModal } from '../modalState.js';
 import { deleteSaveReview, replaceSaveReview, reviewEyebrow } from '../models/ConfirmationReviewModel.js';
@@ -410,7 +410,7 @@ export function openSaveSlotSelector({
           // armHold completes while the pointer is still down; load on its
           // release so neither the lift nor its trailing click hits the map.
           clearPendingRelease?.();
-          clearPendingRelease = finishHoldOnRelease(slotButton, startEvent, {
+          clearPendingRelease = FinishHoldOnRelease(slotButton, startEvent, {
             trailingClickMs,
             onRelease: loadAfterRelease,
           });

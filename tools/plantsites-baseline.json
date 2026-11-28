@@ -143,8 +143,8 @@
       "digest": "212e6540781ff72f"
     },
     "tools/startup-gate.mjs": {
-      "count": 28,
-      "digest": "d712b9e16fb18c2a"
+      "count": 29,
+      "digest": "75d13f693b3e98f7"
     },
     "tools/tapsize.mjs": {
       "count": 2,

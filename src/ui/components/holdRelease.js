@@ -50,7 +50,7 @@ function swallowTrailingClick(windowMs)
  * release's trailing click is guarded. A press with no pointer id runs at once.
  * Returns a function that abandons the wait.
  */
-export function finishHoldOnRelease(button, startEvent, { trailingClickMs, onRelease })
+export function FinishHoldOnRelease(button, startEvent, { trailingClickMs, onRelease })
 {
   const pointerId = startEvent?.pointerId;
   if (!Number.isInteger(pointerId))
