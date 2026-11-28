@@ -6,5 +6,6 @@
       "enemy"
     ],
     "capacityPerLane": 1
-  }
+  },
+  "gridOption": true
 }

@@ -140,7 +140,9 @@
     },
     "reactions": {
       "version": "1.0.0",
-      "settings": {}
+      "settings": {
+        "playerToggle": false
+      }
     },
     "characters": {
       "version": "1.0.0",
@@ -180,7 +182,8 @@
             "enemy"
           ],
           "capacityPerLane": 1
-        }
+        },
+        "gridOption": false
       }
     },
     "heal-rules": {

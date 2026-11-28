@@ -11,6 +11,10 @@
       "type": "integer",
       "minimum": 0,
       "maximum": 1000000
+    },
+    "playerToggle": {
+      "type": "boolean",
+      "description": "The combat Reaction on/off switch. false: the switch is not shown and reactions keep their default; the reactions rules are unchanged. Absent or true is on."
     }
   },
   "required": [
