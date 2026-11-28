@@ -13,6 +13,10 @@ import { dispatch } from '../src/engine/combat.js';
 import { resolveCombatCard } from '../src/engine/combatExpansion.js';
 import { applyStatus, getStacks, decayAtTurnEnd, decayAtTurnStart } from '../src/engine/statuses.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
+import { ReactionCarrierProfile } from './helpers/reaction-carriers.mjs';
+
+// Owner ruling 2026-11-28: no shipped Core card reacts, so the held Defend and Jab are fixture Reaction carriers.
+const REACTION_PROFILE = ReactionCarrierProfile();
 
 function fixture({ weapon = 'straightSword', armor, classId = 'reaver', profile = resolveGameProfile('default') } = {}) {
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -35,7 +39,7 @@ const restored = combat => restoreCombatSnapshot({ registries: combat.registries
 const jabRange = combat => resolveCombatCard(combat, { cardId: 'core.jab', instanceId: 'jab', upgraded: false }).range;
 
 for (const save of [false, true]) test(`current Reach expires before the enemy-phase reaction window${save ? ' across save/restore' : ''}`, () => {
-  let combat = fixture();
+  let combat = fixture({ profile: REACTION_PROFILE });
   assert.notEqual(jabRange(combat), 'reach', 'the Sword card has no inherent Reach');
   applyStatus(combat, combat.player, 'reach', 1, combat.player);
   assert.equal(jabRange(combat), 'reach');
