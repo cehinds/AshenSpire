@@ -154,14 +154,14 @@ function withPacing(body)
     }
 }
 
-test('Pause between steps defaults to 0.5 s and ranges 0 to 2 s', () =>
+test('Pause between steps reads its default and range from actionPacing.json', () =>
 {
     assertRowRange(PAUSE_KEY);
     assert.equal(row(PAUSE_KEY).type, NUMBER_TYPE);
     assert.match(row(PAUSE_KEY).label, /Pause between steps/);
 });
 
-test('Auto combat speed defaults to ×1.5 and ranges ×1 to ×3, beside the manual Combat speed', () =>
+test('Auto combat speed reads its default and range from actionPacing.json, beside Combat speed', () =>
 {
     assertRowRange('autoCombatSpeed');
     assert.equal(row('autoCombatSpeed').type, NUMBER_TYPE);

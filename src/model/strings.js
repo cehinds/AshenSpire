@@ -105,6 +105,8 @@ function read(id, form, tokens) {
 export function t(id, tokens = null) { return read(id, 'short', tokens); }
 /** UiFullText(id, tokens): the full sentence a UI string means (its 'full' column), beside t()'s short label. */
 export function UiFullText(id, tokens = null) { return read(id, 'full', tokens); }
+// Old name kept only for src/model/fixCoreMechanics.js, whose bytes pin saved-run compatibility.
+export const tFull = UiFullText;
 /** tTip(id, tokens) — the tooltip title a too-small face gets. */
 export function tTip(id, tokens = null) { return read(id, 'tip', tokens); }
 

@@ -3079,6 +3079,7 @@
     "has",
     "stringIds",
     "t",
+    "tFull",
     "tTip"
   ],
   "src/model/tagService.js": [
