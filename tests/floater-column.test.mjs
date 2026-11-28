@@ -72,7 +72,7 @@ const CLASS_REDUCED_MOTION = 'reduced-motion';
 const LIFT_PROPERTY = '--float-lift';
 const WORD_STAGGERED = 'staggered';
 const WIDE_WORD_KIND = 'action:Poise absorbed 2';
-const COMBAT_CSS_URL = new URL('../styles/combat.css', import.meta.url);
+const COMBAT_CSS_PATH = '../styles/combat.css';
 
 // The floater life at the shipped default speed, read once before any test changes the pacing.
 setCombatPacing({ combatSpeed: DEFAULT_SPEED });
@@ -132,7 +132,7 @@ function lift(node)
 
 function readCombatCss()
 {
-    return readFileSync(COMBAT_CSS_URL, 'utf8');
+    return readFileSync(new URL(COMBAT_CSS_PATH, import.meta.url), 'utf8');
 }
 
 // Every created element measures one node box and records its custom properties in `props`.
