@@ -11,14 +11,22 @@ import { createRng } from '../src/engine/rng.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
+import { ReactionCarrierProfile } from './helpers/reaction-carriers.mjs';
 
-// Disable the playtest damage cuts so an ordinary Smash clears the shipped Guard's 8-damage threshold.
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {
-  effects: { baseDamageMultiplier: 1, physicalDamageMultiplier: 1, playerDamageMultiplier: 1 },
-} });
+// Owner ruling 2026-11-28: no shipped Core card reacts, so the held Defend answers as a fixture Reaction carrier.
+const profile = ReactionCarrierProfile();
+// The stored 1:1 Smash is under the shipped Guard's 8 threshold, so the fixture Guard answers any hit.
+const GUARD_FIXTURE_MIN_INCOMING = 1;
 const configuredContent = applyGameProfileToContent(contentBundle, profile);
 // Current Core enemies use decks. Keep the shipped legacy Guard move to exercise a deterministic reaction window on a Core card.
-const guard = contentBundle.enemies.find(enemy => enemy.id === 'gildedKnight').moves.gildedGuard;
+const shippedGuard = contentBundle.enemies.find(enemy => enemy.id === 'gildedKnight').moves.gildedGuard;
+const guard = {
+  ...shippedGuard,
+  reaction: {
+    ...shippedGuard.reaction,
+    minIncoming: GUARD_FIXTURE_MIN_INCOMING,
+  },
+};
 const registries = bindGameProfileRegistries(createRegistries({ ...configuredContent,
   // The gear rework replaced the former Axe type-wide Strength grant. Keep it on one fixture weapon to exercise deferred delivery.
   equipment: { ...configuredContent.equipment,
