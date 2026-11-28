@@ -37,14 +37,19 @@ function fight({ classId = 'reaver', cardId = 'strike', enemies = [{}] } = {}) {
 }
 const damageRow = (combat, id, target) => previewCard(combat, id, target).values.find(v => v.op === 'damage');
 const rawRow = (combat, id) => previewCard(combat, id, undefined, undefined, { rawFace: true }).values.find(v => v.op === 'damage');
-// The fixture's Strike faces 5: base 6 halved to 3, plus AR 4 and the +1 AR adjustment (8), then the player side scale floor(8 x 0.7) = 5 (owner, 2026-11-18). Poise 10 cuts that to 3.
+// The fixture's Strike faces base 6 + AR 4 + the +1 AR adjustment, 1:1 (owner ruling 2026-11-28).
+// Poise 10 cuts the quote to 8; Block 5 then Poise 10 cut it to 4.
+const STRIKE_FACE = 11;
+const POISE_QUOTE = 8;
+const BLOCK_SOAK = 5;
+const BLOCK_POISE_QUOTE = 4;
 
 test('Strike: the face is the same against 0 and 20 Block, with and without Poise', () => {
   const faces = [{}, { block: 20 }, { poise: 10 }, { block: 20, poise: 10 }].map(spec => {
     const { combat, id } = fight({ enemies: [spec] });
     return [damageRow(combat, id).faceValue, damageRow(combat, id, combat.enemies[0].id).faceValue, damageRow(combat, id, combat.enemies[0].id).value];
   });
-  for (const row of faces) assert.deepEqual(row, [5, 5, 5]);
+  for (const row of faces) assert.deepEqual(row, [STRIKE_FACE, STRIKE_FACE, STRIKE_FACE]);
 });
 
 test('a defensive stance on the target does not change the face; the quote still does', () => {
@@ -57,22 +62,22 @@ test('a defensive stance on the target does not change the face; the quote still
   assert.ok(guarded.perTarget[enemy.id] <= open.perTarget[enemy.id], 'the quote is the HP lost');
 });
 
-test('the quote is still the HP lost: Strike against a Poise enemy faces 5 and quotes 3', () => {
+test('the quote is still the HP lost: Strike against a Poise enemy faces its full number and quotes less', () => {
   const { combat, id } = fight({ enemies: [{ poise: 10 }] });
   const enemy = combat.enemies[0];
   primeAccuracyRolls(combat);
   const row = damageRow(combat, id, enemy.id);
-  assert.equal(row.faceValue, 5);
-  assert.equal(row.perTarget[enemy.id], 3);
+  assert.equal(row.faceValue, STRIKE_FACE);
+  assert.equal(row.perTarget[enemy.id], POISE_QUOTE);
   dispatch(combat, { type: 'playCard', cardInstanceId: id, targetId: enemy.id });
-  assert.equal(500 - enemy.hp, 3);
+  assert.equal(500 - enemy.hp, POISE_QUOTE);
 });
 
 test('Block and Poise reach the quote, not the face', () => {
-  const { combat, id } = fight({ enemies: [{ poise: 10, block: 5 }] });
+  const { combat, id } = fight({ enemies: [{ poise: 10, block: BLOCK_SOAK }] });
   const row = damageRow(combat, id, combat.enemies[0].id);
-  assert.equal(row.faceValue, 5);
-  assert.equal(row.perTarget[combat.enemies[0].id], 0, 'Block 5 soaks the whole 5');
+  assert.equal(row.faceValue, STRIKE_FACE);
+  assert.equal(row.perTarget[combat.enemies[0].id], BLOCK_POISE_QUOTE, 'Block 5 soaks 5, Poise cuts the rest');
 });
 
 test('the face rises with your attack rating (Strength) and ignores the enemy defences', () => {
@@ -89,14 +94,14 @@ test('the face rises with your attack rating (Strength) and ignores the enemy de
 test('two enemies with different defences: the face is one number whichever is aimed; each quote is its own', () => {
   const { combat, id } = fight({ enemies: [{ poise: 10 }, {}] });
   const [a, b] = combat.enemies;
-  for (const aim of [undefined, a.id, b.id]) assert.equal(damageRow(combat, id, aim).faceValue, 5, `aim ${aim}`);
-  assert.equal(damageRow(combat, id, a.id).perTarget[a.id], 3);
-  assert.equal(damageRow(combat, id, b.id).perTarget[b.id], 5);
+  for (const aim of [undefined, a.id, b.id]) assert.equal(damageRow(combat, id, aim).faceValue, STRIKE_FACE, `aim ${aim}`);
+  assert.equal(damageRow(combat, id, a.id).perTarget[a.id], POISE_QUOTE);
+  assert.equal(damageRow(combat, id, b.id).perTarget[b.id], STRIKE_FACE);
 });
 
 test('outside combat (rawFace): the face is the raw number', () => {
   const { combat, id } = fight({ enemies: [{ poise: 10 }] });
-  assert.equal(rawRow(combat, id).faceValue, 5);
+  assert.equal(rawRow(combat, id).faceValue, STRIKE_FACE);
 });
 
 test('self-target damage keeps the raw face: the player loses the full amount', () => {
@@ -131,8 +136,8 @@ test('an aimed enemy that died falls back to the frontmost living enemy; the fac
   const { combat, id } = fight({ enemies: [{}, { poise: 10 }] });
   const [a, b] = combat.enemies;
   a.alive = false; a.hp = 0;
-  assert.equal(previewCard(combat, id, a.id).values.find(v => v.op === 'damage').faceValue, 5);
-  assert.equal(previewCard(combat, id, b.id).values.find(v => v.op === 'damage').faceValue, 5);
+  assert.equal(previewCard(combat, id, a.id).values.find(v => v.op === 'damage').faceValue, STRIKE_FACE);
+  assert.equal(previewCard(combat, id, b.id).values.find(v => v.op === 'damage').faceValue, STRIKE_FACE);
 });
 
 test('the rendered face of a multi-hit card reads N x M however the target is defended (cardFaceLines and combatCardSummary)', async () => {
@@ -156,8 +161,8 @@ test('Vulnerable on the reference enemy raises the face; the quote follows it', 
   const { combat, id } = fight({ enemies: [{ statuses: { vulnerable: { stacks: 1, duration: 2 } } }, {}] });
   const [a, b] = combat.enemies;
   const face = damageRow(combat, id, a.id).faceValue;
-  assert.ok(face > 5, `Vulnerable raises the face above 5, got ${face}`);
+  assert.ok(face > STRIKE_FACE, `Vulnerable raises the face above ${STRIKE_FACE}, got ${face}`);
   assert.equal(damageRow(combat, id).faceValue, face, 'the frontmost enemy is the reference');
-  assert.equal(damageRow(combat, id, b.id).faceValue, 5, 'aiming the other enemy gives its own Vulnerable-free face');
+  assert.equal(damageRow(combat, id, b.id).faceValue, STRIKE_FACE, 'aiming the other enemy gives its own Vulnerable-free face');
   assert.equal(damageRow(combat, id, a.id).perTarget[a.id], face);
 });
