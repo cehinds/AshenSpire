@@ -103,8 +103,8 @@ let deferredCardSizeNotice = null;
 // there is nothing under their key to export or take away.
 const CONTROL_ROW_TYPES = new Set(['button', 'action', 'sceneList']);
 
-// Both Export buttons (Advanced and the Done prompt) write this same file.
-function SaveEveryChangedSetting(currentSettings)
+// Both Export buttons (Advanced and the Done prompt) write this same file: every stored setting.
+function saveEveryStoredSetting(currentSettings)
 {
   const includeKeys = SETTINGS_ROWS
     .filter((row) => !CONTROL_ROW_TYPES.has(row.type))
@@ -2635,7 +2635,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     btn.addEventListener('click', async () => {
       btn.disabled = true;
       btn.textContent = 'Saving…';
-      const result = await SaveEveryChangedSetting(panelSettings || settings);
+      const result = await saveEveryStoredSetting(panelSettings || settings);
       btn.disabled = false;
       btn.textContent = result.ok ? (result.method === 'save-as' ? 'Saved' : 'Downloaded') : 'Unavailable';
       showSettingsNotice(result.ok
@@ -3232,7 +3232,7 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
     skip.addEventListener('click', () => { prompt.close(); door.close(); });
     exportButton.addEventListener('click', async () => {
       exportButton.disabled = true;
-      const result = await SaveEveryChangedSetting(panelSettings || settings);
+      const result = await saveEveryStoredSetting(panelSettings || settings);
       exportButton.disabled = false;
       if (result.ok) { prompt.close(); door.close(); }
       else exportButton.textContent = 'Try export again';
