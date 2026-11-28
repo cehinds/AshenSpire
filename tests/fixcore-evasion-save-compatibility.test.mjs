@@ -24,8 +24,8 @@ import { GearSelectorMatches } from '../src/model/gearEffects.js';
 const preRegistryRuntime = 'sha256:777939d6ee4065a02491fcd7ff21fc2d9f44271a0d7f10ec3b2435d1786a72cd';
 const registryRuntime = 'sha256:c77d4f30494cb821fc66b9b9ef19b91fbb2c699633fe0137b72ab89d261ec831';
 const preScalingRuntime = 'sha256:eff6f5c38dcdba3c78d012bf55c8baf6fe703f664bc3f3416244b15d1fa07216';
-// Re-pinned at the #3017 merge onto #3031; 6b8f59... is now in PREVIOUS_RUNTIMES.
-const catalogRuntime = 'sha256:86b335d2ec3ae5b290afd68343bf41686eb9e8f67e15a5eee6ec1f4b2420a21c';
+// Owner ruling 2026-11-28: the 1:1 effect scales and stance factors move the host runtime.
+const catalogRuntime = 'sha256:18e3cb54a980c9ab0cd86e6fa5feb164431553b7b3987bfd79c1472dcaa39068';
 const preRegistrySave = () => gunzipSync(readFileSync(new URL('./fixtures/pre-registry-dev-7dff4b03-save.json.gz', import.meta.url))).toString('utf8');
 
 test('the real Dev 7dff4b03 save resumes its active fight without changing the old profile or policy', () => {
@@ -274,8 +274,8 @@ test('a compatible prior-runtime Core profile resumes without changing its integ
   Object.assign(target, { block: 0, statuses: {}, combatStance: { maneuver: 'defend', camp: 'physical', range: 'melee' }, persistentPoise: {value: 20, max: 20} });
   delete target.combatCounter;
   const smash = { skipRatingBonus: true, combatProfile: { camp: 'physical', maneuver: 'smash', range: 'melee' } };
-  // The envelope is today's Core profile under an older runtime pin, so it carries effects.baseDamageMultiplier 0.5 (2026-11-17): 12 -> 6, x2 = 12.
-  assert.equal(profileDamageReceipt(restored, restored.player, target, 12, smash).amount, 12);
+  // Owner ruling 2026-11-28: the saved envelope's baseDamageMultiplier 0.5 reads as 1, so 12 x2 = 24.
+  assert.equal(profileDamageReceipt(restored, restored.player, target, 12, smash).amount, 24);
   assert.equal(restored.fixCoreRules.accuracy.evasionVersion, 2);assert.equal(restored.fixCoreRules.accuracy.evadeStackDex, 0);
   delete restored.player.itemProps?.gainBonus; // the Rogue's Leathers give +1 on every Evade gain (gear pass, 2026-11-18); this test reads the snapshotted card rule alone
   restored.piles.hand.push({cardId:'core.evade',instanceId:'resumed-evade',upgraded:false});
@@ -419,13 +419,14 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   Object.assign(target, { block: 0, statuses: {}, combatStance: { maneuver: 'defend', camp: 'physical', range: 'melee' }, persistentPoise: {value: 20, max: 20} });
   delete target.combatCounter;
   const smash = { skipRatingBonus: true, combatProfile: { camp: 'physical', maneuver: 'smash', range: 'melee' } };
-  // This is a CURRENT-rules round trip: 12 -> 6, x1.5 against Defend = 9; Prepared keeps its shared x1.25 = 7.
-  assert.equal(profileDamageReceipt(restored, restored.player, target, 12, smash).amount, 9);
+  // A CURRENT-rules round trip (owner ruling 2026-11-28, base damage 1:1): 12 x1.5 against Defend = 18;
+  // Prepared keeps its shared x1.25 = 15.
+  assert.equal(profileDamageReceipt(restored, restored.player, target, 12, smash).amount, 18);
   target.combatStance.maneuver = 'prepared';
   const preparedReceipt = profileDamageReceipt(restored, restored.player, target, 12, smash);
-  assert.equal(preparedReceipt.rawHit, 7);
-  assert.equal(preparedReceipt.poiseMitigated, 7, 'Prepared target with 20 Poise mitigates up to 10 (50% of 20), reducing 7 -> 0');
-  assert.equal(preparedReceipt.amount, 0);
+  assert.equal(preparedReceipt.rawHit, 15);
+  assert.equal(preparedReceipt.poiseMitigated, 10, 'Prepared target with 20 Poise mitigates up to 10 (50% of 20)');
+  assert.equal(preparedReceipt.amount, 5);
   assert.equal(restored.gameProfile.lock.runtimeHash, profile.lock.runtimeHash);
 });
 
