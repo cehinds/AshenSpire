@@ -74,19 +74,21 @@ test('actual card dispatch matches selected target receipt and card face after e
 });
 // Wave 3: a Poise break makes the target Broken (hits x1.5, `poise.breakRule: "broken"`); a fight saved before that keeps the Staggered
 // Vulnerable (x1.25), so the legacy case pins the rules to `{ drain: 'prevented' }` as the fight was created.
+const MIXED_HIT_BASE = 20;
 function mixedMultihit(legacy){
  const {combat,target}=live();if(legacy)combat.fixCoreRules={...combat.fixCoreRules,poise:{drain:'prevented'}};
- // Base 40 is halved by the Core 0.5 base-damage scale to an incoming 20, so the hits still reach Ward and Poise after Block 12.
+ // Base 20 lands as 20 (every damage scale is 1, owner ruling 2026-11-28), so the hits still reach
+ // Ward and Poise after Block 12.
  const third=legacy?25:30,total=legacy?50:55;
  Object.assign(target,{block:12,persistentWard:{value:1,max:20},persistentPoise:{value:1,max:20}});
  const carrier={skipRatingBonus:true,magicShare:.5,combatProfile:{camp:'physical',maneuver:'attack',range:'melee',damageComponents:[{damageType:'blunt',share:.5},{damageType:'magic',share:.5}]}};
  const before=JSON.stringify({target,rng:combat.rng.getCounters()});
- const preview=previewDamageHits(combat,combat.player,target,40,[],carrier,3);
+ const preview=previewDamageHits(combat,combat.player,target,MIXED_HIT_BASE,[],carrier,3);
  assert.equal(JSON.stringify({target,rng:combat.rng.getCounters()}),before);
  // Owner, 2026-11-14: hitDamages is the HP lost per hit (the receipt's hpLoss); the incoming hit before defences is the receipt's `incoming`.
  assert.deepEqual(preview.hitDamages,[6,19,third]);assert.equal(preview.totalDamage,total);// the Poise break after hit 2 leaves the break bonus for hit 3; hit 2 meets 1 Poise (capped)
  assert.deepEqual(preview.damageReceipt.hits.map(row=>row.hpLoss),[6,19,third]);assert.equal(preview.hpLoss,total);
- const receipts=[];for(let i=0;i<3;i++){primeAccuracyRolls(combat);applyAttackDamage(combat,combat.player,target,40,[],carrier);receipts.push(combat.eventLog.filter(row=>row.type==='damageDealt').at(-1).damageReceipt.hits[0]);}
+ const receipts=[];for(let i=0;i<3;i++){primeAccuracyRolls(combat);applyAttackDamage(combat,combat.player,target,MIXED_HIT_BASE,[],carrier);receipts.push(combat.eventLog.filter(row=>row.type==='damageDealt').at(-1).damageReceipt.hits[0]);}
  assert.deepEqual(receipts.map(row=>row.hpLoss),preview.damageReceipt.hits.map(row=>row.hpLoss));assert.deepEqual(receipts.map(row=>row.incoming),[20,20,third]);assert.equal(500-target.hp,total);
  assert.deepEqual(receipts.map(row=>[row.blocked,row.barrierReduced,row.wardReduced,row.poiseReduced]),[[12,0,2,0],[0,0,0,1],[0,0,0,0]]);
 }
@@ -265,20 +267,22 @@ test('enemy held gear and relic behavior mounts are owner scoped and leave on un
  assert.equal(protectionReceipt(combat,target,'magical',20).amount,15);assert.equal(protectionReceipt(combat,target,'physical',20).amount,15);
 });
 
+const FRACTIONAL_BASE = 7;
 test('fractional offense reaches final rounding without a fabricated status modifier',()=>{
  const {combat,target}=live();
  const card={skipRatingBonus:true,combatProfile:{camp:'physical',maneuver:'attack',range:'melee'}};
  combat.player.combatStance={...card.combatProfile};delete target.combatStance;
  target.statuses={};combat.player.statuses={};
- const receipt=profileDamageReceipt(combat,combat.player,target,13,card);
+ const receipt=profileDamageReceipt(combat,combat.player,target,FRACTIONAL_BASE,card);
  const sources=receipt.damageReceipt.hits[0].sources;
- // Owner 2026-10-18: no decimals. The chain floors once; the stance line shows its running floor (13 halved by the Core base-damage scale, rounded up, = 7; 7 x 1.25 = 8.75 -> 8) and there is no separate rounding line.
+ // Owner 2026-10-18: no decimals. The chain floors once; the stance line shows its running floor
+ // (7 x 1.25 = 8.75 -> 8) and there is no separate rounding line.
  assert.ok(sources.some(row=>row.id==='matching-stance' && row.effective===8 && Number.isInteger(row.amount)));
  assert.equal(sources.some(row=>row.id==='status-rules'),false);
  assert.equal(sources.some(row=>row.id==='quantity-rounding'),false);
  assert.equal(receipt.damageReceipt.hits[0].incoming,8);
  const before=target.hp;primeAccuracyRolls(combat);
- applyAttackDamage(combat,combat.player,target,13,[],card);
+ applyAttackDamage(combat,combat.player,target,FRACTIONAL_BASE,[],card);
  assert.equal(before-target.hp,receipt.hpLoss);
 });
 test('the Evade card outside combat fills its {evade} token with a phrase, never a raw token',async()=>{
