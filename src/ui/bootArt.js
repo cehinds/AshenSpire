@@ -24,9 +24,30 @@
 
 import { uiConfig } from '../config/generated/ui.js';
 import { packsPinned } from './assetPacks.js';
-import { t, UiFullText } from './strings.js';
+import { UiShortText, UiFullText } from './strings.js';
 
 const LOADING = uiConfig.presentation.startupGate;
+const ART_LOADING_BEHAVIOR = LOADING.behavior.artLoading;
+// Each phase's line: the state it paints and its uiStrings row; null draws no line.
+const PHASE_LINES = ART_LOADING_BEHAVIOR.phaseLines;
+const PHASE = Object.freeze(
+  {
+    OFF: 'off',
+    INDEX: 'index',
+    WARMING: 'warming',
+    DONE: 'done',
+    FAILED: 'failed',
+  },
+);
+const LINE_LOADING = 'loading';
+const ART_LOADED = 'loaded';
+const ANY_ORIENTATION = 'any';
+const TEXT_BY_FORM = Object.freeze(
+  {
+    short: UiShortText,
+    full: UiFullText,
+  },
+);
 /**
  * The files the gate and the title need first, in content/config's order:
  * { id, orientation } with orientation 'any', 'portrait' or 'landscape'. A
@@ -35,16 +56,16 @@ const LOADING = uiConfig.presentation.startupGate;
  * warms only the one its CSS will ask for.
  */
 export const CRITICAL_SET = Object.freeze((LOADING.components.artLoading?.critical || []).map((entry) => Object.freeze(
-  typeof entry === 'string' ? { id: entry, orientation: 'any' } : { id: String(entry.id), orientation: entry.orientation || 'any' },
+  typeof entry === 'string' ? { id: entry, orientation: ANY_ORIENTATION } : { id: String(entry.id), orientation: entry.orientation || ANY_ORIENTATION },
 )));
 /** How long the line may count before it is cleared; the files keep loading. */
-export const CRITICAL_WAIT_MS = Number(LOADING.behavior?.artLoading?.criticalWaitMs) || 20000;
+export const CRITICAL_WAIT_MS = Number(ART_LOADING_BEHAVIOR.criticalWaitMs);
 /**
  * A Retry's deadline (src/ui/artTier.js retryBuiltInArt). Nothing waits on a
  * Retry, so it is not the boot's BOOT_WAIT_MS: a link too slow to bring the art
  * index in 8 s must still be able to bring it on a Retry (review of #1471).
  */
-export const RETRY_WAIT_MS = Number(LOADING.behavior?.artLoading?.retryWaitMs) || 60000;
+export const RETRY_WAIT_MS = Number(ART_LOADING_BEHAVIOR.retryWaitMs);
 
 /** This screen's orientation, as the stylesheets' media queries read it. */
 export function screenOrientation(win = globalThis) {
@@ -53,28 +74,39 @@ export function screenOrientation(win = globalThis) {
 
 /** The critical ids for one orientation: the untagged ones and those tagged for it. */
 export function criticalIds(orientation = screenOrientation(), set = CRITICAL_SET) {
-  return set.filter((e) => e.orientation === 'any' || e.orientation === orientation).map((e) => e.id);
+  return set.filter((e) => e.orientation === ANY_ORIENTATION || e.orientation === orientation).map((e) => e.id);
 }
 
 /** The attribute every element that shows the line carries. */
 export const BOOT_ART_ATTR = 'data-boot-art-status';
 
-let phase = Object.freeze({ state: 'off', done: 0, total: 0 });
+let phase = Object.freeze({ state: PHASE.OFF, done: 0, total: 0 });
 let runId = 0;
 
 /** Where the boot's art load is: off (nothing pinned), index, warming, done or failed. */
 export function bootArtPhase() { return phase; }
 
 /**
- * bootArtLine(p) → null when the gate shows no line (nothing pinned), else
+ * bootArtLine(phase) → null when the gate shows no line (nothing pinned), else
  * { state, text }: the words for that phase ('' once the set is done).
  */
-export function bootArtLine(p = phase) {
-  if (!p || p.state === 'off') return null;
-  if (p.state === 'index') return { state: 'loading', text: t('art.loading') };
-  if (p.state === 'warming') return { state: 'loading', text: t('art.progress', { done: p.done, total: p.total }) };
-  if (p.state === 'failed') return { state: 'failed', text: UiFullText('art.failed.gate') };
-  return { state: 'done', text: '' };
+export function bootArtLine(currentPhase = phase)
+{
+  if (!currentPhase)
+  {
+    return null;
+  }
+  const lineConfig = Object.hasOwn(PHASE_LINES, currentPhase.state)
+    ? PHASE_LINES[currentPhase.state]
+    : PHASE_LINES[PHASE.DONE];
+  if (!lineConfig)
+  {
+    return null;
+  }
+  const text = lineConfig.string
+    ? TEXT_BY_FORM[lineConfig.form](lineConfig.string, currentPhase)
+    : '';
+  return { state: lineConfig.state, text };
 }
 
 /** Write the line into every element that shows it. */
@@ -83,8 +115,8 @@ export function paintBootArt(doc = globalThis.document) {
   const line = bootArtLine();
   for (const el of doc.querySelectorAll(`[${BOOT_ART_ATTR}]`)) {
     el.textContent = line ? line.text : '';
-    el.dataset.state = line ? line.state : 'off';
-    el.setAttribute('aria-busy', line && line.state === 'loading' ? 'true' : 'false');
+    el.dataset.state = line ? line.state : PHASE.OFF;
+    el.setAttribute('aria-busy', line && line.state === LINE_LOADING ? 'true' : 'false');
   }
 }
 
@@ -164,16 +196,16 @@ export function warmCriticalSet({
  */
 export function startBootArt({ settled, source, pinned = packsPinned(), doc = globalThis.document, warm = warmCriticalSet } = {}) {
   const mine = ++runId;
-  if (!pinned || !settled) { setPhase({ state: 'off' }, doc); return Promise.resolve(phase); }
-  setPhase({ state: 'index' }, doc);
+  if (!pinned || !settled) { setPhase({ state: PHASE.OFF }, doc); return Promise.resolve(phase); }
+  setPhase({ state: PHASE.INDEX }, doc);
   return Promise.resolve(settled).then(async (status) => {
     if (mine !== runId) return phase;
-    if (!status || status.state !== 'loaded') { setPhase({ state: 'failed' }, doc); return phase; }
+    if (!status || status.state !== ART_LOADED) { setPhase({ state: PHASE.FAILED }, doc); return phase; }
     const map = typeof source === 'function' ? source() : null;
-    await warm({ map, onProgress: (done, total) => { if (mine === runId) setPhase({ state: 'warming', done, total }, doc); } });
-    if (mine === runId) setPhase({ state: 'done' }, doc);
+    await warm({ map, onProgress: (done, total) => { if (mine === runId) setPhase({ state: PHASE.WARMING, done, total }, doc); } });
+    if (mine === runId) setPhase({ state: PHASE.DONE }, doc);
     return phase;
-  }, () => { if (mine === runId) setPhase({ state: 'failed' }, doc); return phase; });
+  }, () => { if (mine === runId) setPhase({ state: PHASE.FAILED }, doc); return phase; });
 }
 
 /**
@@ -181,13 +213,16 @@ export function startBootArt({ settled, source, pinned = packsPinned(), doc = gl
  * a load that now succeeded clears a failed line; one that failed again keeps it.
  */
 export function bootArtRetried(status, doc = globalThis.document) {
-  if (phase.state === 'off') return;
+  if (phase.state === PHASE.OFF) return;
   runId += 1;
-  setPhase({ state: status && status.state === 'loaded' ? 'done' : 'failed' }, doc);
+  const retriedState = status?.state === ART_LOADED
+    ? PHASE.DONE
+    : PHASE.FAILED;
+  setPhase({ state: retriedState }, doc);
 }
 
 /** For tests: forget the line. */
 export function resetBootArt() {
   runId += 1;
-  phase = Object.freeze({ state: 'off', done: 0, total: 0 });
+  phase = Object.freeze({ state: PHASE.OFF, done: 0, total: 0 });
 }
