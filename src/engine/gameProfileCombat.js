@@ -360,6 +360,7 @@ function attachOptionalFields(targetObject, fieldEntries)
   return targetObject;
 }
 
+// The key order is part of the event log a seeded fight is pinned by, so it follows the original receipt.
 function buildDamageReceiptHitEntry(fields)
 {
   const hitEntry = {
@@ -367,21 +368,28 @@ function buildDamageReceiptHitEntry(fields)
     physical: fields.physical,
     magical: fields.magical,
     blocked: fields.blocked,
+  };
+
+  attachOptionalFields(hitEntry, [
+    [Boolean(fields.broken?.block), 'blockBroken', fields.broken?.block],
+    [Boolean(fields.broken?.poise), 'poiseBroken', fields.broken?.poise],
+  ]);
+  Object.assign(hitEntry, {
     barrierReduced: fields.barrierMitigated,
     wardReduced: fields.wardMitigated,
     poiseReduced: fields.poiseMitigated,
-    hpLoss: fields.amount,
-    sources: fields.sources,
-  };
-
-  return attachOptionalFields(hitEntry, [
-    [Boolean(fields.broken?.block), 'blockBroken', fields.broken?.block],
-    [Boolean(fields.broken?.poise), 'poiseBroken', fields.broken?.poise],
+  });
+  attachOptionalFields(hitEntry, [
     [Boolean(fields.pierceBypassed), 'pierced', fields.pierceBypassed],
     [Boolean(fields.pierceBypassed), 'piercePoise', fields.piercePoise],
     [Boolean(fields.magicPoise), 'magicPoise', fields.magicPoise],
     [Boolean(fields.poiseDrain), 'poiseDamage', fields.poiseDrain],
   ]);
+
+  return Object.assign(hitEntry, {
+    hpLoss: fields.amount,
+    sources: fields.sources,
+  });
 }
 
 function selectProtectionPipelineId(flags)
