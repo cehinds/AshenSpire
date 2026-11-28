@@ -10,8 +10,8 @@
     "V": 5,
     "HITS": 2,
     "ENEMIES": 2,
-    "AUTH_PHYS": 0.35,
-    "AUTH_SPELL": 0.5,
+    "AUTH_PHYS": 1,
+    "AUTH_SPELL": 1,
     "AUTH_BLOCK": 1,
     "REDRAW": 1
   },
@@ -310,7 +310,7 @@
     "strength": {
       "weight": 15,
       "target": "self",
-      "projection": "+1 authored per attack x 0.35 x 2 attacks x 3 rounds",
+      "projection": "+1 damage per attack x 2 attacks x 3 rounds (damage is 1:1, owner 2026-11-28)",
       "why": "attackDamageAdd 1, no decay."
     },
     "dexterity": {
@@ -795,7 +795,7 @@
     },
     "ramp.honed": {
       "weight": 0,
-      "projection": "scaling: +N authored per play this run; ~3 prior plays mid-run -> 3N x 0.35",
+      "projection": "scaling: +N authored per play this run; ~3 prior plays mid-run -> 3N",
       "why": "Grows for the run.",
       "perN": 1,
       "domain": "card",
@@ -2352,8 +2352,8 @@
         "rare": 6
       },
       "gates": {
-        "+3 authored physical damage (+1 final)": "common",
-        "+2 authored spell damage (+1 final)": "common",
+        "+1 physical damage": "common",
+        "+1 spell damage": "common",
         "+2 Block": "common",
         "+3 final Poise (+1)": "common",
         "+1 stack of a status the card already applies": "common",
@@ -3718,9 +3718,9 @@
       "weaponArt": 0.25
     },
     "kit": {
-      "attack": "(attack profile baseValue - 3 unarmed) x 0.35 authored-to-final (spell share x 0.5) x 3 Strikes",
+      "attack": "(attack profile baseValue - 3 unarmed) x 3 Strikes (damage is 1:1)",
       "guard": "(guard profile baseValue - 1 unarmed) / 2 x 2 Defends (Block is 1:1)",
-      "weaponArt": "the art card scored as a card (its SP/MP cost included), played once in 3 rounds; legacy authored numbers converted to card-face as x0.35 + 3 per hit (AR add), Block + 6 (DR add)",
+      "weaponArt": "the art card scored as a card (its SP/MP cost included), played once in 3 rounds; authored numbers read 1:1 plus the rating add the survey measures, 3 per hit (AR) and 6 per Block (DR)",
       "unarmedAttack": 3,
       "unarmedGuard": 1,
       "unarmedNote": "bare hands: Strike 3, Guard 1 (the baseline a weapon profile is measured against)"
@@ -4033,7 +4033,7 @@
       "why": "Reach/ranged weapons avoid melee row tax without inflating common spears/staves."
     },
     "modifiers": {
-      "strike.damage": "n x 0.35 x 3",
+      "strike.damage": "n x 3",
       "strike.poise": "n x 0.5",
       "strike.hits": "(n-1) x 1.5 x 3",
       "strike.cost": "n x -5 x 2",
@@ -4217,7 +4217,7 @@
             "plays.strike"
           ]
         ],
-        "why": "authored +1 = 0.35 final, 3 Strikes in 3R"
+        "why": "+1 damage per Strike (1:1), 3 Strikes in 3R"
       },
       "strike.poise": {
         "label": "Strike Poise",
