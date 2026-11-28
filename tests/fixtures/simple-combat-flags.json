@@ -82,6 +82,7 @@
     "faceCardId": "core.whirlwind",
     "faceWord": "Poise",
     "faceCardPrefix": "core.",
+    "smashCardId": "core.smash",
     "faceExpansionVersion": 2,
     "upgradeOptions": 40,
     "upgradeStepKind": "poise"

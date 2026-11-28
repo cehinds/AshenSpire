@@ -7,6 +7,7 @@ import { PoiseEnabled } from '../src/model/simpleCombatFlags.js';
 import { dispatch } from '../src/engine/combat.js';
 import { cardFaceLines } from '../src/model/cardFaceText.js';
 import { nextUpgradeOptions } from '../src/model/cardUpgradeLimits.js';
+import { coreSmashClause, coreSmashHelp } from '../src/model/smashClause.js';
 import {
   SimpleCombatRegistries,
   SimpleCombatFight,
@@ -233,4 +234,28 @@ test('shipping Core has Poise off: no Core card face names Poise', () =>
 {
   assert.deepEqual(cardsNamingPoise(), []);
   assert.ok(cardsNamingPoise(POISE_ON).length > 0, 'Poise on still names it');
+});
+
+// The Smash clause and tag help, as a Core hand reads them.
+function smashTexts(overrideName)
+{
+  const registries = SimpleCombatRegistries(overrideName);
+  const card = registries.cards.get(FIGHT_PROBE.smashCardId);
+  return [
+    coreSmashClause(card, registries),
+    coreSmashHelp(card, registries),
+  ];
+}
+
+test('shipping Core has Poise off: the Smash clause and help keep matchups, not Poise', () =>
+{
+  for (const text of smashTexts())
+  {
+    assert.ok(text.length > 0, 'the Smash text is still shown');
+    assert.ok(!text.includes(FIGHT_PROBE.faceWord), text);
+  }
+  for (const text of smashTexts(POISE_ON))
+  {
+    assert.ok(text.includes(FIGHT_PROBE.faceWord), text);
+  }
 });
