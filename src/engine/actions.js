@@ -1492,6 +1492,14 @@ export function staggerPlayer(ctx, player) {
   ctx.emit('playerStaggered', { targetId: player.id, actionLoss, statuses: applied, ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(player) } : {}) });
 }
 
+// The Poise a card's own pressure dealt: none while stagger.poise is off, so it never counts as a hit.
+function landedPoise(ctx, offered)
+{
+  return PoiseEnabled(ctx)
+    ? Math.max(0, offered)
+    : 0;
+}
+
 /**
  * dealPoiseDamage(ctx, entity, amount) — an enemy's meter or the PLAYER's
  * (plan phase 8: the player's vessel is real once its max is stamped; an
@@ -1734,7 +1742,7 @@ function splitSmashPressure(ctx, action, target, row) {
   if (poise > 0) {
     const before = Math.max(0, target.poiseGuard || 0);
     dealPoiseDamage(ctx, target, poise, { carrier: action.card, source: action.source }); // a Smash: it may break a Defend target's last Poise
-    trackOwnPressure(ctx, action, target, 'poiseDealt', Math.max(0, poise - (before - Math.max(0, target.poiseGuard || 0))));
+    trackOwnPressure(ctx, action, target, 'poiseDealt', landedPoise(ctx, poise - (before - Math.max(0, target.poiseGuard || 0))));
   }
   if (ward > 0) { const spent = Control.spendPersistentWard(ctx, target, ward, { sourceId: action.source?.id }); trackOwnPressure(ctx, action, target, 'wardDealt', spent.spent); }
   return true;
@@ -2349,7 +2357,7 @@ export const OPCODE_HANDLERS = Object.freeze({
         const blockAtHit = row?.receipt?.blockBefore ?? (hit ? (hit.blocked || 0) + hit.blockRemaining : 0);
         dealPoiseDamage(ctx, t, amount, { knowledgeMatchup: multiplier > 1, carrier: action.card, source: action.source, blockAtHit });
         const guardAfter = Number.isFinite(t?.poiseGuard) ? Math.max(0, Math.floor(t.poiseGuard)) : 0;
-        trackOwnPressure(ctx, action, t, 'poiseDealt', Math.max(0, amount - (guardBefore - guardAfter)));
+        trackOwnPressure(ctx, action, t, 'poiseDealt', landedPoise(ctx, amount - (guardBefore - guardAfter)));
       }
       return;
     },
