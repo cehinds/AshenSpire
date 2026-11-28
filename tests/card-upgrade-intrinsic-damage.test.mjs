@@ -67,6 +67,7 @@ test('first-play offense equals the canonical whole incoming receipt for default
   assert.ok(packets > 0, 'the shared offense includes both packet channels');
 });
 
+const NECROTIC_PLATEAU_MULTIPLIER = 0.25;
 test('intrinsic elemental rounding skips a damage plateau and retains the effective neighboring rank', () => withScoring(() => {
   const scoring = structuredClone(GetActiveScoring());
   scoring.rank.maxRank = 10; scoring.rank.maxCp = 10000;
@@ -74,7 +75,8 @@ test('intrinsic elemental rounding skips a damage plateau and retains the effect
   const run = fresh();
   run.seed = 1;
   run.gameProfile = structuredClone(run.gameProfile);
-  Object.assign(run.gameProfile.modules.effects, { baseDamageMultiplier: .5, playerDamageMultiplier: 1,
+  // Owner ruling 2026-11-28: effect scales read 1, so the plateau comes from a quarter Necrotic multiplier alone.
+  Object.assign(run.gameProfile.modules.effects, { baseDamageMultiplier: 1, playerDamageMultiplier: 1,
     physicalDamageMultiplier: 1, strengthDamageWeight: 0, magicStatWeight: 0 });
   run.gameProfile.modules.stats.mode = 'disabled';
   run.relics = []; run.loadout = { sets: {}, active: {} };
@@ -86,7 +88,7 @@ test('intrinsic elemental rounding skips a damage plateau and retains the effect
     frost: { chillDamageDealtPerStack: 0, brittleMultiplier: 1 },
     burn: { damageTakenPerStack: 0 }, shock: { lightningTakenPerStack: 0 },
     lightning: { chainMultiplier: 1 }, divine: { undeadMultiplier: 1 },
-    necrotic: { damageMultiplier: .5, undeadTag: 'fixture.undead', buildupAttribute: 'intelligence', buildupMin: 0 }, force: {} };
+    necrotic: { damageMultiplier: NECROTIC_PLATEAU_MULTIPLIER, undeadTag: 'fixture.undead', buildupAttribute: 'intelligence', buildupMin: 0 }, force: {} };
   const base = { id: 'fixture.plateau', name: 'Rounding probe', class: 'colorless', rarity: 'common', type: 'attack',
     costRule: 'fixed', cost: 1, staminaCost: 1, manaCost: 0, damageSchool: 'magic',
     tags: ['camp:spell', 'maneuver:casting', 'classification.attack', 'school:decay', 'damage:necrotic'], kindIds: ['classification.attack'], keywords: [],
@@ -114,7 +116,7 @@ test('intrinsic elemental rounding skips a damage plateau and retains the effect
   const instance = rank => ({ instanceId: 'probe-1', cardId: base.id, rank, upgraded: true, upgradeSteps: lead });
   const after = rank => ({ ...instance(rank), upgradeSteps: [...lead, step] });
   assert.deepEqual([dealt(instance(4)), dealt(after(4)), dealt(instance(6)), dealt(after(6))], [2, 2, 2, 3],
-    'ceil(base × 0.5), then floor(necrotic × 0.5), makes precisely one neighboring rank plateau');
+    'floor(necrotic × 0.25) makes precisely one neighboring rank plateau');
   const options = rank => nextUpgradeOptions(run, instance(rank), base, registries, 40, { noAuthored: true, everyFamily: true });
   const snapshot = structuredClone(run), original = structuredClone(base);
   assert.ok(options(4).every(proposal => proposal.k !== 'dmg' || proposal.n !== 2));
