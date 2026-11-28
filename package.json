@@ -42,6 +42,8 @@
     "lint:style": "node tools/style-lint.mjs --check",
     "code:check": "npm --prefix tools/code-quality run check",
     "code:format": "npm --prefix tools/code-quality run format",
+    "format:changed": "node tools/code-quality/format-changed.mjs --write",
+    "format:changed:check": "node tools/code-quality/format-changed.mjs --check",
     "art:fetch": "node tools/fetch-art.mjs --pack light,common",
     "receipts": "node tools/receipts.mjs --check"
   }

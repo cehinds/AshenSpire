@@ -18,7 +18,10 @@
         "build/**",
         "dist/**"
     ],
-    "writeExclude": [],
+    "formatExclude": [
+        "src/"
+    ],
+    "$formatExcludeNote": "Prefixes format-changed skips: tools/bundle.mjs cannot parse split export lists.",
     "allowedNumbers": [
         0,
         1,
