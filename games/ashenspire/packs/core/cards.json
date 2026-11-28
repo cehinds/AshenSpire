@@ -5500,7 +5500,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 11
+        "amount": 9
       }
     ],
     "textTemplate": "Deal {damage} damage.",

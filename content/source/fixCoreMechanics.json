@@ -110,7 +110,7 @@
     },
     "prepared": {
       "damageMultiplier": 1,
-      "meleeDamageTakenMultiplier": 1.25
+      "meleeDamageTakenMultiplier": 1
     },
     "neutral": {
       "extraDrawNextTurn": 1,

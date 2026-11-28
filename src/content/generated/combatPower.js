@@ -111,7 +111,7 @@ export const cardCombatPower = {
  "core.wideSweep": {"raw":16,"cp":16,"rank":1,"rarity":"common"},
  "core.witherDraught": {"raw":23,"cp":13,"rank":1,"rarity":"uncommon"},
  "custom.card_mwx2mb6p": {"raw":0,"cp":0,"rank":0,"rarity":"common"},
- "custom.copy_mwx6hh79": {"raw":1,"cp":1,"rank":1,"rarity":"common"},
+ "custom.copy_mwx6hh79": {"raw":-1,"cp":-1,"rank":0,"rarity":"common"},
  "custom.copy_mwx6xoww": {"raw":1,"cp":1,"rank":1,"rarity":"common"},
  "greatswordSunderingHew": {"raw":-5,"cp":1,"rank":1,"rarity":"rare","overridden":true},
  "twinFang": {"raw":6,"cp":1,"rank":1,"rarity":"rare","overridden":true}
