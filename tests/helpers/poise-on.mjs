@@ -2,8 +2,9 @@
 // their Core profile to bring it back (tests/fixtures/simple-combat-flags.json, poiseOn).
 import { readFileSync } from 'node:fs';
 
-const FIXTURE_URL = new URL('../fixtures/simple-combat-flags.json', import.meta.url);
-const FIXTURE = JSON.parse(readFileSync(FIXTURE_URL, 'utf8'));
+const FIXTURE = JSON.parse(
+  readFileSync(new URL('../fixtures/simple-combat-flags.json', import.meta.url), 'utf8'),
+);
 
 export const POISE_ON_MODULES = Object.freeze(FIXTURE.overrides.poiseOn);
 
