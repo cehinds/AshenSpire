@@ -56,6 +56,8 @@ export function ReferenceClassId(definition, scoreReference)
   named helpers. One concern per module.
 - **Guard clauses:** return early instead of wrapping the body in if/else.
 - **Explaining variables:** break long expressions and `?.` chains into named steps.
+- **Abstract instead of editing many sites:** when one change needs edits in many places, add the
+  helper, table or config entry that lets the next change happen in one place.
 - **HTML as partials:** small named render helpers, not large `innerHTML` template strings.
 - **Abstract the repeats:** near-identical methods, assignments or objects become one helper, base
   class or shared component.
@@ -65,11 +67,23 @@ export function ReferenceClassId(definition, scoreReference)
 - **Descriptive names:** never single letters; use descriptive nouns for every variable so the code
   is easy to follow. PascalCase for public or exported names, camelCase for private ones.
 - **No magic values:** ids, class names, storage keys, paths and status words become named constants
-  or config; tuning numbers go to config.
+  or config; tuning numbers go to config. A list of allowed choices and its default live together
+  in config, never as a literal array in code.
+- **Say what a helper returns:** no cryptic short names (`tFull` became `UiFullText`); a reader
+  should know what a call gives back from its name alone.
+
+## Tests
+
+- **Tests are data-driven too:** expected values are read from the config they test, so a tuning
+  change never needs a test edit.
+- **Inputs are named:** test inputs go in a JSON fixture under `tests/fixtures/` or named constants.
+- **Table-driven repeats:** repeated assert shapes become one helper that loops over a case table.
+- **Pin behaviour, not numbers:** never copy a shipped number into a test to prove it equals itself.
 
 ## Comments and changelog
 
 - **Few comments, at most 2 lines each,** saying why, not what. Names explain the code.
+- **One sentence per line:** never split a sentence across comment lines.
 - No history, dates, issue numbers or owner quotes, and no comments about code that no longer
   exists.
 - **CHANGELOG receipts:** 2 short sentences at most.
@@ -77,6 +91,14 @@ export function ReferenceClassId(definition, scoreReference)
 ## Scope and enforcement
 
 - Clean up only the files the change touches.
+- **A correction applies everywhere:** feedback given on one spot is fixed in every spot of that
+  file and in every file touched later. New feedback is added to this guide.
+- **Formatting is automatic:** run `npm run format:changed` before committing; never hand-format.
+  CI fails a pull request whose changed `tests/` or `tools/` files are not formatted
+  (`npm run format:changed:check`). `src/` waits until the bundler reads multi-line export lists.
+- **Smell report:** `npm run code:smells` lists magic numbers and strings, duplicated code, long
+  functions and deep nesting in the changed files. Fix every finding in lines you touch; CI prints it.
+- **Generated files stay compact:** edit the JSON source named in their header, never the output.
 - A style cleanup never changes behaviour; prove it with the same output before and after.
 - The pinned dprint formatter in `tools/code-quality` applies the layout, with its own 4-space
   indent, to files enrolled in its `policy.json`.
