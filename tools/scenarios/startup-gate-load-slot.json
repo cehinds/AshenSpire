@@ -1,0 +1,361 @@
+{
+  "$note": "A8 Load Game slot selection for tools/startup-gate.mjs. Steps run in order; checks compare page fields to expect (exact) and match (case-insensitive RegExp).",
+  "fields": {
+    "selected": {
+      "selector": "[data-slot-pick][aria-pressed=\"true\"]",
+      "read": "data",
+      "key": "slotPick"
+    },
+    "focused": {
+      "selector": "[data-slot-pick].gp-focus",
+      "read": "data",
+      "key": "slotPick"
+    },
+    "continueEnabled": {
+      "selector": "[data-title-action=\"modal-continue\"]",
+      "read": "enabled"
+    },
+    "picker": {
+      "selector": ".title-slot-list",
+      "read": "exists"
+    },
+    "modal": {
+      "selector": ".title-menu-modal",
+      "read": "exists"
+    },
+    "map": {
+      "selector": ".mapscreen",
+      "read": "exists"
+    },
+    "review": {
+      "selector": ".title-load-review",
+      "read": "exists"
+    },
+    "reviewVariant": {
+      "selector": ".title-load-review",
+      "read": "data",
+      "key": "variant"
+    },
+    "reviewHeading": {
+      "selector": ".title-load-review h2",
+      "read": "text"
+    },
+    "reviewLoad": {
+      "selector": "[data-title-action=\"review-load\"]",
+      "read": "text"
+    },
+    "reviewBack": {
+      "selector": "[data-title-action=\"review-back\"]",
+      "read": "text"
+    },
+    "reviewLoadReady": {
+      "selector": ".title-load-review [data-title-action=\"review-load\"]",
+      "read": "exists"
+    },
+    "slotTitle": {
+      "selector": "[data-slot-pick=\"1\"]",
+      "read": "property",
+      "key": "title"
+    },
+    "slotAria": {
+      "selector": "[data-slot-pick=\"1\"]",
+      "read": "attribute",
+      "key": "aria-label"
+    },
+    "slotHoldMs": {
+      "selector": "[data-slot-pick=\"1\"]",
+      "read": "data",
+      "key": "holdMs"
+    },
+    "slotHint": {
+      "selector": "[data-slot-pick=\"1\"] .hold-hint",
+      "read": "rawText"
+    },
+    "closeBox": {
+      "selector": "[data-component=\"title-modal-close-control\"]",
+      "read": "size"
+    },
+    "deleteBox": {
+      "selector": "[data-component=\"title-save-slot-delete\"]",
+      "read": "size"
+    }
+  },
+  "selectors": {
+    "loadAction": "[data-title-action=\"load\"]",
+    "slotModal": ".title-menu-modal",
+    "slot": "[data-slot-pick=\"1\"]",
+    "heldSlot": "[data-slot-pick=\"1\"][data-hold-ms=\"600\"]",
+    "reviewLoad": "[data-title-action=\"review-load\"]",
+    "reviewBack": "[data-title-action=\"review-back\"]",
+    "map": ".mapscreen"
+  },
+  "pages": {
+    "mobile": {
+      "query": "?shot=title",
+      "width": 390,
+      "height": 844,
+      "mobile": true
+    },
+    "desktop": {
+      "query": "?shot=title"
+    }
+  },
+  "sessions": [
+    {
+      "name": "mobile pointer review",
+      "page": "mobile",
+      "steps": [
+        {
+          "until": "loadAction",
+          "label": "mobile title with an occupied save"
+        },
+        {
+          "click": "loadAction"
+        },
+        {
+          "until": "slotModal",
+          "label": "mobile Load Game slot picker"
+        },
+        {
+          "check": "A8.LOAD-SLOT-INITIAL",
+          "label": "Load visibly focuses its selected occupied slot and enables Continue",
+          "expect": {
+            "selected": "1",
+            "focused": "1",
+            "continueEnabled": true
+          }
+        },
+        {
+          "tapFloor": "A8.LOAD-SLOT-TARGETS-MOBILE",
+          "label": "390x844 Close and occupied-slot Delete each render at least 44x44",
+          "fields": [
+            "closeBox",
+            "deleteBox"
+          ],
+          "minPx": 44
+        },
+        {
+          "screenshot": "qa-load-slot-list-mobile-390x844.png"
+        },
+        {
+          "click": "slot"
+        },
+        {
+          "check": "A8.LOAD-SLOT-RESELECT",
+          "label": "the first press highlights the slot and leaves Continue enabled",
+          "expect": {
+            "selected": "1",
+            "focused": "1",
+            "continueEnabled": true
+          }
+        },
+        {
+          "$note": "Two taps (owner, 2026-09-04). The second press opens the decision door. The kit's stylesheet sets the case, so text matches ignore it.",
+          "click": "slot"
+        },
+        {
+          "check": "A8.LOAD-SLOT-REVIEW",
+          "label": "the second press opens the selected save's decision door with explicit Load and Back actions",
+          "expect": {
+            "reviewVariant": "load-review"
+          },
+          "match": {
+            "reviewHeading": "^load slot 1\\?$",
+            "reviewLoad": "^load save$",
+            "reviewBack": "^back$"
+          }
+        },
+        {
+          "screenshot": "qa-load-slot-review-mobile-390x844.png"
+        },
+        {
+          "click": "reviewBack"
+        },
+        {
+          "check": "A8.LOAD-SLOT-REVIEW-BACK",
+          "label": "Back returns to Load Game with selection and focus preserved",
+          "expect": {
+            "picker": true,
+            "selected": "1",
+            "focused": "1"
+          }
+        },
+        {
+          "click": "slot"
+        },
+        {
+          "until": "reviewLoad",
+          "label": "load review before Escape"
+        },
+        {
+          "key": "Escape"
+        },
+        {
+          "check": "A8.LOAD-SLOT-REVIEW-ESCAPE",
+          "label": "Escape returns to Load Game with selection and focus preserved",
+          "expect": {
+            "picker": true,
+            "selected": "1",
+            "focused": "1"
+          }
+        },
+        {
+          "click": "slot"
+        },
+        {
+          "until": "reviewLoad",
+          "label": "load review after Back"
+        },
+        {
+          "click": "reviewLoad"
+        },
+        {
+          "until": "map",
+          "label": "review-confirmed save load"
+        },
+        {
+          "check": "A8.LOAD-SLOT-REVIEW-COMMIT",
+          "label": "Load Save leaves the title and opens the selected run",
+          "expect": {
+            "modal": false,
+            "map": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "mobile hold to load",
+      "page": "mobile",
+      "steps": [
+        {
+          "until": "loadAction",
+          "label": "mobile title for hold-to-load"
+        },
+        {
+          "click": "loadAction"
+        },
+        {
+          "until": "heldSlot",
+          "label": "data-driven held save slot"
+        },
+        {
+          "check": "A8.LOAD-SLOT-HOLD-HINT",
+          "label": "slot exposes the authored hold duration and visible/accessible instruction",
+          "expect": {
+            "slotHoldMs": "600",
+            "slotHint": "HOLD"
+          },
+          "matchAny": {
+            "fields": [
+              "slotTitle",
+              "slotAria"
+            ],
+            "pattern": "hold to load"
+          }
+        },
+        {
+          "hold": "slot",
+          "ms": 720,
+          "touch": true
+        },
+        {
+          "check": "A8.LOAD-SLOT-HOLD",
+          "label": "a completed mobile touch hold loads the save directly without opening review",
+          "expect": {
+            "modal": false,
+            "map": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "desktop keyboard review",
+      "page": "desktop",
+      "steps": [
+        {
+          "until": "loadAction",
+          "label": "desktop title for keyboard review"
+        },
+        {
+          "click": "loadAction"
+        },
+        {
+          "tapFloor": "A8.LOAD-SLOT-TARGETS-DESKTOP",
+          "label": "1200x730 Close and occupied-slot Delete each render at least 44x44",
+          "fields": [
+            "closeBox",
+            "deleteBox"
+          ],
+          "minPx": 44
+        },
+        {
+          "$note": "A tap asks (2026-09-04): one activation highlights, with no timed hold and no bypass.",
+          "key": "Enter"
+        },
+        {
+          "check": "A8.LOAD-SLOT-KEY-FIRST",
+          "label": "keyboard activation highlights without bypassing the decision door",
+          "expect": {
+            "review": false,
+            "selected": "1"
+          }
+        },
+        {
+          "key": "Enter"
+        },
+        {
+          "check": "A8.LOAD-SLOT-KEY-REVIEW",
+          "label": "a second keyboard activation opens the same review used by pointer input",
+          "expect": {
+            "reviewLoadReady": true
+          }
+        },
+        {
+          "screenshot": "qa-load-slot-review-wide-1200x730.png"
+        }
+      ]
+    },
+    {
+      "name": "desktop controller review",
+      "page": "desktop",
+      "steps": [
+        {
+          "until": "loadAction",
+          "label": "desktop title for controller review"
+        },
+        {
+          "padConnect": true,
+          "settleMs": 250
+        },
+        {
+          "click": "loadAction"
+        },
+        {
+          "padPress": 0,
+          "holdMs": 100,
+          "settleMs": 180
+        },
+        {
+          "check": "A8.LOAD-SLOT-PAD-FIRST",
+          "label": "controller activation highlights without becoming a timed hold",
+          "expect": {
+            "review": false,
+            "selected": "1"
+          }
+        },
+        {
+          "padPress": 0,
+          "holdMs": 100,
+          "settleMs": 180
+        },
+        {
+          "check": "A8.LOAD-SLOT-PAD-REVIEW",
+          "label": "a second controller activation deterministically opens the same review",
+          "expect": {
+            "reviewLoadReady": true
+          }
+        }
+      ]
+    }
+  ]
+}
