@@ -97,7 +97,8 @@ export function ReferenceClassId(definition, scoreReference)
   CI fails a pull request whose changed `tests/` or `tools/` files are not formatted
   (`npm run format:changed:check`). `src/` waits until the bundler reads multi-line export lists.
 - **Smell report:** `npm run code:smells` lists magic numbers and strings, duplicated code, long
-  functions and deep nesting in the changed files. Fix every finding in lines you touch; CI prints it.
+  functions and deep nesting in the changed files. Fix every finding in lines you touch.
+  CI prints the report on every pull request.
 - **Generated files stay compact:** edit the JSON source named in their header, never the output.
 - A style cleanup never changes behaviour; prove it with the same output before and after.
 - The pinned dprint formatter in `tools/code-quality` applies the layout, with its own 4-space
