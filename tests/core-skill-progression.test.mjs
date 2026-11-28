@@ -558,6 +558,7 @@ test('Core Victory receipt spends an earned attribute point and saves it at once
   const { run } = live();
   run.level.unspentPoints = 2;
   const strength = run.attributes.strength, hp = run.hp;
+  const totalBefore = Object.values(run.attributes).reduce((a, b) => a + b);
   withModalDom(() => {
     document.documentElement ??= document.body;
     document.body.classList.add('reduced-motion');
@@ -575,7 +576,7 @@ test('Core Victory receipt spends an earned attribute point and saves it at once
     document.querySelector('[data-stat-done]').click();
     assert.equal(run.level.unspentPoints, 1);
     assert.equal(saves, 1);
-    assert.equal(Object.values(run.attributes).reduce((a, b) => a + b), 7);
+    assert.equal(Object.values(run.attributes).reduce((a, b) => a + b), totalBefore + 1, 'one point spent');
     assert.equal(run.hp, hp, 'a spend does not heal');
     void strength;
   });
