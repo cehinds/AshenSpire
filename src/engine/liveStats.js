@@ -13,6 +13,7 @@
 //   turnBoosts  the part of `boosts` that leaves again at the end of the owner's turn
 // The run's own attributes are never written: combat holds its own copies.
 import { persistentPoiseMaximum } from '../model/combatRatings.js';
+import { PoiseEnabled } from '../model/simpleCombatFlags.js';
 import { ChannelRowValue } from '../model/channelRowValue.js';
 import { SpellScalingValue, SpellTraditionsActive } from '../model/spellTraditions.js';
 import { turnStaminaAliasData } from '../model/turnStamina.js';
@@ -80,6 +81,26 @@ function ensure(ctx, entity) {
 
 const clamp = (value, max) => Math.max(0, Math.min(max, value));
 
+// The live Poise maximum after a stat change; stagger.poise off keeps every pool at 0, bonus and all.
+function livePoiseMaximum(
+  ctx,
+  entity,
+  base,
+  poiseDelta,
+)
+{
+  if (!PoiseEnabled(ctx))
+  {
+    return 0;
+  }
+  const bonus = entity.persistentPoise.barrierBonus || 0;
+  const rated = entity.ratings && ctx.combatExpansionVersion === 2;
+  const max = rated
+    ? persistentPoiseMaximum(ctx, entity)
+    : whole(base.persistentPoiseMax + poiseDelta);
+  return max + bonus;
+}
+
 function resize(entity, field, max, currentFields) {
   if (!Number.isFinite(max)) return;
   const before = entity[field];
@@ -132,8 +153,12 @@ export function RecomputeLiveStats(ctx, entity) {
     // Barrier and Ward stacks add their Poise on top (persistentPoise.barrierBonus, SPEC 4.1a). With a rating table the maximum comes from the
     // same source syncPoiseMaximum uses (rating maximum + bonus), so the stored base format (a fight saved by 0.7.4.216 holds the bonus in it)
     // no longer matters; otherwise the fight-start base plus the rating delta, plus the bonus.
-    const bonus = entity.persistentPoise.barrierBonus || 0;
-    const max = (entity.ratings && ctx.combatExpansionVersion === 2 ? persistentPoiseMaximum(ctx, entity) : whole(base.persistentPoiseMax + delta('poise'))) + bonus;
+    const max = livePoiseMaximum(
+      ctx,
+      entity,
+      base,
+      delta('poise'),
+    );
     entity.persistentPoise.value = clamp(entity.persistentPoise.value + Math.max(0, max - entity.persistentPoise.max), max);
     entity.persistentPoise.max = max;
   }
