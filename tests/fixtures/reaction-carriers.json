@@ -1,0 +1,16 @@
+{
+  "$note": "Core cards a test plays as Reaction cards. The shipped Core cards no longer carry the tag (owner ruling 2026-11-28), so a reaction test adds it back here.",
+  "tag": "trait:reaction",
+  "core": "ashen.core@2.0.0",
+  "pack": "ashen.core-content@2.0.0",
+  "cards": [
+    "core.defend",
+    "core.counter",
+    "core.closingDodge",
+    "core.backstep",
+    "core.jab",
+    "core.steadyGuard",
+    "core.smokeVeil",
+    "core.moteShield"
+  ]
+}
