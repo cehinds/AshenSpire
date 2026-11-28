@@ -59,7 +59,7 @@
       "noManeuver": "What a card with no maneuver resolves to.",
       "byEffect": "In order: a card that deals damage, else one that gives Block, else the fallback stance.",
       "overrides": "cardId to stance, for hand fixes; wins over map and byEffect.",
-      "blockBonus": "When a defend card's Block takes winnerMultiplier. anyEnemyIntent: the player's Block when any living enemy telegraphs a stance defend beats; an enemy's Block against the player's current stance."
+      "blockBonus": "Which cards' Block takes winnerMultiplier (stances) and when (mode). anyEnemyIntent: the player's Block when any living enemy telegraphs a stance it beats; an enemy's Block against the player's current stance."
     },
     "include": [
       "attack",
@@ -122,7 +122,10 @@
     },
     "overrides": {},
     "blockBonus": {
-      "mode": "anyEnemyIntent"
+      "mode": "anyEnemyIntent",
+      "stances": [
+        "defend"
+      ]
     }
   }
 }

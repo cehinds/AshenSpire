@@ -240,10 +240,20 @@
               "enum": [
                 "anyEnemyIntent"
               ]
+            },
+            "stances": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": "The stances whose Block wins; the triangle gives it to defend."
             }
           },
           "required": [
-            "mode"
+            "mode",
+            "stances"
           ],
           "additionalProperties": false
         }

@@ -178,6 +178,20 @@
       "turn": 2,
       "neutralStance": "neutral",
       "skillStance": "skill"
+    },
+    "blockProbe": {
+      "$note": "A defend card's Block wins only against an attack it beats; a strike's Block never does.",
+      "defendCardId": "defend",
+      "otherCardId": "strike",
+      "defendStance": "defend",
+      "bonusStance": "attack",
+      "otherStances": [
+        "smash",
+        "defend",
+        "skill"
+      ],
+      "base": 20,
+      "winnerMultiplier": 1.25
     }
   }
 }

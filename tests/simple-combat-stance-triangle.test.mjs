@@ -8,6 +8,8 @@ import { stanceOf } from '../src/model/stanceRules.js';
 import { setProfileStance, profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
 import { NeutralExtraDraw, StanceWeaknessMultiplier } from '../src/engine/stanceBenefits.js';
 import { enemyMoveCarrier } from '../src/engine/combatCardTactics.js';
+import { TriangleBlockMultiplier } from '../src/engine/triangleBlock.js';
+import { computeBlockGain } from '../src/engine/actions.js';
 import {
   SimpleCombatFixture,
   SimpleCombatRegistries,
@@ -173,4 +175,79 @@ test('triangle: skill is not Idle, no extra draw and no extra damage taken', () 
   assert.equal(NeutralExtraDraw(fight, inSkill, turn), 0);
   assert.equal(StanceWeaknessMultiplier(fight, null, skillStance, {}), 1);
   assert.ok(StanceWeaknessMultiplier(fight, null, neutralStance, {}) > 1, 'Idle stays weak');
+});
+
+const BLOCK = PROBE.blockProbe;
+
+function stanceRow(maneuver)
+{
+  return {
+    combatProfile: { maneuver },
+    maneuver,
+  };
+}
+
+function withEnemyIntent(fight, maneuver)
+{
+  const enemies = fight.enemies.map(enemy => ({
+    ...enemy,
+    intent: stanceRow(maneuver),
+  }));
+  return {
+    ...fight,
+    enemies,
+  };
+}
+
+function withPlayerStance(fight, maneuver)
+{
+  return {
+    ...fight,
+    player:
+    {
+      ...fight.player,
+      combatStance: { maneuver },
+    },
+  };
+}
+
+test('triangle: a defend card gains winnerMultiplier Block against an attack intent only', () =>
+{
+  const fight = SimpleCombatFight(SimpleCombatRegistries(TRIANGLE));
+  const defendCard = { ...cardCarrier(fight.registries, BLOCK.defendCardId) };
+  const otherCard = { ...cardCarrier(fight.registries, BLOCK.otherCardId) };
+  const facingAttack = withEnemyIntent(fight, BLOCK.bonusStance);
+  const multiplier = ctx => TriangleBlockMultiplier(ctx, ctx.player, defendCard);
+  assert.equal(multiplier(facingAttack), BLOCK.winnerMultiplier);
+  assert.equal(TriangleBlockMultiplier(facingAttack, facingAttack.player, otherCard), 1);
+  const bonusBlock = computeBlockGain(facingAttack, facingAttack.player, BLOCK.base, defendCard);
+  for (const stance of BLOCK.otherStances)
+  {
+    const facing = withEnemyIntent(fight, stance);
+    assert.equal(multiplier(facing), 1, stance);
+    assert.ok(computeBlockGain(facing, facing.player, BLOCK.base, defendCard) < bonusBlock, stance);
+  }
+});
+
+test('triangle: an enemy defend move wins against the player\'s current attack stance', () =>
+{
+  const fight = SimpleCombatFight(SimpleCombatRegistries(TRIANGLE));
+  const defendMove = stanceRow(BLOCK.defendStance);
+  const enemyOf = ctx => ctx.enemies[0];
+  const attacking = withPlayerStance(fight, BLOCK.bonusStance);
+  const won = TriangleBlockMultiplier(attacking, enemyOf(attacking), defendMove);
+  assert.equal(won, BLOCK.winnerMultiplier);
+  for (const stance of BLOCK.otherStances)
+  {
+    const facing = withPlayerStance(fight, stance);
+    assert.equal(TriangleBlockMultiplier(facing, enemyOf(facing), defendMove), 1, stance);
+  }
+});
+
+test('maneuvers: no triangle Block bonus', () =>
+{
+  const fight = SimpleCombatFight(SimpleCombatRegistries());
+  const defendCard = { ...cardCarrier(fight.registries, BLOCK.defendCardId) };
+  const facingAttack = withEnemyIntent(fight, BLOCK.bonusStance);
+  assert.equal(TriangleBlockMultiplier(facingAttack, facingAttack.player, defendCard), 1);
 });
