@@ -41,6 +41,7 @@ test('the toast: one at a time, polite, gone after its life, survives a re-rende
     const host = dom.document.createElement('div');
     const toggle = dom.document.createElement('button');
     toggle.className = 'reaction-switch';
+    toggle.setAttribute('data-combat-tool', 'reaction');
     host.append(toggle);
     const note = createReactionNote();
     note.attach(host);
