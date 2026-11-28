@@ -11,19 +11,26 @@
 #
 #   5 -> 2    6 -> 2    8 -> 3
 #
+# RESTATED AGAIN FOR ONE STARTING POINT (owner, 2026-11-28: every class starts with
+# 1 in its main stat and 0 elsewhere, and its starting kit stays equippable). The
+# reachable span at creation is now 0-1, so each row is the lean value carried
+# onto it by round(old x 1 / 4), clamped to 0-1, with a starting-kit item at 1:
+#
+#   2 -> 1    3 -> 1
+#
 # These are AUTHORED defaults, not the last word: Settings -> Advanced ->
 # Progression -> Equipment requirements exposes one row per line below, so the
 # whole table moves with the scale when the scale is retuned.
 itemId,attributeId,minimum
-straightSword,strength,2
-greatsword,strength,3
-dagger,dexterity,2
-ashStaff,intelligence,3
+straightSword,strength,1
+greatsword,strength,1
+dagger,dexterity,1
+ashStaff,intelligence,1
 
-wayfarerPlate,strength,3
+wayfarerPlate,strength,1
 
-nightweave,intelligence,3
+nightweave,intelligence,1
 
-riteVestments,wisdom,3
+riteVestments,wisdom,1
 
-gutterLeathers,dexterity,3
+gutterLeathers,dexterity,1

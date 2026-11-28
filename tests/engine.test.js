@@ -3349,15 +3349,12 @@ export async function runTests({
         const REG = legacyProgressionRegistries();
         const makeCombat = makeLegacyCombat;
         const fresh = createRunState({ seed: 0x6d616e61, classId: 'reaver', registries: REG });
-        // THE BASE ALONE, BECAUSE EVERY TERM FLOORS ON ITS OWN. Since 2026-09-24
-        // the Mana row reads a spread (STR .1, CON .25, WIS .5, INT .3 — the
-        // owner's exported defaults), and the Reaver's lean preset (STR 3, CON 2,
-        // WIS 1, INT 1) floors every one of those terms to zero: the pool is its
-        // base of 1. Before, the pool IS Wisdom and the same Reaver opened at 2.
-        // The creation scale that made one lean point five tuned tiers is still
-        // gone (2026-09-21); this row is the authored one, unconverted.
-        eq(fresh.mana, 2, 'run starts at its WIS-derived mana maximum (base 1 + WIS 1 = 2)');
-        eq(fresh.maxMana, 2, 'Reaver maximum follows the lean preset — base 1 + 1 per WIS');
+        // The Mana pool is its base of 1 plus 1 per Wisdom; the lean Reaver preset
+        // (owner, 2026-11-28) holds 1 Strength and 0 Wisdom, so it opens on the base alone.
+        const manaBase = 1;
+        const expectedMana = manaBase + fresh.attributes.wisdom;
+        eq(fresh.mana, expectedMana, 'run starts at its WIS-derived mana maximum (base 1 + 1 per WIS)');
+        eq(fresh.maxMana, expectedMana, 'Reaver maximum follows the lean preset — base 1 + 1 per WIS');
         assert(validateRunShape(fresh).length === 0, 'the new run shape accepts a sound mana pool');
         assert(
             validateRunShape({ ...fresh, mana: fresh.maxMana + 1 }).some((s) =>
@@ -6878,18 +6875,27 @@ export async function runTests({
         // A run starts stamped by whatever it starts wearing, and `self.*` mods
         // reach the run rather than a card.
         // THE ALLOCATION IS SPELLED OUT HERE BECAUSE THIS BLOCK EQUIPS A DAGGER.
-        // On the lean span a Reaver's own preset leaves Dexterity at the baseline
-        // of 1, and the dagger asks 2 — so the in-combat `changeEquipment` below
-        // would be refused for a reason that has nothing to do with the action
-        // economy this block is about. Three points placed as a dagger-carrying
-        // Reaver would place them: still 8, still inside 1–4, still holding the
-        // greatsword's 2 Strength.
+        // A Reaver's own preset leaves Dexterity at 0 and the dagger asks 1, so the
+        // in-combat `changeEquipment` below would be refused for a reason that has
+        // nothing to do with the action economy this block is about. The one point
+        // goes to Dexterity, as a dagger-carrying Reaver would place it.
         const run = createRunState({
             seed: 7,
             classId: 'reaver',
             registries: LEGACY_REG,
-            attributes: { strength: 3, dexterity: 2, constitution: 1, wisdom: 1, intelligence: 1 },
+            attributes: { strength: 0, dexterity: 1, constitution: 0, wisdom: 0, intelligence: 0 },
         });
+        // Two levelled points: Constitution, so the Poise stamp below has an attribute term to
+        // drop, and Strength, so the swords this block swaps in meet their 1 Strength.
+        const LEVELLED = [
+            'constitution',
+            'strength',
+        ];
+        run.level.unspentPoints += LEVELLED.length;
+        for (const attributeId of LEVELLED)
+        {
+            applyLevelUp(LEGACY_REG, run, attributeId);
+        }
         assert(
             run.loadout && run.loadout.sets.rightHand.length === 3,
             'the right hand carries three sets',
@@ -11295,8 +11301,8 @@ export async function runTests({
         eq(standard.id, 'lean', 'new runs select the lean mode (owner, 2026-09-20)');
         eq(
             `${standard.baseline}/${standard.bonusPool}/${standard.minimum}/${standard.maximum}`,
-            '1/3/1/4',
-            'lean creation bounds author the fixed total of 8: 1 in every stat and 3 to place',
+            '0/1/0/1',
+            'lean creation bounds author the fixed total of 1: 0 in every stat and 1 to place (owner, 2026-11-28)',
         );
         eq(classes.length, 4, 'four playable classes participate in the creation product');
         eq(
@@ -11334,7 +11340,7 @@ export async function runTests({
             classes.map((c) =>
                 attrs.map((a) => contentBundle.attributeRules.presets.lean[c.id][a.id]).join('/')
             ).join('|'),
-            '3/1/2/1/1|1/1/1/2/3|1/3/2/1/1|1/1/2/3/1',
+            '1/0/0/0/0|0/0/0/0/1|0/1/0/0/0|0/0/0/1/0',
             'all four lean class presets are exact in the authored attribute order',
         );
 
@@ -11599,15 +11605,13 @@ export async function runTests({
             JSON.stringify(standard),
             'new run owns the creation-mode rules that admitted its allocation',
         );
-        // Herald lean is STR 1 · DEX 1 · CON 2 · WIS 3 · INT 1. HP 51 + ⌊0.35⌋ +
-        // ⌊4 × 2⌋ + ⌊0.1 × 3⌋ = 59; Actions 3 (every weight floors to 0 at 1–3
-        // points); Draw is the ruleset-7 draw row, base 4 since the hand refresh update
-        // (2026-10-03) and nothing from INT 1, below the row's baseline of 4. It
-        // read 3 under ruleset 6 and 2 under ruleset 7 before D27.
+        // HP is 51 + 1 per CON, Actions 3 and Draw base 3 + 1 per INT, read against the
+        // Herald's lean preset (WIS 1, every other stat 0 since 2026-11-28).
+        const heraldPreset = contentBundle.attributeRules.presets.lean.herald;
         eq(
             `${fresh.maxHp}/${fresh.energyMax}/${fresh.drawPerTurn}`,
-            '53/3/4',
-            'lean HP/actions/hand formulas reach the run, read against the attributes the sheet shows (draw base 3 + 1 INT = 4)',
+            `${51 + heraldPreset.constitution}/3/${3 + heraldPreset.intelligence}`,
+            'lean HP/actions/hand formulas reach the run, read against the attributes the sheet shows (draw base 3 + 1 per INT)',
         );
         eq(
             [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => xpToNextLevel(REG, l)).join(','),
@@ -11652,18 +11656,18 @@ export async function runTests({
         eq(
             JSON.stringify(rogue.attributes),
             JSON.stringify({
-                strength: 1,
-                dexterity: 3,
-                constitution: 2,
-                wisdom: 1,
-                intelligence: 1,
+                strength: 0,
+                dexterity: 1,
+                constitution: 0,
+                wisdom: 0,
+                intelligence: 0,
             }),
-            'Rogue copies the exact approved lean preset',
+            'Rogue copies the exact approved lean preset (owner, 2026-11-28)',
         );
-        // Rogue: HP 51 + ⌊4 × 2⌋ = 59; Actions 3 + ⌊0.25 × DEX 3⌋ = 3; Draw 4 + nothing from INT 1.
+        // Rogue: HP 51 + CON 0 = 51; Actions 3 + ⌊0.25 × DEX 1⌋ = 3; Draw 3 + INT 0 = 3.
         eq(
             `${rogue.attributeMode}/${rogue.maxHp}/${rogue.energyMax}/${rogue.drawPerTurn}`,
-            'lean/53/3/4',
+            'lean/51/3/3',
             'Rogue lean stats reach the HP, action, and hand formulas',
         );
         eq(
@@ -11675,12 +11679,12 @@ export async function runTests({
         const rogueGuard = rogue.deck.find((card) => card.equipmentRole === 'guard');
         eq(
             `${rogueAttack.profileId}/${rogueAttack.profileReceipt.base}/${rogueAttack.profileReceipt.rating.id}/${rogueAttack.profileReceipt.rating.value}/${rogueAttack.profileReceipt.value}`,
-            'daggerPierceAttack/3/ar/1/4',
+            'daggerPierceAttack/3/ar/0/3',
             'Rogue dagger Strike is stamped from the STR channel only: the dagger has no AR of its own (owner, 2026-11-18)',
         );
         eq(
             `${rogueGuard.profileId}/${rogueGuard.profileReceipt.base}/${rogueGuard.profileReceipt.rating.id}/${rogueGuard.profileReceipt.rating.value}/${rogueGuard.profileReceipt.value}`,
-            'shieldGuard/3/dr/3/6',
+            'shieldGuard/3/dr/1/4',
             'Rogue buckler Defend is stamped from DEX alone: the buckler has no DR of its own (owner, 2026-11-18)',
         );
         const star = createRunState({
@@ -11691,8 +11695,8 @@ export async function runTests({
         });
         eq(
             star.attributes.intelligence,
-            3,
-            'the approved Starseer preset keeps the INT 3 its own staff asks for on the lean span',
+            1,
+            'the approved Starseer preset keeps the INT 1 its own staff asks for on the lean span',
         );
         eq(
             star.startingKitId,
@@ -11710,11 +11714,11 @@ export async function runTests({
                 startingKitId: 'reaverGreatsword',
                 profileMeta: { discoveredArmaments: ['greatsword'] },
                 attributes: {
-                    strength: 1,
-                    dexterity: 4,
-                    constitution: 1,
-                    wisdom: 1,
-                    intelligence: 1,
+                    strength: 0,
+                    dexterity: 1,
+                    constitution: 0,
+                    wisdom: 0,
+                    intelligence: 0,
                 },
             });
         }
@@ -11723,7 +11727,7 @@ export async function runTests({
             alternateRefusal = error.message;
         }
         assert(
-            /requires strength 3 \(got 1\)/.test(alternateRefusal),
+            /requires strength 1 \(got 0\)/.test(alternateRefusal),
             'an alternate kit still passes the manual equipment requirement gate',
         );
 
@@ -11745,7 +11749,7 @@ export async function runTests({
         );
         eq(
             afterDrift.attributeModeSnapshot.baseline,
-            1,
+            standard.baseline,
             'the run keeps the creation rules it was born under',
         );
         for (const mode of modes)
@@ -12168,15 +12172,18 @@ export async function runTests({
         const liveHp = REG.derivedStatRules.rules.hp;
         const otherTerms = (attributes) =>
             attributeTerms(liveHp, { ...attributes, constitution: 0 });
+        const leanMode = contentBundle.creationModes.find((mode) => mode.id === 'lean');
+        const leanPresets = contentBundle.attributeRules.presets.lean;
         for (
-            const [classId, con, flat] of [
-                ['reaver', 2, 10],
-                ['starseer', 1, 6],
-                ['rogue', 2, 0],
-                ['herald', 2, 0],
+            const [classId, flat] of [
+                ['reaver', 10],
+                ['starseer', 6],
+                ['rogue', 0],
+                ['herald', 0],
             ]
         )
         {
+            const con = leanPresets[classId].constitution;
             const run = createRunState({ seed: 0xf1, classId, registries: REG });
             const hp = statProjection(REG, run).derived.find((row) => row.id === 'hp');
             eq(run.attributes.constitution, con, `${classId} uses the approved lean CON preset`);
@@ -12195,26 +12202,24 @@ export async function runTests({
                 `${classId} printed receipt lands on the real pool`,
             );
         }
-        // Each row spends the mode's whole total (8) so the allocation is legal;
+        // Each row spends the mode's whole total (1) so the allocation is legal;
         // only Constitution moves between them.
+        const NONE = { strength: 0, dexterity: 0, wisdom: 0, intelligence: 0 };
         const REST = {
-            1: { strength: 4, dexterity: 1, wisdom: 1, intelligence: 1 },
-            2: { strength: 3, dexterity: 1, wisdom: 1, intelligence: 1 },
-            3: { strength: 2, dexterity: 1, wisdom: 1, intelligence: 1 },
-            4: { strength: 1, dexterity: 1, wisdom: 1, intelligence: 1 },
-            0: { strength: 4, dexterity: 2, wisdom: 1, intelligence: 1 },
-            5: { strength: 1, dexterity: 1, wisdom: 1, intelligence: 0 },
+            [leanMode.minimum]: { ...NONE, strength: 1 },
+            [leanMode.minimum + 1]: NONE,
         };
         const at = (con) => createRunState({
             seed: 0xf2,
             classId: 'reaver',
             registries: REG,
-            attributes: { ...REST[con], constitution: con },
+            attributes: { ...(REST[con] || NONE), constitution: con },
         });
-        eq(at(1).maxHp, 62, 'CON floor 1 gives 51 + 1 + 10 flat');
-        eq(at(4).maxHp, 65, 'CON ceiling 4 gives 51 + 4 + 10 flat');
-        eq(at(4).maxHp - at(3).maxHp, perPoint, 'one adjacent CON point is exactly one HP');
-        for (const outside of [0, 5])
+        eq(at(0).maxHp, 61, 'CON floor 0 gives 51 + 0 + 10 flat');
+        eq(at(1).maxHp, 62, 'CON 1, the whole point, gives 51 + 1 + 10 flat');
+        eq(at(1).maxHp - at(0).maxHp, perPoint, 'one adjacent CON point is exactly one HP');
+        const bounds = `between ${leanMode.minimum} and ${leanMode.maximum}`;
+        for (const outside of [leanMode.minimum - 1, leanMode.maximum + 1])
         {
             let refused = false;
             try
@@ -12223,7 +12228,7 @@ export async function runTests({
             }
             catch (error)
             {
-                refused = /between 1 and 4/.test(error.message);
+                refused = error.message.includes(bounds);
             }
             assert(refused, `CON ${outside} is refused by the lean creation bounds`);
         }
@@ -12645,7 +12650,7 @@ export async function runTests({
         // perfect on screen and destroy the player's run at the next load.
         const run = createRunState({ seed: 0x5a7ed, classId: 'reaver', registries: REG });
         run.seedString = 'LEVELS';
-        // Every 4 levels grants 1 attribute point; climb 15 levels (to level 16) for 4 attribute points (enough to pass creation cap 4).
+        // Every 4 levels grants 1 attribute point; climb 15 levels (to level 16) for 4 attribute points (past the creation cap).
         const xpTo16 = Array.from({ length: 15 }, (_, i) => xpToNextLevel(REG, i + 1)).reduce(
             (sum, x) => sum + x,
             0,
@@ -12658,9 +12663,10 @@ export async function runTests({
             applyLevelUp(REG, run, 'constitution');
         }
         eq(run.levelUps, 4, 'four points assigned');
+        const leanCeiling = contentBundle.creationModes.find((mode) => mode.id === 'lean').maximum;
         assert(
-            run.attributes.constitution > 4,
-            'and the stat is past the lean creation ceiling of 4',
+            run.attributes.constitution > leanCeiling,
+            `and the stat is past the lean creation ceiling of ${leanCeiling}`,
         );
 
         const storage = createMemoryStorage();
@@ -12818,13 +12824,21 @@ export async function runTests({
 
         // A RUN THE DIAL ALREADY SHAPED KEEPS IT. Saves born under the old dial
         // carry the layer in their snapshot, and the engine still reads one.
+        // The one point sits in Constitution so a 2-point tier has a term to halve.
+        const tierProbe = { strength: 0, dexterity: 0, constitution: 1, wisdom: 0, intelligence: 0 };
         const dialled = createRunState({
             seed: 0xd1a2,
             classId: 'reaver',
             registries: REG,
+            attributes: tierProbe,
             derivedStatOptions: { explicitOverride: { defaults: { pointsPerTier: 2 } } },
         });
-        const stock = createRunState({ seed: 0xd1a2, classId: 'reaver', registries: REG });
+        const stock = createRunState({
+            seed: 0xd1a2,
+            classId: 'reaver',
+            registries: REG,
+            attributes: tierProbe,
+        });
         assert(dialled.maxHp < stock.maxHp, 'the layer still reaches every row');
         const store = createMemoryStorage();
         dialled.seedString = 'TIER1';
@@ -13968,17 +13982,17 @@ export async function runTests({
         eq(
             allocationTotal(REG, 'assign'),
             allocationTotal(REG, 'lean'),
-            'both open on the same eight points',
+            'both open on the same one point',
         );
         eq(
             Object.values(baselineAttributeAllocation(REG, 'assign')).join(','),
-            '1,1,1,1,1',
-            'Assign points opens on all 1s',
+            '0,0,0,0,0',
+            'Assign points opens on all 0s',
         );
         eq(
             classAttributePreset(REG, 'starseer', 'lean').intelligence,
-            3,
-            'Standard opens the Starseer on INT 3',
+            1,
+            'Standard opens the Starseer on INT 1',
         );
         eq(
             REG.characterCreation.spritePreviewSide,
@@ -14175,11 +14189,11 @@ export async function runTests({
         );
 
         const lowStrength = {
-            strength: 1,
-            dexterity: 4,
-            constitution: 1,
-            wisdom: 1,
-            intelligence: 1,
+            strength: 0,
+            dexterity: 1,
+            constitution: 0,
+            wisdom: 0,
+            intelligence: 0,
         };
         eq(
             attributeAllocationProblems(REG, 'reaver', 'lean', lowStrength).length,
@@ -14241,7 +14255,7 @@ export async function runTests({
         assert(
             standardFailure && standardFailure.piece.id === 'dagger'
                 && standardFailure.failure.attributeId === 'dexterity'
-                && standardFailure.failure.required === 2 && standardFailure.failure.actual === 1,
+                && standardFailure.failure.required === 1 && standardFailure.failure.actual === 0,
             'the creation mode reports a selected hand requirement before Begin can throw',
         );
 
@@ -19463,14 +19477,14 @@ export async function runTests({
         // docs/ARCANE-DIVINE-RULES.md) get the Wisdom row instead; that path is
         // asserted in tests/spell-tradition-combat.test.mjs.
         // The 2026-10-06 default gives Poise base 1 plus one per CON. Reaver's
-        // CON 2 gives three attribute Poise before equipment and relics.
+        // CON 0 (owner, 2026-11-28) gives the base 1 before equipment and relics.
         const poiseRow = run.derivedStatRuleSnapshot.rules.rules.poise;
         eq(
             receipt.attribute,
             poiseRow.base + attributeTerms(poiseRow, run.attributes),
             'Constitution through derivedStatRules.rules.poise',
         );
-        eq(receipt.attribute, 3, 'the worked Reaver number: base 1 + CON 2');
+        eq(receipt.attribute, 1, 'the worked Reaver number: base 1 + CON 0');
         assert(
             said(
                 validateContent({
@@ -19541,7 +19555,7 @@ export async function runTests({
             REG.creationModes.all().some((m) => m.id === id)
         );
         assert(older, 'and every retired mode is still resolvable for the runs born under it');
-        eq(allocationTotal(REG, 'lean'), 8, 'five stats at a baseline of 1 plus three to place');
+        eq(allocationTotal(REG, 'lean'), 1, 'five stats at a baseline of 0 plus one to place (owner, 2026-11-28)');
         eq(
             allocationTotal(REG, 'tuned2'),
             35,
@@ -19770,8 +19784,8 @@ export async function runTests({
             }
         }
         // The break is authored in the DEFAULT mode, because that is the one the
-        // content door applies the kit rule to: a legal allocation (still 8, still
-        // inside 1–4) whose Intelligence is one short of the Ash Focus staff's 3.
+        // content door applies the kit rule to: a legal allocation (still 1, still
+        // inside 0–1) whose Intelligence is one short of the Ash Focus staff's 1.
         const kitBreak = {
             ...contentBundle,
             attributeRules: {
@@ -19782,8 +19796,8 @@ export async function runTests({
                         ...contentBundle.attributeRules.presets.lean,
                         starseer: {
                             ...contentBundle.attributeRules.presets.lean.starseer,
-                            intelligence: 2,
-                            strength: 2,
+                            intelligence: 0,
+                            strength: 1,
                         },
                     },
                 },
@@ -19804,11 +19818,11 @@ export async function runTests({
         // notice — is refused where it is made instead.
         const settingMode = contentBundle.attributeRules.defaultMode;
         const settingCells = {
-            strength: 1,
-            dexterity: 2,
-            constitution: 2,
-            wisdom: 2,
-            intelligence: 1,
+            strength: 0,
+            dexterity: 1,
+            constitution: 0,
+            wisdom: 0,
+            intelligence: 0,
         };
         const settingEdit = Object.fromEntries(
             Object.entries(settingCells)
@@ -19818,12 +19832,12 @@ export async function runTests({
         );
         eq(
             Object.values(settingCells).reduce((a, b) => a + b, 0),
-            8,
+            allocationTotal(REG, settingMode),
             'the edit totals the mode pool, so only the gear rule can refuse it',
         );
         const settingSaid = advancedConfigProblems(contentBundle, settingEdit);
         assert(
-            settingSaid.some((line) => /straightSword/.test(line) && /Strength 1/.test(line)),
+            settingSaid.some((line) => /straightSword/.test(line) && /Strength 0 is below the 1/.test(line)),
             `and Advanced settings refuses the same edit, by name: ${
                 settingSaid.join(' | ') || '(nothing)'
             }`,
@@ -19839,18 +19853,69 @@ export async function runTests({
         // door that covers half of what it claims goes quiet on the other half.
         // `vigil` is an outfit creation really offers the Reaver; it is given a
         // Strength 3 minimum here, above the edit's 1 and at the authored preset's 3.
-        const armourBundle = {
+        // A raised outfit needs room above the preset, which the one-point span
+        // (owner, 2026-11-28) has none of, so this half runs on the eight-point lean
+        // span the rule was written for: baseline 1, three to place, 1-4, in both
+        // offered modes.
+        const OFFERED_MODES = [
+            'lean',
+            'assign',
+        ];
+        const EIGHT_POINT_LEAN = {
+            mode: { baseline: 1, bonusPool: 3, minimum: 1, maximum: 4 },
+            presets: {
+                reaver: { strength: 3, dexterity: 1, constitution: 2, wisdom: 1, intelligence: 1 },
+                starseer: { strength: 1, dexterity: 1, constitution: 1, wisdom: 2, intelligence: 3 },
+                herald: { strength: 1, dexterity: 1, constitution: 2, wisdom: 3, intelligence: 1 },
+                rogue: { strength: 1, dexterity: 3, constitution: 2, wisdom: 1, intelligence: 1 },
+            },
+            requirements: { straightSword: 2, greatsword: 3, dagger: 2, ashStaff: 3 },
+        };
+        const eightPointBundle = {
             ...contentBundle,
+            creationModes: contentBundle.creationModes.map((row) =>
+                OFFERED_MODES.includes(row.id) ? { ...row, ...EIGHT_POINT_LEAN.mode } : row
+            ),
+            attributeRules: {
+                ...contentBundle.attributeRules,
+                presets: {
+                    ...contentBundle.attributeRules.presets,
+                    ...Object.fromEntries(OFFERED_MODES.map((id) => [id, EIGHT_POINT_LEAN.presets])),
+                },
+            },
             equipment: {
                 ...contentBundle.equipment,
-                equipmentRequirements: [...contentBundle.equipment.equipmentRequirements, {
+                equipmentRequirements: contentBundle.equipment.equipmentRequirements.map((row) =>
+                    row.itemId in EIGHT_POINT_LEAN.requirements
+                        ? { ...row, minimum: EIGHT_POINT_LEAN.requirements[row.itemId] }
+                        : row
+                ),
+            },
+        };
+        const eightPointEdit = Object.fromEntries(
+            Object.entries({
+                strength: 1,
+                dexterity: 2,
+                constitution: 2,
+                wisdom: 2,
+                intelligence: 1,
+            })
+                .map((
+                    [id, value],
+                ) => [`gameConfig.attributeRules.presets.${settingMode}.reaver.${id}`, value]),
+        );
+        const armourBundle = {
+            ...eightPointBundle,
+            equipment: {
+                ...eightPointBundle.equipment,
+                equipmentRequirements: [...eightPointBundle.equipment.equipmentRequirements, {
                     itemId: 'vigil',
                     attributeId: 'strength',
                     minimum: 3,
                 }],
             },
         };
-        const armourSaid = advancedConfigProblems(armourBundle, settingEdit);
+        const armourSaid = advancedConfigProblems(armourBundle, eightPointEdit);
         assert(
             armourSaid.some((line) =>
                 /vigil/.test(line) && /starting armour/.test(line) && /Strength is 1\b/.test(line)
@@ -19866,7 +19931,7 @@ export async function runTests({
         // validates the configured bundle, so Settings must judge the same number.
         // Lowering the plate's Strength to the edit's own 1 admits it.
         const loweredSaid = advancedConfigProblems(armourBundle, {
-            ...settingEdit,
+            ...eightPointEdit,
             'gameConfig.equipmentRequirements.vigil.strength': 1,
         });
         assert(

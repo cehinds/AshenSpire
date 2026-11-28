@@ -6731,7 +6731,7 @@
         "gearId": "",
         "requirements": {
           "attributes": {
-            "dexterity": 3
+            "dexterity": 1
           }
         },
         "kind": "armor"
@@ -6778,7 +6778,7 @@
         "gearId": "",
         "requirements": {
           "attributes": {
-            "dexterity": 3
+            "dexterity": 1
           }
         },
         "kind": "armor"
@@ -6825,7 +6825,7 @@
         "gearId": "",
         "requirements": {
           "attributes": {
-            "dexterity": 3
+            "dexterity": 1
           }
         },
         "kind": "armor"
@@ -6872,7 +6872,7 @@
         "gearId": "",
         "requirements": {
           "attributes": {
-            "dexterity": 3
+            "dexterity": 1
           }
         },
         "kind": "armor"
@@ -7052,7 +7052,7 @@
         "gearId": "",
         "requirements": {
           "attributes": {
-            "intelligence": 3
+            "intelligence": 1
           }
         },
         "kind": "armor"
@@ -7099,7 +7099,7 @@
         "gearId": "",
         "requirements": {
           "attributes": {
-            "intelligence": 3
+            "intelligence": 1
           }
         },
         "kind": "armor"
@@ -7146,7 +7146,7 @@
         "gearId": "",
         "requirements": {
           "attributes": {
-            "intelligence": 3
+            "intelligence": 1
           }
         },
         "kind": "armor"
@@ -7193,7 +7193,7 @@
         "gearId": "",
         "requirements": {
           "attributes": {
-            "intelligence": 3
+            "intelligence": 1
           }
         },
         "kind": "armor"
@@ -7469,7 +7469,7 @@
         "gearId": "",
         "requirements": {
           "attributes": {
-            "wisdom": 3
+            "wisdom": 1
           }
         },
         "kind": "armor"
@@ -7516,7 +7516,7 @@
         "gearId": "",
         "requirements": {
           "attributes": {
-            "wisdom": 3
+            "wisdom": 1
           }
         },
         "kind": "armor"
@@ -7563,7 +7563,7 @@
         "gearId": "",
         "requirements": {
           "attributes": {
-            "wisdom": 3
+            "wisdom": 1
           }
         },
         "kind": "armor"
@@ -7610,7 +7610,7 @@
         "gearId": "",
         "requirements": {
           "attributes": {
-            "wisdom": 3
+            "wisdom": 1
           }
         },
         "kind": "armor"
@@ -7884,7 +7884,7 @@
         "gearId": "",
         "requirements": {
           "attributes": {
-            "strength": 3
+            "strength": 1
           }
         },
         "kind": "armor"
@@ -7931,7 +7931,7 @@
         "gearId": "",
         "requirements": {
           "attributes": {
-            "strength": 3
+            "strength": 1
           }
         },
         "kind": "armor"
@@ -7978,7 +7978,7 @@
         "gearId": "",
         "requirements": {
           "attributes": {
-            "strength": 3
+            "strength": 1
           }
         },
         "kind": "armor"
@@ -8025,7 +8025,7 @@
         "gearId": "",
         "requirements": {
           "attributes": {
-            "strength": 3
+            "strength": 1
           }
         },
         "kind": "armor"
@@ -10708,7 +10708,7 @@
         "material": "",
         "requirements": {
           "attributes": {
-            "intelligence": 3
+            "intelligence": 1
           }
         },
         "weaponCardPackage": {
@@ -11977,7 +11977,7 @@
         "material": "metal",
         "requirements": {
           "attributes": {
-            "dexterity": 2
+            "dexterity": 1
           }
         },
         "weaponCardPackage": {
@@ -13147,7 +13147,7 @@
         "material": "metal",
         "requirements": {
           "attributes": {
-            "strength": 3
+            "strength": 1
           }
         },
         "weaponCardPackage": {
@@ -16480,7 +16480,7 @@
         "material": "metal",
         "requirements": {
           "attributes": {
-            "strength": 2
+            "strength": 1
           }
         },
         "weaponCardPackage": {

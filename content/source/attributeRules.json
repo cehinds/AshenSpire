@@ -3,62 +3,62 @@
   "presets": {
     "lean": {
       "reaver": {
-        "strength": 3,
-        "dexterity": 1,
-        "constitution": 2,
-        "wisdom": 1,
-        "intelligence": 1
+        "strength": 1,
+        "dexterity": 0,
+        "constitution": 0,
+        "wisdom": 0,
+        "intelligence": 0
       },
       "starseer": {
-        "strength": 1,
-        "dexterity": 1,
-        "constitution": 1,
-        "wisdom": 2,
-        "intelligence": 3
+        "strength": 0,
+        "dexterity": 0,
+        "constitution": 0,
+        "wisdom": 0,
+        "intelligence": 1
       },
       "herald": {
-        "strength": 1,
-        "dexterity": 1,
-        "constitution": 2,
-        "wisdom": 3,
-        "intelligence": 1
+        "strength": 0,
+        "dexterity": 0,
+        "constitution": 0,
+        "wisdom": 1,
+        "intelligence": 0
       },
       "rogue": {
-        "strength": 1,
-        "dexterity": 3,
-        "constitution": 2,
-        "wisdom": 1,
-        "intelligence": 1
+        "strength": 0,
+        "dexterity": 1,
+        "constitution": 0,
+        "wisdom": 0,
+        "intelligence": 0
       }
     },
     "assign": {
       "reaver": {
-        "strength": 3,
-        "dexterity": 1,
-        "constitution": 2,
-        "wisdom": 1,
-        "intelligence": 1
+        "strength": 1,
+        "dexterity": 0,
+        "constitution": 0,
+        "wisdom": 0,
+        "intelligence": 0
       },
       "starseer": {
-        "strength": 1,
-        "dexterity": 1,
-        "constitution": 1,
-        "wisdom": 2,
-        "intelligence": 3
+        "strength": 0,
+        "dexterity": 0,
+        "constitution": 0,
+        "wisdom": 0,
+        "intelligence": 1
       },
       "herald": {
-        "strength": 1,
-        "dexterity": 1,
-        "constitution": 2,
-        "wisdom": 3,
-        "intelligence": 1
+        "strength": 0,
+        "dexterity": 0,
+        "constitution": 0,
+        "wisdom": 1,
+        "intelligence": 0
       },
       "rogue": {
-        "strength": 1,
-        "dexterity": 3,
-        "constitution": 2,
-        "wisdom": 1,
-        "intelligence": 1
+        "strength": 0,
+        "dexterity": 1,
+        "constitution": 0,
+        "wisdom": 0,
+        "intelligence": 0
       }
     },
     "tuned2": {
