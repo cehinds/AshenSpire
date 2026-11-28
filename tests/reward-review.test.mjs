@@ -15,12 +15,16 @@ const registriesFor = id => id.startsWith('core.') ? bindGameProfileRegistries(c
 const textOf = node => (node.textContent || '') + (node.children || []).map(textOf).join(' ');
 globalThis.HTMLElement ??= class HTMLElement {}; // the confirmation's Back restores focus only to a real element
 const tick = () => new Promise(resolve => setTimeout(resolve, 0));
+// The card door confirms inline (#3037): its answers sit in the door's own action row, not a second modal.
+const INLINE_ACTIONS = '.reward-inline-confirm-actions button';
 const modalConfirm = () => document.querySelector('.confirmation-confirm');
-const modalBack = () => document.querySelector('.confirmation-cancel');
+const inlineConfirm = () => document.querySelector('.reward-inline-confirm');
+const inlineOpen = () => !!inlineConfirm() && !inlineConfirm().hidden;
+const inlineBack = () => [...document.querySelectorAll(INLINE_ACTIONS)].find(node => node.textContent === 'Back');
 const picked = app => [...app.querySelectorAll('.reward-pick')].map(node => node.getAttribute('aria-checked') === 'true');
 
 // Owner 2026-11-18: cards are chosen on the strip, Continue opens a confirmation, and Confirm claims them.
-test('configured choices are confirmed in a modal, Back keeps the selection, commit once, and preserve Cinders on Skip', async () => {
+test('configured choices are confirmed inline, Back keeps the selection, commit once, and preserve Cinders on Skip', async () => {
   const dom = rewardDom();
   const before = Object.fromEntries(Object.keys(dom).map(key => [key, globalThis[key]]));
   Object.assign(globalThis, dom);
@@ -59,11 +63,12 @@ test('configured choices are confirmed in a modal, Back keeps the selection, com
       assert.equal(confirm.disabled, false, 'Continue is always enabled'); assert.ok(!confirm.classList.contains('primary'), 'neutral until the pick is made');
       app.querySelectorAll('.reward-pick')[0].click(); assert.ok(confirm.classList.contains('primary'), 'green once every pick is made');
       confirm.click();
-      assert.ok(document.querySelector('.confirmation-modal'), 'Continue opens the confirmation');
-      assert.match(textOf(document.querySelector('.confirmation-modal')), new RegExp(registries.cards.get(cardId).name));
+      assert.ok(inlineOpen(), 'Continue opens the confirmation');
+      assert.equal(document.querySelector('.confirmation-modal'), null, 'inline, not a second modal');
+      assert.match(textOf(inlineConfirm()), new RegExp(registries.cards.get(cardId).name));
       assert.deepEqual(run.deck, []); assert.equal(writes, 0);
-      modalBack().click();
-      assert.equal(document.querySelector('.confirmation-modal'), null, 'Back closes the confirmation');
+      inlineBack().click();
+      assert.ok(!inlineOpen(), 'Back closes the confirmation');
       assert.deepEqual(picked(app), [true, false], 'and keeps the selection editable');
       app.querySelectorAll('.reward-pick')[1].click(); assert.deepEqual(picked(app), [false, true], 'with one pick the choice moves');
       confirm.click(); modalConfirm().click(); await tick();
@@ -136,7 +141,7 @@ test('cloned configured offers claim every chosen card, and name the picks left 
     assert.equal(prompt(), 'Select 2 card rewards');
     picks[0].click(); assert.equal(prompt(), 'Select 1 card reward'); assert.ok(!confirm.classList.contains('primary'));
     // One of two picks: the confirmation says one is unused; Back keeps the selection.
-    confirm.click(); assert.match(textOf(document.querySelector('.confirmation-modal')), /1 pick unused\./); modalBack().click();
+    confirm.click(); assert.match(textOf(inlineConfirm()), /1 pick unused\./); inlineBack().click();
     picks[2].click(); assert.equal(prompt(), 'Select 0 card rewards'); assert.ok(confirm.classList.contains('primary'));
     picks[1].click(); assert.deepEqual(picked(app), [true, false, true], 'a third card cannot be chosen past the two picks');
     picks[0].click(); assert.equal(prompt(), 'Select 1 card reward', 'tapping a chosen card puts it back');
