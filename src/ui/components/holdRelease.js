@@ -13,6 +13,14 @@ const noOperation = () =>
 {
 };
 
+// Keyboard, controller and script clicks are untrusted or carry no pointer
+// type; only the browser's own pointer click may be the trailing one.
+function isPointerClick(event)
+{
+  const pointerType = event.pointerType;
+  return event.isTrusted && typeof pointerType === 'string' && pointerType !== '';
+}
+
 // A touch release is followed by the browser's own click, hit-tested after the
 // next screen mounts. Swallow that one click so it never presses what is new.
 function swallowTrailingClick(windowMs)
@@ -33,6 +41,10 @@ function swallowTrailingClick(windowMs)
   };
   const swallow = (event) =>
   {
+    if (!isPointerClick(event))
+    {
+      return;
+    }
     event.preventDefault();
     event.stopImmediatePropagation();
     stop();
