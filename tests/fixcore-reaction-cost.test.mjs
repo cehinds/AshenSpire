@@ -7,9 +7,36 @@ import { dispatch, cardPlayCosts, previewCard } from '../src/engine/combat.js';
 import { profileCardCosts } from '../src/engine/gameProfileCombat.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { live, registries, baseRegistries } from './helpers/fixcore-combat-rules.mjs';
+import { contentBundle } from '../src/content/index.js';
+import { createRegistries } from '../src/model/registries.js';
+import { applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
+import { ReactionCarrierProfile } from './helpers/reaction-carriers.mjs';
+
+// Counter answers as a Reaction card only when it carries the tag (tests/fixtures/reaction-carriers.json).
+const carrierProfile = ReactionCarrierProfile();
+const carrierRegistries = bindGameProfileRegistries(
+  createRegistries(applyGameProfileToContent(contentBundle, carrierProfile)),
+  carrierProfile,
+);
+const UNLOCKED_CORE = { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } };
+function carrierLive()
+{
+  const run = createRunState({
+    registries: carrierRegistries,
+    classId: 'reaver',
+    seed: 511,
+    profileMeta: UNLOCKED_CORE,
+  });
+  return createRunCombat({
+    registries: carrierRegistries,
+    run,
+    rng: createRng(511),
+    enemyIds: ['wanderingSoldier'],
+  });
+}
 
 // Each contact owns one attacker roll only in a fight that still rolls (saved before the 2026-11-14 ruling).
-test('enemy 5 × 3 deals three hits of 3 (5 halved by the Core base-damage scale, rounded up), with 9 total HP loss', () => {
+test('enemy 5 × 3 deals three hits of 5 (every damage scale is 1), with 15 total HP loss', () => {
   const ctx = live({ legacy: true }), enemy = ctx.enemies[0];
   // The contact fixture needs the three SP its repeated-hit move now costs.
   Object.assign(enemy, { maxStamina: 3, stamina: 3 });
@@ -24,9 +51,10 @@ test('enemy 5 × 3 deals three hits of 3 (5 halved by the Core base-damage scale
   const hits = ctx.eventLog.slice(start).filter(row => row.type === 'attackHit' && row.sourceId === enemy.id && row.targetId === ctx.player.id);
   assert.deepEqual(hits.map(row => row.d20), [20, 20, 20]);
   assert.equal(ctx.rng.getCounters().combatAvoidance - accuracyStart, 3, 'each contact owns one attacker roll');
-  assert.deepEqual(damage.map(row => row.amount), [3, 3, 3]);
-  assert.deepEqual(damage.map(row => row.hpLoss), [3, 3, 3]);
-  assert.equal(ctx.player.hp, 91);
+  // Owner ruling 2026-11-28: the authored 5 lands as 5.
+  assert.deepEqual(damage.map(row => row.amount), [5, 5, 5]);
+  assert.deepEqual(damage.map(row => row.hpLoss), [5, 5, 5]);
+  assert.equal(ctx.player.hp, 85);
 });
 
 test('matching stance cannot reduce a multi-hit hound lunge below two SP', () => {
@@ -82,7 +110,7 @@ test('real Counter preview, affordability and own-turn payment use authored SP',
 });
 
 test('an actual enemy-turn matching Counter remains affordable and pays the discounted price', () => {
-  const ctx = live();
+  const ctx = carrierLive();
   Object.assign(ctx.enemies[0], { maxStamina: 3, stamina: 3 });
   ctx.enemies[0].intent = { ...ctx.enemies[0].intent, moveId: 'slash' };
   ctx.enemies[0].plannedMoves = [];
