@@ -38,7 +38,7 @@ Settings live in `engine/modules/stances/settings.schema.json`; shipped defaults
 - `/advantageMultiplier` (type number; default `1.25`; range 0..100): Provisional advantage damage multiplier.
 - `/defenseMitigation` (type number; default `0.25`; range 0..1): Reduce incoming direct damage by this fraction when the defender's included stance beats the incoming maneuver in `matchups`. `0` disables mitigation. Applies once before Block/Poise in Core and the Current grouped defense adapter; existing offensive bonuses remain. Old saved resolved profiles missing this setting retain zero mitigation.
 - `/builtInBenefits` (type boolean; default `true`): `false` turns off each stance's own bonus (`stanceBenefits` in fixCoreMechanics.json); stance weaknesses stay.
-- `/sameStanceDiscount` (type boolean; default `true`): `false` turns off the same-stance SP and Mana cuts and effectiveness bonus; matchup advantage stays.
+- `/sameStanceDiscount` (type boolean; default `true`): `false` turns off every same-stance cut and bonus: the SP and Mana cuts, the effectiveness bonus, the Martial and Magic Adept cuts, the spell-chain Mana cut and the Counter reaction discount; matchup advantage stays.
 - `/evadeFailureMultiplier` (type integer; default `2`; range 0..1000000): Damage multiplier when an evade fails.
 - `/accuracyPolicy` (type enum; default `"chance"`; allowed "chance"): Current host accuracy policy is chance.
 - `/staggerPolicy` (type string; default `"legacyAdapter"`; minLength 1): Host adapter stagger policy; treat as provisional.

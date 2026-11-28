@@ -108,7 +108,7 @@
     },
     "sameStanceDiscount": {
       "type": "boolean",
-      "description": "Playing into the stance already held (fixCoreMechanics.json stance): the SP and Mana cuts and the effectiveness bonus. false turns them off; matchup advantage stays. Absent or true is on."
+      "description": "Every cut and bonus for playing into the stance already held: the same-stance SP and Mana cuts and effectiveness bonus (fixCoreMechanics.json stance), the Martial and Magic Adept cuts, the spell-chain Mana cut and the Counter reaction discount. false turns all of them off; matchup advantage stays. Absent or true is on."
     }
   },
   "required": [

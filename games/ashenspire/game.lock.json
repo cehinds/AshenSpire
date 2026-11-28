@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:780c4de8307f8cbe4227b15d403e180cfc623f65c574c670627691e920d0abfd",
+      "hash": "sha256:9b1e4867511f6609072895b5b5d9e35a6fabfbc438fd89fc36334e5c596caf42",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -538,7 +538,7 @@
           "path": "engine/modules/stances/settings.schema.json",
           "id": "stances",
           "version": "1.0.0",
-          "hash": "sha256:f6e880c4470bdc533a8da2882e76789c4f12abaf81acdac906959ed41f72a0b7"
+          "hash": "sha256:85c2d1ff74007bf105b1857d75677d96d0ec519adacf26eceac24622ffe2555e"
         },
         {
           "path": "engine/modules/stats/defaults.json",
@@ -732,7 +732,7 @@
       "runtimeHash": "sha256:86b335d2ec3ae5b290afd68343bf41686eb9e8f67e15a5eee6ec1f4b2420a21c"
     },
     "core": {
-      "hash": "sha256:780c4de8307f8cbe4227b15d403e180cfc623f65c574c670627691e920d0abfd",
+      "hash": "sha256:9b1e4867511f6609072895b5b5d9e35a6fabfbc438fd89fc36334e5c596caf42",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -1268,7 +1268,7 @@
           "path": "engine/modules/stances/settings.schema.json",
           "id": "stances",
           "version": "1.0.0",
-          "hash": "sha256:f6e880c4470bdc533a8da2882e76789c4f12abaf81acdac906959ed41f72a0b7"
+          "hash": "sha256:85c2d1ff74007bf105b1857d75677d96d0ec519adacf26eceac24622ffe2555e"
         },
         {
           "path": "engine/modules/stats/defaults.json",
