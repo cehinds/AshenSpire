@@ -94,22 +94,22 @@
   "stanceBenefits": {
     "version": 1,
     "attack": {
-      "damageMultiplier": 1.2
+      "damageMultiplier": 1
     },
     "smash": {
       "poiseDamageBonus": 0.5
     },
     "counter": {
-      "blockMultiplier": 1.25
+      "blockMultiplier": 1
     },
     "defend": {
-      "blockMultiplier": 1.5,
+      "blockMultiplier": 1,
       "poiseDamageTakenMultiplier": 0.75,
       "poiseFloorWhileBlock": 1,
       "poiseFloorWardMagic": 1
     },
     "prepared": {
-      "damageMultiplier": 1.25,
+      "damageMultiplier": 1,
       "meleeDamageTakenMultiplier": 1.25
     },
     "neutral": {
