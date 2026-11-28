@@ -17,9 +17,10 @@ import { primeAccuracyRolls } from './accuracyFixture.mjs';
 const strike = () => registries.cards.get('core.strike');
 const withSteps = (steps) => ({ upgraded: true, upgradeSteps: steps });
 
-// The `other`-target half hit is a rule about the card's base number; the Core base-damage halving (0.5, rounded up)
-// makes 6 and 3 both land as 3 + AR, so that one test pins baseDamageMultiplier 1 to keep the halves distinguishable.
-const unscaledProfile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { baseDamageMultiplier: 1, physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
+// The `other`-target half hit is a rule about the card's base number; Strike stores 1 (owner ruling
+// 2026-11-28), whose half rounds back to 1, so that test lifts it to 6 so the half (3) stays distinguishable.
+const unscaledProfile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+const WORKED_STRIKE_BONUS = { k: 'dmg', n: 5 };
 const unscaledRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, unscaledProfile)), unscaledProfile);
 function fight(cards, { enemies = ['wanderingSoldier'], registries: reg = registries } = {}) {
   const run = createRunState({ registries: reg, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
@@ -114,25 +115,25 @@ test('target (a step saved before `other`) hits a second enemy; a temporary boos
 
 test('target with `other` hits one OTHER enemy at half damage, never the main target again, and nothing extra against a lone enemy', () => {
   const step = { k: 'fx', fx: 'target', other: true };
-  const plain = fight([inst('p', 'core.strike')], { enemies: ['wanderingSoldier', 'wanderingSoldier'], registries: unscaledRegistries });
+  const plain = fight([inst('p', 'core.strike', [WORKED_STRIKE_BONUS])], { enemies: ['wanderingSoldier', 'wanderingSoldier'], registries: unscaledRegistries });
   play(plain, 'p');
   const main = 500 - plain.enemies[0].hp;
-  const c = fight([inst('p', 'core.strike', [step])], { enemies: ['wanderingSoldier', 'wanderingSoldier'], registries: unscaledRegistries });
+  const c = fight([inst('p', 'core.strike', [WORKED_STRIKE_BONUS, step])], { enemies: ['wanderingSoldier', 'wanderingSoldier'], registries: unscaledRegistries });
   play(c, 'p');
   assert.equal(500 - c.enemies[0].hp, main, 'the main target takes only the card\'s own hit');
   assert.ok(c.enemies[1].hp < 500 && 500 - c.enemies[1].hp < main, 'the other enemy takes the half hit');
-  const lone = fight([inst('p', 'core.strike', [step])], { registries: unscaledRegistries });
+  const lone = fight([inst('p', 'core.strike', [WORKED_STRIKE_BONUS, step])], { registries: unscaledRegistries });
   play(lone, 'p');
   assert.equal(500 - lone.enemies[0].hp, main, 'a lone enemy takes one hit, not a second');
   assert.match(JSON.stringify(applyUpgradeSteps(strike(), [step]).effects), /otherEnemy/);
-  const q = fight([inst('p', 'core.strike', [step])], { enemies: ['wanderingSoldier', 'wanderingSoldier'], registries: unscaledRegistries });
+  const q = fight([inst('p', 'core.strike', [WORKED_STRIKE_BONUS, step])], { enemies: ['wanderingSoldier', 'wanderingSoldier'], registries: unscaledRegistries });
   const half = (aimed) => previewCard(q, 'p', aimed.id).values.find((row) => row.target === 'otherEnemy');
   for (const [aimed, other] of [[q.enemies[0], q.enemies[1]], [q.enemies[1], q.enemies[0]]]) {
     const row = half(aimed);
     assert.deepEqual(Object.keys(row.perTarget), [other.id], 'the half hit is quoted only on the other enemy');
     assert.ok(row.perTarget[other.id] > 0);
   }
-  const alone = fight([inst('p', 'core.strike', [step])], { registries: unscaledRegistries });
+  const alone = fight([inst('p', 'core.strike', [WORKED_STRIKE_BONUS, step])], { registries: unscaledRegistries });
   assert.deepEqual(Object.keys(previewCard(alone, 'p', alone.enemies[0].id).values.find((row) => row.target === 'otherEnemy').perTarget), [], 'a lone enemy is quoted no half hit');
 });
 
