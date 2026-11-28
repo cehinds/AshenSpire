@@ -2438,7 +2438,7 @@
       "from": "core.judgment",
       "move": {
         "intent": "attack",
-        "damage": 6,
+        "damage": 4,
         "effects": [
           {
             "op": "applyStatus",
@@ -5803,7 +5803,7 @@
       "from": "core.judgment",
       "move": {
         "intent": "attack",
-        "damage": 6,
+        "damage": 4,
         "effects": [
           {
             "op": "applyStatus",
@@ -6838,7 +6838,7 @@
       "from": "core.judgment",
       "move": {
         "intent": "attack",
-        "damage": 6,
+        "damage": 4,
         "effects": [
           {
             "op": "applyStatus",

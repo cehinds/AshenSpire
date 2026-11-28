@@ -3745,7 +3745,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 2
+          "amount": 1
         },
         {
           "op": "applyStatus",

@@ -196,7 +196,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 5
+        "amount": 4
       }
     ],
     "tags": [
@@ -2013,7 +2013,7 @@
       {
         "op": "damage",
         "target": "allEnemies",
-        "amount": 4
+        "amount": 3
       },
       {
         "op": "applyStatus",
@@ -2037,7 +2037,7 @@
         {
           "op": "damage",
           "target": "allEnemies",
-          "amount": 6
+          "amount": 5
         },
         {
           "op": "applyStatus",
@@ -2067,7 +2067,7 @@
       {
         "op": "damage",
         "target": "allEnemies",
-        "amount": 4
+        "amount": 3
       }
     ],
     "textTemplate": "Deal {damage} damage to ALL enemies.",
@@ -2076,7 +2076,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 9
+          "amount": 7
         },
         {
           "op": "poiseDamage",
@@ -2122,7 +2122,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 5
+        "amount": 4
       },
       {
         "op": "applyStatus",
@@ -2137,7 +2137,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 7
+          "amount": 6
         },
         {
           "op": "applyStatus",
@@ -2183,7 +2183,7 @@
       {
         "op": "damage",
         "target": "allEnemies",
-        "amount": 11
+        "amount": 9
       },
       {
         "op": "applyStatus",
@@ -2199,7 +2199,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 23
+          "amount": 18
         },
         {
           "op": "applyStatus",
@@ -2347,7 +2347,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 4
       },
       {
         "op": "applyStatus",
@@ -2376,7 +2376,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 7
+          "amount": 6
         },
         {
           "op": "applyStatus",
@@ -2468,7 +2468,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 6
+          "amount": 4
         },
         {
           "op": "restoreMana",
@@ -2537,7 +2537,7 @@
         {
           "op": "damage",
           "target": "allEnemies",
-          "amount": 3
+          "amount": 2
         },
         {
           "op": "applyStatus",
@@ -2776,7 +2776,7 @@
       {
         "op": "damage",
         "target": "allEnemies",
-        "amount": 3
+        "amount": 2
       },
       {
         "op": "applyStatus",
@@ -2791,7 +2791,7 @@
         {
           "op": "damage",
           "target": "allEnemies",
-          "amount": 5
+          "amount": 4
         },
         {
           "op": "applyStatus",
@@ -2836,7 +2836,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 5
+        "amount": 4
       }
     ],
     "textTemplate": "Deal {damage} damage.",
@@ -2845,7 +2845,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 6
+          "amount": 4
         },
         {
           "op": "draw",
@@ -2943,7 +2943,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 4
+        "amount": 3
       },
       {
         "op": "block",
@@ -2971,7 +2971,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 6
+          "amount": 4
         },
         {
           "op": "block",
@@ -3060,7 +3060,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 3
+        "amount": 2
       },
       {
         "op": "poiseDamage",
@@ -3088,7 +3088,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 4
+          "amount": 3
         },
         {
           "op": "poiseDamage",
@@ -4551,7 +4551,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 21
+        "amount": 17
       },
       {
         "op": "applyStatus",
@@ -4567,7 +4567,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 9
+          "amount": 7
         },
         {
           "op": "applyStatus",
@@ -4616,7 +4616,7 @@
       {
         "op": "damage",
         "target": "allEnemies",
-        "amount": 5
+        "amount": 4
       },
       {
         "op": "applyStatus",
@@ -4642,7 +4642,7 @@
         {
           "op": "damage",
           "target": "allEnemies",
-          "amount": 7
+          "amount": 6
         },
         {
           "op": "applyStatus",
@@ -4678,7 +4678,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 7
+        "amount": 5
       },
       {
         "op": "applyStatus",
@@ -4704,7 +4704,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 9
+          "amount": 7
         },
         {
           "op": "applyStatus",
@@ -4742,7 +4742,7 @@
       {
         "op": "damage",
         "target": "allEnemies",
-        "amount": 5
+        "amount": 4
       },
       {
         "op": "applyStatus",
@@ -4769,7 +4769,7 @@
         {
           "op": "damage",
           "target": "allEnemies",
-          "amount": 8
+          "amount": 6
         },
         {
           "op": "applyStatus",
@@ -4805,7 +4805,7 @@
       {
         "op": "damage",
         "target": "allEnemies",
-        "amount": 5
+        "amount": 4
       }
     ],
     "textTemplate": "Apply {chill} Chill to ALL enemies. Deal {damage} damage to ALL enemies.",
@@ -4815,7 +4815,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 6
+          "amount": 5
         },
         {
           "op": "poiseDamage",
@@ -4868,7 +4868,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 9
+        "amount": 7
       },
       {
         "op": "block",
@@ -4898,7 +4898,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 12
+          "amount": 10
         },
         {
           "op": "block",
@@ -5017,7 +5017,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 4
+        "amount": 3
       },
       {
         "op": "poiseDamage",
@@ -5050,7 +5050,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 6
+          "amount": 4
         },
         {
           "op": "poiseDamage",
@@ -5193,7 +5193,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 3
+        "amount": 2
       },
       {
         "op": "applyStatus",
@@ -5216,7 +5216,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 4
+          "amount": 3
         },
         {
           "op": "applyStatus",
@@ -5509,7 +5509,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 6
+          "amount": 4
         },
         {
           "op": "draw",
@@ -5553,7 +5553,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 9
+        "amount": 7
       },
       {
         "op": "poiseDamage",
@@ -5567,7 +5567,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 6
+          "amount": 4
         },
         {
           "op": "draw",

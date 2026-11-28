@@ -4928,7 +4928,7 @@
           {
             "op": "damage",
             "target": "allEnemies",
-            "amount": 2
+            "amount": 1
           }
         ],
         "textTemplate": "Spend all your Stamina. Deal {damage} damage to that many enemies.",
@@ -5570,7 +5570,7 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 3
+            "amount": 2
           }
         ],
         "textTemplate": "If Mana was paid, deal {damage} damage. Otherwise gain 8 Block.",
