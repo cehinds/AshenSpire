@@ -4,8 +4,8 @@
 import { cardRank, rankedEffectsCapped, VisibleCardRank } from './cardRank.js';
 import { mulberry32 } from './rng.js';
 import { upgradeCount, paidUpgradeCount, upgradeStepsOf, FlatSteps, applyUpgradeSteps, MAX_CARD_UPGRADES, firstPlainIndex, isPlainEffect } from './cardUpgrade.js';
-
-const MAX_CANDIDATES = 20;
+import { CardUpgradeRules } from './cardUpgradeRules.js';
+import { uiSentence } from './blacksmithConfig.js';
 import * as UpgradeSteps from './cardUpgradeSteps.js';
 import { OfferSalted } from './upgradeOffer.js';
 import { ActNodeUpgradeStock, NodeScheduleKey } from './actSeedSchedule.js';
@@ -24,88 +24,235 @@ import * as Stances from './stanceRules.js';
 import * as CardProfile from './combatCardProfile.js';
 import * as CarrierDamage from './carrierDamageType.js';
 import * as FixCore from './fixCoreRulesCache.js';
+import { AuthoredUpgradesOnly } from './simpleCombatFlags.js';
 
-function checkDamageUpgrade(run, registries, rank, ranked) {
-  if (!Number.isFinite(run.gameProfile?.modules?.effects?.baseDamageMultiplier)) return undefined;
-  const tokens = (def, atRank) => staticCardTokens(
-    atRank > 1 ? { ...def, effects: rankedEffectsCapped(def, atRank - 1) } : def, registries, run);
-  let before, intrinsicBefore, receiptContext;
-  const intrinsicDamage = (def, atRank) => {
-    // Conditional payloads, charges and Counter returns have their own runtime
-    // context. Retain the existing static fallback rather than guessing it.
-    if (!run.class || !run.attributes || !registries?.gameProfile || def.effectVariants?.length || def.comboHook
-      || (def.effects || []).some(effect => effect.op === 'grantCardCharge' || effect.op === 'damage' && !isPlainEffect(effect, 'damage'))) return null;
-    const index = firstPlainIndex(def.effects, 'damage');
-    if (index < 0 || CardProfile.combatProfileFor(def).maneuver === 'counter') return null;
-    // The source is detached and first-play only: no statuses, enemy, flux or
-    // prior stance. Construct it lazily, only after a numeric damage candidate
-    // has already passed the shared static-face increase check.
-    if (receiptContext === undefined) {
-      const ratings = ProfileRun.gameProfileRatingReceipt(registries, run);
-      if (!ratings) { receiptContext = null; return null; }
-      const attributes = ProfileRun.gameProfileEffectiveAttributes(registries, run);
-      const source = { id: 'player', kind: 'player', classId: run.class, attributes,
-        ratings: ratings.totals, ratingSources: ratings.sources, statuses: {}, alive: true,
-        itemProps: { ...ItemProperties.ItemPropertySummary(run), ...Gear.GearItemProps(Gear.GearSummary(registries, run.loadout, run.class, run)) } };
-      receiptContext = { source, gear: Gear.GearAlwaysOn(registries, run),
-        ctx: { ...run, registries, fixCoreRules: FixCore.fixCoreRules(run), attributes, enemies: [], phase: 'player', elementFlux: null } };
-    }
-    if (!receiptContext) return null;
-    const { source, ctx, gear } = receiptContext;
-    const rankedDef = atRank > 1 ? { ...def, effects: rankedEffectsCapped(def, atRank - 1) } : def;
-    const shown = Gear.ApplyGearCardRules(gear.rules, rankedDef, gear.state);
-    const carrier = CarrierDamage.ResolveCarrierDamageType({ ...shown, cardId: shown.id,
-      combatProfile: { ...CardProfile.combatProfileFor(shown) }, fixCoreSameStance: false }, registries, run.loadout, run.class);
-    const attacker = { ...source, combatStance: Stances.stanceOf(carrier, source) };
-    return Offense.ProfileDamageOffense({ ...ctx, player: attacker }, attacker, null,
-      shown.effects[index].amount, carrier, {
-        getAdd: () => 0, FluxMultiplier: () => 1, defensiveCombatStance: () => undefined,
-        hitWeaknessTriggers: () => [], matchingHitWeaknesses: () => [], weaknessLabel: () => '',
-        AttackDamageMultiplier: StanceRead.AttackDamageMultiplier,
-        StanceWeaknessMultiplier: StanceRead.StanceWeaknessMultiplier,
-        ElementReceiptStages: (...args) => ElementStages.ElementReceiptStages(...args,
-          { stacksOf: () => 0, hasTag: () => false, opponents: () => [], bandsActive: () => false }),
-      }).rawHit;
+// canUpgrade's refusal text lives in content/source/uiStrings.csv.
+const RefusalSentence = 'upgrade.refuse.';
+const OneSlotSentence = 'slots.one';
+const ManySlotsSentence = 'slots.many';
+
+// One damage receipt source per plan scope; it reads only the run and registries.
+const receiptContextsByScope = new WeakMap();
+const AUTHORED_STEP = Object.freeze({ k: 'authored' });
+
+// progression.upgradeMode "authored": one upgrade, the card's own block, and nothing rolled.
+const AUTHORED_MODE_SLOTS = 1;
+
+function hasAuthoredUpgrade(base)
+{
+  return !!base?.upgrade && !Array.isArray(base.gradeProfiles);
+}
+
+function authoredOnlyOptions(instance, base, noAuthored)
+{
+  const firstUpgrade = upgradeStepsOf(instance).length === 0;
+  return firstUpgrade && hasAuthoredUpgrade(base) && !noAuthored
+    ? [{ ...AUTHORED_STEP }]
+    : [];
+}
+
+function RankedCard(def, atRank)
+{
+  return atRank > 1
+    ? { ...def, effects: rankedEffectsCapped(def, atRank - 1) }
+    : def;
+}
+
+// A detached first-play source: no statuses, enemy, flux or prior stance.
+function BuildDamageReceiptContext(run, registries)
+{
+  const ratings = ProfileRun.gameProfileRatingReceipt(registries, run);
+  if (!ratings)
+  {
+    return null;
+  }
+  const attributes = ProfileRun.gameProfileEffectiveAttributes(registries, run);
+  const source = {
+    id: 'player',
+    kind: 'player',
+    classId: run.class,
+    attributes,
+    ratings: ratings.totals,
+    ratingSources: ratings.sources,
+    statuses: {},
+    alive: true,
+    itemProps: {
+      ...ItemProperties.ItemPropertySummary(run),
+      ...Gear.GearItemProps(Gear.GearSummary(registries, run.loadout, run.class, run)),
+    },
   };
-  return (current, step, nextRank) => {
+  return {
+    source,
+    gear: Gear.GearAlwaysOn(registries, run),
+    ctx: {
+      ...run,
+      registries,
+      fixCoreRules: FixCore.fixCoreRules(run),
+      attributes,
+      enemies: [],
+      phase: 'player',
+      elementFlux: null,
+    },
+  };
+}
+
+function SharedDamageReceiptContext(projectionScope, run, registries)
+{
+  const shared = projectionScope
+    ? receiptContextsByScope.get(projectionScope)
+    : null;
+  if (shared && shared.run === run && shared.registries === registries)
+  {
+    return shared.value;
+  }
+  const value = BuildDamageReceiptContext(run, registries);
+  if (projectionScope)
+  {
+    receiptContextsByScope.set(projectionScope, { run, registries, value });
+  }
+  return value;
+}
+
+// Readers for a detached hit: no adds, flux, defender stance or weaknesses.
+function NeutralOffenseHooks()
+{
+  return {
+    getAdd: () => 0,
+    FluxMultiplier: () => 1,
+    defensiveCombatStance: () => undefined,
+    hitWeaknessTriggers: () => [],
+    matchingHitWeaknesses: () => [],
+    weaknessLabel: () => '',
+    AttackDamageMultiplier: StanceRead.AttackDamageMultiplier,
+    StanceWeaknessMultiplier: StanceRead.StanceWeaknessMultiplier,
+    ElementReceiptStages: (...args) => ElementStages.ElementReceiptStages(...args, {
+      stacksOf: () => 0,
+      hasTag: () => false,
+      opponents: () => [],
+      bandsActive: () => false,
+    }),
+  };
+}
+
+// Conditional payloads, charges and Counter returns keep the static fallback.
+function HasIntrinsicDamage(run, registries, def)
+{
+  if (!run.class || !run.attributes || !registries?.gameProfile || def.effectVariants?.length || def.comboHook)
+  {
+    return false;
+  }
+  return !(def.effects || []).some(effect => effect.op === 'grantCardCharge'
+    || effect.op === 'damage' && !isPlainEffect(effect, 'damage'));
+}
+
+function checkDamageUpgrade(run, registries, rank, ranked, projectionScope)
+{
+  if (!Number.isFinite(run.gameProfile?.modules?.effects?.baseDamageMultiplier))
+  {
+    return undefined;
+  }
+  const tokens = (def, atRank) => staticCardTokens(RankedCard(def, atRank), registries, run);
+  let before;
+  let intrinsicBefore;
+  let receiptContext;
+  const intrinsicDamage = (def, atRank) =>
+  {
+    if (!HasIntrinsicDamage(run, registries, def))
+    {
+      return null;
+    }
+    const index = firstPlainIndex(def.effects, 'damage');
+    if (index < 0 || CardProfile.combatProfileFor(def).maneuver === 'counter')
+    {
+      return null;
+    }
+    // Built lazily, after a numeric damage candidate passed the static-face check.
+    if (receiptContext === undefined)
+    {
+      receiptContext = SharedDamageReceiptContext(projectionScope, run, registries);
+    }
+    if (!receiptContext)
+    {
+      return null;
+    }
+    const { source, ctx, gear } = receiptContext;
+    const shown = Gear.ApplyGearCardRules(gear.rules, RankedCard(def, atRank), gear.state);
+    const carrierCard = {
+      ...shown,
+      cardId: shown.id,
+      combatProfile: { ...CardProfile.combatProfileFor(shown) },
+      fixCoreSameStance: false,
+    };
+    const carrier = CarrierDamage.ResolveCarrierDamageType(carrierCard, registries, run.loadout, run.class);
+    const attacker = { ...source, combatStance: Stances.stanceOf(carrier, source) };
+    const amount = shown.effects[index].amount;
+    return Offense.ProfileDamageOffense({ ...ctx, player: attacker }, attacker, null, amount, carrier, NeutralOffenseHooks()).rawHit;
+  };
+  return (current, step, nextRank) =>
+  {
     before ??= tokens(current, rank);
-    const afterDef = applyUpgradeSteps(current, [step]), afterRank = ranked ? Math.max(rank, nextRank || 0) : rank;
+    const afterDef = applyUpgradeSteps(current, [step]);
+    const afterRank = ranked
+      ? Math.max(rank, nextRank || 0)
+      : rank;
     const after = tokens(afterDef, afterRank);
-    if (!Object.values(before).some(Number.isFinite)) return true;
-    if (!Object.keys(after).some(key => before[key] !== after[key])) return false;
-    // A real static increase can still disappear in the intrinsic stance and
-    // element chain's final rounding. CP remains on the shared neutral face;
-    // only eligibility uses the engine's pure pre-defense incoming quantity.
-    if (intrinsicBefore === undefined) intrinsicBefore = intrinsicDamage(current, rank);
-    const intrinsicAfter = intrinsicBefore === null ? null : intrinsicDamage(afterDef, afterRank);
+    if (!Object.values(before).some(Number.isFinite))
+    {
+      return true;
+    }
+    if (!Object.keys(after).some(key => before[key] !== after[key]))
+    {
+      return false;
+    }
+    // A static increase can still round away in the stance and element chain,
+    // so eligibility also checks the engine's pre-defense hit.
+    if (intrinsicBefore === undefined)
+    {
+      intrinsicBefore = intrinsicDamage(current, rank);
+    }
+    const intrinsicAfter = intrinsicBefore === null
+      ? null
+      : intrinsicDamage(afterDef, afterRank);
     return intrinsicBefore === null || intrinsicAfter === null || intrinsicAfter > intrinsicBefore;
   };
 }
 
 /**
- * upgradeBasic(def) → whether a card is "Basic" for upgrades (owner ruling,
- * 2026-10-28): a common card that is not a spell, or any cantrip. Uncommon,
- * rare and starter cards (the class specials, Mana Surge) are not. This is
- * deliberately not the Martial Adept training rule (model/basicCardRule.js),
- * which marks almost every martial card Basic.
+ * upgradeBasic(def) → whether a card is "Basic" for upgrades: a common card that is not a spell,
+ * or any cantrip. Not the Martial Adept training rule (model/basicCardRule.js).
  */
-export function upgradeBasic(def, instance = null) {
+export function upgradeBasic(def, instance = null, registries = null)
+{
+  const { cantripTag, spellTags, rarity } = CardUpgradeRules(registries).basicRule;
   const tags = (def && def.tags) || [];
-  if (tags.includes('rank.cantrip')) return true;
-  // A rank-down upgrade step (tag rank.cantrip) makes this copy count as a cantrip.
-  if (FlatSteps(upgradeStepsOf(instance || {})).some((step) => step.k === 'tag' && step.tag === 'rank.cantrip')) return true;
-  const spell = tags.includes('source:spell') || tags.includes('camp:spell');
-  return !!def && def.rarity === 'common' && !spell;
+  if (tags.includes(cantripTag))
+  {
+    return true;
+  }
+  // A rank-down upgrade step adding the cantrip tag makes this copy a cantrip.
+  const steps = FlatSteps(upgradeStepsOf(instance || {}));
+  if (steps.some(step => step.k === 'tag' && step.tag === cantripTag))
+  {
+    return true;
+  }
+  const spell = spellTags.some(tag => tags.includes(tag));
+  return !!def && def.rarity === rarity && !spell;
 }
 
 /**
- * freeAllowance(instance, def) → F. An upgradeBasic card gets 1; every other
- * card gets its rank (default 1, at most 10): a rank-3 Ironbreaker has 3 free
- * upgrades, a Strike has 1 at any rank.
+ * freeAllowance(instance, def) → free upgrades: a Basic card's configured count, every other
+ * card its rank, at most MAX_CARD_UPGRADES.
  */
-export function freeAllowance(instance, def) {
-  if (!def) return 0;
-  if (upgradeBasic(def, instance)) return 1;
+export function freeAllowance(instance, def, registries = null)
+{
+  if (!def)
+  {
+    return 0;
+  }
+  if (upgradeBasic(def, instance, registries))
+  {
+    return CardUpgradeRules(registries).slots.basicFreeUpgrades;
+  }
   return Math.min(MAX_CARD_UPGRADES, cardRank(instance));
 }
 
@@ -131,32 +278,55 @@ export function WeaponSmithLevel(run, instance) {
   return (Number.isSafeInteger(level) && level > 0 ? level : 0) + picks;
 }
 
-/**
- * UpgradeSlots(run, instance) → how many upgrades the card may carry: the rank its face shows plus 1, never past
- * MAX_CARD_UPGRADES (owner, 2026-11-23; the weapon's Smith level no longer adds). An unranked card (no badge) has 1,
- * a "Rank 1" card 2, a "Rank 4" card 5. `run` is kept for callers; the rule no longer reads it.
- */
-export function UpgradeSlots(run, instance) {
-  return Math.min(MAX_CARD_UPGRADES, VisibleCardRank(instance) + 1);
+/** Upgrades the card may carry: its visible rank plus the configured extra, at most MAX_CARD_UPGRADES. */
+export function UpgradeSlots(run, instance, registries = null)
+{
+  // Authored mode: the one slot is the card's own block, none when it has no block to apply.
+  if (AuthoredUpgradesOnly(run))
+  {
+    const definition = registries?.cards?.get(instance?.cardId);
+    return !definition || hasAuthoredUpgrade(definition)
+      ? AUTHORED_MODE_SLOTS
+      : 0;
+  }
+  const extraSlots = CardUpgradeRules(registries).slots.aboveVisibleRank;
+  return Math.min(MAX_CARD_UPGRADES, VisibleCardRank(instance) + extraSlots);
 }
 
-/** Rest-site odds (owner, 2026-11-14): upgrades 1-3 offer one option of one effect; the 4th and later offer two options, each 80% one effect, 20% two. */
-export const REST_ONE_OPTION_UPTO = 3;
-export const REST_TWO_EFFECT_CHANCE = 0.2;
-export function RestUpgradeRule(instance) {
-  return upgradeCount(instance) + 1 > REST_ONE_OPTION_UPTO ? { choices: 2, combos: true } : { choices: 1, combos: false };
+/** Rest-site offer shape: one single-effect option early, then several that may carry two effects. */
+export function RestUpgradeRule(instance, registries = null)
+{
+  const { singleOptionUpTo, earlyChoices, laterChoices } = CardUpgradeRules(registries).rest;
+  return upgradeCount(instance) + 1 > singleOptionUpTo
+    ? { choices: laterChoices, combos: true }
+    : { choices: earlyChoices, combos: false };
 }
 
 /**
- * upgradeChoiceCount(def, instance, { blacksmith, run }) → how many options a player picks from: a blacksmith
- * offers 2 or 3 at random (owner, 2026-11-14), seeded by the run, the card, its upgrade number and the visit's offer key
- * (upgradeOffer.js) so the quote is stable for the stay; a rest-site upgrade, an event reward and co-op keep the single roll (1). Asked without a run (no seed to
- * roll from) the older rule stands: 2 on a Basic card and 3 on a ranked (not Basic) one.
+ * Options a player picks from: a Blacksmith rolls fewer or more, seeded so a visit's quote is stable;
+ * every other source offers 1. Without a run, a Basic card gets fewer and a ranked card more.
  */
-export function upgradeChoiceCount(def, instance, { blacksmith = false, run = null } = {}) {
-  if (!blacksmith) return 1;
-  if (run && instance?.instanceId) return mulberry32(UpgradeSteps.upgradeSeed(run.seed, OfferSalted(run, `${instance.instanceId}#choices`), upgradeStepsOf(instance).length))() < 0.5 ? 2 : 3;
-  return upgradeBasic(def, instance) ? 2 : 3;
+export function upgradeChoiceCount(def, instance, { blacksmith = false, run = null, registries = null } = {})
+{
+  if (!blacksmith)
+  {
+    return 1;
+  }
+  const offers = CardUpgradeRules(registries).offers;
+  if (run && instance?.instanceId)
+  {
+    const seed = UpgradeSteps.upgradeSeed(
+      run.seed,
+      OfferSalted(run, `${instance.instanceId}#choices`),
+      upgradeStepsOf(instance).length,
+    );
+    return mulberry32(seed)() < offers.blacksmithFewerChoicesChance
+      ? offers.blacksmithFewerChoices
+      : offers.blacksmithMoreChoices;
+  }
+  return upgradeBasic(def, instance, registries)
+    ? offers.basicChoicesWithoutRun
+    : offers.rankedChoicesWithoutRun;
 }
 
 /**
@@ -170,6 +340,10 @@ export function upgradeChoiceCount(def, instance, { blacksmith = false, run = nu
  * the kinds by category and reads the vendor's own rarity odds (proposal section 11); none is a rest site, a free upgrade or any other source.
  */
 export function nextUpgradeOptions(run, instance, base, registries, count = 1, { scale = 1, salt = '', noAuthored = false, combos = false, everyFamily = false, vendor = '', preparation = {} } = {}) {
+  if (AuthoredUpgradesOnly(run))
+  {
+    return authoredOnlyOptions(instance, base, noAuthored);
+  }
   const applied = upgradeStepsOf(instance);
   const mana = (registries && registries.balance && registries.balance.mana) || {};
   // Core ranks scale the face after the steps, so the roll sees the rank the card will be shown at.
@@ -187,12 +361,12 @@ export function nextUpgradeOptions(run, instance, base, registries, count = 1, {
   const mechanics = run.combatMechanics || run.gameProfile?.combatMechanics;
   const mechanicsContext = mechanics ? { combatMechanics: mechanics } : null;
   const limits = { ...mana, mechanicsContext, rank, cardRank: visibleRank, playerLevel, instance, scale, registries, preparation,
-    damageChanges: checkDamageUpgrade(run, registries, rank, ranked),
+    damageChanges: checkDamageUpgrade(run, registries, rank, ranked, preparation?.projectionScope),
     exposure: registries?.balance?.exposure?.elementUpgradeBuildup, maxRange: run.rangePolicy?.maxRange, ...(vendor ? { vendor } : {}), ...(nodeSpecialty ? { nodeSpecialty } : {}) };
   const authored = applied.length === 0 && base.upgrade && !Array.isArray(base.gradeProfiles) && !noAuthored;
   if (count <= 1 && authored) return [{ k: 'authored' }];
   // An authored first step occupies its family (AuthoredFamilies): the rolled alternative is of another family.
-  const excludeFamilies = authored && !everyFamily ? AuthoredFamilies(base) : [];
+  const excludeFamilies = authored && !everyFamily ? AuthoredFamilies(base, registries) : [];
   const roll = (n) => UpgradeSteps.rollUpgradeOptions(base, applied, applied.length, UpgradeSteps.upgradeStepRng(run.seed, OfferSalted(run, salt ? `${instance.instanceId}#${salt}` : instance.instanceId), applied.length), { ...limits, excludeFamilies, everyFamily }, n);
   if (count <= 1) return roll(1);
   // Two options that resolve to the same card would be no choice: every pick after the first must differ in what
@@ -212,25 +386,26 @@ export function nextUpgradeOptions(run, instance, base, registries, count = 1, {
     }
     return picked;
   };
-  let pool = roll(combos ? MAX_CANDIDATES : Math.min(MAX_CANDIDATES, target + 2));
+  const rules = CardUpgradeRules(registries);
+  const maxCandidates = rules.offers.maxCandidates;
+  let pool = roll(combos ? maxCandidates : Math.min(maxCandidates, target));
   let picked = pickDistinct(pool);
-  if (picked.length < target && pool.length < MAX_CANDIDATES) {
-    pool = roll(MAX_CANDIDATES);
+  if (picked.length < target && pool.length < maxCandidates) {
+    pool = roll(maxCandidates);
     picked = pickDistinct(pool);
   }
   const chosen = picked.slice(0, target);
-  return combos ? withSecondEffects(run, instance, applied, chosen, pool, outcome, salt) : chosen;
+  return combos ? withSecondEffects(run, instance, applied, chosen, pool, outcome, salt, rules.rest.twoEffectChance) : chosen;
 }
 
-// "Two effects" (owner, 2026-11-14): each option gets a second, different effect with REST_TWO_EFFECT_CHANCE. The draw comes from
-// its own seeded stream (instance id + `#fx` + step index), so the same quote always shows the same list.
-function withSecondEffects(run, instance, applied, chosen, candidates, outcome, salt) {
+// Each option may get a second effect of another family, drawn from its own seeded stream.
+function withSecondEffects(run, instance, applied, chosen, candidates, outcome, salt, twoEffectChance) {
   const draw = mulberry32(UpgradeSteps.upgradeSeed(run.seed, OfferSalted(run, `${instance.instanceId}#fx${salt}`), applied.length));
   const offered = new Set(chosen.flatMap(UpgradeSteps.UpgradeStepFamilies));
   return chosen.map((step) => {
     const roll = draw();
     const pick = draw();
-    if (roll >= REST_TWO_EFFECT_CHANCE || step.k === 'authored' || step.k === 'combo') return step;
+    if (roll >= twoEffectChance || step.k === 'authored' || step.k === 'combo') return step;
     // The second effect is of a family no option on the list already has (UPGRADE_FAMILIES).
     const partners = candidates.filter((other) => other.k !== 'authored' && other.k !== 'combo' && !UpgradeSteps.UpgradeStepFamilies(other).some((family) => offered.has(family))
       && !chosen.some((c) => JSON.stringify(c) === JSON.stringify(other)) && outcome(other) !== outcome(step));
@@ -245,7 +420,7 @@ function withSecondEffects(run, instance, applied, chosen, candidates, outcome, 
  * The families a card's authored upgrade belongs to, read from what it changes on the face: lower cost, more damage,
  * more Block, more status, more draw-like effects, new keywords. A text-only authored upgrade claims none.
  */
-export function AuthoredFamilies(base) {
+export function AuthoredFamilies(base, registries = null) {
   const after = applyUpgradeSteps(base, [{ k: 'authored' }]);
   const families = new Set();
   const differs = (pick) => JSON.stringify(pick(base)) !== JSON.stringify(pick(after));
@@ -254,26 +429,18 @@ export function AuthoredFamilies(base) {
   const lower = (key) => Number.isFinite(base[key]) && Number.isFinite(after[key]) && after[key] < base[key];
   if (lower('cost') || lower('staminaCost') || lower('manaCost') || differs((card) => card.costGrowth || null)) families.add('cost');
   const rampOf = (stat) => (card) => (card.ramp?.stat === stat ? card.ramp : null);
-  if (differs((card) => ops(card, OP_FAMILIES.damage)) || differs(rampOf('damage'))) families.add('damage');
-  if (differs((card) => ops(card, OP_FAMILIES.defense)) || differs(rampOf('block'))) families.add('defense');
-  if (differs((card) => ops(card, OP_FAMILIES.pressure))) families.add('pressure');
-  if (differs((card) => ops(card, OP_FAMILIES.flow))) families.add('flow');
+  const { opsByFamily, fallback } = CardUpgradeRules(registries).authoredFamilies;
+  if (differs((card) => ops(card, opsByFamily.damage)) || differs(rampOf('damage'))) families.add('damage');
+  if (differs((card) => ops(card, opsByFamily.defense)) || differs(rampOf('block'))) families.add('defense');
+  if (differs((card) => ops(card, opsByFamily.pressure))) families.add('pressure');
+  if (differs((card) => ops(card, opsByFamily.flow))) families.add('flow');
   if (differs((card) => [...(card.keywords || [])].sort())) families.add('keyword');
   if (differs((card) => [...(card.cardTags ?? card.tags ?? [])].sort())) families.add('form');
   // Any other effect, a ramp on another stat, or a text-only change: still one family, never none (review, 2026-11-20).
-  if (!families.size && (differs((card) => card.effects || []) || differs((card) => card.ramp || null))) families.add(OTHER_OP_FAMILY);
-  if (!families.size) families.add('form');
+  if (!families.size && (differs((card) => card.effects || []) || differs((card) => card.ramp || null))) families.add(fallback);
+  if (!families.size) families.add(fallback);
   return [...families];
 }
-
-// The effect ops each family reads when it judges an authored upgrade (AuthoredFamilies).
-const OP_FAMILIES = Object.freeze({
-  damage: ['damage', 'changeAttribute'],
-  defense: ['block', 'gainWard', 'gainBarrier', 'heal', 'applyReflect', 'restorePoise', 'gainCounterStacks'],
-  pressure: ['applyStatus', 'poiseDamage', 'removeStatus'],
-  flow: ['draw', 'discard', 'addCard', 'shuffleDiscardIntoDraw', 'exhaust', 'retain', 'restoreStamina', 'restoreMana'],
-});
-const OTHER_OP_FAMILY = 'form';
 
 /**
  * nextUpgradeStep(run, instance, base, registries) → the step the next upgrade
@@ -295,34 +462,61 @@ export function upgradeCost(run, instance, def, registries, { preparation } = {}
   if (paidUpgradeCount(instance) + 1 > MAX_CARD_UPGRADES) return null;
   if (def && instance && nextUpgradeStep(run, instance, def, registries, { preparation }) === null) return null;
   // A rank-up bonus step does not use a free upgrade (paidUpgradeCount).
-  return paidUpgradeCount(instance) + 1 <= freeAllowance(instance, def) ? 0 : 1;
+  return paidUpgradeCount(instance) + 1 <= freeAllowance(instance, def, registries)
+    ? 0
+    : CardUpgradeRules(registries).slots.stonesAfterFree;
 }
 
 const stonesOf = (run) => (Number.isSafeInteger(run && run.smithingStones) ? run.smithingStones : 0);
 
 /**
  * canUpgrade(registries, run, instance) → { ok, code, reason, cost, n, free }.
- * Codes: 'missing' (not a known card), 'armament' (an armament's own cards upgrade
- * with their armament), 'slots' (all the card's slots are used), 'cap' (10 upgrades), 'maxed' (no step is eligible any more), 'stones'.
+ * Codes: 'missing', 'armament' (upgraded with its armament), 'slots', 'cap', 'maxed', 'stones'.
  */
-export function canUpgrade(registries, run, instance, { preparation } = {}) {
-  const def = instance && registries.cards.has(instance.cardId) ? registries.cards.get(instance.cardId) : null;
+export function canUpgrade(registries, run, instance, { preparation } = {})
+{
+  const def = instance && registries.cards.has(instance.cardId)
+    ? registries.cards.get(instance.cardId)
+    : null;
   const n = upgradeCount(instance) + 1;
-  const refuse = (code, reason, cost = null) => ({ ok: false, code, reason, cost, n, free: null });
-  if (!def) return refuse('missing', 'That card is not in the deck.');
-  if (instance.sourceArmamentId || instance.grantedBy) return refuse('armament', `${def.name} is upgraded with its armament.`);
-  const slots = UpgradeSlots(run, instance);
-  // A rank-up bonus step is a gift and uses no slot, so a rank-up leaves one slot free (owner, 2026-11-23).
-  // The 10 cap counts the same slot-using upgrades, so bonus steps never hold a card short of its slots.
+  const refuse = (code, fields = {}, cost = null, sentence = code) => ({
+    ok: false,
+    code,
+    reason: uiSentence(RefusalSentence + sentence, fields),
+    cost,
+    n,
+    free: null,
+  });
+  if (!def)
+  {
+    return refuse('missing');
+  }
+  const name = def.name;
+  if (instance.sourceArmamentId || instance.grantedBy)
+  {
+    return refuse('armament', { name });
+  }
+  const slots = UpgradeSlots(run, instance, registries);
+  // Rank-up bonus steps are gifts: they use no slot and do not count toward the cap.
   const paid = paidUpgradeCount(instance) + 1;
-  if (paid > slots && paid <= MAX_CARD_UPGRADES) {
-    return refuse('slots', `${def.name} has ${slots} upgrade ${slots === 1 ? 'slot' : 'slots'} (rank + 1); raise its rank for more.`);
+  if (paid > slots && paid <= MAX_CARD_UPGRADES)
+  {
+    const sentence = slots === 1
+      ? OneSlotSentence
+      : ManySlotsSentence;
+    return refuse('slots', { name, slots }, null, sentence);
   }
   const cost = upgradeCost(run, instance, def, registries, { preparation });
-  if (cost === null) {
-    return paid > MAX_CARD_UPGRADES ? refuse('cap', `${def.name} is already at ${MAX_CARD_UPGRADES} upgrades.`)
-      : refuse('maxed', `${def.name} is fully upgraded.`);
+  if (cost === null)
+  {
+    return paid > MAX_CARD_UPGRADES
+      ? refuse('cap', { name, cap: MAX_CARD_UPGRADES })
+      : refuse('maxed', { name });
   }
-  if (cost > stonesOf(run)) return refuse('stones', `Needs ${cost} Smithing Stone; you have ${stonesOf(run)}.`, cost);
+  const stones = stonesOf(run);
+  if (cost > stones)
+  {
+    return refuse('stones', { cost, stones }, cost);
+  }
   return { ok: true, code: '', reason: '', cost, n, free: cost === 0 };
 }

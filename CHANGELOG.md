@@ -32,8 +32,48 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-11-28
+
+- **Same-stance switch covers spells** ([#3049](https://github.com/cehinds/AshenSpire/pull/3049), `0.7.5.199`). Turning off the same-stance discount now also removes the Prepared spell SP cut. It is on, so nothing changes in play.
+
 ## 2026-11-27
 
+- **Simple combat switches** ([#3048](https://github.com/cehinds/AshenSpire/pull/3048), `0.7.5.197`). Poise, stance bonuses, the same-stance discount, rolled upgrades and multi-move enemy turns can now each be turned off in config. All are on, so nothing changes in play yet.
+- **Card text is dark again** ([#3046](https://github.com/cehinds/AshenSpire/pull/3046), `0.7.5.195`). Card rules text is dark ink on the parchment again, not cream. The colour is set in the card layout file.
+- **Startup checks are now plain data** ([#3044](https://github.com/cehinds/AshenSpire/pull/3044), `0.7.5.193`). The phone and controller checks for loading a save are now set in data files, not code. Nothing changes in play.
+- **Export JSON saves every setting** ([#3041](https://github.com/cehinds/AshenSpire/pull/3041), `0.7.5.191`). Both Export buttons now save your changed settings from every tab, music included. Each setting appears once in the file.
+- **Hold-to-load no longer starts a fight on phones** ([#3040](https://github.com/cehinds/AshenSpire/pull/3040), `0.7.5.189`). Holding a save slot to load it on a phone now opens the map and stays there. The tap the phone sends after you lift your finger no longer presses the first map node.
+- **Class-tailored rewards, shops, Defend Block, and branching maps** ([#3039](https://github.com/cehinds/AshenSpire/pull/3039), `0.7.5.187`). Rewards and shops now filter cards and weapons to class-compatible pools controlled in JSON and Score Studio, and Defend now grants Block again. Act maps also branch more often using new route tuning knobs.
+- **Hold-to-load waits for finger release on phones** ([#3038](https://github.com/cehinds/AshenSpire/pull/3038), `0.7.5.185`). Holding a save slot to load on mobile now waits until the finger lifts before opening the map. Lifting your finger no longer taps a map node underneath.
+- **Tighter modal spacing and inline reward confirm** ([#3037](https://github.com/cehinds/AshenSpire/pull/3037), `0.7.5.183`). Modal headers, footers, Settings, Armoury, Character, Merchant, Shrine, and View Deck now trim wasted space on phones. Card rewards confirm inline instead of opening a second modal.
+- **Card readability and cleaner combat backdrop** ([#3036](https://github.com/cehinds/AshenSpire/pull/3036), `0.7.5.181`). Card body text now uses light parchment ink for contrast on dark card faces, the ghost "Card" placeholder over the player is gone, and missing combat backdrop art no longer stretches broken-image shapes across the board.
+- **Starseer playtest fixes** ([#3035](https://github.com/cehinds/AshenSpire/pull/3035), `0.7.5.179`). View Deck now matches combat damage and returns to the map on close. Treasure chests grant relics, tooltips close over modals, dev notes hide outside dev builds, and phone maps keep their bottom bar.
+- **More reliable Smith and equipment checks** ([#3018](https://github.com/cehinds/AshenSpire/pull/3018), `0.7.5.177`). Smith screen checks use an explicit eligible scenario, while equipment tests follow current item availability and use controlled values for mechanics, so authored balance changes do not leave stale expectations.
+- **Evade Wither, rising cost, and Smash flat Block break** ([#3017](https://github.com/cehinds/AshenSpire/pull/3017), `0.7.5.175`). Player Evade cards gain Wither 3 and +1 SP per play (max +3); Smash cards now break flat Block before damage (`Break N Block. Deal N damage.`).
+- **Edit game content with forms in Score Studio** ([#3032](https://github.com/cehinds/AshenSpire/pull/3032), `0.7.5.173`). View > Game content edits decks, pools, cards, enemies, enemy cards, relics and map rules and saves the JSON. The game reloads by itself.
+- **Behind the scenes: mana-only mechanic notes refreshed** ([#3031](https://github.com/cehinds/AshenSpire/pull/3031), `0.7.5.171`). Generated mechanic notes now name the spell cost rules as the mana-only reader. Nothing you play changes.
+- **Opening shop pins no longer cover every branch** ([#3033](https://github.com/cehinds/AshenSpire/pull/3033), `0.7.5.169`). A shop pinned on floor 1 now counts only where a branch exists, as the map builder does. Core maps are unchanged.
+- **Pin a map floor's room type** ([#3025](https://github.com/cehinds/AshenSpire/pull/3025), `0.7.5.167`). Core routes can now set floorTypes, such as floor 4 always a shop. Without it, maps are unchanged.
+- **Card limits and drawback cost** ([#3030](https://github.com/cehinds/AshenSpire/pull/3030), `0.7.5.165`). Card effect and drawback caps are set in actionCosts.json; none means no limit. Drawbacks can cost Combat Power, flat or as a multiplier, off by default.
+- **Steadier timing checks and a lighter Blacksmith picker** ([#3016](https://github.com/cehinds/AshenSpire/pull/3016), `0.7.5.163`). Timing checks skip a one-time test-machine disk wait. The Blacksmith opens faster, and card upgrade rules now live in config.
+
+- **Spell costs match their cards** ([#3022](https://github.com/cehinds/AshenSpire/pull/3022), `0.7.5.161`). A spell now costs the Mana and Stamina printed on it; the hidden extra Mana on every spell is gone. Prepared stance takes 1 Stamina off a spell, never below 1, and no Mana; Mana cuts in Prepared come from a staff or robes. Arcane Strike and Mana Rite cost Stamina only.
+- **Owner editing commands** ([#3021](https://github.com/cehinds/AshenSpire/pull/3021), `0.7.5.159`). New npm run play, check, ship and sync let the owner edit JSON, test with live reload, and open a pull request with one commit per file.
+- **Score Studio saves cards and art** ([#3027](https://github.com/cehinds/AshenSpire/pull/3027), `0.7.5.157`). File > Save or Ctrl+S writes them to `content/source/studio/`, and the game never reads them.
+- **Heavier tests run on review** ([#3029](https://github.com/cehinds/AshenSpire/pull/3029), `0.7.5.155`). Pull requests into dev now run the core suite only. The discovered test shards run when dev is promoted to review.
+- **Initiate gear** ([#3026](https://github.com/cehinds/AshenSpire/pull/3026), `0.7.5.153`). In Prepared stance an Initiate cuts 1 Mana off matching spells, one cut per spell. the Starseer's starting robe carries Arcane Initiate and the Herald's Divine Initiate; Dusk Chime carries a Decay Initiate; staffs and robes no longer cut every spell.
+- **Game rules belong in config** ([#3028](https://github.com/cehinds/AshenSpire/pull/3028), `0.7.5.151`). `CODE-STYLE.md` now asks for rules, numbers and player text in config files instead of code. No game changes.
+
+- **Set an enemy's HP directly** ([#3024](https://github.com/cehinds/AshenSpire/pull/3024), `0.7.5.149`). An enemy sheet can now set stats.hp, which replaces the HP its level and attributes give. Act and tier scaling still apply on top.
+- **Score Studio keeps one active card and item** ([#3019](https://github.com/cehinds/AshenSpire/pull/3019), `0.7.5.147`). Every panel follows the same card, filters never switch it, and reload brings it back.
+- **A code style guide** ([#3020](https://github.com/cehinds/AshenSpire/pull/3020), `0.7.5.145`). `CODE-STYLE.md` sets how all new and changed code looks. No game changes.
+
+- **Faster upgrade choices and Act schedules** ([#3014](https://github.com/cehinds/AshenSpire/pull/3014), `0.7.5.143`). Upgrade offers skip unused extra candidates while preserving choices and prices. Generated map nodes use a direct text sort when preparing upgrade and reward schedules, while custom node IDs retain their existing ordering.
+
+- **Safer card JSON edits in Score Studio** ([#3015](https://github.com/cehinds/AshenSpire/pull/3015), `0.7.5.143`). Failed card JSON edits preserve Undo and Redo history, invalid card text is rejected before changes, and custom cards can open their comparison summary and menu.
+- **Score Studio stories for one active card, Studio Save and card templates** ([#3012](https://github.com/cehinds/AshenSpire/pull/3012), `0.7.5.141`). Planning documents for the next three Score Studio features, each with acceptance criteria and a ready-to-use implementation prompt. No game or tool changes.
+- **Weights can multiply with a card's strength** ([#3013](https://github.com/cehinds/AshenSpire/pull/3013), `0.7.5.139`). Cost, effect, status, multi-effect and tag weights can each switch to a multiply form that scales with the card's positive score, so stronger cards pay more per SP. Every switch is off, so no card's CP or rank changes.
+- **Score Studio keeps the library, card preview and editor together** ([#3008](https://github.com/cehinds/AshenSpire/pull/3008), `0.7.5.137`). The customization pane now shows the selected card's name, preview and what an edit will change in every view, Edit and deck-list rows open the card's properties in place instead of a dialog, an empty state replaces stale content when no card is selected, and narrow screens get a Library / Card switch. The resize handle works with Home, End and arrow keys.
 - **Faster card checks** ([#3009](https://github.com/cehinds/AshenSpire/pull/3009), `0.7.5.134`). Avoid unused authored tag lookups when cards already have resolved tags, while preserving card identity and validation.
 
 ## 2026-11-26

@@ -20,6 +20,7 @@ then run `node tools/game-config.mjs build` and `node tools/game-config.mjs chec
 | Core enemy card data and overlays | `enemyCards.json`; an enemy sheet's `ai["card:<id>"].legacyMove` maps a card to a shared move. `coreOffense: "card"` opts damage/hits into Core; `coreSp: "card"` separately opts stamina cost, and `coreBlock: "card"` opts Block. Otherwise the shared move values stay authoritative. |
 | Base reward cards and their statuses | `games/ashenspire/packs/base-cards/cards.json`, `statuses.json` |
 | Map routes, rest services, shop offers, victory reward offers, class unlocks | `routes.json`, `rests.json`, `shops.json`, `rewards.json`, `classUnlocks.json` |
+| One map floor's room type, in every act | `routes.json` `floorTypes`, like `{ "4": "shop", "8": "elite" }`. Not a floor a rest can land on (in Core 1, 5, 6, 7, 11); elites from floor 3. `{}` pins nothing. |
 | Minimum stats to equip gear | none: Core switches equipment requirements off |
 
 The rest (encounters, events, relics, items and equipment, progression,
@@ -58,7 +59,7 @@ Paths are inside `content/source/` unless they start with `src/`.
 
 | To change... | Edit this file | Notes |
 | --- | --- | --- |
-| An enemy's HP, attributes, deck, behavior and boss phases | `games/ashenspire/packs/core/enemies/<id>.json` | Core enemy sheets are the source; generated enemy rows in `characters.json` and `_reference` files are checked by `node tools/enemy-sheets.mjs --check`. |
+| An enemy's HP, attributes, deck, behavior and boss phases | `games/ashenspire/packs/core/enemies/<id>.json` | Core enemy sheets are the source; generated enemy rows in `characters.json` and `_reference` files are checked by `node tools/enemy-sheets.mjs --check`. HP comes from attributes and level; set `stats.hp` (a whole number) to fix it, and difficulty, floor and tier HP scaling still apply on top. |
 | Which enemies appear together, per region | `wealdEncounters.json`, `marchesEncounters.json`, `reachEncounters.json` | One row per fight: enemies, weight, pool, floor band. |
 | Boss tougher or easier by tier | `balanceBossTiers.json`, `balanceSeatTiers.json` | See the balance table below. |
 | Event text and choices | `events.json` | Choice ids go in `eventChoiceIds.json`, same length as the choices. |

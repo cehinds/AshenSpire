@@ -1165,10 +1165,19 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .set-label-line { display: flex; align-items: center; gap: .5rem; min-width: 0; }
 .set-label-line > .ls-label { flex: 0 1 auto; min-width: 0; }
 .set-row-reset { flex: 0 0 auto; min-height: 1.9rem; padding: .1rem .6rem; font-size: .85rem; }
-/* Hidden, a Reset keeps its height (the tap floor) but no width: the row is
-   the same height changed or not, and the label keeps the whole line. */
-[data-settings-host] .set-label-line > .set-row-reset[hidden] { display: inline-flex !important; visibility: hidden; width: 0; min-width: 0; padding: 0; margin: 0; border: 0; overflow: hidden; }
-.set-row-reset[hidden] { display: none; }
+/* Collapse hidden Reset buttons so label lines stay compact. */
+[data-settings-host] .set-label-line > .set-row-reset[hidden] {
+  display: none !important;
+}
+
+.set-row-reset[hidden] {
+  display: none;
+}
+
+/* Move static setting descriptions to hover text so rows fit on one line. */
+[data-settings-host] .set-panel .set-row > .as-labelstack > .ls-hint.set-note:not([data-fullscreen-status]):not([data-art-tier-status]):not([data-art-status]):not([data-setting-condition]) {
+  display: none;
+}
 .set-search-where { margin-top: 1.1rem; }
 /* The Undo bar. */
 [data-settings-host] > .set-undo { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; margin: .4rem var(--modal-inset, .8rem); padding: .45rem .7rem; border: 1px solid var(--line-soft); border-left: 3px solid var(--accent, #c9a45c); border-radius: var(--r-2); background: var(--panel); }
@@ -1190,23 +1199,79 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .set-sync-fields label { display: grid; gap: .2rem; color: var(--muted); }
 .set-sync-fields .set-text { width: 100%; min-height: var(--tap-floor); }
 @container game-viewport (max-width: 600px) {
-  /* Phones: a row is label over control, the control full width. */
-  [data-settings-host] .set-panel .as-row.setting { flex-direction: column; align-items: stretch; }
-  [data-settings-host] .set-panel .as-row.setting > .as-labelstack { flex: 0 0 auto; }
-  [data-settings-host] .set-panel .as-row.setting > .r-trail { max-width: 100%; margin-left: 0; justify-content: flex-start; flex-wrap: wrap; }
-  [data-settings-host] .set-panel .as-row.setting:has(> .r-trail > :is(.as-toggle, .as-switch)) { flex-direction: row; align-items: center; }
-  [data-settings-host] .set-panel .as-row.setting:has(> .r-trail > :is(.as-toggle, .as-switch)) > .r-trail { margin-left: auto; }
-  /* A switch row keeps label and switch side by side: the label takes the
-     rest of the width and wraps, never its one-line length (was 1,395px). */
-  [data-settings-host] .set-panel .as-row.setting:has(> .r-trail > :is(.as-toggle, .as-switch)) > .as-labelstack { flex: 1 1 0; min-width: 0; }
-  [data-settings-host] .set-panel .choice-group { flex-wrap: wrap; }
-  :root [data-settings-host] .set-stepper > input[type='number'] { flex-basis: 6.4rem; width: 6.4rem; padding-inline: .15rem; }
-  :root [data-settings-host] .set-row-dropdown { grid-template-columns: 1fr; }
+  /* Keep label left and control right on one line; full-width rows stack cleanly. */
+  [data-settings-host] .set-panel .as-row.setting {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+  }
+
+  [data-settings-host] .set-panel .as-row.setting > .as-labelstack {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  [data-settings-host] .set-panel .as-row.setting > .r-trail {
+    flex: 0 1 auto;
+    max-width: 55%;
+    margin-left: auto;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  [data-settings-host] .set-panel .as-row.setting:is(.set-row-wide, .set-row-number) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  [data-settings-host] .set-panel .as-row.setting:is(.set-row-wide, .set-row-number) > .as-labelstack {
+    flex: 0 0 auto;
+  }
+
+  [data-settings-host] .set-panel .as-row.setting:is(.set-row-wide, .set-row-number) > .r-trail {
+    max-width: 100%;
+    margin-left: 0;
+    justify-content: flex-start;
+  }
+
+  [data-settings-host] .set-panel .choice-group {
+    flex-wrap: wrap;
+  }
+
+  :root [data-settings-host] .set-stepper > input[type='number'] {
+    flex-basis: 6.4rem;
+    width: 6.4rem;
+    padding-inline: 0.15rem;
+  }
+
+  /* Prevent dropdown rows from expanding past the 375px phone panel width. */
+  :root [data-settings-host] .set-row-dropdown {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 48%);
+  }
+
+  :root [data-settings-host] .set-row-dropdown > * {
+    min-width: 0;
+  }
+
+  :root [data-settings-host] .set-choice-select {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
 }
-/* LIVE PREVIEW STRIP (src/ui/components/settingsPreview.js) — above General ›
-   Display and Accessibility. It only arranges the sample; every face in it is
-   the game's own rule, restyled by the classes/vars applyDisplaySettings writes. */
-[data-settings-host] .set-preview { margin: .6rem 0; border: 1px solid var(--line); border-radius: var(--r-2, 8px); background: var(--bg); min-width: 0; max-width: 100%; box-sizing: border-box; }
+
+/* LIVE PREVIEW STRIP (src/ui/components/settingsPreview.js) — hidden to keep Settings compact. */
+[data-settings-host] .set-preview {
+  display: none;
+  margin: 0.6rem 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-2, 8px);
+  background: var(--bg);
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
 [data-settings-host] .set-preview > .set-preview-summary { display: flex; align-items: center; min-height: var(--tap-floor, 44px); padding: 0 .9rem; cursor: pointer; font: 600 1.1rem/1 var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 [data-settings-host] .set-preview > .set-preview-body { display: flex; align-items: flex-start; gap: 1rem; padding: 0 .9rem .9rem; min-width: 0; }
 [data-settings-host] .set-preview-text { display: flex; flex-direction: column; gap: .5rem; flex: 1 1 auto; min-width: 0; }

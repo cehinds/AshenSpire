@@ -20,7 +20,7 @@ function readFixture(rel, missing) {
   }
 }
 
-// Returns { artManifest, assetExists, legacyRunSave, preE6RunSave }, each null
+// Returns { artManifest, assetExists, legacyRunSave, preE6RunSave, uiHoldCases }, each null
 // when its source is unavailable (the matching test then skips).
 export async function loadRunNodeFixtures() {
   // The art manifest is written by tools/equipment-blender.py and records the
@@ -54,5 +54,18 @@ export async function loadRunNodeFixtures() {
   const preE6RunSave = readFixture('tests/fixtures/run-save-hp-5597166.json',
     '  (no pre-E6 run-save fixture — test 50e will skip)');
 
-  return { artManifest, assetExists, legacyRunSave, preE6RunSave };
+  // The hold-validator and tray cases are data, so they change without editing the test.
+  const uiHoldText = readFixture('tests/fixtures/ui-hold-cases.json',
+    '  (no ui-hold-cases fixture — the hold-validator cases will skip)');
+  const uiHoldCases = uiHoldText === null
+    ? null
+    : JSON.parse(uiHoldText);
+
+  return {
+    artManifest,
+    assetExists,
+    legacyRunSave,
+    preE6RunSave,
+    uiHoldCases,
+  };
 }

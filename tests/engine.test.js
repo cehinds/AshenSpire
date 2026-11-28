@@ -29,7 +29,7 @@ import { resolveFloorPlan, applyRunShape, minViableFloors, MAP_SHAPE_KEYS } from
 import { rewardPlan, resolveContinue, unseenIds, REWARD_KIND_ORDER, rewardClaimStatus } from '../src/model/rewardplan.js';
 import { beatFor } from '../src/model/secondbeat.js';
 import { createRng, seedFromString, seedToString, seedProblem, SEED_MAX_LEN, sweepSeed } from '../src/engine/rng.js';
-import { createCombat, dispatch, previewCard, previewIntent, getEntity, playerWeightClass } from '../src/engine/combat.js';
+import { createCombat, dispatch, previewCard, previewIntent, getEntity, playerWeightClass, cardPlayCosts } from '../src/engine/combat.js';
 import { commitCombatSnapshot, serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
 import { computeAttackDamage, applyLoseHp, applyHeal } from '../src/engine/actions.js';
@@ -354,11 +354,74 @@ function logOf(combat, type) {
   return combat.eventLog.filter((e) => e.type === type);
 }
 
+// The fixture is required: a missing or empty case list fails instead of passing silently.
+function checkUiHoldCases(uiHoldCases, trays, checks)
+{
+  checks.assert(!!uiHoldCases, 'tests/fixtures/ui-hold-cases.json is handed to runTests');
+  if (!uiHoldCases)
+  {
+    return;
+  }
+  checkTitleLoadHoldRejections(uiHoldCases.titleLoadHoldRejections, checks.assert);
+  checkTrayPresentation(
+    uiHoldCases.trayPresentation,
+    trays,
+    checks,
+  );
+}
+
+// Every authored titleLoadHold row in the fixture must be refused at its own path.
+function checkTitleLoadHoldRejections(rejections, assert)
+{
+  assert(rejections.length > 0, 'the fixture lists titleLoadHold rejections');
+  for (const rejection of rejections)
+  {
+    const balanceUi = {
+      ...contentBundle.balance.ui,
+      titleLoadHold: rejection.titleLoadHold,
+    };
+    const bundle = {
+      ...contentBundle,
+      balance: {
+        ...contentBundle.balance,
+        ui: balanceUi,
+      },
+    };
+    const validation = validateContent(bundle);
+    const namesPath = validation.errors.some((error) => error.path === rejection.errorPath);
+    assert(!validation.ok && namesPath, rejection.label);
+  }
+}
+
+// Each fixture case folds or unfolds one tray and reads back its presentation.
+function checkTrayPresentation(trayCases, trays, { eq, assert })
+{
+  assert(trayCases.cases.length > 0, 'the fixture lists tray presentation cases');
+  for (const trayCase of trayCases.cases)
+  {
+    const state = trayPresentationState({
+      collapsed: trayCase.collapsed,
+      savedHeightRatio: trayCases.savedHeightRatio,
+      defaultHeightRatio: trays.defaultHeightRatio,
+    });
+    for (const [field, expected] of Object.entries(trayCase.expect))
+    {
+      eq(state[field], expected, `${trayCase.label} (${field})`);
+    }
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Runner
 // ---------------------------------------------------------------------------
 
-export async function runTests({ artManifest = null, assetExists = null, legacyRunSave = null, preE6RunSave = null } = {}) {
+export async function runTests({
+  artManifest = null,
+  assetExists = null,
+  legacyRunSave = null,
+  preE6RunSave = null,
+  uiHoldCases = null,
+} = {}) {
   const results = [];
   const test = (name, fn) => {
     try {
@@ -1798,9 +1861,11 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
           // playCard refuses, and this fixture died on the throw. The pools are
           // read from the same cost authority the engine spends from.
           const pools = REG.framework.costProfile(def, { weightClass: playerWeightClass(c).weightClass });
+          // A rising cost (costGrowth, the Evade cards since 2026-11-20) grows with each play: the live quote is what playCard charges.
+          const live = cardPlayCosts(c, inst.instanceId);
           return c.player.energy >= (def.cost === 'X' ? 0 : def.cost)
-            && c.player.mana >= (pools.mana || 0)
-            && c.player.stamina >= (pools.stamina || 0);
+            && c.player.mana >= Math.max(pools.mana || 0, live.mana || 0)
+            && c.player.stamina >= Math.max(pools.stamina || 0, live.stamina || 0);
         });
         if (playable && target) dispatch(c, { type: 'playCard', cardInstanceId: playable.instanceId });
         else dispatch(c, { type: 'endTurn' });
@@ -8023,32 +8088,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'the universal hold setting defaults normal so state-changing options expose click-review and hold-direct from first run');
     eq(contentBundle.balance.ui.titleLoadHold.ms, 600,
       'the title quick-load hold duration is authored as 600 ms');
-    const malformedTitleLoadHold = {
-      ...contentBundle,
-      balance: {
-        ...contentBundle.balance,
-        ui: { ...contentBundle.balance.ui, titleLoadHold: { ms: 0 } },
+    checkUiHoldCases(
+      uiHoldCases,
+      layout.trays,
+      {
+        eq,
+        assert,
       },
-    };
-    const titleLoadHoldValidation = validateContent(malformedTitleLoadHold);
-    assert(!titleLoadHoldValidation.ok
-      && titleLoadHoldValidation.errors.some((error) => error.path === 'balance.ui.titleLoadHold.ms'),
-    'a non-positive title quick-load duration is refused by its authored path');
-    const expandedTray = trayPresentationState({
-      collapsed: false,
-      savedHeightRatio: 0.7,
-      defaultHeightRatio: layout.trays.defaultHeightRatio,
-    });
-    eq(expandedTray.heightRatio, 0.7, 'an unfolded tray restores its independently saved expanded height');
-    assert(expandedTray.resizable, 'an unfolded tray exposes its resize edge');
-    const foldedTray = trayPresentationState({
-      collapsed: true,
-      savedHeightRatio: 0.7,
-      defaultHeightRatio: layout.trays.defaultHeightRatio,
-    });
-    eq(foldedTray.heightRatio, null, 'a folded tray ignores the saved expanded height and uses its intrinsic header height');
-    assert(!foldedTray.resizable, 'a folded tray cannot retain or expose its resize edge');
-    eq(foldedTray.savedHeightRatio, 0.7, 'folding preserves the expanded height for the next unfold');
+    );
     const selectedMove = inventorySelectionAction({
       itemId: 'straightSword',
       selectedSlotId: 'rightHand',

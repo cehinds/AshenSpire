@@ -531,7 +531,7 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 14
+            "amount": 9
           }
         ],
         "hints": {
@@ -825,7 +825,7 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 41
+            "amount": 27
           }
         ],
         "hints": {
@@ -899,7 +899,7 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 19
+            "amount": 13
           }
         ],
         "hints": {
@@ -1043,7 +1043,7 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 15
+            "amount": 10
           },
           {
             "op": "applyStatus",
@@ -2210,7 +2210,7 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 28
+            "amount": 19
           }
         ],
         "hints": {
@@ -2888,7 +2888,7 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 18
+            "amount": 12
           }
         ],
         "hints": {
@@ -3083,7 +3083,7 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 32
+            "amount": 21
           }
         ],
         "hints": {
@@ -3224,7 +3224,7 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 30
+            "amount": 20
           },
           {
             "op": "applyStatus",
@@ -3452,7 +3452,7 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 6
+            "amount": 4
           }
         ],
         "hints": {
@@ -3832,7 +3832,7 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 17
+            "amount": 11
           }
         ],
         "hints": {
@@ -3979,7 +3979,7 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 17
+            "amount": 11
           }
         ],
         "hints": {
@@ -4094,7 +4094,7 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 18
+            "amount": 12
           }
         ],
         "hints": {
@@ -4232,7 +4232,7 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 16
+            "amount": 11
           }
         ],
         "hints": {
@@ -4492,7 +4492,7 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 20
+            "amount": 13
           }
         ],
         "hints": {
@@ -4696,7 +4696,7 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 18
+            "amount": 12
           }
         ],
         "hints": {
@@ -4839,7 +4839,7 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 6
+            "amount": 4
           }
         ],
         "hints": {
@@ -5084,7 +5084,7 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 5
+            "amount": 3
           }
         ],
         "hints": {
@@ -5208,7 +5208,7 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 8
+            "amount": 5
           }
         ],
         "hints": {
@@ -5303,7 +5303,7 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 5
+            "amount": 3
           }
         ],
         "hints": {
@@ -5421,7 +5421,7 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 18
+            "amount": 12
           }
         ],
         "hints": {
@@ -5806,7 +5806,7 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 18
+            "amount": 12
           }
         ],
         "hints": {
@@ -6069,7 +6069,7 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 20
+            "amount": 13
           }
         ],
         "hints": {
@@ -6221,7 +6221,7 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 20
+            "amount": 13
           }
         ],
         "hints": {
@@ -6730,7 +6730,7 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 19
+            "amount": 13
           }
         ],
         "hints": {
@@ -6829,7 +6829,7 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 18
+            "amount": 12
           }
         ],
         "hints": {
@@ -6993,7 +6993,7 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 19
+            "amount": 13
           }
         ],
         "hints": {
@@ -7160,7 +7160,7 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 16
+            "amount": 11
           }
         ],
         "hints": {
@@ -7299,7 +7299,7 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 18
+            "amount": 12
           }
         ],
         "hints": {
@@ -7418,7 +7418,7 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 20
+            "amount": 13
           }
         ],
         "hints": {

@@ -79,6 +79,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
+import { SmithProbeQuery, SMITH_PROBE_OPEN } from './lib/smith-shot-fixture.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '..');
@@ -177,10 +178,8 @@ const SURFACES = [
   { name: 'rest', shot: 'rest', ready: `!!document.querySelector('#rest-opt, #strategize-opt, #smith-opt, #level-opt')` },
   // ?shot=smith lands on the Shrine; its Smith option opens the candidate dialog
   // (the same press tools/screenreach.mjs makes).
-  { name: 'smith', shot: 'smith', ready: `!!document.querySelector('.upgrade-desk, #smith-opt')`,
-    after: `(async () => { if (!document.querySelector('.upgrade-desk')) document.querySelector('#smith-opt')?.click();
-      await new Promise((r) => setTimeout(r, 200));
-      return document.querySelector('.upgrade-desk') ? true : 'the Smith option opened no candidate dialog'; })()`,
+  { name: 'smith', shot: 'smith', q: SmithProbeQuery(), ready: `!!document.querySelector('.upgrade-desk, #smith-opt')`,
+    after: SMITH_PROBE_OPEN,
     open: `!!document.querySelector('.upgrade-desk')` },
   { name: 'shop', shot: 'shop', ready: `!!document.querySelector('#leave-shop')` },
   { name: 'death', shot: 'death', ready: `!!document.querySelector('#app button')` },
@@ -382,7 +381,7 @@ async function main() {
     await cdp.send('Emulation.setDeviceMetricsOverride',
       { width: shape.w, height: shape.h, deviceScaleFactor: shape.dsf, mobile: shape.mobile }, S);
     for (const surface of surfaces) {
-      await navigate(`${BASE}?shot=${surface.shot}`, `${shape.tag} ${surface.name}`);
+      await navigate(`${BASE}${surface.q || `?shot=${surface.shot}`}`, `${shape.tag} ${surface.name}`);
       await until(surface.ready, `${shape.tag} ${surface.name}`);
       if (surface.after) {
         // A press that throws is a surface that was not measured, and a throw

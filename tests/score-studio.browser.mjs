@@ -83,7 +83,7 @@ try {
   const formulaParts = breakdown.formula.match(/^Raw (-?[\d.]+) − rarity (-?[\d.]+) = CP (-?[\d.]+)/);
   assert.ok(formulaParts, `breakdown formula line is shown (${breakdown.formula})`);
   assert.equal(Number(formulaParts[1]) - Number(formulaParts[2]), Number(formulaParts[3]), 'raw minus rarity equals CP in the formula');
-  assert.equal(`CP ${formulaParts[3]}`, breakdown.summaryCp.trim(), 'the formula CP matches the inspector CP');
+  assert.equal(`CP: ${formulaParts[3]}`, breakdown.summaryCp.trim(), 'the formula CP matches the inspector CP');
 
   // 2c. An edit that changes nothing the score reads keeps the score. The edited copy used to skip the game's
   //     card projection, so retyping Acid Splash's own name charged it an extra MP and dropped CP 13 to CP 5.
@@ -168,7 +168,8 @@ try {
   const sentence = await page.evaluate(() => {
     document.querySelector('.studio-tab[data-tab="weights"]').click();
     const row = document.querySelector('.weight-row input.weight-per[aria-label="damage per"]').closest('.weight-row');
-    const order = [...row.querySelectorAll('.weight-sentence input')].map((el) => el.className);
+    const sentenceInputs = row.querySelectorAll('.weight-sentence input:not([type="checkbox"])');
+    const order = [...sentenceInputs].map((el) => el.className);
     const words = [...row.querySelectorAll('.weight-sentence > :not(.weight-reset-btn)')].map((el) => (el.matches('.weight-words') ? el.textContent : `[${el.querySelector('input')?.className || el.className}]`)).filter(Boolean).join(' ');
     const weight = row.querySelector('input.weight-input');
     const per = row.querySelector('input.weight-per');
@@ -183,7 +184,11 @@ try {
     return { order, words, weightLabel, example, intro };
   });
   assert.deepEqual(sentence.order, ['weight-input', 'weight-per'], 'the weight box comes before the per box');
-  assert.equal(sentence.words, '[weight-input] pts per [weight-per] damage', 'the effect row reads "[n] pts per [n] damage"');
+  assert.equal(
+    sentence.words,
+    '[weight-input] pts per [weight-per] damage [weight-mult]',
+    'the effect row reads "[n] pts per [n] damage", then its multiply switch (PR 3013)',
+  );
   assert.equal(sentence.weightLabel, 'damage points', 'the weight box is labelled as points');
   assert.equal(sentence.example, '10 damage = 6 pts', 'the example updates live from the typed boxes (3 pts per 5 damage)');
   assert.match(sentence.intro, /rarity discount is its CP/, 'the Weights tab explains how the parts add up');
@@ -397,9 +402,19 @@ try {
     document.querySelector('.studio-card-tile[data-card-id="core.acidSplash"]').click();
     document.getElementById('btn-duplicate-card').click();
     await new Promise((resolve) => setTimeout(resolve, 300));
-    return { name: document.getElementById('edit-name').value, hint: document.getElementById('name-hint').textContent, autoName: document.getElementById('toggle-auto-name').checked };
+    return {
+      name: document.getElementById('edit-name').value,
+      banner: document.querySelector('.customization-entity-name-text').textContent,
+      hint: document.getElementById('name-hint').textContent,
+      autoName: document.getElementById('toggle-auto-name').checked,
+    };
   });
   assert.ok(duplicateName.autoName, 'a duplicate starts with Auto-name on');
+  assert.equal(
+    duplicateName.banner,
+    duplicateName.name,
+    'the banner shows the auto-named duplicate',
+  );
   assert.doesNotMatch(duplicateName.name, /\(Copy\)/, `the duplicate's auto name has no "(Copy)" (${duplicateName.name})`);
   assert.ok(duplicateName.hint.startsWith(`Convention: ${duplicateName.name} `), `the duplicate takes its convention name (${duplicateName.hint})`);
 
@@ -541,6 +556,23 @@ try {
     return text;
   });
   assert.match(schoolNote, /10 martial cards became magic to fit the school counts/, 'Preview reports martial cards made magic');
+
+  // 12. At 390 x 844, keyboard only: File, Enter, Enter saves,
+  // and focus returns to the File heading.
+  const focusedId = () => page.evaluate(() => document.activeElement?.id);
+  await page.setViewportSize({
+    width: 390,
+    height: 844,
+  });
+  await page.locator('#menu-file').focus();
+  await page.keyboard.press('Enter');
+  assert.equal(await focusedId(), 'menu-studio-save', 'Enter on File focuses Save');
+  await page.keyboard.press('Enter');
+  assert.equal(await focusedId(), 'menu-file', 'after File > Save focus is back on File');
+  await page.setViewportSize({
+    width: 1280,
+    height: 800,
+  });
 
   assert.deepEqual(pageErrors, [], 'no uncaught errors while editing');
   await page.evaluate((key) => localStorage.removeItem(key), DRAFT_KEY);

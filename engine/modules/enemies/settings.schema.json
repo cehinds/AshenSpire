@@ -21,6 +21,13 @@
         "none"
       ]
     },
+    "turnActions": {
+      "enum": [
+        "spPool",
+        "single"
+      ],
+      "description": "How many moves an enemy plans and plays a turn. spPool: as many as its SP pool buys (SPEC 4.6). single: one move, its shown intent. Absent is spPool."
+    },
     "deck": {
       "type": "object",
       "properties": {

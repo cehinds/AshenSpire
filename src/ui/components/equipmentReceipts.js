@@ -118,7 +118,7 @@ function renderCandidateLoad(load) {
 }
 
 export function renderRoleCopies(surface) {
-  return surface.roles.map((row) => statRowHtml({
+  return surface.roles.filter((row) => row.copies > 0).map((row) => statRowHtml({
     attrs: ` data-role="${esc(row.role)}"`,
     nameHtml: `${esc(row.profile.displayName)} <em class="as-pill role-copy-count">x${row.copies}</em>`,
     hintHtml: `${esc(row.profile.damageSchool)} · ${(row.profile.tags || []).map(esc).join(' · ')}`,

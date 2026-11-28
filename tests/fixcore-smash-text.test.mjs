@@ -21,12 +21,12 @@ const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0',
 const core = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const current = createRegistries(contentBundle);
 const plain = lines => lines.map(line => line.html.replace(/<[^>]+>/g, '')).join(' | ');
-const RULE = /Against Defend: 1\.5× damage\. Against Prepared: 1\.25× damage\. Add a quarter of their Block; half of the total breaks Poise/;
+const RULE = /Against Defend: 1\.5× damage\. Against Prepared: 1\.25× damage\. It breaks Poise for half of the total/;
 
 test('the shared Core Smash sentence states the owner rule', () => {
   assert.match(coreSmashClause(core.cards.get('core.reaverSpecial'), core), RULE);
   assert.match(coreSmashHelp(core.cards.get('core.reaverSpecial'), core), RULE);
-  for (const id of ['card.smash.coreClause', 'tag.smash.coreHelp']) assert.match(uiStrings.find(r => r.id === id).full, /\{matchups\}.*\{block\}.*\{poise\}/);
+  for (const id of ['card.smash.coreClause', 'tag.smash.coreHelp']) assert.match(uiStrings.find(r => r.id === id).full, /\{matchups\}.*\{poise\}/);
   assert.match(uiStrings.find(r => r.id === 'card.smash.matchupClause').full, /\{stances\}.*\{mult\}/);
 });
 
@@ -83,8 +83,9 @@ test('the text follows the active rules: a profile with a 3x multiplier, 30% Blo
   const rules = { ...shipped, smashVsDefensive: { damageMultiplier: 3, blockFraction: 0.3, poiseFraction: 0.4 } };
   const ctx = { gameProfile: core.gameProfile, fixCoreRules: rules };
   const reaver = core.cards.get('core.reaverSpecial');
-  assert.equal(coreSmashClause(reaver, ctx), 'Against Defend or Prepared: 3× damage. Add 30% of their Block; 40% of the total breaks Poise.');
-  assert.match(coreSmashHelp(reaver, ctx), /3× damage\. Add 30% of their Block; 40% of the total breaks Poise/);
+  // A saved blockFraction is ignored (owner, 2026-11-20): Smash breaks a flat amount of Block from its card instead.
+  assert.equal(coreSmashClause(reaver, ctx), 'Against Defend or Prepared: 3× damage. It breaks Poise for 40% of the total.');
+  assert.match(coreSmashHelp(reaver, ctx), /3× damage\. It breaks Poise for 40% of the total/);
   assert.match(withCoreSmashBlurb({ id: 'maneuver:smash', blurb: 'x' }, ctx).blurb, /3× damage/);
   assert.doesNotMatch(coreSmashClause(reaver, core), /3×/);
 });
@@ -131,7 +132,7 @@ test('Reframe turning a non-damaging card (core.defend) into Smash gets no Smash
   assert.match(coreSmashClause(asSmash(attack), core), RULE);
 });
 
-const commonTail = 'Add a quarter of their Block; half of the total breaks Poise.';
+const commonTail = 'It breaks Poise for half of the total.';
 const contexts = () => {
   const saved = (smashVsDefensive) => {
     const fixCoreRules = structuredClone(shipped);

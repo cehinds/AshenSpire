@@ -28,6 +28,7 @@ import { WEAKNESS_MANA, WEAKNESS_STAMINA } from '../model/enemyWeaknessRules.js'
 import { counterBlockBonus, CounterStackRule, counterReturnSpent, paidCounterContact } from './counterRule.js';
 import { rollD20Check } from './d20Chance.js';
 import { ChangeAttribute } from './liveStats.js';
+import { PoiseEnabled } from '../model/simpleCombatFlags.js';
 // src/engine/actions.js — effect-DSL opcode implementations (SPEC §3.4)
 //
 // A queued ACTION is { effect, source, owner?, target?, card?, meta? }:
@@ -410,6 +411,84 @@ function applyWeaknessEffects(ctx, source, target, receipt) {
   }
 }
 
+function attachOptionalFields(targetObject, fieldEntries)
+{
+  for (const [shouldInclude, key, value] of fieldEntries)
+  {
+    if (shouldInclude)
+    {
+      targetObject[key] = value;
+    }
+  }
+
+  return targetObject;
+}
+
+function buildDamageDealtEvent(source, target, receipt, carrier, hpBefore)
+{
+  const hpRemoved = Math.max(0, Math.min(receipt.hpLoss, hpBefore));
+  const hasCardInstance = Boolean(carrier.instanceId);
+  const hasUsedArmament = hasCardInstance && Object.hasOwn(carrier, 'usedArmamentId');
+
+  const damageEvent = {
+    sourceId: source?.id || null,
+    targetId: target.id,
+    amount: receipt.amount,
+    blocked: receipt.blocked,
+    hpLoss: receipt.hpLoss,
+    hpRemoved,
+    poiseMitigated: receipt.poiseMitigated,
+    poiseAbsorbed: receipt.poiseMitigated,
+    wardMitigated: receipt.wardMitigated,
+    damageReceipt: receipt.damageReceipt,
+    evaded: receipt.evaded,
+    advantage: receipt.advantage,
+    blockRemaining: target.block,
+    wardRemaining: target.persistentWard?.value,
+    poiseRemaining: target.persistentPoise?.value,
+    isAttack: true,
+  };
+
+  return attachOptionalFields(damageEvent, [
+    [hasCardInstance, 'cardInstanceId', carrier.instanceId],
+    [hasCardInstance, 'sourceHand', carrier.sourceHand],
+    [hasCardInstance, 'grantedBy', carrier.grantedBy],
+    [hasUsedArmament, 'usedArmamentId', carrier.usedArmamentId],
+    [Boolean(target.broken), 'targetBroken', true],
+    [Boolean(receipt.wardHpAbsorbed), 'wardAbsorbed', receipt.wardHpAbsorbed],
+    [Boolean(receipt.wardHpAbsorbed), 'wardHpBuffer', true],
+    [Boolean(receipt.wardHpAbsorbed), 'wardHpRemaining', target.wardHp || 0],
+    [Boolean(receipt.wardRouted), 'wardRouted', true],
+    [Boolean(receipt.wardBlockFirst), 'wardBlockFirst', true],
+    [Boolean(receipt.pierceBypassed), 'pierced', receipt.pierceBypassed],
+    [Boolean(receipt.pierceBypassed), 'piercePoise', receipt.piercePoise],
+    [Boolean(receipt.magicPoise), 'magicPoise', receipt.magicPoise],
+    [Boolean(receipt.poiseDrain), 'poiseDamage', receipt.poiseDrain],
+    [Boolean(receipt.broken?.block), 'blockBroken', receipt.broken?.block],
+    [Boolean(receipt.broken?.poise), 'poiseBroken', receipt.broken?.poise],
+    [Boolean(receipt.weaknesses?.length), 'weaknesses', receipt.weaknesses],
+  ]);
+}
+
+function attachFlatBreakToCarrier(carrier, effect, hitIndex)
+{
+  if (hitIndex !== 0)
+  {
+    return;
+  }
+
+  const flatBlockBreak = effect.breakBlock ?? effect.blockBreak;
+  if (flatBlockBreak > 0)
+  {
+    carrier.breakBlock = flatBlockBreak;
+  }
+
+  if (effect.breakPoise > 0)
+  {
+    carrier.breakPoise = effect.breakPoise;
+  }
+}
+
 // One receipt evaluator drives configured live damage and detached previews.
 function applyProfileDamage(ctx, source, target, base, carrier) {
   // A reflected hit is sent back, not thrown: it needs no hit roll (SPEC §17, Reflect).
@@ -474,13 +553,8 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
   // Stone Skin spent against the Pierce this hit carried (the quote spends nothing; the landed hit does).
   const skinStatus = receipt.skinSpent > 0 ? fixCorePierceRules(fixCoreRules(ctx, target)).skinStatus : null;
   if (skinStatus) statuses.removeStatus(ctx, target, skinStatus, { amount: receipt.skinSpent, reason: 'consumed' });
-  ctx.emit('damageDealt', { sourceId: source?.id || null, targetId: target.id,
-    ...(carrier.instanceId ? { cardInstanceId: carrier.instanceId, sourceHand: carrier.sourceHand, grantedBy: carrier.grantedBy,
-      ...(Object.hasOwn(carrier, 'usedArmamentId') ? { usedArmamentId: carrier.usedArmamentId } : {}) } : {}),
-    amount: receipt.amount, blocked: receipt.blocked, hpLoss: receipt.hpLoss, hpRemoved: Math.max(0, Math.min(receipt.hpLoss, hpBefore)),
-    poiseMitigated: receipt.poiseMitigated, poiseAbsorbed: receipt.poiseMitigated, ...(target.broken ? { targetBroken: true } : {}), ...(receipt.wardHpAbsorbed ? { wardAbsorbed: receipt.wardHpAbsorbed, wardHpBuffer: true, wardHpRemaining: target.wardHp || 0 } : {}), ...(receipt.wardRouted ? { wardRouted: true } : {}), ...(receipt.wardBlockFirst ? { wardBlockFirst: true } : {}), ...(receipt.pierceBypassed ? { pierced: receipt.pierceBypassed, piercePoise: receipt.piercePoise } : {}), ...(receipt.magicPoise ? { magicPoise: receipt.magicPoise } : {}), ...(receipt.poiseDrain ? { poiseDamage: receipt.poiseDrain } : {}), wardMitigated: receipt.wardMitigated, damageReceipt: receipt.damageReceipt, evaded: receipt.evaded,
-    advantage: receipt.advantage, ...(receipt.weaknesses?.length ? { weaknesses: receipt.weaknesses } : {}), blockRemaining: target.block,
-    wardRemaining: target.persistentWard?.value, poiseRemaining: target.persistentPoise?.value, isAttack: true });
+  const damageEvent = buildDamageDealtEvent(source, target, receipt, carrier, hpBefore);
+  ctx.emit('damageDealt', damageEvent);
   if (wardBefore > 0 && wardAfter === 0) ctx.emit('wardBroken', { targetId: target.id, targetKind: target.kind, sourceId: source?.id, ...seatOf(ctx, target) });
   if (before > 0 && target.block === 0) ctx.emit('blockBroken', { sourceId: source?.id, targetId: target.id });
   if (receipt.hpLoss > 0) ctx.emit('hpLost', { targetId: target.id, amount: receipt.hpLoss, cause: 'attack' });
@@ -1418,6 +1492,14 @@ export function staggerPlayer(ctx, player) {
   ctx.emit('playerStaggered', { targetId: player.id, actionLoss, statuses: applied, ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(player) } : {}) });
 }
 
+// The Poise a card's own pressure dealt: none while stagger.poise is off, so it never counts as a hit.
+function landedPoise(ctx, offered)
+{
+  return PoiseEnabled(ctx)
+    ? Math.max(0, offered)
+    : 0;
+}
+
 /**
  * dealPoiseDamage(ctx, entity, amount) — an enemy's meter or the PLAYER's
  * (plan phase 8: the player's vessel is real once its max is stamped; an
@@ -1428,6 +1510,10 @@ export function staggerPlayer(ctx, player) {
 export function dealPoiseDamage(ctx, entity, amount, { knowledgeMatchup = false, cause = null, source = null, cardId = null, carrier = null, blockAtHit = 0 } = {}) {
   // `source` and `cardId` only name who dealt it in the receipt (an explicit amount never reads the source); `carrier` is the hit it rides on,
   // `blockAtHit` the Block the target held when that hit arrived (the hit may have spent it since).
+  if (!PoiseEnabled(ctx))
+  {
+    return;
+  }
   if (configuredCombat(ctx)) { // Core Poise never fills a legacy break meter; extra Poise damage drains the pool.
     if (fixCoreEnabled(ctx)) drainFixCorePoise(ctx, source, entity, amount, carrier, blockAtHit);
     return;
@@ -1656,7 +1742,7 @@ function splitSmashPressure(ctx, action, target, row) {
   if (poise > 0) {
     const before = Math.max(0, target.poiseGuard || 0);
     dealPoiseDamage(ctx, target, poise, { carrier: action.card, source: action.source }); // a Smash: it may break a Defend target's last Poise
-    trackOwnPressure(ctx, action, target, 'poiseDealt', Math.max(0, poise - (before - Math.max(0, target.poiseGuard || 0))));
+    trackOwnPressure(ctx, action, target, 'poiseDealt', landedPoise(ctx, poise - (before - Math.max(0, target.poiseGuard || 0))));
   }
   if (ward > 0) { const spent = Control.spendPersistentWard(ctx, target, ward, { sourceId: action.source?.id }); trackOwnPressure(ctx, action, target, 'wardDealt', spent.spent); }
   return true;
@@ -1858,8 +1944,14 @@ export const OPCODE_HANDLERS = Object.freeze({
             damageSchool: eff.damageSchool || action.card?.damageSchool,
             tags: action.card?.tags || attackTags,
             combatProfile: Expanded.effectCarrier(action.card, eff).combatProfile,
-            combatRiderTargets,proposalTargetDecisions:action.meta ? (action.meta.proposalTargetDecisions ||= {}) : {},
-            energySpent: action.meta?.energySpent || 0 };
+            combatRiderTargets,
+            proposalTargetDecisions: action.meta
+              ? (action.meta.proposalTargetDecisions ||= {})
+              : {},
+            energySpent: action.meta?.energySpent || 0,
+          };
+
+          attachFlatBreakToCarrier(carrier, eff, h);
           if (action.card?.rangeLineage) carrier.rangeContactId=RangeLineage.inheritedContactId(ctx,action,t);
           if (singleTarget) carrier.elementSpread = spread; // fire's spread is decided once for the whole op
           if (spread && t !== targets[0]) { delete carrier.rangePlan; delete carrier.rangeContactId; } // fire's spread: the other enemies were not in the card's range plan; the live band decides
@@ -2265,7 +2357,7 @@ export const OPCODE_HANDLERS = Object.freeze({
         const blockAtHit = row?.receipt?.blockBefore ?? (hit ? (hit.blocked || 0) + hit.blockRemaining : 0);
         dealPoiseDamage(ctx, t, amount, { knowledgeMatchup: multiplier > 1, carrier: action.card, source: action.source, blockAtHit });
         const guardAfter = Number.isFinite(t?.poiseGuard) ? Math.max(0, Math.floor(t.poiseGuard)) : 0;
-        trackOwnPressure(ctx, action, t, 'poiseDealt', Math.max(0, amount - (guardBefore - guardAfter)));
+        trackOwnPressure(ctx, action, t, 'poiseDealt', landedPoise(ctx, amount - (guardBefore - guardAfter)));
       }
       return;
     },

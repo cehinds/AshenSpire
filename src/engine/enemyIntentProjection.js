@@ -222,7 +222,18 @@ function damageBounds(combat, enemy, move, base, hits, neutral, action = null, o
       };
       for (const state of states) {
         if (!(state.attacker?.hp > 0)) { add(state); continue; }
-        const receipt = ProfileCombat.profileDamageReceipt(ctx, state.attacker || source, state.target, base, carrier, { forecast: true });
+        // Flat break applies on the first hit only.
+        const hitCarrier = hit > 0
+          ? ProfileCombat.StripFlatBreakCarrier(carrier)
+          : carrier;
+        const receipt = ProfileCombat.profileDamageReceipt(
+          ctx,
+          state.attacker || source,
+          state.target,
+          base,
+          hitCarrier,
+          { forecast: true },
+        );
         const landed = structuredClone(state.target);
         Damage.applyReceiptToPreviewTarget(ctx, landed, receipt, state.attacker || source);
         const attacker = Damage.cloneDetachedAttacker(state.attacker);

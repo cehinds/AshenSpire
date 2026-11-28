@@ -7,6 +7,7 @@ import { coreSmashClause } from './smashClause.js';
 import { stanceEntryBonuses, stanceRulesFor, stanceOf } from './stanceRules.js';
 import { fixCoreEnabled, evadeGrantOnlyCard } from './fixCoreMechanics.js';
 import { armsAsCoreCounter } from './profileStance.js';
+import { EffectiveCostGrowth } from './combatMechanics.js';
 // src/model/cardFaceText.js — the text a playing card's face says, as lines.
 //
 // ONE MODEL FOR EVERY CARD FACE. It reads the same context combatCardSummary
@@ -28,6 +29,7 @@ import { spellDefenseSplit } from './spellDefense.js';
 import { tagService } from './tagService.js';
 import { resolve as resolveTags } from '../content/tags.js';
 import { combatExpansionMatchups } from '../content/combatMatchups.js';
+import { WitherRemaining } from './wither.js';
 
 const UNPHRASEABLE = Symbol('unphraseable');
 const fail = () => { throw UNPHRASEABLE; };
@@ -67,15 +69,119 @@ function esc(value) {
 /** `def` with the effect list a live preview priced: an active charge expands it (an added buildup row), and the preview's values follow that list. */
 const ATTRIBUTE_ABBREVIATION = Object.freeze({ strength: 'STR', dexterity: 'DEX', constitution: 'CON', wisdom: 'WIS', intelligence: 'INT' });
 
+const COST_GROWTH_POOLS = Object.freeze([
+  ['stamina', 'SP'],
+  ['mana', 'MP'],
+]);
+const UNCAPPED_DISPLAY_THRESHOLD = 100;
+
+/** Wither count shown on face: remaining plays in live combat, else authored N. */
+export function WitherFaceCount(cardDef, rules = null, instanceId = null)
+{
+  const hasValidWither = Number.isSafeInteger(cardDef?.wither) && cardDef.wither >= 1;
+  const hasExhaustKeyword = Boolean(cardDef?.keywords?.includes('exhaust'));
+
+  if (!hasValidWither || hasExhaustKeyword)
+  {
+    return null;
+  }
+
+  const hasLiveInstance = Boolean(rules?.player?.abilityRiders && instanceId);
+
+  return hasLiveInstance
+    ? WitherRemaining(rules.player, { instanceId }, cardDef)
+    : cardDef.wither;
+}
+
+/** Rising-cost text from the costGrowth the engine charges under `ctx`, or null when cost does not rise. */
+export function CostGrowthFaceText(authoredGrowth, ctx = null)
+{
+  const growth = authoredGrowth
+    ? EffectiveCostGrowth({ costGrowth: authoredGrowth }, ctx)
+    : null;
+  if (!growth)
+  {
+    return null;
+  }
+
+  const activePools = COST_GROWTH_POOLS.filter(([key]) => Number(growth[key]) > 0);
+  if (!activePools.length)
+  {
+    return null;
+  }
+
+  const perUse = growth.perUse > 1
+    ? growth.perUse
+    : 1;
+  const isSharedScope = growth.scope === 'card' || growth.perCard === true;
+  const timingPhrase = isSharedScope
+    ? (perUse > 1
+        ? `every ${perUse} times you play this card`
+        : 'each time you play this card')
+    : (perUse > 1
+        ? `every ${perUse} plays`
+        : 'each play');
+
+  const maxSteps = growth.uncapped
+    ? Infinity
+    : growth.max;
+  const isMultiPool = activePools.length > 1;
+  const formatCap = ([key, unit]) =>
+  {
+    const unitSuffix = isMultiPool
+      ? ` ${unit}`
+      : '';
+
+    return `+${growth[key] * maxSteps}${unitSuffix}`;
+  };
+
+  const hasDisplayCap = maxSteps < UNCAPPED_DISPLAY_THRESHOLD;
+  const capText = hasDisplayCap
+    ? ` (max ${activePools.map(formatCap).join(', ')})`
+    : '';
+  const stepText = activePools
+    .map(([key, unit]) => `+${growth[key]} ${unit}`)
+    .join(', ');
+
+  return `${stepText} ${timingPhrase} this fight${capText}`;
+}
+
+/** Rule rider lines appended to any face: Wither and rising cost. */
+export function CardRuleRiderLines(cardDef, rules = null, instanceId = null)
+{
+  const lines = [];
+  const witherCount = WitherFaceCount(cardDef, rules, instanceId);
+
+  if (witherCount !== null)
+  {
+    lines.push({
+      kind: 'detail',
+      html: `Wither <span class="val">${witherCount}</span>`,
+    });
+  }
+
+  const growthText = CostGrowthFaceText(cardDef?.costGrowth, rules);
+
+  if (growthText)
+  {
+    lines.push({
+      kind: 'detail',
+      html: esc(growthText),
+    });
+  }
+
+  return lines;
+}
+
 export function withChargedEffects(def, preview = null) {
   return Array.isArray(preview?.chargedEffects) && preview.chargedEffects !== def.effects ? { ...def, effects: preview.chargedEffects } : def;
 }
 
 /** The card-face lines for `def`, or null when a part of it cannot be phrased. */
 export function cardFaceLines(def, preview = null, registries = null, rules = null,
-  { stanceEntry = true, representedEffects = [], representedEntry = [], representedRules = [], entryLabel = 'Entry' } = {}) {
+  { stanceEntry = true, representedEffects = [], representedEntry = [], representedRules = [], entryLabel = 'Entry', instanceId = null } = {}) {
   try {
-    return buildLines(def, preview, registries, rules, { stanceEntry, representedEffects, representedEntry, representedRules, entryLabel });
+    return buildLines(def, preview, registries, rules, { stanceEntry, representedEffects, representedEntry, representedRules, entryLabel, instanceId });
   } catch (error) {
     if (error === UNPHRASEABLE) return null;
     throw error;
@@ -92,7 +198,7 @@ function rampFace(def) {
   return { def: plain, line: `+<span class="val">${per}</span> ${stat === 'block' ? 'Block' : 'damage'} per play this ${scope === 'run' ? 'run' : 'combat'}` };
 }
 
-function buildLines(def, preview, registries, rules = null, { stanceEntry, representedEffects, representedEntry, representedRules, entryLabel }) {
+function buildLines(def, preview, registries, rules = null, { stanceEntry, representedEffects, representedEntry, representedRules, entryLabel, instanceId = null }) {
   // A live preview prices the effects an active charge expands (an added buildup row); its values follow that list.
   def = withChargedEffects(def, preview);
   const ramped = rampFace(def);
@@ -146,7 +252,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
   };
   // Saved profiles may still carry the old verbose template. Phrase this
   // complete grant from the shared configured/live value on every face.
-  if (evadeGrantOnlyCard(def)) return [{ kind: 'gain', html: `Gain ${num(value(def.effects[0], 0, 'stacks'))} Evade.` }];
+  if (evadeGrantOnlyCard(def)) return [{ kind: 'gain', html: `Gain ${num(value(def.effects[0], 0, 'stacks'))} Evade.` }, ...CardRuleRiderLines(def, rules, instanceId)];
 
   const typeWord = id => {
     const service = registries && tagService(registries);
@@ -210,7 +316,17 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
           const poiseText = `${num(wp, wpBase)} Poise${concise ? '' : ' damage'}${hits !== 1 ? ` ×${num(hits, typeof effect.hits === 'number' ? effect.hits : undefined)}` : ''}`;
           damageFrags.push({ cat: 'damage', text: poiseText + area });
         }
-        return damageFrags;
+        // Flat break reads ahead of damage: "Break 8 Block. Deal 8 damage."
+        const breaks = [
+          ['breakBlock', 'Block'],
+          ['breakPoise', 'Poise'],
+        ]
+          .filter(([key]) => effect[key] > 0)
+          .map(([key, label]) => ({
+            cat: 'break',
+            text: `${num(effect[key], effect[key])} ${label}`,
+          }));
+        return [...breaks, ...damageFrags];
       }
       case 'poiseDamage': case 'wardDamage': {
         // Core 2: the computed return stands for every authored Poise row; a row the return zeroes is not listed.
@@ -357,7 +473,22 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
     const out = [];
     const cost = of('cost'), damage = of('damage'), status = of('status'), remove = of('remove'), consume = of('consume'), gain = of('gain'), restore = of('restore'), bonus = [...of('bonus'), ...extraBonus], defenseRestore = of('defenseRestore');
     if (cost.length) out.push({ kind: 'cost', text: joinList(cost) });
-    if (damage.length) out.push({ kind: 'damage', text: `${concise && !counter ? '' : damageVerb + ' '}${joinList(damage)}` });
+    const breaks = of('break');
+    if (damage.length)
+    {
+      if (breaks.length)
+      {
+        out.push({ kind: 'damage', text: `Break ${breaks.join(', ')}` });
+        out.push({ kind: 'damage', text: `Deal ${joinList(damage)}` });
+      }
+      else
+      {
+        const prefix = concise && !counter
+          ? ''
+          : `${damageVerb} `;
+        out.push({ kind: 'damage', text: `${prefix}${joinList(damage)}` });
+      }
+    }
     else if (counter && isUnconditional && !def.evade) out.push({ kind: 'damage', text: def.defenseRulesVersion === 2 ? 'Prepare Counter' : damageVerb.replace(/: return$/, '') });
     if (status.length) out.push({ kind: 'status', text: `${concise ? '' : 'Inflict '}${joinList(status)}` });
     if (remove.length) out.push({ kind: 'status', text: `Remove ${joinList(remove)}` });
@@ -490,7 +621,10 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
   }
 
   if ((def.keywords || []).some(keyword => !KEYWORDS.includes(keyword))) return null;
-  const keywords = KEYWORDS.filter(keyword => (def.keywords || []).includes(keyword)).map(keyword => keyword[0].toUpperCase() + keyword.slice(1));
+  const keywords = KEYWORDS
+    .filter(keyword => (def.keywords || []).includes(keyword))
+    .map(keyword => keyword[0].toUpperCase() + keyword.slice(1));
+  const wither = WitherFaceCount(def, rules, instanceId);
   const byKind = { cost: [], damage: [], status: [], condition: [], consume: [], gain: [], bonus: [], detail: [] };
   const faceText = new Map();
   const faceSegments = segmentsOf(unconditional.filter(f => !f.tag), keywords, true);
@@ -512,6 +646,15 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
   const byChance = new Map();
   for (const { name, chance } of chances) byChance.set(chance, [...new Set([...(byChance.get(chance) || []), name])]);
   for (const [chance, names] of byChance) byKind.detail.push(`${names.map(esc).join(', ')}: ${esc(chance)}% chance`);
+  if (wither !== null)
+  {
+    byKind.detail.push(`Wither ${num(wither)}`);
+  }
+  const growthLine = CostGrowthFaceText(def.costGrowth, rules || registries);
+  if (growthLine)
+  {
+    byKind.detail.push(esc(growthLine));
+  }
   if (def.usableWhile?.length) byKind.detail.push(`Usable through ${def.usableWhile.map(id => esc(title(id))).join(', ')}`);
   const playGate = PlayConditionPhrase(def.playIf);
   if (playGate) byKind.condition.unshift(esc(playGate));

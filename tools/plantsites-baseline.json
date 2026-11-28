@@ -118,6 +118,10 @@
       "count": 10,
       "digest": "24200c44130a678b"
     },
+    "tools/plants/startup-gate.json": {
+      "count": 29,
+      "digest": "2e2c6d5853f5de43"
+    },
     "tools/profile-durability-probe.mjs": {
       "count": 2,
       "digest": "34263098def0c786"
@@ -141,10 +145,6 @@
     "tools/slot-load-door.mjs": {
       "count": 9,
       "digest": "212e6540781ff72f"
-    },
-    "tools/startup-gate.mjs": {
-      "count": 28,
-      "digest": "d712b9e16fb18c2a"
     },
     "tools/tapsize.mjs": {
       "count": 2,

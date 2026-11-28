@@ -29,6 +29,15 @@ export const ITEM_TRAIT_SELECTORS = Object.freeze([
   { id: 'blockCard', label: 'Block cards' },
   { id: 'spell', label: 'Spells' },
   { id: 'healSpell', label: 'Healing spells' },
+  { id: 'arcaneSpell', label: 'Arcane spells' },
+  { id: 'divineSpell', label: 'Divine spells' },
+  { id: 'schoolSpell:fire', label: 'Fire spells' },
+  { id: 'schoolSpell:lightning', label: 'Lightning spells' },
+  { id: 'schoolSpell:frost', label: 'Frost spells' },
+  { id: 'schoolSpell:force', label: 'Force spells' },
+  { id: 'schoolSpell:decay', label: 'Decay spells' },
+  { id: 'schoolSpell:necrotic', label: 'Necrotic spells' },
+  { id: 'schoolSpell:divine', label: 'Divine-school spells' },
 ]);
 
 export const ITEM_QUICK_TRAITS = Object.freeze([
@@ -40,6 +49,8 @@ export const ITEM_QUICK_TRAITS = Object.freeze([
   { label: '+ Frost', mod: 'attack.hitFrost=+1' },
   { label: '+ Pierce', mod: 'anyAttack.cardPierce=+1' },
   { label: '+ Thorns', mod: 'self.thorns=+1' },
+  { label: 'Arcane Initiate', mod: 'arcaneSpell.cardInitiate=-1' },
+  { label: 'Divine Initiate', mod: 'divineSpell.cardInitiate=-1' },
 ]);
 
 export function parseModPairs(mods) {

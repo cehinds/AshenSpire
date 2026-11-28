@@ -21,7 +21,7 @@ test('out of combat the model carries no attribute rows and nothing open at firs
   assert.equal(model.skillRows.length, 1);
   assert.equal(model.skillRows[0].sense, 'Reaver — level 0, 400 XP to level 1.');
   assert.deepEqual(model.staleTracks, []);
-  assert.equal(model.equipmentCardsSummary, 'Slashing Strike x1 · Shield Defend x0 · Weapon Technique x0');
+  assert.equal(model.equipmentCardsSummary, 'Slashing Strike x1');
 });
 
 test('in combat the attribute rows are compact and summarised in one line', () => {

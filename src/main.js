@@ -4,6 +4,7 @@ import { CharacterDisplayName } from './model/characterName.js';
 import { t } from './ui/strings.js';
 import { gameProfileRewardOffers, GameProfileEliteRelicOffer, ArmamentRewardStep, ArmamentRewardRule, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, gameProfileShopPurchasePlan, purchaseGameProfileShopOffer, addPurchasedCardToDeck, shopCardDeckRefusal } from './model/gameProfileRewards.js';
 import { MountGameProfileOffers } from './ui/components/gameProfileOffers.js';
+import { DECK_VIEW_MODAL_KIND, openPileModal } from './ui/components/piles.js';
 import { OpenRankUpCardModal } from './ui/components/rankUpCardModal.js';
 import { OpenCardCopyModal } from './ui/components/cardCopyModal.js';
 import { StartCardCopyOffer, CARD_COPY_OPTION, CARD_COPY_SOURCE } from './model/cardCopyService.js';
@@ -1450,6 +1451,20 @@ function showArmoury(request = '', returnTo = showMap) {
     showDeckEditor(returnTo, true);
     return;
   }
+  const isDeckShortcut = route.destination === 'cards' || route.view === 'cards';
+  if (isDeckShortcut && !deckDoors().armoury && RestOpensDeckEditor(run))
+  {
+    openPileModal(
+      registries,
+      t('armoury.hub.viewDeck'),
+      run.deck || [],
+      {
+        kind: DECK_VIEW_MODAL_KIND,
+        rules: run,
+      },
+    );
+    return;
+  }
   const { view: initialView, destination, equipItemId } = route;
   // An explicit tab the player navigated to (the editor's Character / Armory tabs, quick-nav) is the new last menu.
   if (route.saveView) {
@@ -2169,6 +2184,15 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
         combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single' } };
       enemy.intentRevealed = false;
     }
+  }
+  if (shotState === 'combat' && shotParams.has('shotCards')) {
+    // `?shotCards=core.evade,core.smash`: a memory-only QA pose that holds the named cards in hand (sandbox acceptance of a card's face).
+    // Loud on an unknown id, as the poses above; the cards still play through the production interpreter.
+    const ids = shotParams.get('shotCards').split(',').map((id) => id.trim()).filter(Boolean);
+    const known = (id) => { try { return !!registries.cards.get(id); } catch { return false; } };
+    for (const id of ids) if (!known(id)) throw new Error(`?shotCards: unknown card '${id}'`);
+    combat.piles.draw.push(...combat.piles.hand);
+    combat.piles.hand = ids.map((cardId, index) => ({ cardId, instanceId: `cards-shot-${index}`, upgraded: false }));
   }
   if (shotState === 'combat' && shotParams.has('shotHand')) {
     const wantHand = Number(shotParams.get('shotHand'));

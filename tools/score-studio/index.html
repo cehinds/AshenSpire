@@ -49,6 +49,7 @@
       <button class="studio-tab" data-tab="art" role="tab" aria-selected="false" hidden><span class="tab-long">Art &amp; Layers</span><span class="tab-short">Art</span></button>
       <button id="effects-tab-button" class="studio-tab" data-tab="effects" role="tab" aria-selected="false" aria-controls="tab-effects"><span class="tab-long">Effects Timing</span><span class="tab-short">Effects</span></button>
       <button class="studio-tab" data-tab="sandbox" role="tab" aria-selected="false"><span class="tab-long">Combat Sandbox</span><span class="tab-short">Sandbox</span></button>
+      <button class="studio-tab" data-tab="content" role="tab" aria-selected="false">Game content</button>
     </nav>
     <div class="studio-actions" hidden>
       <button id="btn-undo" class="s-btn s-btn-icon" title="Undo (Ctrl+Z)" aria-label="Undo (Ctrl+Z)" disabled>↶</button>
@@ -164,7 +165,7 @@
           </div>
           <div class="inspector-preview-wrap">
             <div id="inspector-card-preview" class="inspector-card-preview"></div>
-            <div id="inspector-score-summary" class="inspector-score-summary"></div>
+            <span id="inspector-score-summary" class="inspector-score-summary"></span>
             <p id="inspector-upgrade-summary" class="studio-muted subclass-upgrade-summary" hidden></p>
           </div>
 
@@ -188,7 +189,7 @@
                 <label for="edit-name">Name</label>
                 <div class="name-input-row">
                   <input id="edit-name" type="text" />
-                  <label class="studio-switch" title="Name the card from its main effect, its noun and its rank, and keep the name up to date as you edit"><input id="toggle-auto-name" type="checkbox" role="switch" /> Auto-name</label>
+                  <label class="studio-switch" title="Generate the name from the card's main effect, its noun and its rank, and keep it up to date as you edit"><input id="toggle-auto-name" type="checkbox" role="switch" /> Generate</label>
                 </div>
                 <span id="name-hint" class="studio-muted name-hint"></span>
               </div>
@@ -567,6 +568,7 @@
       </div>
       <iframe id="effects-timing-frame" title="Recipient effects timing editor" data-src="tools/recipient-effects-runtime-preview.html"></iframe>
     </section>
+    <section id="tab-content" class="studio-panel" role="tabpanel"></section>
   </main>
 
   <!-- EXPORT CONFIRMATION MODAL -->

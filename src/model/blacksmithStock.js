@@ -60,7 +60,11 @@ function rangeFor(table, kind, rarity) {
 export function coreBlacksmithShelves(registries, rng, run) {
   const rules = blacksmithRules(run) || {};
   const table = priceTable(run);
-  const pools = gameProfileRewardPools(registries, run);
+  const pools = gameProfileRewardPools(
+    registries,
+    run,
+    { source: 'blacksmith' },
+  );
   const defs = new Map((registries.equipment.armaments || []).map((piece) => [piece.id, piece]));
   const mult = Array.isArray(rules.tierPriceMult) ? rules.tierPriceMult : [];
   // Owner 2026-11-20: `armamentStock` and `weaponArtStock` may be [min, max] ranges, rolled per visit on a hash of the

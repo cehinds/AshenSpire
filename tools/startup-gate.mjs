@@ -9,12 +9,19 @@
 //        node tools/startup-gate.mjs --only reduced-motion-clock
 // Exit: 0 all contracts green · 1 product finding · 2 unavailable/tool failure
 
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import
+{
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+} from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launchBrowser } from './browser.mjs';
 import { padOrdinal, readOrdinal, release, sourceDigest } from './buildversion.mjs';
 import { serve } from './serve.mjs';
+import { RunGateScenario } from './gate-scenario.mjs';
 import { EPOCH_STAMP_KEY } from '../src/engine/epochWipe.js';
 import { uiConfig } from '../src/config/generated/ui.js';
 
@@ -25,6 +32,8 @@ const ONLY = (() => { const i = args.indexOf('--only'); return i >= 0 ? args[i +
 const SELFTEST_LANE = ONLY === 'selftest';
 const CAPTURE_SHOTS = args.includes('--screenshots');
 const SHOT_DIR = resolve(ROOT, 'docs', 'preview');
+const PLANT_CORPUS = resolve(ROOT, 'tools', 'plants', 'startup-gate.json');
+const LOAD_SLOT_SCENARIO = resolve(ROOT, 'tools', 'scenarios', 'startup-gate-load-slot.json');
 const wait = (ms) => new Promise((done) => setTimeout(done, ms));
 
 const browserPath = [
@@ -60,232 +69,26 @@ function connectCdp(wsUrl) {
   };
 }
 
+// The selftest corpus is data: a developer adds or retargets a plant in JSON.
+function readPlantCorpus(path)
+{
+  const corpus = JSON.parse(readFileSync(path, 'utf8'));
+  const plants = corpus.plants.map((plant) =>
+  {
+    return {
+      ...plant,
+      expectRed: new RegExp(plant.expectRed),
+    };
+  });
+  return {
+    ...corpus,
+    plants,
+  };
+}
+
 if (args.includes('--selftest')) {
   const { doorSelftest, resolveShard, selectShard } = await import('./doorplant.mjs');
-  const SELFTEST = {
-    tool: 'startup-gate.mjs',
-    args: ['--only', 'selftest'],
-    timeoutMs: 180000,
-    plants: [
-      {
-        name: 'title controls are mounted behind the cold-boot surface',
-        file: 'src/ui/components/startupGate.js',
-        find: '    <section class="screen startup-gate"',
-        replace: '    <div class="title-screen"><button class="slot-new">PLANT</button></div>\n    <section class="screen startup-gate"',
-        expectRed: /RED A1\.COLD-ONLY/,
-      },
-      {
-        name: 'startup uses a non-startup build-stamp placement',
-        file: 'src/ui/components/startupGate.js',
-        find: "${buildStampHtml('startup')}",
-        replace: "${buildStampHtml('title')}",
-        expectRed: /RED A2\.STARTUP-STAMP/,
-      },
-      {
-        name: 'last-input family stops changing the visible prompt',
-        file: 'src/ui/components/startupGate.js',
-        find: 'prompt.textContent = properties.prompts[next];',
-        replace: "prompt.textContent = properties.prompts.keyboard; // startup-gate selftest plant",
-        expectRed: /RED A3\.PROMPT-FAMILY/,
-      },
-      {
-        name: 'analog-stick activity bypasses the startup input-family owner',
-        file: 'src/ui/input.js',
-        find: "      gateInput({ family: 'controller', kind: 'axis', phase: 'move' });",
-        replace: "      false; // startup-gate selftest plant",
-        expectRed: /RED A3\.PROMPT-ANALOG/,
-      },
-      {
-        name: 'Space is no longer an activation key',
-        file: 'src/ui/components/startupGate.js',
-        find: "if (input.family === 'keyboard') return input.key === 'Enter' || input.key === ' ';",
-        replace: "if (input.family === 'keyboard') return input.key === 'Enter'; // startup-gate selftest plant",
-        expectRed: /RED A5\.SPACE\.REVEAL-ONCE/,
-      },
-      {
-        name: 'controller reveals on button-down instead of release',
-        file: 'src/ui/components/startupGate.js',
-        find: '      if (!input.repeat) armed = identity;',
-        replace: "      if (input.family === 'controller') finish(input.family);\n      if (!input.repeat) armed = identity;",
-        expectRed: /RED A7\.GAMEPAD-RELEASE/,
-      },
-      {
-        name: 'Start or Menu button 9 is no longer an activation button',
-        file: 'src/ui/components/startupGate.js',
-        find: "  if (input.family === 'controller') {",
-        replace: "  if (input.family === 'controller' && input.button !== 9 && input.action !== 'menu') {",
-        expectRed: /RED A7\.GAMEPAD-REVEAL/,
-      },
-      {
-        name: 'returning to title re-opens the startup gate',
-        file: 'src/main.js',
-        find: 'startupGatePending = false;',
-        replace: 'startupGatePending = true; // startup-gate selftest plant',
-        expectRed: /RED A8\.RETURN-BYPASS/,
-      },
-      {
-        name: 'load slot presses read a missing data attribute',
-        file: 'src/ui/components/saveSlotSelector.js',
-        find: '        onTap: () => activateSlot(slot),',
-        replace: '        onTap: () => activateSlot(Number.NaN), // startup-gate selftest plant',
-        // A tap opens the decision door for the slot it read; a NaN slot opens
-        // the wrong door (no save → "empty"), which is the review check's red.
-        expectRed: /RED A8\.LOAD-SLOT-RESELECT/,
-      },
-      {
-        name: 'second activation no longer opens the load review',
-        file: 'src/ui/components/saveSlotSelector.js',
-        find: '    loadReviewSlot = slot;\n    render();',
-        replace: '    loadReviewSlot = null; // startup-gate selftest plant\n    render();',
-        expectRed: /RED A8\.LOAD-SLOT-REVIEW/,
-      },
-      {
-        name: 'Escape closes the whole load flow instead of returning to saves',
-        file: 'src/ui/components/saveSlotSelector.js',
-        find: '      if (loadReviewSlot != null) {',
-        replace: '      if (loadReviewSlot != null) { close(); // startup-gate selftest plant',
-        expectRed: /RED A8\.LOAD-SLOT-REVIEW-ESCAPE/,
-      },
-      {
-        name: 'completed save-slot hold selects instead of loading',
-        file: 'src/ui/components/saveSlotSelector.js',
-        find: "            requestLoad(slot, 'hold');",
-        replace: '            activateSlot(slot); // startup-gate selftest plant',
-        expectRed: /RED A8\.LOAD-SLOT-HOLD/,
-      },
-      {
-        name: 'quick-load hold captures keyboard and controller presses',
-        file: 'src/ui/components/saveSlotSelector.js',
-        find: '        pointerOnly: true,',
-        replace: '        pointerOnly: false, // startup-gate selftest plant',
-        expectRed: /RED A8\.LOAD-SLOT-(?:KEY|PAD)-REVIEW/,
-      },
-      {
-        // THE BOX LIVES IN THE KIT (styles/kit.css) and is one length on both
-        // axes, floor included: a plant that shrinks the length AND the floor
-        // is the only plant that reaches RED A8.LOAD-SLOT-TARGETS.
-        name: 'title modal Close drops below the authored tap floor',
-        file: 'styles/kit.css',
-        find: '.as-iconbtn, .modal-iconbtn, .modal-close {\n  display: inline-flex; align-items: center; justify-content: center;\n  width: var(--iconbtn-size); height: var(--iconbtn-size); flex: 0 0 auto;\n  min-width: var(--iconbtn-size); min-height: var(--iconbtn-size);',
-        replace: '.as-iconbtn, .modal-iconbtn, .modal-close {\n  display: inline-flex; align-items: center; justify-content: center;\n  width: 3rem; height: 3rem; flex: 0 0 auto;\n  min-width: 3rem; min-height: 3rem; /* startup-gate selftest plant */',
-        expectRed: /RED A8\.LOAD-SLOT-TARGETS-(?:MOBILE|DESKTOP)/,
-      },
-      {
-        // Delete is an IconButton now — the same box as Close, sized by ONE
-        // token (base.css --iconbtn-size). Planting the token under the floor
-        // is what shrinks it; nothing else can.
-        name: 'occupied-slot Delete loses its tap-floor height',
-        file: 'styles/base.css',
-        find: '  --iconbtn-size: var(--tap-floor);',
-        replace: '  --iconbtn-size: 3rem; /* startup-gate selftest plant */',
-        expectRed: /RED A8\.LOAD-SLOT-TARGETS-(?:MOBILE|DESKTOP)/,
-      },
-      {
-        name: 'startup outranks the corrupt-profile crisis notice',
-        file: 'src/main.js',
-        find: '  if (showProfileNoticeIfNeeded()) return;',
-        replace: '  if (false && showProfileNoticeIfNeeded()) return; // startup-gate selftest plant',
-        expectRed: /RED A9\.CRISIS-PRECEDENCE/,
-      },
-      {
-        name: 'interrupted startup presses stay armed',
-        file: 'src/ui/components/startupGate.js',
-        find: "      if (!input.family || armed?.startsWith(`${input.family}:`)) armed = null;",
-        replace: '      armed = armed; // startup-gate selftest plant',
-        expectRed: /RED A7\.INTERRUPT-CANCEL/,
-      },
-      {
-        name: 'window blur leaves a held controller activation armed',
-        file: 'src/ui/input.js',
-        find: '    cancelInputGate();',
-        replace: "    cancelInputGate('keyboard'); // startup-gate selftest plant",
-        expectRed: /RED A7\.GAMEPAD-BLUR-CANCEL/,
-      },
-      {
-        name: 'a controller button held before the first poll becomes a rising edge',
-        file: 'src/ui/input.js',
-        find: '      padPrev[pad.index] = pressed;',
-        replace: '      padPrev[pad.index] = pressed.map(() => false); // startup-gate selftest plant',
-        expectRed: /RED A7\.HELD-AT-BOOT/,
-      },
-      {
-        name: 'a disconnected controller keeps its stale button sample',
-        file: 'src/ui/input.js',
-        find: '    if (Number.isInteger(disconnectedIndex)) delete padPrev[disconnectedIndex];',
-        replace: '    if (Number.isInteger(disconnectedIndex)) void disconnectedIndex; // startup-gate selftest plant',
-        expectRed: /RED A7\.HELD-AT-RECONNECT/,
-      },
-      {
-        name: 'one controller can complete another controller\'s activation',
-        file: 'src/ui/components/startupGate.js',
-        find: "      : `${input.family}:${input.padIndex}:${input.button}`;",
-        replace: "      : `${input.family}:${input.button}`; // startup-gate selftest plant",
-        expectRed: /RED A7\.MULTIPAD-OWNERSHIP/,
-      },
-      {
-        name: 'startup activation is removed from the accessibility tree',
-        file: 'src/ui/models/StartupGateModels.js',
-        find: "      role: 'button',",
-        replace: "      role: 'region', // startup-gate selftest plant",
-        expectRed: /RED A1\.ACTION-SEMANTICS/,
-      },
-      {
-        name: 'pointer reveal publishes the persistent gamepad cursor',
-        file: 'src/main.js',
-        find: "        focusCursor: family === 'keyboard' || family === 'controller',",
-        replace: '        focusCursor: true, // startup-gate selftest plant',
-        expectRed: /RED A6\.POINTER-CURSOR/,
-      },
-      {
-        name: 'reveal transition skips its deterministic cleanup deadline',
-        args: ['--only', 'reduced-motion-clock'],
-        file: 'src/ui/components/startupGate.js',
-        find: "    const delay = reducedMotion ? 140 : lightUpMs + holdMs + fadeMs;",
-        replace: "    const delay = reducedMotion ? 900 : lightUpMs + holdMs + fadeMs; // startup-gate selftest plant",
-        expectRed: /RED A10\.REVEAL-CLEANUP/,
-      },
-      {
-        name: 'reduced-motion setting no longer reaches the rendered page',
-        file: 'src/ui/displaySettings.js',
-        find: "document.body.classList.toggle('reduced-motion', settings.reducedMotion === true);",
-        replace: "document.body.classList.toggle('reduced-motion', false); // startup-gate selftest plant",
-        expectRed: /RED A10\.REDUCED-MOTION/,
-      },
-      {
-        // Escape is bound by the shared chrome now, and the plant severs it
-        // FOR THIS DOOR rather than in modalShell.js — a mutation there would
-        // take Escape off all four modals at once, which is a wider defect than
-        // the one A8 is asserting about.
-        // Settings opens through the shell now (OpenModal binds dismissal for
-        // every door, and Escape closes the TOPMOST aria-modal element), so the
-        // plant parks a bare aria-modal element above this one door: Settings
-        // is no longer topmost, and Escape leaves it up over the title. Still
-        // one door, still this defect only — the nested plant A8 appends later
-        // still lands on top and still closes on its own Escape.
-        name: 'Settings stops owning Escape above the expanded title',
-        file: 'src/ui/screens/settings.js',
-        find: "  done.addEventListener('click', () => {",
-        replace: "  document.body.appendChild(document.createElement('div')).setAttribute('aria-modal', 'true'); // startup-gate selftest plant\n  done.addEventListener('click', () => {",
-        expectRed: /RED A8\.SETTINGS-ESCAPE-PRECEDENCE/,
-      },
-      {
-        name: 'reveal cleanup leaves an ash particle behind the title',
-        args: ['--only', 'reduced-motion-clock'],
-        file: 'src/ui/components/startupGate.js',
-        find: '      onReveal({ source, family });',
-        replace: "      onReveal({ source, family });\n      if (reducedMotion) document.body.insertAdjacentHTML('beforeend', '<span class=\"startup-ash\"></span>'); // startup-gate selftest plant",
-        expectRed: /RED A10\.REVEAL-CLEANUP/,
-      },
-      {
-        name: 'reveal removes startup without mounting the title',
-        args: ['--only', 'reduced-motion-clock'],
-        file: 'src/ui/components/startupGate.js',
-        find: '      onReveal({ source, family });',
-        replace: '      if (reducedMotion) root.remove(); else onReveal({ source, family }); // startup-gate selftest plant',
-        expectRed: /RED A10\.REVEAL-CLEANUP/,
-      },
-    ],
-  };
+  const SELFTEST = readPlantCorpus(PLANT_CORPUS);
   // A SHARD (`--shard i/n`, tools/doorplant.mjs SHARDS) runs part of the corpus,
   // so the count is the plants THIS run executed — never a typed literal (it
   // read 26 by hand before, a second copy of the corpus size).
@@ -727,141 +530,15 @@ async function assertSettingsModalStack() {
   await p.close();
 }
 
-async function assertLoadSlotSelection() {
-  const titleTargetRects = (targetPage) => targetPage.ev(`(() => {
-    const rect = (selector) => {
-      const element=document.querySelector(selector);
-      if (!element) return null;
-      const box=element.getBoundingClientRect();
-      return {width:Math.round(box.width*10)/10,height:Math.round(box.height*10)/10};
-    };
-    return {
-      close:rect('[data-component="title-modal-close-control"]'),
-      delete:rect('[data-component="title-save-slot-delete"]')
-    };
-  })()`);
-  const clearsTapFloor = (targets) => ['close', 'delete'].every((key) => targets[key]
-    && targets[key].width >= 44 && targets[key].height >= 44);
-
-  const p = await page({ query: '?shot=title', width: 390, height: 844, mobile: true });
-  await p.until(`!!document.querySelector('[data-title-action="load"]')`, 'mobile title with an occupied save');
-  await p.click('[data-title-action="load"]');
-  await p.until(`!!document.querySelector('.title-menu-modal')`, 'mobile Load Game slot picker');
-
-  const initial = await p.ev(`(() => {
-    const selected=document.querySelector('[data-slot-pick][aria-pressed="true"]');
-    const focused=document.querySelector('[data-slot-pick].gp-focus');
-    return {selected:selected?.dataset.slotPick||null, focused:focused?.dataset.slotPick||null,
-      continueEnabled:document.querySelector('[data-title-action="modal-continue"]')?.disabled===false};
-  })()`);
-  verdict(initial.selected === '1' && initial.focused === '1' && initial.continueEnabled,
-    'A8.LOAD-SLOT-INITIAL', `Load visibly focuses its selected occupied slot and enables Continue (${JSON.stringify(initial)})`);
-  const mobileTargets = await titleTargetRects(p);
-  verdict(clearsTapFloor(mobileTargets), 'A8.LOAD-SLOT-TARGETS-MOBILE',
-    `390x844 Close and occupied-slot Delete each render at least 44x44 (${JSON.stringify(mobileTargets)})`);
-  if (CAPTURE_SHOTS) await p.screenshot('qa-load-slot-list-mobile-390x844.png');
-
-  await p.click('[data-slot-pick="1"]');
-  const reselected = await p.ev(`(() => {
-    const selected=document.querySelector('[data-slot-pick][aria-pressed="true"]');
-    const focused=document.querySelector('[data-slot-pick].gp-focus');
-    return {selected:selected?.dataset.slotPick||null, focused:focused?.dataset.slotPick||null,
-      continueEnabled:document.querySelector('[data-title-action="modal-continue"]')?.disabled===false};
-  })()`);
-  verdict(reselected.selected === '1' && reselected.focused === '1' && reselected.continueEnabled,
-    'A8.LOAD-SLOT-RESELECT', `the first press highlights the slot and leaves Continue enabled (${JSON.stringify(reselected)})`);
-
-  // Two taps (Constantine, 2026-09-04): the second press on the highlighted
-  // slot opens its decision door; Back and Escape return with it highlighted.
-  await p.click('[data-slot-pick="1"]');
-  const review = await p.ev(`(() => ({
-    review:document.querySelector('.title-load-review')?.dataset.variant||'',
-    heading:document.querySelector('.title-load-review h2')?.textContent.trim()||'',
-    load:document.querySelector('[data-title-action="review-load"]')?.textContent.trim()||'',
-    back:document.querySelector('[data-title-action="review-back"]')?.textContent.trim()||''
-  }))()`);
-  // Case-insensitive: the kit's head sets the case in the stylesheet, so the
-  // words are the acceptance, not their shouting.
-  verdict(review.review === 'load-review' && /^load slot 1\?$/i.test(review.heading) && /^load save$/i.test(review.load) && /^back$/i.test(review.back),
-    'A8.LOAD-SLOT-REVIEW', `the second press opens the selected save's decision door with explicit Load and Back actions (${JSON.stringify(review)})`);
-  if (CAPTURE_SHOTS) await p.screenshot('qa-load-slot-review-mobile-390x844.png');
-
-  await p.click('[data-title-action="review-back"]');
-  const returned = await p.ev(`(() => ({
-    picker:!!document.querySelector('.title-slot-list'),
-    selected:document.querySelector('[data-slot-pick][aria-pressed="true"]')?.dataset.slotPick||null,
-    focused:document.querySelector('[data-slot-pick].gp-focus')?.dataset.slotPick||null
-  }))()`);
-  verdict(returned.picker && returned.selected === '1' && returned.focused === '1',
-    'A8.LOAD-SLOT-REVIEW-BACK', `Back returns to Load Game with selection and focus preserved (${JSON.stringify(returned)})`);
-
-  await p.click('[data-slot-pick="1"]');
-  await p.until(`!!document.querySelector('[data-title-action="review-load"]')`, 'load review before Escape');
-  const escapeRelease = await p.key('Escape'); await escapeRelease();
-  const escaped = await p.ev(`(() => ({
-    picker:!!document.querySelector('.title-slot-list'),
-    selected:document.querySelector('[data-slot-pick][aria-pressed="true"]')?.dataset.slotPick||null,
-    focused:document.querySelector('[data-slot-pick].gp-focus')?.dataset.slotPick||null
-  }))()`);
-  verdict(escaped.picker && escaped.selected === '1' && escaped.focused === '1',
-    'A8.LOAD-SLOT-REVIEW-ESCAPE', `Escape returns to Load Game with selection and focus preserved (${JSON.stringify(escaped)})`);
-
-  await p.click('[data-slot-pick="1"]');
-  await p.until(`!!document.querySelector('[data-title-action="review-load"]')`, 'load review after Back');
-  await p.click('[data-title-action="review-load"]');
-  await p.until(`!!document.querySelector('.mapscreen')`, 'review-confirmed save load');
-  verdict(await p.ev(`!document.querySelector('.title-menu-modal') && !!document.querySelector('.mapscreen')`),
-    'A8.LOAD-SLOT-REVIEW-COMMIT', 'Load Save leaves the title and opens the selected run');
-  await p.close();
-
-  const held = await page({ query: '?shot=title', width: 390, height: 844, mobile: true });
-  await held.until(`!!document.querySelector('[data-title-action="load"]')`, 'mobile title for hold-to-load');
-  await held.click('[data-title-action="load"]');
-  await held.until(`!!document.querySelector('[data-slot-pick="1"][data-hold-ms="600"]')`, 'data-driven held save slot');
-  const hint = await held.ev(`(() => {
-    const e=document.querySelector('[data-slot-pick="1"]');
-    return {title:e?.title||'', aria:e?.getAttribute('aria-label')||'', hold:e?.dataset.holdMs||'', word:e?.querySelector('.hold-hint')?.textContent||''};
-  })()`);
-  verdict(hint.hold === '600' && hint.word === 'HOLD' && /hold to load/i.test(`${hint.title} ${hint.aria}`),
-    'A8.LOAD-SLOT-HOLD-HINT', `slot exposes the authored hold duration and visible/accessible instruction (${JSON.stringify(hint)})`);
-  await held.hold('[data-slot-pick="1"]', 720, { touch: true });
-  verdict(await held.ev(`!document.querySelector('.title-menu-modal') && !!document.querySelector('.mapscreen')`),
-    'A8.LOAD-SLOT-HOLD', 'a completed mobile touch hold loads the save directly without opening review');
-  await held.close();
-
-  const keyed = await page({ query: '?shot=title' });
-  await keyed.until(`!!document.querySelector('[data-title-action="load"]')`, 'desktop title for keyboard review');
-  await keyed.click('[data-title-action="load"]');
-  const desktopTargets = await titleTargetRects(keyed);
-  verdict(clearsTapFloor(desktopTargets), 'A8.LOAD-SLOT-TARGETS-DESKTOP',
-    `1200x730 Close and occupied-slot Delete each render at least 44x44 (${JSON.stringify(desktopTargets)})`);
-  const firstKeyRelease = await keyed.key('Enter'); await firstKeyRelease();
-  // A tap asks (2026-09-04): one activation opens the decision door — no
-  // timed hold, no bypass. Escape returns to the list with the slot kept, and
-  // the next activation opens the same door pointer input opens.
-  const keyedFirst = await keyed.ev(`({review:!!document.querySelector('.title-load-review'), selected:document.querySelector('[data-slot-pick][aria-pressed="true"]')?.dataset.slotPick||null})`);
-  verdict(!keyedFirst.review && keyedFirst.selected === '1', 'A8.LOAD-SLOT-KEY-FIRST',
-    `keyboard activation highlights without bypassing the decision door (${JSON.stringify(keyedFirst)})`);
-  const secondKeyRelease = await keyed.key('Enter'); await secondKeyRelease();
-  verdict(await keyed.ev(`!!document.querySelector('.title-load-review [data-title-action="review-load"]')`),
-    'A8.LOAD-SLOT-KEY-REVIEW', 'a second keyboard activation opens the same review used by pointer input');
-  if (CAPTURE_SHOTS) await keyed.screenshot('qa-load-slot-review-wide-1200x730.png');
-  await keyed.close();
-
-  const padded = await page({ query: '?shot=title' });
-  await padded.until(`!!document.querySelector('[data-title-action="load"]')`, 'desktop title for controller review');
-  await padded.ev(`window.__startupPad.connect()`); await wait(250);
-  await padded.click('[data-title-action="load"]');
-  await padded.ev(`window.__startupPad.set(0,true)`); await wait(100);
-  await padded.ev(`window.__startupPad.set(0,false)`); await wait(180);
-  const padFirst = await padded.ev(`({review:!!document.querySelector('.title-load-review'), selected:document.querySelector('[data-slot-pick][aria-pressed="true"]')?.dataset.slotPick||null})`);
-  verdict(!padFirst.review && padFirst.selected === '1', 'A8.LOAD-SLOT-PAD-FIRST',
-    `controller activation highlights without becoming a timed hold (${JSON.stringify(padFirst)})`);
-  await padded.ev(`window.__startupPad.set(0,true)`); await wait(100);
-  await padded.ev(`window.__startupPad.set(0,false)`); await wait(180);
-  verdict(await padded.ev(`!!document.querySelector('.title-load-review [data-title-action="review-load"]')`),
-    'A8.LOAD-SLOT-PAD-REVIEW', 'a second controller activation deterministically opens the same review');
-  await padded.close();
+// The A8 slot flows are data in tools/scenarios/; this only lends them a page.
+async function assertLoadSlotSelection()
+{
+  await RunGateScenario(LOAD_SLOT_SCENARIO, {
+    openPage: page,
+    verdict,
+    wait,
+    captureShots: CAPTURE_SHOTS,
+  });
 }
 
 async function assertCrisisPrecedence() {

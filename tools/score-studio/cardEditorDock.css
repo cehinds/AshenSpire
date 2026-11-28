@@ -1,6 +1,7 @@
 body.studio-body .cards-layout.card-editor-undocked { grid-template-columns: minmax(0, 1fr); }
 body.studio-body .card-editor-undocked > .inspector-resizer { display: none; }
 body.studio-body .card-editor-undocked > .cards-gallery-pane { border-right: 0; }
+body.studio-body .cards-layout > .inspector-resizer:focus-visible { outline: 2px solid var(--st-accent); outline-offset: -2px; }
 body.studio-body .card-editor-dock-toolbar { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
 body.studio-body .card-editor-art-stage { position: relative; isolation: isolate; }
 body.studio-body .card-editor-art-stage > .card { position: relative; z-index: 0; }
@@ -41,6 +42,79 @@ body.studio-body .studio-customization-pane { display: flex; flex-direction: col
 body.studio-body .customization-toolbar { display: flex; align-items: center; flex-wrap: wrap; flex: 0 0 auto; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--st-border); }
 body.studio-body .customization-toolbar label { color: var(--st-muted); font-size: 12px; }
 body.studio-body #customization-view { flex: 1 1 120px; min-width: 0; height: var(--studio-control-h, 32px); background: var(--st-surface-2); color: var(--st-text); border: 1px solid var(--st-border); border-radius: var(--studio-radius, 4px); }
+/* Active entity: one name, its scope and the one native preview in every view. */
+body.studio-body .customization-entity {
+  display: flex; flex-direction: column; flex: 0 0 auto; gap: 6px; min-width: 0;
+  padding: 10px 12px; border-bottom: 1px solid var(--st-border); border-left: 3px solid var(--st-accent);
+}
+body.studio-body .customization-entity-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
+body.studio-body .customization-entity-heading { flex: 1 1 auto; min-width: 0; margin: 0; font-size: 15px; }
+/* The whole name bar is the collapse button; the chevron is drawn here so the name text stays clean. */
+body.studio-body .customization-entity-name {
+  display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0; margin: 0; padding: 4px 6px;
+  font: inherit; font-weight: 700; color: var(--st-text); text-align: left; overflow-wrap: anywhere;
+  background: transparent; border: 1px solid transparent; border-radius: 6px; cursor: pointer;
+}
+body.studio-body .customization-entity-name::before {
+  content: ''; flex: 0 0 auto; width: 7px; height: 7px; margin: 0 2px;
+  border-right: 2px solid var(--st-muted); border-bottom: 2px solid var(--st-muted);
+  transform: rotate(45deg); transition: transform .12s ease;
+}
+body.studio-body .customization-entity-name[aria-expanded="false"]::before { transform: rotate(-45deg); }
+body.studio-body .customization-entity-name:hover { background: var(--st-surface-2); border-color: var(--st-border); }
+body.studio-body .customization-entity-name:focus-visible { outline: 2px solid var(--st-accent); outline-offset: 1px; }
+body.studio-body .customization-preview-body[hidden],
+body.studio-body .customization-entity-preview[hidden] { display: none !important; }
+body.studio-body .customization-preview-body { display: flex; flex-direction: column; min-width: 0; }
+/* Auto size: the card follows the window height, so short screens get a smaller card and no scroll bar. */
+body.studio-body .customization-preview-body .inspector-card-preview { width: clamp(60px, calc((50dvh - 140px) * 2 / 3), var(--inspector-card-width, 165px)); }
+/* The card never takes the room the fields need; past that it stops growing. */
+body.studio-body .customization-entity .inspector-preview-wrap { container-type: inline-size; }
+body.studio-body .customization-entity .inspector-card-preview { max-width: max(60px, calc(100cqw - 230px)); }
+body.studio-body .customization-scope { margin: 0; color: var(--st-muted); font-size: 12px; overflow-wrap: anywhere; }
+body.studio-body .customization-filter-note {
+  margin: 0;
+  color: var(--st-muted);
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+body.studio-body .customization-filter-note[hidden] {
+  display: none;
+}
+body.studio-body .customization-filter-clear {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--st-accent);
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+body.studio-body .customization-filter-clear:hover {
+  color: var(--st-text);
+}
+body.studio-body .customization-filter-clear:focus-visible {
+  outline: 2px solid var(--st-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+body.studio-body .customization-entity-preview { min-width: 0; }
+body.studio-body .customization-entity-preview > [hidden] { display: none !important; }
+body.studio-body .customization-entity-preview .inspector-preview-wrap { min-width: 0; }
+body.studio-body #studio-customization-pane[data-scope="shared"] .customization-entity { border-left-color: var(--st-warn); }
+body.studio-body #studio-customization-pane[data-scope="global"] .customization-entity { border-left-color: var(--st-bad); }
+body.studio-body #studio-customization-pane[data-scope="deck"] .customization-entity { border-left-color: var(--st-good); }
+/* Outside Properties the preview is compact so the shared and global editors keep their room. */
+body.studio-body #studio-customization-pane:not([data-scope="card"]) .inspector-preview-wrap { padding: 6px; }
+body.studio-body #studio-customization-pane:not([data-scope="card"]) .subclass-upgrade-summary { display: none; }
+body.studio-body #studio-customization-pane:not([data-scope="card"]) .item-preview-host { max-height: 220px; overflow: hidden; }
+body.studio-body #studio-customization-pane:not([data-scope="card"]) .item-preview-host .equipment-poker-card { width: 150px; }
+body.studio-body .customization-empty { margin: 0; padding: 16px 12px; }
+body.studio-body .customization-empty[hidden] { display: none; }
 body.studio-body #customization-content { flex: 1 1 auto; min-width: 0; min-height: 0; overflow-y: auto; overflow-x: hidden; }
 body.studio-body .customization-view { min-width: 0; }
 body.studio-body .customization-view[hidden],
@@ -65,7 +139,7 @@ body.studio-body #studio-customization-pane select,
 body.studio-body #studio-customization-pane textarea { max-width: 100%; box-sizing: border-box; }
 body.studio-body .card-editor-modal {
   box-sizing: border-box; width: min(980px, calc(100vw - 32px)); max-width: calc(100vw - 32px);
-  height: min(900px, calc(100dvh - 32px)); max-height: calc(100dvh - 32px); padding: 0;
+  height: min(900px, calc(100dvh - 32px)); max-height: calc(100dvh - 32px); padding: 0; margin: auto;
   border: 1px solid var(--st-border); border-radius: 12px; background: var(--st-surface); color: var(--st-text);
   overflow: hidden;
 }
@@ -100,3 +174,163 @@ body.studio-body #card-editor-modal textarea { max-width: 100%; box-sizing: bord
   body.studio-body #card-editor-modal .inspector-preview-wrap { flex-wrap: wrap; min-width: 0; }
   body.studio-body #card-editor-modal .form-grid { grid-template-columns: minmax(0, 1fr); }
 }
+/* Narrow: one coordinated panel at a time, chosen by the sticky nav. */
+body.studio-body .customization-narrow-nav { display: none; }
+body.studio-body.customize-narrow .customization-narrow-nav {
+  display: flex; flex-wrap: wrap; gap: 8px; position: sticky; top: var(--customization-nav-top, 0px); z-index: 15;
+  padding: 8px max(var(--studio-gap-2, 8px), env(safe-area-inset-right, 0px)) 8px max(var(--studio-gap-2, 8px), env(safe-area-inset-left, 0px));
+  background: var(--st-surface); border-bottom: 1px solid var(--st-border);
+}
+/* Keep the entity heading clear of the sticky nav when it is scrolled to. */
+body.studio-body.customize-narrow :is(#studio-customization-pane, #customization-entity, #customization-entity-name) { scroll-margin-top: calc(var(--customization-nav-top, 0px) + 64px); }
+body.studio-body.customize-narrow .customization-narrow-nav .s-btn { flex: 1 1 0; min-width: 0; min-height: 40px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body.studio-body.customize-narrow .customization-narrow-nav .s-btn[aria-pressed="true"] { border-color: var(--st-accent); color: var(--st-accent); }
+body.studio-body.customize-narrow:not(.customize-panel-editor) .cards-layout > .studio-customization-pane { display: none; }
+body.studio-body.customize-narrow.customize-panel-editor .cards-layout > .cards-gallery-pane { display: none; }
+body.studio-body.customize-narrow.customize-panel-editor .cards-layout > .studio-customization-pane { width: 100%; height: auto; max-height: none; overflow: visible; border-top: 0; }
+body.studio-body.customize-narrow.customize-panel-editor #studio-customization-pane #customization-content { overflow: visible; }
+body.studio-body.customize-narrow #studio-customization-pane .card-inspector:not([hidden]) { display: flex; position: static; inset: auto; height: auto; overflow: visible; }
+body.studio-body.customize-narrow .cards-layout > .inspector-resizer { display: none; }
+/* Beside the card: CP and rank, then the live Name, Card Type, SP and MP fields. */
+body.studio-body .customization-entity .inspector-preview-wrap { align-items: flex-start; flex-wrap: wrap; }
+body.studio-body .customization-entity-details { display: flex; flex-direction: column; gap: 8px; flex: 1 1 190px; min-width: 0; }
+body.studio-body .customization-entity .customization-quick-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 8px; min-width: 0; }
+body.studio-body .customization-quick-fields[hidden] { display: none !important; }
+body.studio-body .customization-quick-fields > * { min-width: 0; font-size: 12px; }
+body.studio-body .customization-quick-fields > .form-wide { grid-column: 1 / -1; }
+body.studio-body .customization-quick-fields .name-hint { display: none; }
+body.studio-body .customization-quick-fields :is(input:not([type="checkbox"]), select) { width: 100%; min-width: 0; }
+/* A dragged height keeps the fields reachable without growing the header. */
+
+body.studio-body .customization-quick-fields .cost-label { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 4px; }
+body.studio-body .customization-entity .customization-quick-fields { align-items: end; }
+
+/* Properties needs no scope line: the card name above says what is being edited. */
+body.studio-body #studio-customization-pane[data-scope="card"]:not([data-empty="true"]) .customization-scope { display: none; }
+
+/* Card banner: name left; rank, rarity and CP right. */
+body.studio-body .customization-entity-name-text { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body.studio-body .customization-entity-name .inspector-score-summary { display: inline-flex; flex-direction: row; align-items: baseline; white-space: nowrap; gap: 10px; flex: 0 0 auto; margin-left: auto; font-size: 12px; font-weight: 600; }
+body.studio-body .customization-entity-name .inspector-score-summary[hidden] { display: none; }
+body.studio-body .customization-entity-name .inspector-score-rarity { color: var(--st-muted); font-weight: 500; }
+body.studio-body .customization-entity-name .inspector-score-big { font-size: 18px; font-weight: 800; line-height: 1; }
+/* CP trend against the in-game card: room for the arrow even when there is none. */
+body.studio-body .customization-entity-name .cp-trend { display: inline-block; min-width: 14px; margin-left: -4px; padding-right: 4px; font-size: 12px; line-height: 1; text-align: left; }
+body.studio-body .cp-trend.is-down { color: var(--st-good, #4caf50); }
+body.studio-body .cp-trend.is-up { color: var(--st-bad, #e05252); }
+body.studio-body .customization-entity-name .inspector-score-big:has(+ .cp-trend.is-down) { color: var(--st-good, #4caf50); }
+body.studio-body .customization-entity-name .inspector-score-big:has(+ .cp-trend.is-up) { color: var(--st-bad, #e05252); }
+/* Name block as a two-column grid: "Name" over the input, "Auto-name" over its toggle, labels level. */
+body.studio-body .customization-quick-fields > .form-wide { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 10px; row-gap: 4px; align-items: end; }
+body.studio-body .customization-quick-fields > .form-wide > label[for="edit-name"] { grid-column: 1; grid-row: 1; }
+body.studio-body .customization-quick-fields .name-input-row { display: contents; }
+body.studio-body .customization-quick-fields .name-input-row > input { grid-column: 1; grid-row: 2; }
+body.studio-body .customization-quick-fields .name-input-row .studio-switch {
+  grid-column: 2; grid-row: 1 / 3; align-self: stretch; display: flex; flex-direction: column-reverse;
+  justify-content: space-between; align-items: center; gap: 4px; white-space: nowrap; color: inherit; font-size: inherit;
+}
+body.studio-body .customization-quick-fields .name-input-row .studio-switch input { margin-bottom: 8px; }
+/* Rank and rarity compared with the in-game card: higher is red, lower is green. */
+body.studio-body .customization-entity-name :is(.inspector-score-rank, .inspector-score-rarity).is-up { color: var(--st-bad, #e05252); }
+body.studio-body .customization-entity-name :is(.inspector-score-rank, .inspector-score-rarity).is-down { color: var(--st-good, #4caf50); }
+/* Card options: vertical ellipsis at the top right of the fields beside the card. */
+body.studio-body .customization-entity .customization-quick-fields { position: relative; }
+body.studio-body .customization-quick-fields > .form-wide { padding-right: 24px; }
+body.studio-body .customization-card-menu-wrap { position: absolute; top: 0; right: 0; }
+body.studio-body .customization-card-menu { min-width: 190px; z-index: 30; }
+body.studio-body .customization-card-menu[hidden] { display: none; }
+body.studio-body .customization-card-menu .menu-item[disabled] { opacity: .45; cursor: not-allowed; }
+body.studio-body .customization-card-menu .menu-sep { height: 1px; margin: 4px 0; background: var(--st-border); }
+/* The floating editor moves by its title bar. */
+body.studio-body .card-editor-modal-head { cursor: move; touch-action: none; }
+body.studio-body .card-editor-modal-head :is(button, input, select) { cursor: pointer; }
+/* View or edit one card as JSON. */
+body.studio-body .card-json-dialog { width: min(720px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); margin: auto; padding: 16px; border: 1px solid var(--st-border); border-radius: 12px; background: var(--st-surface); color: var(--st-text); }
+body.studio-body .card-json-dialog[open] { display: flex; flex-direction: column; gap: 8px; }
+body.studio-body .card-json-dialog::backdrop { background: rgb(0 0 0 / .6); }
+body.studio-body .card-json-dialog h2 { margin: 0; font-size: 16px; }
+body.studio-body .card-json-dialog p { margin: 0; }
+body.studio-body #card-json-text { min-height: 360px; width: 100%; box-sizing: border-box; resize: vertical; font: 12px/1.45 ui-monospace, Consolas, monospace; color: var(--st-text); background: var(--st-surface-2); border: 1px solid var(--st-border); border-radius: 6px; padding: 8px; }
+body.studio-body .card-json-error { min-height: 1.2em; color: var(--st-bad); font-size: 12px; }
+body.studio-body .card-json-actions { display: flex; justify-content: flex-end; gap: 8px; }
+/* The ellipsis reads as a plain glyph on the label line; it only looks like a button on hover or focus. */
+body.studio-body .customization-card-menu-wrap { top: -1px; right: -4px; }
+body.studio-body .customization-card-menu-button.s-btn {
+  width: 20px; min-width: 20px; height: 20px; min-height: 0; padding: 0; font-size: 16px; line-height: 20px;
+  color: var(--st-muted); background: transparent; border: 1px solid transparent; border-radius: 4px; box-shadow: none;
+}
+body.studio-body .customization-card-menu-button.s-btn:hover,
+body.studio-body .customization-card-menu-button.s-btn[aria-expanded="true"] { color: var(--st-text); background: var(--st-surface-2); border-color: var(--st-border); }
+body.studio-body .customization-card-menu-button.s-btn:focus-visible { color: var(--st-text); border-color: var(--st-accent); outline: none; }
+
+/* Beside the fields the card is exactly as tall as they are, keeping its 2:3 shape. */
+body.studio-body .customization-preview-body[data-fit="fields"] .inspector-card-preview { width: max(60px, calc(var(--entity-card-h) * 2 / 3)); }
+
+/* Outside Properties: the view's most-used fields for this card, compact beside the card. */
+body.studio-body .customization-context-fields { display: flex; flex-direction: column; gap: 2px; min-width: 0; font-size: 12px; }
+body.studio-body .customization-context-fields[hidden] { display: none !important; }
+/* Design: the art layers on this card, each with Show, Edit and its opacity. */
+body.studio-body .customization-context-fields .art-context-list { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+body.studio-body .customization-context-fields .art-context-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 2px 6px; min-width: 0;
+  padding: 4px 6px; border: 1px solid var(--st-border); border-radius: 4px; background: var(--st-surface-2);
+}
+body.studio-body .customization-context-fields .art-context-row.is-off .art-context-name,
+body.studio-body .customization-context-fields .art-context-row.is-off .art-context-opacity { opacity: .5; }
+body.studio-body .customization-context-fields .art-context-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+body.studio-body .customization-context-fields .art-context-show { display: inline-flex; align-items: center; gap: 3px; color: var(--st-muted); font-size: 11px; white-space: nowrap; }
+body.studio-body .customization-context-fields .art-context-edit { min-height: 0; padding: 1px 6px; font-size: 11px; }
+body.studio-body .customization-context-fields .art-context-opacity { grid-column: 1 / -1; display: flex; align-items: center; gap: 6px; min-width: 0; color: var(--st-muted); font-size: 11px; }
+body.studio-body .customization-context-fields .art-context-opacity input[type="range"] { flex: 1 1 auto; min-width: 0; width: auto; margin: 0; }
+body.studio-body .customization-context-fields .art-context-opacity .opacity-val { flex: 0 0 34px; text-align: right; }
+body.studio-body .customization-context-fields .art-context-empty { margin: 0; font-size: 12px; }
+/* Deck lists: the decks holding this card, then one Add to deck select. */
+body.studio-body .customization-context-fields .deck-context-list { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+body.studio-body .customization-context-fields .deck-context-row {
+  display: flex; align-items: center; gap: 6px; min-width: 0; min-height: 26px;
+  padding: 2px 4px 2px 8px; border: 1px solid var(--st-border); border-radius: 4px; background: var(--st-surface-2);
+}
+body.studio-body .customization-context-fields .deck-context-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body.studio-body .customization-context-fields .deck-context-template { flex: 0 0 auto; color: var(--st-muted); font-size: 11px; font-style: italic; }
+body.studio-body .customization-context-fields .deck-context-remove { flex: 0 0 auto; min-height: 0; padding: 0 6px; line-height: 20px; }
+body.studio-body .customization-context-fields .deck-context-empty { margin: 0; font-size: 12px; }
+body.studio-body .customization-context-fields .deck-context-add { width: 100%; min-width: 0; height: 28px; background: var(--st-surface-2); color: var(--st-text); border: 1px solid var(--st-border); border-radius: 4px; }
+/* One line per entry beside the card (owner, 2026-11-27): SP and MP share a line; each other weight is
+   name, value, short unit and small toggles; each art layer is name, show, opacity and Edit. */
+body.studio-body .customization-context-fields .art-context-row { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; }
+body.studio-body .customization-context-fields .art-context-name { flex: 1 1 auto; }
+body.studio-body .customization-context-fields .art-context-show { font-size: 0; }
+body.studio-body .customization-context-fields .art-context-opacity { flex: 0 0 72px; grid-column: auto; gap: 2px; }
+body.studio-body .customization-context-fields .art-context-opacity .opacity-val { display: none; }
+body.studio-body .customization-context-fields .art-context-opacity .opacity-val { flex: 0 0 28px; }
+
+/* Weights beside the card: uniform rows (owner, 2026-11-27). Name left, controls right in fixed columns:
+   value | per | multiply | surcharge | reset. The sentence and worked example are on hover. */
+body.studio-body .customization-context-fields[data-context-view="weights"] { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 10px; align-content: start; }
+/* Header line over the toggles so the narrow columns stay readable. */
+body.studio-body .customization-context-fields[data-context-view="weights"]::after { content: ""; }
+
+/* Weights beside the card: uniform columns (owner, 2026-11-27). Name left; Pts | Scalar | Surcharge | reset on the
+   right with equal gaps. The per-unit count, sentence and worked example are on hover (edit per in the full list). */
+body.studio-body .customization-context-fields :is(.weight-row.is-compact, .weight-context-head) { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 6px; margin: 0; padding: 2px 4px; border: 0; border-radius: 4px; }
+body.studio-body .customization-context-fields .weight-row.is-compact[data-weight-key^="costs:"] { grid-column: auto; }
+body.studio-body .customization-context-fields :is(.weight-row.is-compact, .weight-context-head) > :first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+body.studio-body .customization-context-fields .weight-row.is-compact > :first-child { font-weight: 600; cursor: help; }
+body.studio-body .customization-context-fields :is(.weight-row.is-compact, .weight-context-head) .weight-sentence { display: grid; grid-template-columns: 46px 40px 40px 12px; column-gap: 6px; align-items: center; font-size: 11px; color: var(--st-muted); }
+body.studio-body .customization-context-fields .weight-row.is-compact[data-weight-key^="costs:"] .weight-sentence { grid-template-columns: 46px 20px 12px; column-gap: 4px; }
+body.studio-body .customization-context-fields .weight-row.is-compact[data-weight-key^="costs:"] > :first-child { min-width: 20px; }
+body.studio-body .customization-context-fields .weight-row.is-compact :is(.weight-words, .weight-example) { display: none; }
+body.studio-body .customization-context-fields .weight-row.is-compact .weight-per-label:not(.weight-mult-label):not(.weight-surcharge-label) { display: none; }
+body.studio-body .customization-context-fields .weight-row.is-compact .weight-sentence > * { grid-row: 1; }
+body.studio-body .customization-context-fields .weight-row.is-compact input.weight-input { grid-column: 1; width: 46px; padding: 1px 4px; text-align: right; justify-self: end; }
+body.studio-body .customization-context-fields .weight-row.is-compact .weight-mult-label { grid-column: 2; }
+body.studio-body .customization-context-fields .weight-row.is-compact .weight-surcharge-label { grid-column: 3; }
+body.studio-body .customization-context-fields .weight-row.is-compact[data-weight-key^="costs:"] .weight-surcharge-label { display: none; }
+body.studio-body .customization-context-fields .weight-row.is-compact :is(.weight-mult-label, .weight-surcharge-label) { display: inline-flex; justify-content: center; align-items: center; font-size: 0; }
+body.studio-body .customization-context-fields .weight-row.is-compact :is(.weight-mult-label, .weight-surcharge-label) input { margin: 0; }
+body.studio-body .customization-context-fields .weight-row.is-compact .weight-reset-btn { grid-column: -2 / -1; padding: 0; min-height: 0; font-size: 11px; justify-self: center; }
+body.studio-body .customization-context-fields .weight-row.is-compact .weight-reset-btn.is-clean { visibility: hidden; }
+body.studio-body .customization-context-fields .weight-context-head { padding-top: 4px; font-size: 10px; font-weight: 700; color: var(--st-muted); }
+body.studio-body .customization-context-fields .weight-context-head .weight-sentence { font-size: 10px; justify-items: center; }
+body.studio-body .customization-context-fields .weight-context-head .weight-sentence > span:first-child { justify-self: end; }
+body.studio-body .customization-context-fields .weight-context-head span[title] { cursor: help; }

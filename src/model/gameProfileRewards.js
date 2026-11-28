@@ -28,6 +28,7 @@ import { GEAR_TYPES } from '../content/gearTypes.js';
 const GEAR_THEME_PERCENT = GEAR_TYPES.themedPercent;
 import { reconcileRunLoadoutHp } from './loadout/cardMods.js';
 import { SpellRewardEligible, BalanceSpellRewardWeights } from './spellPoolPolicy.js';
+import { ClassCardPoolAllowed, ClassWeaponPoolAllowed } from './classPoolPolicy.js';
 import { CARD_COPY_OPTION, CARD_COPY_SOURCE, CopyOwnedCard, GrantRelicCardCopies, VendorStocksCardCopy, CardCopyShelf, CardCopyUsesLeft, CardCopyCandidates, CardCopyPrice } from './cardCopyService.js';
 
 // Group members are authored references because the legacy catalog's item tags
@@ -53,8 +54,24 @@ function equipmentGroupMembers(registries, rules, category, family) {
   return eligible;
 }
 /** The Core reward pools (weapons, weaponArts, armor, …) the shops and the Blacksmith draw from. */
-export const gameProfileRewardPools = (registries, run) => pools(registries, run);
-function pools(registries, run, { claim = false } = {}) {
+export function gameProfileRewardPools(
+  registries,
+  run,
+  options = {},
+)
+{
+  return pools(
+    registries,
+    run,
+    options,
+  );
+}
+function pools(
+  registries,
+  run,
+  { claim = false, source = 'combat' } = {},
+)
+{
   const definitions = gameContent(run,'cards') || [];
   const rules = gameContent(run,'rewards');
   // Owner 2026-10-17: a basic (below minRank) card the character already owns is never offered again.
@@ -71,9 +88,37 @@ function pools(registries, run, { claim = false } = {}) {
   // Owner 2026-11-20: eligibility.combatCards.skipOwned never offers a card the player already holds (deck or library), at any
   // rank: one copy of a card, and the copy service (cardCopyService.js) is the only way to a second. A claim still accepts it.
   const skipOwned = !claim && cardRule?.skipOwned !== false;
-  const cards = definitions.filter(card => (claim || SpellRewardEligible(registries, run, card)) && rangeCardAvailable(run, card) && !unpayable(card) && !retired?.has(card.id) && (card.class === 'colorless' || card.class === run.class) && !['special', 'status'].includes(card.rarity) && card.type !== 'status'
-    && !(skipOwned && ownedIds.has(card.id))
-    && !(cardRule?.skipOwnedBasics && cardRank(card, rules) < (cardRule.minRank ?? 0) && ownedIds.has(card.id)));
+  const cardAllowedForClass = (card) =>
+  {
+    const matchesClassPool = ClassCardPoolAllowed(
+      run,
+      card,
+      { source },
+    );
+    if (claim)
+    {
+      return matchesClassPool
+        || card.class === 'colorless'
+        || card.class === run.class;
+    }
+    return matchesClassPool;
+  };
+  const cards = definitions.filter((card) =>
+  {
+    return (claim || SpellRewardEligible(registries, run, card))
+      && rangeCardAvailable(run, card)
+      && !unpayable(card)
+      && !retired?.has(card.id)
+      && cardAllowedForClass(card)
+      && !['special', 'status'].includes(card.rarity)
+      && card.type !== 'status'
+      && !(skipOwned && ownedIds.has(card.id))
+      && !(
+        cardRule?.skipOwnedBasics
+        && cardRank(card, rules) < (cardRule.minRank ?? 0)
+        && ownedIds.has(card.id)
+      );
+  });
   const equipment = !!gameModule(run,'equipment'), hasCards=!!gameModule(run,'cards');
   const weapons = equipment ? equipmentGroupMembers(registries,rules,'weapons','armament') : new Set();
   const armor = equipment ? equipmentGroupMembers(registries,rules,'armor','armour') : new Set();
@@ -81,8 +126,28 @@ function pools(registries, run, { claim = false } = {}) {
   if (!Array.isArray(authoredArts)) throw new Error('Missing authored core weapon-art reward references');
   for (const id of hasCards && equipment ? authoredArts : []) if (!definitions.some(card=>card.id===id) || !registries.cards.has(id)) throw new Error(`Unknown core weapon-art reward '${id}'`);
   const carried = new Set([...run.loadout.storage,...Object.values(run.loadout.sets).flat()]);
+  const eligibleWeapons = equipment
+    ? (registries.equipment.armaments || [])
+      .filter((row) =>
+      {
+        if (!weapons.has(row.id) || carried.has(row.id))
+        {
+          return false;
+        }
+        if (claim)
+        {
+          return true;
+        }
+        return ClassWeaponPoolAllowed(
+          run,
+          row,
+          { source },
+        );
+      })
+      .map((row) => row.id)
+    : [];
   return {
-    weapons: equipment ? (registries.equipment.armaments||[]).filter(row=>weapons.has(row.id)&&!carried.has(row.id)).map(row=>row.id) : [],
+    weapons: eligibleWeapons,
     relics: registries.relics.all().filter(row=>!run.relics.includes(row.id)&&(claim||!Array.isArray(rules.eligibility?.relics?.allow)||rules.eligibility.relics.allow.includes(row.id))&&(row.pool!=='core2'||(rules.eligibility?.relics?.pools||[]).includes(row.pool))).map(row=>row.id),
     combatCards: hasCards ? cards.map(row=>row.id) : [],
     // Rank split for combat-card offers (rewards.json eligibility.combatCards): a card's own rank, else its rarity's.
@@ -227,7 +292,12 @@ function BandedRewardIds(run,kind,ids,{pool='normal',rareBoost=false}={}) {
 function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories,groups=[],itemsPerCategory=null,excludedIds=[],pool='normal'}) {
   if (!offerId || typeof offerId!=='string') throw new Error('A stable reward offerId is required');
   if(run.gameProfileRewardOffers?.[offerId])return run.gameProfileRewardOffers[offerId];
-  const available=pools(registries,run), options=[];
+  const available = pools(
+    registries,
+    run,
+    { source },
+  );
+  const options = [];
   for(const kind of Object.keys(available))available[kind]=available[kind].filter(id=>!excludedIds.includes(id));
   const otherSide=artsOnOtherSide(run,source,offerId);
   if(otherSide.length)available.weaponArts=available.weaponArts.filter(id=>!otherSide.includes(id));
@@ -616,7 +686,7 @@ export function gameProfileShopPurchasePlan(registries,run,shopId,index,{instanc
   else if(!Number.isSafeInteger(price)||price<0)reason='Invalid configured shop price';
   else if(stock.options[index].kind==='weapons'&&(run.loadout?.storage||[]).length>=(registries.balance.equipment.storageSlots??8))reason='Inventory is full. Sell or make room first.';
   else if(!Number.isSafeInteger(run.cinders)||run.cinders<price)reason='Insufficient cinders';
-  else if(stock.options[index].kind===RANK_UP_OPTION.kind){if(!RankUpCandidates(registries,run).length)reason='No card of yours can rise in rank.';else if(!RankUpReady(registries,run).length)reason=RankUpReadyReason();else if(rankCard&&RankUpBlock(run,rankCard))reason=RankUpBlock(run,rankCard);}
+  else if(stock.options[index].kind===RANK_UP_OPTION.kind){if(!RankUpCandidates(registries,run).length)reason='No card of yours can rise in rank.';else if(!RankUpReady(registries,run).length)reason=RankUpReadyReason();else if(rankCard&&RankUpBlock(run,rankCard,registries))reason=RankUpBlock(run,rankCard,registries);}
   else if(stock.options[index].kind===CARD_COPY_OPTION.kind){if(CardCopyUsesLeft(stock.options[index])<1)reason='This offer is sold out.';else if(!CardCopyCandidates(registries,run).length)reason='You have no card to copy.';}
   else try {claimGameProfileReward(registries,structuredClone(run),offerId,index);}catch(error){reason=error.message;}
   return {ok:!reason,reason,shopId,index,price,revision:stock?.tradeRevision||0,signature:JSON.stringify(stock?.options[index])};

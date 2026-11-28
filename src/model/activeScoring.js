@@ -35,6 +35,22 @@ export function ValidateScoringConfig(obj) {
     if (!Number.isFinite(obj.costs.sp?.weight)) errors.push('costs.sp.weight must be a finite number.');
     if (!Number.isFinite(obj.costs.mp?.weight)) errors.push('costs.mp.weight must be a finite number.');
   }
+  // A cost, effect or status may carry `multiplier: true` (scores P x weight per unit); absent or false is flat.
+  for (const section of ['costs', 'effects', 'statuses']) {
+    if (!obj[section] || typeof obj[section] !== 'object') continue;
+    for (const [id, entry] of Object.entries(obj[section])) {
+      if (id[0] === '$' || !entry || typeof entry !== 'object') continue;
+      if ('multiplier' in entry && typeof entry.multiplier !== 'boolean') errors.push(`${section}.${id}.multiplier must be true or false.`);
+    }
+  }
+  for (const countRule of ['effectCount', 'drawbackCount']) {
+    const rule = obj[countRule];
+    const badMultiplier = rule && typeof rule === 'object' && 'multiplier' in rule
+      && typeof rule.multiplier !== 'boolean';
+    if (badMultiplier) {
+      errors.push(`${countRule}.multiplier must be true or false.`);
+    }
+  }
   // A keyword is flat (adds `flat`) or a multiplier (adds P x `multiplier`); a tag adds `weight` or carries
   // `multiplier` / `pMultiplier`. Either form is valid; a number it has must be finite.
   if (obj.keywords && typeof obj.keywords === 'object') {

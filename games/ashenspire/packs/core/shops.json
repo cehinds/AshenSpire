@@ -141,5 +141,10 @@
     "minCategories": 3,
     "maxCategories": 6,
     "smithChance": 25
+  },
+  "classFilter": {
+    "enabled": true,
+    "weapons": true,
+    "combatCards": true
   }
 }

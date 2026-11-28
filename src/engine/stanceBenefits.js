@@ -35,7 +35,7 @@ export function StanceWeaknessMultiplier(ctx, carrier, defendingStance, profile 
 
 /** Counter +25%, Defend +50%: the multiplier on the Block a card or turn-start protection grants. */
 export function BlockGainMultiplier(ctx, entity, card = null) {
-  const rules = StanceBenefitRules(ctx);
+  const rules = StanceRead.StanceBonusRules(ctx);
   return rules ? count(rules[HeldStance(entity, card)]?.blockMultiplier) || 1 : 1;
 }
 
@@ -46,7 +46,7 @@ export function BlockGainMultiplier(ctx, entity, card = null) {
  * Returns { extra, spared }: add `extra` to the drain; the pool loses taken + extra - spared.
  */
 export function PoiseLossAdjust(ctx, source, carrier, defendingStance, { taken = 0, pool = 0 } = {}) {
-  const rules = StanceBenefitRules(ctx);
+  const rules = StanceRead.StanceBonusRules(ctx);
   if (!rules || isReturn(carrier) || !(taken > 0)) return { extra: 0, spared: 0 };
   const bonus = count(rules[HeldStance(source, carrier)]?.poiseDamageBonus);
   const extra = bonus > 0 ? Math.max(0, Math.min(Math.floor(bonus * taken), Math.floor(pool) - taken)) : 0;
@@ -68,7 +68,7 @@ function magicHit(ctx, carrier) {
  * or a fight saved without the key).
  */
 export function DefendPoiseFloor(ctx, target, carrier, defendingStance, blockBefore = target?.block || 0) {
-  const rules = StanceBenefitRules(ctx)?.defend;
+  const rules = StanceRead.StanceBonusRules(ctx)?.defend;
   const floor = Math.max(0, Math.floor(count(rules?.poiseFloorWhileBlock)));
   // Poise damage with no card of its own (a relic, a trigger) is physical: it keeps the floor too (owner decision, 2026-11-17).
   carrier = carrier || PHYSICAL_POISE;
@@ -96,14 +96,14 @@ export function ApplyDefendPoiseFloor(ctx, target, carrier, receipt) {
 
 /** Counter: the HP an attacker takes back from a hit that cost its Counter-stance target `hpLoss` HP (0 when fully blocked, or for a return hit). */
 export function CounterReturnAmount(ctx, defendingStance, hpLoss, carrier) {
-  const rules = StanceBenefitRules(ctx);
+  const rules = StanceRead.StanceBonusRules(ctx);
   if (!rules || isReturn(carrier) || !(hpLoss > 0)) return 0;
   return Math.floor(count(rules[StanceRead.STANCE_ALIASES[defendingStance] || defendingStance]?.hpReturnFraction) * hpLoss);
 }
 
 /** Sweep: the share of its damage a hit also deals to every other enemy in range (0 for a splash hit itself, or any other stance). */
 export function SweepSplashFraction(ctx, source, carrier) {
-  const rules = StanceBenefitRules(ctx);
+  const rules = StanceRead.StanceBonusRules(ctx);
   if (!rules || isReturn(carrier) || carrier?.stanceSplash) return 0;
   return count(rules[HeldStance(source, carrier)]?.splashFraction);
 }
@@ -121,14 +121,32 @@ export function SweepSplashTargets(ctx, source, primary, carrier, candidates) {
 }
 
 /** The carrier a splash hit travels as: no committed contact, range plan or crit of the main hit, and the fraction its damage carries. */
-export function SplashCarrier(ctx, source, carrier) {
-  const { rangePlan, rangeContactId, expansionGroup, expansionContact, manualCounterSerial, critMultiplier, ...rest } = carrier;
-  return { ...rest, stanceSplash: SweepSplashFraction(ctx, source, carrier), proposalTargetDecisions: {}, combatRiderTargets: [] };
+export function SplashCarrier(ctx, source, carrier)
+{
+  // Splash hits carry no flat break or committed primary contact.
+  const {
+    rangePlan,
+    rangeContactId,
+    expansionGroup,
+    expansionContact,
+    manualCounterSerial,
+    critMultiplier,
+    breakBlock,
+    blockBreak,
+    breakPoise,
+    ...rest
+  } = carrier;
+  return {
+    ...rest,
+    stanceSplash: SweepSplashFraction(ctx, source, carrier),
+    proposalTargetDecisions: {},
+    combatRiderTargets: [],
+  };
 }
 
 /** Neutral: the extra cards a player draws at a turn start when it holds no stance. The first turn has no earlier turn to have rested in. */
 export function NeutralExtraDraw(ctx, entity, turn) {
-  const rules = StanceBenefitRules(ctx);
+  const rules = StanceRead.StanceBonusRules(ctx);
   if (!rules || entity?.kind !== 'player' || !(turn > 1)) return 0;
   return HeldStance(entity) === 'neutral' ? Math.max(0, Math.floor(count(rules.neutral?.extraDrawNextTurn))) : 0;
 }

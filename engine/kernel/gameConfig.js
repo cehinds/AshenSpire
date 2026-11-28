@@ -1,4 +1,5 @@
 import { rewardGroupProblems } from './rewardPolicy.js';
+import { RouteFloorTypeProblems } from './routeFloorTypes.js';
 // Pure, host-neutral configuration resolution. No runtime code is evaluated.
 export class GameConfigError extends Error {
   constructor(path, message) { super(`${path}: ${message}`); this.name = 'GameConfigError'; this.path = path; }
@@ -820,6 +821,20 @@ function verifyRouteFirstFloor(modules, content) {
   const alternatives = [...new Set([...(content.routes.hiddenTypes || []), ...(content.routes.visibleTypes || [])])].filter(type => !['rest', 'boss'].includes(type));
   if (!alternatives.includes(firstFloor) || (restFloors.includes(1) && !(routes.startRestFromAct > 1)) || (firstFloor === 'elite' && minimumThreatFloor > 1)) fail('$/modules/routes/firstFloor', 'must be a non-rest, non-boss route node type, depth 1 cannot be a rest floor, and an elite needs minimumThreatFloor of 1');
 }
+// floorTypes is checked here too, by the rules the map build applies (routeFloorTypes.js).
+function verifyRouteFloorTypes(modules, content)
+{
+  const routes = modules.routes;
+  if (routes?.mode !== 'configured' || !record(content?.routes))
+  {
+    return;
+  }
+  const problems = RouteFloorTypeProblems(routes, content.routes, routes.routeShape);
+  for (const problem of problems)
+  {
+    fail('$/modules/routes/floorTypes', problem);
+  }
+}
 function verifyRewardGroups(modules, content) {
   if (modules.rewards?.mode !== 'configured' || !content.rewards) return;
   for (const message of rewardGroupProblems(modules.rewards.rewardGroups || [], content.rewards.categories || [])) fail('$/modules/rewards/rewardGroups', message);
@@ -881,6 +896,7 @@ export function resolveGameAuthor(author, catalog) {
   }
   verifySettings(modules, instances);
   verifyRouteFirstFloor(modules, content);
+  verifyRouteFloorTypes(modules, content);
   verifyRewardGroups(modules, content);
   verifyContent(content); verifyGearContent(content, modules.gear); verifyEnemyContent(content, modules.enemies ? characterSettings(modules) : null, modules.gear);
   if (content.classes) {
@@ -907,7 +923,14 @@ export function validateResolvedGameProfile(snapshot, supportedRuntimeHash) {
     if (!value.schemas[id]) fail(`$/modules/${id}`, 'missing pinned settings schema');
     validateGameSchema(settings,value.schemas[id],`$/modules/${id}`);
   }
-  verifySettings(value.modules, value.instances); verifyRouteFirstFloor(value.modules, value.content); verifyRewardGroups(value.modules, value.content); verifyContent(value.content); verifyGearContent(value.content, value.modules.gear); verifyEnemyContent(value.content, value.modules.enemies ? characterSettings(value.modules) : null, value.modules.gear);
+  verifySettings(value.modules, value.instances);
+  verifyRouteFirstFloor(value.modules, value.content);
+  verifyRouteFloorTypes(value.modules, value.content);
+  verifyRewardGroups(value.modules, value.content);
+  verifyContent(value.content);
+  verifyGearContent(value.content, value.modules.gear);
+  const enemySettings = value.modules.enemies ? characterSettings(value.modules) : null;
+  verifyEnemyContent(value.content, enemySettings, value.modules.gear);
   return freezeGameData({...value,hash});
 }
 

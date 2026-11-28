@@ -22,7 +22,11 @@
   <script type="module">
     import { runTests } from './engine.test.js';
     const ul = document.getElementById('results');
-    const { passed, failed, results } = await runTests();
+    const UI_HOLD_CASES_URL = './fixtures/ui-hold-cases.json';
+    const uiHoldCases = await fetch(UI_HOLD_CASES_URL)
+      .then((response) => response.json())
+      .catch(() => null);
+    const { passed, failed, results } = await runTests({ uiHoldCases });
     for (const r of results) {
       const li = document.createElement('li');
       li.className = r.skipped ? 'skip' : r.ok ? 'pass' : 'fail';

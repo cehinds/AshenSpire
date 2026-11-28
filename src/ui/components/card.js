@@ -37,8 +37,10 @@ import { cardArtFallbacks } from '../cardArtwork.js';
 import { markArtPlaceholder } from '../artFallback.js';
 import { registerCardArtRefresh } from '../cardArtStyle.js';
 import { assetUrl } from '../assetmap.js';
-import { t } from '../strings.js';
+import { t, tFull } from '../strings.js';
 import { loreLine } from './loreLine.js';
+import { buildChannel } from '../buildChannel.js';
+import { uiConfig } from '../../config/generated/ui.js';
 import { cardChoice } from '../../model/cardChoices.js';
 import { engravedIconHtml, engravedGlyphId } from './engravedIcon.js';
 import { equipmentCardArt } from '../assets.js';
@@ -47,12 +49,37 @@ import { ashenBlightCardLabel } from './ashenBlight.js';
 import { ACTION_SIGILS, SCHOOL_SIGILS, mirrorSigil } from '../../content/combatSigils.js';
 import { compactCardRules, sigilExplanationHtml } from './combatSigilView.js';
 import { armsAsCoreCounter } from '../../model/profileStance.js';
-import { cardFaceLines } from '../../model/cardFaceText.js';
+import { WitherFaceCount, CostGrowthFaceText, CardRuleRiderLines, cardFaceLines } from '../../model/cardFaceText.js';
 import { cardFaceProjection, FACE_EFFECT_LINES } from '../../model/cardFaceProjection.js';
 import { roomyBudgetFor } from '../../model/cardFaceBudget.js';
 import { evadeGrantOnlyCard, CounterStacksForCard, FixCoreCounterStacks } from '../../model/fixCoreMechanics.js';
 import { wardReadsAsPoise, wardOffCardText } from '../../model/wardOffCardText.js';
 import { spellDefenseSplit } from '../../model/spellDefense.js';
+
+function isDevFixtureFlavor(text, prefixes)
+{
+    const lowered = text.toLowerCase();
+    return prefixes.some((prefix) => lowered.startsWith(String(prefix).toLowerCase()));
+}
+
+export function CardInspectorFlavor(flavor, channel = buildChannel())
+{
+    const text = typeof flavor === 'string'
+        ? flavor.trim()
+        : '';
+    if (!text)
+    {
+        return '';
+    }
+    const rules = uiConfig.components.card.behavior.devFixtureFlavor;
+    const allowedChannels = rules?.allowedChannels || [];
+    const prefixes = rules?.prefixes || [];
+    if (isDevFixtureFlavor(text, prefixes) && !allowedChannels.includes(channel))
+    {
+        return '';
+    }
+    return flavor;
+}
 
 // WCI3: rarity at the start of the band, the owned count at the end, each only
 // when the surface can state it. No domain action ever belongs in this band.
@@ -403,7 +430,7 @@ export function renderCard(registries, ref, opts = {}) {
     const representedEntry = model.sideTags.flatMap(tag => tag.representedEntry || []);
     const representedRules = model.sideTags.flatMap(tag => tag.representedRules || []);
     allFaceLines = baseCardPresentation[def.id] ? null : cardFaceLines(def, opts.preview || null, registries, opts.rules || null,
-      { stanceEntry: false, representedEffects, representedEntry, representedRules });
+      { stanceEntry: false, representedEffects, representedEntry, representedRules, instanceId: model.instanceId || null });
     // The bounded projection selects whole qualified clauses after the live
     // model has suppressed benefits already represented by exact tag values.
     faceLines = allFaceLines && registries.gameProfile?.foundation?.mode === 'configured' && opts.level !== 'inspect'
@@ -427,8 +454,16 @@ export function renderCard(registries, ref, opts = {}) {
     // Dynamic weapon poise fallback for authored-template cards when attacking.
     const weaponPoiseNote = !faceLines && opts.preview?.weaponPoise > 0 && !/Poise/i.test(authoredRules)
       ? ` <span class="val">${esc(opts.preview.weaponPoise)}</span> <span class="st-bleed">${esc(t('combat.protection.poise'))}</span>.` : '';
-    // Under version-one combat a sentence that opens "In expanded combat," does not apply, so the face need not carry it.
-    const appliedRules = (expanded ? authoredRules : authoredRules.replace(/\s*In expanded combat,[^.]*\./g, '')) + weaponPoiseNote;
+    // Authored faces append field-driven riders (Wither, rising cost); generated faces already include them.
+    const riderRules = allFaceLines
+      ? ''
+      : CardRuleRiderLines(def, opts.rules || null, model.instanceId || null)
+          .map(line => ` ${line.html}.`)
+          .join('');
+    const baseRules = expanded
+      ? authoredRules
+      : authoredRules.replace(/\s*In expanded combat,[^.]*\./g, '');
+    const appliedRules = baseRules + weaponPoiseNote + riderRules;
     // An authored short summary (`faceTemplate`) stands in for the Inspect cue; same live tokens, no shared rider clauses.
     const summaryHtml = Array.isArray(def.faceTemplate) && def.faceTemplate.length
       ? def.faceTemplate.map(line => fillTemplate({ id: def.id, type: def.type, tags: def.tags, cardTags: def.cardTags, combatProfile: def.combatProfile, evade: def.evade, textTemplate: line.replace(/\[v2:([^\]]*)\]/g, expanded ? '$1' : '').replace(/,? ?(\{[\w.]+\})×/, ', $1 times'), defenseRulesVersion: def.defenseRulesVersion, minCombatExpansionVersion: def.minCombatExpansionVersion },
@@ -580,7 +615,7 @@ export function renderCard(registries, ref, opts = {}) {
       // one line there: the identity line. The card's full description opens
       // in the lore modal from that line (components/loreLine.js), the same
       // element the equipment card uses, so the two card kinds read alike.
-      const lore = loreLine({ text: def.flavor, title: def.name });
+      const lore = loreLine({ text: CardInspectorFlavor(def.flavor), title: def.name });
       if (lore) details.append(lore);
       const face = renderCard(registries, ref, { ...opts, tooltip: false, inspection: false, level: 'inspect', faceLineLimit: undefined });
       details.classList.add('playing-card-details');
@@ -792,11 +827,31 @@ export function cardPlainText(registries, ref, opts = {}) {
     ? (baseCardPresentation[def.id] ? null : cardFaceLines(def, opts.preview || null, registries, opts.rules || null)) : null;
   // Plain string work only: no DOM, so it runs the same headless and in a
   // browser. Tags go first; &amp; is decoded last so "&amp;lt;" stays literal.
-  return String(lines ? lines.map(line => line.html).join(' · ') : fillTemplate(def, model.tokens, null, model.damageSequences, wardReadsAsPoise(registries) ? { preview: opts.preview || null } : null, registries, opts.rules ?? opts.preview?.faceRules ?? null))
+  const rawText = lines
+    ? lines.map(line => line.html).join(' · ')
+    : fillTemplate(
+        def,
+        model.tokens,
+        null,
+        model.damageSequences,
+        wardReadsAsPoise(registries)
+          ? { preview: opts.preview || null }
+          : null,
+        registries,
+        opts.rules ?? opts.preview?.faceRules ?? null,
+      )
+      + CardRuleRiderLines(def, opts.rules || null, ref?.instanceId || null)
+          .map(line => ` ${line.html}.`)
+          .join('');
+  return String(rawText)
     .replace(/<[^>]+>/g, '')
-    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
     .replace(/&amp;/g, '&')
-    .replace(/\s+/g, ' ').trim();
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 /**
@@ -980,7 +1035,8 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
   // follow, then the chips.
   const common = html.slice(commonStart);
   html = html.slice(0, commonStart);
-  html += `<div class="ctext">${fillTemplate(def, tokens, null, damageSequences, wardReadsAsPoise(registries) ? { preview: null } : null, registries, statusContext)}</div>`;
+  const growthRule = CostGrowthFaceText(def.costGrowth, registries);
+  html += `<div class="ctext">${fillTemplate(def, tokens, null, damageSequences, wardReadsAsPoise(registries) ? { preview: null } : null, registries, statusContext)}${growthRule ? ' ' + esc(growthRule) + '.' : ''}</div>`;
   html += cardStatusDetailsHtml(registries, def, statusContext);
   // Nested keyword + status tooltips (SPEC §7.3).
   // ONE CHIP PER DISTINCT TAG. Three authored ids carry the label "Spell"
@@ -1006,6 +1062,9 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
     const k = registries.framework.keywordDisplay(kw);
     if (k) addChip(k.name, k.tooltip, true);
   }
+  // Wither N (SPEC §4.3) is a card field, not a keyword id: its chip reads the authored count.
+  const witherCount = WitherFaceCount(def);
+  if (witherCount !== null) addChip(t('card.keyword.wither', { n: witherCount }), tFull('card.keyword.wither', { n: witherCount }), true);
   for (const eff of def.effects || []) {
     // Status/stance WORDS resolve through the per-bundle framework term
     // overlay — verbatim text, framework authority. Unknown ids and

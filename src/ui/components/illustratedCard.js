@@ -104,7 +104,8 @@ export function illustratedCardHtml(model,{rules,painting,equipmentArtwork=false
       // A rules row also carries a second size that a phone shrinks by --ic-rules-shrink (playtest 2026-11-17 item 39);
       // a browser without calc() keeps the first.
       const authoredSize=`${(l.fontSize||20)/doc.width*100}cqw`;
-      const font=`font-family:${esc(l.font||'Georgia')};font-size:${authoredSize};${l.bind==='rules'?`font-size:calc(${authoredSize} - var(--ic-rules-shrink, 0px));`:''}font-weight:${esc(l.fontWeight||'normal')};text-align:${esc(l.align||'center')};color:${esc(l.color||'#eee')};`;
+      const layerColor=l.color||'var(--parchment)';
+      const font=`font-family:${esc(l.font||'Georgia')};font-size:${authoredSize};${l.bind==='rules'?`font-size:calc(${authoredSize} - var(--ic-rules-shrink, 0px));`:''}font-weight:${esc(l.fontWeight||'normal')};text-align:${esc(l.align||'center')};color:${esc(layerColor)};`;
       body=`<div class="ic-text" data-card-binding="${esc(l.bind||l.id)}" data-min-font="${l.minFontSize||l.fontSize||20}" data-max-font="${l.maxFontSize||l.fontSize||20}" data-auto-fit="${l.autoFit===true}" data-max-lines="${l.maxLines||1}"${faceRules&&l.bind==='rules'?' data-face-lines="true"':''} style="${font}${l.maxLines?`display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:${Math.max(1,Math.floor(l.maxLines))};height:auto;`: ''}${l.outline?`text-shadow:1px 1px 0 ${esc(l.outline)},-1px -1px 0 ${esc(l.outline)};`:''}">${text}</div>`;
     }
     if(footer)return `<div class="ic-plane"><div class="ic-layer" data-component="${esc(l.id)}" style="${position}">${body}</div></div>`;

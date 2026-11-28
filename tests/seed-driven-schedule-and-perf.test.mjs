@@ -20,6 +20,35 @@ import { EvaluateUpgradeStepCp, PrepareUpgradeStepCpContext } from '../src/model
 import { cardUpgradeModel } from '../src/ui/models/CardUpgradeModel.js';
 import { PrecomputeActRewardSchedule, RewardScheduleForOffer, gameProfileRewardOffers } from '../src/model/gameProfileRewards.js';
 
+// The first text sort on a fresh CI runner waits ~200 ms on disk (run 45945847782).
+// Pay that one-time host cost before any timed region.
+const IcuWarmupLeft = 'n1_0';
+const IcuWarmupRight = 'n10_0';
+IcuWarmupLeft.localeCompare(IcuWarmupRight);
+
+const MicrosecondsPerMillisecond = 1000;
+const ReportedDecimals = 1;
+
+// Wall time plus the CPU, fault and wait counts that explain a slow run.
+function Measure(work)
+{
+  const usageStart = process.resourceUsage();
+  const cpuStart = process.cpuUsage();
+  const startMs = performance.now();
+  const result = work();
+  const ms = performance.now() - startMs;
+  const cpu = process.cpuUsage(cpuStart);
+  const usage = process.resourceUsage();
+  const cpuMs = (cpu.user + cpu.system) / MicrosecondsPerMillisecond;
+  const why = [
+    `cpuMs=${cpuMs.toFixed(ReportedDecimals)}`,
+    `majorFaults=${usage.majorPageFault - usageStart.majorPageFault}`,
+    `blockedSwitches=${usage.voluntaryContextSwitches - usageStart.voluntaryContextSwitches}`,
+    `preemptedSwitches=${usage.involuntaryContextSwitches - usageStart.involuntaryContextSwitches}`,
+  ].join(', ');
+  return { result, ms, why };
+}
+
 test('ActNodeUpgradeStock is deterministic by (seed, nodeKey, vendor), respects tier unlocks, and varies by seed/node', () => {
   ClearScheduleCaches();
   const s1a = ActNodeUpgradeStock(12345, '1:n4', { vendor: 'blacksmith', scoring: shippedScoring });
@@ -52,15 +81,13 @@ test('ActUpgradeSchedule and ActRewardSchedule pre-compute an entire Act map det
   const mapGraph = buildActMap(registries, createRng(777), run.seatOrder[0], 1);
   run.mapGraph = mapGraph;
 
-  const cpuStart = process.cpuUsage();
-  const t0 = performance.now();
-  const upgSchedA = ActUpgradeSchedule(run.seed, mapGraph, { actNumber: 1, scoring: shippedScoring });
-  const rewSchedA = PrecomputeActRewardSchedule(run, mapGraph);
-  const elapsed = performance.now() - t0;
-  const cpuElapsed = process.cpuUsage(cpuStart);
-  const cpuMs = (cpuElapsed.user + cpuElapsed.system) / 1000;
+  const precompute = Measure(() => ({
+    upgSchedA: ActUpgradeSchedule(run.seed, mapGraph, { actNumber: 1, scoring: shippedScoring }),
+    rewSchedA: PrecomputeActRewardSchedule(run, mapGraph),
+  }));
+  const { upgSchedA, rewSchedA } = precompute.result;
 
-  assert.ok(elapsed < 50, `Expected full Act upgrade+reward precompute < 50ms, got ${elapsed.toFixed(1)}ms (cpuMs=${cpuMs.toFixed(1)})`);
+  assert.ok(precompute.ms < 50, `Expected full Act upgrade+reward precompute < 50ms, got ${precompute.ms.toFixed(1)}ms (${precompute.why})`);
   assert.ok(Object.keys(upgSchedA.nodes).length > 0, 'pre-computed upgrade nodes');
   assert.ok(Object.keys(rewSchedA.nodes).length > 0, 'pre-computed reward nodes');
 
@@ -145,14 +172,10 @@ test('Blacksmith 60-card picker is fast cold (< 250ms) and instant on re-selecti
   ];
   const beforeJson = JSON.stringify(run);
 
-  const cpuStart = process.cpuUsage();
-  const t0 = performance.now();
-  const m1 = cardUpgradeModel(registries, run, null, { blacksmith: true });
-  const coldMs = performance.now() - t0;
-  const cpuElapsed = process.cpuUsage(cpuStart);
-  const cpuMs = (cpuElapsed.user + cpuElapsed.system) / 1000;
+  const cold = Measure(() => cardUpgradeModel(registries, run, null, { blacksmith: true }));
+  const m1 = cold.result;
   assert.ok(m1.rows.length >= 40, `expected >= 40 rows, got ${m1.rows.length}`);
-  assert.ok(coldMs < 250, `Expected cold 60-card Blacksmith picker < 250ms, got ${coldMs.toFixed(1)}ms (cpuMs=${cpuMs.toFixed(1)})`);
+  assert.ok(cold.ms < 250, `Expected cold 60-card Blacksmith picker < 250ms, got ${cold.ms.toFixed(1)}ms (${cold.why})`);
 
   // Clicking 10 different cards in the picker hits the WeakMap row cache
   const t1 = performance.now();
@@ -219,4 +242,126 @@ test('planCardUpgrade and picker caches invalidate on playsEver, rank vs ability
     const cached = EvaluateUpgradeStepCp({ baseDef, currentDef: baseDef, instance: strike, step, playerLevel: 5, scoring: shippedScoring, context: ctx });
     assert.deepEqual(cached, direct);
   }
+});
+
+
+// Controlled ordering contracts run after the original six timing/mechanics cases.
+async function orderingScoring() {
+  const { scoringContract } = await import('./helpers/scoring-contract.mjs');
+  const scoring = scoringContract();
+  scoring.tierUnlocks = { enabled: false };
+  scoring.rank = { unrankedMax: 0, width: 10, maxRank: 1, maxCp: 10 };
+  return scoring;
+}
+const orderingGraph = rows => ({ nodes: Object.fromEntries(rows.map((node, index) => [index, node])) });
+const orderingIds = ['n2_2', 'boss_2', 'n1_2', 'n10_0', 'boss_10', 'n1_10', 'boss', 'n2_1', 'n1_1', 'boss_0'];
+const orderedIds = ['boss', 'boss_0', 'boss_10', 'boss_2', 'n1_1', 'n1_10', 'n1_2', 'n10_0', 'n2_1', 'n2_2'];
+
+test('Act node ordering: canonical text parts have exact lexical and prefix order with English reference parity', async () => {
+  const scoring = await orderingScoring();
+  const rows = orderingIds.map(id => ({ id, type: 'blacksmith' }));
+  const before = structuredClone(rows), graph = orderingGraph(rows);
+  const upgrades = ActUpgradeSchedule(21, graph, { actNumber: 2, scoring, slotsPerTier: 1 });
+  const rewards = ActRewardSchedule(21, graph, { actNumber: 2 });
+  const keys = orderedIds.map(id => '2:' + id);
+  assert.deepEqual(Object.keys(upgrades.nodes), keys);
+  assert.deepEqual(Object.keys(rewards.nodes), keys);
+  // This deliberately checks the shipping English reference, not every locale.
+  assert.deepEqual([...orderingIds].sort((a, b) => a.localeCompare(b, 'en')), orderedIds);
+  assert.deepEqual(rows, before);
+});
+
+test('Act node ordering: stable duplicates retain the last node vendor and reward kind', async () => {
+  const scoring = await orderingScoring();
+  const graph = orderingGraph([{ id: 'n2_0', type: 'blacksmith' }, { id: 'n1_0', type: 'blacksmith' },
+    { id: 'n2_0', type: 'shop' }]);
+  const upgrades = ActUpgradeSchedule(22, graph, { scoring, slotsPerTier: 1 });
+  const rewards = ActRewardSchedule(22, graph);
+  assert.deepEqual(Object.keys(upgrades.nodes), ['1:n1_0', '1:n2_0']);
+  assert.equal(upgrades.forNode('n2_0').vendor, 'arcane');
+  assert.equal(rewards.forNode('n2_0').source, 'shop');
+  assert.deepEqual(upgrades.forNode('n2_0').byTier, ActNodeUpgradeStock(22, '1:n2_0', { vendor: 'arcane', scoring, slotsPerTier: 1 }).byTier);
+});
+
+test('Act node ordering: node seed outputs equal standalone lookups and ignore map insertion order', async () => {
+  const scoring = await orderingScoring();
+  const rows = orderingIds.map(id => ({ id, type: 'blacksmith' }));
+  const a = ActUpgradeSchedule(23, orderingGraph(rows), { scoring, slotsPerTier: 1 });
+  const b = ActRewardSchedule(23, orderingGraph(rows), { countRange: { min: 2, max: 4 }, maxSlots: 3 });
+  ClearScheduleCaches();
+  const reverseA = ActUpgradeSchedule(23, orderingGraph([...rows].reverse()), { scoring, slotsPerTier: 1 });
+  const reverseB = ActRewardSchedule(23, orderingGraph([...rows].reverse()), { countRange: { min: 2, max: 4 }, maxSlots: 3 });
+  assert.deepEqual(Object.keys(reverseA.nodes), Object.keys(a.nodes));
+  for (const id of orderingIds) {
+    const key = '1:' + id;
+    assert.deepEqual(a.forNode(id).byTier, ActNodeUpgradeStock(23, key, { vendor: 'blacksmith', scoring, slotsPerTier: 1 }).byTier);
+    assert.deepEqual(reverseA.forNode(id).byTier, a.forNode(id).byTier);
+    const standalone = NodeRewardSchedule(23, key, { source: 'blacksmith', pool: 'normal', countRange: null, maxSlots: 3 });
+    assert.deepEqual(b.forNode(id).slotSeeds, standalone.slotSeeds);
+    assert.deepEqual(reverseB.forNode(id).slotSeeds, standalone.slotSeeds);
+    assert.deepEqual(reverseB.forNode(id).rareBoostSlots, b.forNode(id).rareBoostSlots);
+  }
+});
+
+function observeOrdering(makeRows, schedule = null) {
+  const events = [], rows = makeRows(events), graph = orderingGraph(rows), original = String.prototype.localeCompare;
+  let error = null;
+  String.prototype.localeCompare = function(other, ...args) {
+    events.push('compare:' + String(this) + ':' + other);
+    return original.call(this, other, ...args);
+  };
+  try {
+    const watched = { get nodes() { events.push('nodes'); return graph.nodes; } };
+    if (schedule) schedule(24, watched);
+    else {
+      const raw = watched?.nodes && typeof watched.nodes === 'object' ? Object.values(watched.nodes) : [];
+      const sorted = [...raw].sort((a, b) => String(a?.id || '').localeCompare(String(b?.id || '')));
+      for (const node of sorted) if (node && node.id) void node.type;
+    }
+  } catch (caught) { error = caught.message; }
+  finally { String.prototype.localeCompare = original; }
+  return { events, error };
+}
+
+test('Act node ordering: any custom, Unicode, inherited or nonplain ID retains whole-list legacy comparisons', () => {
+  const cases = [
+    ...['custom', 'éclair', 'n0_0', 'n01_0', 'n1_01', 'boss_00', 'boss_01', 'n1_0_extra', 'n1_0\n', 'boss\r', 'boss_1\u2028', 4, null].map(id => () => ({ id, type: 'unused' })),
+    () => Object.assign(Object.create(null), { id: 'n1_0', type: 'unused' }),
+    () => Object.assign(Object.create({ id: 'n1_0' }), { type: 'unused' }),
+    () => new (class Node { constructor() { this.id = 'n1_0'; this.type = 'unused'; } })(),
+  ];
+  for (const make of cases) {
+    const rows = () => [{ id: 'n2_0', type: 'unused' }, make(), { id: 'n10_0', type: 'unused' }, { id: 'n1_0', type: 'unused' }];
+    const expected = observeOrdering(rows);
+    assert.ok(expected.events.some(event => event.startsWith('compare:')));
+    assert.deepEqual(observeOrdering(rows, ActUpgradeSchedule), expected);
+    assert.deepEqual(observeOrdering(rows, ActRewardSchedule), expected);
+  }
+});
+
+test('Act node ordering: accessor and stringification reads and errors occur in the original order', () => {
+  for (const throws of [false, true]) for (const form of ['accessor', 'coercion']) {
+    const rows = events => {
+      const read = () => { events.push('read-id'); if (throws) throw new Error('controlled ID read'); return 'n1_0'; };
+      const id = form === 'coercion' ? { toString: read } : undefined;
+      const node = form === 'coercion' ? { id, type: 'unused' } : { get id() { return read(); }, type: 'unused' };
+      return [{ id: 'n2_0', type: 'unused' }, node, { id: 'n10_0', type: 'unused' }];
+    };
+    const expected = observeOrdering(rows);
+    assert.equal(expected.error, throws ? 'controlled ID read' : null);
+    assert.deepEqual(observeOrdering(rows, ActUpgradeSchedule), expected);
+    assert.deepEqual(observeOrdering(rows, ActRewardSchedule), expected);
+  }
+});
+
+test('Act node ordering: canonical lists do not call localeCompare or Intl.Collator', async () => {
+  const scoring = await orderingScoring();
+  const compare = String.prototype.localeCompare, collator = Intl.Collator;
+  String.prototype.localeCompare = () => { throw new Error('unexpected native collation'); };
+  Intl.Collator = () => { throw new Error('unexpected native collator'); };
+  try {
+    const graph = orderingGraph(orderingIds.map(id => ({ id, type: 'blacksmith' })));
+    assert.deepEqual(Object.keys(ActUpgradeSchedule(25, graph, { scoring, slotsPerTier: 1 }).nodes), orderedIds.map(id => '1:' + id));
+    assert.deepEqual(Object.keys(ActRewardSchedule(25, graph).nodes), orderedIds.map(id => '1:' + id));
+  } finally { String.prototype.localeCompare = compare; Intl.Collator = collator; }
 });

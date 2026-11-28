@@ -30,11 +30,12 @@ const DISCOVER = options.discovered;
 // The fixtures runTests() is handed (art manifest, asset lookup, two legacy
 // run-save files) are loaded here, not inside engine.test.js, so the browser
 // harness stays fs-free; tests/helpers/run-node-fixtures.mjs says why.
-const { artManifest, assetExists, legacyRunSave, preE6RunSave } = await loadRunNodeFixtures();
+const fixtures = await loadRunNodeFixtures();
+const { artManifest } = fixtures;
 if (!artManifest) console.warn('  (no art manifest — test 33 will skip; run tools/equipment-blender.py)');
 
 const { passed, failed, results } = CORE
-  ? await runTests({ artManifest, assetExists, legacyRunSave, preE6RunSave })
+  ? await runTests(fixtures)
   : { passed: 0, failed: 0, results: [] };
 for (const r of results) {
   const tag = r.skipped ? 'SKIP' : r.ok ? 'PASS' : 'FAIL';

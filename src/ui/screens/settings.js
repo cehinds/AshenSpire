@@ -103,6 +103,18 @@ let deferredCardSizeNotice = null;
 // there is nothing under their key to export or take away.
 const CONTROL_ROW_TYPES = new Set(['button', 'action', 'sceneList']);
 
+// Both Export buttons (Advanced and the Done prompt) write this same file: every stored setting.
+function saveEveryStoredSetting(currentSettings)
+{
+  const includeKeys = SETTINGS_ROWS
+    .filter((row) => !CONTROL_ROW_TYPES.has(row.type))
+    .map((row) => row.key);
+  return saveAdvancedConfigFile(currentSettings, {
+    build: { contentVersion: contentBundle.version },
+    includeKeys,
+  });
+}
+
 /**
  * hiddenTuningKeys(settings, debug) → stored keys this build has no row for:
  * every row of a debug-only section (tuning or not — `creationAutoAdvance`, say),
@@ -1121,7 +1133,15 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
     extra,
   });
   const modified = rowModified(settings, r);
-  const rowOpen = (extraClass = '', attrs = '') => settingRowOpenHtml({ key: r.key, extraClass, modified, attrs });
+  const noteTitle = note
+    ? ` title="${esc(stripTags(note))}"`
+    : '';
+  const rowOpen = (extraClass = '', attrs = '') => settingRowOpenHtml({
+    key: r.key,
+    extraClass,
+    modified,
+    attrs: `${noteTitle}${attrs}`,
+  });
   if (r.type === 'color') {
     const value = /^#[0-9a-f]{6}$/i.test(settings[r.key] || '') ? settings[r.key] : r.def;
     return `${rowOpen()}${stack()}<span class="r-trail"><input type="color" class="set-color" data-key="${esc(r.key)}" value="${value}" aria-label="${esc(r.label)}"></span></div>`;
@@ -2615,10 +2635,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     btn.addEventListener('click', async () => {
       btn.disabled = true;
       btn.textContent = 'Saving…';
-      const result = await saveAdvancedConfigFile(panelSettings || settings, {
-        build: { contentVersion: contentBundle.version },
-        includeKeys: SETTINGS_ROWS.filter((row) => row.cat === 'Advanced' && !CONTROL_ROW_TYPES.has(row.type)).map((row) => row.key),
-      });
+      const result = await saveEveryStoredSetting(panelSettings || settings);
       btn.disabled = false;
       btn.textContent = result.ok ? (result.method === 'save-as' ? 'Saved' : 'Downloaded') : 'Unavailable';
       showSettingsNotice(result.ok
@@ -3215,10 +3232,7 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
     skip.addEventListener('click', () => { prompt.close(); door.close(); });
     exportButton.addEventListener('click', async () => {
       exportButton.disabled = true;
-      const result = await saveAdvancedConfigFile(panelSettings || settings, {
-        build: { contentVersion: contentBundle.version },
-        includeKeys: SETTINGS_ROWS.filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key),
-      });
+      const result = await saveEveryStoredSetting(panelSettings || settings);
       exportButton.disabled = false;
       if (result.ok) { prompt.close(); door.close(); }
       else exportButton.textContent = 'Try export again';

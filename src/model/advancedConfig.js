@@ -1047,12 +1047,28 @@ export function advancedConfigOwns(bundle) {
   return OWNS_BY_BUNDLE.get(bundle);
 }
 
-export function advancedConfigSettings(settings = {}, additionalKeys = []) {
-  const entries = withoutSupersededLegacy(Object.entries(settings).filter(([key]) => key.startsWith(ADVANCED_CONFIG_PREFIX)));
-  for (const key of additionalKeys) {
-    // `statTierSize` is the retired tier dial (ruleset 6); it is never exported.
-    if (key === 'statTierSize' || settings[key] === undefined) continue;
-    entries.push([`settings.${key}`, settings[key]]);
+const RETIRED_TIER_SIZE_KEY = 'statTierSize';
+const SETTINGS_EXPORT_PREFIX = 'settings.';
+
+function isExportedSettingKey(settings, key)
+{
+  // A `gameConfig.*` row is already exported under its own key; the tier dial is retired.
+  const isGameConfigKey = key.startsWith(ADVANCED_CONFIG_PREFIX);
+  return !isGameConfigKey && key !== RETIRED_TIER_SIZE_KEY && settings[key] !== undefined;
+}
+
+export function advancedConfigSettings(settings = {}, additionalKeys = [])
+{
+  const gameConfigEntries = Object.entries(settings)
+    .filter(([key]) => key.startsWith(ADVANCED_CONFIG_PREFIX));
+  const entries = withoutSupersededLegacy(gameConfigEntries);
+  for (const key of additionalKeys)
+  {
+    if (!isExportedSettingKey(settings, key))
+    {
+      continue;
+    }
+    entries.push([`${SETTINGS_EXPORT_PREFIX}${key}`, settings[key]]);
   }
   return Object.fromEntries(entries.sort(([a], [b]) => a.localeCompare(b)));
 }

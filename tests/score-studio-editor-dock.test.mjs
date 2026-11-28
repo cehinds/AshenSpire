@@ -1,10 +1,29 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { withKitDom } from './helpers/dom.mjs';
-import { initCardEditorDock, CARD_EDITOR_DOCK_KEY } from '../tools/score-studio/cardEditorDock.js';
+import {
+  initCardEditorDock,
+  CARD_EDITOR_DOCK_KEY,
+  FilterNoteId,
+} from '../tools/score-studio/cardEditorDock.js';
+import { GalleryKind } from '../tools/score-studio/workingContext.js';
 import { createAddCardTile, CaptureCardTilePositions, animateCardInsertion } from '../tools/score-studio/addCardTile.js';
 
-function fixture(dom, stored = new Map()) {
+// The fixture's cards and the filter notice's parts, for the filter notice test.
+const FilterNoteFixture = Object.freeze({
+  ActiveCardId: 'a',
+  ActiveCardName: 'Alpha',
+  OtherCardId: 'b',
+  ClearCall: 'clear',
+  TextSelector: 'span',
+  ButtonSelector: 'button',
+  EntityNameId: 'customization-entity-name',
+  EntityNameTextSelector: '.customization-entity-name-text',
+  AriaLabelAttribute: 'aria-label',
+  ClearAriaLabel: 'Clear filters',
+});
+
+function fixture(dom, stored = new Map(), extra = {}, { scoreSummary = false } = {}) {
   const { document: doc } = dom;
   const create = doc.createElement;
   doc.createElement = tag => {
@@ -16,8 +35,8 @@ function fixture(dom, stored = new Map()) {
     return node;
   };
   doc.body.innerHTML = `<main class="studio-main">
-    <section id="tab-cards"><div class="cards-layout"><div class="cards-gallery-pane"><div class="names-row"></div><div id="cards-grid"><div class="studio-card-tile" data-card-id="a"><div class="studio-card-stage"></div></div><div class="studio-card-tile" data-card-id="b"><div class="studio-card-stage"></div></div></div></div><div id="inspector-resizer" class="inspector-resizer"></div><aside id="card-inspector" class="card-inspector"><input id="edit-name"></aside></div></section>
-    <section id="tab-items"><div class="cards-layout"><div class="cards-gallery-pane"><div class="names-row"></div><div id="items-grid"><div class="item-grid-tile" data-item-key="weapon:one"><div></div></div><div class="item-grid-tile" data-item-key="weapon:two"><div></div></div></div></div><div id="item-inspector-resizer" class="inspector-resizer"></div><aside id="item-inspector-pane" class="card-inspector"><input id="item-edit-name"></aside></div></section>
+    <section id="tab-cards"><div class="cards-layout"><div class="cards-gallery-pane"><div class="names-row"></div><div id="cards-grid"><div class="studio-card-tile" data-card-id="a"><div class="studio-card-stage"></div></div><div class="studio-card-tile" data-card-id="b"><div class="studio-card-stage"></div></div></div></div><div id="inspector-resizer" class="inspector-resizer"></div><aside id="card-inspector" class="card-inspector"><div class="inspector-preview-wrap"><div id="inspector-card-preview"></div>${scoreSummary ? '<div id="inspector-score-summary"></div>' : ''}</div><input id="edit-name"></aside></div></section>
+    <section id="tab-items"><div class="cards-layout"><div class="cards-gallery-pane"><div class="names-row"></div><div id="items-grid"><div class="item-grid-tile" data-item-key="weapon:one"><div></div></div><div class="item-grid-tile" data-item-key="weapon:two"><div></div></div></div></div><div id="item-inspector-resizer" class="inspector-resizer"></div><aside id="item-inspector-pane" class="card-inspector"><div id="item-preview-host" class="item-preview-host"></div><input id="item-edit-name"></aside></div></section>
     <section id="tab-weights" class="studio-panel"><input id="weight-value"></section>
     <section id="tab-art" class="studio-panel"><input id="art-value"></section>
     <div id="deck-panel"><input id="deck-name"></div>
@@ -33,6 +52,7 @@ function fixture(dom, stored = new Map()) {
     renameCard: id => calls.push(['renameCard', id]), balanceCard: id => calls.push(['balanceCard', id]),
     renameItem: id => calls.push(['renameItem', id]), balanceItem: id => calls.push(['balanceItem', id]),
     onViewChange: view => calls.push(['view', view]),
+    ...extra,
   };
   const cardInput = doc.getElementById('edit-name'), itemInput = doc.getElementById('item-edit-name');
   const api = initCardEditorDock(ctx);
@@ -93,8 +113,9 @@ test('floating card and item Edit actions do not trigger their gallery selection
   assert.equal(selected, 0);
 }));
 
-test('Edit opens the one pane in a modal, native cancel returns focus, docking restores its current home', () => withKitDom(dom => {
+test('undocked Edit opens the one pane in a modal, native cancel returns focus, docking restores its current home', () => withKitDom(dom => {
   const { api, doc, cardInput, stored } = fixture(dom);
+  api.setDocked(false); // Docked Edit stays in place (see the docked Edit test below).
   let edits = 0; cardInput.addEventListener('input', () => edits++);
   api.edit('b');
   const modal = doc.getElementById('card-editor-modal');
@@ -114,6 +135,7 @@ test('Edit opens the one pane in a modal, native cancel returns focus, docking r
 
 test('card and item modal actions address only the selected object, including item focus return', () => withKitDom(dom => {
   const { api, doc, calls, state } = fixture(dom);
+  api.setDocked(false);
   api.edit('b'); doc.getElementById('card-editor-rename').click(); doc.getElementById('card-editor-balance').click();
   assert.ok(calls.some(row => row[0] === 'renameCard' && row[1] === 'b'));
   assert.ok(calls.some(row => row[0] === 'balanceCard' && row[1] === 'b'));
@@ -190,3 +212,325 @@ test('insertion animation moves existing cards from their prior positions and re
   assert.equal(calls.find(call => call.id === 'new').frames[0].opacity, 0);
   assert.ok(calls.every(call => call.options.duration === 180));
 }));
+
+test('one native preview moves into the active entity header and stays there in every view', () => withKitDom(dom => {
+  const { api, doc } = fixture(dom);
+  const entity = doc.getElementById('customization-entity');
+  const wrap = doc.querySelector('.inspector-preview-wrap'), itemHost = doc.getElementById('item-preview-host');
+  assert.equal(entity.getAttribute('role'), 'region');
+  assert.equal(wrap.closest('#customization-entity'), entity);
+  assert.equal(doc.getElementById('card-inspector').querySelector('.inspector-preview-wrap'), null, 'moved, not cloned');
+  for (const view of ['design', 'weights', 'decks', 'properties']) {
+    api.setView(view);
+    assert.equal(doc.querySelectorAll('.inspector-preview-wrap').length, 1, view);
+    assert.equal(doc.querySelector('.inspector-preview-wrap'), wrap, view);
+    assert.equal(doc.querySelectorAll('#inspector-card-preview').length, 1, view);
+    assert.equal(wrap.hidden, false, view);
+  }
+  api.setContext('items');
+  assert.equal(itemHost.closest('#customization-entity'), entity);
+  assert.equal(itemHost.hidden, false); assert.equal(wrap.hidden, true);
+  assert.equal(entity.getAttribute('aria-label'), 'Active item');
+  assert.equal(doc.querySelector('.customization-entity-name-text').textContent, 'First weapon');
+}));
+
+test('the scope line names what each view changes and labels the pane scope', () => withKitDom(dom => {
+  const { api, doc } = fixture(dom);
+  const pane = doc.getElementById('studio-customization-pane'), scope = doc.getElementById('customization-scope');
+  const expected = {
+    properties: ['card', 'Selected card · edits change only Alpha'],
+    design: ['shared', 'Shared art layers · rules apply to every matching card'],
+    weights: ['global', 'Global scoring · changes rescore every card'],
+    decks: ['deck', 'Deck membership · changes only the chosen deck'],
+  };
+  for (const [view, [kind, text]] of Object.entries(expected)) {
+    api.setView(view);
+    assert.equal(pane.getAttribute('data-scope'), kind, view);
+    assert.equal(scope.textContent, text, view);
+    assert.equal(doc.querySelector('.customization-entity-name-text').textContent, 'Alpha', view);
+  }
+  api.setView('properties'); api.setContext('items');
+  assert.equal(scope.textContent, 'Selected item · edits change only First weapon');
+}));
+
+test('docked Edit selects and shows Properties in place without opening the dialog', () => withKitDom(dom => {
+  const { api, doc, state, calls } = fixture(dom);
+  api.setView('weights');
+  api.edit('b');
+  const modal = doc.getElementById('card-editor-modal');
+  assert.ok(!modal.open, 'no dialog while docked');
+  assert.equal(api.isDocked(), true);
+  assert.equal(api.getView(), 'properties');
+  assert.equal(state.selectedCardId, 'b');
+  assert.ok(calls.some(row => row[0] === 'selectCard' && row[1] === 'b'));
+  assert.ok(doc.getElementById('tab-cards').querySelector('#studio-customization-pane'));
+  assert.equal(doc.activeElement, doc.getElementById('customization-entity-name'), 'focus goes to the heading, not a field');
+  assert.equal(doc.querySelector('.customization-entity-name-text').textContent, 'Beta');
+  doc.querySelector('#cards-grid [data-card-id="b"] .card-editor-edit-button').click();
+  assert.ok(!modal.open);
+}));
+
+test('an invalid or missing selection shows the empty state and disables card actions', () => withKitDom(dom => {
+  const { api, doc, state, calls } = fixture(dom);
+  const pane = doc.getElementById('studio-customization-pane'), empty = doc.getElementById('customization-empty');
+  assert.equal(pane.getAttribute('data-empty'), 'false'); assert.equal(empty.hidden, true);
+  for (const selected of ['gone', null]) {
+    state.selectedCardId = selected;
+    assert.doesNotThrow(() => api.refresh());
+    assert.equal(pane.getAttribute('data-empty'), 'true', String(selected));
+    assert.equal(empty.hidden, false);
+    assert.equal(empty.textContent, 'No card selected. Choose a card in the library.');
+    assert.equal(doc.getElementById('card-inspector').hidden, true, 'stale inspector is hidden');
+    assert.equal(doc.querySelector('.inspector-preview-wrap').hidden, true, 'stale preview is hidden');
+    assert.equal(doc.querySelector('.customization-entity-name-text').textContent, 'No card selected');
+    assert.equal(doc.getElementById('card-editor-rename').disabled, true);
+    assert.equal(doc.getElementById('card-editor-balance').disabled, true);
+    assert.equal(doc.querySelectorAll('#cards-grid .card-editor-edit-button').length, 0, 'no Edit on any tile');
+  }
+  const before = calls.length;
+  doc.getElementById('card-editor-rename').disabled = false; doc.getElementById('card-editor-rename').click();
+  assert.equal(calls.length, before, 'a forced click still cannot act on an invalid card');
+  state.selectedCardId = 'b'; api.refreshEntity();
+  assert.equal(pane.getAttribute('data-empty'), 'false');
+  assert.equal(doc.getElementById('card-inspector').hidden, false);
+  assert.equal(doc.querySelectorAll('#cards-grid [data-card-id="b"] .card-editor-edit-button').length, 1, 'an inspector render alone restores Edit');
+}));
+
+test('narrow screens switch between the library and the editor without losing the active card', () => withKitDom(dom => {
+  const media = { matches: true, addEventListener() {} };
+  const { api, doc, state } = fixture(dom, new Map(), { matchMedia: query => { media.query = query; return media; }, narrowQuery: '(max-width: 900px)' });
+  assert.equal(media.query, '(max-width: 900px)');
+  const body = doc.body, nav = doc.getElementById('customization-narrow-nav');
+  const [library, editor] = nav.querySelectorAll('button');
+  assert.ok(body.classList.contains('customize-narrow'));
+  assert.ok(!body.classList.contains('customize-panel-editor'), 'the library is the default panel');
+  assert.equal(library.textContent, 'Library'); assert.equal(editor.textContent, 'Card: Alpha');
+  assert.equal(library.getAttribute('aria-pressed'), 'true'); assert.equal(editor.getAttribute('aria-pressed'), 'false');
+  assert.ok(doc.getElementById('customization-narrow-nav-items'), 'items get their own nav');
+  // Selecting a tile only selects; it does not jump to the editor.
+  state.selectedCardId = 'b'; api.refresh();
+  assert.ok(!body.classList.contains('customize-panel-editor'));
+  assert.equal(editor.textContent, 'Card: Beta');
+  editor.click();
+  assert.ok(body.classList.contains('customize-panel-editor'));
+  assert.equal(editor.getAttribute('aria-pressed'), 'true');
+  assert.equal(doc.activeElement, doc.getElementById('customization-entity-name'));
+  library.click();
+  assert.ok(!body.classList.contains('customize-panel-editor'));
+  assert.equal(state.selectedCardId, 'b', 'returning keeps the active card');
+  assert.equal(doc.activeElement.dataset.cardId, 'b', 'focus returns to the active tile');
+  doc.querySelector('#cards-grid [data-card-id="b"] .card-editor-edit-button').click();
+  assert.ok(body.classList.contains('customize-panel-editor'), 'Edit opens the editor panel');
+  assert.ok(!doc.getElementById('card-editor-modal').open);
+}));
+
+test('the resizer is a named separator with Home and End limits and an understandable minimum', () => withKitDom(dom => {
+  const { doc, stored } = fixture(dom);
+  const resize = doc.getElementById('inspector-resizer');
+  assert.equal(resize.getAttribute('role'), 'separator');
+  assert.equal(resize.getAttribute('aria-label'), 'Resize customization pane');
+  assert.equal(resize.tabIndex, 0);
+  const press = key => { const event = new dom.Event('keydown', { key, cancelable: true }); resize.dispatchEvent(event); return event; };
+  assert.equal(press('Home').defaultPrevented, true);
+  assert.equal(stored.get('ashenspire:studioInspectorW'), '340');
+  assert.equal(resize.getAttribute('aria-valuenow'), '340');
+  assert.equal(resize.getAttribute('aria-valuetext'), '340 pixels, minimum 340');
+  press('ArrowRight'); assert.equal(stored.get('ashenspire:studioInspectorW'), '340', 'never below the minimum');
+  press('End');
+  assert.equal(stored.get('ashenspire:studioInspectorW'), '780');
+  assert.equal(resize.getAttribute('aria-valuetext'), '780 pixels, minimum 340');
+  assert.equal(press('Tab').defaultPrevented, false, 'other keys pass through');
+}));
+
+test('repeated refresh, view and context changes build the header once and add no listeners', () => withKitDom(dom => {
+  const { api, doc } = fixture(dom);
+  const edit = doc.querySelector('#cards-grid .card-editor-edit-button');
+  const navEditor = doc.querySelector('#customization-narrow-nav .customization-nav-editor');
+  const listenerCount = node => [...node.listeners.values()].reduce((sum, list) => sum + list.length, 0);
+  const before = [edit, navEditor, doc.getElementById('customization-view')].map(listenerCount);
+  for (let run = 0; run < 5; run++) { api.refresh(); api.refreshEntity(); api.setView(['design', 'weights', 'decks', 'properties'][run % 4]); }
+  api.setContext('items'); api.setContext('cards'); api.setView('properties');
+  for (const id of ['customization-entity', 'customization-entity-name', 'customization-scope', 'customization-empty', 'customization-narrow-nav', 'customization-narrow-nav-items', 'inspector-card-preview', 'item-preview-host']) assert.equal(doc.querySelectorAll(`#${id}`).length, 1, id);
+  assert.equal(doc.querySelectorAll('.inspector-preview-wrap').length, 1);
+  assert.equal(doc.querySelectorAll('#cards-grid .card-editor-edit-button').length, 1);
+  assert.equal(doc.querySelector('#cards-grid .card-editor-edit-button'), edit, 'the same Edit node is kept');
+  assert.deepEqual([edit, navEditor, doc.getElementById('customization-view')].map(listenerCount), before);
+}));
+
+test('card name collapses the preview; there is no resize bar and only collapsed state persists', () => withKitDom(dom => {
+  const stored = new Map();
+  const first = fixture(dom, stored);
+  const name = first.doc.getElementById('customization-entity-name');
+  const body = first.doc.querySelector('.customization-preview-body');
+  assert.equal(name.tagName, 'BUTTON', 'the whole name bar is the toggle');
+  assert.equal(name.getAttribute('aria-expanded'), 'true');
+  assert.equal(first.doc.querySelector('.customization-preview-resizer'), null, 'no resize bar');
+  name.click();
+  assert.equal(body.hidden, true, 'clicking the name collapses the preview');
+  assert.equal(name.getAttribute('aria-expanded'), 'false');
+  assert.deepEqual(JSON.parse(stored.get('ashenspire:scoreStudioEntityPreview:v1')), { collapsed: true });
+  const again = fixture(dom, stored);
+  assert.equal(again.doc.querySelector('.customization-preview-body').hidden, true, 'collapsed state survives a reload');
+  again.doc.getElementById('customization-entity-name').click();
+  assert.equal(again.doc.querySelector('.customization-preview-body').hidden, false, 'clicking again expands it');
+  assert.equal(again.doc.querySelectorAll('.customization-preview-body').length, 1);
+}));
+
+test('outside Properties the column beside the card holds the view fields only when the composition root draws some', () => withKitDom(dom => {
+  const requests = [];
+  let draws = true;
+  const renderContextFields = (view, container, cardId) => {
+    requests.push([view, cardId]);
+    if (!draws) return false;
+    const row = dom.document.createElement('div'); row.className = 'context-row'; row.textContent = `${view}:${cardId}`;
+    container.replaceChildren(row);
+    return true;
+  };
+  const { api, doc, state } = fixture(dom, new Map(), { renderContextFields }, { scoreSummary: true });
+  const context = doc.querySelector('.customization-context-fields');
+  assert.ok(context, 'the container exists');
+  assert.equal(context.closest('.customization-entity-details')?.parentNode, doc.querySelector('.inspector-preview-wrap'));
+  assert.equal(context.getAttribute('role'), 'group');
+  assert.equal(context.hidden, true, 'Properties keeps its own fields');
+  assert.ok(!requests.some(([view]) => view === 'properties'), 'Properties never asks for context fields');
+  api.setView('weights');
+  assert.equal(context.hidden, false);
+  assert.equal(context.getAttribute('aria-label'), 'Weights for this card');
+  assert.equal(doc.querySelector('.customization-quick-fields').hidden, true);
+  for (let run = 0; run < 4; run++) { api.refresh(); api.refreshEntity(); api.refreshContextFields(); }
+  assert.equal(doc.querySelectorAll('.customization-context-fields').length, 1, 'one container');
+  assert.equal(context.querySelectorAll('.context-row').length, 1, 'rows are rebuilt, never stacked');
+  assert.equal(context.querySelector('.context-row').textContent, 'weights:a');
+  state.selectedCardId = 'b'; api.refreshEntity();
+  assert.equal(context.querySelector('.context-row').textContent, 'weights:b', 'follows the selected card');
+  doc.getElementById('customization-entity-name').click();
+  assert.equal(context.hidden, true, 'hidden while the preview is collapsed');
+  doc.getElementById('customization-entity-name').click();
+  assert.equal(context.hidden, false);
+  draws = false; api.setView('design');
+  assert.equal(context.hidden, true, 'hidden when the view has nothing to show');
+  assert.equal(context.children.length, 0);
+  draws = true; api.setView('decks');
+  assert.equal(context.getAttribute('aria-label'), 'Decks with this card');
+  api.setContext('items');
+  assert.equal(context.hidden, true, 'cards only');
+  api.setContext('cards'); state.selectedCardId = 'gone'; api.refresh();
+  assert.equal(context.hidden, true, 'no fields without a valid card');
+  api.setView('properties');
+  assert.equal(context.hidden, true);
+}));
+
+test(
+  'the dock requires a selectCard callback instead of writing the active card itself',
+  () => withKitDom(dom =>
+  {
+    assert.throws(
+      () => fixture(
+        dom,
+        new Map(),
+        { selectCard: undefined },
+      ),
+      /requires ctx\.selectCard/,
+    );
+  }),
+);
+
+// The dock fixture with filters that hide the cards in hidden until Clear runs.
+function filterNoteFixture(dom, hidden)
+{
+  let parts = null;
+
+  function clearFilters(kind)
+  {
+    hidden.clear();
+    parts.calls.push([FilterNoteFixture.ClearCall, kind]);
+    parts.api.refresh();
+  }
+
+  parts = fixture(
+    dom,
+    new Map(),
+    {
+      isHiddenByFilters: (kind, id) => kind === GalleryKind.Cards && hidden.has(id),
+      clearFilters,
+    },
+  );
+  return parts;
+}
+
+// The notice shows one action while the card stays active and named in the banner.
+function assertNoticeKeepsActiveCard({ doc, state }, note)
+{
+  assert.equal(
+    note.hidden,
+    false,
+    'the banner says the active card is hidden',
+  );
+  const noticeText = note.querySelector(FilterNoteFixture.TextSelector).textContent;
+  assert.match(noticeText, /Hidden by current filters/);
+  assert.equal(
+    state.selectedCardId,
+    FilterNoteFixture.ActiveCardId,
+    'filters never change the active card',
+  );
+  const entityName = doc.getElementById(FilterNoteFixture.EntityNameId);
+  const bannerName = entityName.querySelector(FilterNoteFixture.EntityNameTextSelector);
+  assert.equal(
+    bannerName.textContent,
+    FilterNoteFixture.ActiveCardName,
+    'the banner still shows the active card',
+  );
+  const clear = doc.getElementById(FilterNoteId.Clear);
+  const clearLabel = clear.getAttribute(FilterNoteFixture.AriaLabelAttribute);
+  assert.equal(clearLabel, FilterNoteFixture.ClearAriaLabel);
+  assert.equal(
+    note.querySelectorAll(FilterNoteFixture.ButtonSelector).length,
+    1,
+    'one action, no extra controls',
+  );
+}
+
+// Clear asks the studio to clear the card filters, then hides the notice and focuses the tile.
+function assertClearShowsActiveTile({ doc, state, calls }, note)
+{
+  doc.getElementById(FilterNoteId.Clear).click();
+  const clearCalls = calls.filter(row => row[0] === FilterNoteFixture.ClearCall);
+  assert.deepEqual(clearCalls, [[FilterNoteFixture.ClearCall, GalleryKind.Cards]]);
+  assert.equal(
+    note.hidden,
+    true,
+    'the notice goes once the tile is shown',
+  );
+  assert.equal(
+    doc.activeElement?.dataset?.cardId,
+    FilterNoteFixture.ActiveCardId,
+    'focus lands on the active tile, not the page body',
+  );
+  assert.equal(state.selectedCardId, FilterNoteFixture.ActiveCardId);
+}
+
+test(
+  'filters that hide the active card keep it active; one notice with Clear brings its tile back',
+  () => withKitDom(dom =>
+  {
+    const hidden = new Set([FilterNoteFixture.ActiveCardId]);
+    const dock = filterNoteFixture(dom, hidden);
+    const {
+      doc,
+      state,
+      api,
+    } = dock;
+    api.refresh();
+    const note = doc.getElementById(FilterNoteId.Note);
+    assertNoticeKeepsActiveCard(dock, note);
+    assertClearShowsActiveTile(dock, note);
+    // A visible active card, or no active card, shows no notice.
+    hidden.add(FilterNoteFixture.OtherCardId);
+    api.refresh();
+    assert.equal(note.hidden, true);
+    state.selectedCardId = null;
+    hidden.add(null);
+    api.refresh();
+    assert.equal(note.hidden, true);
+  }),
+);

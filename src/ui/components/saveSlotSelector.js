@@ -14,6 +14,7 @@ import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { focusElement } from '../input.js';
 import { armHold, beatArmer } from '../../framework/optionDecision.js';
 import { hideTooltip } from './tooltip.js';
+import { FinishHoldOnRelease } from './holdRelease.js';
 import { OpenConfirmationModal } from './confirmationModal.js';
 import { registerModal } from '../modalState.js';
 import { deleteSaveReview, replaceSaveReview, reviewEyebrow } from '../models/ConfirmationReviewModel.js';
@@ -383,48 +384,40 @@ export function openSaveSlotSelector({
       actionSlot: selection.properties.actionSlot,
     }));
 
-    const duration = Number(registries?.balance?.ui?.titleLoadHold?.ms);
+    const loadHold = registries?.balance?.ui?.titleLoadHold;
+    const duration = Number(loadHold?.ms);
     const holdMs = Number.isFinite(duration) && duration > 0 ? duration : 600;
+    const trailingClickMs = Number(loadHold?.trailingClickMs);
     veil.querySelectorAll('.title-slot-pick.is-filled').forEach((slotButton) => {
       const slot = Number(slotButton.dataset.slotPick);
       let clearPendingRelease = null;
+      const loadAfterRelease = () =>
+      {
+        if (!closed)
+        {
+          requestLoad(slot, 'hold');
+        }
+      };
       const disarmHold = armHold(slotButton, {
         ms: holdMs,
         id: 'loadSave',
         pointerOnly: true,
         hintHost: slotButton,
         onTap: () => activateSlot(slot),
-        onConfirm: (startEvent) => {
+        onConfirm: (startEvent) =>
+        {
           hideTooltip();
-          if (inlineReview) {
-            requestLoad(slot, 'hold');
-            return;
-          }
-
-          // armHold completes while the pointer is still down. Opening the
-          // Quick Menu confirmation at that instant lets the trailing touch
-          // release hit-test the new veil and cancel it. Retain this selector
-          // as the input owner until the same pointer ends, then cross the
-          // navigation boundary on the next task after its click is swallowed.
-          const pointerId = startEvent?.pointerId;
-          if (!Number.isInteger(pointerId)) return;
-          const clear = () => {
-            slotButton.removeEventListener('pointerup', release);
-            slotButton.removeEventListener('pointercancel', cancel);
-            if (clearPendingRelease === clear) clearPendingRelease = null;
-          };
-          const release = (endEvent) => {
-            if (endEvent.pointerId !== pointerId) return;
-            clear();
-            setTimeout(() => { if (!closed) requestLoad(slot, 'hold'); }, 0);
-          };
-          const cancel = (endEvent) => {
-            if (endEvent.pointerId === pointerId) clear();
-          };
+          // armHold completes while the pointer is still down.
+          // Load on release, so neither the lift nor its click hits the map.
           clearPendingRelease?.();
-          clearPendingRelease = clear;
-          slotButton.addEventListener('pointerup', release);
-          slotButton.addEventListener('pointercancel', cancel);
+          clearPendingRelease = FinishHoldOnRelease(
+            slotButton,
+            startEvent,
+            {
+              trailingClickMs,
+              onRelease: loadAfterRelease,
+            },
+          );
         },
       });
       holdCleanups.push(() => {

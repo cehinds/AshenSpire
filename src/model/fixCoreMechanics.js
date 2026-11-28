@@ -5,6 +5,7 @@ import { fixCoreMechanics as defaults } from '../content/generated/fixCoreMechan
 import { fixCoreProtection } from '../content/generated/fixCoreProtection.js';
 import { compileBindings, evaluateModifiers, queryBinding, parameterDefaults } from './mechanicsKernel.js';
 import { tFull } from './strings.js';
+import { ValidateSpellCostRules } from './spellCostRules.js';
 const mechanics = new Map(fixCoreProtection);
 const behaviorTags = new Set(fixCoreProtection.map(([, row]) => row.manifest.tag));
 
@@ -112,9 +113,11 @@ export function FixCoreBrokenRules(ctx) {
   // Owner, 2026-11-18: a break also applies `breakStatusStacks` stacks each of Staggered, Vulnerable, Weak and Frail until the owner's next turn starts (0 or absent: none).
   return poise?.breakRule === 'broken' ? { damageMultiplier: poise.brokenDamageMultiplier ?? FIXCORE_BROKEN_DAMAGE_MULTIPLIER, statusStacks: poise.breakStatusStacks ?? 0 } : null;
 }
-// Owner, 2026-10-19: a Smash against a defensive stance deals damageMultiplier x its normal damage plus blockFraction of the target's Block,
-// and costs the target's Poise poiseFraction of that total (instead of the 25% Poise absorption). Missing blocks keep these defaults.
-export const FIXCORE_SMASH_VS_DEFENSIVE_DEFAULTS = Object.freeze({ damageMultiplier: 1.25, blockFraction: 0.25, poiseFraction: 0.5 });
+// Owner, 2026-10-19: a Smash against a defensive stance deals damageMultiplier x its normal damage and costs the target's Poise poiseFraction of
+// that total (instead of the 25% Poise absorption). Missing blocks keep these defaults. Owner, 2026-11-20: the share of the target's Block
+// (`blockFraction`) is gone; a Smash card's damage effect breaks a flat amount of Block instead (`breakBlock`). A saved fight's rules may still
+// carry `blockFraction`; it is accepted and ignored.
+export const FIXCORE_SMASH_VS_DEFENSIVE_DEFAULTS = Object.freeze({ damageMultiplier: 1.25, poiseFraction: 0.5 });
 export const fixCoreSmashVsDefensiveRules = rules => ({ ...FIXCORE_SMASH_VS_DEFENSIVE_DEFAULTS, ...(rules?.smashVsDefensive || {}) });
 // Owner, 2026-10-26: a pierce hit lets floor(blockBypassFraction x its damage) past Block. Missing blocks keep this default.
 // Owner, 2026-11-18: `builtInElements` carry Pierce without a tag (Lightning); `skinStatus` is the status whose stacks each cut a Pierce hit's bypass by 1 (Stone Skin);
@@ -222,16 +225,7 @@ function validateStanceBenefits(rows) {
     if (!fields || typeof row !== 'object' || row === null || Object.entries(row).some(([key, value]) => !fields.includes(key) || !Number.isFinite(value) || value < 0)) throw new Error(`FixCore stanceBenefits.${stance} requires non-negative numbers for ${(fields || []).join(', ')}`);
   }
 }
-// Owner, 2026-11-15 (W25-F): spell costs and the elemental flux stance, in data. A missing block (a fight saved before this ruling) keeps today's costs and has no flux.
-// spellCosts: manaSurcharge (every spell), staminaSurcharge (every spell except a `cantripTag` one), preparedStaminaDiscount (in Prepared), focusManaDiscount (a Focus item held), optional manaOnlyTag (a spell with it pays 0 Stamina; a fight without the key ignores the tag). Logic: src/engine/spellCosts.js.
 // elementFlux: multiplier of the next card of the flux element (floored per number). Logic: src/engine/elementFlux.js.
-const SPELL_COST_INTEGERS = Object.freeze(['manaSurcharge', 'staminaSurcharge', 'preparedStaminaDiscount', 'focusManaDiscount']);
-function validateSpellCosts(row) {
-  if (row === undefined) return;
-  if (typeof row !== 'object' || row === null || row.version !== 1 || Object.keys(row).some(key => !['version', 'cantripTag', 'manaOnlyTag', ...SPELL_COST_INTEGERS].includes(key))
-    || SPELL_COST_INTEGERS.some(key => !Number.isInteger(row[key]) || row[key] < 0) || typeof row.cantripTag !== 'string' || !row.cantripTag
-    || (row.manaOnlyTag !== undefined && (typeof row.manaOnlyTag !== 'string' || !row.manaOnlyTag))) throw new Error(`FixCore spellCosts requires version 1, a cantripTag and whole numbers >= 0 for ${SPELL_COST_INTEGERS.join(', ')}`);
-}
 // Owner, 2026-11-15 (W25-BANDS): front and back rows. `bands.rows: true` turns the system on; a fight saved without the block (or with rows:false)
 // plays as before. advancedTurnEnds: how many of the player's turn ends an Advance lasts (2 = through the enemy phase and the next turn).
 // retreatTag / retreatCardId: a weapon with the tag grants the free Retreat card each turn. formationBlock: Block two enemies of one row gain at their turn start.
@@ -303,13 +297,14 @@ export function validateFixCoreRules(rules) {
     || (pierce.builtInElements !== undefined && !(Array.isArray(pierce.builtInElements) && pierce.builtInElements.every(id => typeof id === 'string' && id.length > 0)))
     || ['skinStatus', 'earthSource'].some(key => pierce[key] !== undefined && pierce[key] !== null && !(typeof pierce[key] === 'string' && pierce[key].length > 0)))) throw new Error('FixCore pierce requires optional fraction, non-negative integer Block per stack, element strings and nullable status/source strings');
   validateStanceBenefits(rules.stanceBenefits);
-  validateSpellCosts(rules.spellCosts);
+  ValidateSpellCostRules(rules.spellCosts);
   validateElementFlux(rules.elementFlux);
   validateBands(rules.bands);
   const smash = rules.smashVsDefensive;
   if (smash !== undefined && (typeof smash !== 'object' || smash === null || Object.keys(smash).some(key => !['damageMultiplier','defendDamageMultiplier','blockFraction','poiseFraction'].includes(key))
-    || ![smash.damageMultiplier,smash.blockFraction,smash.poiseFraction].every(v => typeof v === 'number' && Number.isFinite(v)) || smash.damageMultiplier < 1 || smash.blockFraction < 0 || smash.poiseFraction < 0
-    || (smash.defendDamageMultiplier !== undefined && (typeof smash.defendDamageMultiplier !== 'number' || !Number.isFinite(smash.defendDamageMultiplier) || smash.defendDamageMultiplier < 1)))) throw new Error('FixCore smashVsDefensive requires {damageMultiplier>=1, optional defendDamageMultiplier>=1, blockFraction>=0, poiseFraction>=0}');
+    || ![smash.damageMultiplier,smash.poiseFraction].every(v => typeof v === 'number' && Number.isFinite(v)) || smash.damageMultiplier < 1 || smash.poiseFraction < 0
+    || (smash.blockFraction !== undefined && (typeof smash.blockFraction !== 'number' || !Number.isFinite(smash.blockFraction) || smash.blockFraction < 0))
+    || (smash.defendDamageMultiplier !== undefined && (typeof smash.defendDamageMultiplier !== 'number' || !Number.isFinite(smash.defendDamageMultiplier) || smash.defendDamageMultiplier < 1)))) throw new Error('FixCore smashVsDefensive requires {damageMultiplier>=1, optional defendDamageMultiplier>=1, poiseFraction>=0}');
   if (rules.elements !== undefined && (typeof rules.elements !== 'object' || rules.elements === null || rules.elements.version !== 1)) throw new Error('FixCore elements requires {version:1}');
   for(const key of Object.keys(rules)) if(!known.has(key)) throw new Error(`FixCore unknown configuration field ${key}`);
   for (const tag of rules.defaultTags || []) if (!behaviorTags.has(tag)) throw new Error(`FixCore unknown behavior tag ${tag}`);

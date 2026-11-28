@@ -1,0 +1,80 @@
+{
+  "$note": "Module overrides that each switch one Simple Combat mechanic off.",
+  "core": "ashen.core@2.0.0",
+  "seed": 511,
+  "classId": "reaver",
+  "enemyIds": [
+    "fellWarden"
+  ],
+  "overrides": {
+    "poiseOff": {
+      "stagger": {
+        "poise": false
+      }
+    },
+    "stanceBenefitsOff": {
+      "stances": {
+        "builtInBenefits": false
+      }
+    },
+    "sameStanceDiscountOff": {
+      "stances": {
+        "sameStanceDiscount": false
+      }
+    },
+    "authoredUpgrades": {
+      "progression": {
+        "upgradeMode": "authored"
+      }
+    },
+    "singleEnemyAction": {
+      "enemies": {
+        "turnActions": "single"
+      }
+    }
+  },
+  "stanceProbe": {
+    "stance": {
+      "maneuver": "smash",
+      "camp": "physical",
+      "range": "melee"
+    },
+    "carrier": {
+      "combatProfile": {
+        "maneuver": "smash",
+        "camp": "physical"
+      }
+    },
+    "baseSp": 2,
+    "secondTurn": 2
+  },
+  "upgradeProbe": {
+    "choices": 3,
+    "rank": 2
+  },
+  "enemyTurnProbe": {
+    "seeds": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ],
+    "playerHp": 400
+  },
+  "preparedSpellProbe": {
+    "$note": "A spell priced 2 SP; Prepared cuts it to 1 while the discount is on.",
+    "cardId": "starShower",
+    "price": {
+      "stamina": 2,
+      "mana": 0
+    }
+  }
+}

@@ -28,7 +28,10 @@
     },
     "stances": {
       "version": "1.0.0",
-      "settings": {}
+      "settings": {
+        "builtInBenefits": true,
+        "sameStanceDiscount": true
+      }
     },
     "effects": {
       "version": "1.0.0",
@@ -96,6 +99,7 @@
       "settings": {
         "entitlementPolicy": "authored",
         "cardRanks": true,
+        "upgradeMode": "rolled",
         "characterLevels": true,
         "attributePointsPerLevel": 1,
         "classXpMultiplier": 1,
@@ -144,6 +148,7 @@
     "enemies": {
       "version": "1.0.0",
       "settings": {
+        "turnActions": "spPool",
         "effectiveLevelByAct": {
           "elite": [
             2,
@@ -183,7 +188,9 @@
     },
     "stagger": {
       "version": "1.0.0",
-      "settings": {}
+      "settings": {
+        "poise": true
+      }
     },
     "enemy-visibility": {
       "version": "1.0.0",
@@ -238,6 +245,7 @@
         "minimumThreatFloor": "minimumThreatFloor",
         "mapMode": "mapMode",
         "firstFloor": "firstFloor",
+        "floorTypes": "floorTypes",
         "shopShare": "shopShare",
         "requirePrebossRest": "requirePrebossRest",
         "maxBranches": "maxBranches",

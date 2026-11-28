@@ -8,6 +8,7 @@ export const LEGACY_ROUTES = {
   acts: 3, prebossNodes: 9, bosses: 3, restsPerAct: 3,
   hiddenTypes: ['event', 'fight', 'treasure', 'shop'], visibleTypes: ['rest', 'elite', 'boss'],
   restFloors: [3, 6, 9], branchColumns: 3, minimumThreatFloor: 3, mapMode: 'fog', firstFloor: 'fight',
+  floorTypes: null,
   shopShare: 0.15, requirePrebossRest: true, maxBranches: 3, startNodeRefills: true, fogRevealRests: null, fogTrailOnly: null,
   typeWeights: null, variedNeighbours: null, shopsPerBranch: null, forkPercent: null, crossLinkPercent: null,
   startRestFromAct: null, restGap: null, restFloorSpread: null, branchSpread: null, singlePrebossRest: null, fogCommittedBranch: null,

@@ -264,7 +264,18 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
         // A Counter that answered is used up for whatever acts after this action in the same detached state.
         if (bonus > 0) defender.combatCounter = { ...defender.combatCounter, charges: 0 };
       }
-      const receipt = ProfileCombat.profileDamageReceipt(previewCtx, attacker || source, defender, base, carrier, { forecast: true });
+      // Flat break applies on the first hit only.
+      const hitCarrier = hit > 0
+        ? ProfileCombat.StripFlatBreakCarrier(carrier)
+        : carrier;
+      const receipt = ProfileCombat.profileDamageReceipt(
+        previewCtx,
+        attacker || source,
+        defender,
+        base,
+        hitCarrier,
+        { forecast: true },
+      );
       receipts.push(receipt);
       const blockBefore = defender?.block || 0;
       if (defender) { applyReceiptToPreviewTarget(ctx, defender, receipt, attacker || source); if (receipt.evaded) SpendPreviewEvade(defender); }

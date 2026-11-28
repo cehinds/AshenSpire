@@ -8,6 +8,7 @@ import { ElementStatusCap } from './elementIdentity.js';
 import { combatStatusRules } from '../content/combatStatusRules.js';
 import { syncWardMaximum, syncPoiseMaximum } from './combatPools.js';
 import { persistentPoiseMaximum } from '../model/combatRatings.js';
+import { PoiseEnabled } from '../model/simpleCombatFlags.js';
 
 const finite = value => Number.isFinite(value) ? value : 0;
 const whole = value => Math.max(0, Math.floor(finite(value)));
@@ -309,7 +310,7 @@ export function applyStatusPressure(ctx, target, id, units, source = null, optio
       const spent = spendPersistentWard(ctx, target, 1, { status: id, actionKey: options.actionKey, sourceId: source?.id });
       receipt.wardSpent += spent.spent;
       admitted = target.persistentWard.value === 0;
-    } else if (camp === 'physical' && target.poiseMeter?.max > 0) {
+    } else if (camp === 'physical' && target.poiseMeter?.max > 0 && PoiseEnabled(ctx)) {
       const meter = target.poiseMeter;
       meter.value += 1; receipt.poiseStrain += 1;
       admitted = meter.value >= meter.max;
