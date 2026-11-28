@@ -1,7 +1,9 @@
-// Renderers for one value: a number, a line or block of text, or a choice from a list.
+// Renderers for one value: a number, a line or block of text, a choice from a list, or on/off.
 import { El, TextInput } from './dom.js';
 import { FormatFieldInput, ParseFieldInput } from './fieldPaths.js';
 import { FieldRenderer, NUMBER_TYPE, TEXT_TYPE } from './fieldRenderer.js';
+
+const CHECKBOX_TYPE = 'checkbox';
 
 export class ScalarRenderer extends FieldRenderer
 {
@@ -98,5 +100,23 @@ export class SelectRenderer extends FieldRenderer
         }, optionElements);
         select.value = current;
         return select;
+    }
+}
+
+export class BooleanRenderer extends FieldRenderer
+{
+    Control(field, value, context)
+    {
+        const checkbox = El('input', {
+            className: this.classes.control,
+            attributes: {
+                type: CHECKBOX_TYPE,
+            },
+            on: {
+                change: () => context.onChange(checkbox.checked),
+            },
+        });
+        checkbox.checked = value === true;
+        return checkbox;
     }
 }
