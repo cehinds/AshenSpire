@@ -1110,6 +1110,7 @@
       "portability": "legacy",
       "modules": [
         "defenses",
+        "stances",
         "statuses"
       ]
     },
@@ -1331,6 +1332,7 @@
       "portability": "legacy",
       "modules": [
         "deck-training",
+        "stances",
         "statuses"
       ]
     },

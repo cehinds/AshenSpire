@@ -41,6 +41,8 @@
 // Prepared-only Focus wording and the shared Evade grant source reference move only the runtime artifact identity.
 // The 2026-11-19 deferred Axe Strength grant repoints its generated mechanic reader to finishAbilityPlay; the preceding runtime keeps its own snapshotted rules.
 const PREVIOUS_RUNTIMES = new Set([
+  // Dev before the stances.ruleset triangle switch (the breakBlock/breakPoise manaOnly runtime).
+  'sha256:86b335d2ec3ae5b290afd68343bf41686eb9e8f67e15a5eee6ec1f4b2420a21c',
   // Before catalog regeneration 7c32f9ef4bc: keep the exact recorded profile and its tradition tags.
   'sha256:c77d4f30494cb821fc66b9b9ef19b91fbb2c699633fe0137b72ab89d261ec831',
   // Dev c5c5ec4a before #3002: no enemyLevelScaling table or enemy level-card lists.
@@ -221,8 +223,12 @@ const COMPATIBLE_HOST_RUNTIMES = new Set([
   'sha256:26b1b0c446b58265c9a7c6264f824e0455cef63f7ea8ee5f937aac06049ad85e',
   // breakBlock/breakPoise op fields merged onto the cost.manaOnly manifest move the host runtime.
   'sha256:86b335d2ec3ae5b290afd68343bf41686eb9e8f67e15a5eee6ec1f4b2420a21c',
+  // The stances.ruleset triangle switch (stance reads in Block gain and concurrent defenses).
+  'sha256:8285db7e6ab355d97ccb9c2c7d214587c9413f766c8f7a346821cb96afd51081',
   // Per-tag attributeFloor and enemyStartingBudget (engine/kernel/gameConfig.js) move the host runtime.
   'sha256:bcd52f05f1070ebba6fe36bf95b2073274ab37bd74d034a0d719f5d47f28f24d',
+  // The attribute floor split merged onto the stances.ruleset triangle switch.
+  'sha256:86802cfdd96a412c98939eb67815c92754f08fcd44709668309f5f8393e4864b',
 ]);
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return COMPATIBLE_HOST_RUNTIMES.has(currentRuntime)

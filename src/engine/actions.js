@@ -21,6 +21,7 @@ import { moveCards, hasCardChoice } from './cardZones.js';
 import { SpellPoiseMultiplier, configuredCombat, configuredModule, profileDamageReceipt } from './gameProfileCombat.js';
 import { BlockGainMultiplier, CounterReturnAmount, SweepSplashTargets, SplashCarrier, DefendPoiseFloor, HeldStance } from './stanceBenefits.js';
 import { FluxMultiplier, FluxScale } from './elementFlux.js';
+import { TriangleBlockMultiplier } from './triangleBlock.js';
 import { ApplyElementReceipt, OnPoiseBreak, ElementTargets, ElementChain } from './elementIdentity.js';
 import { gainCounterStacks, CounterStackGrant, gainReflectStacks, spendReflectStacks, reflectReturned } from './guardStacks.js';
 import { weaknessTickMultiplier, weaknessesActive } from './weaknesses.js';
@@ -1149,6 +1150,25 @@ const StatusBlockAdd = (ctx, entity, card) => {
   return Number.isFinite(w) && w > 0 ? Math.floor(statuses.getAdd(ctx, entity, 'blockAdd') * w) : 0;
 };
 
+// Stance Block bonuses (stanceBenefits.js) and the triangle's defend winner multiply here.
+function configuredBlockGain(ctx, entity, base, card)
+{
+  if (!configuredModule(ctx, 'defenses')?.include?.includes('block'))
+  {
+    return 0;
+  }
+  const dr = fixCoreEnabled(ctx)
+    ? ratingValue(ctx, entity, 'dr')
+    : entity?.ratings?.dr || 0;
+  const rated = base + dr * ChannelWeight(configuredModule(ctx, 'effects'), 'dr');
+  const scaled = rated
+    * stanceEffectiveness(ctx, entity, card)
+    * BlockGainMultiplier(ctx, entity, card)
+    * FluxMultiplier(ctx, entity, card)
+    * BlockGainScale(ctx)
+    * TriangleBlockMultiplier(ctx, entity, card);
+  return Math.max(0, Math.floor(scaled) + StatusBlockAdd(ctx, entity, card));
+}
 /**
  * computeBlockGain(ctx, entity, base) → final integer block gain:
  * base + the eligible rating bonus + per-stack 'blockAdd' modifiers,
@@ -1156,8 +1176,7 @@ const StatusBlockAdd = (ctx, entity, card) => {
  * floored, min 0 (SPEC §4.2). Pure. Cap NOT applied here.
  */
 export function computeBlockGain(ctx, entity, base, card = null) {
-  if (configuredCombat(ctx)) return configuredModule(ctx, 'defenses')?.include?.includes('block')
-    ? Math.max(0, Math.floor((base + (fixCoreEnabled(ctx) ? ratingValue(ctx, entity, 'dr') : entity?.ratings?.dr || 0) * ChannelWeight(configuredModule(ctx, 'effects'), 'dr')) * stanceEffectiveness(ctx, entity, card) * BlockGainMultiplier(ctx, entity, card) * FluxMultiplier(ctx, entity, card) * BlockGainScale(ctx)) + StatusBlockAdd(ctx, entity, card)) : 0; // Wave 2.5: Defend +50%, Counter +25% (stanceBenefits.js)
+  if (configuredCombat(ctx)) return configuredBlockGain(ctx, entity, base, card);
   const split = computeSpellDefenseGain(ctx, entity, base, card);
   if (split) return split.block + split.ward;
   let amt = base + Ratings.cardRatingBonus(ctx, entity, card, 'block', base) + statuses.getAdd(ctx, entity, 'blockAdd');
