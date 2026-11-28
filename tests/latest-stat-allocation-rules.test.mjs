@@ -48,10 +48,22 @@ test('fresh Core snapshots assign only Health to CON and Poise/Mana to WIS', () 
   assert.equal(run.maxHp, before.hp + 5);
 });
 
+// What gear and level bonuses add to one attribute, read at a base high enough that the floor of 0
+// on effective attributes cannot hide a penalty.
+const OFFSET_PROBE_BASE = 10;
+function gearOffset(run, attribute)
+{
+  const base = run.attributes[attribute];
+  run.attributes[attribute] = OFFSET_PROBE_BASE;
+  const offset = gameProfileEffectiveAttributes(registries, run)[attribute] - OFFSET_PROBE_BASE;
+  run.attributes[attribute] = base;
+  return offset;
+}
+
 test('real allocations grant one SP, MP or hand card per applicable point', () => {
   for (const [attribute, pool] of [['dexterity', 'maxStamina'], ['wisdom', 'maxMana']]) {
     const run = makeRun();
-    const offset = gameProfileEffectiveAttributes(registries, run)[attribute] - run.attributes[attribute];
+    const offset = gearOffset(run, attribute);
     run.attributes[attribute] = 2 - offset;
     rederivePools(registries, run, 'threshold fixture');
     assert.equal(gameProfileEffectiveAttributes(registries, run)[attribute], 2);
@@ -65,7 +77,7 @@ test('real allocations grant one SP, MP or hand card per applicable point', () =
     assert.equal(run[pool], before + 2, `${attribute} 3 -> 4`);
   }
   const run = makeRun();
-  const offset = gameProfileEffectiveAttributes(registries, run).intelligence - run.attributes.intelligence;
+  const offset = gearOffset(run, 'intelligence');
   run.attributes.intelligence = 2 - offset;
   rederivePools(registries, run, 'hand fixture');
   assert.equal(gameProfileEffectiveAttributes(registries, run).intelligence, 2);
