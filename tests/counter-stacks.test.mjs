@@ -22,13 +22,36 @@ import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/co
 import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
 import { combatLogEntries } from '../src/model/combatLog.js';
 import { mechanics } from '../src/framework/data/mechanics.js';
+import { ReactionCarrierProfile } from './helpers/reaction-carriers.mjs';
 
-// Pins this file's SPEC worked examples (a Counter, Poise or Smash rule, not damage scale): the Core 0.5 base-damage scale is off here.
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { baseDamageMultiplier: 1, physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
-const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
-function live() {
-  const run = createRunState({ registries: reg, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
-  const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+// Pins this file's SPEC worked examples (a Counter, Poise or Smash rule): every damage scale is 1
+// (owner ruling 2026-11-28); the fights answer an 8-damage Slash so the stack share stays above 0.
+const profile = resolveGameProfile({
+  formatVersion: 1,
+  core: 'ashen.core@2.0.0',
+  modules: {},
+});
+const WORKED_ATTACK_DAMAGE = 8;
+function workedSoldier(row)
+{
+  const slash = { ...row.moves.slash, damage: WORKED_ATTACK_DAMAGE };
+  return { ...row, moves: { ...row.moves, slash } };
+}
+const soldierBundle = {
+  ...contentBundle,
+  enemies: contentBundle.enemies.map(row => row.id === 'wanderingSoldier' ? workedSoldier(row) : row),
+};
+function registriesFor(gameProfile)
+{
+  const registries = createRegistries(applyGameProfileToContent(soldierBundle, gameProfile));
+  return bindGameProfileRegistries(registries, gameProfile);
+}
+const reg = registriesFor(profile);
+// The per-root stacking fights answer with Defend as a Reaction card (tests/fixtures/reaction-carriers.json).
+const carrierReg = registriesFor(ReactionCarrierProfile());
+function live(registries = reg) {
+  const run = createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
   const enemy = combat.enemies[0];
   combat.player.basePrecisionBonus = 1000;
   // A plain 8-damage Attack that always lands, with no rating or status noise.
@@ -77,18 +100,21 @@ test('stacks persist across the owner turn start (less the fade) and a stance ch
   assert.equal(combat.player.counterStacks, stacks - 2, 'a stance change leaves them alone');
 });
 
-test('the return is the card\'s base damage + floor(stacks x 0.1 x incoming) (+ the advantage share): 4 + floor(7 x 0.1 x 8) + 2 = 11', () => {
+test('the return is the card\'s base damage + floor(stacks x 0.1 x incoming) (+ the advantage share): 1 + floor(7 x 0.1 x 8) + 2 = 8', () => {
   const { combat } = withCounter();
   dispatch(combat, { type: 'playCard', cardInstanceId: 'cx1' });
   combat.player.counterStacks = 7;
   Object.assign(combat.player, { block: 5, persistentPoise: { value: 20, max: 20 } });
   const triggered = returnEvent(endTurn(combat));
-  assert.equal(triggered.amount, 4 + Math.floor(7 * 0.1 * 8) + 2);
-  assert.equal(triggered.amount, 11);
-  assert.equal(triggered.counterBase, 4); assert.equal(triggered.counterStacks, 7); assert.equal(triggered.counterIncoming, 8);
+  // Owner ruling 2026-11-28: Counter's stored base is 1.
+  assert.equal(triggered.amount, 1 + Math.floor(7 * 0.1 * 8) + 2);
+  assert.equal(triggered.amount, 8);
+  assert.equal(triggered.counterBase, 1);
+  assert.equal(triggered.counterStacks, 7);
+  assert.equal(triggered.counterIncoming, 8);
   assert.equal(triggered.counterStackShare, 5);
   const [line] = combatLogEntries([triggered], { registries: reg, enemies: combat.enemies });
-  assert.match(line.text, /for 11 \(base 4 \+ stack bonus 5 \+ advantage 2\)\.$/);
+  assert.match(line.text, /for 8 \(base 1 \+ stack bonus 5 \+ advantage 2\)\.$/);
 });
 
 test('counterReturn units: base once, stacks floor per hit, no return from a zero hit', () => {
@@ -210,7 +236,7 @@ test('outside Core 2 (default bundle) a Counter gains no stacks', () => {
 
 // Per-root reaction policy (saved Core 2 fights: contactPolicy absent) stacks cards before the hit lands (Codex on #2431).
 function stackingFight(cardId, stance = 'counter') {
-  const { combat } = live();
+  const { combat } = live(carrierReg);
   delete combat.reactionRules.contactPolicy;
   combat.piles.hand.length = 0;
   combat.piles.hand.push({ instanceId: 'st1', cardId });
