@@ -72,6 +72,25 @@ test('settings import accepts exported legacy advanced settings using their row 
   assert.deepEqual(parseAdvancedConfigFile(text, contentBundle, {}, rows), { cardMotif: 'band' });
 });
 
+const PLAYBACK_KEY = 'gameConfig.prologue.presentation.playback';
+const MUSIC_KEY = 'musicEnabled';
+
+test('an export writes each gameConfig key once and keeps ordinary settings', () =>
+{
+  const settings = {
+    [PLAYBACK_KEY]: 'once',
+    [MUSIC_KEY]: false,
+  };
+  const overrides = JSON.parse(advancedConfigExport(settings, {}, [
+    PLAYBACK_KEY,
+    MUSIC_KEY,
+  ])).overrides;
+  assert.deepEqual(overrides, {
+    [PLAYBACK_KEY]: 'once',
+    [`settings.${MUSIC_KEY}`]: false,
+  });
+});
+
 test('advanced configuration inventory is complete, grouped, and uniquely keyed', () => {
   const rows = advancedConfigRows(contentBundle);
   assert(rows.length > 250);
