@@ -22,6 +22,17 @@ import { legacyGearProfile, legacyGearRegistries } from './helpers/legacy-gear.m
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { physicalDamageMultiplier: 1 } } }); // the playtest physical cut is off: this file pins its own hand-sized arithmetic
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+const REFLECT_SLASH_DAMAGE = 8;
+const TRIPLE_SLASH_DAMAGE = 20;
+const SOLDIER_ID = 'wanderingSoldier';
+const soldierSlash = () => contentBundle.enemies.find(row => row.id === SOLDIER_ID).moves.slash;
+function withSoldierSlash(slash)
+{
+  const enemies = contentBundle.enemies.map(row => row.id === SOLDIER_ID
+    ? { ...row, moves: { ...row.moves, slash } }
+    : row);
+  return { ...contentBundle, enemies };
+}
 const preGearRegistries = legacyGearRegistries(reg);
 function live(registries = reg) {
   const run = createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
@@ -267,10 +278,14 @@ test('a solo player preview binds its detached attacker, so level-keyed Precisio
 
 test('Counter forecast under Reflect equals live: a return that kills the attacker forecasts no Counter; a survivable one forecasts live\'s damage', async () => {
   const { previewCard } = await import('../src/engine/combat.js');
-  // Full base damage: under Core's halving the soldier's 8 Slash returns 1, which its Poise rating absorbs, so the Reflect return could never kill.
-  const fullProfile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { baseDamageMultiplier: 1, physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
+  // An 8-damage Slash reflects floor(8 x 0.3) = 2, enough to kill a one-HP attacker; the stored
+  // Slash is 2 (owner ruling 2026-11-28), whose reflected 0 could never kill.
+  const slash = { ...soldierSlash(), damage: REFLECT_SLASH_DAMAGE };
+  const bundle = withSoldierSlash(slash);
   // The one-HP attacker is meant to die to Reflect, without plate Thorns killing it first.
-  const fullBase = legacyGearRegistries(bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, fullProfile)), fullProfile));
+  const slashContent = createRegistries(applyGameProfileToContent(bundle, profile));
+  const slashRegistries = bindGameProfileRegistries(slashContent, profile);
+  const fullBase = legacyGearRegistries(slashRegistries);
   const run = enemyHp => {
     const { combat, enemy } = live(fullBase);
     enemy.hp = enemyHp;
@@ -297,9 +312,9 @@ test('Counter forecast under Reflect equals live: a return that kills the attack
 // so later hits (and the Counter Block they grant) are priced from the evolving detached attacker, not the original enemy.
 test('per-root Counter forecast prices later contacts from the Poise-broken attacker, forecast == live', async () => {
   const { previewCard } = await import('../src/engine/combat.js');
-  // Slash is authored at 40 so Core's base-damage scale (x0.5, ceil) lands each contact at the 20 these numbers were captured with.
-  const run = (poise, rules = profile, damage = 40) => {
-    const bundle = { ...contentBundle, enemies: contentBundle.enemies.map(e => e.id === 'wanderingSoldier' ? { ...e, moves: { ...e.moves, slash: { intent: 'attack', damage, hits: 3, weight: 45 } } } : e) };
+  // Each of the three contacts lands at 20 (every damage scale is 1, owner ruling 2026-11-28).
+  const run = (poise, rules = profile, damage = TRIPLE_SLASH_DAMAGE) => {
+    const bundle = withSoldierSlash({ intent: 'attack', damage, hits: 3, weight: 45 });
     const triple = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(bundle, rules)), rules);
     const { combat, enemy } = live(triple);
     pinHistoricalReflectPoise(combat);
@@ -325,12 +340,13 @@ test('per-root Counter forecast prices later contacts from the Poise-broken atta
   assert.equal(broken.forecast.hp, broken.liveHp, 'Reflect breaks the attacker\'s Poise: forecast == live return damage');
   const control = run(0);
   assert.equal(control.forecast.hp, control.liveHp, 'control: nothing to break, forecast == live');
-  // With 11 stacks held (10 + the card's 1), each answered hit returns the scaled base 2 plus floor(incoming x 0.1 x stacks held), then spends one stack.
-  assert.equal(control.forecast.hp, 48, 'control forecast with the card-stack Counter rule; the enemy side x0.7 (owner, 2026-11-18) took it from 66 (19 + 25 + 22)');
-  const fullProfile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { baseDamageMultiplier: 1, physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
-  const legacy = withoutBatch2Rules(() => run(0, legacyGearProfile(fullProfile), 20));
+  // 11 stacks held (10 + the card's 1): each answered hit returns the stored base 1 plus
+  // floor(incoming x 0.1 x stacks held), then spends one stack (owner ruling 2026-11-28).
+  assert.equal(control.forecast.hp, 53, 'control forecast, card-stack Counter rule (15 + 20 + 18)');
+  const legacy = withoutBatch2Rules(() => run(0, legacyGearProfile(profile)));
   assert.equal(legacy.forecast.hp, legacy.liveHp, 'pre-batch-2 rules: forecast == live');
-  assert.equal(legacy.forecast.hp, 111, 'pre-batch-2 control forecast unchanged');
+  // One whole-root return (owner ruling 2026-11-28): 1 + floor(17 Block-as-stacks x 0.1 x 51) + 11.
+  assert.equal(legacy.forecast.hp, 98, 'pre-batch-2 control forecast');
   assert.ok(broken.liveHp < control.liveHp, 'the Poise break really removed the later-hit bonus');
 });
 
