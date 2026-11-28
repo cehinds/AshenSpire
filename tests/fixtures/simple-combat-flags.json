@@ -204,6 +204,17 @@
         6
       ],
       "stepLimit": 400
+    },
+    "concurrentDefense": {
+      "$note": "A target holding defend and smash against a casting damage spell (attack) defends with defend.",
+      "cardId": "starShower",
+      "capacityStatus": "base.many-forms",
+      "liveManeuver": "casting",
+      "held": [
+        "defend",
+        "smash"
+      ],
+      "expected": "defend"
     }
   }
 }

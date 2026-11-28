@@ -11,6 +11,7 @@ import { enemyMoveCarrier } from '../src/engine/combatCardTactics.js';
 import { TriangleBlockMultiplier } from '../src/engine/triangleBlock.js';
 import { computeBlockGain } from '../src/engine/actions.js';
 import { dispatch } from '../src/engine/combat.js';
+import { defensiveCombatStance } from '../src/engine/concurrentStances.js';
 import {
   affordableCards,
   botCardTargetId,
@@ -312,4 +313,38 @@ test('triangle: bot-played fights reach a result', () =>
     }
     assert.ok(fight.result, `seed ${seed}`);
   }
+});
+
+test('triangle: concurrent defenses rank by the triangle, not the old matchups', () =>
+{
+  const probe = PROBE.concurrentDefense;
+  const registries = SimpleCombatRegistries(TRIANGLE);
+  const fight = SimpleCombatFight(registries);
+  const rows = probe.held.map(maneuver =>
+  {
+    return {
+      camp: 'physical',
+      maneuver,
+    };
+  });
+  const target = {
+    combatStance: rows[rows.length - 1],
+    concurrentStances: rows,
+    statuses: {
+      [probe.capacityStatus]: {
+        stacks: 1,
+      },
+    },
+  };
+  const card = cardCarrier(registries, probe.cardId);
+  const carrier = {
+    ...card,
+    cardId: probe.cardId,
+    combatProfile: {
+      ...card.combatProfile,
+      maneuver: probe.liveManeuver,
+    },
+  };
+  const chosen = defensiveCombatStance(fight, target, carrier);
+  assert.equal(chosen.maneuver, probe.expected, probe.$note);
 });
