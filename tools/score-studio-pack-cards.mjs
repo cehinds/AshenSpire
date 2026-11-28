@@ -14,6 +14,7 @@ import { spawnSync } from 'node:child_process';
 import {
   StudioCardChangeKeys,
   StudioPackCardIdPrefixes,
+  IsStudioPackCardId,
 } from './score-studio/studioSaveFiles.js';
 
 const jsonIndent = 2;
@@ -48,11 +49,6 @@ function isPlainObject(value)
 function isNonEmptyString(value)
 {
   return typeof value === 'string' && Boolean(value);
-}
-
-function isPackCardId(id)
-{
-  return isNonEmptyString(id) && StudioPackCardIdPrefixes.some((prefix) => id.startsWith(prefix));
 }
 
 function isAuthoredKey(key)
@@ -106,7 +102,7 @@ function cardChangeProblem(change)
   {
     return shapeProblem;
   }
-  if (!isPackCardId(change.id))
+  if (!IsStudioPackCardId(change.id))
   {
     return `card id "${change.id}" is not in the game card file's namespaces (${namespaceRule()}).`;
   }
@@ -119,7 +115,7 @@ function removedIdsProblem(removedCardIds, changedIds)
   {
     return 'removedCardIds must be an array of card ids.';
   }
-  const outside = removedCardIds.filter((id) => !isPackCardId(id));
+  const outside = removedCardIds.filter((id) => !IsStudioPackCardId(id));
   if (outside.length)
   {
     return `removed ids ${outside.join(', ')} are not in the game card file's namespaces`

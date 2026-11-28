@@ -41,7 +41,12 @@ const toastText = Object.freeze({
   [StudioSaveResult.Unchanged]: 'No Studio changes since the last Save',
   [StudioSaveResult.Downloaded]: `Downloaded ${StudioSaveDownloadName}`,
   loadFailed: 'Could not read the Studio save files',
+  heldBack: (count) => ` ${count} card change(s) outside core. and custom. stay in the draft.`,
 });
+const savedResults = Object.freeze([
+  StudioSaveResult.Saved,
+  StudioSaveResult.Unchanged,
+]);
 
 async function fetchJson(url, init)
 {
@@ -109,7 +114,7 @@ function registerCardsFile(deps)
     path: StudioSaveFiles[cardsName].path,
     read: () => ({
       cards: deps.packCardChanges(),
-      removedCardIds: deps.removedCoreIds(),
+      removedCardIds: deps.packRemovedIds(),
     }),
   });
 }
@@ -211,7 +216,7 @@ class StudioSaveUi
       pill.textContent = StudioSavePillText.Saving;
     }
     const outcome = await this.#controller.save();
-    this.#deps.toast(outcome.message ?? toastText[outcome.result]);
+    this.#deps.toast(this.#outcomeText(outcome));
     if (outcome.result === StudioSaveResult.Failed)
     {
       this.#showFailed(pill, outcome.detail);
@@ -287,6 +292,16 @@ class StudioSaveUi
     }));
   }
 
+  #outcomeText(outcome)
+  {
+    const text = outcome.message ?? toastText[outcome.result];
+    const heldBack = this.#deps.heldBackCardCount?.() ?? 0;
+    const notesHeldBack = heldBack > 0 && savedResults.includes(outcome.result);
+    return notesHeldBack
+      ? `${text}${toastText.heldBack(heldBack)}`
+      : text;
+  }
+
   #showFailed(pill, message)
   {
     this.#failedUntil = Date.now() + failedPillMs;
@@ -303,7 +318,7 @@ class StudioSaveUi
   }
 }
 
-// deps: state, packCardChanges, removedCoreIds, isLocalServer, isTextEntry,
+// deps: state, packCardChanges, packRemovedIds, heldBackCardCount, isLocalServer, isTextEntry,
 // flushDraft, writeDraftNow, storeDraft, refreshDirtyStatus, toast, download and clone.
 export function InitStudioSaveUi(deps)
 {

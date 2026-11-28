@@ -23,6 +23,13 @@ export const StudioPackCardIdPrefixes = Object.freeze([
   'core.',
   'custom.',
 ]);
+/** True for an id the game's card file may hold. */
+export function IsStudioPackCardId(id)
+{
+  const isId = typeof id === 'string' && Boolean(id);
+  return isId && StudioPackCardIdPrefixes.some((prefix) => id.startsWith(prefix));
+}
+
 export const StudioCardChangeKeys = Object.freeze([
   'id',
   'set',

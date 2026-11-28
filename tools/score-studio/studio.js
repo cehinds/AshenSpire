@@ -54,6 +54,7 @@ import {
 } from './contentEditor/contentEditor.js';
 import { InitStudioSaveUi, StudioSaveMenuLabel } from './studioSaveUi.js';
 import { StudioCardChanges } from './packCardChanges.js';
+import { IsStudioPackCardId } from './studioSaveFiles.js';
 import {
   GalleryKind,
   Galleries,
@@ -497,9 +498,25 @@ function gameCardOf(id)
 }
 
 // What File > Save writes into the game's card file: the keys each edit changed.
+// Cards outside the file's id namespaces (generated, subclass) stay in the draft.
 function packCardChanges()
 {
-  return StudioCardChanges(editedCards(), gameCardOf);
+  const packCards = editedCards().filter((card) => IsStudioPackCardId(card.id));
+  return StudioCardChanges(packCards, gameCardOf);
+}
+
+function packRemovedIds()
+{
+  return removedCoreIds().filter(IsStudioPackCardId);
+}
+
+// Edits and removals a Save cannot write to the game's card file.
+function heldBackCardCount()
+{
+  const isHeldBack = (id) => !IsStudioPackCardId(id);
+  const heldEdits = editedCards().filter((card) => isHeldBack(card.id));
+  const heldRemovals = removedCoreIds().filter(isHeldBack);
+  return heldEdits.length + heldRemovals.length;
 }
 
 function editedItems() {
@@ -5805,7 +5822,8 @@ async function boot() {
   studioSaveUi = InitStudioSaveUi({
     state,
     packCardChanges,
-    removedCoreIds,
+    packRemovedIds,
+    heldBackCardCount,
     isLocalServer,
     isTextEntry,
     flushDraft,
