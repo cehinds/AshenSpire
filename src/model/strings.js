@@ -32,7 +32,14 @@
 
 import { uiStrings } from '../content/generated/uiStrings.js';
 
-const FORMS = ['short', 'full', 'tip'];
+const SHORT_FORM = 'short';
+const FULL_FORM = 'full';
+const TOOLTIP_FORM = 'tip';
+const FORMS = [
+  SHORT_FORM,
+  FULL_FORM,
+  TOOLTIP_FORM,
+];
 
 /**
  * devMessage(id, tokens) — the text of this lookup's own developer errors.
@@ -101,17 +108,30 @@ function read(id, form, tokens) {
   return fill(text, tokens, id, form);
 }
 
-/** t(id, tokens) — the control's own words. */
-export function t(id, tokens = null) { return read(id, 'short', tokens); }
-/** UiFullText(id, tokens): the full sentence a UI string means (its 'full' column), beside t()'s short label. */
-export function UiFullText(id, tokens = null) { return read(id, 'full', tokens); }
-// Old name kept only for src/model/fixCoreMechanics.js, whose bytes pin saved-run compatibility.
+/** The control's own words: a button label, chip or title. */
+export function UiShortText(id, tokens = null)
+{
+  return read(id, SHORT_FORM, tokens);
+}
+
+/** The full sentence a string means: a tooltip body or aria description. */
+export function UiFullText(id, tokens = null)
+{
+  return read(id, FULL_FORM, tokens);
+}
+
+/** The tooltip title a control gets when its face is too small to read. */
+export function UiTooltipTitle(id, tokens = null)
+{
+  return read(id, TOOLTIP_FORM, tokens);
+}
+
+// Short names kept for existing importers; fixCoreMechanics.js bytes pin saved runs.
+export const t = UiShortText;
 export const tFull = UiFullText;
-/** tTip(id, tokens) — the tooltip title a too-small face gets. */
-export function tTip(id, tokens = null) { return read(id, 'tip', tokens); }
 
 /** has(id, form) — for a caller that offers a form only when it is authored. */
-export function has(id, form = 'short') {
+export function has(id, form = SHORT_FORM) {
   if (!rows.has(id)) return false;
   return !!resolve(id)[form];
 }

@@ -75,7 +75,7 @@ import { armouryInventoryBlock, isCollectibleCategory } from '../components/armo
 import { inventoryRowUsable } from '../models/ArmouryInventoryModel.js';
 import { traySizeService } from '../services/TraySizeService.js';
 import { clearSelection } from '../components/cardSelection.js';
-import { t, UiFullText, tTip } from '../strings.js';
+import { t, UiFullText, UiTooltipTitle } from '../strings.js';
 import { RestOpensDeckEditor, ShopOpensDeckEditor } from '../../model/armouryRules.js';
 import { DECK_VIEW_MODAL_KIND, openPileModal } from '../components/piles.js';
 import { runClassIdentity } from '../../model/classCard.js';
@@ -971,7 +971,7 @@ export function mountEquipment(host, {
         id: choice.id, label: `${choice.slot.label} · ${choice.position.index + 1}`,
         disabled: isRefused(choice),
         hint: refusalFor(choice),
-        sub: `${t(choice.position.active ? 'armoury.slot.active' : 'armoury.slot.reserve')} · ${choice.position.state === 'empty' ? tTip('piles.empty') : choice.position.summary.name}`,
+        sub: `${t(choice.position.active ? 'armoury.slot.active' : 'armoury.slot.reserve')} · ${choice.position.state === 'empty' ? UiTooltipTitle('piles.empty') : choice.position.summary.name}`,
       })),
       onChoose: (id) => {
         const choice = choices.find(candidate => candidate.id === id);
@@ -1225,9 +1225,9 @@ export function mountEquipment(host, {
       }, [
         el('div', { class: 'armament-compact-heading' }, [
           el('span', { class: 'armament-position-code', text: `${position.code} —`, title: position.label }),
-          el('strong', { text: tTip('piles.empty') }),
+          el('strong', { text: UiTooltipTitle('piles.empty') }),
           pill({ label: t(position.active ? 'armoury.slot.active' : 'armoury.slot.reserve'), attrs: { class: 'armament-equipped-badge' } }),
-        ]), positionActions(slot, position), rowSelectButton(slot, position, tTip('piles.empty')),
+        ]), positionActions(slot, position), rowSelectButton(slot, position, UiTooltipTitle('piles.empty')),
       ]);
       attachPositionDropTarget(card, slot, position);
       return card;

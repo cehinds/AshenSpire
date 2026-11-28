@@ -11,7 +11,7 @@
 // any row the branch adds over origin/dev when git can say so, it takes the
 // short, full and tip text and looks for that same text as a string, template
 // or markup literal anywhere in src/ui. A hit is a control that can paint the
-// old words. It is either routed through t()/UiFullText()/tTip(), or it is listed in
+// old words. It is either routed through t()/UiFullText()/UiTooltipTitle(), or it is listed in
 // ALLOWED below with the reason it is not copy (an id, a stored value, a lookup
 // key) or not this row's copy (the same English word naming something else).
 // An allowance that no longer matches anything fails too, so the list cannot rot.

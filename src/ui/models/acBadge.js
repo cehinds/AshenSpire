@@ -1,4 +1,4 @@
-import { t, UiFullText, tTip } from '../strings.js';
+import { t, UiFullText, UiTooltipTitle } from '../strings.js';
 import { effectiveEvasion } from '../../engine/stanceHit.js';
 import { fixCoreEnabled, FixCoreHitRollOff } from '../../model/fixCoreMechanics.js';
 import { fixCoreRules } from '../../model/fixCoreRulesCache.js';
@@ -24,5 +24,5 @@ export function acBadgeText(ac) {
   const lines = [UiFullText('combat.protection.ac', { value: ac.value })];
   if (ac.evade) lines.push(t('combat.protection.acEvade', { value: ac.evade }));
   lines.push(t('combat.protection.acBase', { value: ac.base }));
-  return { title: tTip('combat.protection.ac', { value: ac.value }), lines };
+  return { title: UiTooltipTitle('combat.protection.ac', { value: ac.value }), lines };
 }
