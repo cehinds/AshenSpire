@@ -139,7 +139,10 @@
     "curse": { "label": "CURSE", "color": "#6a3a7a", "radius": 10, "art": 6 },
     "status": { "label": "STATUS", "color": "#7a6f5a", "radius": 10, "art": 6 }
   },
-  "armaments": { "phonePlacement": "right" },
+  "armaments": {
+    "armamentsPresentation": { "def": "radial", "choices": ["radial", "fixed"] },
+    "armamentsPhonePlacement": { "def": "right", "choices": ["left", "center", "right"] }
+  },
   "cardMotif": "wash",
   "cardMotifModes": ["off", "wash", "accent", "band"],
   "cardMotifStrength": { "subtle": 0.06, "normal": 0.1, "strong": 0.17 },

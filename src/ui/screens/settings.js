@@ -690,20 +690,28 @@ export function musicEnabledCondition(settings = {}) {
   return `Music on · volume ${volume}%.`;
 }
 
-export function resolveArmamentsPresentation(settings = {}) {
-  return ['radial', 'fixed'].includes(settings.armamentsPresentation)
-    ? settings.armamentsPresentation : 'radial';
-}
 
 const ARMAMENTS_PLACEMENT_KEY = 'armamentsPhonePlacement';
+const ARMAMENTS_PRESENTATION_KEY = 'armamentsPresentation';
+
+// A stored armaments choice stands only when balanceUi.json still lists it.
+function resolveArmamentsChoice(settings, key)
+{
+  const setting = UI_DEFAULTS.armaments[key];
+  const stored = settings[key];
+  return setting.choices.includes(stored)
+    ? stored
+    : setting.def;
+}
+
+export function resolveArmamentsPresentation(settings = {})
+{
+  return resolveArmamentsChoice(settings, ARMAMENTS_PRESENTATION_KEY);
+}
 
 export function resolveArmamentsPhonePlacement(settings = {})
 {
-  const placementRow = SETTINGS_ROWS.find((row) => row.key === ARMAMENTS_PLACEMENT_KEY);
-  const stored = settings[ARMAMENTS_PLACEMENT_KEY];
-  return placementRow.choices.includes(stored)
-    ? stored
-    : UI_DEFAULTS.armaments.phonePlacement;
+  return resolveArmamentsChoice(settings, ARMAMENTS_PLACEMENT_KEY);
 }
 
 function rowNote(settings, row) {

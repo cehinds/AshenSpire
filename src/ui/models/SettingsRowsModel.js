@@ -44,6 +44,10 @@ const hooks = {};
 export function bindSettingsRowHooks(supplied) { Object.assign(hooks, supplied); }
 
 export const UI_DEFAULTS = balance.ui;
+const SETTINGS_ROW_STRING_PREFIX = 'settings.row.';
+const ARMAMENTS_CATEGORY = 'Combat';
+const ARMAMENTS_TOPIC = 'armaments';
+const CHOICE_ROW_TYPE = 'choice';
 // The card's authored sizes, so the rows below state a DEFAULT they read
 // rather than a number typed twice. content/config/ui/components/card.json is
 // the one home; these rows lay a tuning override over it.
@@ -82,6 +86,25 @@ const ADVANCED_CONFIG_ROWS = authoredAdvancedRows.filter((row) => !row.retired)
 // (models/AdvancedSettingsGroups.js): the group's stable id, which is also what
 // `settingsAdvancedSubgroup.Wireframes` stores. `wireframeTopicLabel` is the
 // rewordable uiStrings label the topic tab wears, and only that (Codex, #1489).
+// Each armaments choice row reads its default and choices from balanceUi.json `armaments`.
+function armamentsChoiceRows()
+{
+  return Object.entries(UI_DEFAULTS.armaments).map(([key, setting]) =>
+  {
+    const stringId = `${SETTINGS_ROW_STRING_PREFIX}${key}`;
+    return {
+      cat: ARMAMENTS_CATEGORY,
+      key,
+      topic: ARMAMENTS_TOPIC,
+      type: CHOICE_ROW_TYPE,
+      def: setting.def,
+      choices: setting.choices,
+      label: t(stringId),
+      note: tFull(stringId),
+    };
+  });
+}
+
 function wireframeChoiceRows() {
   return WIREFRAME_CHOICE_GROUPS.flatMap((group) => group.choices.map((choice) => ({
     cat: 'Advanced',
@@ -420,12 +443,7 @@ export const SETTINGS_ROWS = [
   { cat: 'Display', key: 'resetAllSettings', topic: 'interface', type: 'button', btn: `${t('settings.resetAll.confirm')}…`, label: t('settings.row.resetAllSettings'),
     note: tFull('settings.row.resetAllSettings') },
 
-  { cat: 'Combat', key: 'armamentsPresentation', topic: 'armaments', type: 'choice', def: 'radial',
-    choices: ['radial', 'fixed'], label: t('settings.row.armamentsPresentation'),
-    note: tFull('settings.row.armamentsPresentation') },
-  { cat: 'Combat', key: 'armamentsPhonePlacement', topic: 'armaments', type: 'choice', def: UI_DEFAULTS.armaments.phonePlacement,
-    choices: ['left', 'center', 'right'], label: t('settings.row.armamentsPhonePlacement'),
-    note: tFull('settings.row.armamentsPhonePlacement') },
+  ...armamentsChoiceRows(),
 
   { cat: 'Combat', key: 'showPlayedCard', topic: 'animation', def: false, label: t('settings.row.showPlayedCard'),
     note: tFull('settings.row.showPlayedCard') },
