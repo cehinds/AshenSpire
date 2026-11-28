@@ -14,13 +14,14 @@ const cp = def => CombatPower(ScoreCard(CardDefinitionToScoreFace(def),scoring).
 
 test('authored damage plateaus share exactly the displayed mechanic and CP',()=>{
   const a=ProjectCardMechanicalValues(card(8)),b=ProjectCardMechanicalValues(card(7)),c=ProjectCardMechanicalValues(card(16));
-  assert.equal(a.tokens.damage,3);assert.equal(b.tokens.damage,3);assert.equal(c.tokens.damage,5);
-  assert.equal(a.card.effects[0].amount,3);assert.equal(c.card.effects[0].amount,5);
+  // The reference Reaver's 1 Strength (owner, 2026-11-28) adds one point to each displayed hit.
+  assert.equal(a.tokens.damage,2);assert.equal(b.tokens.damage,2);assert.equal(c.tokens.damage,4);
+  assert.equal(a.card.effects[0].amount,2);assert.equal(c.card.effects[0].amount,4);
   assert.equal(cp(card(8)),cp(card(7)));assert.ok(cp(card(16))>cp(card(8)));
-  assert.equal(CardDefinitionToScoreFace(card(8)).dmg,3);assert.equal(CardDefinitionToScoreFace(card(16)).dmg,5);
+  assert.equal(CardDefinitionToScoreFace(card(8)).dmg,2);assert.equal(CardDefinitionToScoreFace(card(16)).dmg,4);
   for(const id of ['core.projection-probe','subclass.projection-probe']){
     const before={...card(8),id},same={...card(7),id},after={...card(16),id};
-    assert.equal(cp(before),13);assert.equal(cp(same),13);assert.equal(cp(after),15);
+    assert.equal(cp(before),12);assert.equal(cp(same),12);assert.equal(cp(after),14);
   }
 });
 
@@ -88,7 +89,7 @@ test('identical full inputs reuse the frozen final projection while source and c
   assert.deepEqual(source,snapshot);
   source.effects[0].amount=16;
   const changed=ProjectCardMechanicalValues(source,context);
-  assert.notEqual(changed,original);assert.equal(changed.tokens.damage,5);assert.equal(original.tokens.damage,3);
+  assert.notEqual(changed,original);assert.equal(changed.tokens.damage,4);assert.equal(original.tokens.damage,2);
   assert.deepEqual(original.card.effects[1],snapshot.effects[1]);assert.equal(snapshot.effects[0].amount,8);
   const rules={...context.rules,faceAttributes:{strength:0,dexterity:0,intelligence:0,wisdom:0},gearRules:[]};
   const alternate=ProjectCardMechanicalValues(original.card,{registries:context.registries,rules});
@@ -138,15 +139,15 @@ test('configured Evade counts and element packet channels preserve canonical mec
 test('the shipped classic bundle initializes shared projection lazily without captured undefined imports',()=>{
   const require=productionBundle({additionalModules:['src/model/cardMechanicalProjection.js','src/model/cardUpgradeCp.js']});
   const model=require('src/model/cardMechanicalProjection.js'),adapter=require('src/model/cardUpgradeCp.js');
-  assert.equal(model.ProjectCardMechanicalValues(card(8)).tokens.damage,3);
-  assert.equal(adapter.CardDefinitionToScoreFace(card(8)).dmg,3);
-  assert.equal(adapter.CardDefinitionToScoreFace(card(7)).dmg,3);
-  assert.equal(adapter.CardDefinitionToScoreFace(card(16)).dmg,5);
+  assert.equal(model.ProjectCardMechanicalValues(card(8)).tokens.damage,2);
+  assert.equal(adapter.CardDefinitionToScoreFace(card(8)).dmg,2);
+  assert.equal(adapter.CardDefinitionToScoreFace(card(7)).dmg,2);
+  assert.equal(adapter.CardDefinitionToScoreFace(card(16)).dmg,4);
   const supplied={...model.CardScoreReferenceContext(base).registries};
   const reference=model.CardScoreReferenceContext(base,{registries:supplied});
   assert.equal(reference.registries,supplied);
-  assert.equal(model.ProjectCardMechanicalValues(card(8),{registries:supplied}).tokens.damage,3);
-  assert.equal(adapter.CardDefinitionToScoreFace(card(16),{registries:supplied}).dmg,5);
+  assert.equal(model.ProjectCardMechanicalValues(card(8),{registries:supplied}).tokens.damage,2);
+  assert.equal(adapter.CardDefinitionToScoreFace(card(16),{registries:supplied}).dmg,4);
 });
 
 test('default projection equals the actual static token reader in the injected reference run',()=>{
@@ -164,14 +165,14 @@ test('rebalancing fixed costs/rarity changes actual displayed damage when CP cha
   assert.equal(result.card.staminaCost,1);assert.equal(result.card.manaCost,0);assert.equal(result.card.rarity,'common');
   assert.equal(result.metrics.cp,before.cp+2);
   const original=ProjectCardMechanicalValues(base),candidate=ProjectCardMechanicalValues(result.card);
-  assert.equal(original.tokens.damage,3);assert.equal(candidate.tokens.damage,5);assert.equal(candidate.tokens.bleed,1);
+  assert.equal(original.tokens.damage,2);assert.equal(candidate.tokens.damage,4);assert.equal(candidate.tokens.bleed,1);
   assert.equal(result.card.effects[1].stacks,1);assert.equal(base.effects[0].amount,8);
 });
 
 test('conditional/charge expected values retain reliability and barrier stacks retain their units',()=>{
   const condition={p:'hasStatus',of:'target',status:'bleed'};
   const conditional=card(16);conditional.effects[0].if=condition;
-  assert.equal(CardDefinitionToScoreFace(conditional).dmg,5*(scoring.conditionals?.inlineIf??.7));
+  assert.equal(CardDefinitionToScoreFace(conditional).dmg,4*(scoring.conditionals?.inlineIf??.7));
   const charged={...base,effects:[{op:'grantCardCharge',target:'self',key:'test',cardType:'attack',damage:3}]};
   assert.equal(ProjectCardMechanicalValues(charged).tokens.chargeDamage,3);
   assert.equal(CardDefinitionToScoreFace(charged).dmg,3*(scoring.conditionals?.inlineIf??.7));
