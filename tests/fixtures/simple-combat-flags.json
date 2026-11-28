@@ -1,5 +1,5 @@
 {
-  "$note": "Module overrides that each switch one Simple Combat mechanic off.",
+  "$note": "Module overrides that each switch one Simple Combat mechanic off; poiseOn brings Poise back, since Core ships it off.",
   "core": "ashen.core@2.0.0",
   "seed": 511,
   "classId": "reaver",
@@ -10,6 +10,11 @@
     "poiseOff": {
       "stagger": {
         "poise": false
+      }
+    },
+    "poiseOn": {
+      "stagger": {
+        "poise": true
       }
     },
     "stanceBenefitsOff": {

@@ -15,8 +15,9 @@ import { dispatch } from '../src/engine/combat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { rangePairKey } from '../src/model/combatEngagement.js';
 import { EnemyDefinitionOf } from '../src/model/enemyMoveSet.js';
+import { POISE_ON_MODULES } from './helpers/poise-on.mjs';
 
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { ...POISE_ON_MODULES, effects: { physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 // `legacy` is the Staggered rule a fight saved before Wave 3 keeps (no `poise.breakRule`); the default is the shipped Broken rule.
 function fight(id, seed = 511, { legacy = false } = {}) {

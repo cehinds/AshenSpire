@@ -13,7 +13,7 @@ import { dispatch } from '../src/engine/combat.js';
 import { previewEnemyAction } from '../src/engine/enemyActionPreview.js';
 import { projectCombatIntent, ProjectPlannedFollowUpDamage } from '../src/ui/models/CombatIntentProjectionModel.js';
 
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { physicalDamageMultiplier: 1 } } }); // the playtest physical cut is off: this file pins Poise-break mechanics with hand-sized hits
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { ...POISE_ON_MODULES, effects: { physicalDamageMultiplier: 1 } } }); // the playtest physical cut is off: this file pins Poise-break mechanics with hand-sized hits
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 
 /** A fight against `moves` ([enemyId, moveId] each, in turn order) with the player holding `poise` Poise and `block` Block in `stance`. */
@@ -168,6 +168,7 @@ test('no Poise mark when the attack costs no Poise, or the intent is hidden', ()
 import { withKitDom } from './helpers/dom.mjs';
 import { IntentPoiseMark } from '../src/ui/components/combatantOverhead.js';
 import { t } from '../src/ui/strings.js';
+import { POISE_ON_MODULES } from './helpers/poise-on.mjs';
 
 test('the intent tag says whose Poise breaks: BREAKS YOU, never the target quote BREAK', () => {
   withKitDom(() => {

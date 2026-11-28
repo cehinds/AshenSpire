@@ -109,7 +109,7 @@ import { applyAttackDamage, computeBlockGain, gainBlock } from '../src/engine/ac
 import { previewDamageHits } from '../src/engine/combatDamagePreview.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { ...POISE_ON_MODULES, effects: { physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const OPEN = { skipRatingBonus: true };
 const carrierOf = (maneuver, camp = 'physical') => ({ ...OPEN, combatProfile: { camp, maneuver, range: 'melee' } });
@@ -306,6 +306,7 @@ test('the stance tooltip and the stance help state each benefit in the same word
 });
 
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
+import { POISE_ON_MODULES } from './helpers/poise-on.mjs';
 
 test('a fight saved before the ruling keeps today\'s stance rules after a save and load; a fight saved with them keeps them', () => {
   for (const benefits of [false, true]) {

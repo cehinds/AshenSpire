@@ -1,5 +1,5 @@
 // stagger.poise (docs/design/SIMPLE-COMBAT-PLAN.md step 1): off empties every Poise pool, so Poise
-// damage does nothing and nothing breaks; on (Core today) keeps the pools and the break.
+// damage does nothing and nothing breaks (Core ships it off); on keeps the pools and the break.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { dealPoiseDamage, OPCODE_HANDLERS } from '../src/engine/actions.js';
@@ -7,6 +7,7 @@ import { PoiseEnabled } from '../src/model/simpleCombatFlags.js';
 import { SimpleCombatRegistries, SimpleCombatFight } from './helpers/simple-combat.mjs';
 
 const POISE_OFF = 'poiseOff';
+const POISE_ON = 'poiseOn';
 const HUGE_POISE_DAMAGE = 999;
 const BREAK_EVENT = 'poiseBroken';
 const POISE_ONLY_EFFECT = {
@@ -22,7 +23,7 @@ function breakEvents(combat, start)
 
 test('stagger.poise on: Core fighters hold Poise and a big Poise hit breaks the enemy', () =>
 {
-  const combat = SimpleCombatFight(SimpleCombatRegistries());
+  const combat = SimpleCombatFight(SimpleCombatRegistries(POISE_ON));
   const enemy = combat.enemies[0];
   assert.equal(PoiseEnabled(combat), true);
   assert.ok(combat.player.persistentPoise.max > 0, 'the player has a Poise pool');
@@ -74,10 +75,11 @@ function poiseOnlyPressure(overrideName)
 
 test('stagger.poise on: a Poise-only card records the Poise it dealt', () =>
 {
-  assert.equal(poiseOnlyPressure(null), POISE_ONLY_EFFECT.amount);
+  assert.equal(poiseOnlyPressure(POISE_ON), POISE_ONLY_EFFECT.amount);
 });
 
 test('stagger.poise off: a Poise-only card records no Poise, so it is not a hit', () =>
 {
   assert.equal(poiseOnlyPressure(POISE_OFF), 0);
 });
+

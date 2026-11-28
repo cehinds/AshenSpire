@@ -53,7 +53,15 @@ for (const [enemyId, moveId] of [['stitchedKing', 'graspingHands'], ['blightedVa
     const damage = combat.eventLog.slice(before).filter(e => e.type === 'damageDealt' && e.sourceId === enemy.id && e.targetId === combat.player.id);
     assert.deepEqual(damage.map(e => e.hpLoss), view.hitDamages);
     assert.deepEqual(damage.map(e => guardHitFloatParts(e).damage?.text ?? null), damage.map(e => e.hpLoss > 0 ? `-${e.hpLoss}` : null), 'the float is the HP lost, shown only when HP was lost');
-    assert.equal(combat.player.hp, 1000 - view.totalDamage);
+    // Core ships Poise off, so a physical status such as Bleeding lands at once.
+    // Its tick is not one of the move's hits.
+    const statusTick = e => e.type === 'hpLost'
+      && e.targetId === combat.player.id
+      && e.cause === 'effect';
+    const statusLoss = combat.eventLog.slice(before)
+      .filter(statusTick)
+      .reduce((sum, e) => sum + e.amount, 0);
+    assert.equal(combat.player.hp, 1000 - view.totalDamage - statusLoss);
   });
 }
 

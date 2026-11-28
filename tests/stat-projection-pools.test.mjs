@@ -16,8 +16,9 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { gameProfileRatingReceipt } from '../src/model/gameProfileRun.js';
 import { DeckAttributeBonuses } from '../src/model/cardUpgrade.js';
+import { CORE_POISE_ON_AUTHOR } from './helpers/poise-on.mjs';
 
-function world(profile = resolveGameProfile('core'), classId = 'reaver', gearFixture = null) {
+function world(profile = resolveGameProfile(CORE_POISE_ON_AUTHOR), classId = 'reaver', gearFixture = null) {
   const content = applyGameProfileToContent(contentBundle, profile);
   if (gearFixture) {
     content.equipment.armaments = content.equipment.armaments.map(piece => piece.id === gearFixture.id

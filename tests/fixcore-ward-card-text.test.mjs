@@ -10,8 +10,9 @@ import { combatCardSummary } from '../src/model/playingCard.js';
 import { wardReadsAsPoise, poiseMergeGroups } from '../src/model/wardOffCardText.js';
 import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
 import { legacyRules } from './legacyHitRules.mjs';
+import { POISE_ON_MODULES } from './helpers/poise-on.mjs';
 
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { ...POISE_ON_MODULES } });
 const core = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const current = createRegistries(contentBundle);
 const plain = lines => lines.map(line => line.html.replace(/<[^>]+>/g, ''));

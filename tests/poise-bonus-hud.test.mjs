@@ -6,6 +6,7 @@ import { PoiseBonusView } from '../src/ui/models/CombatHealthModel.js';
 import { ApplyPoiseBonus } from '../src/ui/components/combatHealth.js';
 import { meter } from '../src/ui/kit/index.js';
 import { withKitDom } from './helpers/dom.mjs';
+import { POISE_ON_MODULES } from './helpers/poise-on.mjs';
 
 test('PoiseBonusView splits current Poise into the base part and the bonus past the base maximum', () => {
   // 8 base + one Barrier stack (+5): max 13.
@@ -57,7 +58,7 @@ test('the engine reports the bonus maximum so the HUD can follow it', async () =
   const { createRng } = await import('../src/engine/rng.js');
   const { createRunCombat } = await import('../src/engine/runCombat.js');
   const S = await import('../src/engine/statuses.js');
-  const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+  const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { ...POISE_ON_MODULES } });
   const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const run = createRunState({ registries: reg, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });

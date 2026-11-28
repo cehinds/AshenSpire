@@ -13,8 +13,9 @@ import { dispatch } from '../src/engine/combat.js';
 import { drainFixCorePoise } from '../src/engine/actions.js';
 import { enemyPlanActions } from '../src/engine/normalPreview.js';
 import { projectCombatIntent } from '../src/ui/models/CombatIntentProjectionModel.js';
+import { POISE_ON_MODULES } from './helpers/poise-on.mjs';
 
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { ...POISE_ON_MODULES } });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const META = { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } };
 

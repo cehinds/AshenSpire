@@ -19,7 +19,7 @@ import { legacyGearProfile } from './helpers/legacy-gear.mjs';
 
 // Pins this file's SPEC worked examples (a Counter, Poise or Smash rule, not damage scale): the Core 0.5 base-damage scale is off here.
 // These pre-batch-2 worked returns also predate weapon-type damage and armour-type Block/Thorns.
-const profile = legacyGearProfile(resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { baseDamageMultiplier: 1, physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } }));
+const profile = legacyGearProfile(resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { ...POISE_ON_MODULES, effects: { baseDamageMultiplier: 1, physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } }));
 const houndBundle = { ...contentBundle, enemies: contentBundle.enemies.map(row => row.id === 'blightHound' ? { ...row, firstMove: 'lunge' } : row) };
 const mantisBundle = { ...contentBundle, enemies: contentBundle.enemies.map(row => row.id === 'cinderMantis' ? { ...row, firstMove: 'scythePair' } : row) };
 const wyrmBundle = { ...contentBundle, enemies: contentBundle.enemies.map(row => row.id === 'wyrmLord' ? { ...row, firstMove: 'tailSweep' } : row) };
@@ -718,7 +718,7 @@ test('Core: a spell Counter face with no revealed attack describes a return with
 
 // A Core profile may override the stances module (engine/modules/stances/guide.md): omit prepared or counter.
 function overrideLive(include) {
-  const custom = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { stances: { include } } });
+  const custom = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { ...POISE_ON_MODULES, stances: { include } } });
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, custom)), custom);
   const run = createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
@@ -752,6 +752,7 @@ for (const [name, include] of [['prepared', ['attack', 'smash', 'defend', 'count
 }
 
 import { setProfileStance } from '../src/engine/gameProfileCombat.js';
+import { POISE_ON_MODULES } from './helpers/poise-on.mjs';
 test('Many Forms: a retained Defend before Frost Counter previews the same return live deals (best of both stances)', () => {
   const { combat, enemy } = live();
   combat.registries = { ...combat.registries, proposalStatusRules: { weak: { behaviors: [{ kind: 'stanceCapacity', additionalPerStack: 1, maxStances: 2, defensePriority: ['counter', 'defend', 'evade', 'casting', 'attack', 'smash', 'sweep'] }] } } };
