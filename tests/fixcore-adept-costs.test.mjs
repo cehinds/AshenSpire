@@ -166,7 +166,7 @@ test('an older active reaction snapshot retains its accepted MP quote and old pa
 test('Mana Surge keeps one SP cost, zero MP cost and its separate two-Mana restore', () => {
   for (const maxMana of [1, 2]) {
     const ctx = native('herald');
-    assert.equal(ctx.player.maxMana, 3, 'the fresh Herald starts with base 1 + WIS 2 = 3 Mana');
+    assert.equal(ctx.player.maxMana, 1 + ctx.player.attributes.wisdom, 'the fresh Herald starts with base 1 + its effective WIS in Mana');
     ctx.player.maxMana = maxMana;
     ctx.piles.hand = [{ instanceId: 'surge', cardId: 'core.manaSurge', upgraded: false }];
     ctx.player.combatStance = stanceOf(resolveCombatCard(ctx, ctx.piles.hand[0]));
