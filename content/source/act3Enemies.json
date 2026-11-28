@@ -494,7 +494,7 @@
         "delay": {
           "turns": 1,
           "whileCharging": {
-            "block": 0
+            "block": 2
           }
         }
       },

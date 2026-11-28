@@ -361,7 +361,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 0
+        "amount": 1
       },
       {
         "op": "applyStatus",
@@ -398,7 +398,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 0
+        "amount": 1
       },
       {
         "op": "applyStatus",
@@ -3509,7 +3509,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 0
+        "amount": 2
       },
       {
         "op": "applyStatus",
@@ -4121,7 +4121,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 0
+        "amount": 2
       },
       {
         "op": "applyStatus",

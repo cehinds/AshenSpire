@@ -1,6 +1,6 @@
 {
   "oath": {
-    "block": 0,
+    "block": 2,
     "$note": { "block": "Block each Oath card grants while you have not entered a stance this fight." }
   }
 }

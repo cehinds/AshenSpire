@@ -11,11 +11,11 @@
   "arcaneDraw": { "draw": 2 },
   "conduit": { "restoreStamina": 1 },
   "reservoir": { "restoreMana": 1 },
-  "warmth": { "block": 0 },
+  "warmth": { "block": 2 },
   "vigil": { "heal": 1 },
   "sealOfPlenty": { "restoreMana": 1 },
   "wakingRot": { "crimsonBlight": 1 },
-  "martyr": { "block": 0 },
+  "martyr": { "block": 2 },
   "saint": { "heal": 5 },
   "quickHands": { "prepared": 1 },
   "secondWind": { "draw": 1 },
@@ -38,6 +38,6 @@
   "lowProfile": { "block": 1 },
   "feint": { "poiseDamage": 4 },
   "spareWhetstone": { "gainEnergy": 1 },
-  "whettedGuard": { "block": 0 },
+  "whettedGuard": { "block": 1 },
   "$note": { "{node}.{variable}": "{talent}, {talentPlace}: {effect}.{blurbSuffix}" }
 }

@@ -257,7 +257,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 0,
+            "amount": 2,
             "oncePerTurn": "grade-block"
           }
         ]
@@ -396,7 +396,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 0,
+            "amount": 2,
             "oncePerTurn": "grade-block"
           }
         ]
@@ -423,7 +423,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 0,
+            "amount": 2,
             "oncePerTurn": "grade-block"
           },
           {
@@ -730,7 +730,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 0,
+            "amount": 2,
             "oncePerTurn": "grade-block"
           }
         ]
@@ -767,7 +767,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 0,
+            "amount": 2,
             "oncePerTurn": "grade-block"
           },
           {
@@ -868,7 +868,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 0,
+            "amount": 2,
             "oncePerTurn": "grade-block"
           }
         ]
@@ -895,7 +895,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 0,
+            "amount": 2,
             "oncePerTurn": "grade-block"
           },
           {
@@ -1354,7 +1354,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 0,
+            "amount": 2,
             "oncePerTurn": "grade-block"
           }
         ]
@@ -1465,7 +1465,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 0,
+            "amount": 2,
             "oncePerTurn": "grade-block"
           }
         ]
@@ -1578,7 +1578,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 0,
+            "amount": 2,
             "oncePerTurn": "grade-block"
           }
         ]
@@ -2825,7 +2825,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 0,
+            "amount": 2,
             "oncePerTurn": "grade-block"
           }
         ]
@@ -3200,7 +3200,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 0,
+            "amount": 2,
             "oncePerTurn": "grade-block"
           }
         ]
@@ -3245,7 +3245,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 0,
+            "amount": 2,
             "oncePerTurn": "grade-block"
           },
           {
@@ -3389,7 +3389,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 0,
+            "amount": 2,
             "oncePerTurn": "grade-block"
           }
         ]
@@ -3755,7 +3755,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 0,
+            "amount": 2,
             "oncePerTurn": "grade-block"
           }
         ]
@@ -3791,7 +3791,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 0,
+            "amount": 2,
             "oncePerTurn": "grade-block"
           },
           {
@@ -3894,7 +3894,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 0,
+            "amount": 2,
             "oncePerTurn": "grade-block"
           }
         ]
@@ -4035,7 +4035,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 0,
+            "amount": 2,
             "oncePerTurn": "grade-block"
           }
         ]
@@ -4360,7 +4360,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 0,
+            "amount": 2,
             "oncePerTurn": "grade-block"
           }
         ]
@@ -4398,7 +4398,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 0,
+            "amount": 2,
             "oncePerTurn": "grade-block"
           },
           {
@@ -4501,7 +4501,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 0,
+            "amount": 2,
             "oncePerTurn": "grade-block"
           }
         ]
@@ -4528,7 +4528,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 0,
+            "amount": 2,
             "oncePerTurn": "grade-block"
           },
           {
@@ -4616,7 +4616,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 0,
+            "amount": 2,
             "oncePerTurn": "grade-block"
           }
         ]
@@ -5094,7 +5094,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 0,
+            "amount": 2,
             "oncePerTurn": "grade-block"
           }
         ]
@@ -5563,7 +5563,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 0,
+            "amount": 2,
             "oncePerTurn": "grade-block"
           }
         ]
@@ -5590,7 +5590,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 0,
+            "amount": 2,
             "oncePerTurn": "grade-block"
           },
           {
@@ -6225,7 +6225,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 0,
+            "amount": 2,
             "oncePerTurn": "grade-block"
           }
         ]
@@ -6246,7 +6246,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 0,
+            "amount": 2,
             "oncePerTurn": "grade-block"
           },
           {

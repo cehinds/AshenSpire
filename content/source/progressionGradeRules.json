@@ -1,10 +1,10 @@
 {
   "gradeBudget": [6, 9, 13, 18, 24, 30],
   "areaFamilies": ["ashen-cleaver", "falling-constellation"],
-  "lessonGradeBlock": 0,
+  "lessonGradeBlock": 2,
   "lessonGradeBlockBudget": 2,
   "$note": {
-    "lessonGradeBlock": "Block a lesson grade of rank 4 or higher adds once per turn; Block is 1:1 (owner 2026-11-28), and the old 2 gave 0 in play.",
+    "lessonGradeBlock": "Block a lesson grade of rank 4 or higher adds once per turn; Block is 1:1 (Owner ruling 2026-11-28).",
     "lessonGradeBlockBudget": "Grade budget a lesson grade of rank 4 or higher reserves for that Block before its primary effect is sized."
   }
 }

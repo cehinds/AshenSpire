@@ -2,12 +2,12 @@
   "progression-emberjaw-token": { "bleed": 2 },
   "progression-cracked-war-anvil": { "poiseDamage": 1 },
   "progression-cinderbound-crown": { "heal": 4 },
-  "progression-moonwell-lens": { "block": 0 },
+  "progression-moonwell-lens": { "block": 2 },
   "progression-nightglass-rosary": { "restoreMana": 1 },
   "progression-fragment-of-the-third-sky": { "block": 2 },
   "progression-whisperglass-die": { "chargeDamage": 5 },
-  "progression-purse-of-borrowed-shadows": { "block": 0 },
-  "progression-ember-alms-bowl": { "block": 0 },
+  "progression-purse-of-borrowed-shadows": { "block": 2 },
+  "progression-ember-alms-bowl": { "block": 2 },
   "progression-ossuary-prayer-wheel": { "restoreMana": 1 },
   "$note": { "{id}.{effect}": "The {effect} amount conferred by the progression relic {id}." }
 }

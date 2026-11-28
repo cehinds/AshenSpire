@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:42155a9240bdc9ae77fb299eeb88261921042bbe67a738117b50349c9f6d1216",
+      "hash": "sha256:292601bdffe32075579833366b83e3866dfb821447c590f5348055ab5b435dc4",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -634,13 +634,13 @@
           "path": "games/ashenspire/packs/core/cards.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:e392990c499bc89a09764c726e2bc5a6ebc245923cd829a7072902bc0a87bbd2"
+          "hash": "sha256:749c4259b5df5e50f4c4fa681a57e8bdc5611e312466f19fea5da1f88fdb08b9"
         },
         {
           "path": "games/ashenspire/packs/core/characters.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:aac533f8fe835fddd11150ee14ec80384e1a553bd00ea5b3d50c7d2d03b44531"
+          "hash": "sha256:791b901360c8dfc9c8cab5b92131ac7a0b577947bf40ca9956873a44c1170bc2"
         },
         {
           "path": "games/ashenspire/packs/core/classUnlocks.json",
@@ -732,7 +732,7 @@
       "runtimeHash": "sha256:dfeee14ac5d2eef699e68fcceec4359e72034f805f10b5089a25ecc28bb5095f"
     },
     "core": {
-      "hash": "sha256:42155a9240bdc9ae77fb299eeb88261921042bbe67a738117b50349c9f6d1216",
+      "hash": "sha256:292601bdffe32075579833366b83e3866dfb821447c590f5348055ab5b435dc4",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -1364,13 +1364,13 @@
           "path": "games/ashenspire/packs/core/cards.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:e392990c499bc89a09764c726e2bc5a6ebc245923cd829a7072902bc0a87bbd2"
+          "hash": "sha256:749c4259b5df5e50f4c4fa681a57e8bdc5611e312466f19fea5da1f88fdb08b9"
         },
         {
           "path": "games/ashenspire/packs/core/characters.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:aac533f8fe835fddd11150ee14ec80384e1a553bd00ea5b3d50c7d2d03b44531"
+          "hash": "sha256:791b901360c8dfc9c8cab5b92131ac7a0b577947bf40ca9956873a44c1170bc2"
         },
         {
           "path": "games/ashenspire/packs/core/classUnlocks.json",

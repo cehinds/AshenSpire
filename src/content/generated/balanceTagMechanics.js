@@ -2,4 +2,4 @@
 // Do not edit by hand — edit the source file and re-run the build.
 
 import { withNotes } from '../noteKeys.js';
-export const balanceTagMechanics = withNotes({"oath":{"block":0,"$note":{"block":"Block each Oath card grants while you have not entered a stance this fight."}}});
+export const balanceTagMechanics = withNotes({"oath":{"block":2,"$note":{"block":"Block each Oath card grants while you have not entered a stance this fight."}}});
