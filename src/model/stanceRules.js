@@ -7,7 +7,8 @@ import { core2ActionPolicyEnabled } from './core2ActionPolicy.js';
 import { gameContent } from './gameProfile.js';
 import { characterTags } from '../../engine/kernel/gameConfig.js';
 import { ChannelRowValue } from './channelRowValue.js';
-import { mirroredManeuver, MIRRORED_TYPES } from './profileStance.js';
+import { mirroredManeuver, MIRRORED_TYPES, configuredStance } from './profileStance.js';
+import { TriangleRules } from './stanceTriangle.js';
 import { SameStanceDiscountEnabled } from './simpleCombatFlags.js';
 export { mirroredManeuver };
 
@@ -36,13 +37,34 @@ function profileOf(carrier) {
   const normalized = tags ? { ...carrier, cardTags: tags.map(tag => typeof tag === 'string' ? tag : tag.id) } : carrier;
   return carrier.combatProfile || (carrier.camp ? carrier : combatProfileFor(normalized));
 }
-export function stanceOf(carrier, entity = null) {
+const SPELL_CAMPS = [
+  'spell',
+  'spells',
+  'magic',
+  'magical',
+];
+const campOf = profile => SPELL_CAMPS.includes(profile.camp)
+  ? 'spell'
+  : 'physical';
+// Under the triangle every carrier plays one of its stances; the camp and range read as before.
+function triangleStanceOf(carrier, profile, subject)
+{
+  return {
+    maneuver: configuredStance(carrier, subject),
+    camp: campOf(profile),
+    range: profile.range || 'melee',
+    ...(profile.school ? { school: profile.school } : {}),
+  };
+}
+/** The stance a carrier enters; `subject` (the fight) lets stances.ruleset triangle resolve it. */
+export function stanceOf(carrier, entity = null, subject = null) {
   if (!carrier) return null;
   const profile = profileOf(carrier);
   if (profile.stanceTrigger === false) return null;
+  if (TriangleRules(subject)) return triangleStanceOf(carrier, profile, subject);
   const preparation = cardPreparationCategory(carrier);
   if (!preparation && !profile.maneuver) return null;
-  const camp = ['spell', 'spells', 'magic', 'magical'].includes(profile.camp) ? 'spell' : 'physical';
+  const camp = campOf(profile);
   // A Spell that mirrors a basic card (owner 2026-10-18) takes that basic's stance type; it stays a Spell.
   const mirrored = camp === 'spell' && (MIRRORED_TYPES.has(profile.mirrors) || profile.mirrored === true && MIRRORED_TYPES.has(profile.maneuver));
   let maneuver = mirrored ? (profile.mirrors || profile.maneuver) : preparation ? 'casting' : carrier.stanceTrigger?.stance || profile.stanceTrigger?.stance || profile.maneuver;

@@ -129,6 +129,25 @@
         },
         "expected": "triangle"
       }
-    ]
+    ],
+    "cardStances": {
+      "$note": "Real Core cards: map and byEffect.",
+      "starShower": "attack",
+      "crystalBarrier": "defend",
+      "warcry": "skill",
+      "core.sweep": "attack",
+      "core.counter": "defend",
+      "core.smash": "smash"
+    },
+    "enemyMoveStances": {
+      "$note": "fellWarden's moves read through the same map.",
+      "caneStrike": "attack",
+      "hammerToss": "attack",
+      "heldBlade": "smash"
+    },
+    "overrideCase": {
+      "cardId": "warcry",
+      "stance": "defend"
+    }
   }
 }

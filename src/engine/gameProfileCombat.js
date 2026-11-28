@@ -21,6 +21,7 @@ import { WeaponPoiseDamage, StanceHasPoiseMitigation } from '../model/weaponPois
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { mirroredStance, configuredStance, armsAsCoreCounter, isSpellCounter } from '../model/profileStance.js';
 import { stanceMitigation } from './stanceMitigation.js';
+import { TriangleRules } from '../model/stanceTriangle.js';
 import { rememberCombatStance, defensiveCombatStance } from './concurrentStances.js';
 import { proposalHitPlan, proposalTargetPlan } from './proposalStatusRuntime.js';
 import { hitWeaknessTriggers, matchingHitWeaknesses, weaknessLabel } from './weaknesses.js';
@@ -98,8 +99,9 @@ export function setProfileStance(ctx, entity, carrier) {
   const entering = entity?.itemProps && !sameStance(entity,carrier);
   // A registry stance entry (enterStance) is a stance-only change: no maneuver entry grant, which the card face does not quote.
   const grants = !carrier?.registryStanceEntry && fixCoreEnabled(ctx) && !sameStance(entity,carrier) ? stanceEntryBonuses(carrier,ctx) : null;
-  const rule = configuredModule(ctx, 'stances');
-  const stance = configuredStance(carrier);
+  // Under the triangle its own include list holds, so skill stays skill.
+  const rule = TriangleRules(ctx) || configuredModule(ctx, 'stances');
+  const stance = configuredStance(carrier, ctx);
   entity.combatStance = rule?.include?.includes(stance)
     ? { maneuver: stance, camp: carrier?.combatProfile?.camp || 'physical', range: carrier?.combatProfile?.range || 'melee',
       ...(mirroredStance(carrier) ? { mirrored: true, camp: 'spell' } : {}) }
