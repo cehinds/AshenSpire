@@ -157,7 +157,7 @@ import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { combatVitals } from '../models/StaminaOrbModel.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { mountRelicRail } from '../components/relicRail.js';
-import { t, tFull } from '../strings.js';
+import { t, UiFullText } from '../strings.js';
 import { weaknessTraitRows } from '../../model/enemyWeaknessRules.js';
 import { StanceWeaknessChip, weaknessChips } from '../components/weaknessChips.js';
 import { StanceWeaknessFor } from '../../model/stanceWeakness.js';
@@ -1921,12 +1921,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (bar.id === 'hp') {
         const wardHp = EffectiveWardHp(combat, entity || combat.player);
         return wardHp > 0
-          ? `${esc(helpText('hp'))}<br>${esc(tFull('combat.protection.hpWardAria', { hp: (entity || combat.player).hp, maxHp: (entity || combat.player).maxHp, ward: wardHp }))}`
+          ? `${esc(helpText('hp'))}<br>${esc(UiFullText('combat.protection.hpWardAria', { hp: (entity || combat.player).hp, maxHp: (entity || combat.player).maxHp, ward: wardHp }))}`
           : esc(helpText('hp'));
       }
       if (bar.id === 'block') return esc(helpText(bar.id));
-      if (['precision', 'evasion', 'critChance'].includes(bar.id)) return esc(tFull(`combat.stat.${bar.id}`));
-      if (bar.id === 'poiseGuard' || bar.id === 'wardGuard') return esc(tFull(`combat.protection.${bar.id}`));
+      if (['precision', 'evasion', 'critChance'].includes(bar.id)) return esc(UiFullText(`combat.stat.${bar.id}`));
+      if (bar.id === 'poiseGuard' || bar.id === 'wardGuard') return esc(UiFullText(`combat.protection.${bar.id}`));
       if (['mana', 'stamina'].includes(bar.id)) return esc(helpText(bar.id));
       if (bar.id !== 'poise') return '';
       if (kind === 'player') {
@@ -2082,7 +2082,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       poiseHelp: poiseHelpText(combat, v),
       broken: !!v.broken, // Wave 3: re-render the Poise bar and the fighter when Broken starts or ends
       wardHp: EffectiveWardHp(combat, v),
-      wardHelp: fixCoreProtectionDescription(combat, v, 'ward') || tFull('combat.protection.ward'),
+      wardHelp: fixCoreProtectionDescription(combat, v, 'ward') || UiFullText('combat.protection.ward'),
     };
     const arcane = procPlan && !stackHidden.has('arcaneExposure') ? arcaneExposureReceipt(registries, v, disp ? disp.arcaneEvents : recentArcaneEvents) : null;
     const procs = procPlan && !expanded ? procPlan.bars.map((sid) => ({ sid, value: v.statuses[sid].meter.value, max: v.statuses[sid].meter.max, resisted: hasResistAgainst(entity, sid) })) : [];
@@ -4248,7 +4248,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     for (const node of combatEl.querySelectorAll('#combat-armoury, .combat-deck-edit')) {
       node.setAttribute('aria-disabled', String(locked));
       node.classList.toggle('edit-locked', locked);
-      node.title = locked ? tFull('combat.editLocked') : '';
+      node.title = locked ? UiFullText('combat.editLocked') : '';
       if (locked) node.dataset.editLocked = 'true'; else delete node.dataset.editLocked;
     }
   }
@@ -4304,7 +4304,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       handRules: combat.handRules || runHandRules(registries, run, readSettings()),
       destination,
       inCombat: true,
-      onEditDeck: onEditDeck ? () => { if (!busy && !enemyPlayback && !combat.pendingReaction && !hasCardChoice(combat)) onEditDeck({ inCombat: true, note: tFull('combat.deckEdit.deferred') }); } : null,
+      onEditDeck: onEditDeck ? () => { if (!busy && !enemyPlayback && !combat.pendingReaction && !hasCardChoice(combat)) onEditDeck({ inCombat: true, note: UiFullText('combat.deckEdit.deferred') }); } : null,
       onSwap: (slotId, setIndex) => {
         let out;
         try {
@@ -4335,11 +4335,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // Owner 2026-10-18: Core has no combat Deck button (deck editing is outside combat only); the D key and quick-nav stay inert.
   if (onEditDeck && !noncombatEditing(run)) {
     const deck = document.createElement('button'); deck.className = 'subtle combat-deck-edit'; deck.textContent = t('deckEditor.open');
-    deck.setAttribute('aria-description', tFull('combat.deckEdit.deferred'));
+    deck.setAttribute('aria-description', UiFullText('combat.deckEdit.deferred'));
     deck.addEventListener('click', () => {
       if (editLocked() || busy || enemyPlayback || combat.pendingReaction || hasCardChoice(combat)) return;
       selected = selfArm = null; selectedFlask = null; clearSelection(); syncCardSelection();
-      onEditDeck({ inCombat: true, note: tFull('combat.deckEdit.deferred') });
+      onEditDeck({ inCombat: true, note: UiFullText('combat.deckEdit.deferred') });
     });
     combatEl.querySelector('.combat-tools')?.append(deck);
   }

@@ -39,7 +39,7 @@ import { settingOn } from '../screens/settings.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { mountRelicRail } from './relicRail.js';
 import { observeIconTray, setIconTrayItems, trayIcon } from './iconTray.js';
-import { t, tFull } from '../strings.js';
+import { t, UiFullText } from '../strings.js';
 import { armouryHasNew, markArmourySeen } from '../../model/armouryRules.js';
 
 export const RUN_HUD_ARMOURY_ID = 'open-armoury';

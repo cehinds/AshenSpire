@@ -75,7 +75,7 @@ import { armouryInventoryBlock, isCollectibleCategory } from '../components/armo
 import { inventoryRowUsable } from '../models/ArmouryInventoryModel.js';
 import { traySizeService } from '../services/TraySizeService.js';
 import { clearSelection } from '../components/cardSelection.js';
-import { t, tFull, tTip } from '../strings.js';
+import { t, UiFullText, tTip } from '../strings.js';
 import { RestOpensDeckEditor, ShopOpensDeckEditor } from '../../model/armouryRules.js';
 import { DECK_VIEW_MODAL_KIND, openPileModal } from '../components/piles.js';
 import { runClassIdentity } from '../../model/classCard.js';

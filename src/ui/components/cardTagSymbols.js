@@ -1,7 +1,7 @@
 import { ACTION_SIGILS, SCHOOL_SIGILS, TRADITION_SIGILS } from '../../content/combatSigils.js';
 import { constantFormulaValue } from '../../model/formulas.js';
 import { cardArtElement } from '../cardArtComposition.js';
-import { t, tFull } from '../strings.js';
+import { t, UiFullText } from '../strings.js';
 import { esc } from './tooltip.js';
 import { cardBonusTags } from '../../model/cardBonusTags.js';
 import { coreSmashHelp } from '../../model/smashClause.js';
@@ -97,7 +97,7 @@ export function cardSideTags(model, def = {}, registries = null, preview = null,
   const school = tags.find(tag => tag.id.startsWith('school:'));
   const evasion = Boolean(def.evade) || def.effects?.some(effect => effect?.op === 'dodgeRoll')
     || tags.some(tag => ['maneuver:evade', 'effect:evade', 'utility.evasion'].includes(tag.id));
-  const effects = damage.length ? damage : evasion ? [{ id: 'effect:evade', label: t('card.tags.evade'), blurb: tFull('card.tags.evade') }]
+  const effects = damage.length ? damage : evasion ? [{ id: 'effect:evade', label: t('card.tags.evade'), blurb: UiFullText('card.tags.evade') }]
     : [element || school].filter(Boolean);
   for (const tag of effects) if (!selected.some(row => row.id === tag.id) && selected.length < 5) selected.push(tag);
   // Owner, 2026-11-18 section 22: Gale Pull carries the Pull tag; the rail says it removes a Retreat stack.
@@ -106,7 +106,7 @@ export function cardSideTags(model, def = {}, registries = null, preview = null,
   // Owner, 2026-11-18: a card whose moveEngagement sends a foe back carries the Retreat tag, and the rail says it inflicts Retreat (not the weapon's free Retreat card).
   const retreat = tags.find(tag => tag.id === 'retreat');
   if (retreat && def.effects?.some(effect => effect?.op === 'moveEngagement' && effect.target === 'enemy' && effect.bands > 0) && selected.length < 5) {
-    selected.push({ ...retreat, blurb: tFull('card.tag.retreatInflicts') });
+    selected.push({ ...retreat, blurb: UiFullText('card.tag.retreatInflicts') });
   }
   const statuses = new Map();
   const add = (id, occurrence = null) => {
@@ -202,7 +202,7 @@ export function cardCategorySigilHtml(camp) {
 function symbolTip(tag) {
   const traitName = Number.isInteger(tag.count) && tag.count >= 0 ? `${tag.label} ${tag.count}${tag.countFormula ? ' + ' + tag.countFormula : ''}` : tag.label;
   const blurb = (tag.blurb || tag.label).replace(/\bN\b/g, tag.count ?? 'N');
-  return tFull('card.tag.tooltip', { name: traitName, blurb });
+  return UiFullText('card.tag.tooltip', { name: traitName, blurb });
 }
 
 // The combat hand's range chip (Melee / Reach / Ranged) closes the rail, in the

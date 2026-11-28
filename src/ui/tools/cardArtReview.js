@@ -9,7 +9,7 @@ import {cardCutoutUrl} from '../layeredCardArt.js';
 import {gameRootURL} from './cardArtReviewUrl.js';
 import {containRect} from './cardArtReviewGeometry.js';
 import {mountProceduralBuilder} from './cardArtProceduralBuilder.js';
-import {t,tFull} from '../strings.js';
+import {t,UiFullText} from '../strings.js';
 import {CARD_ART_REVIEWED} from '../cardArtStyle.js';
 const profile=resolveGameProfile('default');
 const reg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile);
@@ -27,7 +27,7 @@ function queue(){
   for(const [id,art] of Object.entries(catalog.records)){
     if(!`${art.label} ${id} ${art.tags.join(' ')}`.toLowerCase().includes(query))continue;
     const li=element('li'),check=element('input'),button=element('button',`${art.code} · ${art.label}`);
-    check.type='checkbox';check.checked=checked.has(id);check.setAttribute('aria-label',tFull('cardArtBuilder.reviewedCard',{name:art.label}));
+    check.type='checkbox';check.checked=checked.has(id);check.setAttribute('aria-label',UiFullText('cardArtBuilder.reviewedCard',{name:art.label}));
     check.onchange=()=>{check.checked?checked.add(id):checked.delete(id);summary();};
     button.setAttribute('aria-current',String(selected===id));button.onclick=()=>{selected=id;queue();show();};li.append(check,button);$('queue').append(li);
   }

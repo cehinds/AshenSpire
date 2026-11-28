@@ -37,7 +37,7 @@ import { cardArtFallbacks } from '../cardArtwork.js';
 import { markArtPlaceholder } from '../artFallback.js';
 import { registerCardArtRefresh } from '../cardArtStyle.js';
 import { assetUrl } from '../assetmap.js';
-import { t, tFull } from '../strings.js';
+import { t, UiFullText } from '../strings.js';
 import { loreLine } from './loreLine.js';
 import { buildChannel } from '../buildChannel.js';
 import { uiConfig } from '../../config/generated/ui.js';
@@ -1064,7 +1064,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
   }
   // Wither N (SPEC §4.3) is a card field, not a keyword id: its chip reads the authored count.
   const witherCount = WitherFaceCount(def);
-  if (witherCount !== null) addChip(t('card.keyword.wither', { n: witherCount }), tFull('card.keyword.wither', { n: witherCount }), true);
+  if (witherCount !== null) addChip(t('card.keyword.wither', { n: witherCount }), UiFullText('card.keyword.wither', { n: witherCount }), true);
   for (const eff of def.effects || []) {
     // Status/stance WORDS resolve through the per-bundle framework term
     // overlay — verbatim text, framework authority. Unknown ids and

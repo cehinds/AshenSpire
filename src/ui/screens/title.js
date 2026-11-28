@@ -9,7 +9,7 @@ import { beatArmer } from '../../framework/optionDecision.js';
 import { buildStampHtml } from '../components/buildstamp.js';
 import { closeSaveSlotSelector, deleteSlotReview, openSaveSlotSelector, slotFacts, slotOption, slotDoor, slotDecisionDoor } from '../components/saveSlotSelector.js';
 import { el, html, titleMenu } from '../kit/index.js';
-import { t, tFull } from '../strings.js';
+import { t, UiFullText } from '../strings.js';
 import { saveSlotSelectionModel } from '../models/SaveSlotSelectionModel.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { focusElement } from '../input.js';
@@ -121,7 +121,7 @@ export function mountTitle(app, {
       attrs: { 'data-component': UI.titleBrandLockup },
     });
     const quick = menu.querySelector('#quick-start');
-    if (quick) quick.title = tFull('title.quickstart');
+    if (quick) quick.title = UiFullText('title.quickstart');
     menu.querySelector('.tm-name').dataset.component = UI.titleWordmark;
     menu.querySelector('.tm-name').classList.add('title-glow');
     menu.querySelector('.tm-sub').dataset.component = UI.titleSubtitle;

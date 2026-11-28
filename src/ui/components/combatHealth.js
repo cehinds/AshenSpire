@@ -1,7 +1,7 @@
 import { tagSymbolSvg } from './cardTagSymbols.js';
 import { setAttr, setData, setStyle } from '../domWrite.js';
 import { combatHealthModel, visibleBadges } from '../models/CombatHealthModel.js';
-import { t, tFull } from '../strings.js';
+import { t, UiFullText } from '../strings.js';
 import { attachTooltip, esc } from './tooltip.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
@@ -14,12 +14,12 @@ import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 export function badgeTipHtml(badge, { blockHelp, poiseHelp, wardHelp, evadeHelp = null, precisionHelp = null }) {
   // The +N overflow badge lists the hidden badges, each as "label value" (the same text its own aria-label would carry).
   if (badge.kind === 'overflow') return `<div class="tt-title">${esc(badge.label)}</div>${badge.names.map(esc).join('<br>')}`;
-  return `<div class="tt-title">${esc(badge.label)} ${badge.value}${badge.barrier > 0 ? ` (${esc(t('combat.protection.barrier'))} ${badge.barrier})` : ''}</div>${esc(badge.kind === 'shield' ? blockHelp : badge.help ? badge.help : badge.kind === 'evade' ? (evadeHelp || 'Active Evasion stacks. Each stack contributes to the attack roll defense.') : badge.kind === 'precision' ? (precisionHelp || tFull('card.tags.precision')) : badge.kind === 'poise' ? poiseHelp : wardHelp)}${badge.barrier > 0 ? `<br>${esc(tFull('combat.protection.barrier'))}` : ''}${badge.wardBlock > 0 ? `<br>${esc(t('combat.protection.wardBlock'))} ${badge.wardBlock}: ${esc(tFull('combat.protection.wardBlock'))}` : ''}`;
+  return `<div class="tt-title">${esc(badge.label)} ${badge.value}${badge.barrier > 0 ? ` (${esc(t('combat.protection.barrier'))} ${badge.barrier})` : ''}</div>${esc(badge.kind === 'shield' ? blockHelp : badge.help ? badge.help : badge.kind === 'evade' ? (evadeHelp || 'Active Evasion stacks. Each stack contributes to the attack roll defense.') : badge.kind === 'precision' ? (precisionHelp || UiFullText('card.tags.precision')) : badge.kind === 'poise' ? poiseHelp : wardHelp)}${badge.barrier > 0 ? `<br>${esc(UiFullText('combat.protection.barrier'))}` : ''}${badge.wardBlock > 0 ? `<br>${esc(t('combat.protection.wardBlock'))} ${badge.wardBlock}: ${esc(UiFullText('combat.protection.wardBlock'))}` : ''}`;
 }
 // The kinds a persistent row holds a node for, in the order the model lists them.
 // Owner 2026-11-07: Poise is a plain bar row under HP (no Poise badge, no HP-bar overlay or trim); AC is not drawn.
 const BADGE_KINDS = Object.freeze(['shield', 'evade', 'ward', 'precision', 'counter', 'reflect']);
-export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull('combat.protection.block'), wardHelp = tFull('combat.protection.ward'), poiseHelp = tFull('combat.protection.poise'), evadeHelp = null, precisionHelp = null, persistent = false, poise = null, statuses = null } = {}) {
+export function combatHealthRow(hp, values, { tooltips = true, blockHelp = UiFullText('combat.protection.block'), wardHelp = UiFullText('combat.protection.ward'), poiseHelp = UiFullText('combat.protection.poise'), evadeHelp = null, precisionHelp = null, persistent = false, poise = null, statuses = null } = {}) {
   if (!hp) return null;
   const model = combatHealthModel(values);
   const row = document.createElement('div');

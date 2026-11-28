@@ -21,7 +21,7 @@
 // data attribute and reads it back for the four components below.
 import { CATEGORY_NAV_MODES } from './CategoryNavModel.js';
 import { uiConfig } from '../../config/generated/ui.js';
-import { t, tFull } from '../strings.js';
+import { t, UiFullText } from '../strings.js';
 
 /** The word every choice starts on: draw it the way the wireframe draws it. */
 export const AS_DESIGNED = 'auto';
@@ -44,7 +44,7 @@ export const WIREFRAME_CHOICE_GROUPS = Object.freeze([
       Object.freeze({
         key: 'wireframeModalWidth',
         label: t('settings.row.wireframeModalWidth'),
-        note: tFull('settings.row.wireframeModalWidth'),
+        note: UiFullText('settings.row.wireframeModalWidth'),
         def: AS_DESIGNED,
         options: Object.freeze([
           asDesigned(),
@@ -55,7 +55,7 @@ export const WIREFRAME_CHOICE_GROUPS = Object.freeze([
       Object.freeze({
         key: 'wireframeModalFooter',
         label: t('settings.row.wireframeModalFooter'),
-        note: tFull('settings.row.wireframeModalFooter'),
+        note: UiFullText('settings.row.wireframeModalFooter'),
         def: AS_DESIGNED,
         options: Object.freeze([
           asDesigned(),
@@ -74,7 +74,7 @@ export const WIREFRAME_CHOICE_GROUPS = Object.freeze([
       Object.freeze({
         key: 'wireframeMenuNav',
         label: t('settings.row.wireframeMenuNav'),
-        note: tFull('settings.row.wireframeMenuNav'),
+        note: UiFullText('settings.row.wireframeMenuNav'),
         def: AS_DESIGNED,
         options: Object.freeze([
           asDesigned('Fit to the screen'),
@@ -85,7 +85,7 @@ export const WIREFRAME_CHOICE_GROUPS = Object.freeze([
       Object.freeze({
         key: 'wireframeMenuFrame',
         label: t('settings.row.wireframeMenuFrame'),
-        note: tFull('settings.row.wireframeMenuFrame'),
+        note: UiFullText('settings.row.wireframeMenuFrame'),
         def: AS_DESIGNED,
         options: Object.freeze([
           asDesigned(),
@@ -102,7 +102,7 @@ export const WIREFRAME_CHOICE_GROUPS = Object.freeze([
       Object.freeze({
         key: 'wireframeSceneSkyline',
         label: t('settings.row.wireframeSceneSkyline'),
-        note: tFull('settings.row.wireframeSceneSkyline'),
+        note: UiFullText('settings.row.wireframeSceneSkyline'),
         def: AS_DESIGNED,
         options: Object.freeze([
           asDesigned(),
@@ -113,7 +113,7 @@ export const WIREFRAME_CHOICE_GROUPS = Object.freeze([
       Object.freeze({
         key: 'wireframeSceneFloor',
         label: t('settings.row.wireframeSceneFloor'),
-        note: tFull('settings.row.wireframeSceneFloor'),
+        note: UiFullText('settings.row.wireframeSceneFloor'),
         def: AS_DESIGNED,
         options: Object.freeze([
           asDesigned(),

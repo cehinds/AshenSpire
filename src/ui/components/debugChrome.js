@@ -11,7 +11,7 @@
 
 import { el, openModal, button, logBox, flavour, prose, titleS, blocker } from '../kit/index.js';
 import { registerDebugChrome, logText, MAX_ENTRIES } from '../debuglog.js';
-import { t, tFull } from '../strings.js';
+import { t, UiFullText } from '../strings.js';
 import { consoleRecorder, consoleLogText } from '../consoleLog.js';
 import { BUILD_STAMP_TEXT } from '../../buildversion.js';
 import { saveTextFile } from '../services/saveTextFile.js';
@@ -93,7 +93,7 @@ function consoleDoor({ opener = document.activeElement, onClose = null } = {}) {
     queueMicrotask(() => { queued = false; if (!closed && !manual) fill(); });
   });
   const modal = openModal({ size: 'lg', className: 'console-modal', title: t('debugChrome.console'), opener,
-    body: el('div', { class: 'console-log-pane' }, [flavour(tFull('debugChrome.consoleOutput')), body, status]),
+    body: el('div', { class: 'console-log-pane' }, [flavour(UiFullText('debugChrome.consoleOutput')), body, status]),
     secondary: [copy, download], primary: close, footSize: 'short',
     onClose: () => { closed = true; unsubscribe(); onClose?.(); },
   });
@@ -112,7 +112,7 @@ function consoleDoor({ opener = document.activeElement, onClose = null } = {}) {
       body.value = snapshot;
       body.focus();
       body.select();
-      status.textContent = tFull('debugChrome.consoleManualCopy');
+      status.textContent = UiFullText('debugChrome.consoleManualCopy');
     }
   });
   download.addEventListener('click', async () => {
@@ -121,7 +121,7 @@ function consoleDoor({ opener = document.activeElement, onClose = null } = {}) {
     if (closed) return;
     download.disabled = false;
     status.textContent = result.ok ? result.method === 'share' ? t('debugChrome.consoleShared') : t('debugChrome.consoleDownloaded')
-      : result.method === 'cancelled' ? t('debugChrome.consoleExportCancelled') : tFull('debugChrome.consoleExportUnavailable');
+      : result.method === 'cancelled' ? t('debugChrome.consoleExportCancelled') : UiFullText('debugChrome.consoleExportUnavailable');
   });
   close.addEventListener('click', modal.close);
   return modal;

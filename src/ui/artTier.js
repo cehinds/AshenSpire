@@ -35,7 +35,7 @@ import {
   ASSET_PACKS, packsPinned, builtInArtStatus, loadBuiltInPacks, startBuiltInArt,
 } from './assetPacks.js';
 import { ASSET_MAP } from './assetmap.js';
-import { tFull } from './strings.js';
+import { UiFullText } from './strings.js';
 import { RETRY_WAIT_MS } from './bootArt.js';
 
 /** At or under this many GB (navigator.deviceMemory), Auto picks light. */
@@ -166,7 +166,7 @@ export function tierStatus(settings, { pin = ASSET_PACKS, inlineMap = ASSET_MAP,
   const choice = artQualityChoice(settings);
   const s = builtInArtStatus();
   if (switching || s.state === 'loading' || s.state === 'idle') return `Loading ${TIER_WORD[requestedTier(settings, { defaultTier: pin?.tier, ...env })]} art…`;
-  if (s.state !== 'loaded') return tFull('art.failed.settings');
+  if (s.state !== 'loaded') return UiFullText('art.failed.settings');
   const showing = `Showing ${TIER_WORD[s.tier]} art`;
   if (s.requested && s.requested !== s.tier) {
     return pin?.packs?.[s.requested] ? `${showing}: the ${TIER_WORD[s.requested]} art could not be loaded.` : `${showing}: this build carries no ${TIER_WORD[s.requested]} art.`;

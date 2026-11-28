@@ -1,4 +1,4 @@
-import { tFull } from '../strings.js';
+import { UiFullText } from '../strings.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { anchorLocalBox, uiZoom } from '../fx.js';
 import { alternativeEnemyTargetGrid as enemyTargetGrid } from '../models/AlternativeEnemyTargetGridModel.js';
@@ -91,7 +91,7 @@ export function renderEnemyTargetPicker(host, { targets = [], disabled = false, 
     picker = document.createElement('div');
     picker.className = 'enemy-target-picker';
     picker.setAttribute('role', 'group');
-    picker.setAttribute('aria-label', tFull('combat.enemyTarget.choose'));
+    picker.setAttribute('aria-label', UiFullText('combat.enemyTarget.choose'));
     markUiComponent(picker, UI.enemyTargetPicker);
     host.appendChild(picker);
   }
@@ -128,8 +128,8 @@ export function renderEnemyTargetPicker(host, { targets = [], disabled = false, 
     button.disabled = disabled;
     button.dataset.number = String(index + 1);
     button.querySelector('.enemy-target-name').textContent = `${index + 1}. ${target.name}`;
-    button.querySelector('.enemy-target-health').textContent = tFull('combat.enemyTarget.health', { hp: target.hp, maxHp: target.maxHp });
-    button.setAttribute('aria-label', tFull('combat.enemyTarget.label', { number: index + 1, name: target.name, hp: target.hp, maxHp: target.maxHp }));
+    button.querySelector('.enemy-target-health').textContent = UiFullText('combat.enemyTarget.health', { hp: target.hp, maxHp: target.maxHp });
+    button.setAttribute('aria-label', UiFullText('combat.enemyTarget.label', { number: index + 1, name: target.name, hp: target.hp, maxHp: target.maxHp }));
   });
   picker.activate = onActivate;
   picker.preview = onPreview;

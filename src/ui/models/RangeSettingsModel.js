@@ -1,5 +1,5 @@
 import { RANGE_SETTING_KEYS, snapshotRangePolicy } from '../../model/combatEngagement.js';
-import { t, tFull } from '../strings.js';
+import { t, UiFullText } from '../strings.js';
 import { readNewGameProfile } from '../components/gameProfileSelector.js';
 import { fixCoreMechanics } from '../../content/generated/fixCoreMechanics.js';
 
@@ -25,11 +25,11 @@ export function rangeSettingsRows(authored = fixCoreMechanics.range) {
   return [
     { ...common, key: RANGE_SETTING_KEYS.enabled, type: 'toggle', def: policy.enabled,
       defaultFor: defaultEnabledFor, resolve: (settings = {}) => typeof settings[RANGE_SETTING_KEYS.enabled] === 'boolean' ? settings[RANGE_SETTING_KEYS.enabled] : defaultEnabledFor(settings),
-      label: t('settings.range.enabled'), note: tFull('settings.range.enabled') },
+      label: t('settings.range.enabled'), note: UiFullText('settings.range.enabled') },
     ...['advanceSpPerBand', 'reachPrecisionBonus', 'throwPrecisionPenalty'].map(field => ({
       ...common, key: RANGE_SETTING_KEYS[field], type: 'number', def: policy[field], defaultFor: defaultFor(field),
       min: 0, max: Number.MAX_SAFE_INTEGER, integer: true, step: 1,
-      label: t(`settings.range.${field}`), note: tFull(`settings.range.${field}`),
+      label: t(`settings.range.${field}`), note: UiFullText(`settings.range.${field}`),
     })),
   ];
 }

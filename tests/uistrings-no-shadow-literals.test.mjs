@@ -11,7 +11,7 @@
 // any row the branch adds over origin/dev when git can say so, it takes the
 // short, full and tip text and looks for that same text as a string, template
 // or markup literal anywhere in src/ui. A hit is a control that can paint the
-// old words. It is either routed through t()/tFull()/tTip(), or it is listed in
+// old words. It is either routed through t()/UiFullText()/tTip(), or it is listed in
 // ALLOWED below with the reason it is not copy (an id, a stored value, a lookup
 // key) or not this row's copy (the same English word naming something else).
 // An allowance that no longer matches anything fails too, so the list cannot rot.
@@ -254,7 +254,7 @@ test('all three enemy target rows remain protected independently of origin/dev',
   // Health starts with a value token, so it has no literal prefix to sweep.
   // Its live renderer must still read that authored row rather than rebuild it.
   const picker = stripComments(readFileSync(join(ROOT, 'src/ui/components/enemyTargetPicker.js'), 'utf8'));
-  for (const id of frozen) assert.ok(picker.includes(`tFull('${id}'`), `target picker must consume ${id}`);
+  for (const id of frozen) assert.ok(picker.includes(`UiFullText('${id}'`), `target picker must consume ${id}`);
   const health = uiStrings.find(row => row.id === 'combat.enemyTarget.health');
   assert.match(health.full, /\{hp\}.*\{maxHp\}/, 'the authored health row retains both live values');
 });
@@ -367,7 +367,7 @@ test('builder and lifecycle copy retain migration coverage without a branch delt
   assert.ok(texts.get('Reviewed')?.includes('cardArtBuilder.reviewedCard.full'));
   assert.ok(texts.get('The')?.includes('status.lifecycle.perTurnEnd.full'));
   const renderer = stripComments(readFileSync(join(ROOT, 'src/ui/tools/cardArtReview.js'), 'utf8'));
-  assert.ok(renderer.includes("tFull('cardArtBuilder.reviewedCard'"), 'review checkbox accessibility copy uses the authored row');
+  assert.ok(renderer.includes("UiFullText('cardArtBuilder.reviewedCard'"), 'review checkbox accessibility copy uses the authored row');
 });
 
 test('Reviewed allowance permits only the persisted style enum and rejects displayed copy', () => {

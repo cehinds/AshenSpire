@@ -1,14 +1,14 @@
 // The face of the "rank up a card" service on a reward door or a merchant's shelf (W25-R): the poker canvas of the
 // collectible cards, populated with the service's one effect. Presentation only; the claim is the host's.
 import { renderEquipmentCard } from './equipmentCard.js';
-import { t, tFull } from '../strings.js';
+import { t, UiFullText } from '../strings.js';
 
 /** RankUpOfferModel() -> the equipment-card presentation of the service. */
 export function RankUpOfferModel() {
   const effect = t('rankUp.blurb');
   return {
     id: 'cardRank', name: t('rankUp.name'), cardKind: 'service', type: 'Service', art: null, glyph: 'smith', accent: '#d0ac5d',
-    typeExplanation: tFull('rankUp.name'), facts: [], tags: [],
+    typeExplanation: UiFullText('rankUp.name'), facts: [], tags: [],
     effectsLabel: 'Effect', bonuses: [{ label: effect, explanation: effect }],
     flavor: effect, requirement: 'One card', requirementExplanation: t('rankUp.blurb'), rarity: 'uncommon',
   };

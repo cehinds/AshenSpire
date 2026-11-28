@@ -4,7 +4,7 @@ import { rangePolicyProblems } from './combatEngagement.js';
 import { fixCoreMechanics as defaults } from '../content/generated/fixCoreMechanics.js';
 import { fixCoreProtection } from '../content/generated/fixCoreProtection.js';
 import { compileBindings, evaluateModifiers, queryBinding, parameterDefaults } from './mechanicsKernel.js';
-import { tFull } from './strings.js';
+import { UiFullText } from './strings.js';
 import { ValidateSpellCostRules } from './spellCostRules.js';
 const mechanics = new Map(fixCoreProtection);
 const behaviorTags = new Set(fixCoreProtection.map(([, row]) => row.manifest.tag));
@@ -416,12 +416,12 @@ export function fixCoreStatusDefinition(ctx, id, baseDefinition, holder = null) 
   else if (id === 'staggered') row.tooltip = row.description = facts[id];
   else if (id === 'ward' && rules.ward?.routing === 'hpBuffer' && rules.ward?.hpPerStack > 0) {
     const decay = rules.ward.decayPerTurn ?? rules.statuses.decayAmount;
-    row.tooltip = row.description = tFull('status.ward.tooltipHpBuffer', { hp: rules.ward.hpPerStack, decay, decayHp: decay * rules.ward.hpPerStack });
+    row.tooltip = row.description = UiFullText('status.ward.tooltipHpBuffer', { hp: rules.ward.hpPerStack, decay, decayHp: decay * rules.ward.hpPerStack });
   }
   else if (id === 'ward' && rules.ward?.poisePerStack > 0) {
     const tokens = { poise: rules.ward.poisePerStack, decay: rules.ward.decayPerTurn ?? rules.statuses.decayAmount };
-    row.tooltip = row.description = [tFull(rules.ward.routing === 'blockFirst' ? 'status.ward.tooltipBlockFirst' : 'status.ward.tooltipPoiseFirst', tokens),
-      ...(rules.ward.breaksAtZeroPoise ? [tFull('status.ward.breaks')] : [])].join(' ');
+    row.tooltip = row.description = [UiFullText(rules.ward.routing === 'blockFirst' ? 'status.ward.tooltipBlockFirst' : 'status.ward.tooltipPoiseFirst', tokens),
+      ...(rules.ward.breaksAtZeroPoise ? [UiFullText('status.ward.breaks')] : [])].join(' ');
   }
   else if (id === 'barrier') { const per = ctx?.ratingsRules?.barrier?.poisePerStack ?? ctx?.registries?.balance?.combatRatings?.barrier?.poisePerStack ?? 5; row.tooltip = row.description = `Poise gained above your maximum. Each stack is +${per} maximum and current Poise. Lose ${rules.statuses.decayAmount} stack at the start of your turn, and its +${per} maximum Poise with it.`; }
   else if (facts[id]) row.tooltip = row.description = `${facts[id]} Applications add stacks. Lose ${rules.statuses.decayAmount} stack at the start of the owner's turn each round.`;
@@ -439,7 +439,7 @@ export function fixCoreProtectionDescription(ctx,entity,kind) {
   const broken = FixCoreBrokenRules(ctx);
   // Owner, 2026-11-18 (3a): a break no longer multiplies damage; it applies Staggered, Vulnerable, Weak and Frail stacks instead.
   const brokenByStatuses = broken && broken.damageMultiplier === 1 && broken.statusStacks > 0;
-  const spends = brokenByStatuses ? tFull('poise.broken.statuses', { stacks: broken.statusStacks }) : broken ? `The damage it absorbs is taken off the pool, and when the pool is empty the owner is Broken: it loses its next action and takes ×${broken.damageMultiplier} damage until then, and its Poise refills to full.`
+  const spends = brokenByStatuses ? UiFullText('poise.broken.statuses', { stacks: broken.statusStacks }) : broken ? `The damage it absorbs is taken off the pool, and when the pool is empty the owner is Broken: it loses its next action and takes ×${broken.damageMultiplier} damage until then, and its Poise refills to full.`
     : 'The damage it absorbs is taken off the pool, and when the pool is empty the owner is Staggered.';
   const weaponPoise = FixCoreWeaponPoiseRules(ctx);
   if (weaponPoise) {

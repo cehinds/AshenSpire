@@ -3079,7 +3079,6 @@
     "has",
     "stringIds",
     "t",
-    "tFull",
     "tTip"
   ],
   "src/model/tagService.js": [
@@ -5442,7 +5441,6 @@
     "has",
     "stringIds",
     "t",
-    "tFull",
     "tTip"
   ],
   "src/ui/surfaces.js": [

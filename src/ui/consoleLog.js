@@ -1,5 +1,5 @@
 // Bounded, session-only console capture. Leaf: only the leaf strings table is imported.
-import { t, tFull } from './strings.js';
+import { t, UiFullText } from './strings.js';
 export const CONSOLE_MAX_ENTRIES = 1000;
 export const CONSOLE_MAX_TEXT = 8192;
 const LEVELS = ['log', 'info', 'warn', 'error', 'debug'];
@@ -89,8 +89,8 @@ if (typeof window !== 'undefined' && window.console) consoleRecorder.install(win
 /** Metadata is supplied by chrome, keeping this module free of game imports. */
 export function consoleLogText(metadata = {}) {
   return [t('debugChrome.consoleExportTitle'), ...Object.entries(metadata).map(([key, value]) => `${key}: ${value}`),
-    t('debugChrome.consoleExportTime', { time: new Date().toISOString() }), tFull('debugChrome.consoleRetention', { max: CONSOLE_MAX_ENTRIES }),
-    tFull('debugChrome.consoleExportBoundary'),
-    tFull('debugChrome.consoleExportPrivacy'), '---',
+    t('debugChrome.consoleExportTime', { time: new Date().toISOString() }), UiFullText('debugChrome.consoleRetention', { max: CONSOLE_MAX_ENTRIES }),
+    UiFullText('debugChrome.consoleExportBoundary'),
+    UiFullText('debugChrome.consoleExportPrivacy'), '---',
     ...consoleRecorder.getEntries().map(entry => `${entry.time} [${entry.level}] ${entry.text}`)].join('\n');
 }

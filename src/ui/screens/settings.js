@@ -26,7 +26,7 @@ import { renderAboutSection, renderChangelogSection } from './about.js';
 import { AUDIO_DEFAULTS, resolveMusicEnabled } from '../audio.js';
 import { openModal, button, settingRowOpenHtml, settingLabelStackHtml } from '../kit/index.js';
 import { OpenConfirmationModal } from '../components/confirmationModal.js';
-import { t, tFull } from '../strings.js';
+import { t, UiFullText } from '../strings.js';
 import { settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceModel.js';
 import { cardLevelsWithOverrides, cardSizingExport, cardSizingExportPath } from '../models/CardSizeModel.js';
 import {
@@ -242,24 +242,24 @@ const ADVANCED_GROUPS = Object.freeze([
   //
   // A retired tab id resolves through `activeAdvancedGroup`, so a profile that
   // last had "Rules" open lands on the first tab rather than a blank panel.
-  { id: 'Opening', label: t('settings.group.Opening'), tip: tFull('settings.group.Opening') },
+  { id: 'Opening', label: t('settings.group.Opening'), tip: UiFullText('settings.group.Opening') },
   // Progression, Rewards, Equipment and World went with their rows (owner, 2026-11-20):
   // Core 2 drew none of them, and their values are authored content now.
-  { id: 'Deck', label: t('settings.group.Deck'), tip: tFull('settings.group.Deck') },
+  { id: 'Deck', label: t('settings.group.Deck'), tip: UiFullText('settings.group.Deck') },
   // The four Range rules moved here from General › Combat (owner, 2026-11-20): they change the
   // next run's rules, not how a fight looks.
-  { id: 'Range', label: t('settings.group.Range'), tip: tFull('settings.group.Range') },
+  { id: 'Range', label: t('settings.group.Range'), tip: UiFullText('settings.group.Range') },
   // The four map rows, split from Interface (owner, 2026-11-20).
-  { id: 'Map', label: t('settings.group.Map'), tip: tFull('settings.group.Map') },
-  { id: 'Interface', label: t('settings.group.Interface'), tip: tFull('settings.group.Interface') },
-  { id: 'Text', label: t('settings.group.Text'), tip: tFull('settings.group.Text') },
-  { id: 'Export', label: t('settings.group.Export'), tip: tFull('settings.group.Export') },
+  { id: 'Map', label: t('settings.group.Map'), tip: UiFullText('settings.group.Map') },
+  { id: 'Interface', label: t('settings.group.Interface'), tip: UiFullText('settings.group.Interface') },
+  { id: 'Text', label: t('settings.group.Text'), tip: UiFullText('settings.group.Text') },
+  { id: 'Export', label: t('settings.group.Export'), tip: UiFullText('settings.group.Export') },
   // Author and QA dials (owner, 2026-11-20): the wireframe choices, card sizes and their export,
   // the settings window and the creation shortcut. Dev and test builds only.
-  { id: 'Developer', label: t('settings.group.Developer'), tip: tFull('settings.group.Developer') },
-  { id: 'Sync', label: t('settings.group.Sync'), tip: tFull('settings.group.Sync') },
-  { id: 'Changelog', label: t('settings.group.Changelog'), tip: tFull('settings.group.Changelog') },
-  { id: 'About', label: t('settings.group.About'), tip: tFull('settings.group.About') },
+  { id: 'Developer', label: t('settings.group.Developer'), tip: UiFullText('settings.group.Developer') },
+  { id: 'Sync', label: t('settings.group.Sync'), tip: UiFullText('settings.group.Sync') },
+  { id: 'Changelog', label: t('settings.group.Changelog'), tip: UiFullText('settings.group.Changelog') },
+  { id: 'About', label: t('settings.group.About'), tip: UiFullText('settings.group.About') },
 ]);
 
 // ---- DEBUG-ONLY SECTIONS (owner, 2026-09-24) --------------------------------
@@ -367,7 +367,7 @@ export function SettingsGroupLabel(row) {
 export function SettingsGroupButtonRow(id) {
   const spec = SETTINGS_GROUP_MODALS[id];
   return {
-    cat: 'Advanced', key: `groupModal.${id}`, type: 'button', label: t(spec.labelId), note: tFull(spec.labelId),
+    cat: 'Advanced', key: `groupModal.${id}`, type: 'button', label: t(spec.labelId), note: UiFullText(spec.labelId),
     btn: (settings = {}) => {
       const changed = SettingsGroupRows(id).filter((row) => rowModified(settings, row)).length;
       return changed ? t('settings.groupModal.changed', { count: changed }) : t('settings.groupModal.allDefault');
@@ -1026,7 +1026,7 @@ export function allResettableKeys(stored = {}) {
 export function confirmResetAll(onConfirm, returnFocusElement = document.activeElement) {
   return OpenConfirmationModal({
     title: t('settings.resetAll.title'),
-    message: tFull('settings.resetAll.title'),
+    message: UiFullText('settings.resetAll.title'),
     confirmLabel: t('settings.resetAll.confirm'),
     cancelLabel: t('common.cancel'),
     tone: 'danger',

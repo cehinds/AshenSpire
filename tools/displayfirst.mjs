@@ -1199,13 +1199,13 @@ function selftestPlants() {
           file: 'src/ui/models/SettingsRowsModel.js',
           find: [
             "  { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: t('settings.row.fullscreen'),",
-            "    note: tFull('settings.row.fullscreen') },",
+            "    note: UiFullText('settings.row.fullscreen') },",
             '  // Fullscreen and Music are persistent quick controls on Title, Map, and',
           ].join(settingsEol),
           replace: [
             "  { cat: 'Display', key: 'accent', type: 'choice', def: 'gold', selfEvident: true,",
             "    choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: t('settings.row.accent'),",
-            "    note: tFull('settings.row.accent') },",
+            "    note: UiFullText('settings.row.accent') },",
             '  // Fullscreen and Music are persistent quick controls on Title, Map, and',
           ].join(settingsEol),
         },
@@ -1214,12 +1214,12 @@ function selftestPlants() {
           find: [
             "  { cat: 'Display', key: 'accent', type: 'choice', def: 'gold', selfEvident: true,",
             "    choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: t('settings.row.accent'),",
-            "    note: tFull('settings.row.accent') },",
+            "    note: UiFullText('settings.row.accent') },",
             '  // ART QUALITY (LFS / art-tier plan, step 4, 2026-09-26; Auto / Light / High,',
           ].join(settingsEol),
           replace: [
             "  { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: t('settings.row.fullscreen'),",
-            "    note: tFull('settings.row.fullscreen') },",
+            "    note: UiFullText('settings.row.fullscreen') },",
             '  // ART QUALITY (LFS / art-tier plan, step 4, 2026-09-26; Auto / Light / High,',
           ].join(settingsEol),
         },

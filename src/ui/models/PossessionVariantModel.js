@@ -2,7 +2,7 @@ import { wireframeUi } from '../../content/wireframeUi.js';
 import { relicPropertyRules } from '../../model/registries.js';
 import { resources as resourceTable } from '../../content/resources.js';
 import { statuses as statusTable } from '../../content/statuses.js';
-import { t, tFull, has } from '../strings.js';
+import { t, UiFullText, has } from '../strings.js';
 
 // WC2a1–WC2c3 possession sub-variants. One poker canvas draws every possession
 // card; this model decides which wireframe rows each of its regions carries,
@@ -29,7 +29,7 @@ const unique = (list) => [...new Set(list)];
 const signed = (n) => `${n >= 0 ? '+' : ''}${n}`;
 const line = (id, text, explanation, extra = {}) => ({ id, text, explanation: explanation || text, ...extra });
 const copy = (id, tokens) => t(id, tokens);
-const fullCopy = (id, tokens) => (has(id, 'full') ? tFull(id, tokens) : null);
+const fullCopy = (id, tokens) => (has(id, 'full') ? UiFullText(id, tokens) : null);
 
 function faceCount(value, name) {
   if (!Number.isInteger(value) || value < 1) throw new Error(`possession: ${name} must be a positive whole number`);

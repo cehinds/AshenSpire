@@ -1,6 +1,6 @@
 import { fixCoreProtectionDescription, fixCoreWardDisabled } from '../model/fixCoreMechanics.js';
 import { configuredCombat } from '../engine/gameProfileCombat.js';
-import { tFull } from './strings.js';
+import { UiFullText } from './strings.js';
 
 /**
  * The Poise tooltip. The locked FixCore description covers the physical 25% absorb; under a configured Core fight with
@@ -8,6 +8,6 @@ import { tFull } from './strings.js';
  */
 export function poiseHelpText(combat, entity) {
   const base = fixCoreProtectionDescription(combat, entity, 'poise');
-  if (!base) return tFull('combat.protection.poise');
-  return configuredCombat(combat) && fixCoreWardDisabled(combat) ? `${base} ${tFull('combat.tooltip.poiseMagic')}` : base;
+  if (!base) return UiFullText('combat.protection.poise');
+  return configuredCombat(combat) && fixCoreWardDisabled(combat) ? `${base} ${UiFullText('combat.tooltip.poiseMagic')}` : base;
 }

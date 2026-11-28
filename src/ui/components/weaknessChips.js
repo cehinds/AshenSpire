@@ -5,7 +5,7 @@ import { describeWeakness } from '../../model/enemyWeaknessRules.js';
 import { weaknessIconId } from '../../model/weaknessIcons.js';
 import { tagSymbolSvg } from './cardTagSymbols.js';
 import { attachTooltip, esc } from './tooltip.js';
-import { t, tFull } from '../strings.js';
+import { t, UiFullText } from '../strings.js';
 
 /** "Weak to Piercing: +25% damage" - the chip's tooltip text, its accessible name and its fallback title. */
 export function weaknessChipText(weakness) {
@@ -41,7 +41,7 @@ const STANCE_WEAKNESS_ICON = Object.freeze({ melee: 'effect:attack', all: 'effec
 export function StanceWeaknessChip(weakness) {
   if (!weakness) return null;
   const key = `combat.stanceWeakness.${weakness.stance}`;
-  const label = t(key), text = tFull(key);
+  const label = t(key), text = UiFullText(key);
   const chip = document.createElement('span');
   chip.className = 'weakness-chip stance-weakness-chip';
   chip.dataset.weakness = weakness.to;

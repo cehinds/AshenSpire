@@ -24,7 +24,7 @@
 
 import { uiConfig } from '../config/generated/ui.js';
 import { packsPinned } from './assetPacks.js';
-import { t, tFull } from './strings.js';
+import { t, UiFullText } from './strings.js';
 
 const LOADING = uiConfig.presentation.startupGate;
 /**
@@ -73,7 +73,7 @@ export function bootArtLine(p = phase) {
   if (!p || p.state === 'off') return null;
   if (p.state === 'index') return { state: 'loading', text: t('art.loading') };
   if (p.state === 'warming') return { state: 'loading', text: t('art.progress', { done: p.done, total: p.total }) };
-  if (p.state === 'failed') return { state: 'failed', text: tFull('art.failed.gate') };
+  if (p.state === 'failed') return { state: 'failed', text: UiFullText('art.failed.gate') };
   return { state: 'done', text: '' };
 }
 

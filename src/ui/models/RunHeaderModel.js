@@ -1,7 +1,7 @@
 import { ComponentModel } from './ComponentModel.js';
 import { metadataFieldModel } from './HudPrimitiveModels.js';
 import { UI_COMPONENTS as UI } from './UiComponentId.js';
-import { t, tFull } from '../strings.js';
+import { t, UiFullText } from '../strings.js';
 
 // WGH7 / WGS3 run header. The compact header exposes only the class identity.
 // Character name, portrait, sigil and screen-context copy remain on their
@@ -14,7 +14,7 @@ export function identityClusterModel(identity = {}) {
 }
 
 export function cindersCounterModel(cinders) {
-  const accessibleLabel = tFull('hud.cinders', { amount: cinders });
+  const accessibleLabel = UiFullText('hud.cinders', { amount: cinders });
   return ComponentModel(UI.cindersCounter, {
     properties: { value: cinders, label: t('hud.cinders'), accessibleLabel },
     accessibility: { label: accessibleLabel, live: 'polite' },

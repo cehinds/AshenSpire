@@ -10,7 +10,7 @@ import { proceduralCardArt } from '../src/ui/proceduralCardArt.js';
 import { reviewedCardArtCatalog } from '../src/content/reviewedCardArt.generated.js';
 import { renderCard } from '../src/ui/components/card.js';
 import { applyCardArtStyle, cardArtStyle } from '../src/ui/cardArtStyle.js';
-import { t, tFull } from '../src/ui/strings.js';
+import { t, UiFullText } from '../src/ui/strings.js';
 import { mountProceduralBuilder } from '../src/ui/tools/cardArtProceduralBuilder.js';
 import { withModalDom } from './helpers/dom.mjs';
 import { BUILDER_TYPES, BUILDER_ELEMENTS, BUILDER_RANK_MAX, BUILDER_PREVIEW_ID,
@@ -19,11 +19,11 @@ import { BUILDER_TYPES, BUILDER_ELEMENTS, BUILDER_RANK_MAX, BUILDER_PREVIEW_ID,
 const profile = resolveGameProfile('default');
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const run = createRunState({ registries, classId: 'reaver', seed: 73031 });
-const previewText = { name: t('cardArtBuilder.previewName'), text: tFull('cardArtBuilder.previewOnly') };
+const previewText = { name: t('cardArtBuilder.previewName'), text: UiFullText('cardArtBuilder.previewOnly') };
 
 test('reviewed-card accessibility copy fills its authored name token through the strings API', () => {
-  assert.equal(tFull('cardArtBuilder.reviewedCard', { name: 'Example card' }), 'Reviewed Example card');
-  assert.throws(() => tFull('cardArtBuilder.reviewedCard'), /wants \{name\}/);
+  assert.equal(UiFullText('cardArtBuilder.reviewedCard', { name: 'Example card' }), 'Reviewed Example card');
+  assert.throws(() => UiFullText('cardArtBuilder.reviewedCard'), /wants \{name\}/);
 });
 
 test('builder exports only canonical type, tags and one-based bounded rank', () => {
@@ -169,7 +169,7 @@ test('mounted controls update the real preview, clear invalid input and export o
     find('rank').value = '0'; find('rank').dispatchEvent(new Event('input'));
     assert.equal(find('export').disabled, true);
     assert.equal(find('native').children.length, 0);
-    assert.equal(find('message').textContent, tFull('cardArtBuilder.invalidRank', { max: BUILDER_RANK_MAX }));
+    assert.equal(find('message').textContent, UiFullText('cardArtBuilder.invalidRank', { max: BUILDER_RANK_MAX }));
     find('rank').value = '3'; find('type').value = 'skill'; find('utility').value = 'heal';
     find('type').dispatchEvent(new Event('input'));
     assert.equal(find('utility').disabled, false);

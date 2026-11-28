@@ -1,4 +1,4 @@
-import { t, tFull } from './strings.js';
+import { t, UiFullText } from './strings.js';
 import { combatStatusRules as defaultStatusRules } from '../content/combatStatusRules.js';
 import { resolveStatusPresentationDefinition, coreStatusLifecycle, statusPresentationContext } from '../model/statusPresentation.js';
 import { mechanics } from '../framework/data/mechanics.js';
@@ -18,52 +18,52 @@ export function statusLifecycleText(def, context = {}) {
   const activeRule = Object.values(rules.statuses).find(rule => rule.activeStatus === def.id);
   if (activeRule && combatExpansionVersion === 2 && !core?.overrides) {
     // Element rules (W25): Burn has no cap, so there is no cap to state.
-    return [ElementStatusUncapped(context, def.id) ? tFull('status.lifecycle.add', { value: t('status.lifecycle.stackTotal') }) : tFull('status.lifecycle.expandedStacking', { cap: activeRule.cap }),
+    return [ElementStatusUncapped(context, def.id) ? UiFullText('status.lifecycle.add', { value: t('status.lifecycle.stackTotal') }) : UiFullText('status.lifecycle.expandedStacking', { cap: activeRule.cap }),
       core ? coreDecayText(def, core, t('status.lifecycle.stackTotal')) : decayText(def, t('status.lifecycle.stackTotal')),
       typeof def.decay === 'object' && Number.isFinite(def.decay?.duration)
-        ? tFull('status.lifecycle.expandedTimer') : ''].filter(Boolean).join(' ');
+        ? UiFullText('status.lifecycle.expandedTimer') : ''].filter(Boolean).join(' ');
   }
   const meter = Boolean(def.meter || def.proc);
   const value = t(meter ? 'status.lifecycle.buildup'
     : def.instancePresentation?.valueToken === 'percent' ? 'status.lifecycle.effectValue' : 'status.lifecycle.stackTotal');
   const rule = foundation && !meter ? def.stacking : null;
   if (rule) {
-    const stacking = tFull(`status.lifecycle.foundation.${rule.mode}`, { value, cap: rule.cap });
-    const duration = rule.duration == null ? tFull('status.lifecycle.noDecay')
-      : tFull('status.lifecycle.applicationTimer', {
+    const stacking = UiFullText(`status.lifecycle.foundation.${rule.mode}`, { value, cap: rule.cap });
+    const duration = rule.duration == null ? UiFullText('status.lifecycle.noDecay')
+      : UiFullText('status.lifecycle.applicationTimer', {
         duration: rule.duration,
         clock: t(rule.clock === 'ownerTurnStart' ? 'status.lifecycle.turnStart' : 'status.lifecycle.turnEnd'),
       });
     const timer = rule.duration != null && ['add', 'refresh'].includes(rule.mode)
-      ? tFull(rule.refresh === false ? 'status.lifecycle.keepTimer' : 'status.lifecycle.resetTimer') : '';
+      ? UiFullText(rule.refresh === false ? 'status.lifecycle.keepTimer' : 'status.lifecycle.resetTimer') : '';
     return [stacking, duration, timer, core ? coreDecayText(def, core, value) : ''].filter(Boolean).join(' ');
   }
-  const stacking = tFull(`status.lifecycle.${def.stackMode}`, { value });
+  const stacking = UiFullText(`status.lifecycle.${def.stackMode}`, { value });
   const legacy = `${stacking} ${core ? coreDecayText(def, core, value) : decayText(def, value)}`;
   // Definition-only inspection has no fight version. Name both rule sets
   // rather than silently treating a v2 active status as a legacy meter.
   return activeRule && combatExpansionVersion == null
-    ? [tFull('status.lifecycle.classic', { detail: legacy }),
-      tFull('status.lifecycle.expanded', { detail: statusLifecycleText(def, { ...context, combatExpansionVersion: 2 }) })].join(' ')
+    ? [UiFullText('status.lifecycle.classic', { detail: legacy }),
+      UiFullText('status.lifecycle.expanded', { detail: statusLifecycleText(def, { ...context, combatExpansionVersion: 2 }) })].join(' ')
     : legacy;
 }
 
 function coreDecayText(def, core, value) {
-  if (core.clock === 'precisionOwnerTurnStart') return tFull('status.lifecycle.corePrecision', {
+  if (core.clock === 'precisionOwnerTurnStart') return UiFullText('status.lifecycle.corePrecision', {
     decay: mechanics.accuracy.precisionDecayPerTurn,
   });
-  if (core.clock === 'stackOwnerTurnStart') return tFull('status.lifecycle.coreDecay', {
+  if (core.clock === 'stackOwnerTurnStart') return UiFullText('status.lifecycle.coreDecay', {
     value, amount: core.decayAmount, clock: t('status.lifecycle.turnStart'),
   });
-  if (core.clock === 'timerOwnerTurnStart') return tFull('status.lifecycle.coreTimer', {
+  if (core.clock === 'timerOwnerTurnStart') return UiFullText('status.lifecycle.coreTimer', {
     duration: def.decay.duration, clock: t('status.lifecycle.turnStart'),
   });
-  return def.decay === 'onConsume' ? tFull('status.lifecycle.onConsume') : tFull('status.lifecycle.noDecay');
+  return def.decay === 'onConsume' ? UiFullText('status.lifecycle.onConsume') : UiFullText('status.lifecycle.noDecay');
 }
 
 function decayText(def, value) {
   return typeof def.decay === 'object' && Number.isFinite(def.decay?.duration)
-    ? tFull('status.lifecycle.timer', { duration: def.decay.duration })
-    : def.decay === 'perTurnEnd' ? tFull('status.lifecycle.perTurnEnd', { value })
-      : def.decay === 'onConsume' ? tFull('status.lifecycle.onConsume') : tFull('status.lifecycle.noDecay');
+    ? UiFullText('status.lifecycle.timer', { duration: def.decay.duration })
+    : def.decay === 'perTurnEnd' ? UiFullText('status.lifecycle.perTurnEnd', { value })
+      : def.decay === 'onConsume' ? UiFullText('status.lifecycle.onConsume') : UiFullText('status.lifecycle.noDecay');
 }

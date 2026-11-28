@@ -19,7 +19,7 @@ import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefi
 import { potionContents, potionCountStringId } from '../models/PotionContentsModel.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
 import { paintFooterArt } from './footerArt.js';
-import { t, tFull } from '../strings.js';
+import { t, UiFullText } from '../strings.js';
 import { staminaOrbHtml, paintStaminaOrb } from './staminaOrb.js';
 import { esc } from './tooltip.js';
 import { flaskTooltipHtml, flaskDetailLines, flaskPresentation } from './flask.js';
@@ -179,7 +179,7 @@ export function openCombatPotions({ rows, opener, shortcut = null, arm, useReaso
         meta: t(countId, { count: remaining }), trail: [use], arrow: true });
       const detail = detailCard({ eyebrow: t('reward.kind.potion'), name: def.name + ' details',
         line: def.textTemplate || '', meta: targetLine(row),
-        children: [flavour(tFull(countId, { count: remaining })), reason ? flavour(reason) : null] });
+        children: [flavour(UiFullText(countId, { count: remaining })), reason ? flavour(reason) : null] });
       fold.append(summary, detail);
       const moveUse = () => {
         if (fold.open) {
@@ -264,7 +264,7 @@ export function renderCombatPotionTray(tray, rows, open) {
   setIconTrayOverflow(tray, () => open());
   setIconTrayItems(tray, shown.map(({ entry, def }) => trayIcon({
     art: flaskPresentation(def, { showName: false }), count: entry.count, tone: def.tint || '',
-    label: `${def.name}, ${tFull(potionCountStringId(entry), { count: entry.count })}`, disabled: entry.count <= 0,
+    label: `${def.name}, ${UiFullText(potionCountStringId(entry), { count: entry.count })}`, disabled: entry.count <= 0,
     attrs: { class: 'potion-mini', dataset: { potionKey: entry.key } },
     tip: () => flaskTooltipHtml(def, entry.category === 'charge' ? { charges: entry.count } : {}),
     activate: () => open(entry.key),

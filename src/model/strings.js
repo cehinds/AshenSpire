@@ -103,8 +103,8 @@ function read(id, form, tokens) {
 
 /** t(id, tokens) — the control's own words. */
 export function t(id, tokens = null) { return read(id, 'short', tokens); }
-/** tFull(id, tokens) — the sentence it means. */
-export function tFull(id, tokens = null) { return read(id, 'full', tokens); }
+/** UiFullText(id, tokens): the full sentence a UI string means (its 'full' column), beside t()'s short label. */
+export function UiFullText(id, tokens = null) { return read(id, 'full', tokens); }
 /** tTip(id, tokens) — the tooltip title a too-small face gets. */
 export function tTip(id, tokens = null) { return read(id, 'tip', tokens); }
 

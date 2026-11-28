@@ -8,21 +8,21 @@
 // empty control (Law 1 clause 5, applied to copy).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { t, tFull, tTip, has, stringIds } from '../src/ui/strings.js';
+import { t, UiFullText, tTip, has, stringIds } from '../src/ui/strings.js';
 import { uiStrings } from '../src/content/generated/uiStrings.js';
 
 test('the three forms are authored separately, not derived from one another', () => {
   assert.equal(t('common.back'), 'Back');
-  assert.equal(tFull('common.back'), 'Return to the screen before this one.');
+  assert.equal(UiFullText('common.back'), 'Return to the screen before this one.');
   assert.equal(tTip('common.back'), 'Back');
-  assert.notEqual(t('reward.blocked.storage'), tFull('reward.blocked.storage'));
+  assert.notEqual(t('reward.blocked.storage'), UiFullText('reward.blocked.storage'));
 });
 
 test('extends fills every cell a row leaves blank and never overwrites one it authors', () => {
   // reward.skip extends common.skip: its own `full` and `tip`, the parent's word.
   assert.equal(t('reward.skip'), t('common.skip'));
-  assert.equal(tFull('reward.skip'), 'Leave this blocked reward behind.');
-  assert.notEqual(tFull('reward.skip'), tFull('common.skip'));
+  assert.equal(UiFullText('reward.skip'), 'Leave this blocked reward behind.');
+  assert.notEqual(UiFullText('reward.skip'), UiFullText('common.skip'));
   assert.equal(tTip('reward.skip'), 'Skip unavailable reward');
 });
 
