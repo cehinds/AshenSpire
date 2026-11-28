@@ -105,7 +105,10 @@ const review = app => { app.querySelector('.reward-pick').click(); app.querySele
 const footLabels = app => [...app.querySelectorAll('.reward-foot button')].filter(b => !b.hidden).map(b => b.textContent);
 const settle = async () => { await new Promise(resolve => setTimeout(resolve, 0)); };
 const answer = async selector => { document.querySelector(selector).click(); await settle(); await new Promise(resolve => setTimeout(resolve, 650)); };
-const confirmAnswers = () => [...document.querySelectorAll('.confirmation-footer button')].filter(b => !b.hidden).map(b => b.textContent);
+// The card door confirms inline (#3037): its answers sit in the door's own action row, not a second modal.
+const INLINE_ACTIONS = '.reward-inline-confirm-actions button';
+const confirmAnswers = () => [...document.querySelectorAll(INLINE_ACTIONS)].filter(b => !b.hidden).map(b => b.textContent);
+const inlineBack = () => [...document.querySelectorAll(INLINE_ACTIONS)].find(b => b.textContent === 'Back');
 
 test('the card door footer is just Skip and Continue; the confirmation answers Add to deck or Send to library', async () => {
   await withDom(async () => {
@@ -115,10 +118,11 @@ test('the card door footer is just Skip and Continue; the confirmation answers A
     assert.equal(app.querySelector('#reward-inspect'), null);
     app.querySelector('#reward-card-confirm').click();
     assert.deepEqual(confirmAnswers().sort(), ['Add to deck', 'Back', 'Send to library']);
+    assert.equal(document.querySelector('.confirmation-modal'), null, 'no second modal');
     assert.equal(document.querySelector('.confirmation-confirm').textContent, 'Add to deck');
     assert.equal(document.querySelector('.confirmation-alternate').textContent, 'Send to library');
     assert.equal(document.querySelector('[role=radiogroup]'), null, 'no inner destination group');
-    document.querySelector('.confirmation-cancel').click();
+    inlineBack().click();
   });
 });
 test('Add to deck claims straight into the deck once', async () => {

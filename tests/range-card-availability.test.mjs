@@ -19,6 +19,8 @@ const movement = { ...template, id: 'fixture.advance', name: 'Advance fixture', 
 const mixed = { ...movement, id: 'fixture.closingDodge', name: 'Closing Dodge fixture', effects: [
   { op: 'applyStatus', target: 'self', status: 'evade', stacks: 1 }, ...movement.effects] };
 profile.content.cards.push(movement, mixed);
+// rewards.json classPools offers only listed cards, so the fixtures join the Reaver's list.
+profile.content.rewards.classPools.cardLists.reaver.push(movement.id, mixed.id);
 profile.modules.rewards.offerCount = 1000;
 profile.modules.shops.itemsPerCategory = 1000;
 delete profile.hash;

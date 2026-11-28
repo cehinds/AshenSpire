@@ -85,6 +85,7 @@ test('a legacy rewards fixture (old weights, no eliteRelic, no playableOnly) kee
   const legacy = rules => {
     delete rules.eliteRelic;
     delete rules.eligibility.playableOnly;
+    delete rules.classPools;
     const weights = { cards: 66, weaponArts: 4, potions: 18, flaskRelic: 2, weapons: 10, retired: 0 };
     for (const group of rules.rewardGroups) group.weight = weights[group.id];
   };

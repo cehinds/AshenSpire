@@ -113,6 +113,16 @@ test('switching casting focus filters exclusive spells while keeping shared, mar
   const profileMeta = { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } };
   const run = createRunState({ registries, classId: 'rogue', seed: 7, profileMeta });
   run.maxMana = 99;
+  // No class list holds both traditions, so the focus switch is measured with rewards.json classPools off.
+  const rewards = structuredClone(run.gameProfile.content.rewards);
+  rewards.classPools.enabled = false;
+  run.gameProfile = {
+    ...run.gameProfile,
+    content: {
+      ...run.gameProfile.content,
+      rewards,
+    },
+  };
   // Owner ruling 2026-11-21: the Rogue's ten-card starter no longer holds Venomed Edge, so the owned martial fixture is added here.
   run.deck.push({ instanceId: 'fixture:venomedEdge', cardId: 'core.venomedEdge', upgraded: false });
   const pool = (intelligence, wisdom) => {
