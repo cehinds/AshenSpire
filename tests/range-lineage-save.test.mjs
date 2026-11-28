@@ -14,6 +14,16 @@ import { rangePairKey } from '../src/model/combatEngagement.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { gameDigest } from '../engine/kernel/gameConfig.js';
 import { uncappedRun } from './helpers/uncapped-range.mjs';
+import { REACTION_TAG, REACTION_CARRIER_IDS } from './helpers/reaction-carriers.mjs';
+
+function tagReactionCarriers(profile)
+{
+  for (const card of profile.content.cards)
+  {
+    const carrier = REACTION_CARRIER_IDS.includes(card.id);
+    if (carrier && !card.tags.includes(REACTION_TAG)) card.tags.push(REACTION_TAG);
+  }
+}
 const json = value => JSON.parse(JSON.stringify(value));
 
 const actors = ['player:player', 'enemy:e1', 'enemy:e2'];
@@ -216,6 +226,8 @@ test('a paid random trigger rider resumes from a real nested SaveManager pause w
 test('a paid Counter saves its whole reserved trigger graph before the incoming contact and reuses it on return', () => {
   const profile = structuredClone(resolveGameProfile('core'));
   profile.content.cards.find(card => card.id === 'core.counter').effects.unshift({ op: 'discard', target: 'self', choose: true, amount: 1 });
+  // The Counter is answered as a Reaction; shipped Core cards carry none (owner ruling 2026-11-28).
+  tagReactionCarriers(profile);
   delete profile.hash; profile.hash = gameDigest(profile);
   const base = lineageRegistries(profile, [randomRider], 'rallyingStandard');
   const registries = { ...base, enemies: { ...base.enemies, get(id) {
