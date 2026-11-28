@@ -1,0 +1,47 @@
+{
+  "request": "disable grid option; disable reaction toggle",
+  "success": "In Core combat there is no Grid checkbox and no Reaction switch; the formation-grid overlay stays off even with a saved Grid preference of on; Combat log and Auto are still there, side by side and on screen; no console errors.",
+  "failure": "The Grid checkbox or the Reaction switch is visible, or the overlay draws over a saved preference of on.",
+  "viewports": [
+    { "name": "desktop", "width": 1280, "height": 800 },
+    { "name": "phone", "width": 390, "height": 844 }
+  ],
+  "scenes": [
+    {
+      "name": "combat",
+      "url": "?shot=combat&shotSeed=4",
+      "ready": ".combat-tools [data-combat-tool=\"log\"]",
+      "settleMs": 2000,
+      "actions": [],
+      "success": [
+        { "kind": "count", "label": "No Grid checkbox", "selector": "[data-combat-tool=\"grid\"]", "eq": 0 },
+        { "kind": "count", "label": "No Reaction switch", "selector": "[data-combat-tool=\"reaction\"]", "eq": 0 },
+        { "kind": "visible", "label": "Combat log is there", "selector": "[data-combat-tool=\"log\"]" },
+        { "kind": "visible", "label": "Auto switch is there", "selector": "[data-combat-tool=\"auto\"]" },
+        { "kind": "within", "label": "Auto inside the screen", "selector": "[data-combat-tool=\"auto\"]", "container": "body" },
+        { "kind": "within", "label": "Combat log inside the screen", "selector": "[data-combat-tool=\"log\"]", "container": "body" },
+        { "kind": "noOverlap", "label": "Combat log and Auto do not overlap", "a": "[data-combat-tool=\"log\"]", "b": "[data-combat-tool=\"auto\"]" },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["navigator.vibrate", "status of 404"] }
+      ],
+      "failure": [
+        { "kind": "visible", "label": "Grid checkbox still shown", "selector": ".combat-grid-toggle" },
+        { "kind": "visible", "label": "Reaction switch still shown", "selector": "[data-combat-tool=\"reaction\"]" }
+      ]
+    },
+    {
+      "name": "combat-saved-grid-on",
+      "url": "?shot=combat&shotSeed=4&shotSettings=%7B%22gameConfig.presentation.showFormationGrid%22%3Atrue%7D",
+      "ready": ".combat-tools [data-combat-tool=\"log\"]",
+      "settleMs": 2000,
+      "actions": [],
+      "success": [
+        { "kind": "style", "label": "Overlay off over a saved preference of on", "selector": ".formation-grid", "prop": "display", "equals": "none" },
+        { "kind": "count", "label": "No Grid checkbox", "selector": "[data-combat-tool=\"grid\"]", "eq": 0 },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["navigator.vibrate", "status of 404"] }
+      ],
+      "failure": [
+        { "kind": "visible", "label": "Overlay drawn", "selector": ".formation-grid" }
+      ]
+    }
+  ]
+}
