@@ -28,9 +28,12 @@ export function StanceBonusRules(ctx)
   return StanceBenefitRules(ctx);
 }
 
-/** The stance a unit acts from: the card or move it plays when that carries a stance (playing it enters it), else the stance it holds, else neutral. */
-export function HeldStance(entity, carrier = null) {
-  const entered = carrier && stanceOf(carrier, entity) ? configuredStance(carrier) : null;
+/** The stance a unit acts from: the card or move it plays when that carries a stance (playing it enters it), else the stance it holds, else neutral.
+ * `ctx` lets the triangle ruleset resolve the card. */
+export function HeldStance(entity, carrier = null, ctx = null) {
+  const entered = carrier && stanceOf(carrier, entity, ctx)
+    ? configuredStance(carrier, ctx)
+    : null;
   const held = entered || entity?.combatStance?.maneuver || 'neutral';
   return STANCE_ALIASES[held] || held;
 }
@@ -42,7 +45,7 @@ const isReturn = carrier => !!(carrier?.counterReturnAttack || carrier?.reflecte
  * Sweep included) reads Prepared, never the basic's row; anything else reads the stance it acts from.
  */
 const damageStance = (ctx, source, carrier) => SpellTraditionsActive(ctx) && isSpellCard(carrier) && stanceOf(carrier, source)
-  ? 'prepared' : HeldStance(source, carrier);
+  ? 'prepared' : HeldStance(source, carrier, ctx);
 
 /** Attack +20%, Prepared +25%: the multiplier on a hit's damage before the defender's stance, Block and Poise. 1 for a return hit. */
 export function AttackDamageMultiplier(ctx, source, carrier) {

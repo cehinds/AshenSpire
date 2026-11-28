@@ -26,7 +26,10 @@ const count = value => Number.isFinite(value) ? value : 0;
 const PHYSICAL_POISE = Object.freeze({ combatProfile: Object.freeze({ camp: 'physical' }) });
 const isReturn = carrier => !!(carrier?.counterReturnAttack || carrier?.reflectedHit);
 export function StanceBenefitRules(ctx) { return StanceRead.StanceBenefitRules(ctx); }
-export function HeldStance(entity, carrier = null) { return StanceRead.HeldStance(entity, carrier); }
+export function HeldStance(entity, carrier = null, ctx = null)
+{
+  return StanceRead.HeldStance(entity, carrier, ctx);
+}
 export function AttackDamageMultiplier(ctx, source, carrier) { return StanceRead.AttackDamageMultiplier(ctx, source, carrier); }
 export const HitRange = profile => StanceRead.HitRange(profile);
 export function StanceWeaknessMultiplier(ctx, carrier, defendingStance, profile = carrier?.combatProfile, target = null) {
@@ -36,7 +39,7 @@ export function StanceWeaknessMultiplier(ctx, carrier, defendingStance, profile 
 /** Counter +25%, Defend +50%: the multiplier on the Block a card or turn-start protection grants. */
 export function BlockGainMultiplier(ctx, entity, card = null) {
   const rules = StanceRead.StanceBonusRules(ctx);
-  return rules ? count(rules[HeldStance(entity, card)]?.blockMultiplier) || 1 : 1;
+  return rules ? count(rules[HeldStance(entity, card, ctx)]?.blockMultiplier) || 1 : 1;
 }
 
 /**
@@ -48,7 +51,7 @@ export function BlockGainMultiplier(ctx, entity, card = null) {
 export function PoiseLossAdjust(ctx, source, carrier, defendingStance, { taken = 0, pool = 0 } = {}) {
   const rules = StanceRead.StanceBonusRules(ctx);
   if (!rules || isReturn(carrier) || !(taken > 0)) return { extra: 0, spared: 0 };
-  const bonus = count(rules[HeldStance(source, carrier)]?.poiseDamageBonus);
+  const bonus = count(rules[HeldStance(source, carrier, ctx)]?.poiseDamageBonus);
   const extra = bonus > 0 ? Math.max(0, Math.min(Math.floor(bonus * taken), Math.floor(pool) - taken)) : 0;
   const keep = rules[StanceRead.STANCE_ALIASES[defendingStance] || defendingStance]?.poiseDamageTakenMultiplier;
   const spared = Number.isFinite(keep) && keep < 1 ? Math.min(taken + extra, Math.floor((1 - keep) * (taken + extra))) : 0;
@@ -105,7 +108,7 @@ export function CounterReturnAmount(ctx, defendingStance, hpLoss, carrier) {
 export function SweepSplashFraction(ctx, source, carrier) {
   const rules = StanceRead.StanceBonusRules(ctx);
   if (!rules || isReturn(carrier) || carrier?.stanceSplash) return 0;
-  return count(rules[HeldStance(source, carrier)]?.splashFraction);
+  return count(rules[HeldStance(source, carrier, ctx)]?.splashFraction);
 }
 
 /**
