@@ -4,7 +4,12 @@ import { ARIA_LABEL, NUMBER_TYPE } from './fieldRenderer.js';
 import { JsonRenderer } from './jsonRenderer.js';
 import { ListRenderer, ObjectsRenderer } from './listRenderers.js';
 import { MapRenderer } from './mapRenderer.js';
-import { ScalarRenderer, SelectRenderer, TextRenderer } from './scalarRenderers.js';
+import {
+    BooleanRenderer,
+    ScalarRenderer,
+    SelectRenderer,
+    TextRenderer,
+} from './scalarRenderers.js';
 
 const RENDERER_TYPES = {
     text: TextRenderer,
@@ -13,6 +18,7 @@ const RENDERER_TYPES = {
     objects: ObjectsRenderer,
     map: MapRenderer,
     json: JsonRenderer,
+    boolean: BooleanRenderer,
 };
 
 /** The renderer registry, keyed by the `type` a field names in contentEditor.json. */

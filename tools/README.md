@@ -13,7 +13,7 @@ prefix; its callers are the union.
 
 This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level `tools/*.mjs`, `*.cjs`, `*.py`, `*.sh`, `*.ps1` and `*.bat`, every top-level subfolder, and every `tools/attic/` tool must be a backticked name in the first column of a table row (below, or in the Attic section for attic tools), and every such name must still be tracked. Add the row in the same change that adds, moves or deletes a tool.
 
-## Tools something references (248 tool files, plus the 9 subfolders)
+## Tools something references (249 tool files, plus the 13 subfolders)
 
 | Tool | What it does (its header comment) | Who calls it |
 | --- | --- | --- |
@@ -26,6 +26,8 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `hud-component-studio/` (1295 files) | From this directory, run 'python -m http.server 8360 --bind 127.0.0.1' and open http://localhost:8360/. On Windows,… | docs CREDITS.md, docs/ai/CHARACTER-CREATION-HANDOFF.md, docs/design/character-creation/README.md +1; other docs/component-catalog.html, workbench/tools.json |
 | `lib/` (7 files) | tools/lib/build-lock — one writer of the generated trees across processes. | tests build-lock, build-steps, class-smash-qa-notices +4; tools config-build, content-build, engine-export +2; other .gitignore, editor/server.mjs +12 |
 | `owner/` (19 files) | The owner's no-code commands: `npm run play`, `check`, `ship`, `sync`, driven by ownerTools.json, ownerText.json and ownerDiff.json (docs/OWNER-EDITING.md). | npm play, check, ship, sync; tests owner-tools |
+| `plants/` (1 file) | Startup-gate plants kept as JSON instead of inline in the gate. | tools plantsites, plantsites-baseline.json |
+| `scenarios/` (1 file) | The A8 load-slot flows a startup gate plays, as JSON scenarios. | tools startup-gate |
 | `score/` (4 files) | tools/score/alt — the "alt" cut of a score (owner, 2026-09-26: "alt | tests music-score; docs CREDITS.md, DEVELOPER.md, SPEC.md +5; other music/score/_motifs.mjs, music/score/boss.mjs +13 |
 | `score-studio/` (4 files) | Interactive Score Studio: procedural card art grid, weights editor, Art & Layers stack, and live combat sandbox (`npm run studio`). | npm studio; tools serve, score-studio-save |
 | `about-changelog.mjs` | Focused contract for #189. CHANGELOG.md is authored; the generated browser | wf sync-dev-to-alternative-dev, build-stamp, ci +2; tests build-stamp, check-order-pending; tools build-stamp, plantsites-baseline.json, pr-restamp +1; docs .claude/skills/finish/SKILL.md, DEVELOPER.md, docs/FINISH.md +11; other src/content/changelog.generated.js, src/content/changelog.js +1 |
@@ -156,6 +158,7 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `full-run-probe.mjs` | full-run-probe — one whole run, played in Chromium from the title | wf ci; tests full-run-probe; docs DEVELOPER.md, docs/FINISH.md |
 | `fullscreen-control.mjs` | Deterministic controller checks for Settings > Fullscreen. No browser claims: | wf ci; tools plantsites-baseline.json; docs SPEC.md |
 | `game-config.mjs` | Compile source JSON to importable JS for the repository's import-only bundler. | wf feature-preview; tests base-card-pack, enemies-module, engine-export +4; tools build-game, content-build, derived-tables +2; docs DEVELOPER.md, docs/ENGINE-EXPORT.md, docs/ai/json-game-modules/ARCHITECTURE.md +32; other src/content/generated/gameProfiles.js, workbench/core/files.mjs +6 |
+| `gate-scenario.mjs` | Play a JSON gate scenario through a startup-gate page. | tools startup-gate |
 | `gatelist.mjs` | gatelist — WHICH INSTRUMENTS DOES A GATE ACTUALLY RUN, AND DOES IT | wf ci; tests run-node; tools plantsites-baseline.json, watched |
 | `gesture-cancel.mjs` | gesture-cancel — the gesture lifecycle, observed: a cancelled drag | tools card-drag-targeting, inspecthold, plantsites-baseline.json |
 | `git-artifact.mjs` | Read a committed artifact regardless of whether Git stores its bytes or an | wf pages-builds; tools git-artifact.test, pages-site |
