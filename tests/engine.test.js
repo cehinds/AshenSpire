@@ -354,9 +354,26 @@ function logOf(combat, type) {
   return combat.eventLog.filter((e) => e.type === type);
 }
 
+// The fixture is required: a missing or empty case list fails instead of passing silently.
+function checkUiHoldCases(uiHoldCases, trays, checks)
+{
+  checks.assert(!!uiHoldCases, 'tests/fixtures/ui-hold-cases.json is handed to runTests');
+  if (!uiHoldCases)
+  {
+    return;
+  }
+  checkTitleLoadHoldRejections(uiHoldCases.titleLoadHoldRejections, checks.assert);
+  checkTrayPresentation(
+    uiHoldCases.trayPresentation,
+    trays,
+    checks,
+  );
+}
+
 // Every authored titleLoadHold row in the fixture must be refused at its own path.
 function checkTitleLoadHoldRejections(rejections, assert)
 {
+  assert(rejections.length > 0, 'the fixture lists titleLoadHold rejections');
   for (const rejection of rejections)
   {
     const balanceUi = {
@@ -379,6 +396,7 @@ function checkTitleLoadHoldRejections(rejections, assert)
 // Each fixture case folds or unfolds one tray and reads back its presentation.
 function checkTrayPresentation(trayCases, trays, { eq, assert })
 {
+  assert(trayCases.cases.length > 0, 'the fixture lists tray presentation cases');
   for (const trayCase of trayCases.cases)
   {
     const state = trayPresentationState({
@@ -8070,18 +8088,14 @@ export async function runTests({
       'the universal hold setting defaults normal so state-changing options expose click-review and hold-direct from first run');
     eq(contentBundle.balance.ui.titleLoadHold.ms, 600,
       'the title quick-load hold duration is authored as 600 ms');
-    if (!uiHoldCases)
-    {
-      assert(true, 'SKIPPED (no ui-hold-cases fixture handed in)');
-    }
-    else
-    {
-      checkTitleLoadHoldRejections(uiHoldCases.titleLoadHoldRejections, assert);
-      checkTrayPresentation(uiHoldCases.trayPresentation, layout.trays, {
+    checkUiHoldCases(
+      uiHoldCases,
+      layout.trays,
+      {
         eq,
         assert,
-      });
-    }
+      },
+    );
     const selectedMove = inventorySelectionAction({
       itemId: 'straightSword',
       selectedSlotId: 'rightHand',
