@@ -26,6 +26,7 @@ import { createFollowMemo, CreateFollowUpReduction, PromoteFollowUpRow } from '.
 import { SnapshotIntentShift, AnimateIntentShift } from '../components/intentShift.js';
 import { stackedEnemyReactionIntent } from '../models/ReactionIncomingModel.js';
 import { formationOccupancy } from '../../model/formationOccupancy.js';
+import { FormationGridOptionEnabled, ReactionToggleEnabled } from '../../model/combatToolOptions.js';
 import { combatRangeRanks, applyRangeRankEvent, rangeRanksFromSnapshot, rangeRankSnapshot, StageRangeRanks } from '../models/CombatRangeRankModel.js';
 import { projectEnemyBurdenHand } from '../models/EnemyBurdenModel.js';
 import { hasCardChoice, zoneCandidates } from '../../engine/cardZones.js';
@@ -355,6 +356,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const combatToolsState = { open: false, size: COMBAT_LOG_DEFAULT_SIZE, followLatest: true };
   const combatTools = mountCombatTools(combatEl, { state: combatToolsState,
     readSettings,
+    gridOption: FormationGridOptionEnabled(run),
+    reactionToggle: ReactionToggleEnabled(run),
     onGridToggle: enabled => onSettingsChange?.({ 'gameConfig.presentation.showFormationGrid': enabled }),
     readAuto: () => resolveCombatAutomation(readSettings()).enabled,
     onAutoToggle: async enabled => {

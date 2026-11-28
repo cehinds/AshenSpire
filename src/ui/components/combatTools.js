@@ -11,6 +11,7 @@ import { openCombatLogModal } from './combatLogModal.js';
 import { combatLogPalette } from '../models/CombatLogPaletteModel.js';
 import { setAttr } from '../domWrite.js';
 import { measureThenMutate } from '../frameMeasure.js';
+import { GRID_OPTION_ON, GRID_OPTION_OFF } from '../../model/combatToolOptions.js';
 
 // The narrowest a hand-spanning row may be, in CSS px: Combat log and the
 // Reaction switch side by side with their gap. A two-card hand is narrower.
@@ -67,7 +68,26 @@ export function closeCombatFullLog(state) {
 // Gap between a corner tool and the combat screen's edge, in CSS px.
 const CORNER_INSET = 16;
 
-export function mountCombatTools(combatEl, { state, onToggle, onAutoToggle, readAuto, readSettings = () => ({}), onViewChange, onGridToggle }) {
+// The nodes of the optional controls whose switch is on, in row order.
+function shownControls(controls)
+{
+  return controls
+    .filter(control => control.shown)
+    .map(control => control.node);
+}
+
+export function mountCombatTools(combatEl, {
+  state,
+  onToggle,
+  onAutoToggle,
+  readAuto,
+  readSettings = () => ({}),
+  onViewChange,
+  onGridToggle,
+  gridOption = true,
+  reactionToggle = true,
+})
+{
   // Debug mode also grants the Console button (the log viewer plus ignored-tap traces).
   const consoleOn = () => { const st = readSettings(); return st?.combatLogConsole === true || st?.debugMode === true; };
   const root = markUiComponent(el('aside', { class: 'combat-tools', 'data-combat-read-only': '' }), UI.combatTools);
@@ -119,7 +139,19 @@ export function mountCombatTools(combatEl, { state, onToggle, onAutoToggle, read
   head.append(title, fullLog);
   const list = el('div', { class: 'combat-log-entries', 'data-combat-tool': 'entries', tabindex: '0', role: 'region', 'aria-label': t('combat.log.actions') });
   list.addEventListener('scroll', () => { state.scrollTop = list.scrollTop; state.followLatest = list.scrollTop + list.clientHeight >= list.scrollHeight - 4; });
-  panel.append(head, list); root.append(panel, logButton, reaction, ...(onAutoToggle ? [auto] : []), gridLabel); combatEl.append(root);
+  panel.append(head, list);
+  // combat.css keeps the formation-grid overlay off while this reads off.
+  combatEl.dataset.formationGridOption = gridOption
+    ? GRID_OPTION_ON
+    : GRID_OPTION_OFF;
+  // Core hides the Reaction switch and the Grid checkbox (reactions.playerToggle, formation.gridOption).
+  const optionalControls = shownControls([
+    { node: reaction, shown: reactionToggle },
+    { node: auto, shown: !!onAutoToggle },
+    { node: gridLabel, shown: gridOption },
+  ]);
+  root.append(panel, logButton, ...optionalControls);
+  combatEl.append(root);
   let drag = null, suppressClick = false, released = false;
   const snapHeights = () => {
     const menuBottom = [...combatEl.querySelectorAll('.topbar button')].reduce((max, node) => Math.max(max, node.getBoundingClientRect().bottom), 0);
