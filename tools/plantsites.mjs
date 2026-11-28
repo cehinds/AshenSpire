@@ -56,7 +56,7 @@ function readString(src, i) {
 
 // A gate may keep its plants as JSON in tools/plants/ instead of inline.
 // Every { file, find } row there is a site, keyed by the corpus file.
-function scanPlantCorpora(root, sites, unreadable)
+function scanPlantCorpora(root, scan)
 {
   const corpusDir = resolve(root, PLANT_CORPUS_DIR);
   if (!existsSync(corpusDir))
@@ -70,26 +70,46 @@ function scanPlantCorpora(root, sites, unreadable)
       continue;
     }
     const tool = `${PLANT_CORPUS_DIR}/${name}`;
-    const corpus = JSON.parse(readFileSync(resolve(corpusDir, name), 'utf8'));
+    const corpus = readCorpus(resolve(corpusDir, name));
+    if (!corpus)
+    {
+      scan.unreadable.push({
+        tool,
+        why: 'the corpus is not valid JSON',
+      });
+      continue;
+    }
     for (const plant of corpus.plants || [])
     {
-      addCorpusSite(tool, plant, sites, unreadable);
+      addCorpusSite(scan, { tool, plant });
     }
   }
 }
 
-function addCorpusSite(tool, plant, sites, unreadable)
+function readCorpus(path)
+{
+  try
+  {
+    return JSON.parse(readFileSync(path, 'utf8'));
+  }
+  catch
+  {
+    return null;
+  }
+}
+
+function addCorpusSite(scan, { tool, plant })
 {
   const readable = typeof plant.file === 'string' && typeof plant.find === 'string';
   if (!readable)
   {
-    unreadable.push({
+    scan.unreadable.push({
       tool,
       why: 'a corpus plant has no string file or find',
     });
     return;
   }
-  sites.push({
+  scan.sites.push({
     tool,
     target: plant.file,
     find: plant.find,
@@ -160,7 +180,7 @@ export function scanPlantSites(root = ROOT) {
       sites.push({ tool, target: fileStr.value, find: findStr.value });
     }
   }
-  scanPlantCorpora(root, sites, unreadable);
+  scanPlantCorpora(root, { sites, unreadable });
   for (const s of sites) {
     s.id = createHash('sha256').update(`${s.tool}\0${s.target}\0${s.find}`).digest('hex').slice(0, 16);
     const targetPath = resolve(root, s.target);

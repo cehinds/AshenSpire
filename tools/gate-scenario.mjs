@@ -13,6 +13,7 @@ function readFieldsInPage(fieldSpecs, sizePrecision)
     exists: (element) => !!element,
     enabled: (element) => element?.disabled === false,
     text: (element) => element?.textContent.trim() || '',
+    rawText: (element) => element?.textContent ?? '',
     data: (element, key) => element?.dataset[key] || null,
     property: (element, key) => element?.[key] || '',
     attribute: (element, key) => element?.getAttribute(key) || '',
@@ -100,7 +101,11 @@ async function runCheck(context, step, holds)
   const passed = holds(step, values);
   const shown = JSON.stringify(pick(values, namesOf(step)));
   const code = step.check || step.tapFloor;
-  context.verdict(passed, code, `${step.label} (${shown})`);
+  context.verdict(
+    passed,
+    code,
+    `${step.label} (${shown})`,
+  );
 }
 
 async function pressKey(page, key)
