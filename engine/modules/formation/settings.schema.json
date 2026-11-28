@@ -36,6 +36,10 @@
         "capacityPerLane"
       ],
       "additionalProperties": false
+    },
+    "gridOption": {
+      "type": "boolean",
+      "description": "The combat Grid checkbox and the formation-grid overlay. false: no Grid checkbox in combat and the overlay stays off, even when a saved preference says on (the preference is kept). Absent or true is on."
     }
   },
   "required": [

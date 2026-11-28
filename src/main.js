@@ -18,6 +18,7 @@ import { readNewGameProfile } from './ui/components/gameProfileSelector.js';
 import { beginGameProfileRest, createGameProfileRestDraft, commitGameProfileRest } from './model/gameProfileRest.js';
 import { retiredProfileReason } from './model/retiredProfile.js';
 import { resolveGameProfile, gameModule, gameContent, applyGameProfileToContent, bindGameProfileRegistries } from './model/gameProfile.js';
+import { ForgetHiddenReactionSwitch } from './model/combatToolOptions.js';
 import { isConfiguredRun, gameProfileClassAvailable } from './model/gameProfileRun.js';
 import { StampOfferKey } from './model/upgradeOffer.js';
 import { openRestRecord, OpenSiteRecord, VisitSiteStock, StashSiteStock, recordRestConsumed, markRestLeft, restRevisitNodeId, clearRestRevisitOnTravel } from './model/restRevisit.js';
@@ -2091,6 +2092,8 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     enemyStatuses: cm.enemyStatuses,
     playerStatuses: cm.playerStatuses,
   });
+  // A resumed fight under a profile that hides the Reaction switch drops a stored "off".
+  if (savedSnapshot) ForgetHiddenReactionSwitch(combat);
   stampCombatPlaysEver(run, combat); // pile copies carry the deck copy's lifetime plays (Honed cards)
   // The live fight's rules are never edited once it starts: freezing them lets the rules cache key them by identity and a preview share them by reference.
   if (combat.fixCoreRules) freezeProfile(combat.fixCoreRules);

@@ -21,6 +21,7 @@
 import { mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { serve } from './serve.mjs';
+import { TOOLS_ON_PROFILE } from '../tests/helpers/combat-tools-on.mjs';
 
 const playwright = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const chromium = playwright.chromium || playwright.default.chromium;
@@ -31,8 +32,10 @@ const ONLY = process.env.CANVAS_QA_ONLY || '';
 const PARTS = ['pairs', 'thresholds', 'armed', 'chain', 'drag'];
 if (ONLY && !PARTS.includes(ONLY)) { console.error(`CANVAS_QA_ONLY=${ONLY}: expected one of ${PARTS.join(', ')}`); process.exit(2); }
 const runs = part => !ONLY || ONLY === part;
-const ROUTE = '/?gameProfile=core&shot=combat&shotHand=2';
-const THREE = '/?gameProfile=core&shot=combat&shotHand=5&shotSeed=4&shotEnemies=ashheartDragon,wyrmAspirant,fellWarden';
+// Core with the Reaction switch back: the `reaction` key measures it on every preset.
+const ROUTE = `/?gameProfile=${TOOLS_ON_PROFILE}&shot=combat&shotHand=2`;
+const THREE = `/?gameProfile=${TOOLS_ON_PROFILE}&shot=combat&shotHand=5&shotSeed=4`
+  + '&shotEnemies=ashheartDragon,wyrmAspirant,fellWarden';
 const KEYS = ['player', 'enemy', 'playerHud', 'enemyHud', 'card', 'endTurn', 'header', 'sky', 'groundTop', 'healthRow', 'valueFont', 'reaction', 'enemyPanel'];
 
 const server = await serve({ root: process.cwd(), port: 0, open: false, quiet: true });
@@ -63,7 +66,8 @@ function canvasFacts() {
   // A length in canvas px: a local (pre-zoom) CSS length times the node's own rendered zoom, without the canvas scale.
   const canvasZoom = node => { const r = node.getBoundingClientRect(); return node.offsetHeight ? r.height / node.offsetHeight / scale : 0; };
   const row = document.querySelector('.combat-health-row'), value = document.querySelector('.combat-health-row .m-value');
-  const reaction = document.querySelector('.reaction-switch-value');
+  // The Reaction switch's own label, not Auto's twin.
+  const reaction = document.querySelector('[data-combat-tool="reaction"] .reaction-switch-value');
   const ground = rect('.layered-environment-layer[data-role="ground"]:not([data-mirror]), .alternative-backdrop image[data-layer$="-ground"]');
   return { win: [innerWidth, innerHeight], canvas,
     player: rect('.combatant.player .sprite'), enemy: rect('.combatant.enemy .sprite'),

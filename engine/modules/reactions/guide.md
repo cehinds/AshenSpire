@@ -55,3 +55,7 @@ node tools/game-config.mjs check
 ```
 
 For runtime changes, use the focused tests in `tests/game-profile-run.test.mjs` and the matching module tests. A passing resolver check proves schema/resolution only, not that every host behavior is covered by browser acceptance.
+
+## Player toggle
+
+`playerToggle` (default `true`) shows the combat Reaction on/off switch. With `false` the switch is not shown and reactions keep their default; `chainLimit` and the reactions rules are unchanged. Core sets `false`.

@@ -5,6 +5,7 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { buildPageUrl, launchBrowser } from './browser.mjs';
+import { TOOLS_ON_PROFILE } from '../tests/helpers/combat-tools-on.mjs';
 import { serve } from './serve.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
@@ -241,7 +242,9 @@ async function main() {
     for (const [name, width, height] of [['desktop-grid', 1440, 900], ['phone-grid', 390, 844]]) {
       await cdp.send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: width < 500 }, sessionId);
       const settings = encodeURIComponent(JSON.stringify({ 'gameConfig.presentation.showFormationGrid': true }));
-      await cdp.send('Page.navigate', { url: `${previewURL}?shot=combat&shotSettings=${settings}` }, sessionId);
+      const gridURL = `${previewURL}?shot=combat&shotSettings=${settings}`
+        + `&gameProfile=${TOOLS_ON_PROFILE}`;
+      await cdp.send('Page.navigate', { url: gridURL }, sessionId);
       await until("document.querySelectorAll('.formation-grid-cell').length === 12", 'formation grid');
       await wait(350);
       const grid = await evaluate(`(() => { const grid = document.querySelector('.formation-grid'); return { display: getComputedStyle(grid).display, pointer: getComputedStyle(grid).pointerEvents, labels: [...grid.children].map(el => el.textContent) }; })()`);

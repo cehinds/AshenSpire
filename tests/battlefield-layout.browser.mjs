@@ -6,6 +6,7 @@ import { createRequire } from "node:module";
 import { writeFileSync, mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { serve } from "../tools/serve.mjs";
+import { TOOLS_ON_PROFILE } from "./helpers/combat-tools-on.mjs";
 const { chromium } = createRequire(import.meta.url)(
   process.env.PLAYWRIGHT_MODULE || "playwright",
 );
@@ -40,7 +41,7 @@ try {
       const errors = [];
       p.on("pageerror", (e) => errors.push(e.message));
       await p.goto(
-        `${base}${entry}?shot=combat&gameProfile=core&shotHand=${hand}`,
+        `${base}${entry}?shot=combat&gameProfile=${TOOLS_ON_PROFILE}&shotHand=${hand}`,
         { waitUntil: "domcontentloaded" },
       );
       await p.locator(".combatant.player .sprite").waitFor();

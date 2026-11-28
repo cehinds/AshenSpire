@@ -9,7 +9,7 @@
   "scenes": [
     {
       "name": "combat-grid-on",
-      "url": "?shot=combat&shotSeed=PERF1&shotSettings=%7B%22gameConfig.presentation.showFormationGrid%22%3Atrue%7D",
+      "url": "?shot=combat&shotSeed=PERF1&shotSettings=%7B%22gameConfig.presentation.showFormationGrid%22%3Atrue%7D&gameProfile=%7B%22formatVersion%22%3A1%2C%22core%22%3A%22ashen.core%402.0.0%22%2C%22modules%22%3A%7B%22formation%22%3A%7B%22gridOption%22%3Atrue%7D%2C%22reactions%22%3A%7B%22playerToggle%22%3Atrue%7D%7D%7D",
       "ready": ".combatant .sprite",
       "settleMs": 2500,
       "actions": [],
@@ -25,7 +25,7 @@
     },
     {
       "name": "combat-back-row",
-      "url": "?shot=combat&shotSeed=PERF1&shotEnemyCount=3&shotSettings=%7B%22gameConfig.presentation.showFormationGrid%22%3Atrue%7D",
+      "url": "?shot=combat&shotSeed=PERF1&shotEnemyCount=3&shotSettings=%7B%22gameConfig.presentation.showFormationGrid%22%3Atrue%7D&gameProfile=%7B%22formatVersion%22%3A1%2C%22core%22%3A%22ashen.core%402.0.0%22%2C%22modules%22%3A%7B%22formation%22%3A%7B%22gridOption%22%3Atrue%7D%2C%22reactions%22%3A%7B%22playerToggle%22%3Atrue%7D%7D%7D",
       "ready": ".combatant .sprite",
       "settleMs": 2500,
       "actions": [],

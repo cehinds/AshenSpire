@@ -16,18 +16,25 @@ try {
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(`${base}index.html?shot=combat&gameProfile=${profile}`, { waitUntil: 'networkidle' });
     await page.waitForFunction(() => !!window.__combat);
-    const auto = page.locator('[data-combat-tool="auto"]'), reaction = page.locator('[data-combat-tool="reaction"]');
+    const auto = page.locator('[data-combat-tool="auto"]');
+    const reaction = page.locator('[data-combat-tool="reaction"]');
     assert.equal(await auto.count(), 1, `${profile} ${width}: Auto switch present`);
-    const a = await auto.boundingBox(), r = await reaction.boundingBox();
+    // Core hides the Reaction switch (reactions.playerToggle).
+    // Auto lines up with Combat log instead.
+    assert.equal(await reaction.count(), 0, `${profile} ${width}: no Reaction switch`);
+    const a = await auto.boundingBox();
+    const r = await page.locator('[data-combat-tool="log"]').boundingBox();
     assert.ok(a.x >= 0 && a.x + a.width <= width, `${profile} ${width}: Auto inside the viewport`);
-    assert.ok(a.x + a.width <= r.x || r.x + r.width <= a.x, `${profile} ${width}: Auto does not overlap Reaction`);
+    const apart = a.x + a.width <= r.x || r.x + r.width <= a.x;
+    assert.ok(apart, `${profile} ${width}: Auto does not overlap Combat log`);
     assert.ok(Math.abs((a.y + a.height / 2) - (r.y + r.height / 2)) < 14, `${profile} ${width}: same row`);
     assert.equal(await auto.getAttribute('aria-checked'), 'false');
     const clipped = await page.evaluate(() => [...document.querySelectorAll('.combat-tools [data-combat-tool], .combat-tools [data-combat-tool] span')]
       .filter(node => node.scrollWidth > node.clientWidth + 1).map(node => node.className || node.dataset.combatTool));
     assert.deepEqual(clipped, [], `${profile} ${width}: no footer text is clipped`);
     if (width <= 480) {
-      for (const sw of ['auto', 'reaction']) assert.equal(await page.locator(`[data-combat-tool="${sw}"] .reaction-switch-value`).isVisible(), false, `${sw} state text hidden on phone`);
+      const autoValueShown = await auto.locator('.reaction-switch-value').isVisible();
+      assert.equal(autoValueShown, false, 'auto state text hidden on phone');
     } else assert.equal(await auto.locator('.reaction-switch-value').isVisible(), true, 'state text kept on desktop');
     if (out) await page.screenshot({ path: `${out}/${profile}-${width}x${height}-off.png` });
     await auto.focus(); await page.keyboard.press('Enter');

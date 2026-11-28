@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { mkdirSync, writeFileSync } from 'node:fs';
+import { TOOLS_ON_PROFILE } from '../tests/helpers/combat-tools-on.mjs';
 const { chromium } = createRequire(import.meta.url)('playwright');
 const out = process.env.COMBAT_QA_OUT || '.codex/mobile-touch';
 mkdirSync(out, { recursive: true });
@@ -62,6 +63,9 @@ try {
     try {
       const url = new URL(process.env.COMBAT_QA_URL || 'http://localhost:8338/?preview=rear-player');
       url.searchParams.set('shot', 'combat');
+      // Core hides the Reaction switch (reactions.playerToggle).
+      // This run taps it, so it turns it back on.
+      url.searchParams.set('gameProfile', decodeURIComponent(TOOLS_ON_PROFILE));
       await page.goto(url.href, { waitUntil: 'domcontentloaded', timeout: 120000 });
       result.url = page.url(); result.title = await page.title();
       await page.waitForSelector('.hand .card', { timeout: 120000 });

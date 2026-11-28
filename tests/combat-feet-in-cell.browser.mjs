@@ -10,6 +10,7 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { serve } from '../tools/serve.mjs';
+import { TOOLS_ON_PROFILE } from './helpers/combat-tools-on.mjs';
 import { uiConfig } from '../src/config/generated/ui.js';
 const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');
 // The grid starts off (owner, 2026-11-19); this test measures cells, so it turns the grid on.
@@ -21,7 +22,9 @@ const b = await chromium.launch({ executablePath: process.env.CHROME || undefine
 try {
   for (const scene of SCENES) for (const [w, h] of [[390, 844], [360, 800], [1280, 800]]) {
     const p = await b.newPage({ viewport: { width: w, height: h }, reducedMotion: 'reduce' });
-    await p.goto(`${server.url}index.html?shot=combat&shotSeed=PERF1${scene.query}&shotSettings=${GRID_ON}`, { waitUntil: 'load' });
+    const query = `?shot=combat&shotSeed=PERF1${scene.query}`
+      + `&shotSettings=${GRID_ON}&gameProfile=${TOOLS_ON_PROFILE}`;
+    await p.goto(`${server.url}index.html${query}`, { waitUntil: 'load' });
     await p.waitForSelector('.combatant .sprite');
     await p.waitForTimeout(2500);
     const m = await p.evaluate(() => ({

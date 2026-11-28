@@ -10,6 +10,9 @@ export const REACTION_NOTE_MS = 2500;
 // The hero's HP readout (owner, 2026-10-11): on a phone the switch sits right
 // under the hero's mini HUD, so the note would cover the HP bar and value.
 const AVOID_SELECTOR = '.combatant.player .combatant-mini-hud';
+// The Reaction switch itself, not its Auto twin.
+// With no switch (reactions.playerToggle off) the note hides.
+const TOGGLE_SELECTOR = '[data-combat-tool="reaction"]';
 
 /**
  * avoidRects(box, rects, gap) → box. When `box` overlaps any of `rects` (all in
@@ -51,7 +54,7 @@ export function createReactionNote({ now = () => Date.now() } = {}) {
   let node = null, until = 0, timer = null, host = null;
   const place = () => {
     if (!node || !host || !node.isConnected) return;
-    const toggle = host.querySelector('.reaction-switch');
+    const toggle = host.querySelector(TOGGLE_SELECTOR);
     if (!toggle) { node.hidden = true; return; }
     node.hidden = false;
     const box = anchorLocalBox(host, toggle);

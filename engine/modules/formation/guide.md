@@ -21,3 +21,7 @@ node tools/game-config.mjs check
 ```
 
 For a real seven-enemy browser fixture, use `?shot=combat&shotEnemyCount=7&gameProfile=current` (or `gameProfile=core`). The shot-only count accepts integers 1–12 and cycles the selected encounter’s authored enemy IDs through normal combat initialization. It never manufactures DOM actors or inserts enemies after initialization. Inspect `window.__combat.enemies[*].formationCell` and the field occupancy data: Current uses A5 for the seventh enemy; Core never uses extra cells.
+
+## Grid option
+
+`gridOption` (default `true`) shows the combat Grid checkbox and lets the formation-grid overlay follow the player's saved preference. With `false` the checkbox is not shown and the overlay stays off; the saved preference is kept, so turning the switch back on restores it. Core sets `false`.
