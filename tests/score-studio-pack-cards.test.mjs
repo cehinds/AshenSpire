@@ -13,6 +13,7 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   MergedPackCardsText,
   PackCardDataProblem,
@@ -30,8 +31,8 @@ const subclassId = 'subclass.qa.card';
 const generatedFile = 'src/content/generated/qa.js';
 const strayGeneratedFile = 'src/content/generated/stray.js';
 const lockFile = 'games/ashenspire/game.lock.json';
-const packUrl = new URL(`../${StudioPackCardsPath}`, import.meta.url);
-const packText = readFileSync(packUrl, textEncoding);
+const packPath = fileURLToPath(new URL(`../${StudioPackCardsPath}`, import.meta.url));
+const packText = readFileSync(packPath, textEncoding);
 const packCards = JSON.parse(packText);
 
 // A card as it sits in the file: one array level deep.
