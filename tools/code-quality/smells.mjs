@@ -3,7 +3,13 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { ListChangedFiles, ParseBaseArgument, RepoRoot, SmellsConfig } from './changed-files.mjs';
+import {
+    ListChangedFiles,
+    ParseBaseArgument,
+    RepoRelative,
+    RepoRoot,
+    SmellsConfig,
+} from './changed-files.mjs';
 import { ParseSource } from './smells-ast.mjs';
 import { FindDuplicateSmells } from './smells-duplicates.mjs';
 import { FindLiteralSmells } from './smells-literals.mjs';
@@ -68,7 +74,7 @@ export function RunSmells(argv, root = RepoRoot)
     const strict = rest.includes(STRICT_FLAG);
     const named = rest.filter(argument => argument !== STRICT_FLAG);
     const paths = named.length
-        ? named.map(path => path.replaceAll('\\', '/'))
+        ? named.map(path => RepoRelative(path, root))
         : ListChangedFiles(base, root);
     const findings = FindSmells(paths, SmellsConfig, root);
     for (const finding of findings)

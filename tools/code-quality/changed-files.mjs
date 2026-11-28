@@ -1,7 +1,7 @@
 // Lists the JavaScript files a branch changed against a base ref, minus generated and exempt paths.
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
-import { extname, join } from 'node:path';
+import { extname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const BASE_FLAG = '--base';
@@ -19,6 +19,8 @@ const ANY_DEPTH = '**';
 const ANY_NAME = '*';
 const HEAD_REF = 'HEAD';
 const TEXT_ENCODING = 'utf8';
+const WINDOWS_SEPARATOR = '\\';
+const POSIX_SEPARATOR = '/';
 
 export const RepoRoot = fileURLToPath(new URL('../..', import.meta.url));
 
@@ -66,6 +68,16 @@ export function CreatePathFilter(config, protectedPaths)
     };
 }
 
+function toPosixPath(path)
+{
+    return path.replaceAll(WINDOWS_SEPARATOR, POSIX_SEPARATOR);
+}
+
+export function RepoRelative(path, root = RepoRoot)
+{
+    return toPosixPath(relative(root, resolve(path)));
+}
+
 export function ParseBaseArgument(argv, fallbackBase)
 {
     const flagIndex = argv.indexOf(BASE_FLAG);
@@ -97,7 +109,7 @@ export function ListChangedFiles(base, root = RepoRoot)
         ...untracked,
     ]);
     return [...paths]
-        .map(path => path.replaceAll('\\', '/'))
+        .map(toPosixPath)
         .filter(keepPath)
         .filter(path => existsSync(join(root, path)))
         .sort();

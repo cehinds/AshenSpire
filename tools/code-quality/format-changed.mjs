@@ -3,7 +3,13 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { ListChangedFiles, ParseBaseArgument, RepoRoot, SmellsConfig } from './changed-files.mjs';
+import {
+    ListChangedFiles,
+    ParseBaseArgument,
+    RepoRelative,
+    RepoRoot,
+    SmellsConfig,
+} from './changed-files.mjs';
 import { FormatSource } from './format.mjs';
 
 const WRITE_FLAG = '--write';
@@ -54,7 +60,7 @@ export function RunFormatChanged(argv, root = RepoRoot)
     const { base, rest } = ParseBaseArgument(argv, SmellsConfig.defaultBase);
     const named = rest.filter(argument => argument !== mode);
     const candidates = named.length
-        ? named
+        ? named.map(path => RepoRelative(path, root))
         : ListChangedFiles(base, root);
     const paths = candidates.filter(path => isFormattable(path, SmellsConfig.formatExclude));
     const unformatted = FindUnformatted(paths, root);

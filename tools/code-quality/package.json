@@ -12,7 +12,7 @@
     "format": "node check.mjs format --write",
     "inventory": "node check.mjs inventory",
     "types": "tsc --project tsconfig.json && tsc --project tsconfig.contracts.json",
-    "selftest": "node --test selftest.mjs"
+    "selftest": "node --test selftest.mjs selftest-style.mjs"
   },
   "linkcheckExports": {
     "@dprint/formatter": ["createContext"],
