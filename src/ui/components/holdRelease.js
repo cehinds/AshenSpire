@@ -8,21 +8,41 @@ const NEXT_GESTURE_EVENTS = Object.freeze([
   'keydown',
 ]);
 const CAPTURE = true;
+const NEXT_TASK_DELAY_MS = 0;
 
 const noOperation = () =>
 {
 };
 
-// Keyboard, controller and script clicks are untrusted or carry no pointer
-// type; only the browser's own pointer click may be the trailing one.
+function listenOnWindow(eventName, handler)
+{
+  window.addEventListener(
+    eventName,
+    handler,
+    CAPTURE,
+  );
+}
+
+function forgetOnWindow(eventName, handler)
+{
+  window.removeEventListener(
+    eventName,
+    handler,
+    CAPTURE,
+  );
+}
+
+// Keyboard, controller and script clicks are untrusted or have no pointer type.
+// Only the browser's own pointer click can be the trailing one.
 function isPointerClick(event)
 {
   const pointerType = event.pointerType;
-  return event.isTrusted && typeof pointerType === 'string' && pointerType !== '';
+  const hasPointerType = typeof pointerType === 'string' && pointerType !== '';
+  return event.isTrusted && hasPointerType;
 }
 
-// A touch release is followed by the browser's own click, hit-tested after the
-// next screen mounts. Swallow that one click so it never presses what is new.
+// The browser clicks after a touch release, and hits whatever screen is new by then.
+// Swallow that one click so it never presses the next screen.
 function swallowTrailingClick(windowMs)
 {
   if (!Number.isFinite(windowMs) || windowMs <= 0)
@@ -33,10 +53,10 @@ function swallowTrailingClick(windowMs)
   const stop = () =>
   {
     clearTimeout(timer);
-    window.removeEventListener(CLICK_EVENT, swallow, CAPTURE);
+    forgetOnWindow(CLICK_EVENT, swallow);
     for (const eventName of NEXT_GESTURE_EVENTS)
     {
-      window.removeEventListener(eventName, stop, CAPTURE);
+      forgetOnWindow(eventName, stop);
     }
   };
   const swallow = (event) =>
@@ -49,20 +69,28 @@ function swallowTrailingClick(windowMs)
     event.stopImmediatePropagation();
     stop();
   };
-  window.addEventListener(CLICK_EVENT, swallow, CAPTURE);
+  listenOnWindow(CLICK_EVENT, swallow);
   for (const eventName of NEXT_GESTURE_EVENTS)
   {
-    window.addEventListener(eventName, stop, CAPTURE);
+    listenOnWindow(eventName, stop);
   }
   timer = setTimeout(stop, windowMs);
 }
 
 /**
- * Runs `onRelease` once the pointer that started the hold lifts, after the
- * release's trailing click is guarded. A press with no pointer id runs at once.
- * Returns a function that abandons the wait.
+ * Runs `onRelease` when the pointer that started the hold lifts.
+ * The release's trailing click is swallowed first.
+ * A press with no pointer id runs at once.
+ * @returns {() => void} Abandons the wait.
  */
-export function FinishHoldOnRelease(button, startEvent, { trailingClickMs, onRelease })
+export function FinishHoldOnRelease(
+  button,
+  startEvent,
+  {
+    trailingClickMs,
+    onRelease,
+  },
+)
 {
   const pointerId = startEvent?.pointerId;
   if (!Number.isInteger(pointerId))
@@ -83,7 +111,7 @@ export function FinishHoldOnRelease(button, startEvent, { trailingClickMs, onRel
     }
     clear();
     swallowTrailingClick(trailingClickMs);
-    setTimeout(onRelease, 0);
+    setTimeout(onRelease, NEXT_TASK_DELAY_MS);
   };
   const cancel = (endEvent) =>
   {

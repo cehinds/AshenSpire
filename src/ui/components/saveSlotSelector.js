@@ -407,13 +407,17 @@ export function openSaveSlotSelector({
         onConfirm: (startEvent) =>
         {
           hideTooltip();
-          // armHold completes while the pointer is still down; load on its
-          // release so neither the lift nor its trailing click hits the map.
+          // armHold completes while the pointer is still down.
+          // Load on release, so neither the lift nor its click hits the map.
           clearPendingRelease?.();
-          clearPendingRelease = FinishHoldOnRelease(slotButton, startEvent, {
-            trailingClickMs,
-            onRelease: loadAfterRelease,
-          });
+          clearPendingRelease = FinishHoldOnRelease(
+            slotButton,
+            startEvent,
+            {
+              trailingClickMs,
+              onRelease: loadAfterRelease,
+            },
+          );
         },
       });
       holdCleanups.push(() => {

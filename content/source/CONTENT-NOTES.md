@@ -2342,13 +2342,9 @@ _No comments were written beside these numbers in the old balance.js._
 - **`ui.holdConfirm.settleSlopPx`** — How far the finger may drift during the settle and still be judged
   still. Kept apart from the hold's own slop so "did they mean to drag"
   and "did they wander off mid-hold" can be tuned independently.
-- **`ui.titleLoadHold`** — TITLE SAVE SLOT QUICK LOAD. This is a pointer/touch convenience gesture,
-  not the irreversible-action safety dial above: a short activation still
-  selects/reviews the save, while a stationary hold loads it directly.
-  Keeping the duration here lets the interaction be tuned without changing
-  the title screen's event wiring. `trailingClickMs` is how long after the
-  finger lifts the browser's trailing click is swallowed, so it cannot press
-  the map that the load just opened; the next touch or key ends it early.
+- **`ui.titleLoadHold`** — TITLE SAVE SLOT QUICK LOAD, a pointer shortcut, not a safety dial.
+  A tap reviews the save; a hold of `ms` loads it directly.
+  `trailingClickMs` swallows the phone's click after the lift, so it cannot press the new map.
 - **`ui.holdBeat`** — THE HOLD'S BEAT — WHERE IN THE FILL A SOUND LANDS. One home for the
   fractions; the sounds themselves are recipes in content/sfx.js and the
   durations are holdConfirm above. Three facts, three homes, none restated.
