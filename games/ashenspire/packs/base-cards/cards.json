@@ -5427,7 +5427,7 @@
             "amount": 1
           }
         ],
-        "textTemplate": "Smash: deal 12 damage. Otherwise gain {damage} Block.",
+        "textTemplate": "Smash: deal 3 damage. Otherwise gain {damage} Block.",
         "icon": "attack",
         "flavor": "An answering form of the Bastion's shield yard.\n\nThe same turn of the shoulder served different purposes under different weights. With a raised weapon it drove forward; behind a settled guard it closed the opening. Instructors judged the footing before they corrected the hands.\n\nThe body gives a motion its meaning.",
         "damageSchool": "physical",
@@ -5442,7 +5442,7 @@
               {
                 "op": "damage",
                 "target": "enemy",
-                "amount": 12
+                "amount": 3
               }
             ],
             "textTemplate": "Deal {damage} damage."
@@ -5573,8 +5573,8 @@
             "amount": 2
           }
         ],
-        "textTemplate": "If Mana was paid, deal {damage} damage. Otherwise gain 8 Block.",
-        "faceTemplate": ["Mana paid: deal {damage} damage.", "Otherwise gain 8 Block."],
+        "textTemplate": "If Mana was paid, deal {damage} damage. Otherwise gain 3 Block.",
+        "faceTemplate": ["Mana paid: deal {damage} damage.", "Otherwise gain 3 Block."],
         "icon": "skill",
         "flavor": "A borrowed cadence of the Observatory's armed attendants.\n\nSome attendants could kindle a spell along the motion of a blade. Others repeated the same motion without its light and found it settled into a serviceable guard. Both remained in the drills after the teachers stopped distinguishing them.\n\nThe hand remembers whether it carried fire.",
         "damageSchool": "physical",
@@ -5590,7 +5590,7 @@
               {
                 "op": "damage",
                 "target": "enemy",
-                "amount": 12
+                "amount": 2
               }
             ],
             "textTemplate": "Deal {damage} damage."
