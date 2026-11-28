@@ -130,7 +130,12 @@ test('weapon cards add their source equipment rating without a tier', async () =
   assert.doesNotMatch(html, /\btier\b/i);
   assert.doesNotMatch(html, /pointsPerTier/);
   assert.match(html, /5 base \+ 3 STR \(weapon\) \+ 0 rarity =/);
-  assert.match(html, /3 base \+ 1 DEX \(shield\) \+ 0 rarity =/);
+  // The reaver deck holds no guard copy, and x0 roles are hidden; one copy shows the shield receipt.
+  assert.equal(guard.copies, 0);
+  assert.doesNotMatch(html, /data-role="guard"/);
+  const guardCopy = { ...guard, copies: 1 };
+  const guardHtml = renderRoleCopies({ ...surface, roles: [guardCopy] });
+  assert.match(guardHtml, /3 base \+ 1 DEX \(shield\) \+ 0 rarity =/);
   assert.doesNotMatch(html, /\b(AR|DR|PR)\b/);
 
   const ratingHtml = renderPlayerPoise(surface.poise);
