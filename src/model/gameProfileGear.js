@@ -7,6 +7,8 @@ import { GearIdOf } from './gearIds.js';
 import { GearSummary, GearTypeEffectsEnabled } from './gearEffects.js';
 const ATTRIBUTES = ['strength','dexterity','constitution','wisdom','intelligence'];
 const STATS = ['hp','mp','sp','poise','ward','evasion','precision',...ATTRIBUTES];
+// A gear penalty (heavy armour's -1 DEX) on a 0 base stat stops at 0, as enemy totals do (enemyAttributeTotal).
+const MIN_EFFECTIVE_ATTRIBUTE = 0;
 // A single resolved-value path. Points are never also granted as raw bonuses.
 export function gameProfileEquipmentReceipt(registries, run) {
   const settings = gameModule(run,'gear');
@@ -49,5 +51,13 @@ export function gameProfileEffectiveAttributes(registries, run, attributes = run
   const deck = DeckAttributeBonuses(run.deck);
   // The class bonus of every odd character level (model/classLevelBonus.js).
   const level = ClassLevelAttributeBonus(run);
-  return Object.fromEntries(Object.entries(attributes || {}).map(([id,value])=>[id,value+(gear.totals[id] || 0)+(deck[id] || 0)+(level[id] || 0)]));
+  const effective = ([id, value]) =>
+  {
+    const total = value + (gear.totals[id] || 0) + (deck[id] || 0) + (level[id] || 0);
+    return [
+      id,
+      Math.max(MIN_EFFECTIVE_ATTRIBUTE, total),
+    ];
+  };
+  return Object.fromEntries(Object.entries(attributes || {}).map(effective));
 }
