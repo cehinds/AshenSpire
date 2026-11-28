@@ -46,6 +46,10 @@ for (const [name, original] of Object.entries(currentFixture.scenarios)) {
   const checkpoints = Object.fromEntries(Object.entries(snapshots).map(([phase, snapshot]) => [phase, { ...original[phase], snapshot }]));
   expectedScenarios[name] = { ...original, ...checkpoints, profile: { ...original.profile, ...currentIdentity.profile }, save };
 }
+// Owner ruling 2026-11-28: archived profiles play their scales at 1 on 1:1 content, so these replays
+// were recaptured; the content before the ruling with the scales on reproduces the older captures.
+const oneToOneRecapture = JSON.parse(readFileSync(new URL('./fixtures/core2-cleanup-1to1.json', import.meta.url), 'utf8'));
+Object.assign(expectedScenarios, oneToOneRecapture.scenarios);
 const historicalBytes = readFileSync(new URL('./fixtures/dev-profile-73ef.json.gz', import.meta.url));
 const historicalJson = gunzipSync(historicalBytes).toString('utf8');
 const historicalHash = JSON.parse(historicalJson).hash;

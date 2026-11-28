@@ -1,0 +1,338 @@
+{
+  "$note": "Owner ruling 2026-11-28: saved profiles play every effects scale at 1 and Core stores 1:1 values, so these replays moved. They replace the older captures, which stay as provenance.",
+  "scenarios": {
+    "paid reaction": {
+      "profile": {
+        "hash": "sha256:e8d742f498fd75d6447bbbbfb217ba7c231b9762296cc1df0f9e2580d92d2cfc",
+        "runtimeHash": "sha256:c77d4f30494cb821fc66b9b9ef19b91fbb2c699633fe0137b72ab89d261ec831",
+        "actionPolicy": 2
+      },
+      "start": {
+        "snapshot": "9f6fe86678ba30ebfefcb19e62387a5186fed048ebf1a98516f9773c151b5a95",
+        "events": "6f8bd20021833bca83eea6de33afd59fbe2e5ec8d54a58e6f5bbf26506b9defe",
+        "rng": {
+          "hash": "fc484943a4043b0bcee39f44a9830082e6271483782593be0f576ddc094dc177",
+          "drawn": {
+            "shuffle": 9,
+            "enemyAI": 2,
+            "enemyHP": 1
+          }
+        }
+      },
+      "receipt": {
+        "preview": {
+          "cost": 2,
+          "manaCost": 0,
+          "staminaCost": 2,
+          "effects": "7f85fc73245224993f6b946029334f7e845e489dc6a6622046ec839961138845"
+        },
+        "payment": {
+          "sp": 1,
+          "advanceSp": 0,
+          "totalSp": 1
+        }
+      },
+      "pending": {
+        "snapshot": "3ba12f6cf262560cbbbd2acf56254ee6c8a6b75e9fa098eced14745db94689e8",
+        "events": "e5fbe05629be5e0cd305c5f592b05642bba7df55147b912819c3ff9cdd34eb40",
+        "rng": {
+          "hash": "fc484943a4043b0bcee39f44a9830082e6271483782593be0f576ddc094dc177",
+          "drawn": {
+            "shuffle": 9,
+            "enemyAI": 2,
+            "enemyHP": 1
+          }
+        }
+      },
+      "save": {
+        "stored": "9800ca257fcdfe00b7a0b9725791c1f2899ff08e0c45f945767a80de5ac11dde",
+        "loaded": "d4791abf46f148d905ed4bcb87eccc0b9ce0b4a8edfd9cbb7dfdf6b74145b93f"
+      },
+      "restored": {
+        "snapshot": "3ba12f6cf262560cbbbd2acf56254ee6c8a6b75e9fa098eced14745db94689e8",
+        "events": "9b0df71fc898c2d85e27ee10a86f7febb590e2ba3e0ab9934c1daff4ae92c0a2",
+        "rng": {
+          "hash": "fc484943a4043b0bcee39f44a9830082e6271483782593be0f576ddc094dc177",
+          "drawn": {
+            "shuffle": 9,
+            "enemyAI": 2,
+            "enemyHP": 1
+          }
+        }
+      },
+      "live": {
+        "snapshot": "b812f2161ad8269e2d09af7db72d1ae9e33d87503e354ec5fabf72915d4fa80c",
+        "events": "e737e2b6a26f3d92718e45da76bf4d8f87ed9ace5eade1a5a715bf6e0f53d0ed",
+        "rng": {
+          "hash": "fc484943a4043b0bcee39f44a9830082e6271483782593be0f576ddc094dc177",
+          "drawn": {
+            "shuffle": 9,
+            "enemyAI": 2,
+            "enemyHP": 1
+          }
+        },
+        "continuation": "63b13fad9181bb8ae7e9fc08896f6227a0cc96b257caa1c105026bfab14c84f8"
+      },
+      "afterRestore": {
+        "snapshot": "b812f2161ad8269e2d09af7db72d1ae9e33d87503e354ec5fabf72915d4fa80c",
+        "events": "742ff885dfb2e253c58fb037edb7b5022adf4a73e5573cbceab9fdc966b27ed1",
+        "rng": {
+          "hash": "fc484943a4043b0bcee39f44a9830082e6271483782593be0f576ddc094dc177",
+          "drawn": {
+            "shuffle": 9,
+            "enemyAI": 2,
+            "enemyHP": 1
+          }
+        },
+        "continuation": "63b13fad9181bb8ae7e9fc08896f6227a0cc96b257caa1c105026bfab14c84f8"
+      }
+    },
+    "paid delayed charge": {
+      "profile": {
+        "hash": "sha256:e8d742f498fd75d6447bbbbfb217ba7c231b9762296cc1df0f9e2580d92d2cfc",
+        "runtimeHash": "sha256:c77d4f30494cb821fc66b9b9ef19b91fbb2c699633fe0137b72ab89d261ec831",
+        "actionPolicy": 2
+      },
+      "start": {
+        "snapshot": "35227c9b7f07b741b390ff99d5ffd3618eec22fabb97d51851d5afc0bf87a293",
+        "events": "ccf58ac0c4ceeb546e58279bfe30b68b05954c1c470b289f88be1a51547a9494",
+        "rng": {
+          "hash": "c79f870f6acc0261a1668926959967ee91e3512a99bfbe87402d17b39830e385",
+          "drawn": {
+            "shuffle": 9,
+            "enemyHP": 1
+          }
+        }
+      },
+      "receipt": {
+        "sp": 1,
+        "advanceSp": 1,
+        "totalSp": 2
+      },
+      "pending": {
+        "snapshot": "62f490b38e91e2689e17df4a2693476dcd43c1026a9be9e6ca094399ee9664ab",
+        "events": "a10616b6e97cab995f543e52e541f8f8bd0a1ed37844b53283efdd1079f63bce",
+        "rng": {
+          "hash": "177f9befa4f7dfc7f52ba9f4c458d2ffd76d7f77dce513e2e96d6fc6ae4dee04",
+          "drawn": {
+            "shuffle": 18,
+            "enemyHP": 1
+          }
+        }
+      },
+      "save": {
+        "stored": "7a8cc2a941901836871f86d41478b14d0babccab6ac4bfb96733acfb6ddbf2c4",
+        "loaded": "b9baf91c75169e4b032241b9f9d79b6a7831f4bcbbf0ebd00f00b4da6714ea7b"
+      },
+      "restored": {
+        "snapshot": "62f490b38e91e2689e17df4a2693476dcd43c1026a9be9e6ca094399ee9664ab",
+        "events": "a10616b6e97cab995f543e52e541f8f8bd0a1ed37844b53283efdd1079f63bce",
+        "rng": {
+          "hash": "177f9befa4f7dfc7f52ba9f4c458d2ffd76d7f77dce513e2e96d6fc6ae4dee04",
+          "drawn": {
+            "shuffle": 18,
+            "enemyHP": 1
+          }
+        }
+      },
+      "live": {
+        "snapshot": "5a373ac4fc5335df5c5bd895a8fd05cdec233973d668cde72dfeef1578de10ed",
+        "events": "ee6e028bb7288031b87d31129f04f12c6ccfa8136904203b130bd2555a113011",
+        "rng": {
+          "hash": "b6ef4acd618a1c151b1e7fe159fa107104a654e6200fd8f46a2478834034ef51",
+          "drawn": {
+            "shuffle": 27,
+            "enemyAI": 2,
+            "enemyHP": 1
+          }
+        },
+        "continuation": "edbe75e4e72b66bf6c96043d97975f7fc2ae2ea96b97c7ebc2122746625831b6"
+      },
+      "afterRestore": {
+        "snapshot": "5a373ac4fc5335df5c5bd895a8fd05cdec233973d668cde72dfeef1578de10ed",
+        "events": "ee6e028bb7288031b87d31129f04f12c6ccfa8136904203b130bd2555a113011",
+        "rng": {
+          "hash": "b6ef4acd618a1c151b1e7fe159fa107104a654e6200fd8f46a2478834034ef51",
+          "drawn": {
+            "shuffle": 27,
+            "enemyAI": 2,
+            "enemyHP": 1
+          }
+        },
+        "continuation": "edbe75e4e72b66bf6c96043d97975f7fc2ae2ea96b97c7ebc2122746625831b6"
+      }
+    },
+    "ordered enemy plan": {
+      "profile": {
+        "hash": "sha256:e8d742f498fd75d6447bbbbfb217ba7c231b9762296cc1df0f9e2580d92d2cfc",
+        "runtimeHash": "sha256:c77d4f30494cb821fc66b9b9ef19b91fbb2c699633fe0137b72ab89d261ec831",
+        "actionPolicy": 2
+      },
+      "start": {
+        "snapshot": "3703f3cf52d1027934bfd2a08f7846cf6447838a6e0d3f96d995a469e735d9e9",
+        "events": "6a33ac0828102b1efc1ded8a78e798aa6a93e243b896ebd84d040bcb617b0a3e",
+        "rng": {
+          "hash": "fc484943a4043b0bcee39f44a9830082e6271483782593be0f576ddc094dc177",
+          "drawn": {
+            "shuffle": 9,
+            "enemyAI": 2,
+            "enemyHP": 1
+          }
+        }
+      },
+      "receipt": [
+        [
+          "caneStrike",
+          1
+        ],
+        [
+          "caneStrike",
+          1
+        ],
+        [
+          "heldBlade",
+          1
+        ]
+      ],
+      "pending": {
+        "snapshot": "3703f3cf52d1027934bfd2a08f7846cf6447838a6e0d3f96d995a469e735d9e9",
+        "events": "6a33ac0828102b1efc1ded8a78e798aa6a93e243b896ebd84d040bcb617b0a3e",
+        "rng": {
+          "hash": "fc484943a4043b0bcee39f44a9830082e6271483782593be0f576ddc094dc177",
+          "drawn": {
+            "shuffle": 9,
+            "enemyAI": 2,
+            "enemyHP": 1
+          }
+        }
+      },
+      "save": {
+        "stored": "405ae48c2a54ee3503db73928e87ed8d6833f1cbb5bc11800b878930958063ba",
+        "loaded": "ede2168076594426206a08fe586d857abca8a429ff64873f3d0a9718224da2e2"
+      },
+      "restored": {
+        "snapshot": "3703f3cf52d1027934bfd2a08f7846cf6447838a6e0d3f96d995a469e735d9e9",
+        "events": "6a33ac0828102b1efc1ded8a78e798aa6a93e243b896ebd84d040bcb617b0a3e",
+        "rng": {
+          "hash": "fc484943a4043b0bcee39f44a9830082e6271483782593be0f576ddc094dc177",
+          "drawn": {
+            "shuffle": 9,
+            "enemyAI": 2,
+            "enemyHP": 1
+          }
+        }
+      },
+      "live": {
+        "snapshot": "1660426e0eb72bd07973b6c7596a0f840b55b034cc426f93e9affd0564b0dc41",
+        "events": "8d378c0fb5750239774f8521e7840d2772e2c40177a1cded760a6f817607eb7a",
+        "rng": {
+          "hash": "e69f3c2c007aa59a54736cac3f8a6cfcfbd9e56590bcf12d09b4098ed1812ac0",
+          "drawn": {
+            "shuffle": 18,
+            "enemyAI": 2,
+            "enemyHP": 1
+          }
+        },
+        "continuation": "e105f81eadabcf4dfc9fb34844e01250781a3d0336e7543826b9989a74f35b84"
+      },
+      "afterRestore": {
+        "snapshot": "1660426e0eb72bd07973b6c7596a0f840b55b034cc426f93e9affd0564b0dc41",
+        "events": "8d378c0fb5750239774f8521e7840d2772e2c40177a1cded760a6f817607eb7a",
+        "rng": {
+          "hash": "e69f3c2c007aa59a54736cac3f8a6cfcfbd9e56590bcf12d09b4098ed1812ac0",
+          "drawn": {
+            "shuffle": 18,
+            "enemyAI": 2,
+            "enemyHP": 1
+          }
+        },
+        "continuation": "e105f81eadabcf4dfc9fb34844e01250781a3d0336e7543826b9989a74f35b84"
+      }
+    },
+    "historical action policy": {
+      "profile": {
+        "hash": "sha256:59214dc474c262ee2e644f3c4ddbf3b94cea056c6026c5ad13002698bc263d33",
+        "runtimeHash": "sha256:73ef240835ff52f3dec38ad7b0a972d6f4886adf88fbbf1e3bf12a42d53161f2",
+        "actionPolicy": 1
+      },
+      "start": {
+        "snapshot": "6ac6e041080709fe446aad90f8b1e2c68e05b35cfc3947e6d50211706971858b",
+        "events": "b5f7eee68639e2e61e568414e7af53f149f0f1e128b7f0bfb515244c881c0ded",
+        "rng": {
+          "hash": "fc484943a4043b0bcee39f44a9830082e6271483782593be0f576ddc094dc177",
+          "drawn": {
+            "shuffle": 9,
+            "enemyAI": 2,
+            "enemyHP": 1
+          }
+        }
+      },
+      "receipt": {
+        "level": 19,
+        "attributes": {
+          "strength": 2,
+          "dexterity": 1,
+          "constitution": 1,
+          "wisdom": 2,
+          "intelligence": 0
+        },
+        "stamina": 2,
+        "totalSp": 2
+      },
+      "pending": {
+        "snapshot": "6ac6e041080709fe446aad90f8b1e2c68e05b35cfc3947e6d50211706971858b",
+        "events": "b5f7eee68639e2e61e568414e7af53f149f0f1e128b7f0bfb515244c881c0ded",
+        "rng": {
+          "hash": "fc484943a4043b0bcee39f44a9830082e6271483782593be0f576ddc094dc177",
+          "drawn": {
+            "shuffle": 9,
+            "enemyAI": 2,
+            "enemyHP": 1
+          }
+        }
+      },
+      "save": {
+        "stored": "260c32bd5a03ccb73b25a722a4c15d56f8cb2029d645aee438ef2155e0e64db6",
+        "loaded": "4b82826495fd465af8ae38c5ff31567993d33e747bf083c6eeb98a4e10c01c75"
+      },
+      "restored": {
+        "snapshot": "6ac6e041080709fe446aad90f8b1e2c68e05b35cfc3947e6d50211706971858b",
+        "events": "b5f7eee68639e2e61e568414e7af53f149f0f1e128b7f0bfb515244c881c0ded",
+        "rng": {
+          "hash": "fc484943a4043b0bcee39f44a9830082e6271483782593be0f576ddc094dc177",
+          "drawn": {
+            "shuffle": 9,
+            "enemyAI": 2,
+            "enemyHP": 1
+          }
+        }
+      },
+      "live": {
+        "snapshot": "9ab187d3ee0d93c69b0993be3a107b6750c0556562d5a140e999eca72b2001f0",
+        "events": "6edb51365335de1bdc8c4d46c2a785096049e0b91577309210a5453e3b536e19",
+        "rng": {
+          "hash": "e256db0dd97d3be03db67ffa7beb9dd3444651285206eb292bdf75ccacae1e89",
+          "drawn": {
+            "shuffle": 18,
+            "enemyAI": 3,
+            "enemyHP": 1
+          }
+        },
+        "continuation": "da525b793b4dec8c82e07eba0ebea1de067da4ac22c1a2c9ed351b3cffa4e8f3"
+      },
+      "afterRestore": {
+        "snapshot": "9ab187d3ee0d93c69b0993be3a107b6750c0556562d5a140e999eca72b2001f0",
+        "events": "6edb51365335de1bdc8c4d46c2a785096049e0b91577309210a5453e3b536e19",
+        "rng": {
+          "hash": "e256db0dd97d3be03db67ffa7beb9dd3444651285206eb292bdf75ccacae1e89",
+          "drawn": {
+            "shuffle": 18,
+            "enemyAI": 3,
+            "enemyHP": 1
+          }
+        },
+        "continuation": "da525b793b4dec8c82e07eba0ebea1de067da4ac22c1a2c9ed351b3cffa4e8f3"
+      }
+    }
+  }
+}
