@@ -28,6 +28,7 @@ import { WEAKNESS_MANA, WEAKNESS_STAMINA } from '../model/enemyWeaknessRules.js'
 import { counterBlockBonus, CounterStackRule, counterReturnSpent, paidCounterContact } from './counterRule.js';
 import { rollD20Check } from './d20Chance.js';
 import { ChangeAttribute } from './liveStats.js';
+import { PoiseEnabled } from '../model/simpleCombatFlags.js';
 // src/engine/actions.js — effect-DSL opcode implementations (SPEC §3.4)
 //
 // A queued ACTION is { effect, source, owner?, target?, card?, meta? }:
@@ -1501,6 +1502,10 @@ export function staggerPlayer(ctx, player) {
 export function dealPoiseDamage(ctx, entity, amount, { knowledgeMatchup = false, cause = null, source = null, cardId = null, carrier = null, blockAtHit = 0 } = {}) {
   // `source` and `cardId` only name who dealt it in the receipt (an explicit amount never reads the source); `carrier` is the hit it rides on,
   // `blockAtHit` the Block the target held when that hit arrived (the hit may have spent it since).
+  if (!PoiseEnabled(ctx))
+  {
+    return;
+  }
   if (configuredCombat(ctx)) { // Core Poise never fills a legacy break meter; extra Poise damage drains the pool.
     if (fixCoreEnabled(ctx)) drainFixCorePoise(ctx, source, entity, amount, carrier, blockAtHit);
     return;

@@ -183,7 +183,9 @@
     },
     "stagger": {
       "version": "1.0.0",
-      "settings": {}
+      "settings": {
+        "poise": true
+      }
     },
     "enemy-visibility": {
       "version": "1.0.0",

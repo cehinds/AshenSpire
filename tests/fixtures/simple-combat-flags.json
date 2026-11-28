@@ -1,0 +1,16 @@
+{
+  "$note": "Module overrides that switch one Simple Combat mechanic off (docs/design/SIMPLE-COMBAT-PLAN.md).",
+  "core": "ashen.core@2.0.0",
+  "seed": 511,
+  "classId": "reaver",
+  "enemyIds": [
+    "fellWarden"
+  ],
+  "overrides": {
+    "poiseOff": {
+      "stagger": {
+        "poise": false
+      }
+    }
+  }
+}
