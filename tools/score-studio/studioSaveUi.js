@@ -215,7 +215,12 @@ class StudioSaveUi
     {
       pill.textContent = StudioSavePillText.Saving;
     }
+    const sentCards = this.#deps.snapshotPackCards();
     const outcome = await this.#controller.save();
+    if (savedResults.includes(outcome.result))
+    {
+      this.#deps.markPackCardsSaved(sentCards);
+    }
     this.#deps.toast(this.#outcomeText(outcome));
     if (outcome.result === StudioSaveResult.Failed)
     {
@@ -318,7 +323,8 @@ class StudioSaveUi
   }
 }
 
-// deps: state, packCardChanges, packRemovedIds, heldBackCardCount, isLocalServer, isTextEntry,
+// deps: state, packCardChanges, packRemovedIds, heldBackCardCount, snapshotPackCards,
+// markPackCardsSaved, isLocalServer, isTextEntry,
 // flushDraft, writeDraftNow, storeDraft, refreshDirtyStatus, toast, download and clone.
 export function InitStudioSaveUi(deps)
 {

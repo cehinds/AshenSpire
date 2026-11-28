@@ -446,6 +446,8 @@ function setupSaveUi({ savedFiles, choice, storage, asked })
     packCardChanges: () => [],
     packRemovedIds: () => [],
     heldBackCardCount: () => 0,
+    snapshotPackCards: () => null,
+    markPackCardsSaved: () => undefined,
     isLocalServer: true,
     clone: structuredClone,
     toast: () => undefined,

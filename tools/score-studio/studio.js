@@ -53,7 +53,7 @@ import {
   SaveShownContentEditor,
 } from './contentEditor/contentEditor.js';
 import { InitStudioSaveUi, StudioSaveMenuLabel } from './studioSaveUi.js';
-import { StudioCardChanges } from './packCardChanges.js';
+import { CreatePackCardBaseline } from './packCardChanges.js';
 import { IsStudioPackCardId } from './studioSaveFiles.js';
 import {
   GalleryKind,
@@ -497,12 +497,33 @@ function gameCardOf(id)
   return normalizeStudioCard(clone(registries.cards.get(id)));
 }
 
+const packCardBaseline = CreatePackCardBaseline(gameCardOf);
+
+function isEditedCard(card)
+{
+  return Boolean(card._edited || card._custom);
+}
+
+// Cards outside the game card file's id namespaces (generated, subclass) stay in the draft.
+function packNamespaceCards()
+{
+  return state.cards.filter((card) => IsStudioPackCardId(card.id));
+}
+
 // What File > Save writes into the game's card file: the keys each edit changed.
-// Cards outside the file's id namespaces (generated, subclass) stay in the draft.
 function packCardChanges()
 {
-  const packCards = editedCards().filter((card) => IsStudioPackCardId(card.id));
-  return StudioCardChanges(packCards, gameCardOf);
+  return packCardBaseline.changes(packNamespaceCards(), isEditedCard);
+}
+
+function snapshotPackCards()
+{
+  return packCardBaseline.snapshot(packNamespaceCards(), isEditedCard, packRemovedIds());
+}
+
+function markPackCardsSaved(snapshot)
+{
+  packCardBaseline.markSaved(snapshot);
 }
 
 function packRemovedIds()
@@ -5824,6 +5845,8 @@ async function boot() {
     packCardChanges,
     packRemovedIds,
     heldBackCardCount,
+    snapshotPackCards,
+    markPackCardsSaved,
     isLocalServer,
     isTextEntry,
     flushDraft,

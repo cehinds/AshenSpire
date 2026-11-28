@@ -1,11 +1,14 @@
-// A Studio Save sends only the authored keys an edit changed, so untouched keys keep their form.
+// A Studio Save sends only the authored keys an edit changed, so untouched keys keep their form,
+// and the baseline follows each Save so a revert is a real change.
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  CreatePackCardBaseline,
   StudioCardChange,
   StudioCardChanges,
 } from '../tools/score-studio/packCardChanges.js';
+import { MergePackCards } from '../tools/score-studio-pack-cards.mjs';
 
 const editedId = 'core.qaEdited';
 const untouchedId = 'core.qaUntouched';
@@ -113,4 +116,43 @@ test('pack card changes: a card equal to its baseline is left out', () =>
   assert.deepEqual(changes[0].set, {
     cost: 2,
   });
+});
+
+// A Save round trip through the server's merge, with the baseline following each Save.
+function saveInto(pack, baseline, studioCards, removedIds = [])
+{
+  const isEdited = (card) => Boolean(card._edited);
+  const sent = baseline.snapshot(studioCards, isEdited, removedIds);
+  const data = {
+    cards: baseline.changes(studioCards, isEdited),
+    removedCardIds: removedIds,
+  };
+  baseline.markSaved(sent);
+  return MergePackCards(pack, data);
+}
+
+test('pack card baseline: edit, save, revert, save leaves the game card as it was', () =>
+{
+  const original = structuredClone(baselineCard);
+  let pack = [structuredClone(original)];
+  const loaded = new Map([[editedId, structuredClone(original)]]);
+  const baseline = CreatePackCardBaseline((id) => loaded.get(id) ?? null);
+  pack = saveInto(pack, baseline, [editedCard({ name: 'QA Renamed' })]);
+  assert.equal(pack[0].name, 'QA Renamed');
+  const reverted = structuredClone(original);
+  pack = saveInto(pack, baseline, [reverted]);
+  assert.deepEqual(pack, [original], 'Undo to the loaded card reaches the game');
+});
+
+test('pack card baseline: undoing a saved removal puts the card back in the game', () =>
+{
+  const original = structuredClone(baselineCard);
+  let pack = [structuredClone(original)];
+  const loaded = new Map([[editedId, structuredClone(original)]]);
+  const baseline = CreatePackCardBaseline((id) => loaded.get(id) ?? null);
+  pack = saveInto(pack, baseline, [], [editedId]);
+  assert.deepEqual(pack, []);
+  pack = saveInto(pack, baseline, [structuredClone(original)]);
+  assert.deepEqual(pack.map((card) => card.id), [editedId]);
+  assert.equal(pack[0].name, original.name);
 });
