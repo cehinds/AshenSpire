@@ -12,7 +12,10 @@ import { fixCorePierceRules, validateFixCoreRules } from '../src/model/fixCoreMe
 
 const PIERCE = { combatProfile: { camp: 'physical', damageType: 'piercing', reach: 'contact' }, tags: ['camp:physical', 'pierce', 'damage:piercing'] };
 const BLUNT = { combatProfile: { camp: 'physical', damageType: 'blunt', reach: 'contact' }, tags: ['camp:physical', 'damage:blunt'] };
-const hit = (combat, target, carrier, base = 20) => profileDamageReceipt(combat, combat.player, target, base, { ...carrier, skipRatingBonus: true }, { roll: 0 });
+// Owner ruling 2026-11-28: damage is 1:1 (no base-damage scale), so a base meets the layers as dealt.
+const HIT_DAMAGE = 10;
+const SPLIT_HIT_DAMAGE = 20;
+const hit = (combat, target, carrier, base = HIT_DAMAGE) => profileDamageReceipt(combat, combat.player, target, base, { ...carrier, skipRatingBonus: true }, { roll: 0 });
 
 test('the Block a Pierce stack ignores is a config value: 1', () => {
   assert.equal(fixCoreMechanics.pierce.blockIgnoredPerStack, 1);
@@ -55,7 +58,7 @@ test('stack Pierce leaves the whole post-Block hit on the ordinary Poise split',
   // Match the saved Poise policy used by these split examples.
   combat.fixCoreRules.poise = { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1, breakStatusStacks: 2 };
   enemy.block = 5;
-  const receipt = hit(combat, enemy, { ...PIERCE, pierceStacks: 2 }, 40);
+  const receipt = hit(combat, enemy, { ...PIERCE, pierceStacks: 2 }, SPLIT_HIT_DAMAGE);
   assert.equal(receipt.damageReceipt.hits[0].incoming, 20);
   assert.equal(receipt.blocked, 3);
   assert.equal(receipt.blockRemaining, 0, 'Block spending stays the same as an unpierced hit');
@@ -70,7 +73,7 @@ test('stack Pierce leaves a Force hit on its half-Poise split after Block', () =
   combat.fixCoreRules.poise = { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1, breakStatusStacks: 2 };
   enemy.block = 5;
   const force = { combatProfile: { camp: 'spell', school: 'force', damageType: 'arcane' }, tags: ['school:force', 'pierce'], pierceStacks: 2 };
-  const receipt = hit(combat, enemy, force, 40);
+  const receipt = hit(combat, enemy, force, SPLIT_HIT_DAMAGE);
   assert.equal(receipt.damageReceipt.hits[0].incoming, 20);
   assert.equal(receipt.blocked, 3);
   assert.equal(receipt.blockRemaining, 0);
@@ -85,7 +88,7 @@ test('a saved fight without stack Pierce retains the fraction bypass and separat
   combat.fixCoreRules.poise = { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1, breakStatusStacks: 2 };
   delete combat.fixCoreRules.pierce.blockIgnoredPerStack;
   enemy.block = 5;
-  const receipt = hit(combat, enemy, { ...PIERCE, pierceStacks: 2 }, 40);
+  const receipt = hit(combat, enemy, { ...PIERCE, pierceStacks: 2 }, SPLIT_HIT_DAMAGE);
   assert.equal(receipt.damageReceipt.hits[0].incoming, 20);
   assert.equal(receipt.pierceBypassed, 4, 'legacy Pierce ignores 20% of the hit, rather than 2 Block');
   assert.equal(receipt.blocked, 1);
