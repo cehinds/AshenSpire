@@ -96,8 +96,11 @@ test('a fight boost turns the number green', () => {
   assert.deepEqual(damageClasses(world, 'core.venomSpray'), ['up']);
 });
 
+// Since 2026-11-28 a class starts with 1 point, in its main stat. The debuff scenarios below give the
+// stat they lower one more base point, so the cut lands above the floor of 0 and moves the face.
+const DEBUFF_HEADROOM = 1;
 test('a fight debuff on the player turns the number red', () => {
-  const world = fight('starseer');
+  const world = fight('starseer', { attributes: { wisdom: DEBUFF_HEADROOM } });
   ChangeAttribute(world.combat, world.combat.player, 'wisdom', -2);
   assert.deepEqual(damageClasses(world, 'core.venomSpray'), ['down']);
 });
@@ -108,8 +111,9 @@ test('the current stance bonus turns a physical attack green', () => {
 });
 
 test('Weak turns a physical attack without a stance bonus red', () => {
-  const calm = fight('reaver');
-  const weak = fight('reaver');
+  const strength = { strength: 1 + DEBUFF_HEADROOM };
+  const calm = fight('reaver', { attributes: strength });
+  const weak = fight('reaver', { attributes: strength });
   isolateAttributeColours(calm);
   isolateAttributeColours(weak);
   applyStatus(weak.combat, weak.combat.player, 'weak', 2, weak.combat.player);
