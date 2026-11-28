@@ -180,7 +180,7 @@ test('full plain reading and Information preserve facts omitted from the face', 
 
 test('tag riders (Smash, Prone, Entry) and long lists stay off the face; Core faces are 1-3 clauses of at most 5 words', async () => {
   const { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } = await import('../src/model/gameProfile.js');
-  const profile = resolveGameProfile('core');
+  const profile = resolveGameProfile(CORE_POISE_ON_AUTHOR);
   const coreReg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const coreRules = { combatExpansionVersion: 2, gameProfile: profile };
   const cards = profile.content.cards.filter(card => card.id.startsWith('core.'));
@@ -309,6 +309,7 @@ test('every roomy reading stays inside the budget, never names an Inspect cue, a
 });
 
 import { roomyBudgetFor } from '../src/model/cardFaceBudget.js';
+import { CORE_POISE_ON_AUTHOR } from './helpers/poise-on.mjs';
 test('a profile that cuts the face below the module defaults also caps the roomy reading', () => {
   assert.equal(roomyBudgetFor({ faceMaxEffects: 2, faceMaxLines: 3 }), FACE_BUDGET, 'the module defaults are lifted by the roomy budget');
   assert.equal(roomyBudgetFor(null), FACE_BUDGET);

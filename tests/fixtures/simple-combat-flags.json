@@ -1,5 +1,5 @@
 {
-  "$note": "Module overrides that each switch one Simple Combat mechanic off.",
+  "$note": "Module overrides that each switch one Simple Combat mechanic off; poiseOn brings Poise back, since Core ships it off.",
   "core": "ashen.core@2.0.0",
   "seed": 511,
   "classId": "reaver",
@@ -10,6 +10,11 @@
     "poiseOff": {
       "stagger": {
         "poise": false
+      }
+    },
+    "poiseOn": {
+      "stagger": {
+        "poise": true
       }
     },
     "stanceBenefitsOff": {
@@ -52,6 +57,35 @@
     },
     "baseSp": 2,
     "secondTurn": 2
+  },
+  "poiseOffFightProbe": {
+    "$note": "Shipping Core plays these Poise cards for some rounds: no Poise lands and no Poise break staggers. Weakness-row staggers are not Poise and may still fire.",
+    "cardIds": [
+      "core.ironbreaker",
+      "core.batteringGale",
+      "core.hammerBlow",
+      "core.whirlwind"
+    ],
+    "rounds": 4,
+    "resource": 20,
+    "playerHp": 400,
+    "enemyHp": 999,
+    "forbiddenEvents": [
+      "poiseBroken",
+      "persistentPoiseChanged"
+    ],
+    "staggerEvents": [
+      "enemyStaggered",
+      "playerStaggered"
+    ],
+    "poiseStaggerCause": "poiseBreak",
+    "faceCardId": "core.whirlwind",
+    "faceWord": "Poise",
+    "faceCardPrefix": "core.",
+    "smashCardId": "core.smash",
+    "faceExpansionVersion": 2,
+    "upgradeOptions": 40,
+    "upgradeStepKind": "poise"
   },
   "upgradeProbe": {
     "choices": 3,

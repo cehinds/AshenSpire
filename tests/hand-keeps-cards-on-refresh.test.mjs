@@ -15,6 +15,7 @@ import { clearSelection, resetSelection } from '../src/ui/components/cardSelecti
 import { withModalDom } from './helpers/dom.mjs';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
+import { CORE_POISE_ON_AUTHOR } from './helpers/poise-on.mjs';
 
 const registries = createRegistries(contentBundle);
 const player = {
@@ -149,7 +150,7 @@ test('a refresh moves no child of the card: every node keeps its place and ident
 }));
 
 test('a mounted live hand refreshes saved Smash rules with an unchanged preview and keeps Information and Play current', () => {
-  const profile = resolveGameProfile('core');
+  const profile = resolveGameProfile(CORE_POISE_ON_AUTHOR);
   const core = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const combat = createCombat({ registries: core, gameProfile: profile, combatExpansionVersion: 2, rng: createRng(71),
     enemyIds: ['wanderingSoldier'], player: { ...structuredClone(player),

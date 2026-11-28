@@ -16,8 +16,9 @@ import { fixCoreMechanics as shipped } from '../src/content/generated/fixCoreMec
 import { coreSmashClause, coreSmashHelp, withCoreSmashBlurb } from '../src/model/smashClause.js';
 import { configuredStance } from '../src/model/profileStance.js';
 import { uiStrings } from '../src/content/generated/uiStrings.js';
+import { POISE_ON_MODULES } from './helpers/poise-on.mjs';
 
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { ...POISE_ON_MODULES } });
 const core = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const current = createRegistries(contentBundle);
 const plain = lines => lines.map(line => line.html.replace(/<[^>]+>/g, '')).join(' | ');

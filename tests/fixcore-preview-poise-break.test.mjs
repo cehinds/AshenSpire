@@ -13,8 +13,9 @@ import { dispatch, previewCard } from '../src/engine/combat.js';
 import { applyStatus } from '../src/engine/statuses.js';
 import { damagePreviewState, previewPoiseDrain } from '../src/engine/combatDamagePreview.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
+import { POISE_ON_MODULES } from './helpers/poise-on.mjs';
 
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { ...POISE_ON_MODULES } });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 function fight(poise) {
   const run = createRunState({ registries: reg, classId: 'starseer', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });

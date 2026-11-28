@@ -120,7 +120,7 @@ test('resbars print shownCur in the value, tooltip and aria text while data-cur 
 
 test('meterInputs applies PoiseBarRemaining to the plan', () => {
   const src = read('src/ui/screens/combat.js');
-  assert.match(src, /plan\[poiseAt\] = PoiseBarRemaining\(plan\[poiseAt\]\)/);
+  assert.match(src, /bar\.id === POISE_RESOURCE\s*\?\s*PoiseBarRemaining\(bar\)/);
 });
 
 test('the Poise reader prefers the Core pool (Poise left, drains) and falls back to the fill-up meter', () => {

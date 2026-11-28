@@ -8,6 +8,7 @@ import { fixCoreEnabled, fixCoreSmashVsDefensiveRules } from './fixCoreMechanics
 import { fixCoreRules } from './fixCoreRulesCache.js';
 import { configuredModule } from './profileModule.js';
 import { uiStrings } from '../content/generated/uiStrings.js';
+import { PoiseEnabled } from './simpleCombatFlags.js';
 
 const row = id => {
   const text = uiStrings.find(r => r.id === id)?.full;
@@ -30,7 +31,13 @@ export const smashBeatsStances = ctx => {
   return stances?.include?.includes('smash') ? [...new Set(stances.matchups?.smash || [])] : [];
 };
 const stanceName = id => uiStrings.find(r => r.id === `stance.name.${id}`)?.short || id.charAt(0).toUpperCase() + id.slice(1);
-export const fill = (id, ctx) => {
+// stagger.poise off: the Smash text keeps its matchups and drops the Poise sentence.
+const NO_POISE_SUFFIX = '.noPoise';
+const smashTextId = (id, ctx) => PoiseEnabled(ruleCtx(ctx))
+  ? id
+  : `${id}${NO_POISE_SUFFIX}`;
+export const fill = (textId, ctx) => {
+  const id = smashTextId(textId, ctx);
   const rules = fixCoreSmashVsDefensiveRules(fixCoreRules(ruleCtx(ctx)));
   const groups = [];
   for (const stance of smashBeatsStances(ctx)) {

@@ -22,7 +22,15 @@ import { EffectiveCostGrowth } from './combatMechanics.js';
 // Returns null for a card with an effect it cannot phrase (the same cases as
 // combatCardSummary). The caller then keeps the authored text.
 
-import { cardSummaryContext, combatCardDamageLabel, splitOf, AllEnemySpread, CardHpLossWording, PlayConditionPhrase } from './playingCard.js';
+import {
+  cardSummaryContext,
+  combatCardDamageLabel,
+  splitOf,
+  AllEnemySpread,
+  CardHpLossWording,
+  PlayConditionPhrase,
+  PoiseFaceClauseHidden,
+} from './playingCard.js';
 import { isSpellCard } from './combatCardProfile.js';
 import { BarrierPoiseFactor, BarrierPoisePerStack } from './combatRatings.js';
 import { spellDefenseSplit } from './spellDefense.js';
@@ -277,6 +285,15 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
     const n = value(effect, index), base = baseOf(effect, index, 'amount');
     const area = areaOf(effect.target);
     const frag = (cat, text) => [{ cat, text }];
+    const poiseHidden = PoiseFaceClauseHidden(
+      effect,
+      poiseMerge?.get(index),
+      registries,
+    );
+    if (poiseHidden)
+    {
+      return [];
+    }
     switch (effect.op) {
       case 'damage': {
         const live = preview?.values?.[index], hits = live?.hits ?? effect.hits ?? 1;

@@ -12,8 +12,9 @@ import { cardEffectLine } from '../src/ui/models/CardOptionSummaryModel.js';
 import { fixCoreStatusDefinition } from '../src/model/fixCoreMechanics.js';
 import { uiStrings } from '../src/content/generated/uiStrings.js';
 import { combatLogEntries } from '../src/model/combatLog.js';
+import { POISE_ON_MODULES } from './helpers/poise-on.mjs';
 
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { ...POISE_ON_MODULES } });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const BARRIER = /\bbarrier\b/i;
 // `base.*` is the hash-locked Persistent proposal fixture pack (tests/base-card-pack.test.mjs); no Core pool deals it.

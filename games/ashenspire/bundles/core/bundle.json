@@ -188,9 +188,10 @@
       "settings": {}
     },
     "stagger": {
+      "$note": "Poise is off in the simple ruleset; set true to bring it back.",
       "version": "1.0.0",
       "settings": {
-        "poise": true
+        "poise": false
       }
     },
     "enemy-visibility": {

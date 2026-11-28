@@ -11,6 +11,7 @@ import { EvaluateUpgradeStepCp, PrepareUpgradeStepCpContext } from './cardUpgrad
 import * as MechanicalProjection from './cardMechanicalProjection.js';
 import { GetActiveScoring } from './activeScoring.js';
 import { EffectiveCostGrowth } from './combatMechanics.js';
+import { PoiseEnabled } from './simpleCombatFlags.js';
 import * as CombatPower from './combatPower.js';
 import { fixCoreMechanics } from '../content/generated/fixCoreMechanics.js';
 import {
@@ -603,7 +604,9 @@ function addTagOptions(base, current, applied, found, dmgIndex, limits = {}, cou
   // Glacial Spike (3 Chill, a frost hit that soaks the whole Poise pool before its Poise damage lands): measured in the no-op probe against Chilled targets of every
   // pool size, Poise rating and Constitution tried, a Poise step on it changes nothing the engine does, so none is offered (batch 4 review).
   const freezesTarget = familyValue(tags, 'school:') === 'frost' && effects.some((e) => e.op === 'applyStatus' && e.status === 'chill' && e.target !== 'self' && (e.stacks || 0) >= FREEZING_CHILL);
-  if (poiseIndex >= 0 && !counterReturn && maneuver !== 'smash' && !freezesTarget) {
+  // stagger.poise off: Poise damage does nothing, so a Poise step would be a dud.
+  const poiseLands = PoiseEnabled(limits.registries);
+  if (poiseIndex >= 0 && poiseLands && !counterReturn && maneuver !== 'smash' && !freezesTarget) {
     const baseTotal = (base.effects || []).find((e) => isPlainEffect(e, 'poiseDamage'))?.amount || effects[poiseIndex].amount;
     const n = biggest(Math.max(1, Math.ceil(baseTotal * 0.2)), (Number.isFinite(limits.scale) ? limits.scale : 1) * SIZE_MULT.poise[rarity], (k) => effects[poiseIndex].amount + k - baseTotal <= baseTotal);
     if (n) found.poise = { n };

@@ -13,8 +13,9 @@ import { withKitDom } from './helpers/dom.mjs';
 import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
 import { legacyRules } from './legacyHitRules.mjs';
 import { stanceEntryBonuses } from '../src/model/stanceRules.js';
+import { POISE_ON_MODULES } from './helpers/poise-on.mjs';
 
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { ...POISE_ON_MODULES } });
 const core = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const legacy = createRegistries(contentBundle);
 const definition = id => playingCardDefinition(core, { cardId: id });

@@ -6,6 +6,7 @@ import { resolveGameProfile } from '../../src/model/gameProfile.js';
 import { createCombat } from '../../src/engine/combat.js';
 import { createRng } from '../../src/engine/rng.js';
 import { gameDigest } from '../../engine/kernel/gameConfig.js';
+import { POISE_ON_MODULES } from './poise-on.mjs';
 
 const spell = (id, effects, extra = {}) => ({ id, name: id, class: 'colorless', rarity: 'common', type: 'attack',
   costRule: 'fixed', cost: 0, staminaCost: 0, manaCost: 1, effects, keywords: [], upgrade: {},
@@ -27,6 +28,8 @@ Object.assign(profile.modules.effects, { baseDamageMultiplier: 1, playerDamageMu
 delete profile.modules.gear.typeEffectsVersion;
 profile.modules.stances.include = ['attack', 'defend', 'counter', 'prepared', 'smash', 'sweep', 'neutral'];
 profile.modules.reactions.chainLimit = 16;
+// Core ships Poise off; these W25 contracts pin the Poise rules, so they bring it back.
+Object.assign(profile.modules.stagger, POISE_ON_MODULES.stagger);
 profile.content.cards = w25Cards;
 profile.content.resourceVariants = {};
 delete profile.hash; profile.hash = gameDigest(profile);

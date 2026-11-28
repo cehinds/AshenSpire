@@ -14,6 +14,7 @@ import { gameProfileRatingReceipt, gameProfileEffectiveAttributes } from '../src
 import { creationBrief } from '../src/model/creationBrief.js';
 import { gameModule, gameContent } from '../src/model/gameProfile.js';
 import { resolveGearItem } from '../engine/kernel/gameConfig.js';
+import { CORE_POISE_ON_AUTHOR } from './helpers/poise-on.mjs';
 
 // Historical owner ruling, 2026-11-18: CON supplied +5 HP and +1 maximum Poise.
 // Preserve that exact contract using the genuine resolved Dev profile at 6727a25530,
@@ -21,7 +22,7 @@ import { resolveGearItem } from '../engine/kernel/gameConfig.js';
 const profile = resolveGameProfile(JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/dev-profile-6727a255.json.gz', import.meta.url)))));
 const registriesFor = (own) => bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, own)), own);
 const reg = registriesFor(profile);
-const currentReg = registriesFor(resolveGameProfile('default'));
+const currentReg = registriesFor(resolveGameProfile(CORE_POISE_ON_AUTHOR));
 const meta = { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } };
 const mk = (classId, registries = reg) => createRunState({ registries, classId, seed: 511, profileMeta: meta });
 const fightPoise = (run, registries = reg) => createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] }).player.persistentPoise.max;
