@@ -42,71 +42,8 @@ const readFixture = (name) =>
 const baseline = readFixture('config-migration-baseline.json');
 const baselineTierA = readFixture('config-migration-baseline-tier-a.json');
 
-// RE-POINTING A BASELINE VALUE, AND THE ONLY REASON THAT IS ALLOWED. These
-// fixtures pin what each module exported BEFORE its tables moved into
-// content/config, so a red here normally means the move changed behaviour and
-// the MODULE is wrong. There is one other case: an authored value legitimately
-// changes AFTER the baseline was captured, and then the FIXTURE is the stale
-// one. Re-point it by hand, one value, never by regenerating the file — a
-// regeneration would relabel every other drift as intended at the same time.
-//
-// Re-pointed so far:
-//   · Illustrated card template: minimumHandHeight([]) 145.6 -> 153.6.
-//     The approved 2:3 face makes the 80px minimum width 120px tall, plus 33.6 inset.
-//   · CombatLayout.minimumHandHeight([]) 161.6 -> 145.6, for #1146, which gave
-//     the playing card one authored shape and moved its ratio from 5/8 to 5/7.
-//     The hand's floor is minWidthRem * rem / card.ratio + the inset, lift and
-//     arc, so a wider card needs less height: 80/0.625 + 33.6 = 161.6 became
-//     80/(5/7) + 33.6 = 145.6. #1146 and #1140 merged 74 seconds apart, so
-//     neither could see the other's effect and dev went red on the pair.
-//   · tooltipHelp.messages.playerPoise. #1203 gave the player a live Poise
-//     meter with a Constitution term, so the old copy denied a feature that
-//     exists and named three of the four things that steady the threshold.
-//     One string, re-pointed by hand.
-//   · CombatFormationModel probes now include #1180's grid cells, rowSpacing,
-//     cell labels and fitGround. Its slots keep their previous coordinates;
-//     only that module's entry is refreshed for the approved added outputs.
-//   · StartupGateModels' TITLE_ENTRANCE_TIMING.holdDefault is 2s, not 0.5s:
-//     the owner's uploaded defaults (#1254) set the city title pause. Only that
-//     one value is refreshed.
-//   · Compact Armoury (2026-10-04): normalizeArmouryLayout's two default probes
-//     add equipment.compactList (82/68px thumbnails, 264px inspection) and
-//     cardClasses.armamentItem (read-only disclosure, inline comparison).
-//     These are the approved new contract, not migration drift. Only those
-//     subtrees/key-order entries were added; all prior probe values remain pinned.
-//   · Compact combat footer (FixUI, 2026-10-10): packCombatFooter and
-//     packCombatRails add spentWidth (the Discard/Exhaust column) for the larger
-//     phone piles. Only CombatLayout.js's entry is refreshed; every prior probe
-//     value is unchanged apart from the key order the new field shifts.
-
-//   · Responsive Core combat (2026-10-17): only five allocateCombatBands
-//     probe values change for the approved 27% hand / 14% footer. The
-//     historical export shapes, freezing and all other migration probes stay pinned.
-
-// Core renewal (2026-10-22): the uiContent baseline updates exactly 85
-// icon/delay string leaves for approved named vector IDs and the readable
-// delayed suffix. Export shapes, key order, freezing and all other probe
-// values remain unchanged; this does not recapture unrelated module drift.
-// Settings descriptions (2026-10-26): the tooltipHelp baseline re-points exactly
-// two string leaves, the hoverTooltips and tooltipDelay notes, to the owner's
-// one-short-sentence copy. Nothing else in the module moves.
-// Broken wording (2026-11-14): the tooltipHelp baseline re-points exactly two string leaves, messages.playerPoise
-// (Your Stagger threshold -> The threshold that Breaks you) and messages.enemyPoise (Fill it to Stagger -> Break).
-// Quick menu Console row (2026-10-25): the uiContent baseline adds the console
-// row to MENU (map/combat/overlay), MENU_ACTS and the three menuRows probes.
-// Nothing else in that entry changes.
-// Original class/map symbols (2026-10-24): repoint only fourteen uiContent
-// map-icon string leaves (seven NODE_TYPES, boss lookup, six legend entries)
-// to historic-* IDs. No whole-fixture recapture or other value change.
-// World-painting biomes and terrain (2026-10-25, #2323): the environments.js
-// entry gains `biomes` and `terrain` on each of the three MEGA_MAPS paintings
-// (biome framing and battle terrain zones). Only those 12 leaves change; no
-// whole-fixture recapture.
-// Map spacing (2026-11-15, owner "spread them out"): MAP_TERRAIN_REVEAL_RADIUS 74 -> 100, the fog light scaling with COL_X 75 -> 96.
-// No dashes in player text (2026-11-17, chore/EventCopy): uiContent re-points only the leaves whose em dash
-// became a colon or full stop (the three ACT titles and the two actTitle probes, the two fight blurbs, the
-// staggered and committed tooltips); tooltipHelp re-points messages.playerPoise the same way. No recapture.
-// Owner's defaults (2026-11-27): TITLE_ENTRANCE_TIMING.holdDefault "2s" -> "1s" in StartupGateModels.js. Only that leaf.
+// The fixtures pin each module's exports from before its tables moved into content/config.
+// An approved authored change re-points only its own leaves by hand; never regenerate the file.
 
 /** Every path at which `want` and `got` differ, as readable lines. */
 function differences(want, got, path = '')
