@@ -1496,7 +1496,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 0
+          "amount": 5
         }
       ],
       "textTemplate": " Gain {block} Block.",
