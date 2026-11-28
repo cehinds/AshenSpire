@@ -162,6 +162,8 @@ const PREVIOUS_RUNTIMES = new Set([
   'sha256:edb03b160d360fcbd7ac312134fc535bc1e2b90ad45d6bcbfcff780c6dc8ec06',
   // Before the 1:1 values (owner, 2026-11-28): its saves load and play at the disabled scales of 1.
   'sha256:86b335d2ec3ae5b290afd68343bf41686eb9e8f67e15a5eee6ec1f4b2420a21c',
+  // Before Prepared turned neutral (Owner ruling 2026-11-28): its saves keep their own stance factor.
+  'sha256:18e3cb54a980c9ab0cd86e6fa5feb164431553b7b3987bfd79c1472dcaa39068',
 ]);
 // Moved by the rankUpCard row (batch 3), then the spellCosts/elementFlux rules (W25-F), Ward routing (W25-W), the cost.manaOnly tag and its spells (W25-MS);
 // the statusCaps rule key (W25-NC); the Counter stack rule (batch 5); the bands rules (W25-BANDS) with the swapRows op, Upset the Ranks, formation Block and spell lanes (rules 6-9). Then W25-EvadeCards (Evade card data, card modes, the self Advance). Then the Evade card faces, the Quickstep Counter stack and the Evade-grant face phrase (src/model/fixCoreMechanics.js, playingCard.js). Pinned once at the batch-5 + bands + Evade cards merge; 8c57f3... is now in PREVIOUS_RUNTIMES.
@@ -225,6 +227,8 @@ const COMPATIBLE_HOST_RUNTIMES = new Set([
   'sha256:86b335d2ec3ae5b290afd68343bf41686eb9e8f67e15a5eee6ec1f4b2420a21c',
   // The 1:1 values (owner, 2026-11-28): effect scales and stance factors at 1 move the host runtime.
   'sha256:18e3cb54a980c9ab0cd86e6fa5feb164431553b7b3987bfd79c1472dcaa39068',
+  // A neutral Prepared stance (Owner ruling 2026-11-28) moves the host runtime again.
+  'sha256:dfeee14ac5d2eef699e68fcceec4359e72034f805f10b5089a25ecc28bb5095f',
 ]);
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return COMPATIBLE_HOST_RUNTIMES.has(currentRuntime)
