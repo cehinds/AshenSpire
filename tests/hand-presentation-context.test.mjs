@@ -41,7 +41,8 @@ function quote(api, world, cardId = 'core.cinderDart', upgraded = false) {
 }
 for (const mode of ['native', 'bundled']) test(`live hand rules retain original, upgraded, selected and triggered baselines: ${mode}`, async () => {
   const api = await runtime(mode), world = fixture(api), { combat, registries } = world;
-  for (const [upgraded, expected] of [[false, 12], [true, 13]]) {
+  // Owner ruling 2026-11-28: Cinder Dart's stored 1:1 upgrade damage equals its base 1, so both read 12.
+  for (const [upgraded, expected] of [[false, 12], [true, 12]]) {
     const { inst, preview } = quote(api, world, 'core.cinderDart', upgraded);
     assert.equal(api.playingCardModel(registries, inst, { preview, rules: combat }).baseTokens.damage, expected);
     const html = api.cardFaceLines(preview.resolvedDefinition, preview, registries, combat).find(row => row.kind === 'damage').html;
