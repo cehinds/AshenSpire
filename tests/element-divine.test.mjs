@@ -7,8 +7,9 @@ import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
 import { getStacks } from '../src/engine/statuses.js';
 
 const DIVINE = { combatProfile: { camp: 'spell', school: 'divine', damageType: 'arcane', magicShare: 1 }, tags: ['school:divine'], magicShare: 1 };
-// Base doubled: Core halves card base damage (ceil, effects.baseDamageMultiplier 0.5), so the hit meets the element rules at the old 10.
-const hit = (combat, target, base = 20) => profileDamageReceipt(combat, combat.player, target, base, { ...DIVINE, skipRatingBonus: true }, { roll: 0 });
+// Owner ruling 2026-11-28: damage is 1:1 (no base-damage scale), so the hit meets the element rules at 10.
+const HIT_DAMAGE = 10;
+const hit = (combat, target, base = HIT_DAMAGE) => profileDamageReceipt(combat, combat.player, target, base, { ...DIVINE, skipRatingBonus: true }, { roll: 0 });
 const stage = (receipt, id) => receipt.damageReceipt.hits[0].sources.find(row => row.id === id);
 
 test('a divine hit heals the attacker WIS and removes WIS Necrotic build-up and WIS Shock from it', () => {
