@@ -1,13 +1,14 @@
 // PLAYWRIGHT_MODULE=/path/to/playwright BASE_URL=http://localhost:4470/index.html node tests/mobile-centered-formation.browser.mjs
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import { TOOLS_ON_PROFILE } from './helpers/combat-tools-on.mjs';
 const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');
 // The grid starts off (owner, 2026-11-19); this test counts cells, so it turns the grid on.
 const GRID_ON = encodeURIComponent(JSON.stringify({ 'gameConfig.presentation.showFormationGrid': true }));
 const browser = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/chromium', args: ['--no-sandbox'] });
 try {
   const page = await browser.newPage({ viewport: { width: 844, height: 390 }, reducedMotion: 'reduce' });
-  await page.goto(`${process.env.BASE_URL || 'http://localhost:4470/index.html'}?shot=combat&gameProfile=core&shotSeed=3&shotEnemyCount=3&shotSettings=${GRID_ON}`);
+  await page.goto(`${process.env.BASE_URL || 'http://localhost:4470/index.html'}?shot=combat&gameProfile=${TOOLS_ON_PROFILE}&shotSeed=3&shotEnemyCount=3&shotSettings=${GRID_ON}`);
   await page.locator('.end-turn').waitFor();
   await page.locator('#combat-menu').click();
   if (!await page.locator('[data-settings-host]').count()) await page.locator('.qn-row[data-tab="settings"]').click();

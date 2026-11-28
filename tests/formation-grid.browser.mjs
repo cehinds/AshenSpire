@@ -4,6 +4,14 @@ import { createRequire } from "node:module";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { serve } from "../tools/serve.mjs";
+import { TOOLS_ON_PROFILE } from "./helpers/combat-tools-on.mjs";
+
+// Core hides the Grid checkbox (formation.gridOption); this test drives it, so Core runs with it on.
+const CORE_PROFILE = "core";
+const profileQuery = (profile) =>
+  profile === CORE_PROFILE
+    ? TOOLS_ON_PROFILE
+    : profile;
 const { chromium } = createRequire(import.meta.url)(
   process.env.PLAYWRIGHT_MODULE || "playwright",
 );
@@ -148,7 +156,7 @@ try {
     page.setDefaultTimeout(12000);
     const errors = [];
     page.on("pageerror", (e) => errors.push(e.message));
-    await page.goto(`${base}${entry}?shot=combat&gameProfile=${profile}`, {
+    await page.goto(`${base}${entry}?shot=combat&gameProfile=${profileQuery(profile)}`, {
       waitUntil: "domcontentloaded",
     });
     await page.locator(".combatant.player .sprite").waitFor();
@@ -279,7 +287,7 @@ try {
       viewport: { width: 1440, height: 900 },
     });
     title.setDefaultTimeout(12000);
-    await title.goto(`${base}${entry}?gameProfile=${profile}`, {
+    await title.goto(`${base}${entry}?gameProfile=${profileQuery(profile)}`, {
       waitUntil: "domcontentloaded",
     });
     let toggle = await openSettings(title, { title: true });
@@ -313,7 +321,7 @@ try {
       viewport: { width, height },
       reducedMotion: "reduce",
     });
-    await page.goto(`${base}${entry}?shot=combat&gameProfile=core`, {
+    await page.goto(`${base}${entry}?shot=combat&gameProfile=${TOOLS_ON_PROFILE}`, {
       waitUntil: "domcontentloaded",
     });
     await page.locator(".combatant.player .sprite").waitFor();
