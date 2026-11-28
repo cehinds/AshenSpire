@@ -103,21 +103,23 @@ test('classification preserves the 38 authored item signatures from the equipmen
   assert.equal(createHash('sha256').update(JSON.stringify(mods)).digest('hex'), '52b4453ae54a7c80aa8f1618a182d4e33c65a85d9f336d3bdcfb99c00c2404bc');
 });
 
+// Owner ruling 2026-11-28: Core Strike stores its 1:1 damage, 1.
+const CORE_STRIKE_DAMAGE = 1;
 test('Codex Sword adds one damage to real Core Strike without applying the signature reserved for Sweep', () => {
-  assert.equal(world().card('core.strike').effects.find(e => e.op === 'damage').amount, 6);
+  assert.equal(world().card('core.strike').effects.find(e => e.op === 'damage').amount, CORE_STRIKE_DAMAGE);
   const sword = world({ right: 'broadsword' });
   assert.deepEqual(pieceById('broadsword').mods, ['sweep.hitWeak=+1']);
-  assert.equal(sword.card('core.strike').effects.find(e => e.op === 'damage').amount, 7);
+  assert.equal(sword.card('core.strike').effects.find(e => e.op === 'damage').amount, CORE_STRIKE_DAMAGE + 1);
 });
 
 test('Moon Glaives adds exactly one hit and Iron Knuckles applies its damage base once', () => {
   const glaives = world({ right: 'moonGlaives' }).card('core.strike').effects.find(e => e.op === 'damage');
-  assert.equal(glaives.amount, 6);
+  assert.equal(glaives.amount, CORE_STRIKE_DAMAGE);
   assert.equal(glaives.hits, 2, 'old strike.hits=3 is not applied to configured Core cards');
   const plain = world().card('core.strike'), claws = world({ right: 'ironKnuckles' }).card('core.strike');
   assert.equal(plain.cost, 1); assert.equal(claws.cost, plain.cost, 'Claws no longer change Stamina cost');
-  assert.equal(plain.effects.find(e => e.op === 'damage').amount, 6);
-  assert.equal(claws.effects.find(e => e.op === 'damage').amount, 5);
+  assert.equal(plain.effects.find(e => e.op === 'damage').amount, CORE_STRIKE_DAMAGE);
+  assert.equal(claws.effects.find(e => e.op === 'damage').amount, CORE_STRIKE_DAMAGE - 1, 'claws cardDamage -1');
 });
 
 test('Storm Sceptre no longer grants Ward, and staffs and sceptres carry no Prepared Mana cut', () => {
