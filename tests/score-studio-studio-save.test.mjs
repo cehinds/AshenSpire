@@ -35,6 +35,7 @@ import {
   StudioPackCardsPath,
 } from '../tools/score-studio/studioSaveFiles.js';
 import { PackCardsBuildSteps } from '../tools/score-studio-pack-cards.mjs';
+import { tryAcquire } from '../tools/lib/build-lock.mjs';
 
 const tempPrefix = 'ashen-studio-save-';
 const textEncoding = 'utf8';
@@ -763,3 +764,33 @@ test('studio save: templates.json is saved in its own shape, kind and no savedAt
     assert.deepEqual(JSON.parse(bytesOf(root, templatesName)), document);
   });
 });
+
+test('studio save: a held build lock refuses a card save before any write',
+  async () =>
+  {
+    await withTempRepo((root) =>
+    {
+      const release = tryAcquire(root, 'QA running build');
+      assert.equal(typeof release, 'function');
+      try
+      {
+        const build = recordingBuild();
+        const seams = {
+          now: () => fixedTime,
+          runBuildStep: build.runBuildStep,
+        };
+        const body = saveBody(ReadStudioSave(root).revision);
+        assert.throws(
+          () => SaveStudioSave(root, body, seams),
+          (error) => error.statusCode === httpConflict,
+        );
+        assert.deepEqual(build.ran, []);
+        assert.equal(bytesOf(root, cardsName), packText);
+        assert.equal(existsSync(studioDirOf(root)), false);
+      }
+      finally
+      {
+        release();
+      }
+    });
+  });

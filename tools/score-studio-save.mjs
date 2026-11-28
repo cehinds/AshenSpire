@@ -686,29 +686,51 @@ function defaultBuildStep(rootDir, env)
   );
 }
 
-// After the game's card file changed, rebuild what the game reads, under the build lock.
+// Rebuild what the game reads after its card file changed; the caller holds the build lock.
 // A failed step puts the build outputs and every written file back.
-function rebuildGame(rootDir, save)
+function rebuildGame(save, env)
 {
-  const release = tryAcquire(rootDir, studioSaveBuildLabel);
-  if (typeof release !== 'function')
-  {
-    restorePriorBytes(save.writes, save.priorBytes);
-    throw new StudioSaveError(busyMessage(release.heldBy), httpConflict);
-  }
+  const runStep = save.runBuildStep ?? defaultBuildStep(save.rootDir, env);
   try
   {
-    const env = {
-      ...process.env,
-      ...lockEnv(release),
-    };
-    const runStep = save.runBuildStep ?? defaultBuildStep(rootDir, env);
     return RebuildFromPackCards(save.pathOf, runStep);
   }
   catch (error)
   {
     restorePriorBytes(save.writes, save.priorBytes);
-    throw new StudioSaveError(`${studioSaveLabel} rebuild failed and was rolled back: ${error.message}`);
+    const rolledBack = `${studioSaveLabel} rebuild failed and was rolled back`;
+    throw new StudioSaveError(`${rolledBack}: ${error.message}`);
+  }
+}
+
+// A card write takes the build lock before it writes, so no build reads a half-saved card file.
+function writeAndRebuild(save)
+{
+  if (!writesGameFile(save.writes))
+  {
+    writeAllOrRestore(
+      save.writes,
+      save.priorBytes,
+      save.writeFile,
+    );
+    return [];
+  }
+  const release = tryAcquire(save.rootDir, studioSaveBuildLabel);
+  if (typeof release !== 'function')
+  {
+    throw new StudioSaveError(busyMessage(release.heldBy), httpConflict);
+  }
+  try
+  {
+    writeAllOrRestore(
+      save.writes,
+      save.priorBytes,
+      save.writeFile,
+    );
+    return rebuildGame(save, {
+      ...process.env,
+      ...lockEnv(release),
+    });
   }
   finally
   {
@@ -782,19 +804,14 @@ export function SaveStudioSave(
     pathOf,
     savedAt,
   });
-  writeAllOrRestore(
+  const rebuilt = writeAndRebuild({
+    rootDir,
     writes,
     priorBytes,
+    pathOf,
     writeFile,
-  );
-  const rebuilt = writesGameFile(writes)
-    ? rebuildGame(rootDir, {
-      writes,
-      priorBytes,
-      pathOf,
-      runBuildStep,
-    })
-    : [];
+    runBuildStep,
+  });
   const current = ReadStudioSave(rootDir);
   return {
     revision: current.revision,
