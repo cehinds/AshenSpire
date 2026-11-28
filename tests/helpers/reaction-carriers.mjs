@@ -2,8 +2,9 @@ import { readFileSync } from 'node:fs';
 import { gameProfileCatalog } from '../../src/content/generated/gameProfiles.js';
 import { resolveGameAuthor } from '../../engine/kernel/gameConfig.js';
 
-const FIXTURE_URL = new URL('../fixtures/reaction-carriers.json', import.meta.url);
-const ReactionCarriers = JSON.parse(readFileSync(FIXTURE_URL, 'utf8'));
+const ReactionCarriers = JSON.parse(
+  readFileSync(new URL('../fixtures/reaction-carriers.json', import.meta.url), 'utf8'),
+);
 const CORE_AUTHOR = Object.freeze({
   formatVersion: 1,
   core: ReactionCarriers.core,
