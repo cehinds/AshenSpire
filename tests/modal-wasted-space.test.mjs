@@ -27,9 +27,11 @@ test('shared modal head/foot and modal screens tighten spacing', () =>
     assert.match(polishCss, /\.class-pick > \.glyph[\s\S]{0,40}display:\s*none/);
 });
 
-test('card reward uses inline confirm instead of a second confirmation modal', () =>
+test('card reward confirms in a modal, not an inline section', () =>
 {
     const offersSrc = readText('../src/ui/components/gameProfileOffers.js');
-    assert.match(offersSrc, /class:\s*'reward-inline-confirm'/);
-    assert.doesNotMatch(offersSrc, /reward\.picks\.continue\.title/);
+    const kitCss = readText('../styles/kit.css');
+    assert.match(offersSrc, /OpenConfirmationModal\(\{\s*title:\s*translate\(PICKS_CONFIRM_TITLE_KEY\)/);
+    assert.doesNotMatch(offersSrc, /reward-inline-confirm/);
+    assert.doesNotMatch(kitCss, /reward-inline-confirm/);
 });

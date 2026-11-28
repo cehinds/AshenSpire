@@ -28,6 +28,13 @@ const RELIC_KIND = 'relics';
 const POTION_KIND = 'potions';
 
 const CONFIRM_LABEL_KEY = 'common.confirm';
+const BACK_LABEL_KEY = 'common.back';
+const ADD_TO_DECK_LABEL_KEY = 'reward.configured.addToDeck';
+const SEND_TO_LIBRARY_LABEL_KEY = 'reward.configured.sendToLibrary';
+const PICKS_CONFIRM_TITLE_KEY = 'reward.picks.continue.title';
+const PICKS_CONFIRM_MESSAGE_KEY = 'reward.picks.continue.message';
+const DECK_DESTINATION = 'deck';
+const LIBRARY_DESTINATION = 'library';
 const SKIP_LABEL_KEY = 'common.skip';
 const CHOSEN_CLASS = 'is-chosen';
 const REWARD_SURFACE = 'reward';
@@ -1043,10 +1050,6 @@ function mountCardPickDoor(appRoot, doorArgs)
     });
     const statusLine = buildStatusLine();
     statusLine.textContent = initialStatus || '';
-    const inlineConfirm = buildElement('div', {
-        class: 'reward-inline-confirm',
-        hidden: true,
-    });
     const continueButton = button({
         label: translate('common.continue'),
         id: 'reward-card-confirm',
@@ -1078,7 +1081,6 @@ function mountCardPickDoor(appRoot, doorArgs)
             spoils,
             promptLine,
             choiceStrip,
-            inlineConfirm,
             statusLine,
         ],
         foot: modalFooter({
@@ -1174,7 +1176,6 @@ function mountCardPickDoor(appRoot, doorArgs)
             return;
         }
         statusLine.textContent = '';
-        hideInlineConfirm();
         if (selected.has(optionIndex))
         {
             selected.delete(optionIndex);
@@ -1326,74 +1327,62 @@ function mountCardPickDoor(appRoot, doorArgs)
         }
         const picks = [...selected].sort((a, b) => a - b);
         const canDeck = canAllJoinDeck(picks);
-        showInlineConfirm(picks, canDeck);
+        openPickConfirmation(picks, canDeck);
     }
 
-    function hideInlineConfirm()
+    // Add to deck and Send to library are the modal's own one-click answers, not a radio group.
+    function buildPickAnswers(picks, canDeck)
     {
-        inlineConfirm.hidden = true;
-        inlineConfirm.replaceChildren();
-    }
-
-    function showInlineConfirm(picks, canDeck)
-    {
-        const libraryLabel = translate('reward.configured.sendToLibrary');
-        const details = buildPickConfirmDetails({
-            names: picks.map((optionIndex) =>
-            {
-                return findOptionDefinition(registries, activeRun, offer.options[optionIndex])?.name
-                    || offer.options[optionIndex].id;
-            }),
-            unused: picksAllowed - picks.length,
-            canDeck,
-        });
-        const confirmLabel = !picks.length
-            ? translate(CONFIRM_LABEL_KEY)
-            : canDeck
-                ? translate('reward.configured.addToDeck')
-                : libraryLabel;
-        const confirmDest = !picks.length
-            ? 'library'
-            : canDeck
-                ? 'deck'
-                : 'library';
-        const confirmBtn = button({
-            label: confirmLabel,
-            weight: 'primary',
-            className: 'confirmation-confirm',
-        });
-        confirmBtn.addEventListener('click', () =>
+        const libraryLabel = translate(SEND_TO_LIBRARY_LABEL_KEY);
+        const claimToLibrary = () => claimChosen(picks, LIBRARY_DESTINATION);
+        if (!picks.length)
         {
-            hideInlineConfirm();
-            claimChosen(picks, confirmDest);
-        });
-        const actionButtons = [];
-        if (picks.length && canDeck)
-        {
-            const altBtn = button({
-                label: libraryLabel,
-                className: 'confirmation-alternate',
-            });
-            altBtn.addEventListener('click', () =>
-            {
-                hideInlineConfirm();
-                claimChosen(picks, 'library');
-            });
-            actionButtons.push(altBtn);
+            return {
+                confirmLabel: translate(CONFIRM_LABEL_KEY),
+                onConfirm: claimToLibrary,
+            };
         }
-        const backBtn = button({
-            label: translate('common.back'),
-            role: 'exit',
+        if (!canDeck)
+        {
+            return {
+                confirmLabel: libraryLabel,
+                onConfirm: claimToLibrary,
+            };
+        }
+        return {
+            confirmLabel: translate(ADD_TO_DECK_LABEL_KEY),
+            onConfirm: () => claimChosen(picks, DECK_DESTINATION),
+            alternate: {
+                label: libraryLabel,
+                onSelect: claimToLibrary,
+            },
+        };
+    }
+
+    function pickName(optionIndex)
+    {
+        const option = offer.options[optionIndex];
+        const definition = findOptionDefinition(registries, activeRun, option);
+        return definition?.name || option.id;
+    }
+
+    function openPickConfirmation(picks, canDeck)
+    {
+        const message = picks.length
+            ? translate(PICKS_CONFIRM_MESSAGE_KEY)
+            : '';
+        OpenConfirmationModal({
+            title: translate(PICKS_CONFIRM_TITLE_KEY),
+            message,
+            detailsNode: buildPickConfirmDetails({
+                names: picks.map(pickName),
+                unused: picksAllowed - picks.length,
+                canDeck,
+            }),
+            ...buildPickAnswers(picks, canDeck),
+            cancelLabel: translate(BACK_LABEL_KEY),
+            returnFocusElement: continueButton,
         });
-        backBtn.addEventListener('click', hideInlineConfirm);
-        actionButtons.push(backBtn, confirmBtn);
-        const actionsRow = buildElement(
-            'div',
-            { class: 'reward-inline-confirm-actions' },
-            actionButtons,
-        );
-        inlineConfirm.replaceChildren(details, actionsRow);
-        inlineConfirm.hidden = false;
     }
 
     function adoptOffer(result)

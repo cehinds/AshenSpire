@@ -4895,26 +4895,6 @@ p.inspection-lore-line .lore-identity { white-space:normal; overflow:visible; te
   display: none;
 }
 
-.reward-inline-confirm {
-  display: grid;
-  gap: 0.6rem;
-  margin-top: 0.6rem;
-  padding: 0.7rem 0.8rem;
-  border: 1px solid var(--line);
-  border-radius: var(--r-3);
-  background: var(--panel);
-}
-
-.reward-inline-confirm[hidden] {
-  display: none;
-}
-
-.reward-inline-confirm-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 0.5rem;
-}
 .reward-door .reward-row.reward-choice-grid { row-gap: 12px; }
 /* Reward-card status stack, top to bottom: Information, NEW, card.
    These three variables are the only placement knobs a theme or future card
