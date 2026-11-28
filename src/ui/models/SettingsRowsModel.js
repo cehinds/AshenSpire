@@ -423,7 +423,7 @@ export const SETTINGS_ROWS = [
   { cat: 'Combat', key: 'armamentsPresentation', topic: 'armaments', type: 'choice', def: 'radial',
     choices: ['radial', 'fixed'], label: t('settings.row.armamentsPresentation'),
     note: tFull('settings.row.armamentsPresentation') },
-  { cat: 'Combat', key: 'armamentsPhonePlacement', topic: 'armaments', type: 'choice', def: 'left',
+  { cat: 'Combat', key: 'armamentsPhonePlacement', topic: 'armaments', type: 'choice', def: UI_DEFAULTS.armaments.phonePlacement,
     choices: ['left', 'center', 'right'], label: t('settings.row.armamentsPhonePlacement'),
     note: tFull('settings.row.armamentsPhonePlacement') },
 

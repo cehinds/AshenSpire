@@ -2,7 +2,7 @@
   "imageHints": { "decoding": "async", "lazy": true },
   "touchFlick": {
     "enabled": true,
-    "distance": { "min": 32, "max": 160, "def": 64 },
+    "distance": { "min": 32, "max": 160, "def": 32 },
     "minVelocity": 300,
     "velocityWindowMs": 120
   },
@@ -139,8 +139,12 @@
     "curse": { "label": "CURSE", "color": "#6a3a7a", "radius": 10, "art": 6 },
     "status": { "label": "STATUS", "color": "#7a6f5a", "radius": 10, "art": 6 }
   },
+  "armaments": {
+    "phonePlacement": "right",
+    "$note": { "phonePlacement": "Default side of the phone screen for the armaments control: left, center or right." }
+  },
   "cardMotif": "wash",
   "cardMotifModes": ["off", "wash", "accent", "band"],
   "cardMotifStrength": { "subtle": 0.06, "normal": 0.1, "strong": 0.17 },
-  "audio": { "musicEnabled": true, "musicVolume": 50, "sfxVolume": 75 }
+  "audio": { "musicEnabled": false, "musicVolume": 50, "sfxVolume": 75 }
 }

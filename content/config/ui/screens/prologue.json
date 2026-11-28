@@ -369,7 +369,7 @@
         "characterTint": "gold",
         "wash": 0.14,
         "reduceMotion": false,
-        "playback": "every",
+        "playback": "once",
         "autoAdvance": true,
         "customTint": "#c9a227",
         "previewClass": "reaver",
@@ -440,7 +440,7 @@
         "controlsSize": "normal",
         "showPause": true,
         "showSkip": true,
-        "advanceOnClick": false
+        "advanceOnClick": true
       },
       "palettes": {
         "accent": {
