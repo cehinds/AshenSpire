@@ -21,10 +21,13 @@ const newRun = classId => { const run = createRunState({ registries, classId, se
 const effects = profile.modules.effects;
 const face = (run, cardId) => cardPlainText(registries, { cardId }, { rules: run });
 const number = text => Number(/\d+/.exec(text)[0]);
+// Defend's authored Block comes from the pack (#3039 restored it to grant Block again).
+const defendBlockEffect = registries.cards.get('core.defend').effects.find(effect => effect.op === 'block');
+const DEFEND_AUTHORED_BLOCK = defendBlockEffect.amount;
 
 test('a face with no run keeps the authored number', () => {
   assert.equal(number(cardPlainText(registries, { cardId: 'core.strike' }, {})), 6);
-  assert.equal(number(cardPlainText(registries, { cardId: 'core.defend' }, {})), 0); // Defend authors 0 Block (final Block 4), owner 2026-11-21 (was 8, before that 10)
+  assert.equal(number(cardPlainText(registries, { cardId: 'core.defend' }, {})), DEFEND_AUTHORED_BLOCK);
 });
 
 test('Strike and Defend use the wielded attack stat and DEX through the shipped multipliers', () => {
@@ -34,7 +37,8 @@ test('Strike and Defend use the wielded attack stat and DEX through the shipped 
     const attribute = classId === 'rogue' ? 'dexterity' : 'strength'; // The starter dagger is finesse.
     const strike = Math.floor((Math.ceil(6 * effects.baseDamageMultiplier) + attributes[attribute] * effects.strengthDamageWeight)
       * effects.physicalDamageMultiplier * effects.playerDamageMultiplier);
-    const defend = Math.floor(attributes.dexterity * effects.dexterityBlockWeight * effects.blockGainMultiplier);
+    const defendRaw = DEFEND_AUTHORED_BLOCK + attributes.dexterity * effects.dexterityBlockWeight;
+    const defend = Math.floor(defendRaw * effects.blockGainMultiplier);
     assert.equal(number(face(run, 'core.strike')), strike, `${classId} Strike`);
     assert.equal(number(face(run, 'core.defend')), defend, `${classId} Defend`);
   }
