@@ -58,13 +58,24 @@ test('Core winning defense mitigates exactly once before configured Block/Poise,
 // Owner, 2026-11-14 (Wave 2.5): the enemy's Attack stance deals +20% (8 -> 9 a hit), so the shipped Core quotes and loses 17 HP (baseline 23). A fight created
 // before the stance benefits keeps the older 14 (baseline 20): `legacy` builds it without the `stanceBenefits` rules.
 // Theme B (owner, 2026-11-17): the no-stance baseline is Idle, which takes x1.25 from every hit, so the shipped baseline is 32; the Counter-stance quote is unchanged.
+// Owner ruling 2026-11-28 ships Attack's factor as 1; the fight's own rules carry the 1.2 so the stage stays covered.
+const ATTACK_STANCE_FACTOR = 1.2;
+function withAttackFactor(combat)
+{
+  const benefits = combat.fixCoreRules.stanceBenefits;
+  const attack = { ...benefits.attack, damageMultiplier: ATTACK_STANCE_FACTOR };
+  combat.fixCoreRules = { ...combat.fixCoreRules, stanceBenefits: { ...benefits, attack } };
+  return combat;
+}
 for (const [mode, legacy, expected, baseline] of [['core', false, 17, 32], ['core', true, 14, 20]]) test(`${mode}${legacy ? ' (fight before stance benefits)' : ''} actual grouped damage matches green HP projection without double mitigation`, () => {
   const { gameProfile } = context(mode);
   const original = resolveGameProfile(mode);
   const registries = mode === 'core' ? bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, original)), original) : createRegistries(contentBundle);
   const build = () => createCombat({ registries, gameProfile, rng: createRng(73), combatExpansionVersion: 2,
     enemyIds: ['wanderingSoldier'], player: { classId: 'reaver', hp: 100, maxHp: 100, maxMana: 5, mana: 5, maxStamina: 5, stamina: 5, energyMax: 5, drawPerTurn: 1, deck: [] } });
-  const combat = legacy ? withoutStanceBenefitDefaults(build) : build();
+  const combat = legacy
+    ? withoutStanceBenefitDefaults(build)
+    : withAttackFactor(build());
   const enemy = combat.enemies[0];
   enemy.intent = { kind: 'attack', moveId: 'slash', damage: 8, hits: 3, combatProfile: { camp: 'physical', maneuver: 'attack', range: 'melee' } };
   enemy.proposalIntentRevealedUntil = 99;
