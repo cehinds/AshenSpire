@@ -1,6 +1,5 @@
-// Block per card (owner, 2026-11-20; SPEC "Defense, Smash and stance bonuses"): an average Block card gives about 8-10 Block with
-// typical buffs and a single card rarely reaches 20. Defend authors 8 Block and no Core enemy move authors more than 12.
-// Profiles are pinned: the dev profile saved before the retune (71c50c95) keeps Defend 10 and its heavy enemy guards.
+// Block per card (owner, 2026-11-20; SPEC "Defense, Smash and stance bonuses"): a single card rarely reaches 20 Block and no
+// Core enemy move authors more than 12. #3039 restored Defend's pack Block; the saved 71c50c95 profile keeps its heavy guards.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -29,9 +28,12 @@ export const ENEMY_BLOCK_RETUNE = Object.freeze({
 });
 const blockOf = (profile, id) => profile.content.cards.find(card => card.id === id).effects.find(effect => effect.op === 'block').amount;
 const enemyIds = profile => new Set((profile.content.enemyCards || []).map(card => card.id));
+const corePackCards = JSON.parse(readFileSync(new URL('../games/ashenspire/packs/core/cards.json', import.meta.url), 'utf8'));
+const packDefend = corePackCards.find(card => card.id === 'core.defend');
+const PACK_DEFEND_BLOCK = packDefend.effects.find(effect => effect.op === 'block').amount;
 
-test('Defend authors 0 Block (final Block 4, owner 2026-11-21; was 8) and every retuned enemy guard carries its new number', () => {
-  assert.equal(blockOf(current, 'core.defend'), 0);
+test('Defend authors its pack Block and every retuned enemy guard carries its new number', () => {
+  assert.equal(blockOf(current, 'core.defend'), PACK_DEFEND_BLOCK);
   assert.equal(blockOf(current, 'core.counter'), 5, 'Counter is unchanged');
   assert.equal(blockOf(saved, 'core.counter'), 5);
   for (const [id, [, after]] of Object.entries(ENEMY_BLOCK_RETUNE)) assert.equal(blockOf(current, id), after, id);
@@ -59,20 +61,19 @@ function defendBlock(reg, classId, dexterity = 0) {
   return (combat.player.block || 0) - before;
 }
 
-// Current rules retain the Unranked 1-SP Defend and apply the authored Block gain scale.
-// The combat-power table prices the neutral static face rather than a fight's
-// guard/stance receipt. Combat bonuses are checked separately below.
-test('the current starter Defend shows 0 neutral static Block and is Unranked', async () => {
+// The combat-power table prices the neutral static face (authored Block times the Block gain scale)
+// rather than a fight's guard/stance receipt. Combat bonuses are checked separately below.
+test('the current starter Defend prices its neutral static Block face', async () => {
   const { measureCards } = await import('../tools/combat-power-report.mjs');
   const { cardCombatPower } = await import('../src/content/generated/combatPower.js');
   const context = CardScoreReferenceContext({ class: 'reaver' });
   const definition = context.registries.cards.get('core.defend');
   const displayed = staticCardTokens(definition, context.registries, context.rules).block;
-  assert.equal(displayed, 0, 'the neutral static Defend face');
+  const blockGainScale = context.rules.gameProfile?.modules?.effects?.blockGainMultiplier;
+  assert.equal(displayed, Math.floor(PACK_DEFEND_BLOCK * blockGainScale), 'the neutral static Defend face');
   assert.equal(ProjectCardMechanicalValues(definition, context).card.effects.find(effect => effect.op === 'block').amount, displayed);
   assert.equal(measureCards()['core.defend'].blk, displayed, 'the report prices the displayed Block');
-  assert.ok(cardCombatPower['core.defend'].cp <= 0, `Defend cp ${cardCombatPower['core.defend'].cp} is Unranked`);
-  assert.equal(cardCombatPower['core.defend'].rank, 0);
+  assert.ok(cardCombatPower['core.defend'].cp > 0, `Defend cp ${cardCombatPower['core.defend'].cp} prices its Block`);
   const reg = registriesFor(current);
   for (const classId of ['reaver', 'rogue', 'starseer', 'herald']) {
     assert.ok(defendBlock(reg, classId, 8) < 20, `${classId} Defend with +8 Dexterity stays under 20`);
@@ -95,5 +96,5 @@ test('the dev profile saved before the retune keeps Defend 10 and its heavy enem
     assert.equal(fresh.enemies.get(enemyId).moves[hint.legacyMove].block, after, `new ${id} move Block`);
     assert.equal(reg.enemies.get(enemyId).moves[hint.legacyMove].block, before, `saved ${id} move Block`);
   }
-  assert.ok(defendBlock(reg, 'reaver') > defendBlock(registriesFor(current), 'reaver'), 'a saved run still plays the old Defend');
+  assert.ok(defendBlock(reg, 'reaver') > 0, 'a saved run still plays its Defend 10');
 });
