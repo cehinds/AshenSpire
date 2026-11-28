@@ -6,6 +6,25 @@ import { STAT_ROW_NO_MAX } from './statRows.js';
 const PREFIX = 'gameConfig.startingStats.';
 const REQUIREMENT_PREFIX = 'gameConfig.equipmentRequirements.';
 const TOTAL_MAX = 495;
+// The one point per attribute the dials assumed before a mode could open on 0 (owner, 2026-11-28).
+// A mode authored with a lower minimum uses that minimum instead.
+const LEGACY_ATTRIBUTE_FLOOR = 1;
+
+function dialAttributeFloor(mode)
+{
+  const authored = Number.isInteger(mode?.minimum)
+    ? mode.minimum
+    : LEGACY_ATTRIBUTE_FLOOR;
+  return Math.min(LEGACY_ATTRIBUTE_FLOOR, authored);
+}
+
+function creationModeById(bundle, modeId)
+{
+  const modes = Array.isArray(bundle.creationModes)
+    ? bundle.creationModes
+    : [];
+  return modes.find((mode) => mode?.id === modeId) || null;
+}
 
 // ---- ONE DRIVER FOR STARTING STATS (owner, 2026-09-20) ---------------------
 //
@@ -366,11 +385,15 @@ export function applyEquipmentRequirementConfig(configured, authored, settings =
  */
 export function startingStatBounds(bundle, modeId) {
   const ids = (bundle.attributes || []).map((attribute) => attribute.id);
-  let min = ids.length;
+  const offered = offersKitFloor(bundle, modeId);
+  const floorPer = offered
+    ? dialAttributeFloor(creationModeById(bundle, modeId))
+    : LEGACY_ATTRIBUTE_FLOOR;
+  let min = ids.length * floorPer;
   let because = null;
-  if (offersKitFloor(bundle, modeId)) {
+  if (offered) {
     for (const [classId, need] of Object.entries(kitAttributeMinimums(bundle))) {
-      const floor = ids.reduce((sum, id) => sum + Math.max(1, need[id]?.minimum || 0), 0);
+      const floor = ids.reduce((sum, id) => sum + Math.max(floorPer, need[id]?.minimum || 0), 0);
       if (floor <= min) continue;
       min = floor;
       because = { classId, need };
@@ -748,6 +771,7 @@ export function resolveStartingStatMode(authored, mode, settings = {}) {
   const ids = (authored.attributes || []).map((attribute) => attribute.id);
   const oldTotal = mode.baseline * ids.length + mode.bonusPool;
   const bounds = startingStatBounds(authored, mode.id);
+  const floorPer = dialAttributeFloor(mode);
   const refusals = [];
   const refuse = (dial, value, dialBounds, kept, extra = {}) => refusals.push({
     key: PREFIX + mode.id + '.' + dial, value, bounds: dialBounds, kept, ...extra,
@@ -767,13 +791,13 @@ export function resolveStartingStatMode(authored, mode, settings = {}) {
   let pool = mode.bonusPool;
 
   if (rawBaseline !== undefined) {
-    const poolCeiling = TOTAL_MAX - ids.length;
+    const poolCeiling = TOTAL_MAX - ids.length * floorPer;
     if (rawPool !== undefined) {
       if (Number.isInteger(rawPool) && rawPool >= 0 && rawPool <= poolCeiling) pool = rawPool;
       else refuse('bonusPool', rawPool, { min: 0, max: poolCeiling }, pool);
     }
-    const baselineCeiling = Math.max(1, Math.floor((bounds.max - pool) / ids.length));
-    if (Number.isInteger(rawBaseline) && rawBaseline >= 1 && rawBaseline <= baselineCeiling
+    const baselineCeiling = Math.max(floorPer, Math.floor((bounds.max - pool) / ids.length));
+    if (Number.isInteger(rawBaseline) && rawBaseline >= floorPer && rawBaseline <= baselineCeiling
       && rawBaseline * ids.length + pool >= bounds.min) {
       baseline = rawBaseline;
       total = baseline * ids.length + pool;
@@ -783,7 +807,7 @@ export function resolveStartingStatMode(authored, mode, settings = {}) {
       // sentence travels with the refusal so the message can still name the
       // class and the kit.
       refuse('baseline', rawBaseline, {
-        min: Math.max(1, Math.ceil((bounds.min - pool) / ids.length)), max: baselineCeiling,
+        min: Math.max(floorPer, Math.ceil((bounds.min - pool) / ids.length)), max: baselineCeiling,
       }, mode.baseline, { kitBounds: bounds });
       // A REFUSED ROW COSTS THAT ROW. The baseline falls back to the authored
       // one, and the points-to-assign row he typed BESIDE it — already
@@ -818,7 +842,7 @@ export function resolveStartingStatMode(authored, mode, settings = {}) {
       if (Number.isInteger(rawTotal) && rawTotal >= bounds.min && rawTotal <= bounds.max) total = rawTotal;
       else refuse('total', rawTotal, bounds, oldTotal);
     }
-    const poolMax = total - ids.length;
+    const poolMax = total - ids.length * floorPer;
     pool = Math.min(mode.bonusPool, Math.max(0, poolMax));
     if (rawPool !== undefined) {
       if (Number.isInteger(rawPool) && rawPool >= 0 && rawPool <= poolMax) pool = rawPool;
@@ -829,10 +853,10 @@ export function resolveStartingStatMode(authored, mode, settings = {}) {
   const needs = offersKitFloor(authored, mode.id) ? kitAttributeMinimums(authored) : {};
   const kitCeiling = Math.max(0, ...Object.values(needs).flatMap((need) => Object.values(need).map((entry) => entry.minimum)));
   const ratio = total / oldTotal;
-  const resolvedBaseline = baseline ?? Math.max(1, Math.floor((total - pool) / ids.length));
+  const resolvedBaseline = baseline ?? Math.max(floorPer, Math.floor((total - pool) / ids.length));
 
   // ---- the three limits, each overridable ---------------------------------
-  let minimum = Math.max(1, Math.min(resolvedBaseline, Math.floor(mode.minimum * ratio)));
+  let minimum = Math.max(floorPer, Math.min(resolvedBaseline, Math.floor(mode.minimum * ratio)));
   let maximum = Math.min(bounds.max, Math.max(resolvedBaseline, Math.ceil(mode.maximum * ratio), kitCeiling));
   let belowBaseline = mode.belowBaseline;
   let limitsMoved = false;
@@ -842,10 +866,10 @@ export function resolveStartingStatMode(authored, mode, settings = {}) {
     // A floor above the baseline is the one shape `attributeContentProblems`
     // refuses outright ("minimum N exceeds baseline M"), so the row is bounded
     // by the baseline in force rather than letting it reach the content door.
-    if (Number.isInteger(rawMinimum) && rawMinimum >= 1 && rawMinimum <= resolvedBaseline) {
+    if (Number.isInteger(rawMinimum) && rawMinimum >= floorPer && rawMinimum <= resolvedBaseline) {
       limitsMoved ||= rawMinimum !== minimum;
       minimum = rawMinimum;
-    } else refuse('minimum', rawMinimum, { min: 1, max: resolvedBaseline }, minimum);
+    } else refuse('minimum', rawMinimum, { min: floorPer, max: resolvedBaseline }, minimum);
   }
   const rawMaximum = stored(settings, mode, 'maximum');
   if (rawMaximum !== undefined) {
