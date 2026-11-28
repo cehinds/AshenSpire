@@ -31,7 +31,12 @@ import {
 import { beatArmer } from '../../framework/optionDecision.js';
 import { skillTracks, rankUpCandidates, raiseCardRank } from '../../model/skills.js';
 import { el as buildElement, modalFooter, button } from '../kit/index.js';
-import { t as translate, UiFullText as translateFull, UiTooltipTitle as translateTip } from '../strings.js';
+import
+{
+  t as translate,
+  UiFullText as translateFull,
+  UiTooltipTitle as translateTip,
+} from '../strings.js';
 import { reasonWhenDisabled } from '../components/refusal.js';
 import { OpenConfirmationModal } from '../components/confirmationModal.js';
 import { rankUpBonusOptions } from '../../model/rankUpBonus.js';

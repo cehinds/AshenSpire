@@ -1101,7 +1101,8 @@ export function mountCustomize(app, {
       choose.setAttribute('aria-label', t('creation.abilities.chooseLabel', { name: card.name }));
       const capReason = () => (!state.startingAbilityIds.includes(card.id) && section.count > 1
         && section.elementIds?.includes(card.id) && elementCapReached())
-        ? UiTooltipTitle('creation.abilities.elementCap', { max: section.maxElementPicks }) : null;
+        ? UiTooltipTitle('creation.abilities.elementCap', { max: section.maxElementPicks })
+        : null;
       capRefreshers.set(card.id, refusesWhen(choose, capReason, ''));
       const select = () => {
         const picked = state.startingAbilityIds.includes(card.id);

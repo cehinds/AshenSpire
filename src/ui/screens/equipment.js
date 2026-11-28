@@ -92,6 +92,27 @@ import {
   el, eyebrow, titleS, subtitle, statusText, flavour, prose, pill, tagChip, artWell, detailCard, optionCard, options, optionGrid, face, button, chip, statStrip, kitLine, kitItem, blocker, meter,
 } from '../kit/index.js';
 
+const EMPTY_POSITION_STATE = 'empty';
+const EMPTY_POSITION_STRING_ID = 'piles.empty';
+
+// "Active" or "Reserve": which half of the slot a position sits in.
+function positionSlotWord(position)
+{
+  return t(
+    position.active
+      ? 'armoury.slot.active'
+      : 'armoury.slot.reserve',
+  );
+}
+
+// What a position holds: its item's name, or the empty-position word.
+function positionContentName(position)
+{
+  return position.state === EMPTY_POSITION_STATE
+    ? UiTooltipTitle(EMPTY_POSITION_STRING_ID)
+    : position.summary.name;
+}
+
 const CFG = () => balance.equipment;
 const armouryTraySession = { folded: new Map(), heights: new Map() };
 /** The view-toggle IconButton's glyph, by the view it switches TO. */
@@ -971,7 +992,7 @@ export function mountEquipment(host, {
         id: choice.id, label: `${choice.slot.label} · ${choice.position.index + 1}`,
         disabled: isRefused(choice),
         hint: refusalFor(choice),
-        sub: `${t(choice.position.active ? 'armoury.slot.active' : 'armoury.slot.reserve')} · ${choice.position.state === 'empty' ? UiTooltipTitle('piles.empty') : choice.position.summary.name}`,
+        sub: `${positionSlotWord(choice.position)} · ${positionContentName(choice.position)}`,
       })),
       onChoose: (id) => {
         const choice = choices.find(candidate => candidate.id === id);
@@ -1225,9 +1246,11 @@ export function mountEquipment(host, {
       }, [
         el('div', { class: 'armament-compact-heading' }, [
           el('span', { class: 'armament-position-code', text: `${position.code} —`, title: position.label }),
-          el('strong', { text: UiTooltipTitle('piles.empty') }),
+          el('strong', { text: UiTooltipTitle(EMPTY_POSITION_STRING_ID) }),
           pill({ label: t(position.active ? 'armoury.slot.active' : 'armoury.slot.reserve'), attrs: { class: 'armament-equipped-badge' } }),
-        ]), positionActions(slot, position), rowSelectButton(slot, position, UiTooltipTitle('piles.empty')),
+        ]),
+        positionActions(slot, position),
+        rowSelectButton(slot, position, UiTooltipTitle(EMPTY_POSITION_STRING_ID)),
       ]);
       attachPositionDropTarget(card, slot, position);
       return card;
