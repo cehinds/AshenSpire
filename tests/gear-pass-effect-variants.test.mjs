@@ -69,8 +69,9 @@ for (const mode of ['native', 'bundled']) {
     const control = fixture(api, 'base.scale-damage-taken', { sword: true, extraStrength: 1 });
     control.combat.player.itemProps.cardRules = control.combat.player.itemProps.cardRules.filter(rule => rule.stat !== 'damage');
     const withSword = quoteAndPlay(api, equipped), withoutBonus = quoteAndPlay(api, control);
-    assert.equal(withoutBonus.damage, 16);
-    assert.equal(withSword.damage, 18, 'one flat base damage is scaled by the existing stance rules');
+    // Owner ruling 2026-11-28: stance factors are 1, so base 10 + STR 3 + 1 adjustment plays 14.
+    assert.equal(withoutBonus.damage, 14);
+    assert.equal(withSword.damage, 15, 'one flat base damage adds exactly one');
     assert.equal(withSword.hits[0].damageReceipt.hits[0].sources.find(row => row.id === 'base').amount, 11);
     assert.equal(withoutBonus.hits[0].damageReceipt.hits[0].sources.find(row => row.id === 'base').amount, 10);
     assert.equal(withSword.damage, withSword.quote.values.find(row => row.op === 'damage').perTarget[equipped.target.id]);
