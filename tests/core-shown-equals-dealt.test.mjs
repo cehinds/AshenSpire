@@ -34,6 +34,9 @@ const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent
 const META = { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } };
 const CLASSES = ['reaver', 'rogue', 'starseer', 'herald'];
 const FIGHTS = 208;
+// The intents below read the stored move numbers, so the shown and the dealt hit start from one figure.
+const SLASH_DAMAGE = reg.enemies.get('wanderingSoldier').moves.slash.damage;
+const SCYTHE_PAIR = reg.enemies.get('cinderMantis').moves.scythePair;
 const POOL = reg.encounters.all().filter(row => ['normal', 'elite'].includes(row.pool)).map(row => row.enemies);
 
 function fightFor(classId, seed, enemyIds = null, { weaknesses = true } = {}) {
@@ -387,7 +390,7 @@ test('a lethal enemy multi-hit stops at the exact forecast prefix while a surviv
     enemy.plannedMoves = [];
     enemy.planDue = true;
     const move = expandedEnemyMove(enemy, reg.enemies.get(enemy.enemyId).moves.scythePair, 'scythePair', combat);
-    enemy.intent = { ...enemy.intent, kind: 'attack', moveId: 'scythePair', damage: 5, hits: 2, combatProfile: enemyMoveCarrier(enemy, move, 'scythePair', combat).combatProfile };
+    enemy.intent = { ...enemy.intent, kind: 'attack', moveId: 'scythePair', damage: SCYTHE_PAIR.damage, hits: SCYTHE_PAIR.hits, combatProfile: enemyMoveCarrier(enemy, move, 'scythePair', combat).combatProfile };
     combat.player.hp = hp; combat.player.maxHp = 100; combat.player.block = 0;
     combat.player.statuses = {};
     combat.player.persistentPoise = { value: 18, max: 18, barrierBonus: 15 };
@@ -538,7 +541,7 @@ test('a Broken player: the intent number holds the x1.5 and the enemy then costs
   const run = () => {
     const { combat } = fixture();
     const enemy = combat.enemies[0];
-    Object.assign(enemy, { intent: { ...enemy.intent, kind: 'attack', moveId: 'slash', damage: 8, hits: 1 }, planDue: true });
+    Object.assign(enemy, { intent: { ...enemy.intent, kind: 'attack', moveId: 'slash', damage: SLASH_DAMAGE, hits: 1 }, planDue: true });
     Object.assign(combat.player, { block: 0, hp: 100, persistentPoise: { value: 0, max: 8 }, statuses: {} });
     return combat;
   };
@@ -571,7 +574,7 @@ test('a current Broken target shows its two-stack break statuses and deals exact
 
 test('a current Broken player shows the break statuses in its incoming intent and loses exactly that HP', () => {
   const { combat } = fixture(), enemy = combat.enemies[0];
-  Object.assign(enemy, { intent: { ...enemy.intent, kind: 'attack', moveId: 'slash', damage: 8, hits: 1 }, planDue: true });
+  Object.assign(enemy, { intent: { ...enemy.intent, kind: 'attack', moveId: 'slash', damage: SLASH_DAMAGE, hits: 1 }, planDue: true });
   Object.assign(combat.player, { block: 0, hp: 100, persistentPoise: { value: 0, max: 8 }, statuses: {} });
   const rules = FixCoreBrokenRules(combat);
   assert.deepEqual(rules, { damageMultiplier: 1, statusStacks: 2 });
@@ -630,7 +633,7 @@ test('a later attacker is forecast after an earlier enemy has played all of its 
     const { combat } = fixture({ enemies: ['wanderingSoldier', 'wanderingSoldier'] });
     const [first, second] = combat.enemies;
     // The earlier enemy has three attacks this turn (its head and two planned follow-ups); the later one has one.
-    for (const enemy of [first, second]) { enemy.intent = { ...enemy.intent, kind: 'attack', moveId: 'slash', damage: 8, hits: 1 }; enemy.planDue = true; enemy.skipNextTurn = false; }
+    for (const enemy of [first, second]) { enemy.intent = { ...enemy.intent, kind: 'attack', moveId: 'slash', damage: SLASH_DAMAGE, hits: 1 }; enemy.planDue = true; enemy.skipNextTurn = false; }
     first.plannedMoves = [{ moveId: 'slash', sp: 1 }, { moveId: 'slash', sp: 1 }];
     first.maxStamina = first.stamina = first.fixCoreStaminaRemaining = 12;
     combat.player.block = block; combat.player.hp = 100; combat.player.maxHp = 100;
@@ -704,7 +707,7 @@ test('an earlier enemy that applies Vulnerable, then attacks, is in the later en
     for (const enemy of combat.enemies) Object.assign(enemy, { hp: 400, maxHp: 400, statuses: {}, planDue: true, skipNextTurn: false, maxStamina: 12, stamina: 12, fixCoreStaminaRemaining: 12 });
     first.intent = { ...first.intent, kind: 'debuff', moveId: 'hex', damage: null, hits: 1 };
     first.plannedMoves = plan.map(moveId => ({ moveId, sp: 1 }));
-    second.intent = { ...second.intent, kind: 'attack', moveId: 'slash', damage: 8, hits: 1 };
+    second.intent = { ...second.intent, kind: 'attack', moveId: 'slash', damage: SLASH_DAMAGE, hits: 1 };
     second.plannedMoves = [];
     combat.player.block = 0; combat.player.hp = 100; combat.player.maxHp = 100; combat.player.statuses = {};
     const shown = projectCombatIntent(combat, second.id)?.projectedDamage;
