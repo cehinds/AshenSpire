@@ -88,7 +88,7 @@ try {
       const viewScale = Number(document.documentElement.dataset.viewScale) || 1;
       const cardsTop = Math.min(...[...document.querySelectorAll('.hand .card')].map(card => card.getBoundingClientRect().top));
       return { viewScale, cardsTop, hudSide:frame.dataset.hudSide || 'above', panel:box(meters), rack:box(rack), art, hp:box(hp), hpText:hp.textContent, badges, acCaptions:hpRow.querySelectorAll('[data-ac-caption]').length,
-        hpTrack:box(hpTrack), poiseTrack:box(poiseTrack), badgeRow:box(badgeRow),
+        hpTrack:box(hpTrack), poiseTrack:poiseTrack ? box(poiseTrack) : null, badgeRow:box(badgeRow),
         resourceKinds:[...rack.querySelectorAll('[data-meter-row="resource"]')].map(e=>e.dataset.res),
         statusTrayIds:[...document.querySelectorAll('.combatant.player .statuses [data-status-id], .combatant.player .statuses [data-status]')].map(e=>e.dataset.statusId||e.dataset.status), hasAc:!!hpRow.querySelector('.combat-health-ac'),
         text:text.map(e=>({text:e.textContent,box:box(e)})),
@@ -121,9 +121,16 @@ try {
       assert.deepEqual(geometry.resourceKinds.filter(kind=>kind!=='hp'), [], name+': no extra resource row replaces the dedicated Poise bar');
       const { hpTrack, poiseTrack, badgeRow } = geometry;
       assert.ok(hpTrack.width > 0 && hpTrack.height > 0, name+': HP bar is visible');
-      assert.ok(Math.abs(hpTrack.width-poiseTrack.width) < 1 && Math.abs(hpTrack.height-poiseTrack.height) < 1, name+': HP and Poise bars share width and height');
-      assert.ok(Math.abs(hpTrack.left-poiseTrack.left) < 1 && Math.abs(hpTrack.left-badgeRow.left) < 1, name+': HP, Poise and badges align');
-      assert.ok(hpTrack.bottom <= poiseTrack.top && poiseTrack.bottom <= badgeRow.top, name+': HP, Poise and badges stack without overlap');
+      // With stagger.poise off there is no Poise bar: the bars end at the HP track.
+      const barsBottom = poiseTrack ? poiseTrack.bottom : hpTrack.bottom;
+      if (poiseTrack) {
+        assert.ok(Math.abs(hpTrack.width-poiseTrack.width) < 1 && Math.abs(hpTrack.height-poiseTrack.height) < 1, name+': HP and Poise bars share width and height');
+        assert.ok(Math.abs(hpTrack.left-poiseTrack.left) < 1 && Math.abs(hpTrack.left-badgeRow.left) < 1, name+': HP, Poise and badges align');
+        assert.ok(hpTrack.bottom <= poiseTrack.top && poiseTrack.bottom <= badgeRow.top, name+': HP, Poise and badges stack without overlap');
+      } else {
+        assert.ok(Math.abs(hpTrack.left-badgeRow.left) < 1, name+': HP and badges align');
+        assert.ok(hpTrack.bottom <= badgeRow.top, name+': HP and badges stack without overlap');
+      }
       assert.ok(geometry.hp.left >= hpTrack.right, name+': HP fraction sits to the right of its bar');
       assert.ok(Math.abs(geometry.hp.left-hpTrack.right-3) < 1, name+': the HP value uses only the budgeted 3px gap');
       assert.ok(Math.abs(badgeRow.width-hpTrack.width) < 1, name+': badges stay within the fixed bar width');
@@ -132,9 +139,11 @@ try {
         assert.ok(badge.valueBox.width > 0 && badge.valueBox.height > 0, name+': '+badge.kind+' value is visible');
         if (badge.kind === 'shield') {
           // Owner 2026-11-12: the shield is as tall as the HP and Poise bars, left of them, with the badge row below the bars.
-          assert.ok(Math.abs(badge.box.top-hpTrack.top) <= 1 && Math.abs(badge.box.bottom-poiseTrack.bottom) <= 1, name+': Block is as tall as the HP and Poise bars');
+          if (poiseTrack) assert.ok(Math.abs(badge.box.top-hpTrack.top) <= 1 && Math.abs(badge.box.bottom-poiseTrack.bottom) <= 1, name+': Block is as tall as the HP and Poise bars');
+          // No Poise bar: the shield spans the HP bar from its top and stops above the badge row.
+          else assert.ok(Math.abs(badge.box.top-hpTrack.top) <= 1 && badge.box.bottom >= hpTrack.bottom - 1 && badge.box.bottom <= badgeRow.top + 0.5, name+': Block spans the HP bar');
           assert.ok(badge.box.right <= hpTrack.left, name+': Block sits left of the bars');
-          assert.ok(badgeRow.top >= poiseTrack.bottom, name+': the badge row sits below the bars');
+          assert.ok(badgeRow.top >= barsBottom, name+': the badge row sits below the bars');
           const v = badge.valueBox, b = badge.box;
           assert.ok(v.top >= b.top-0.5 && v.bottom <= b.bottom+0.5 && v.left >= b.left-0.5 && v.right <= b.right+0.5, name+': the Block value sits inside the shield');
         } else {
@@ -163,7 +172,8 @@ try {
       assert.ok(geometry.selected.rackTop >= geometry.selected.artTop - 0.5, name+': selected, the HUD top is still no higher than the art top');
       // Ward sits behind the +N now, so Barrier provenance is pinned on the badge itself in tests/combat-health.test.mjs.
       assert.equal(geometry.badges.some(badge=>badge.barrier), false, name+': no visible badge claims Barrier provenance');
-      assert.deepEqual(geometry.order, ['shield','hp','poise'], name+': Block precedes the HP and Poise bars');
+      const barOrder = geometry.poiseTrack ? ['shield','hp','poise'] : ['shield','hp'];
+      assert.deepEqual(geometry.order, barOrder, name+': Block precedes the HP (and Poise) bars');
       assert.ok(!geometry.statusTrayIds.some(id=>['evade','precision'].includes(id)), name+': Evade and Precision live only in the defense badges, not the status tray');
       assert.deepEqual(errors, [], name+': no browser errors');
     } catch(error) { report.failures.push(error.message); }
