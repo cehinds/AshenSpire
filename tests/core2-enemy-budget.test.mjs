@@ -16,12 +16,17 @@ import { BandsEnemyPhaseRangeState } from '../src/engine/bandRows.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
-function fight(id = 'fellWarden') {
+function fight(id = 'fellWarden', { strength = undefined } = {}) {
   const run = createRunState({ registries, classId: 'reaver', seed: 511 });
+  if (strength !== undefined) run.attributes = { ...run.attributes, strength };
   const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: [id] });
   combat.player.hp = combat.player.maxHp = 10000;
   return combat;
 }
+// The Gilded Guard answers a hit of at least its minIncoming (8). A Reaver Strike reaches it at
+// STR 2, one point above the base 1, so the reaction scenarios below fight at that strength.
+const GUARD_TRIGGER_STRENGTH = 2;
+const guardFight = () => fight('gildedKnight', { strength: GUARD_TRIGGER_STRENGTH });
 const settle = combat => { for (let i = 0; combat.pendingReaction && i < 50; i++) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null }); };
 
 test('multi-hit floors apply after discounts to authored and derived prices, including repeated effects', () => {
@@ -139,7 +144,7 @@ test('an execution-time loss can refuse a charge before any preparation effects'
 
 test('native enemy reaction pays on enqueue, retains payment if it fizzles, and refuses at zero SP', () => {
   for (const available of [0, 2]) {
-    const combat = fight('gildedKnight'), enemy = combat.enemies[0];
+    const combat = guardFight(), enemy = combat.enemies[0];
     enemy.stamina = available;
     const card = combat.piles.hand.find(row => row.cardId === 'core.strike');
     assert.ok(card);
@@ -157,7 +162,7 @@ test('native enemy reaction pays on enqueue, retains payment if it fizzles, and 
 });
 
 test('a native ranged enemy reaction pays base and Advance before its stacked event and never pays twice after restore', () => {
-  const combat = fight('gildedKnight'), enemy = combat.enemies[0];
+  const combat = guardFight(), enemy = combat.enemies[0];
   combat.rangeState.engagements[Object.keys(combat.rangeState.engagements)[0]] = 1;
   const move = registries.enemies.get(enemy.enemyId).moves.gildedGuard;
   const quote = enemyMoveQuote(move, { enemy, moveId: 'gildedGuard', combat });
@@ -194,7 +199,7 @@ test('a native ranged enemy reaction pays base and Advance before its stacked ev
 });
 
 test('an old active fight keeps its free enemy reaction and charge-time payment behavior', () => {
-  const combat = fight('gildedKnight'), enemy = combat.enemies[0];
+  const combat = guardFight(), enemy = combat.enemies[0];
   delete combat.core2ActionRulesVersion;
   const card = combat.piles.hand.find(row => row.cardId === 'core.strike');
   dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: enemy.id });
