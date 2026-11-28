@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState, validateRunShape } from '../src/model/state.js';
@@ -15,6 +16,65 @@ import {
 } from '../src/ui/models/TouchFlickModel.js';
 import { withWeaponRack } from './withWeaponRack.mjs';
 
+const FLICK_CASES = JSON.parse(
+    readFileSync(new URL('./fixtures/card-removal-flick-cases.json', import.meta.url), 'utf8'),
+);
+const RUN_SEED = 671;
+
+function withoutNote(record)
+{
+    const { $note, ...values } = record;
+    return values;
+}
+
+function verdictSettings(flickCase, rules)
+{
+    if (flickCase.settings)
+    {
+        return flickCase.settings;
+    }
+    if (flickCase.distanceRule)
+    {
+        return { touchFlickDistance: rules.distance[flickCase.distanceRule] };
+    }
+    return withoutNote(FLICK_CASES.referenceSettings);
+}
+
+function attackSlotIds(deck)
+{
+    return deck
+        .filter(card => card.equipmentAttackSlotId)
+        .map(card => card.equipmentAttackSlotId);
+}
+
+function runFlickCases(check, rules)
+{
+    const { start, end } = FLICK_CASES;
+    const trail = [
+        start,
+        end,
+    ];
+    for (const flickCase of FLICK_CASES.verdictCases)
+    {
+        const release = flickCase.release ?? end;
+        const settings = verdictSettings(flickCase, rules);
+        const verdict = flickVerdict(start, release, trail, settings, rules);
+        check(verdict.qualifies === flickCase.expected, flickCase.label);
+    }
+    for (const preferenceCase of FLICK_CASES.preferenceCases)
+    {
+        const preferences = flickPreferences(preferenceCase.settings, rules);
+        const expectedDistance = rules.distance[preferenceCase.expectedDistanceRule];
+        check(preferences.distance === expectedDistance, preferenceCase.label);
+    }
+    for (const targetCase of FLICK_CASES.targetCases)
+    {
+        const nearest = nearestFlickTarget(targetCase.targets, targetCase.point);
+        const nearestId = nearest?.id ?? null;
+        check(nearestId === targetCase.expectedId, targetCase.label);
+    }
+}
+
 export function runCardRemovalFlickTests()
 {
     let checks = 0;
@@ -23,53 +83,14 @@ export function runCardRemovalFlickTests()
         assert.ok(value, message);
         checks++;
     };
-    const rules = contentBundle.balance.ui.touchFlick;
-    // The gesture checks below are drawn for a 64 px threshold, not for the shipped default.
-    const referenceSettings = { touchFlickDistance: 64 };
-    const start = { x: 90, y: 700, time: 0 };
-    const end = { x: 100, y: 630, time: 100 };
-    const verdict = (point = end, settings = referenceSettings) =>
-        flickVerdict(start, point, [start, end], settings, rules);
-    check(verdict().qualifies, 'a short intentional upward flick qualifies');
-    check(!verdict(end, { touchFlickPlay: false }).qualifies, 'disabled stays disabled');
-    check(
-        !verdict(end, { touchFlickDistance: 160 }).qualifies,
-        'live distance changes recognition',
-    );
-    check(
-        verdict({ x: 90, y: 668, time: 80 }, { touchFlickDistance: 32 }).qualifies,
-        'minimum configured distance is usable',
-    );
-    check(!verdict({ x: 90, y: 690, time: 100 }).qualifies, 'small tap movement is not play');
-    check(!verdict({ x: 90, y: 730, time: 100 }).qualifies, 'downward release is not play');
-    check(!verdict({ x: 180, y: 630, time: 100 }).qualifies, 'sideways hand movement is not play');
-    check(!verdict({ ...end, time: 500 }).qualifies, 'pausing above threshold is not a flick');
-    check(
-        !flickVerdict(start, { x: 90, y: 645, time: 110 }, [start, end], referenceSettings, rules)
-            .qualifies,
-        'reversing toward hand cancels',
-    );
-    check(
-        flickPreferences({ touchFlickDistance: NaN }, rules).distance === rules.distance.def,
-        'invalid settings fall back',
-    );
-    check(
-        flickPreferences({ touchFlickDistance: 999 }, rules).distance === 160,
-        'settings clamp to the upper bound',
-    );
-    check(
-        nearestFlickTarget([{ id: 'b', x: 0, y: 0 }, { id: 'a', x: 2, y: 0 }], { x: 1, y: 0 }).id
-            === 'a',
-        'equidistant targets have a stable tie-break',
-    );
-    check(nearestFlickTarget([], end) === null, 'no legal target returns none');
+    runFlickCases(check, contentBundle.balance.ui.touchFlick);
 
     const registries = createRegistries(withWeaponRack(contentBundle));
     // A Starseer: its bound cards leave three basic attacks under the cap, so a
     // middle one exists (a sword-and-shield Reaver's kits and Dodge Roll leave one).
     // This regression constructs the original headless combat/swap contract.
     const run = createRunState({
-        seed: 671,
+        seed: RUN_SEED,
         classId: 'starseer',
         registries,
         combatExpansionVersion: 1,
@@ -82,19 +103,15 @@ export function runCardRemovalFlickTests()
         'merchant can remove a middle basic attack',
     );
     check(!removeDeckCard(run, retired.instanceId), 'stale instance cannot be removed twice');
-    const survivorIds = run.deck.filter(c => c.equipmentAttackSlotId).map(c =>
-        c.equipmentAttackSlotId
-    );
+    const survivorIds = attackSlotIds(run.deck);
     run.loadout.sets.rightHand[1] = 'dagger';
     stampDeck(registries, run);
     check(
-        JSON.stringify(
-            run.deck.filter(c => c.equipmentAttackSlotId).map(c => c.equipmentAttackSlotId),
-        ) === JSON.stringify(survivorIds),
+        JSON.stringify(attackSlotIds(run.deck)) === JSON.stringify(survivorIds),
         'restamp preserves surviving identities',
     );
     const saves = createSaveManager(createMemoryStorage());
-    saves.saveRun(run, createRng(671));
+    saves.saveRun(run, createRng(RUN_SEED));
     const loaded = saves.loadRun(registries);
     check(
         loaded && loaded.removedAttackSlotIds.includes(retired.equipmentAttackSlotId),
@@ -102,12 +119,12 @@ export function runCardRemovalFlickTests()
     );
     stampDeck(registries, loaded);
     check(
-        !loaded.deck.some(c => c.instanceId === retired.instanceId),
+        !loaded.deck.some(card => card.instanceId === retired.instanceId),
         'load does not resurrect removed copy',
     );
     const combat = createCombat({
         registries,
-        rng: createRng(671),
+        rng: createRng(RUN_SEED),
         enemyIds: [contentBundle.enemies[0].id],
         player: {
             classId: loaded.class,
@@ -136,7 +153,7 @@ export function runCardRemovalFlickTests()
     dispatch(combat, { type: 'swapArmament', slotId: 'rightHand', setIndex: 1 });
     const snapshot = serializeCombatSnapshot(combat);
     loaded.combatEntered = { nodeId: 'n1', encounterId: 'e1', snapshot };
-    saves.saveRun(loaded, createRng(671));
+    saves.saveRun(loaded, createRng(RUN_SEED));
     const resumed = saves.loadRun(registries);
     const resumedStatus = saves.runStatus();
     check(
@@ -145,22 +162,26 @@ export function runCardRemovalFlickTests()
             resumedStatus.reason ?? 'no reason'
         })`,
     );
-    const restored = restoreCombatSnapshot({ registries, rng: createRng(671), snapshot });
+    const restored = restoreCombatSnapshot({ registries, rng: createRng(RUN_SEED), snapshot });
     restored.player.energy = 10; // isolate slot persistence from the second swap's resource cost
     dispatch(restored, { type: 'swapArmament', slotId: 'rightHand', setIndex: 0 });
-    const combatCards = Object.values(restored.piles).flat().filter(c => c?.equipmentAttackSlotId);
+    const combatCards = Object.values(restored.piles).flat().filter(card =>
+        card?.equipmentAttackSlotId
+    );
     check(
         combatCards.length === attacks.length - 1
-            && !combatCards.some(c => c.equipmentAttackSlotId === retired.equipmentAttackSlotId),
+            && !combatCards.some(card =>
+                card.equipmentAttackSlotId === retired.equipmentAttackSlotId
+            ),
         'combat save and swaps keep the slot retired',
     );
-    for (const card of [...loaded.deck].filter(c => c.equipmentAttackSlotId))
+    for (const card of [...loaded.deck].filter(card => card.equipmentAttackSlotId))
     {
         removeDeckCard(loaded, card.instanceId);
     }
     stampDeck(registries, loaded);
     check(
-        loaded.deck.every(c => !c.equipmentAttackSlotId),
+        loaded.deck.every(card => !card.equipmentAttackSlotId),
         'removing all attacks leaves an intentional zero',
     );
     check(
@@ -172,8 +193,8 @@ export function runCardRemovalFlickTests()
         'merchant cannot remove the final card',
     );
     check(
-        validateRunShape({ ...loaded, removedAttackSlotIds: ['attack:999'] }).some(p =>
-            p.includes('removedAttackSlotIds')
+        validateRunShape({ ...loaded, removedAttackSlotIds: ['attack:999'] }).some(problem =>
+            problem.includes('removedAttackSlotIds')
         ),
         'invalid retired slots are rejected at save validation',
     );

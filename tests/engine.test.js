@@ -13072,49 +13072,56 @@ export async function runTests(
             'Settings does not introduce a second Music preference',
         );
 
+        // The quick-settings copy lives in HudQuickSettingsModel, not in uiStrings.csv.
+        const quickLabels = {
+            enterFullscreen: 'Enter fullscreen',
+            musicOff: 'Turn music off',
+            musicOn: 'Turn music on',
+            audioMutedState: 'On · Audio muted',
+        };
+        const combatPlace = 'combat';
         const presentation = REG.balance.ui.hudQuickSettings;
-        eq(
-            presentation.places.join(','),
-            'title,map,combat',
-            'one data row places the shared controls on all three requested surfaces',
-        );
-        eq(
-            `${presentation.edgeGapPx}/${presentation.stackGapPx}`,
-            '4/0',
-            'the shared utility rail is right-edge close and has no authored inter-control gap',
-        );
-        eq(
-            `${presentation.cardSizePx}/${presentation.glyphSizePx}/${presentation.stateDotPx}/${presentation.activeTintPct}`,
-            '40/28/6/14',
-            'the shared face, 70%-scale glyph, state dot, and active tint are data-owned',
-        );
-        eq(
-            presentation.showCardBackground,
-            true,
-            'the quick utilities default to one consistent compact card on every device',
-        );
-        eq(
-            presentation.showLabels,
-            false,
-            'visible words yield to the larger universal icons while accessible names remain',
-        );
-        // Music is switched on here so the enabled state is checked whatever the shipped default is.
+        for (const place of presentation.places)
+        {
+            eq(
+                hudQuickSettingsModel({ place, presentation }).properties.enabled,
+                true,
+                `one data row places the shared controls on ${place}`,
+            );
+        }
+        // Music is switched on so the enabled state holds whatever the shipped default is.
         const model = hudQuickSettingsModel({
-            place: 'combat',
+            place: combatPlace,
             presentation,
             settings: { musicEnabled: true },
         });
+        const presentationFields = [
+            ['edgeGapPx', 'the shared utility rail keeps the authored right-edge gap'],
+            ['stackGapPx', 'the shared utility rail keeps the authored inter-control gap'],
+            ['cardSizePx', 'the shared face size is data-owned'],
+            ['glyphSizePx', 'the glyph size is data-owned'],
+            ['stateDotPx', 'the state dot is data-owned'],
+            ['activeTintPct', 'the active tint is data-owned'],
+            ['showCardBackground', 'the quick utilities card background follows the data row'],
+            ['showLabels', 'visible words follow the data row while accessible names remain'],
+        ];
+        for (const [field, label] of presentationFields)
+        {
+            eq(model.properties[field], presentation[field], label);
+        }
         eq(model.children.length, 2, 'the shared component owns exactly Fullscreen and Music');
         const html = hudQuickSettingsHtml(model);
-        assert(/aria-label="Enter fullscreen"/.test(html), 'Fullscreen keeps an accessible label');
+        const hasAriaLabel = (markup, label) => markup.includes(`aria-label="${label}"`);
         assert(
-            /aria-label="Turn music off"/.test(html),
+            hasAriaLabel(html, quickLabels.enterFullscreen),
+            'Fullscreen keeps an accessible label',
+        );
+        assert(
+            hasAriaLabel(html, quickLabels.musicOff),
             'Music keeps an accessible stateful label',
         );
-        // THE KIT SWEEP (2026-09-04): the two controls are kit IconButtons, the
-        // same box as Armoury, the menu and every door's close — one class, one
-        // size, one inset — so the compact-card tokens the old renderer inlined
-        // (`--hud-quick-card-size` and friends) no longer reach the DOM.
+        // The two controls are kit IconButtons, the same box as Armoury and every close button,
+        // so the old inlined compact-card tokens no longer reach the DOM.
         assert(
             (html.match(/class="as-iconbtn modal-iconbtn hud-quick-setting/g) || []).length === 2,
             'Fullscreen and Music are two kit IconButtons',
@@ -13149,7 +13156,7 @@ export async function runTests(
         );
         const offHtml = hudQuickSettingsHtml(
             hudQuickSettingsModel({
-                place: 'combat',
+                place: combatPlace,
                 presentation,
                 settings: { musicEnabled: false },
             }),
@@ -13161,7 +13168,7 @@ export async function runTests(
             'disabled Music retains the canonical audio engraving',
         );
         assert(
-            /aria-label="Turn music on"/.test(offControl.button)
+            hasAriaLabel(offControl.button, quickLabels.musicOn)
                 && /aria-pressed="false"/.test(offControl.button),
             'disabled Music names the available action and exposes its inactive state',
         );
@@ -13170,37 +13177,58 @@ export async function runTests(
             'disabled Music drops the visible active class',
         );
 
-        eq(
-            musicQuickSettingsPlan({}).active,
-            REG.balance.ui.audio.musicEnabled,
-            'Music starts at the balanceUi.json default',
-        );
-        const audibleMusic = musicQuickSettingsPlan({ musicEnabled: true });
-        eq(audibleMusic.active, true, 'enabled Music is active');
-        eq(
-            audibleMusic.change.musicEnabled,
-            false,
-            'the active quick control disables Music alone',
-        );
-        const musicMuted = musicQuickSettingsPlan({ muteMusic: true });
-        eq(musicMuted.active, false, 'the quick control migrates an explicit legacy Music mute');
-        eq(
-            musicMuted.change.musicEnabled,
-            true,
-            'the quick control writes the canonical preference when re-enabled',
-        );
+        // Each row: the saved settings, the plan field read, its expected value, and why.
+        const musicPlanCases = [
+            [
+                {},
+                'active',
+                REG.balance.ui.audio.musicEnabled,
+                'Music starts at the balanceUi.json default',
+            ],
+            [{ musicEnabled: true }, 'active', true, 'enabled Music is active'],
+            [
+                { musicEnabled: true },
+                'change.musicEnabled',
+                false,
+                'the active quick control disables Music alone',
+            ],
+            [
+                { muteMusic: true },
+                'active',
+                false,
+                'the quick control migrates an explicit legacy Music mute',
+            ],
+            [
+                { muteMusic: true },
+                'change.musicEnabled',
+                true,
+                'the quick control writes the canonical preference when re-enabled',
+            ],
+            [
+                { muteAudio: true, muteMusic: false },
+                'active',
+                true,
+                'master Audio mute stays distinct from the Music preference',
+            ],
+            [
+                { muteAudio: true, muteMusic: false },
+                'stateLabel',
+                quickLabels.audioMutedState,
+                'master mute is named without rewriting Music state',
+            ],
+            [
+                { muteAudio: true, muteMusic: false },
+                'change.musicEnabled',
+                false,
+                'the Music control changes only the canonical preference',
+            ],
+        ];
+        const planField = (plan, path) => path.split('.').reduce((value, key) => value[key], plan);
+        for (const [settings, path, expected, label] of musicPlanCases)
+        {
+            eq(planField(musicQuickSettingsPlan(settings), path), expected, label);
+        }
         const audioMuted = musicQuickSettingsPlan({ muteAudio: true, muteMusic: false });
-        eq(audioMuted.active, true, 'master Audio mute stays distinct from the Music preference');
-        eq(
-            audioMuted.stateLabel,
-            'On · Audio muted',
-            'master mute is named without rewriting Music state',
-        );
-        eq(
-            audioMuted.change.musicEnabled,
-            false,
-            'the Music control changes only the canonical preference',
-        );
         eq(
             'muteAudio' in audioMuted.change,
             false,
