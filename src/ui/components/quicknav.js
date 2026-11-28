@@ -43,7 +43,7 @@ import { isEngaged, focusFirst } from '../input.js';
 import { closeFlaskActionMenu } from './flask.js';
 import { quickMenuPanelModel } from '../models/MenuModels.js';
 import { renderQuickMenu } from './menuComponents.js';
-import { t, tFull } from '../strings.js';
+import { t, UiFullText } from '../strings.js';
 import { registerModal, pageLockHeld } from '../modalManager.js';
 
 // The player's presentation choice, set from applyDisplaySettings (main.js) the same
@@ -160,7 +160,7 @@ export function lockEquipmentRows(panel) {
   if (!panel) return;
   for (const act of ['inventory', 'character']) {
     const row = panel.querySelector(`.qn-row[data-act="${act}"]`);
-    if (row) { row.disabled = true; row.setAttribute('aria-disabled', 'true'); row.title = tFull('combat.editLocked'); }
+    if (row) { row.disabled = true; row.setAttribute('aria-disabled', 'true'); row.title = UiFullText('combat.editLocked'); }
   }
 }
 

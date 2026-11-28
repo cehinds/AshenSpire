@@ -13,18 +13,18 @@
 import { behaviorModel } from './BehaviorModel.js';
 import { ComponentModel } from './ComponentModel.js';
 import { UI_COMPONENTS as UI } from './UiComponentId.js';
-import { t, tFull } from '../strings.js';
+import { t, UiFullText } from '../strings.js';
 
 export const ART_NOTICE_STATES = Object.freeze(['failed', 'retrying', 'again']);
 
 export function artLoadNoticeModel({ state = 'failed' } = {}) {
   const variant = ART_NOTICE_STATES.includes(state) ? state : 'failed';
   const message = variant === 'retrying' ? t('art.loading')
-    : variant === 'again' ? tFull('art.failed.again') : tFull('art.failed.notice');
+    : variant === 'again' ? UiFullText('art.failed.again') : UiFullText('art.failed.notice');
   const retry = ComponentModel(UI.artLoadNoticeRetry, {
     variant: variant === 'retrying' ? 'busy' : 'ready',
     properties: { label: t('art.retry'), busy: variant === 'retrying' },
-    accessibility: { description: tFull('art.retry') },
+    accessibility: { description: UiFullText('art.retry') },
     behaviors: [behaviorModel('retry-art', { event: 'activate', command: 'retry-art', policy: 'one-at-a-time' })],
   });
   return ComponentModel(UI.artLoadNotice, {

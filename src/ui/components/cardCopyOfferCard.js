@@ -1,14 +1,14 @@
 // The face of the "copy a card" service on a merchant's shelf (owner 2026-11-20): the collectible poker canvas, like the
 // rank-up service's face (rankUpOfferCard.js). Presentation only.
 import { renderEquipmentCard } from './equipmentCard.js';
-import { t, tFull } from '../strings.js';
+import { t, UiFullText } from '../strings.js';
 
 /** CardCopyOfferModel(usesLeft) -> the equipment-card presentation of the service. */
 export function CardCopyOfferModel(usesLeft = 1) {
   const effect = t('cardCopy.blurb');
   return {
     id: 'cardCopy', name: t('cardCopy.name'), cardKind: 'service', type: 'Service', art: null, glyph: 'skill', accent: '#8fb3c9',
-    typeExplanation: tFull('cardCopy.name'), facts: [], tags: [],
+    typeExplanation: UiFullText('cardCopy.name'), facts: [], tags: [],
     effectsLabel: 'Effect', bonuses: [{ label: effect, explanation: effect }],
     flavor: effect, requirement: t('cardCopy.uses', { uses: usesLeft }), requirementExplanation: effect, rarity: 'uncommon',
   };

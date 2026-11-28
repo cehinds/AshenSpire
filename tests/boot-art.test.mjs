@@ -22,7 +22,7 @@ import { artLoadNoticeModel, ART_NOTICE_STATES } from '../src/ui/models/ArtLoadN
 import { artLoadNoticeHtml } from '../src/ui/components/artLoadNotice.js';
 import { ART_QUALITY_KEY, ART_LIGHT, ART_AUTO } from '../src/ui/highResArt.js';
 import { indexText } from '../tools/asset-pack.mjs';
-import { t, tFull } from '../src/ui/strings.js';
+import { t, UiFullText } from '../src/ui/strings.js';
 
 const sha = (text) => createHash('sha256').update(text).digest('hex');
 const A = 'a'.repeat(64);
@@ -111,7 +111,7 @@ test('the gate’s line: none when nothing is pinned, then loading, counting, no
   assert.equal(t('art.loading'), 'Loading art…');
   assert.deepEqual(bootArtLine({ state: 'warming', done: 12, total: 21 }), { state: 'loading', text: 'Loading art · 12 of 21' });
   assert.deepEqual(bootArtLine({ state: 'done' }), { state: 'done', text: '' });
-  assert.equal(bootArtLine({ state: 'failed' }).text, tFull('art.failed.gate'));
+  assert.equal(bootArtLine({ state: 'failed' }).text, UiFullText('art.failed.gate'));
   assert.match(bootArtLine({ state: 'failed' }).text, /placeholders.*retry from the title screen/i);
   // Its own component, a polite status that is busy while it counts.
   const model = bootArtStatusModel(bootArtLine({ state: 'index' }));
@@ -228,8 +228,8 @@ test('Retry after a failed boot load: loads through the Art quality queue, re-po
   await loadBuiltInPacks({ pin: tree.pin, ...tree.load, tier: 'high', deadlineMs: 200 });
   assert.equal(builtInArtStatus().state, 'failed');
   assert.equal(retryOffered({ pin: tree.pin, inlineMap: {} }), true, 'the row offers Retry');
-  assert.equal(tierStatus(settings, { pin: tree.pin, inlineMap: {} }), tFull('art.failed.settings'), 'the sentence is a uiStrings row');
-  assert.match(tFull('art.failed.settings'), /placeholders\. Choose Retry/);
+  assert.equal(tierStatus(settings, { pin: tree.pin, inlineMap: {} }), UiFullText('art.failed.settings'), 'the sentence is a uiStrings row');
+  assert.match(UiFullText('art.failed.settings'), /placeholders\. Choose Retry/);
   assert.equal(await applyArtTier(settings, opts), null, 'the same choice again loads nothing: that is what Retry is for');
   const arrived = [];
   onTierArrived((map) => arrived.push(map));
@@ -277,7 +277,7 @@ test('the title’s notice: three states, a polite message, and Retry disabled w
   assert.deepEqual(ART_NOTICE_STATES, ['failed', 'retrying', 'again']);
   const failed = artLoadNoticeModel({ state: 'failed' });
   assert.equal(failed.component, 'art-load-notice');
-  assert.equal(failed.properties.message, tFull('art.failed.notice'));
+  assert.equal(failed.properties.message, UiFullText('art.failed.notice'));
   assert.equal(failed.accessibility.live, 'polite');
   const html = artLoadNoticeHtml(failed);
   assert.match(html, /data-component="art-load-notice"/);
@@ -471,7 +471,7 @@ test('a Retry pressed inside the announcement delay is not overwritten by the ol
   root.notice = null;
   mountArtLoadNotice(root, { model: artLoadNoticeModel({ state: 'failed' }), schedule });
   later.shift()();
-  assert.equal(root.notice.text.textContent, tFull('art.failed.notice'));
+  assert.equal(root.notice.text.textContent, UiFullText('art.failed.notice'));
   resetArtLoadNotice();
 });
 
@@ -658,11 +658,11 @@ test('the notice’s state counts as announced only once its words land (review 
   mountArtLoadNotice(second, { model: artLoadNoticeModel({ state: 'failed' }), schedule });
   assert.equal(second.notice.text.textContent, '', 'not drawn as already said: the delay is armed again');
   for (const fn of later.splice(0)) fn();
-  assert.equal(second.notice.text.textContent, tFull('art.failed.notice'), 'and the words land on the node in the page');
+  assert.equal(second.notice.text.textContent, UiFullText('art.failed.notice'), 'and the words land on the node in the page');
   // Now it was announced: a further redraw draws the words in place.
   const third = makeRoot();
   mountArtLoadNotice(third, { model: artLoadNoticeModel({ state: 'failed' }), schedule });
-  assert.equal(third.notice.text.textContent, tFull('art.failed.notice'));
+  assert.equal(third.notice.text.textContent, UiFullText('art.failed.notice'));
   resetArtLoadNotice();
 });
 

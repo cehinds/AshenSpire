@@ -1,5 +1,5 @@
 import { ChannelLabel } from '../../model/damageChannels.js';
-import { t, tFull } from '../strings.js';
+import { t, UiFullText } from '../strings.js';
 import { activeCombatStance } from '../../model/combatTacticsDisplay.js';
 import { ACTION_SIGILS } from '../../content/combatSigils.js';
 import { stanceRatingBonus } from '../../model/stanceRules.js';
@@ -83,10 +83,10 @@ export function combatHealthModel({ defense = 0, ward = 0, barrier = 0, wardStac
       // Counter and Reflect stacks (owner 2026-10-31): plain counts on the entity, shown only while above zero.
       ...(count(counterStacks) > 0 ? [{ kind: 'counter', glyph: 'riposte', label: t('combat.protection.counter'), value: count(counterStacks),
         // An enemy's Counter badge (theme B, 2026-11-17) counts the uses of its armed Counter; its stacks add nothing to the return.
-        help: enemyCounter ? tFull('combat.protection.counterEnemy', { stacks: count(counterStacks), decay: counterDecay })
-          : tFull('combat.protection.counter', { stacks: count(counterStacks), stackPercent: CounterStackPercent(), decay: counterDecay }) }] : []),
+        help: enemyCounter ? UiFullText('combat.protection.counterEnemy', { stacks: count(counterStacks), decay: counterDecay })
+          : UiFullText('combat.protection.counter', { stacks: count(counterStacks), stackPercent: CounterStackPercent(), decay: counterDecay }) }] : []),
       ...(count(reflectStacks) > 0 ? [{ kind: 'reflect', label: t('combat.protection.reflect'), value: count(reflectStacks),
-        help: tFull('combat.protection.reflect', { reduce: reflectReducePct(count(reflectStacks)), back: reflectReturnPct(count(reflectStacks)) }) }] : []),
+        help: UiFullText('combat.protection.reflect', { reduce: reflectReducePct(count(reflectStacks)), back: reflectReturnPct(count(reflectStacks)) }) }] : []),
     ],
   });
 }

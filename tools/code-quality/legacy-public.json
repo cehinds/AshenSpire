@@ -3079,8 +3079,7 @@
     "has",
     "stringIds",
     "t",
-    "tFull",
-    "tTip"
+    "tFull"
   ],
   "src/model/tagService.js": [
     "tagService"
@@ -5441,9 +5440,7 @@
   "src/ui/strings.js": [
     "has",
     "stringIds",
-    "t",
-    "tFull",
-    "tTip"
+    "t"
   ],
   "src/ui/surfaces.js": [
     "assertSurfaces",

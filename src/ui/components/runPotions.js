@@ -29,7 +29,7 @@ import { settingOn } from '../screens/settings.js';
 import { resolveTooltipSettings } from '../../model/tooltipSettings.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
 import { button, flavour, openModal, optionCard } from '../kit/index.js';
-import { t, tFull } from '../strings.js';
+import { t, UiFullText } from '../strings.js';
 
 export function mountRunPotions(host, { registries, run, meta, onChange = null }) {
   const drinkOutsideCombat = settingOn(meta.settings, 'useRestorativeFlasksOutsideCombat');
@@ -50,7 +50,7 @@ export function mountRunPotions(host, { registries, run, meta, onChange = null }
   setIconTrayOverflow(minis, () => { openList(); });
   setIconTrayItems(minis, runPotionRows(registries, run).map(({ entry, def }) => trayIcon({
     art: flaskPresentation(def, { showName: false }), count: entry.count, tone: def.tint || '',
-    label: `${def.name}, ${tFull(potionCountStringId(entry), { count: entry.count })}`, disabled: entry.count <= 0,
+    label: `${def.name}, ${UiFullText(potionCountStringId(entry), { count: entry.count })}`, disabled: entry.count <= 0,
     attrs: { class: 'potion-mini', dataset: { potionKey: entry.key } },
     tip: () => flaskTooltipHtml(def, entry.category === 'charge' ? { charges: entry.count } : {}),
     activate: (node) => mountFlaskActionMenu(node, {

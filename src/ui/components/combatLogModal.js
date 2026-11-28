@@ -10,7 +10,7 @@ import { damageReceiptLines } from './damageReceipt.js';
 import { rollReceiptLines } from './rollReceipt.js';
 import { el, button } from '../kit/index.js';
 import { OpenModal } from './modalShell.js';
-import { t, tFull } from '../strings.js';
+import { t, UiFullText } from '../strings.js';
 import { markUiComponent, UI_COMPONENTS as UI } from './uiComponents.js';
 import { openConsoleLog } from '../debuglog.js';
 import { combatLogPalette } from '../models/CombatLogPaletteModel.js';
@@ -62,7 +62,7 @@ export function renderCombatLogEntries(container, entries, { detailed = false, p
     }
     items.append(item);
   }
-  if (!entries.length) nodes.push(el('p', { text: tFull('combat.log.empty') }));
+  if (!entries.length) nodes.push(el('p', { text: UiFullText('combat.log.empty') }));
   container.replaceChildren(...nodes);
 }
 
@@ -81,7 +81,7 @@ function combatLogText(entries, detailed = false) {
       : entry.text);
     if (detailed) lines.push(...damageReceiptLines(entry.damageReceipt), ...rollReceiptLines(entry.rollReceipt));
   }
-  return lines.length ? lines.join('\n') : tFull('combat.log.empty');
+  return lines.length ? lines.join('\n') : UiFullText('combat.log.empty');
 }
 
 /**

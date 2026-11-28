@@ -1,5 +1,5 @@
 import { OpenConfirmationModal } from './confirmationModal.js';
-import { t, tFull } from '../strings.js';
+import { t, UiFullText } from '../strings.js';
 
 // Escape, close and the local-settings button all preserve this device's values.
 export function openSettingsDefaultsChoice({ onDefaults, onLocal, returnFocusElement, failed = false }) {
@@ -10,7 +10,7 @@ export function openSettingsDefaultsChoice({ onDefaults, onLocal, returnFocusEle
   };
   return OpenConfirmationModal({
     title: t('settings.defaults.choice'),
-    message: (failed ? t('settings.defaults.failed') + '\n\n' : '') + tFull('settings.defaults.choice'),
+    message: (failed ? t('settings.defaults.failed') + '\n\n' : '') + UiFullText('settings.defaults.choice'),
     confirmLabel: t('settings.defaults.use'),
     cancelLabel: t('settings.defaults.local'),
     onConfirm: () => choose(onDefaults),

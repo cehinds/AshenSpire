@@ -1,6 +1,6 @@
 import { renderCard } from '../components/card.js';
 import { cardArtLayersHtml } from '../cardArtLayers.js';
-import { t, tFull } from '../strings.js';
+import { t, UiFullText } from '../strings.js';
 import { tagService } from '../../model/tagService.js';
 import { BUILDER_TYPES, BUILDER_ELEMENTS, BUILDER_RANK_MAX, builderInputFromControls, createBuilderPreview, builderInputJson } from './cardArtBuilderModel.js';
 
@@ -37,9 +37,9 @@ export function mountProceduralBuilder({ registries, run, imageURL, download, ro
         element: find('builder-element').value, utility: find('builder-type').value === 'skill' ? find('builder-utility').value : '', delivery: find('builder-delivery').value,
         rank: find('builder-rank').valueAsNumber, extraTags: find('builder-extra-tags').value,
         statuses: [...find('builder-statuses').querySelectorAll('input:checked')].map(input => input.value) });
-      const preview = createBuilderPreview(registries, value, { name: t('cardArtBuilder.previewName'), text: tFull('cardArtBuilder.previewOnly') });
+      const preview = createBuilderPreview(registries, value, { name: t('cardArtBuilder.previewName'), text: UiFullText('cardArtBuilder.previewOnly') });
       find('builder-input').textContent = builderInputJson(preview.input);
-      if (!preview.composition) { find('builder-message').textContent = tFull('cardArtBuilder.noComposition'); return; }
+      if (!preview.composition) { find('builder-message').textContent = UiFullText('cardArtBuilder.noComposition'); return; }
       const art = preview.composition, background = node('img'); background.src = imageURL(art.path); background.alt = '';
       find('builder-art').append(background); find('builder-art').insertAdjacentHTML('beforeend', cardArtLayersHtml(art));
       const face = renderCard(registries, { cardId: preview.definition.id, rank: preview.input.rank },
@@ -52,12 +52,12 @@ export function mountProceduralBuilder({ registries, run, imageURL, download, ro
         const item = node('li'), link = node('a', sprite.label || sprite.assetId); link.href = imageURL(sprite.path); link.target = '_blank'; link.rel = 'noopener';
         item.append(link, node('span', ` · ${sprite.id} · ${sprite.assetId}`)); find('builder-components').append(item);
       }
-      find('builder-message').textContent = tFull('cardArtBuilder.ready', { rank: preview.input.rank, count: art.componentArt.sprites.length });
+      find('builder-message').textContent = UiFullText('cardArtBuilder.ready', { rank: preview.input.rank, count: art.componentArt.sprites.length });
       current = preview.input; find('builder-export').disabled = false;
     } catch (error) {
       find('builder-input').textContent = '';
-      find('builder-message').textContent = error.code === 'rank' ? tFull('cardArtBuilder.invalidRank', { max: BUILDER_RANK_MAX })
-        : error.code ? tFull('cardArtBuilder.invalidInput') : tFull('cardArtBuilder.previewFailed', { reason: error.message });
+      find('builder-message').textContent = error.code === 'rank' ? UiFullText('cardArtBuilder.invalidRank', { max: BUILDER_RANK_MAX })
+        : error.code ? UiFullText('cardArtBuilder.invalidInput') : UiFullText('cardArtBuilder.previewFailed', { reason: error.message });
     }
   }
   for (const id of ['builder-type', 'builder-category', 'builder-element', 'builder-utility', 'builder-delivery', 'builder-rank', 'builder-extra-tags']) find(id).addEventListener('input', draw);

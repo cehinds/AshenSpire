@@ -35,8 +35,25 @@ import {
   ASSET_PACKS, packsPinned, builtInArtStatus, loadBuiltInPacks, startBuiltInArt,
 } from './assetPacks.js';
 import { ASSET_MAP } from './assetmap.js';
-import { tFull } from './strings.js';
+import { UiFullText } from './strings.js';
 import { RETRY_WAIT_MS } from './bootArt.js';
+
+const TIER_LIGHT = 'light';
+const TIER_HIGH = 'high';
+const LOAD_STATE_IDLE = 'idle';
+const LOAD_STATE_LOADING = 'loading';
+const LOAD_STATE_LOADED = 'loaded';
+const LOAD_STATE_FAILED = 'failed';
+const LAYOUT_ATTRIBUTE = 'data-layout';
+const NARROW_LAYOUT = 'narrow';
+const LIGHT_REASON_STRINGS = Object.freeze(
+  {
+    saveData: 'art.tier.reason.saveData',
+    narrow: 'art.tier.reason.narrow',
+    small: 'art.tier.reason.small',
+    lowMemory: 'art.tier.reason.lowMemory',
+  },
+);
 
 /** At or under this many GB (navigator.deviceMemory), Auto picks light. */
 export const LOW_MEMORY_GB = 2;
@@ -55,27 +72,59 @@ export function artQualityChoice(settings) {
   return ART_QUALITY_CHOICES.includes(value) ? value : ART_AUTO;
 }
 
+// The uiStrings row naming why this device should get light art, or null.
+function lightReasonId(doc, nav, scr)
+{
+  if (nav?.connection?.saveData === true)
+  {
+    return LIGHT_REASON_STRINGS.saveData;
+  }
+  const layout = doc?.documentElement?.getAttribute?.(LAYOUT_ATTRIBUTE);
+  if (layout === NARROW_LAYOUT)
+  {
+    return LIGHT_REASON_STRINGS.narrow;
+  }
+  const shortSide = Math.min(Number(scr?.width), Number(scr?.height));
+  if (Number.isFinite(shortSide) && shortSide > 0 && shortSide <= SMALL_SCREEN_PX)
+  {
+    return LIGHT_REASON_STRINGS.small;
+  }
+  const memory = Number(nav?.deviceMemory);
+  if (Number.isFinite(memory) && memory > 0 && memory <= LOW_MEMORY_GB)
+  {
+    return LIGHT_REASON_STRINGS.lowMemory;
+  }
+  return null;
+}
+
 /**
  * autoTier({ defaultTier, doc, nav }) → { tier, reason }. `reason` names why
  * Auto chose light below the build's default, else ''.
  */
-export function autoTier({ defaultTier = ASSET_PACKS?.tier, doc = globalThis.document, nav = globalThis.navigator, scr = globalThis.screen } = {}) {
-  const best = defaultTier === 'high' ? 'high' : 'light';
-  if (best === 'light') return { tier: 'light', reason: '' };
-  if (nav?.connection?.saveData === true) return { tier: 'light', reason: 'Data Saver is on' };
-  if (doc?.documentElement?.getAttribute?.('data-layout') === 'narrow') return { tier: 'light', reason: 'the screen is narrow' };
-  const short = Math.min(Number(scr?.width), Number(scr?.height));
-  if (Number.isFinite(short) && short > 0 && short <= SMALL_SCREEN_PX) return { tier: 'light', reason: 'the screen is small' };
-  const memory = Number(nav?.deviceMemory);
-  if (Number.isFinite(memory) && memory > 0 && memory <= LOW_MEMORY_GB) return { tier: 'light', reason: 'this device has little memory' };
-  return { tier: best, reason: '' };
+export function autoTier(
+  {
+    defaultTier = ASSET_PACKS?.tier,
+    doc = globalThis.document,
+    nav = globalThis.navigator,
+    scr = globalThis.screen,
+  } = {},
+)
+{
+  if (defaultTier !== TIER_HIGH)
+  {
+    return { tier: TIER_LIGHT, reason: '' };
+  }
+  const reasonId = lightReasonId(doc, nav, scr);
+  return reasonId
+    ? { tier: TIER_LIGHT, reason: UiFullText(reasonId) }
+    : { tier: TIER_HIGH, reason: '' };
 }
 
-/** The tier the setting asks the loader for: 'light' or 'high'. */
+/** The tier the setting asks the loader for: light or high. */
 export function requestedTier(settings, env = {}) {
   const choice = artQualityChoice(settings);
-  if (choice === ART_LIGHT) return 'light';
-  if (choice === ART_HIGH) return 'high';
+  if (choice === ART_LIGHT) return TIER_LIGHT;
+  if (choice === ART_HIGH) return TIER_HIGH;
   return autoTier(env).tier;
 }
 
@@ -94,7 +143,7 @@ let lastSceneryChoice = null;
 
 // Display exports are common to both packs, so their desktop default is high.
 export function displaySceneryTier(env = {}) {
-  return requestedTier(lastSettings, { ...env, defaultTier: 'high' });
+  return requestedTier(lastSettings, { ...env, defaultTier: TIER_HIGH });
 }
 
 // Painted scene backdrops are static, drawn once, and read badly upscaled from the
@@ -151,31 +200,96 @@ let queue = Promise.resolve();
 let round = 0;
 let onArrived = null;
 
-const TIER_WORD = { high: 'high', light: 'light' };
+// The Settings row's sentences and tier words, as uiStrings rows.
+const TIER_STRINGS = Object.freeze(
+  {
+    inlineOnly: 'art.tier.inlineOnly',
+    sourceTree: 'art.tier.sourceTree',
+    loading: 'art.tier.loading',
+    showing: 'art.tier.showing',
+    notLoaded: 'art.tier.notLoaded',
+    notCarried: 'art.tier.notCarried',
+    autoLight: 'art.tier.autoLight',
+    failed: 'art.failed.settings',
+  },
+);
+const STILL_LOADING_STATES = Object.freeze(
+  [
+    LOAD_STATE_LOADING,
+    LOAD_STATE_IDLE,
+  ],
+);
+
+// One status sentence about the tier on screen; a tier id is also its word.
+function tierLine(stringId, shownTier, extraTokens = {})
+{
+  return UiFullText(stringId, { tier: shownTier, ...extraTokens });
+}
+
+function noTiersLine(inlineMap)
+{
+  const carriesArtInside = Object.keys(inlineMap || {}).length > 0;
+  return UiFullText(
+    carriesArtInside
+      ? TIER_STRINGS.inlineOnly
+      : TIER_STRINGS.sourceTree,
+  );
+}
+
+// Why the shown tier is not the one asked for, or null when they match.
+function mismatchLine(status, pin)
+{
+  if (!status.requested || status.requested === status.tier)
+  {
+    return null;
+  }
+  const requestedPackExists = Boolean(pin?.packs?.[status.requested]);
+  const stringId = requestedPackExists
+    ? TIER_STRINGS.notLoaded
+    : TIER_STRINGS.notCarried;
+  return tierLine(stringId, status.tier, { requested: status.requested });
+}
+
+// Auto chose Light below the build's default: say why, or null.
+function autoLightLine(settings, status, pin, env)
+{
+  const choice = artQualityChoice(settings);
+  if (choice !== ART_AUTO && choice !== ART_LOCAL_HIGH)
+  {
+    return null;
+  }
+  const auto = autoTier({ defaultTier: pin?.tier, ...env });
+  const lightByAuto = status.tier === TIER_LIGHT && status.requested === TIER_LIGHT;
+  if (!lightByAuto || !auto.reason)
+  {
+    return null;
+  }
+  return tierLine(TIER_STRINGS.autoLight, status.tier, { reason: auto.reason });
+}
 
 /**
  * tierStatus(settings, opts) — the row's live line: which tier is on screen and
  * why, or why Light and High do nothing in this copy.
  */
-export function tierStatus(settings, { pin = ASSET_PACKS, inlineMap = ASSET_MAP, env = {} } = {}) {
-  if (!tiersAvailable(pin, inlineMap)) {
-    return Object.keys(inlineMap || {}).length
-      ? 'This file carries its art inside it, so it has no other tier to load: Light and High apply to the web edition (the hosted game or the full game folder).'
-      : 'This copy loads its art straight from the game’s folders, so there are no tiers to choose: Light and High apply to the built web edition.';
+export function tierStatus(settings, { pin = ASSET_PACKS, inlineMap = ASSET_MAP, env = {} } = {})
+{
+  if (!tiersAvailable(pin, inlineMap))
+  {
+    return noTiersLine(inlineMap);
   }
-  const choice = artQualityChoice(settings);
-  const s = builtInArtStatus();
-  if (switching || s.state === 'loading' || s.state === 'idle') return `Loading ${TIER_WORD[requestedTier(settings, { defaultTier: pin?.tier, ...env })]} art…`;
-  if (s.state !== 'loaded') return tFull('art.failed.settings');
-  const showing = `Showing ${TIER_WORD[s.tier]} art`;
-  if (s.requested && s.requested !== s.tier) {
-    return pin?.packs?.[s.requested] ? `${showing}: the ${TIER_WORD[s.requested]} art could not be loaded.` : `${showing}: this build carries no ${TIER_WORD[s.requested]} art.`;
+  const status = builtInArtStatus();
+  if (switching || STILL_LOADING_STATES.includes(status.state))
+  {
+    const wanted = requestedTier(settings, { defaultTier: pin?.tier, ...env });
+    return tierLine(TIER_STRINGS.loading, wanted);
   }
-  if (choice === ART_AUTO || choice === ART_LOCAL_HIGH) {
-    const auto = autoTier({ defaultTier: pin?.tier, ...env });
-    if (s.tier === 'light' && auto.reason && s.requested === 'light') return `${showing}, because ${auto.reason}. Choose High to load it anyway.`;
+  if (status.state !== LOAD_STATE_LOADED)
+  {
+    return UiFullText(TIER_STRINGS.failed);
   }
-  return `${showing}.`;
+  return mismatchLine(status, pin)
+    ?? autoLightLine(settings, status, pin, env)
+    ?? tierLine(TIER_STRINGS.showing, status.tier);
 }
 
 /**
@@ -183,8 +297,10 @@ export function tierStatus(settings, { pin = ASSET_PACKS, inlineMap = ASSET_MAP,
  * has failed, or a Retry is running (the button stays, disabled, so the focus
  * the player put on it is not lost).
  */
-export function retryOffered({ pin = ASSET_PACKS, inlineMap = ASSET_MAP } = {}) {
-  return tiersAvailable(pin, inlineMap) && (retrying || (!switching && builtInArtStatus().state === 'failed'));
+export function retryOffered({ pin = ASSET_PACKS, inlineMap = ASSET_MAP } = {})
+{
+  const loadFailed = !switching && builtInArtStatus().state === LOAD_STATE_FAILED;
+  return tiersAvailable(pin, inlineMap) && (retrying || loadFailed);
 }
 
 function showTierStatus(settings, where = {}) {
@@ -212,8 +328,18 @@ function showTierStatus(settings, where = {}) {
 function stamp(result, { failed = false } = {}) {
   try {
     const root = globalThis.document?.documentElement;
-    if (root?.dataset && result.state === 'loaded') root.dataset.builtInArt = result.tier;
-    else if (root?.dataset && failed && result.state === 'failed') root.dataset.builtInArt = 'failed';
+    if (!root?.dataset)
+    {
+      return;
+    }
+    if (result.state === LOAD_STATE_LOADED)
+    {
+      root.dataset.builtInArt = result.tier;
+    }
+    else if (failed && result.state === LOAD_STATE_FAILED)
+    {
+      root.dataset.builtInArt = LOAD_STATE_FAILED;
+    }
   } catch { /* no document: tests */ }
 }
 
@@ -244,10 +370,10 @@ export function applyArtTier(settings, opts = {}) {
   const state = builtInArtStatus().state;
   const choice = artQualityChoice(settings);
   // The boot load is not started yet: main.js asks it for this tier.
-  if (state === 'idle') { lastChoice = choice; return Promise.resolve(null); }
+  if (state === LOAD_STATE_IDLE) { lastChoice = choice; return Promise.resolve(null); }
   // The boot load is under way: look again once it settles (startBuiltInArt
   // returns the load already running; it never starts a second one).
-  if (state === 'loading' && !switching) {
+  if (state === LOAD_STATE_LOADING && !switching) {
     return startBuiltInArt().then(() => (lastSettings === settings ? applyArtTier(settings, opts) : null), () => null);
   }
   if (choice === lastChoice) { showTierStatus(settings); return Promise.resolve(null); }
@@ -263,7 +389,12 @@ export function applyArtTier(settings, opts = {}) {
     const now = builtInArtStatus();
     // Already showing it — or asked for it before on a build that has no such
     // pack, where asking again would only fall back the same way.
-    if (now.state === 'loaded' && now.requested === want && (now.tier === want || !pin.packs?.[want])) { showTierStatus(settings); return null; }
+    const fallsBackTheSameWay = now.tier === want || !pin.packs?.[want];
+    if (now.state === LOAD_STATE_LOADED && now.requested === want && fallsBackTheSameWay)
+    {
+      showTierStatus(settings);
+      return null;
+    }
     switching = true;
     showTierStatus(settings);
     try {

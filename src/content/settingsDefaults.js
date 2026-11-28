@@ -12,12 +12,6 @@
 //   · Reset puts a key back to this value, not to the row's code default.
 // Empty values mean the code defaults stand, exactly as before this file.
 export const SETTINGS_DEFAULTS = Object.freeze({
-  digest: '17c520dd33',
-  values: Object.freeze({
-    "gameConfig.prologue.scenes.extraA.character": false,
-    "gameConfig.prologue.scenes.step.actor.desktop.height": 40,
-    "gameConfig.prologue.scenes.step.actor.desktop.layer": "behindWash",
-    "gameConfig.prologue.scenes.step.actor.desktop.rotation": 0,
-    "gameConfig.prologue.scenes.step.actor.desktop.y": 96
-  }),
+  digest: 'none',
+  values: Object.freeze({}),
 });

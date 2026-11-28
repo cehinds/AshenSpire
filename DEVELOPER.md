@@ -1064,10 +1064,10 @@ Every sentence a screen says is a row in `content/source/uiStrings.csv`, and a
 screen asks for it by id:
 
 ```js
-import { t, tFull, tTip } from '../strings.js';
+import { t, UiFullText, tTip } from '../strings.js';
 t('reward.continue')                         // the control's own words
 t('reward.cinders.title', { amount: 40 })    // {tokens} come from the caller
-tFull('reward.blocked.storage')              // the sentence it means
+UiFullText('reward.blocked.storage')         // the sentence it means
 tTip('reward.skip')                          // the tooltip a small face gets
 ```
 

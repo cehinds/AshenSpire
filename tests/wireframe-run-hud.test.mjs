@@ -6,7 +6,7 @@ import { runHudViewModel } from '../src/ui/viewModels/RunHudViewModel.js';
 import { childModel, optionalChildModel, descendantModel } from '../src/ui/models/ComponentModel.js';
 import { UI_COMPONENTS as UI } from '../src/ui/models/UiComponentId.js';
 import { wireframeUi } from '../src/content/wireframeUi.js';
-import { t, tFull } from '../src/ui/strings.js';
+import { t, UiFullText } from '../src/ui/strings.js';
 
 const hudConfig = (layers = {}, potions = {}) => ({
   layers: { ...wireframeUi.hud.layers, ...layers },
@@ -84,7 +84,7 @@ test('WGH7 / WGS3 header: labels are uiStrings rows, the seat is its own field',
   assert.equal(childModel(header, UI.identityCluster).properties.label, t('hud.class'));
   const cinders = childModel(header, UI.cindersCounter);
   assert.equal(cinders.properties.label, t('hud.cinders'));
-  assert.equal(cinders.accessibility.label, tFull('hud.cinders', { amount: 120 }));
+  assert.equal(cinders.accessibility.label, UiFullText('hud.cinders', { amount: 120 }));
   const trail = childModel(header, UI.buildMetadataTrail);
   const act = childModel(trail, UI.metadataField, 'act').properties;
   assert.deepEqual([act.label, act.value, act.detail], [t('hud.act'), 1, 'The Pale Marches']);
@@ -125,5 +125,5 @@ test('WGH8 count copy agrees in number', () => {
   assert.equal(t(potionCountStringId(three), { count: 3 }), '3 charges');
   assert.equal(t(potionCountStringId({ category: 'carried', count: 1 }), { count: 1 }), '1 carried potion');
   assert.equal(t(potionCountStringId({ category: 'carried', count: 2 }), { count: 2 }), '2 carried potions');
-  assert.equal(tFull(potionCountStringId(three), { count: 3 }), '3 charges remaining');
+  assert.equal(UiFullText(potionCountStringId(three), { count: 3 }), '3 charges remaining');
 });

@@ -48,7 +48,7 @@ import { el, html, row, stepper, statusText, subtitle, statPair, button, modalFo
 // the head's {Status} from the same facts, Continue in the foot when the
 // Shrine has one (Multi-use). ChoiceBodyModel projects; this screen decides.
 import { restChoiceStatus } from '../models/ChoiceBodyModel.js';
-import { t, tFull, has } from '../strings.js';
+import { t, UiFullText, has } from '../strings.js';
 
 // THE REFILL LINE. `refill` is the plan engine/encounters.js ALREADY APPLIED on
 // arrival — this screen reports, it never decides, and it is passed the plan
@@ -310,7 +310,7 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
           <div class="glyph">${engravedIconHtml('skill')}</div>
           <div class="cp-body">
             <h3>${esc(t('deckEditor.rest'))}</h3>
-            <p>${esc(tFull('deckEditor.rest'))}</p>
+            <p>${esc(UiFullText('deckEditor.rest'))}</p>
           </div>
         </div>` : ''}
       </div>

@@ -1,0 +1,22 @@
+{
+  "reason": "Stance rows and art tier status lines; keep shadow coverage after origin/dev advances.",
+  "ids": [
+    "art.tier.autoLight",
+    "art.tier.inlineOnly",
+    "art.tier.loading",
+    "art.tier.notCarried",
+    "art.tier.notLoaded",
+    "art.tier.reason.lowMemory",
+    "art.tier.reason.narrow",
+    "art.tier.reason.saveData",
+    "art.tier.reason.small",
+    "art.tier.showing",
+    "art.tier.sourceTree",
+    "combat.stanceRow.active",
+    "combat.stanceRow.broken",
+    "combat.stanceRow.staggered",
+    "combat.stanceRow.staggeredHolds",
+    "combat.stanceRow.staggeredStamina",
+    "combat.stanceRow.staggeredVulnerable"
+  ]
+}

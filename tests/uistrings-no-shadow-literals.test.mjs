@@ -11,7 +11,7 @@
 // any row the branch adds over origin/dev when git can say so, it takes the
 // short, full and tip text and looks for that same text as a string, template
 // or markup literal anywhere in src/ui. A hit is a control that can paint the
-// old words. It is either routed through t()/tFull()/tTip(), or it is listed in
+// old words. It is either routed through t()/UiFullText()/UiTooltipTitle(), or it is listed in
 // ALLOWED below with the reason it is not copy (an id, a stored value, a lookup
 // key) or not this row's copy (the same English word naming something else).
 // An allowance that no longer matches anything fails too, so the list cannot rot.
@@ -31,7 +31,29 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const csvIds = (text) => new Set(text.split('\n').filter((line) => line && !line.startsWith('#')).map((line) => line.split(',')[0]).filter((id) => id && id !== 'id'));
 
 const frozenMigrationIds = (number) => JSON.parse(readFileSync(join(ROOT, `tests/fixtures/uistrings-migrated-${number}.json`), 'utf8')).ids;
-const permanentMigratedIds = () => new Set([1489, 1535, 1578, 1651, 1671, 1767, 1850, 1915, 2190, 2284, 'common-controls', 'core-profile', 'effects-toggle', 'blur-shadows', 'card-art-builder-lifecycle', 'modal-return', 'wording', 'smash-stance-rule', 'settings-regroup'].flatMap(frozenMigrationIds));
+const PERMANENT_MIGRATIONS = [
+  1489,
+  1535,
+  1578,
+  1651,
+  1671,
+  1767,
+  1850,
+  1915,
+  2190,
+  2284,
+  'common-controls',
+  'core-profile',
+  'effects-toggle',
+  'blur-shadows',
+  'card-art-builder-lifecycle',
+  'modal-return',
+  'wording',
+  'smash-stance-rule',
+  'settings-regroup',
+  'owner-defaults-review',
+];
+const permanentMigratedIds = () => new Set(PERMANENT_MIGRATIONS.flatMap(frozenMigrationIds));
 
 function migratedIds() {
   // Merged rows must remain protected when origin/dev advances or is absent.
@@ -74,6 +96,11 @@ const ALLOWED = [
   ['src/ui/components/smithUpgradeModal.js', 'None', 'the Smith requirement row when an item has no stat requirement; not the builder optional art-cue choice'],
   ['src/ui/components/combatantInspector.js', 'None', 'absence of a combatant current action; not the builder optional art-cue choice'],
   ['src/ui/screens/customize.js', 'None', 'absence of a starting relic or slot selection; not the builder optional art-cue choice'],
+  [
+    'src/ui/screens/settings.js',
+    'Showing',
+    'the display-scale readout ("Showing 1.20×"), not the art tier status line',
+  ],
   ['src/ui/screens/rest.js', 'Heal', 'rest-site HP restoration sentence with its live amount; not the builder healing art cue'],
   // The status decay row starts with The {value}; these bounded matches share
   // only its article, not its lifecycle sentence or meaning.
@@ -254,7 +281,7 @@ test('all three enemy target rows remain protected independently of origin/dev',
   // Health starts with a value token, so it has no literal prefix to sweep.
   // Its live renderer must still read that authored row rather than rebuild it.
   const picker = stripComments(readFileSync(join(ROOT, 'src/ui/components/enemyTargetPicker.js'), 'utf8'));
-  for (const id of frozen) assert.ok(picker.includes(`tFull('${id}'`), `target picker must consume ${id}`);
+  for (const id of frozen) assert.ok(picker.includes(`UiFullText('${id}'`), `target picker must consume ${id}`);
   const health = uiStrings.find(row => row.id === 'combat.enemyTarget.health');
   assert.match(health.full, /\{hp\}.*\{maxHp\}/, 'the authored health row retains both live values');
 });
@@ -367,7 +394,7 @@ test('builder and lifecycle copy retain migration coverage without a branch delt
   assert.ok(texts.get('Reviewed')?.includes('cardArtBuilder.reviewedCard.full'));
   assert.ok(texts.get('The')?.includes('status.lifecycle.perTurnEnd.full'));
   const renderer = stripComments(readFileSync(join(ROOT, 'src/ui/tools/cardArtReview.js'), 'utf8'));
-  assert.ok(renderer.includes("tFull('cardArtBuilder.reviewedCard'"), 'review checkbox accessibility copy uses the authored row');
+  assert.ok(renderer.includes("UiFullText('cardArtBuilder.reviewedCard'"), 'review checkbox accessibility copy uses the authored row');
 });
 
 test('Reviewed allowance permits only the persisted style enum and rejects displayed copy', () => {

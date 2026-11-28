@@ -37,104 +37,60 @@ import { numericLiterals } from './source-literals.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const lf = (text) => text.replace(/\r\n/g, '\n');
-const readFixture = (name) => JSON.parse(readFileSync(new URL(`./fixtures/${name}`, import.meta.url), 'utf8'));
+const readFixture = (name) =>
+    JSON.parse(readFileSync(new URL(`./fixtures/${name}`, import.meta.url), 'utf8'));
 const baseline = readFixture('config-migration-baseline.json');
 const baselineTierA = readFixture('config-migration-baseline-tier-a.json');
 
-// RE-POINTING A BASELINE VALUE, AND THE ONLY REASON THAT IS ALLOWED. These
-// fixtures pin what each module exported BEFORE its tables moved into
-// content/config, so a red here normally means the move changed behaviour and
-// the MODULE is wrong. There is one other case: an authored value legitimately
-// changes AFTER the baseline was captured, and then the FIXTURE is the stale
-// one. Re-point it by hand, one value, never by regenerating the file — a
-// regeneration would relabel every other drift as intended at the same time.
-//
-// Re-pointed so far:
-//   · Illustrated card template: minimumHandHeight([]) 145.6 -> 153.6.
-//     The approved 2:3 face makes the 80px minimum width 120px tall, plus 33.6 inset.
-//   · CombatLayout.minimumHandHeight([]) 161.6 -> 145.6, for #1146, which gave
-//     the playing card one authored shape and moved its ratio from 5/8 to 5/7.
-//     The hand's floor is minWidthRem * rem / card.ratio + the inset, lift and
-//     arc, so a wider card needs less height: 80/0.625 + 33.6 = 161.6 became
-//     80/(5/7) + 33.6 = 145.6. #1146 and #1140 merged 74 seconds apart, so
-//     neither could see the other's effect and dev went red on the pair.
-//   · tooltipHelp.messages.playerPoise. #1203 gave the player a live Poise
-//     meter with a Constitution term, so the old copy denied a feature that
-//     exists and named three of the four things that steady the threshold.
-//     One string, re-pointed by hand.
-//   · CombatFormationModel probes now include #1180's grid cells, rowSpacing,
-//     cell labels and fitGround. Its slots keep their previous coordinates;
-//     only that module's entry is refreshed for the approved added outputs.
-//   · StartupGateModels' TITLE_ENTRANCE_TIMING.holdDefault is 2s, not 0.5s:
-//     the owner's uploaded defaults (#1254) set the city title pause. Only that
-//     one value is refreshed.
-//   · Compact Armoury (2026-10-04): normalizeArmouryLayout's two default probes
-//     add equipment.compactList (82/68px thumbnails, 264px inspection) and
-//     cardClasses.armamentItem (read-only disclosure, inline comparison).
-//     These are the approved new contract, not migration drift. Only those
-//     subtrees/key-order entries were added; all prior probe values remain pinned.
-//   · Compact combat footer (FixUI, 2026-10-10): packCombatFooter and
-//     packCombatRails add spentWidth (the Discard/Exhaust column) for the larger
-//     phone piles. Only CombatLayout.js's entry is refreshed; every prior probe
-//     value is unchanged apart from the key order the new field shifts.
-
-//   · Responsive Core combat (2026-10-17): only five allocateCombatBands
-//     probe values change for the approved 27% hand / 14% footer. The
-//     historical export shapes, freezing and all other migration probes stay pinned.
-
-// Core renewal (2026-10-22): the uiContent baseline updates exactly 85
-// icon/delay string leaves for approved named vector IDs and the readable
-// delayed suffix. Export shapes, key order, freezing and all other probe
-// values remain unchanged; this does not recapture unrelated module drift.
-// Settings descriptions (2026-10-26): the tooltipHelp baseline re-points exactly
-// two string leaves, the hoverTooltips and tooltipDelay notes, to the owner's
-// one-short-sentence copy. Nothing else in the module moves.
-// Broken wording (2026-11-14): the tooltipHelp baseline re-points exactly two string leaves, messages.playerPoise
-// (Your Stagger threshold -> The threshold that Breaks you) and messages.enemyPoise (Fill it to Stagger -> Break).
-// Quick menu Console row (2026-10-25): the uiContent baseline adds the console
-// row to MENU (map/combat/overlay), MENU_ACTS and the three menuRows probes.
-// Nothing else in that entry changes.
-// Original class/map symbols (2026-10-24): repoint only fourteen uiContent
-// map-icon string leaves (seven NODE_TYPES, boss lookup, six legend entries)
-// to historic-* IDs. No whole-fixture recapture or other value change.
-// World-painting biomes and terrain (2026-10-25, #2323): the environments.js
-// entry gains `biomes` and `terrain` on each of the three MEGA_MAPS paintings
-// (biome framing and battle terrain zones). Only those 12 leaves change; no
-// whole-fixture recapture.
-// Map spacing (2026-11-15, owner "spread them out"): MAP_TERRAIN_REVEAL_RADIUS 74 -> 100, the fog light scaling with COL_X 75 -> 96.
-// No dashes in player text (2026-11-17, chore/EventCopy): uiContent re-points only the leaves whose em dash
-// became a colon or full stop (the three ACT titles and the two actTitle probes, the two fight blurbs, the
-// staggered and committed tooltips); tooltipHelp re-points messages.playerPoise the same way. No recapture.
+// The fixtures pin each module's exports from before its tables moved into content/config.
+// An approved authored change re-points only its own leaves by hand; never regenerate the file.
 
 /** Every path at which `want` and `got` differ, as readable lines. */
-function differences(want, got, path = '') {
-  if (JSON.stringify(want) === JSON.stringify(got)) return [];
-  const bothObjects = want && got && typeof want === 'object' && typeof got === 'object';
-  if (!bothObjects) return [`${path}: ${JSON.stringify(want)} -> ${JSON.stringify(got)}`];
-  const keys = new Set([...Object.keys(want), ...Object.keys(got)]);
-  return [...keys].flatMap((k) => differences(want[k], got[k], `${path}.${k}`));
+function differences(want, got, path = '')
+{
+    if (JSON.stringify(want) === JSON.stringify(got))
+    {
+        return [];
+    }
+    const bothObjects = want && got && typeof want === 'object' && typeof got === 'object';
+    if (!bothObjects)
+    {
+        return [`${path}: ${JSON.stringify(want)} -> ${JSON.stringify(got)}`];
+    }
+    const keys = new Set([...Object.keys(want), ...Object.keys(got)]);
+    return [...keys].flatMap((k) => differences(want[k], got[k], `${path}.${k}`));
 }
 
-for (const [list, fixture] of [[MIGRATED, baseline], [TIER_A, baselineTierA]]) {
-  for (const rel of list) {
-    test(`${rel} exports exactly what it exported before the move`, async () => {
-      assert.ok(fixture[rel], `${rel} is in the baseline fixture`);
-      const changed = differences(fixture[rel], await captureModule(rel));
-      assert.deepEqual(changed, [], `${rel} must be identical to dev:\n  ${changed.join('\n  ')}`);
-    });
-  }
+for (const [list, fixture] of [[MIGRATED, baseline], [TIER_A, baselineTierA]])
+{
+    for (const rel of list)
+    {
+        test(`${rel} exports exactly what it exported before the move`, async () =>
+        {
+            assert.ok(fixture[rel], `${rel} is in the baseline fixture`);
+            const changed = differences(fixture[rel], await captureModule(rel));
+            assert.deepEqual(
+                changed,
+                [],
+                `${rel} must be identical to dev:\n  ${changed.join('\n  ')}`,
+            );
+        });
+    }
 }
 
-test('each phase has its own fixture, and it covers exactly that phase', () => {
-  assert.deepEqual(Object.keys(baseline).sort(), [...MIGRATED].sort());
-  assert.deepEqual(Object.keys(baselineTierA).sort(), [...TIER_A].sort());
-  // Two files, so neither phase's evidence can be silently regenerated by a
-  // run that was only meant to refresh the other.
-  assert.notEqual(PHASES[1].fixture, PHASES[2].fixture);
-  assert.equal(new Set([...MIGRATED, ...TIER_A]).size, MIGRATED.length + TIER_A.length,
-    'no module is claimed by both phases');
+test('each phase has its own fixture, and it covers exactly that phase', () =>
+{
+    assert.deepEqual(Object.keys(baseline).sort(), [...MIGRATED].sort());
+    assert.deepEqual(Object.keys(baselineTierA).sort(), [...TIER_A].sort());
+    // Two files, so neither phase's evidence can be silently regenerated by a
+    // run that was only meant to refresh the other.
+    assert.notEqual(PHASES[1].fixture, PHASES[2].fixture);
+    assert.equal(
+        new Set([...MIGRATED, ...TIER_A]).size,
+        MIGRATED.length + TIER_A.length,
+        'no module is claimed by both phases',
+    );
 });
-
 
 // ---------------------------------------------------------------------------
 // The shims author no number of their own.
@@ -163,63 +119,95 @@ const SHIMS = [...MIGRATED, ...TIER_A, 'src/ui/paintedOutfits.js'];
  * `.45` fails this test, which is the whole point.
  */
 const ARITHMETIC = new Map([
-  ['0', 'zero — an origin, an empty count, the floor of a clamp'],
-  ['1', 'the unit — a whole, a full opacity, the next index'],
-  ['2', 'a midpoint: the centre of a box is half its width, and a pair has two ends'],
-  ['3', 'the three battlefield rows A/B/C; the enemy front column is column three'],
-  ['4', 'a count of things that exist — the four gaps in the footer, the four columns of the battlefield'],
-  ['6', 'the six cells on each side of the battlefield: three rows by two columns'],
-  ['16', 'the CSS reference root font size in px; a rem is defined against it, so it is a platform fact and not a choice'],
-  ['100', 'percent — the unit the layer is written in'],
-  ['180', 'a half turn in degrees'],
-  ['360', 'a whole turn in degrees'],
-  ['0.5', 'a centre, as a fraction'],
-  ['.5', 'a centre, as a fraction'],
-  ['1e-9', 'a floating-point comparison epsilon, not a tolerance anyone tunes'],
+    ['0', 'zero — an origin, an empty count, the floor of a clamp'],
+    ['1', 'the unit — a whole, a full opacity, the next index'],
+    ['2', 'a midpoint: the centre of a box is half its width, and a pair has two ends'],
+    ['3', 'the three battlefield rows A/B/C; the enemy front column is column three'],
+    [
+        '4',
+        'a count of things that exist — the four gaps in the footer, the four columns of the battlefield',
+    ],
+    ['6', 'the six cells on each side of the battlefield: three rows by two columns'],
+    [
+        '16',
+        'the CSS reference root font size in px; a rem is defined against it, so it is a platform fact and not a choice',
+    ],
+    ['100', 'percent — the unit the layer is written in'],
+    ['180', 'a half turn in degrees'],
+    ['360', 'a whole turn in degrees'],
+    ['0.5', 'a centre, as a fraction'],
+    ['.5', 'a centre, as a fraction'],
+    ['1e-9', 'a floating-point comparison epsilon, not a tolerance anyone tunes'],
 ]);
 
-for (const rel of SHIMS) {
-  test(`${rel} authors no number of its own`, () => {
-    const source = lf(readFileSync(join(ROOT, ...rel.split('/')), 'utf8'));
-    // Directly, or through wireframeUi — which is itself a shim over the same
-    // compiled config, so a module that takes its numbers from there is not
-    // holding a second copy either.
-    assert.match(source, /config\/generated\/ui\.js|wireframeUi\.js/, `${rel} takes its values from the compiled config`);
-    const found = numericLiterals(source, { allow: [...ARITHMETIC.keys()] });
-    const report = found.map((f) => `  ${rel}:${f.line}  ${f.value}  |  ${f.text}`).join('\n');
-    assert.deepEqual(found, [], `these numbers belong in content/config, not in the shim:\n${report}`);
-  });
+for (const rel of SHIMS)
+{
+    test(`${rel} authors no number of its own`, () =>
+    {
+        const source = lf(readFileSync(join(ROOT, ...rel.split('/')), 'utf8'));
+        // Directly, or through wireframeUi — which is itself a shim over the same
+        // compiled config, so a module that takes its numbers from there is not
+        // holding a second copy either.
+        assert.match(
+            source,
+            /config\/generated\/ui\.js|wireframeUi\.js/,
+            `${rel} takes its values from the compiled config`,
+        );
+        const found = numericLiterals(source, { allow: [...ARITHMETIC.keys()] });
+        const report = found.map((f) => `  ${rel}:${f.line}  ${f.value}  |  ${f.text}`).join('\n');
+        assert.deepEqual(
+            found,
+            [],
+            `these numbers belong in content/config, not in the shim:\n${report}`,
+        );
+    });
 }
 
-test('the arithmetic exemptions are all still used, and all still argued', () => {
-  // An exemption nobody needs is a hole held open for no reason, and one with
-  // no argument beside it is the next person's excuse for adding another.
-  const used = new Set();
-  for (const rel of SHIMS) {
-    const source = lf(readFileSync(join(ROOT, ...rel.split('/')), 'utf8'));
-    for (const f of numericLiterals(source, { allow: [] })) used.add(f.value);
-  }
-  // By VALUE, not by spelling: `.5` and `0.5` are the same number, and an
-  // exemption that covers one spelling has to cover the other or the guard
-  // turns into a style rule about leading zeros.
-  const usedValues = new Set([...used].map(Number));
-  const unused = [...ARITHMETIC.keys()].filter((v) => !usedValues.has(Number(v)) && Number(v) !== 0 && Number(v) !== 1);
-  assert.deepEqual(unused, [], `exemptions nothing uses any more — delete them: ${unused.join(', ')}`);
-  for (const [value, reason] of ARITHMETIC) {
-    assert.ok(reason && reason.length > 8, `exemption ${value} needs a reason, not a label`);
-  }
+test('the arithmetic exemptions are all still used, and all still argued', () =>
+{
+    // An exemption nobody needs is a hole held open for no reason, and one with
+    // no argument beside it is the next person's excuse for adding another.
+    const used = new Set();
+    for (const rel of SHIMS)
+    {
+        const source = lf(readFileSync(join(ROOT, ...rel.split('/')), 'utf8'));
+        for (const f of numericLiterals(source, { allow: [] }))
+        {
+            used.add(f.value);
+        }
+    }
+    // By VALUE, not by spelling: `.5` and `0.5` are the same number, and an
+    // exemption that covers one spelling has to cover the other or the guard
+    // turns into a style rule about leading zeros.
+    const usedValues = new Set([...used].map(Number));
+    const unused = [...ARITHMETIC.keys()].filter((v) =>
+        !usedValues.has(Number(v)) && Number(v) !== 0 && Number(v) !== 1
+    );
+    assert.deepEqual(
+        unused,
+        [],
+        `exemptions nothing uses any more — delete them: ${unused.join(', ')}`,
+    );
+    for (const [value, reason] of ARITHMETIC)
+    {
+        assert.ok(reason && reason.length > 8, `exemption ${value} needs a reason, not a label`);
+    }
 });
 
-test('the guard can still see a literal that is smuggled back in', () => {
-  // The guard's own integrity: a check that cannot fail is not a check, and a
-  // stripper with one bracket wrong goes quiet rather than red.
-  const planted = [
-    "import { uiConfig } from '../config/generated/ui.js';",
-    "// a comment with 4321 in it is not code",
-    "const prose = 'a string with 8765 in it is not code';",
-    'const gap = 12;',
-    'const css = `width:${gap * 7}px`;',
-  ].join('\n');
-  assert.deepEqual(numericLiterals(planted).map((f) => f.value), ['12', '7'],
-    'comments and string bodies are ignored; declarations and interpolations are not');
+test('the guard can still see a literal that is smuggled back in', () =>
+{
+    // The guard's own integrity: a check that cannot fail is not a check, and a
+    // stripper with one bracket wrong goes quiet rather than red.
+    const planted = [
+        "import { uiConfig } from '../config/generated/ui.js';",
+        '// a comment with 4321 in it is not code',
+        "const prose = 'a string with 8765 in it is not code';",
+        'const gap = 12;',
+        'const css = `width:${gap * 7}px`;',
+    ].join('\n');
+    assert.deepEqual(
+        numericLiterals(planted).map((f) => f.value),
+        ['12', '7'],
+        'comments and string bodies are ignored; declarations and interpolations are not',
+    );
 });

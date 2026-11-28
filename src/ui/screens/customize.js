@@ -68,7 +68,7 @@ import {
 // The fold's own sentence is a row in content/source/uiStrings.csv, which is
 // where #991 put the words this game says. This screen still carries plenty of
 // copy in code — the baseline counts it — but a NEW sentence does not join it.
-import { t, tTip } from '../strings.js';
+import { t, UiTooltipTitle } from '../strings.js';
 import { clearSelection } from '../components/cardSelection.js';
 import { focusCreationClassPreview, openCreationStatDetail, openCreationRelicDetail } from '../components/creationPreviewDetails.js';
 import { placeAnchored, placeGap, viewportLocalBox, anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
@@ -1101,7 +1101,8 @@ export function mountCustomize(app, {
       choose.setAttribute('aria-label', t('creation.abilities.chooseLabel', { name: card.name }));
       const capReason = () => (!state.startingAbilityIds.includes(card.id) && section.count > 1
         && section.elementIds?.includes(card.id) && elementCapReached())
-        ? tTip('creation.abilities.elementCap', { max: section.maxElementPicks }) : null;
+        ? UiTooltipTitle('creation.abilities.elementCap', { max: section.maxElementPicks })
+        : null;
       capRefreshers.set(card.id, refusesWhen(choose, capReason, ''));
       const select = () => {
         const picked = state.startingAbilityIds.includes(card.id);

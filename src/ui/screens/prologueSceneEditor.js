@@ -7,7 +7,7 @@ import {
   prologueConfig, prologueRows, prologueSequence, prologueSettingKey,
   prologueStaging, PROLOGUE_DEFAULTS, PROLOGUE_STAGE_FIELDS,
 } from '../../model/prologue.js';
-import { t, tTip } from '../strings.js';
+import { t, UiTooltipTitle } from '../strings.js';
 
 const STAGE_BY_KEY = new Map(PROLOGUE_STAGE_FIELDS.map(field => [field.key, field]));
 const SCENE_GROUPS = [
@@ -364,7 +364,7 @@ export function openPrologueSceneEditor(settings, onChange, { sceneId = null, ta
     if (reset) {
       const follow = element('button', 'pse-follow', t(settings[key] === undefined ? 'prologueEditor.followingStyle' : 'prologueEditor.followStyle'));
       follow.type = 'button'; follow.disabled = settings[key] === undefined;
-      follow.title = tTip('prologueEditor.followStyle');
+      follow.title = UiTooltipTitle('prologueEditor.followStyle');
       follow.addEventListener('click', event => {
         event.preventDefault();
         if (saved(key, undefined)) { drawFields(); schedulePreview(); }

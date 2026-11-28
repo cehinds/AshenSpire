@@ -35,7 +35,7 @@ import { OpenConfirmationModal, CloseConfirmationModal } from '../components/con
 import { markUiComponent, UI_COMPONENTS as UI } from '../components/uiComponents.js';
 import { actionLabel, focusElement, matchAction, setInputGate, setTabRing } from '../input.js';
 import { DECK_PANES, deckEditorModel, deckEditorView, deckVariantKey, nextFilterPreset, openDeckEdit, rankZeroLabelId } from '../models/DeckEditorModel.js';
-import { t, tFull } from '../strings.js';
+import { t, UiFullText } from '../strings.js';
 import { renderCard, cardPlainText, cardDetailHtml, scheduleCardFits, CardInspectorFlavor } from '../components/card.js';
 import { resolveCard } from '../../model/registries.js';
 import { combatCardRange, combatProfileFor } from '../../model/combatCardProfile.js';
@@ -163,14 +163,14 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   function header() {
     const counter = el('p', {
       class: 'deck-editor-counter', role: 'status', 'aria-live': 'polite', 'aria-invalid': model.counter.outOfBounds ? 'true' : 'false',
-      dataset: { state: model.counter.outOfBounds ? 'out' : 'ok' }, title: tFull('deckEditor.counter', null),
+      dataset: { state: model.counter.outOfBounds ? 'out' : 'ok' }, title: UiFullText('deckEditor.counter', null),
       text: model.counter.text,
     });
-    const curve = el('div', { class: 'deck-editor-curve', role: 'img', 'aria-label': tFull('deckEditor.curve') });
+    const curve = el('div', { class: 'deck-editor-curve', role: 'img', 'aria-label': UiFullText('deckEditor.curve') });
     for (const bar of model.curve) {
       curve.appendChild(el('span', {
         class: 'deck-editor-curve-bar', dataset: { bucket: bar.bucket, count: bar.count },
-        title: tFull('deckEditor.curve.bar', { bucket: bar.bucket, count: bar.count }),
+        title: UiFullText('deckEditor.curve.bar', { bucket: bar.bucket, count: bar.count }),
         style: { '--share': bar.share.toFixed(3) },
       }, [
         el('span', { class: 'deck-editor-curve-fill', 'aria-hidden': 'true' }),
@@ -514,7 +514,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     const presentation = CardPresentationSigils(def, { registries, rules: run });
     const traditions = presentation.traditions || [];
     const label = traditions.length ? traditions.map(value => value[0].toUpperCase() + value.slice(1)).join(' and ') : t(`deckEditor.camp.${camp}`);
-    const node = el('span', { class: 'deck-editor-camp', dataset: { camp, traditions: traditions.join(' ') }, role: 'img', title: traditions.length ? label : tFull(`deckEditor.camp.${camp}`), 'aria-label': label });
+    const node = el('span', { class: 'deck-editor-camp', dataset: { camp, traditions: traditions.join(' ') }, role: 'img', title: traditions.length ? label : UiFullText(`deckEditor.camp.${camp}`), 'aria-label': label });
     node.innerHTML = traditions.length ? traditions.map(id => sigilHtml(id, 'tradition')).join('')
       : cardCategorySigilHtml(camp === 'magical' ? 'spell' : 'physical');
     return node;
@@ -569,8 +569,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   }
   const stepperText = (count) => (count.unlimited ? t('deckEditor.stepperCount.unlimited', { inDeck: count.inDeck })
     : t('deckEditor.stepperCount', { inDeck: count.inDeck, owned: count.owned }));
-  const stepperSpoken = (count) => (count.unlimited ? tFull('deckEditor.stepperCount.unlimited', { inDeck: count.inDeck })
-    : tFull('deckEditor.stepperCount', { inDeck: count.inDeck, owned: count.owned }));
+  const stepperSpoken = (count) => (count.unlimited ? UiFullText('deckEditor.stepperCount.unlimited', { inDeck: count.inDeck })
+    : UiFullText('deckEditor.stepperCount', { inDeck: count.inDeck, owned: count.owned }));
 
   // A search box is built once and reused by every redraw, so the text, the caret and focus stay in the one input
   // the player is typing into (a fresh input would carry its starting value and be swapped in by the patch).
@@ -607,7 +607,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       artOpens(main, tile, 'collection');
       const plus = focusable(el('button', {
         type: 'button', class: 'deck-editor-step', disabled: tile.equipmentEligible === false, dataset: { action: 'add', key: tile.key },
-        'aria-label': tFull('deckEditor.add', { name: tile.name }), 'aria-disabled': tile.addable ? 'false' : 'true',
+        'aria-label': UiFullText('deckEditor.add', { name: tile.name }), 'aria-disabled': tile.addable ? 'false' : 'true',
         text: t('deckEditor.add', { name: tile.name }),
       }), `tile-add:${tile.key}`);
       plus.addEventListener('click', () => { focusKey = plus.dataset.focusKey; add(tile.key); });
@@ -615,7 +615,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       // how many copies the deck holds, ＋ adds one.
       const minus = focusable(el('button', {
         type: 'button', class: 'deck-editor-step', disabled: !tile.removable, dataset: { action: 'remove', key: tile.key },
-        'aria-label': tFull('deckEditor.remove', { name: tile.name }), 'aria-disabled': tile.removable ? 'false' : 'true',
+        'aria-label': UiFullText('deckEditor.remove', { name: tile.name }), 'aria-disabled': tile.removable ? 'false' : 'true',
         text: t('deckEditor.remove', { name: tile.name }),
       }), `tile-remove:${tile.key}`);
       minus.addEventListener('click', () => { if (tile.removable) { focusKey = minus.dataset.focusKey; remove(tile.removeInstanceId); } });
@@ -661,14 +661,14 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
         for (const [dir, id, can] of [[-1, 'deckEditor.up', row.canUp], [1, 'deckEditor.down', row.canDown]]) {
           const step = focusable(el('button', {
             type: 'button', class: 'deck-editor-step deck-editor-order', dataset: { action: dir < 0 ? 'up' : 'down', instanceId: row.instanceId },
-            'aria-label': tFull(id, { name: row.name }), 'aria-disabled': can ? 'false' : 'true', text: t(id, { name: row.name }),
+            'aria-label': UiFullText(id, { name: row.name }), 'aria-disabled': can ? 'false' : 'true', text: t(id, { name: row.name }),
           }), `row-${dir < 0 ? 'up' : 'down'}:${row.instanceId}`);
           step.addEventListener('click', () => { if (can) { session.move(row.instanceId, dir); draw(); } });
           actions.appendChild(step);
         }
         const pick = focusable(el('button', {
           type: 'button', class: 'deck-editor-step deck-editor-pick', dataset: { action: 'pick', instanceId: row.instanceId },
-          'aria-label': tFull('deckEditor.pickUp', { name: row.name }), 'aria-pressed': held === row.instanceId ? 'true' : 'false',
+          'aria-label': UiFullText('deckEditor.pickUp', { name: row.name }), 'aria-pressed': held === row.instanceId ? 'true' : 'false',
           text: t('deckEditor.pickUp', { name: row.name }),
         }), `row-pick:${row.instanceId}`);
         pick.addEventListener('click', () => togglePick(row.instanceId));
@@ -676,7 +676,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       }
       const minus = focusable(el('button', {
         type: 'button', class: 'deck-editor-step', dataset: { action: 'remove', instanceId: row.instanceId },
-        'aria-label': row.locked ? row.lockSentence : tFull('deckEditor.remove', { name: row.name }),
+        'aria-label': row.locked ? row.lockSentence : UiFullText('deckEditor.remove', { name: row.name }),
         'aria-disabled': row.removable ? 'false' : 'true', text: t('deckEditor.remove', { name: row.name }),
       }), `row-remove:${row.groupKey}`);
       minus.addEventListener('click', () => remove(row.instanceId));
@@ -842,10 +842,10 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   }
 
   function footer() {
-    const cancel = button({ label: backLabel || t('deckEditor.cancel'), id: 'deck-editor-cancel', className: 'deck-editor-cancel', attrs: { title: tFull('deckEditor.cancel') } });
+    const cancel = button({ label: backLabel || t('deckEditor.cancel'), id: 'deck-editor-cancel', className: 'deck-editor-cancel', attrs: { title: UiFullText('deckEditor.cancel') } });
     const done = button({
       label: t('deckEditor.accept'), weight: 'primary', id: 'deck-editor-done', className: 'deck-editor-done',
-      disabled: model.done.disabled, attrs: { title: tFull('deckEditor.accept'), 'aria-describedby': 'deck-editor-refusal' },
+      disabled: model.done.disabled, attrs: { title: UiFullText('deckEditor.accept'), 'aria-describedby': 'deck-editor-refusal' },
     });
     done.setAttribute('aria-disabled', model.done.disabled ? 'true' : 'false');
     cancel.addEventListener('click', requestClose);

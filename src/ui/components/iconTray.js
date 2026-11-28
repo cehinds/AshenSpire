@@ -25,7 +25,7 @@ import { planIconTray } from '../models/IconTrayModel.js';
 import { setVar } from '../domWrite.js';
 import { attachTooltip, hideTooltip, showTooltipFor } from './tooltip.js';
 import { pip, pips } from '../kit/index.js';
-import { t, tFull } from '../strings.js';
+import { t, UiFullText } from '../strings.js';
 import { layoutMetrics } from '../layoutMetrics.js';
 import { ActivateOnKey } from '../selection.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
@@ -225,7 +225,7 @@ export function fitIconTray(row, width, { iconPx = iconSizes.get(row) || 0, extr
   state.count = key; row.replaceChildren(...items.slice(0, shown));
   if (hidden) {
     summary.textContent = t('iconTray.more', { count: hidden });
-    summary.setAttribute('aria-label', tFull(list ? 'iconTray.more' : 'iconTray.moreOpen', { count: hidden }));
+    summary.setAttribute('aria-label', UiFullText(list ? 'iconTray.more' : 'iconTray.moreOpen', { count: hidden }));
     list?.replaceChildren(...items.slice(shown));
     row.append(overflow);
   }

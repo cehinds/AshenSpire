@@ -41,7 +41,7 @@
     "entrance": {
       "lightUpMs": 560,
       "fadeMs": 880,
-      "holdDefault": "2s",
+      "holdDefault": "1s",
       "holdDurations": {
         "0s": 0,
         "0.3s": 300,
@@ -77,7 +77,28 @@
   "behavior": {
     "artLoading": {
       "criticalWaitMs": 20000,
-      "retryWaitMs": 60000
+      "retryWaitMs": 60000,
+      "phaseLines": {
+        "off": null,
+        "index": {
+          "state": "loading",
+          "string": "art.loading",
+          "form": "short"
+        },
+        "warming": {
+          "state": "loading",
+          "string": "art.progress",
+          "form": "short"
+        },
+        "failed": {
+          "state": "failed",
+          "string": "art.failed.gate",
+          "form": "full"
+        },
+        "done": {
+          "state": "done"
+        }
+      }
     }
   }
 }
