@@ -351,5 +351,6 @@ test('Smith card receipts read a Honed card at its lifetime plays (Whetstone Nic
   };
   const fresh0 = nick(0), honed = nick(8);
   assert.equal(honed.before - fresh0.before, 5, 'before: base 2 + 8 plays, not the fresh base');
-  assert.equal(honed.after - fresh0.after, 4, 'after: the same 8 plays through the next tier’s rounding');
+  // With the 1-point Reaver's Strength (owner, 2026-11-28) the next tier's rounding keeps all five (it read 4 at STR 2).
+  assert.equal(honed.after - fresh0.after, 5, 'after: the same 8 plays through the next tier’s rounding');
 });
