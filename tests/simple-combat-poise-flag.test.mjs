@@ -207,3 +207,30 @@ test('shipping Core has Poise off: no Poise upgrade step is offered', () =>
   assert.equal(poiseUpgradeSteps().length, 0, 'no Poise step in Core');
   assert.ok(poiseUpgradeSteps(POISE_ON).length > 0, 'Poise on still offers it');
 });
+
+const MARKUP = /<[^>]+>/g;
+
+// Every shipping Core card face, as the hand draws it, that still names Poise.
+function cardsNamingPoise(overrideName)
+{
+  const registries = SimpleCombatRegistries(overrideName);
+  const rules = {
+    combatExpansionVersion: FIGHT_PROBE.faceExpansionVersion,
+    gameProfile: registries.gameProfile,
+  };
+  const cards = registries.cards.all()
+    .filter(card => card.id.startsWith(FIGHT_PROBE.faceCardPrefix));
+  assert.ok(cards.length > 0, 'the probe sees Core cards');
+  return cards.filter(card =>
+  {
+    const lines = cardFaceLines(card, null, registries, rules) || [];
+    const text = lines.map(line => line.html.replace(MARKUP, '')).join(' ');
+    return text.includes(FIGHT_PROBE.faceWord);
+  }).map(card => card.id);
+}
+
+test('shipping Core has Poise off: no Core card face names Poise', () =>
+{
+  assert.deepEqual(cardsNamingPoise(), []);
+  assert.ok(cardsNamingPoise(POISE_ON).length > 0, 'Poise on still names it');
+});

@@ -81,6 +81,8 @@
     "poiseStaggerCause": "poiseBreak",
     "faceCardId": "core.whirlwind",
     "faceWord": "Poise",
+    "faceCardPrefix": "core.",
+    "faceExpansionVersion": 2,
     "upgradeOptions": 40,
     "upgradeStepKind": "poise"
   },
