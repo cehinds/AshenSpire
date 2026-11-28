@@ -124,15 +124,22 @@ function expectedRobeFocusPrice(authored, block, stance)
     ];
 }
 
+// Core Mana is MANA_BASE + Wisdom; the robe cases need PAYABLE_MANA to pay their dearest spell.
+const MANA_BASE = 1;
+const PAYABLE_MANA = 4;
+
 function robeFocusFight(cardId, block, hand, stance)
 {
     const run = fresh('starseer');
-    // Two earned Wisdom points keep the highest quoted cost payable.
-    run.level.unspentPoints = 2;
+    // Earned Wisdom raises the pool to PAYABLE_MANA, so the highest quoted cost stays payable.
+    const earned = PAYABLE_MANA - MANA_BASE - run.attributes.wisdom;
+    run.level.unspentPoints = earned;
     withGameProfileService(run, 'levelUp', () =>
     {
-        applyLevelUp(registries, run, 'wisdom');
-        applyLevelUp(registries, run, 'wisdom');
+        for (let point = 0; point < earned; point++)
+        {
+            applyLevelUp(registries, run, 'wisdom');
+        }
     });
     run.loadout.sets.rightHand[0] = hand;
     run.loadout.sets.leftHand[0] = null;
@@ -199,9 +206,9 @@ test('core Reaver Mana grows by one with each earned Wisdom, independent of Inte
 {
     // Level Up is no longer a shipped rest service; a run pinned to the pre-one-pick rests keeps it.
     const run = pinLegacyRests(fresh());
-    assert.equal(run.maxMana, 2);
-    assert.equal(run.mana, 2);
-    assert.equal(run.attributes.wisdom, 1);
+    assert.equal(run.attributes.wisdom, 0, 'the Reaver starts with no Wisdom (owner, 2026-11-28)');
+    assert.equal(run.maxMana, MANA_BASE + run.attributes.wisdom);
+    assert.equal(run.mana, run.maxMana);
     run.attributes.intelligence = 7;
     run.attributes.wisdom = 3;
     rederivePools(registries, run, 'test');
@@ -307,7 +314,7 @@ test('robes, Focus and Prepared: spell quote, payment and restored snapshot agre
             const block = spellCostModes[mode]();
             const combat = robeFocusFight(cardId, block, hand, stance);
             assert.equal(combat.gameProfile.modules.gear.typeEffectsVersion, 1, 'current gear');
-            assert.equal(combat.player.maxMana, 4, 'two earned Wisdom points make 4 MP payable');
+            assert.equal(combat.player.maxMana, PAYABLE_MANA, 'earned Wisdom makes 4 MP payable');
             assert.equal(getStacks(combat.player, 'ward'), 0, 'no automatic turn-start Ward');
             const expected = expectedRobeFocusPrice(authored, block, stance);
             assertQuotePayResume(combat, expected, label);
