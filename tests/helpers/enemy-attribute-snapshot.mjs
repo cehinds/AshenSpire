@@ -12,12 +12,15 @@ import {
   resolveGameAuthor,
 } from '../../engine/kernel/gameConfig.js';
 
-const GAME_URL = new URL('../../games/ashenspire/game.json', import.meta.url);
-const FIXTURE_URL = new URL('../fixtures/enemy-attributes-baseline.json', import.meta.url);
+const GAME_PATH = fileURLToPath(new URL('../../games/ashenspire/game.json', import.meta.url));
+const FIXTURE_PATH = fileURLToPath(new URL('../fixtures/enemy-attributes-baseline.json', import.meta.url));
+const SCRIPT_PATH = fileURLToPath(import.meta.url);
 const ENEMY_TAG = 'character.enemy';
+// The highest Core enemy level (SPEC §17: Act 3 bosses).
+const MAX_ENEMY_LEVEL = 11;
 const LEVELS = Array.from(
   {
-    length: 11,
+    length: MAX_ENEMY_LEVEL,
   },
   (unused, index) => index + 1,
 );
@@ -66,7 +69,7 @@ function enemySnapshot(row, settings, content, gear)
 
 export function EnemyAttributeSnapshot()
 {
-  const author = JSON.parse(readFileSync(GAME_URL, 'utf8'));
+  const author = JSON.parse(readFileSync(GAME_PATH, 'utf8'));
   const profile = resolveGameAuthor(author, loadGameProfileCatalog());
   const settings = characterSettings(profile.modules);
   const content = profile.content;
@@ -90,10 +93,10 @@ export function EnemyAttributeSnapshot()
 
 export function ReadEnemyAttributeBaseline()
 {
-  return JSON.parse(readFileSync(FIXTURE_URL, 'utf8'));
+  return JSON.parse(readFileSync(FIXTURE_PATH, 'utf8'));
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1] && process.argv.includes(WRITE_FLAG))
+if (process.argv[1] === SCRIPT_PATH && process.argv.includes(WRITE_FLAG))
 {
-  writeFileSync(FIXTURE_URL, JSON.stringify(EnemyAttributeSnapshot()) + '\n');
+  writeFileSync(FIXTURE_PATH, JSON.stringify(EnemyAttributeSnapshot()) + '\n');
 }
