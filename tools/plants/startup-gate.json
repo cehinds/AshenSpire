@@ -1,0 +1,231 @@
+{
+  "$note": "Known-bad plants for `node tools/startup-gate.mjs --selftest`. Each patches one find-string and must turn the gate red with expectRed (a RegExp source).",
+  "tool": "startup-gate.mjs",
+  "args": [
+    "--only",
+    "selftest"
+  ],
+  "timeoutMs": 180000,
+  "plants": [
+    {
+      "name": "title controls are mounted behind the cold-boot surface",
+      "file": "src/ui/components/startupGate.js",
+      "find": "    <section class=\"screen startup-gate\"",
+      "replace": "    <div class=\"title-screen\"><button class=\"slot-new\">PLANT</button></div>\n    <section class=\"screen startup-gate\"",
+      "expectRed": "RED A1\\.COLD-ONLY"
+    },
+    {
+      "name": "startup uses a non-startup build-stamp placement",
+      "file": "src/ui/components/startupGate.js",
+      "find": "${buildStampHtml('startup')}",
+      "replace": "${buildStampHtml('title')}",
+      "expectRed": "RED A2\\.STARTUP-STAMP"
+    },
+    {
+      "name": "last-input family stops changing the visible prompt",
+      "file": "src/ui/components/startupGate.js",
+      "find": "prompt.textContent = properties.prompts[next];",
+      "replace": "prompt.textContent = properties.prompts.keyboard; // startup-gate selftest plant",
+      "expectRed": "RED A3\\.PROMPT-FAMILY"
+    },
+    {
+      "name": "analog-stick activity bypasses the startup input-family owner",
+      "file": "src/ui/input.js",
+      "find": "      gateInput({ family: 'controller', kind: 'axis', phase: 'move' });",
+      "replace": "      false; // startup-gate selftest plant",
+      "expectRed": "RED A3\\.PROMPT-ANALOG"
+    },
+    {
+      "name": "Space is no longer an activation key",
+      "file": "src/ui/components/startupGate.js",
+      "find": "if (input.family === 'keyboard') return input.key === 'Enter' || input.key === ' ';",
+      "replace": "if (input.family === 'keyboard') return input.key === 'Enter'; // startup-gate selftest plant",
+      "expectRed": "RED A5\\.SPACE\\.REVEAL-ONCE"
+    },
+    {
+      "name": "controller reveals on button-down instead of release",
+      "file": "src/ui/components/startupGate.js",
+      "find": "      if (!input.repeat) armed = identity;",
+      "replace": "      if (input.family === 'controller') finish(input.family);\n      if (!input.repeat) armed = identity;",
+      "expectRed": "RED A7\\.GAMEPAD-RELEASE"
+    },
+    {
+      "name": "Start or Menu button 9 is no longer an activation button",
+      "file": "src/ui/components/startupGate.js",
+      "find": "  if (input.family === 'controller') {",
+      "replace": "  if (input.family === 'controller' && input.button !== 9 && input.action !== 'menu') {",
+      "expectRed": "RED A7\\.GAMEPAD-REVEAL"
+    },
+    {
+      "name": "returning to title re-opens the startup gate",
+      "file": "src/main.js",
+      "find": "startupGatePending = false;",
+      "replace": "startupGatePending = true; // startup-gate selftest plant",
+      "expectRed": "RED A8\\.RETURN-BYPASS"
+    },
+    {
+      "$note": "A tap opens the decision door for the slot it read; a NaN slot opens the wrong door (no save → \"empty\"), which is the review check's red.",
+      "name": "load slot presses read a missing data attribute",
+      "file": "src/ui/components/saveSlotSelector.js",
+      "find": "        onTap: () => activateSlot(slot),",
+      "replace": "        onTap: () => activateSlot(Number.NaN), // startup-gate selftest plant",
+      "expectRed": "RED A8\\.LOAD-SLOT-RESELECT"
+    },
+    {
+      "name": "second activation no longer opens the load review",
+      "file": "src/ui/components/saveSlotSelector.js",
+      "find": "    loadReviewSlot = slot;\n    render();",
+      "replace": "    loadReviewSlot = null; // startup-gate selftest plant\n    render();",
+      "expectRed": "RED A8\\.LOAD-SLOT-REVIEW"
+    },
+    {
+      "name": "Escape closes the whole load flow instead of returning to saves",
+      "file": "src/ui/components/saveSlotSelector.js",
+      "find": "      if (loadReviewSlot != null) {",
+      "replace": "      if (loadReviewSlot != null) { close(); // startup-gate selftest plant",
+      "expectRed": "RED A8\\.LOAD-SLOT-REVIEW-ESCAPE"
+    },
+    {
+      "name": "completed save-slot hold selects instead of loading",
+      "file": "src/ui/components/saveSlotSelector.js",
+      "find": "          requestLoad(slot, 'hold');",
+      "replace": "            activateSlot(slot); // startup-gate selftest plant",
+      "expectRed": "RED A8\\.LOAD-SLOT-HOLD"
+    },
+    {
+      "$note": "The release's trailing click is hit-tested on the freshly mounted map.",
+      "name": "hold-to-load lets the trailing touch click press the map",
+      "file": "src/ui/components/holdRelease.js",
+      "find": "    swallowTrailingClick(trailingClickMs);",
+      "replace": "    // startup-gate selftest plant",
+      "expectRed": "RED A8\\.LOAD-SLOT-HOLD"
+    },
+    {
+      "name": "quick-load hold captures keyboard and controller presses",
+      "file": "src/ui/components/saveSlotSelector.js",
+      "find": "        pointerOnly: true,",
+      "replace": "        pointerOnly: false, // startup-gate selftest plant",
+      "expectRed": "RED A8\\.LOAD-SLOT-(?:KEY|PAD)-REVIEW"
+    },
+    {
+      "$note": "THE BOX LIVES IN THE KIT (styles/kit.css) and is one length on both axes, floor included: a plant that shrinks the length AND the floor is the only plant that reaches RED A8.LOAD-SLOT-TARGETS.",
+      "name": "title modal Close drops below the authored tap floor",
+      "file": "styles/kit.css",
+      "find": ".as-iconbtn, .modal-iconbtn, .modal-close {\n  display: inline-flex; align-items: center; justify-content: center;\n  width: var(--iconbtn-size); height: var(--iconbtn-size); flex: 0 0 auto;\n  min-width: var(--iconbtn-size); min-height: var(--iconbtn-size);",
+      "replace": ".as-iconbtn, .modal-iconbtn, .modal-close {\n  display: inline-flex; align-items: center; justify-content: center;\n  width: 3rem; height: 3rem; flex: 0 0 auto;\n  min-width: 3rem; min-height: 3rem; /* startup-gate selftest plant */",
+      "expectRed": "RED A8\\.LOAD-SLOT-TARGETS-(?:MOBILE|DESKTOP)"
+    },
+    {
+      "$note": "Delete is an IconButton now — the same box as Close, sized by ONE token (base.css --iconbtn-size). Planting the token under the floor is what shrinks it; nothing else can.",
+      "name": "occupied-slot Delete loses its tap-floor height",
+      "file": "styles/base.css",
+      "find": "  --iconbtn-size: var(--tap-floor);",
+      "replace": "  --iconbtn-size: 3rem; /* startup-gate selftest plant */",
+      "expectRed": "RED A8\\.LOAD-SLOT-TARGETS-(?:MOBILE|DESKTOP)"
+    },
+    {
+      "name": "startup outranks the corrupt-profile crisis notice",
+      "file": "src/main.js",
+      "find": "  if (showProfileNoticeIfNeeded()) return;",
+      "replace": "  if (false && showProfileNoticeIfNeeded()) return; // startup-gate selftest plant",
+      "expectRed": "RED A9\\.CRISIS-PRECEDENCE"
+    },
+    {
+      "name": "interrupted startup presses stay armed",
+      "file": "src/ui/components/startupGate.js",
+      "find": "      if (!input.family || armed?.startsWith(`${input.family}:`)) armed = null;",
+      "replace": "      armed = armed; // startup-gate selftest plant",
+      "expectRed": "RED A7\\.INTERRUPT-CANCEL"
+    },
+    {
+      "name": "window blur leaves a held controller activation armed",
+      "file": "src/ui/input.js",
+      "find": "    cancelInputGate();",
+      "replace": "    cancelInputGate('keyboard'); // startup-gate selftest plant",
+      "expectRed": "RED A7\\.GAMEPAD-BLUR-CANCEL"
+    },
+    {
+      "name": "a controller button held before the first poll becomes a rising edge",
+      "file": "src/ui/input.js",
+      "find": "      padPrev[pad.index] = pressed;",
+      "replace": "      padPrev[pad.index] = pressed.map(() => false); // startup-gate selftest plant",
+      "expectRed": "RED A7\\.HELD-AT-BOOT"
+    },
+    {
+      "name": "a disconnected controller keeps its stale button sample",
+      "file": "src/ui/input.js",
+      "find": "    if (Number.isInteger(disconnectedIndex)) delete padPrev[disconnectedIndex];",
+      "replace": "    if (Number.isInteger(disconnectedIndex)) void disconnectedIndex; // startup-gate selftest plant",
+      "expectRed": "RED A7\\.HELD-AT-RECONNECT"
+    },
+    {
+      "name": "one controller can complete another controller's activation",
+      "file": "src/ui/components/startupGate.js",
+      "find": "      : `${input.family}:${input.padIndex}:${input.button}`;",
+      "replace": "      : `${input.family}:${input.button}`; // startup-gate selftest plant",
+      "expectRed": "RED A7\\.MULTIPAD-OWNERSHIP"
+    },
+    {
+      "name": "startup activation is removed from the accessibility tree",
+      "file": "src/ui/models/StartupGateModels.js",
+      "find": "      role: 'button',",
+      "replace": "      role: 'region', // startup-gate selftest plant",
+      "expectRed": "RED A1\\.ACTION-SEMANTICS"
+    },
+    {
+      "name": "pointer reveal publishes the persistent gamepad cursor",
+      "file": "src/main.js",
+      "find": "        focusCursor: family === 'keyboard' || family === 'controller',",
+      "replace": "        focusCursor: true, // startup-gate selftest plant",
+      "expectRed": "RED A6\\.POINTER-CURSOR"
+    },
+    {
+      "name": "reveal transition skips its deterministic cleanup deadline",
+      "args": [
+        "--only",
+        "reduced-motion-clock"
+      ],
+      "file": "src/ui/components/startupGate.js",
+      "find": "    const delay = reducedMotion ? 140 : lightUpMs + holdMs + fadeMs;",
+      "replace": "    const delay = reducedMotion ? 900 : lightUpMs + holdMs + fadeMs; // startup-gate selftest plant",
+      "expectRed": "RED A10\\.REVEAL-CLEANUP"
+    },
+    {
+      "name": "reduced-motion setting no longer reaches the rendered page",
+      "file": "src/ui/displaySettings.js",
+      "find": "document.body.classList.toggle('reduced-motion', settings.reducedMotion === true);",
+      "replace": "document.body.classList.toggle('reduced-motion', false); // startup-gate selftest plant",
+      "expectRed": "RED A10\\.REDUCED-MOTION"
+    },
+    {
+      "$note": "Escape is bound by the shared chrome now, and the plant severs it FOR THIS DOOR rather than in modalShell.js — a mutation there would take Escape off all four modals at once, which is a wider defect than the one A8 is asserting about. Settings opens through the shell now (OpenModal binds dismissal for every door, and Escape closes the TOPMOST aria-modal element), so the plant parks a bare aria-modal element above this one door: Settings is no longer topmost, and Escape leaves it up over the title. Still one door, still this defect only — the nested plant A8 appends later still lands on top and still closes on its own Escape.",
+      "name": "Settings stops owning Escape above the expanded title",
+      "file": "src/ui/screens/settings.js",
+      "find": "  done.addEventListener('click', () => {",
+      "replace": "  document.body.appendChild(document.createElement('div')).setAttribute('aria-modal', 'true'); // startup-gate selftest plant\n  done.addEventListener('click', () => {",
+      "expectRed": "RED A8\\.SETTINGS-ESCAPE-PRECEDENCE"
+    },
+    {
+      "name": "reveal cleanup leaves an ash particle behind the title",
+      "args": [
+        "--only",
+        "reduced-motion-clock"
+      ],
+      "file": "src/ui/components/startupGate.js",
+      "find": "      onReveal({ source, family });",
+      "replace": "      onReveal({ source, family });\n      if (reducedMotion) document.body.insertAdjacentHTML('beforeend', '<span class=\"startup-ash\"></span>'); // startup-gate selftest plant",
+      "expectRed": "RED A10\\.REVEAL-CLEANUP"
+    },
+    {
+      "name": "reveal removes startup without mounting the title",
+      "args": [
+        "--only",
+        "reduced-motion-clock"
+      ],
+      "file": "src/ui/components/startupGate.js",
+      "find": "      onReveal({ source, family });",
+      "replace": "      if (reducedMotion) root.remove(); else onReveal({ source, family }); // startup-gate selftest plant",
+      "expectRed": "RED A10\\.REVEAL-CLEANUP"
+    }
+  ]
+}

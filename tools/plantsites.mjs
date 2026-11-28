@@ -27,6 +27,8 @@ import { createHash } from 'node:crypto';
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const BASELINE = resolve(ROOT, 'tools/plantsites-baseline.json');
+const PLANT_CORPUS_DIR = 'tools/plants';
+const JSON_EXTENSION = '.json';
 
 // Parse the JS string literal starting at src[i] (a quote). Handles ' " ` and
 // backslash escapes; template interpolation is reported, not guessed at.
@@ -50,6 +52,68 @@ function readString(src, i) {
     out += ch; j++;
   }
   return null;
+}
+
+// A gate may keep its plants as JSON in tools/plants/ instead of inline.
+// Every { file, find } row there is a site, keyed by the corpus file.
+function scanPlantCorpora(root, scan)
+{
+  const corpusDir = resolve(root, PLANT_CORPUS_DIR);
+  if (!existsSync(corpusDir))
+  {
+    return;
+  }
+  for (const name of readdirSync(corpusDir).sort())
+  {
+    if (!name.endsWith(JSON_EXTENSION))
+    {
+      continue;
+    }
+    const tool = `${PLANT_CORPUS_DIR}/${name}`;
+    const corpus = readCorpus(resolve(corpusDir, name));
+    if (!corpus)
+    {
+      scan.unreadable.push({
+        tool,
+        why: 'the corpus is not valid JSON',
+      });
+      continue;
+    }
+    for (const plant of corpus.plants || [])
+    {
+      addCorpusSite(scan, { tool, plant });
+    }
+  }
+}
+
+function readCorpus(path)
+{
+  try
+  {
+    return JSON.parse(readFileSync(path, 'utf8'));
+  }
+  catch
+  {
+    return null;
+  }
+}
+
+function addCorpusSite(scan, { tool, plant })
+{
+  const readable = typeof plant.file === 'string' && typeof plant.find === 'string';
+  if (!readable)
+  {
+    scan.unreadable.push({
+      tool,
+      why: 'a corpus plant has no string file or find',
+    });
+    return;
+  }
+  scan.sites.push({
+    tool,
+    target: plant.file,
+    find: plant.find,
+  });
 }
 
 export function scanPlantSites(root = ROOT) {
@@ -116,6 +180,7 @@ export function scanPlantSites(root = ROOT) {
       sites.push({ tool, target: fileStr.value, find: findStr.value });
     }
   }
+  scanPlantCorpora(root, { sites, unreadable });
   for (const s of sites) {
     s.id = createHash('sha256').update(`${s.tool}\0${s.target}\0${s.find}`).digest('hex').slice(0, 16);
     const targetPath = resolve(root, s.target);

@@ -1,0 +1,31 @@
+{
+  "$note": "Cases for engine.test.js: authored hold rows the validator must refuse, and tray fold states.",
+  "titleLoadHoldRejections": [
+    {
+      "label": "a non-positive title quick-load duration is refused by its authored path",
+      "titleLoadHold": { "ms": 0 },
+      "errorPath": "balance.ui.titleLoadHold.ms"
+    },
+    {
+      "label": "a non-positive trailing-click guard is refused by its authored path",
+      "titleLoadHold": { "ms": 600, "trailingClickMs": 0 },
+      "errorPath": "balance.ui.titleLoadHold.trailingClickMs"
+    }
+  ],
+  "trayPresentation": {
+    "$note": "Each case folds or unfolds a tray whose saved expanded height is savedHeightRatio.",
+    "savedHeightRatio": 0.7,
+    "cases": [
+      {
+        "label": "an unfolded tray restores its saved height and exposes its resize edge",
+        "collapsed": false,
+        "expect": { "heightRatio": 0.7, "resizable": true, "savedHeightRatio": 0.7 }
+      },
+      {
+        "label": "a folded tray uses its header height, hides its resize edge, and keeps the saved height",
+        "collapsed": true,
+        "expect": { "heightRatio": null, "resizable": false, "savedHeightRatio": 0.7 }
+      }
+    ]
+  }
+}
