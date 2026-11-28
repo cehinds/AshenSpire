@@ -33,8 +33,10 @@ function fight(enemyIds = ['wanderingSoldier'], { legacy = false, seed = 511, no
   if (legacy) { combat.fixCoreRules = { ...combat.fixCoreRules, poise: { drain: 'prevented' } }; }
   return combat;
 }
-// `amount` is the hit after Core halves card base damage (ceil, effects.baseDamageMultiplier 0.5), so it is dealt from twice that base.
-const hit = (combat, target, amount) => { primeAccuracyRolls(combat); const before = target.hp; applyAttackDamage(combat, combat.player, target, amount * 2, [], carrier); return before - target.hp; };
+// Owner ruling 2026-11-28: damage is 1:1, so `amount` is dealt as it stands and the Attack stance adds x1.
+const ATTACK_STANCE_MULTIPLIER = shipped.stanceBenefits.attack.damageMultiplier;
+const BREAK_VULNERABLE_MULTIPLIER = 1.25;
+const hit = (combat, target, amount) => { primeAccuracyRolls(combat); const before = target.hp; applyAttackDamage(combat, combat.player, target, amount, [], carrier); return before - target.hp; };
 const endTurn = combat => {
   dispatch(combat, { type: 'endTurn' });
   for (let safety = 0; combat.pendingReaction && safety < 20; safety++) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
@@ -101,11 +103,12 @@ test('a charging move is cancelled and its charge lost', () => {
 
 test('a hit on a Broken enemy takes only the break\'s Vulnerable x1.25 (no x1.5), and only while Broken', () => {
   const combat = fight(); const enemy = combat.enemies[0]; sandbag(enemy, 1); enemy.ratings = { ...(enemy.ratings || {}), dr: 0 };
-  const before = hit(combat, enemy, 10); // the Attack stance's x1.2 is in every figure here
+  const before = hit(combat, enemy, 10); // the Attack stance's multiplier is in every figure here
   assert.equal(enemy.broken && true, true, 'the 1-Poise bar broke on that hit');
   assert.equal(enemy.statuses.vulnerable?.stacks, 2, 'the break grants 2 Vulnerable');
   const broken = hit(combat, enemy, 10), second = hit(combat, enemy, 10);
-  assert.equal(broken, Math.floor(10 * 1.2 * 1.25), 'x1.25 Vulnerable once, no x1.5');
+  const expected = Math.floor(10 * ATTACK_STANCE_MULTIPLIER * BREAK_VULNERABLE_MULTIPLIER);
+  assert.equal(broken, expected, 'x1.25 Vulnerable once, no x1.5');
   assert.equal(second, broken);
   assert.ok(broken > before, 'bigger than the hit that broke it');
   endTurn(combat);
@@ -113,17 +116,19 @@ test('a hit on a Broken enemy takes only the break\'s Vulnerable x1.25 (no x1.5)
   assert.equal(enemy.statuses.vulnerable, undefined, 'the break statuses leave with Broken');
 });
 
-test('with the shipped Attack stance benefit a hit on a Broken enemy is 10 x 1.25 (the break\'s own Vulnerable) x 1.2', () => {
+test('with the shipped Attack stance benefit (x1) a hit on a Broken enemy is 10 x 1.25 (the break\'s own Vulnerable)', () => {
   const combat = fight(); const enemy = combat.enemies[0]; sandbag(enemy, 1); enemy.ratings = { ...(enemy.ratings || {}), dr: 0 };
   hit(combat, enemy, 10);
-  assert.equal(hit(combat, enemy, 10), 15, 'floor(10 x 1.25 x 1.2): the break grants Vulnerable (owner 2026-11-18, breakStatusStacks); no x1.5');
+  assert.equal(ATTACK_STANCE_MULTIPLIER, 1, 'Owner ruling 2026-11-28: the Attack stance adds no damage');
+  assert.equal(hit(combat, enemy, 10), 12, 'floor(10 x 1.25): the break grants Vulnerable (breakStatusStacks); no x1.5');
 });
 
 test('Vulnerable multiplies a Broken target once (x1.25), however many stacks', () => {
   const combat = fight(); const enemy = combat.enemies[0]; sandbag(enemy, 1);
   hit(combat, enemy, 10);
   enemy.statuses.vulnerable = { stacks: 7 };
-  assert.equal(hit(combat, enemy, 10), Math.floor(10 * 1.2 * 1.25), 'Vulnerable still multiplies once however many stacks (Attack stance x1.2 included); no x1.5');
+  const expected = Math.floor(10 * ATTACK_STANCE_MULTIPLIER * BREAK_VULNERABLE_MULTIPLIER);
+  assert.equal(hit(combat, enemy, 10), expected, 'Vulnerable still multiplies once however many stacks; no x1.5');
 });
 
 test('a Broken enemy cannot be broken again and its Poise cannot be refilled until Broken ends', () => {
@@ -175,8 +180,7 @@ test('the player Broken: next turn starts 1 Stamina short, hits take the break\'
   // The plain player holds no stance, so it is Idle and takes the Idle stance weakness (theme B, 2026-11-17); a Broken player holds the
   // Staggered stance and does not. The baseline leaves the weakness out so the comparison is Broken against nothing.
   delete plain.fixCoreRules.stanceBenefits.neutral.damageTakenMultiplier;
-  // Bases 20 and 16 halve to 10 and 8 (Core base-damage scale).
-  const hpPlain = plain.player.hp; applyAttackDamage(plain, plain.enemies[0], plain.player, 20, [], carrier);
+  const hpPlain = plain.player.hp; applyAttackDamage(plain, plain.enemies[0], plain.player, 10, [], carrier);
   const bare = hpPlain - plain.player.hp;
   const combat = fight(); const player = combat.player, enemy = combat.enemies[0];
   const full = player.energyMax;
@@ -184,13 +188,13 @@ test('the player Broken: next turn starts 1 Stamina short, hits take the break\'
   player.hp = player.maxHp = 100;
   player.persistentPoise.value = 1;
   primeAccuracyRolls(combat);
-  applyAttackDamage(combat, enemy, player, 16, [], carrier);
+  applyAttackDamage(combat, enemy, player, 8, [], carrier);
   assert.ok(player.broken, 'the player is Broken');
   assert.equal(player.persistentPoise.value, 0);
   assert.equal(player.statuses.vulnerable?.stacks, 2, 'the break grants 2 Vulnerable (owner 2026-11-18)');
   assert.equal(player.pendingActionLoss, 1, 'the next turn opens 1 short');
   const hpBefore = player.hp; primeAccuracyRolls(combat);
-  applyAttackDamage(combat, enemy, player, 20, [], carrier);
+  applyAttackDamage(combat, enemy, player, 10, [], carrier);
   assert.equal(hpBefore - player.hp, Math.floor(bare * 1.25), 'the break\'s Vulnerable x1.25 while Broken, no x1.5');
   enemy.plannedMoves = []; enemy.planDue = false; enemy.intent = { kind: 'unknown', moveId: null };
   endTurn(combat);
