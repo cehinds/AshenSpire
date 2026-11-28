@@ -26,7 +26,7 @@
     "moves": {
       "cinderSlash": {
         "intent": "attack",
-        "damage": 12,
+        "damage": 3,
         "weight": 55,
         "maxConsecutive": 2
       },
@@ -85,7 +85,7 @@
     "moves": {
       "desperateClaw": {
         "intent": "attack",
-        "damage": 9,
+        "damage": 2,
         "weight": 60
       },
       "wail": {
@@ -152,13 +152,13 @@
     "moves": {
       "spiralLance": {
         "intent": "attack",
-        "damage": 5,
+        "damage": 1,
         "hits": 2,
         "weight": 50
       },
       "bloodFeather": {
         "intent": "attack",
-        "damage": 5,
+        "damage": 1,
         "weight": 50,
         "effects": [
           {
@@ -213,7 +213,7 @@
     "moves": {
       "smash": {
         "intent": "attack",
-        "damage": 16,
+        "damage": 3,
         "weight": 50,
         "maxConsecutive": 2
       },
@@ -232,7 +232,7 @@
       },
       "harden": {
         "intent": "block",
-        "block": 6,
+        "block": 10,
         "weight": 25,
         "maxConsecutive": 1
       }
@@ -292,13 +292,13 @@
       },
       "halberdReign": {
         "intent": "attack",
-        "damage": 15,
+        "damage": 3,
         "weight": 45,
         "maxConsecutive": 2
       },
       "tailSweep": {
         "intent": "attack",
-        "damage": 8,
+        "damage": 1,
         "weight": 30,
         "effects": [
           {
@@ -311,7 +311,7 @@
       },
       "goldenBulwark": {
         "intent": "block",
-        "block": 7,
+        "block": 11,
         "weight": 25,
         "maxConsecutive": 1,
         "effects": [
@@ -363,7 +363,7 @@
     "moves": {
       "spiralThrust": {
         "intent": "attack",
-        "damage": 12,
+        "damage": 3,
         "weight": 35,
         "maxConsecutive": 2,
         "effects": [
@@ -377,7 +377,7 @@
       },
       "whirlwind": {
         "intent": "attack",
-        "damage": 4,
+        "damage": 1,
         "hits": 5,
         "weight": 30,
         "maxConsecutive": 1,
@@ -406,7 +406,7 @@
       },
       "scarletDance": {
         "intent": "attack",
-        "damage": 5,
+        "damage": 1,
         "hits": 5,
         "weight": 35,
         "locked": true
@@ -482,13 +482,13 @@
     "moves": {
       "scythePair": {
         "intent": "attack",
-        "damage": 5,
+        "damage": 1,
         "weight": 55,
         "hits": 2
       },
       "emberPounce": {
         "intent": "attack",
-        "damage": 18,
+        "damage": 4,
         "weight": 30,
         "maxConsecutive": 1,
         "delay": {
@@ -501,7 +501,7 @@
       "foldedBlades": {
         "intent": "block",
         "counterDamage": 6,
-        "block": 3,
+        "block": 4,
         "weight": 15,
         "maxConsecutive": 1
       }
@@ -559,12 +559,12 @@
       },
       "lunarRay": {
         "intent": "attack",
-        "damage": 11,
+        "damage": 2,
         "weight": 50
       },
       "fadingEcho": {
         "intent": "attack",
-        "damage": 6,
+        "damage": 2,
         "weight": 20,
         "maxConsecutive": 1,
         "effects": [
@@ -617,7 +617,7 @@
     "moves": {
       "openFurnace": {
         "intent": "attack",
-        "damage": 32,
+        "damage": 11,
         "weight": 30,
         "maxConsecutive": 1,
         "delay": {
@@ -629,7 +629,7 @@
       },
       "censerSweep": {
         "intent": "attack",
-        "damage": 22,
+        "damage": 5,
         "weight": 45,
         "maxConsecutive": 2
       },
@@ -700,14 +700,14 @@
       },
       "orbitalShards": {
         "intent": "attack",
-        "damage": 8,
+        "damage": 1,
         "weight": 45,
         "hits": 4,
         "maxConsecutive": 2
       },
       "totalEclipse": {
         "intent": "attack",
-        "damage": 30,
+        "damage": 10,
         "weight": 35,
         "maxConsecutive": 1,
         "delay": {
@@ -727,7 +727,7 @@
       },
       "fallingHeavens": {
         "intent": "attack",
-        "damage": 10,
+        "damage": 2,
         "weight": 30,
         "hits": 3,
         "locked": true,
@@ -779,14 +779,14 @@
     "moves": {
       "obsidianClaws": {
         "intent": "attack",
-        "damage": 12,
+        "damage": 3,
         "weight": 45,
         "hits": 2,
         "maxConsecutive": 2
       },
       "tailBastion": {
         "intent": "block",
-        "block": 5,
+        "block": 8,
         "weight": 25,
         "maxConsecutive": 1
       },
@@ -805,7 +805,7 @@
       },
       "ashBreath": {
         "intent": "attack",
-        "damage": 9,
+        "damage": 3,
         "weight": 35,
         "maxConsecutive": 1,
         "delay": {
@@ -875,28 +875,28 @@
       "shellBash": {
         "sp": 1,
         "intent": "attack",
-        "damage": 6,
+        "damage": 1,
         "weight": 35,
         "maxConsecutive": 2
       },
       "kilnBreath": {
         "sp": 1,
         "intent": "attack",
-        "damage": 7,
+        "damage": 2,
         "weight": 30,
         "maxConsecutive": 1
       },
       "shellTuck": {
         "sp": 1,
         "intent": "block",
-        "block": 3,
+        "block": 5,
         "weight": 20,
         "maxConsecutive": 1
       },
       "kilnPlate": {
         "sp": 2,
         "intent": "block",
-        "block": 6,
+        "block": 10,
         "weight": 20,
         "maxConsecutive": 1
       }
@@ -939,14 +939,14 @@
       "slagSpit": {
         "sp": 1,
         "intent": "attack",
-        "damage": 7,
+        "damage": 2,
         "weight": 45,
         "maxConsecutive": 2
       },
       "tongueBrand": {
         "sp": 1,
         "intent": "attack",
-        "damage": 6,
+        "damage": 1,
         "weight": 25,
         "maxConsecutive": 1
       },
@@ -1003,7 +1003,7 @@
       "sootFlurry": {
         "sp": 1,
         "intent": "attack",
-        "damage": 2,
+        "damage": 1,
         "hits": 3,
         "weight": 45,
         "maxConsecutive": 2
@@ -1011,7 +1011,7 @@
       "ashWingBeat": {
         "sp": 1,
         "intent": "attack",
-        "damage": 5,
+        "damage": 1,
         "weight": 30,
         "maxConsecutive": 1,
         "effects": [
@@ -1062,28 +1062,28 @@
       "hornRam": {
         "sp": 1,
         "intent": "attack",
-        "damage": 7,
+        "damage": 2,
         "weight": 30,
         "maxConsecutive": 2
       },
       "brassCall": {
         "sp": 1,
         "intent": "attack",
-        "damage": 8,
+        "damage": 2,
         "weight": 35,
         "maxConsecutive": 2
       },
       "thunderLeap": {
         "sp": 2,
         "intent": "attack",
-        "damage": 19,
+        "damage": 4,
         "weight": 25,
         "maxConsecutive": 1
       },
       "stormPeal": {
         "sp": 3,
         "intent": "attack",
-        "damage": 27,
+        "damage": 9,
         "weight": 15,
         "maxConsecutive": 1,
         "effects": [
@@ -1135,35 +1135,35 @@
       "shellRam": {
         "sp": 2,
         "intent": "attack",
-        "damage": 18,
+        "damage": 4,
         "weight": 30,
         "maxConsecutive": 1
       },
       "siegeLob": {
         "sp": 2,
         "intent": "attack",
-        "damage": 18,
+        "damage": 6,
         "weight": 25,
         "maxConsecutive": 1
       },
       "emberVolley": {
         "sp": 3,
         "intent": "attack",
-        "damage": 27,
+        "damage": 9,
         "weight": 15,
         "maxConsecutive": 1
       },
       "siegePlate": {
         "sp": 2,
         "intent": "block",
-        "block": 6,
+        "block": 10,
         "weight": 20,
         "maxConsecutive": 1
       },
       "bunkerGuard": {
         "sp": 1,
         "intent": "block",
-        "block": 3,
+        "block": 5,
         "weight": 20,
         "maxConsecutive": 1
       }
@@ -1207,28 +1207,28 @@
       "slagJab": {
         "sp": 1,
         "intent": "attack",
-        "damage": 7,
+        "damage": 2,
         "weight": 40,
         "maxConsecutive": 2
       },
       "emberDive": {
         "sp": 2,
         "intent": "attack",
-        "damage": 19,
+        "damage": 4,
         "weight": 30,
         "maxConsecutive": 1
       },
       "moltenBeak": {
         "sp": 3,
         "intent": "attack",
-        "damage": 28,
+        "damage": 9,
         "weight": 15,
         "maxConsecutive": 1
       },
       "heronWard": {
         "sp": 1,
         "intent": "block",
-        "block": 3,
+        "block": 5,
         "weight": 15,
         "maxConsecutive": 1
       }
@@ -1271,7 +1271,7 @@
       "venomFang": {
         "sp": 1,
         "intent": "attack",
-        "damage": 7,
+        "damage": 2,
         "weight": 35,
         "maxConsecutive": 2
       },
@@ -1298,14 +1298,14 @@
       "cocoonCrush": {
         "sp": 2,
         "intent": "attack",
-        "damage": 16,
+        "damage": 3,
         "weight": 20,
         "maxConsecutive": 1
       },
       "ashSilkVolley": {
         "sp": 3,
         "intent": "attack",
-        "damage": 26,
+        "damage": 6,
         "weight": 15,
         "maxConsecutive": 1
       }
@@ -1349,28 +1349,28 @@
       "ironCensure": {
         "sp": 1,
         "intent": "attack",
-        "damage": 7,
+        "damage": 2,
         "weight": 30,
         "maxConsecutive": 2
       },
       "voltaicPrayer": {
         "sp": 1,
         "intent": "attack",
-        "damage": 8,
+        "damage": 2,
         "weight": 30,
         "maxConsecutive": 2
       },
       "anvilBrand": {
         "sp": 2,
         "intent": "attack",
-        "damage": 18,
+        "damage": 4,
         "weight": 25,
         "maxConsecutive": 1
       },
       "ironLitany": {
         "sp": 2,
         "intent": "block",
-        "block": 6,
+        "block": 10,
         "weight": 25,
         "maxConsecutive": 1
       },
@@ -1428,42 +1428,42 @@
       "moltenBite": {
         "sp": 1,
         "intent": "attack",
-        "damage": 8,
+        "damage": 2,
         "weight": 40,
         "maxConsecutive": 2
       },
       "crucibleTail": {
         "sp": 2,
         "intent": "attack",
-        "damage": 20,
+        "damage": 4,
         "weight": 30,
         "maxConsecutive": 1
       },
       "slagBreath": {
         "sp": 2,
         "intent": "attack",
-        "damage": 13,
+        "damage": 3,
         "weight": 20,
         "maxConsecutive": 1
       },
       "emberSpit": {
         "sp": 1,
         "intent": "attack",
-        "damage": 8,
+        "damage": 2,
         "weight": 20,
         "maxConsecutive": 1
       },
       "moltenHide": {
         "sp": 1,
         "intent": "block",
-        "block": 3,
+        "block": 5,
         "weight": 25,
         "maxConsecutive": 1
       },
       "meltdown": {
         "sp": 3,
         "intent": "attack",
-        "damage": 30,
+        "damage": 10,
         "weight": 35,
         "maxConsecutive": 1,
         "locked": true

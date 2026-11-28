@@ -4,7 +4,7 @@
     "$note": { "bleed": "Coal On Steel: Bleed buildup applied by the first qualifying Blade hit." }
   },
   "brace-and-bite": {
-    "damage": 3,
+    "damage": 1,
     "$note": {
       "damage": "Brace And Bite: Additional damage on the first qualifying direct effect, including each hit and target."
     }
@@ -18,13 +18,13 @@
     "$note": { "break": "Anvil Discipline: Additional Break damage on the first qualifying attack." }
   },
   "forge-momentum": {
-    "damage": 4,
+    "damage": 1,
     "$note": {
       "damage": "Forge Momentum: Additional damage on the first qualifying direct effect, including each hit and target."
     }
   },
   "paid-in-blood": {
-    "damage": 4,
+    "damage": 1,
     "$note": {
       "damage": "Paid In Blood: Additional damage on the first qualifying direct effect, including each hit and target."
     }
@@ -42,31 +42,31 @@
     "$note": { "block": "War Cadence: Additional Block granted by the qualifying play or event." }
   },
   "broad-sentence": {
-    "damage": 2,
+    "damage": 1,
     "$note": {
       "damage": "Broad Sentence: Additional damage on the first qualifying direct effect, including each hit and target."
     }
   },
   "ember-sovereign": {
-    "damage": 2,
+    "damage": 1,
     "$note": {
       "damage": "Ember Sovereign: Additional damage on the first qualifying direct effect, including each hit and target."
     }
   },
   "nightglass-scholar": {
-    "damage": 2,
+    "damage": 1,
     "$note": {
       "damage": "Nightglass Scholar: Additional damage on the first qualifying direct effect, including each hit and target."
     }
   },
   "smoke-dancer": {
-    "damage": 2,
+    "damage": 1,
     "$note": {
       "damage": "Smoke Dancer: Additional damage on the first qualifying direct effect, including each hit and target."
     }
   },
   "dread-of-the-hammer": {
-    "damage": 4,
+    "damage": 1,
     "$note": {
       "damage": "Dread Of The Hammer: Additional damage on the first qualifying direct effect, including each hit and target."
     }
@@ -84,7 +84,7 @@
     "$note": { "heal": "Sepulchral Promise: HP restored by the qualifying play or credited kill." }
   },
   "orbit-keeper": {
-    "damage": 3,
+    "damage": 1,
     "$note": {
       "damage": "Orbit Keeper: Additional damage on the first qualifying direct effect, including each hit and target."
     }
@@ -116,7 +116,7 @@
     }
   },
   "constellation-keeper": {
-    "damage": 3,
+    "damage": 1,
     "$note": {
       "damage": "Constellation Keeper: Additional damage on the first qualifying direct effect, including each hit and target."
     }
@@ -128,7 +128,7 @@
     }
   },
   "eclipse-hunter": {
-    "damage": 4,
+    "damage": 1,
     "$note": {
       "damage": "Eclipse Hunter: Additional damage on the first qualifying direct effect, including each hit and target."
     }
@@ -152,7 +152,7 @@
     "$note": { "draw": "Threefold Sky: Cards drawn by the qualifying play." }
   },
   "first-knife": {
-    "damage": 3,
+    "damage": 1,
     "$note": {
       "damage": "First Knife: Additional damage on the first qualifying direct effect, including each hit and target."
     }
@@ -162,7 +162,7 @@
     "$note": { "block": "Pocket Method: Additional Block granted by the qualifying play or event." }
   },
   "open-flank": {
-    "damage": 3,
+    "damage": 1,
     "$note": {
       "damage": "Open Flank: Additional damage on the first qualifying direct effect, including each hit and target."
     }
@@ -172,13 +172,13 @@
     "$note": { "block": "Hidden Palm: Additional Block granted by the qualifying play or event." }
   },
   "tighten-the-wire": {
-    "damage": 3,
+    "damage": 1,
     "$note": {
       "damage": "Tighten The Wire: Additional damage on the first qualifying direct effect, including each hit and target."
     }
   },
   "carrion-measure": {
-    "damage": 4,
+    "damage": 1,
     "hpPct": 50,
     "$note": {
       "damage": "Carrion Measure: Additional damage on the first qualifying direct effect, including each hit and target.",
@@ -192,7 +192,7 @@
     }
   },
   "trapdoor-smile": {
-    "damage": 4,
+    "damage": 1,
     "$note": {
       "damage": "Trapdoor Smile: Additional damage on the first qualifying direct effect, including each hit and target."
     }
@@ -202,7 +202,7 @@
     "$note": { "restoreStamina": "Clean Exit: Stamina restored by the qualifying Guard play." }
   },
   "razor-ledger": {
-    "damage": 3,
+    "damage": 1,
     "$note": {
       "damage": "Razor Ledger: Additional damage on the first qualifying direct effect, including each hit and target."
     }
@@ -238,7 +238,7 @@
     "$note": { "restoreStamina": "Choir Of Bone: Stamina restored by the qualifying Guard play." }
   },
   "requiem-reader": {
-    "damage": 3,
+    "damage": 1,
     "$note": {
       "damage": "Requiem Reader: Additional damage on the first qualifying direct effect, including each hit and target."
     }
@@ -252,7 +252,7 @@
     }
   },
   "crowned-offering": {
-    "damage": 4,
+    "damage": 1,
     "$note": {
       "damage": "Crowned Offering: Additional damage on the first qualifying direct effect, including each hit and target."
     }

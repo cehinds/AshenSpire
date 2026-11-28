@@ -1,10 +1,12 @@
 [
   {
     "id": "katanaDrawCut",
+    "costRule": "fixed",
+    "manaCost": 1,
     "name": "Draw Cut",
     "class": "colorless",
     "rarity": "uncommon",
-    "cost": 1,
+    "cost": 2,
     "type": "attack",
     "flavor": "Single cut from the scabbard, as it is done beyond the marches.\n\nThe curved blades reached the ring in the years of the Mark Trade, borne by foreign lords who paid to be warm there. They burned with the rest of the marked, far from home, and left their swords where they fell.\n\nThe merchant knows whose each one was. He sells that separately.",
     "keywords": [],
@@ -13,7 +15,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 8
+        "amount": 4
       },
       {
         "op": "applyStatus",
@@ -24,11 +26,12 @@
     ],
     "textTemplate": "Deal {damage} damage. Apply {bleed} Bleed.",
     "upgrade": {
+      "cost": 3,
       "effects": [
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 11
+          "amount": 5
         },
         {
           "op": "applyStatus",
@@ -55,7 +58,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 36
+        "amount": 8
       },
       {
         "op": "poiseDamage",
@@ -69,7 +72,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 60
+          "amount": 14
         },
         {
           "op": "poiseDamage",
@@ -81,6 +84,7 @@
   },
   {
     "id": "honedEdge",
+    "costRule": "fixed",
     "name": "Honed Edge",
     "class": "colorless",
     "rarity": "common",
@@ -113,6 +117,7 @@
   },
   {
     "id": "ironSkin",
+    "costRule": "fixed",
     "name": "Iron Skin",
     "class": "colorless",
     "rarity": "common",
@@ -125,7 +130,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 3
+        "amount": 5
       }
     ],
     "textTemplate": "Gain {block} Block.",
@@ -134,7 +139,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 4
+          "amount": 7
         }
       ]
     }
@@ -253,10 +258,12 @@
   },
   {
     "id": "twinFang",
+    "costRule": "fixed",
+    "manaCost": 1,
     "name": "Twin Fang",
     "class": "colorless",
     "rarity": "rare",
-    "cost": 1,
+    "cost": 2,
     "type": "attack",
     "flavor": "Two knives, worn crosswise.\n\nOne for the hound, one for its handler. The weald's blight-hounds were the Wardens' before the Burning, and run yet with Bastion kennelmen who turned with the pack.\n\nA handler may be reasoned with, briefly. Never twice.",
     "keywords": [
@@ -267,7 +274,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 20,
+        "amount": 10,
         "hits": 2
       },
       {
@@ -283,7 +290,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 56,
+          "amount": 29,
           "hits": 2
         },
         {
@@ -392,10 +399,12 @@
   },
   {
     "id": "bashingBlow",
+    "costRule": "fixed",
+    "manaCost": 1,
     "name": "Bashing Blow",
     "class": "colorless",
     "rarity": "common",
-    "cost": 1,
+    "cost": 2,
     "type": "attack",
     "flavor": "Blow of whatever is heavy.\n\nA cudgel, a mallet, a shovel from a mine camp. The reach's miners swing it at things in the lower galleries that were miners once. Foreman Coll says not to look at their hands, which remember the work.\n\nHis camp has lost fewer than any other.",
     "keywords": [],
@@ -404,7 +413,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 7
+        "amount": 3
       },
       {
         "op": "poiseDamage",
@@ -418,7 +427,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 9
+          "amount": 3
         },
         {
           "op": "poiseDamage",
@@ -430,6 +439,7 @@
   },
   {
     "id": "quickGuard",
+    "costRule": "fixed",
     "name": "Quick Guard",
     "class": "colorless",
     "rarity": "common",
@@ -444,7 +454,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 2
+        "amount": 3
       },
       {
         "op": "draw",
@@ -460,7 +470,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 3
+          "amount": 5
         },
         {
           "op": "draw",
@@ -471,10 +481,12 @@
   },
   {
     "id": "sweepingBlow",
+    "costRule": "fixed",
+    "manaCost": 1,
     "name": "Sweeping Blow",
     "class": "colorless",
     "rarity": "uncommon",
-    "cost": 1,
+    "cost": 2,
     "type": "attack",
     "flavor": "Wide swing for the viaduct.\n\nWhere the corrupted come three abreast and the stone is narrow. The Forsaken councils teach that the viaducts were always built to funnel something, long before there were corrupted to funnel.\n\nThe corrupted walk them because the stone expects a crowd.",
     "keywords": [],
@@ -483,7 +495,7 @@
       {
         "op": "damage",
         "target": "allEnemies",
-        "amount": 6
+        "amount": 1
       }
     ],
     "textTemplate": "Deal {damage} damage to ALL enemies.",
@@ -492,13 +504,14 @@
         {
           "op": "damage",
           "target": "allEnemies",
-          "amount": 8
+          "amount": 1
         }
       ]
     }
   },
   {
     "id": "enfeeble",
+    "costRule": "fixed",
     "name": "Enfeeble",
     "class": "colorless",
     "rarity": "uncommon",
@@ -531,6 +544,7 @@
   },
   {
     "id": "colossusSmash",
+    "costRule": "fixed",
     "name": "Colossus Smash",
     "class": "colorless",
     "rarity": "rare",
@@ -549,7 +563,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 18
+        "amount": 7
       },
       {
         "op": "applyStatus",
@@ -565,7 +579,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 24
+          "amount": 10
         },
         {
           "op": "applyStatus",
@@ -860,6 +874,7 @@
   },
   {
     "id": "stoneskin",
+    "costRule": "fixed",
     "name": "Diamond Skin",
     "class": "colorless",
     "rarity": "uncommon",
@@ -874,7 +889,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 2
+        "amount": 4
       },
       {
         "op": "applyStatus",
@@ -889,7 +904,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 4
+          "amount": 6
         },
         {
           "op": "applyStatus",

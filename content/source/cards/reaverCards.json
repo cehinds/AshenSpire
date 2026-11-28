@@ -235,10 +235,11 @@
   },
   {
     "id": "gorefireSlash",
+    "costRule": "fixed",
     "name": "Gorefire Slash",
     "class": "reaver",
     "rarity": "starter",
-    "cost": 1,
+    "cost": 3,
     "manaCost": 1,
     "type": "attack",
     "flavor": "Art of the sellswords of the Bastion.\n\nThe hired blades who held the Fell Courtyard wetted their steel with their own blood before each watch, for the Gorefire takes more readily to a blade already red.\n\nThe Wardens called it discipline. The sellswords knew it as a price, paid in advance.",
@@ -248,7 +249,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 5
+        "amount": 2
       },
       {
         "op": "applyStatus",
@@ -269,7 +270,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 5
+          "amount": 2
         },
         {
           "op": "applyStatus",
@@ -300,7 +301,7 @@
       {
         "op": "damage",
         "target": "allEnemies",
-        "amount": 8
+        "amount": 1
       },
       {
         "op": "applyStatus",
@@ -315,7 +316,7 @@
         {
           "op": "damage",
           "target": "allEnemies",
-          "amount": 11
+          "amount": 2
         },
         {
           "op": "applyStatus",
@@ -340,7 +341,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 5
+        "amount": 1
       },
       {
         "op": "poiseDamage",
@@ -354,7 +355,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 8
+          "amount": 1
         },
         {
           "op": "poiseDamage",
@@ -390,7 +391,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 2
+        "amount": 1
       },
       {
         "op": "draw",
@@ -414,7 +415,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 2
+          "amount": 1
         },
         {
           "op": "draw",
@@ -437,7 +438,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 4,
+        "amount": 1,
         "if": {
           "p": "not",
           "pred": {
@@ -449,7 +450,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 10,
+        "amount": 2,
         "if": {
           "p": "hasBlock",
           "of": "self"
@@ -462,7 +463,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 6,
+          "amount": 1,
           "if": {
             "p": "not",
             "pred": {
@@ -474,7 +475,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 14,
+          "amount": 3,
           "if": {
             "p": "hasBlock",
             "of": "self"
@@ -485,6 +486,7 @@
   },
   {
     "id": "ironResolve",
+    "costRule": "fixed",
     "name": "Iron Resolve",
     "class": "reaver",
     "rarity": "common",
@@ -497,7 +499,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 2,
+        "amount": 3,
         "if": {
           "p": "not",
           "pred": {
@@ -509,7 +511,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 4,
+        "amount": 6,
         "if": {
           "p": "inStance",
           "stance": "bulwark"
@@ -523,7 +525,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 3,
+          "amount": 5,
           "if": {
             "p": "not",
             "pred": {
@@ -535,7 +537,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 5,
+          "amount": 8,
           "if": {
             "p": "inStance",
             "stance": "bulwark"
@@ -546,10 +548,11 @@
   },
   {
     "id": "serratedBlade",
+    "costRule": "fixed",
     "name": "Serrated Blade",
     "class": "reaver",
     "rarity": "common",
-    "cost": 1,
+    "cost": 2,
     "type": "attack",
     "flavor": "Saw-backed blade from the forges beneath the Bastion ridge.\n\nWeald smiths filed its teeth for clearing briar, and the Wardens took it up when the Blight came out of the woods. The smiths were never paid for the change of use.\n\nHow the briar learned to bleed, the smiths will not speak of.",
     "keywords": [],
@@ -558,7 +561,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 7
+        "amount": 4
       },
       {
         "op": "applyStatus",
@@ -574,11 +577,12 @@
     ],
     "textTemplate": "Deal {damage} damage. If the target has Bleed: apply {bleed} more Bleed.",
     "upgrade": {
+      "cost": 3,
       "effects": [
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 9
+          "amount": 4
         },
         {
           "op": "applyStatus",
@@ -621,6 +625,7 @@
   },
   {
     "id": "enterBulwark",
+    "costRule": "fixed",
     "name": "Enter: Bulwark",
     "class": "reaver",
     "rarity": "common",
@@ -645,7 +650,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 1
+          "amount": 2
         }
       ],
       "textTemplate": "Enter Bulwark Stance. Gain {block} extra Block."
@@ -665,7 +670,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 1
       },
       {
         "op": "poiseDamage",
@@ -683,7 +688,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 8
+          "amount": 1
         },
         {
           "op": "poiseDamage",
@@ -711,7 +716,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 5
+        "amount": 1
       },
       {
         "op": "applyStatus",
@@ -736,7 +741,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 7
+          "amount": 2
         },
         {
           "op": "applyStatus",
@@ -759,6 +764,8 @@
   },
   {
     "id": "cleavingBlow",
+    "costRule": "fixed",
+    "manaCost": 1,
     "name": "Cleaving Blow",
     "class": "reaver",
     "rarity": "common",
@@ -771,7 +778,7 @@
       {
         "op": "damage",
         "target": "allEnemies",
-        "amount": 7
+        "amount": 1
       },
       {
         "op": "poiseDamage",
@@ -785,7 +792,7 @@
         {
           "op": "damage",
           "target": "allEnemies",
-          "amount": 9
+          "amount": 2
         },
         {
           "op": "poiseDamage",
@@ -876,6 +883,7 @@
   },
   {
     "id": "warSurgeon",
+    "costRule": "fixed",
     "name": "War Surgeon",
     "class": "reaver",
     "rarity": "uncommon",
@@ -930,6 +938,7 @@
   },
   {
     "id": "hemorrhage",
+    "costRule": "fixed",
     "name": "Hemorrhage",
     "class": "reaver",
     "rarity": "uncommon",
@@ -960,10 +969,12 @@
   },
   {
     "id": "twinbladeFlurry",
+    "costRule": "fixed",
+    "manaCost": 1,
     "name": "Twinblade Flurry",
     "class": "reaver",
     "rarity": "uncommon",
-    "cost": 1,
+    "cost": 2,
     "type": "attack",
     "flavor": "Two short blades, worked in turn, as the weald's sellswords used them.\n\nToo poor for a shield and too proud to carry a Warden's, they were hired for the Bastion's narrow gates. It is said part of their wage was paid in marks rather than coin: a right to the city's warmth.\n\nThose who refused the mark are the ones who tell of it.",
     "keywords": [],
@@ -972,7 +983,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 3,
+        "amount": 1,
         "hits": 3
       }
     ],
@@ -982,7 +993,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 4,
+          "amount": 2,
           "hits": 3
         }
       ]
@@ -1063,7 +1074,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 4
+        "amount": 1
       },
       {
         "op": "poiseDamage",
@@ -1078,7 +1089,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 7
+          "amount": 1
         },
         {
           "op": "poiseDamage",
@@ -1127,10 +1138,11 @@
   },
   {
     "id": "impale",
+    "costRule": "fixed",
     "name": "Impale",
     "class": "reaver",
     "rarity": "uncommon",
-    "cost": 2,
+    "cost": 4,
     "type": "attack",
     "flavor": "Pinning thrust of the weald hamlets.\n\nLearned in the first winter of the Blight, against what rose from the drowned hamlet and would not stay down. A pinned thing stops, the hamlets say. The Wardens would once have burned such things.\n\nBut the fire went into the Wardens that winter.",
     "keywords": [],
@@ -1139,7 +1151,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 9
+        "amount": 4
       },
       {
         "op": "applyStatus",
@@ -1159,7 +1171,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 12
+          "amount": 6
         },
         {
           "op": "applyStatus",
@@ -1207,6 +1219,7 @@
   },
   {
     "id": "executioner",
+    "costRule": "fixed",
     "name": "Executioner",
     "class": "reaver",
     "rarity": "rare",
@@ -1219,7 +1232,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 10,
+        "amount": 5,
         "if": {
           "p": "not",
           "pred": {
@@ -1232,7 +1245,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 15,
+        "amount": 8,
         "if": {
           "p": "hasStatus",
           "of": "target",
@@ -1247,7 +1260,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 14,
+          "amount": 7,
           "if": {
             "p": "not",
             "pred": {
@@ -1260,7 +1273,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 19,
+          "amount": 9,
           "if": {
             "p": "hasStatus",
             "of": "target",
@@ -1455,10 +1468,11 @@
   },
   {
     "id": "ruinousBlow",
+    "costRule": "fixed",
     "name": "Ruinous Blow",
     "class": "reaver",
     "rarity": "rare",
-    "cost": 3,
+    "cost": 2,
     "type": "attack",
     "attack": {
       "components": [
@@ -1479,7 +1493,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 20
+        "amount": 8
       },
       {
         "op": "poiseDamage",
@@ -1494,7 +1508,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 26
+          "amount": 11
         },
         {
           "op": "poiseDamage",
@@ -1506,6 +1520,7 @@
   },
   {
     "id": "bloodhuntersStrike",
+    "costRule": "fixed",
     "name": "Bloodhunter's Strike",
     "class": "reaver",
     "rarity": "rare",
@@ -1518,7 +1533,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 1
       },
       {
         "op": "damage",
@@ -1537,7 +1552,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 8
+          "amount": 2
         },
         {
           "op": "damage",
@@ -1583,10 +1598,11 @@
   },
   {
     "id": "goreslash",
+    "costRule": "fixed",
     "name": "Goreslash",
     "class": "reaver",
     "rarity": "common",
-    "cost": 1,
+    "cost": 2,
     "type": "attack",
     "flavor": "Short cut of the Bastion's hired blades.\n\nThe sellswords had no patience for the Wardens' long forms. A long cut belongs in songs, they said, and the songs of the Bastion were paid for by the Wardens.\n\nThe sellswords kept a verse of their own. Only its tune survives.",
     "keywords": [],
@@ -1595,7 +1611,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 3
       },
       {
         "op": "applyStatus",
@@ -1610,7 +1626,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 8
+          "amount": 4
         },
         {
           "op": "applyStatus",
@@ -1635,12 +1651,12 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 2
+        "amount": 4
       },
       {
         "op": "block",
         "target": "self",
-        "amount": 1,
+        "amount": 2,
         "if": {
           "p": "inStance",
           "stance": "bulwark"
@@ -1653,12 +1669,12 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 3
+          "amount": 5
         },
         {
           "op": "block",
           "target": "self",
-          "amount": 1,
+          "amount": 2,
           "if": {
             "p": "inStance",
             "stance": "bulwark"
@@ -1669,6 +1685,8 @@
   },
   {
     "id": "flameToBlade",
+    "costRule": "fixed",
+    "manaCost": 1,
     "name": "Flame to Blade",
     "class": "reaver",
     "rarity": "uncommon",
@@ -1681,12 +1699,12 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 8
+        "amount": 4
       },
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6,
+        "amount": 3,
         "if": {
           "p": "inStance",
           "stance": "gorefire"
@@ -1703,12 +1721,12 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 10
+          "amount": 5
         },
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 8,
+          "amount": 4,
           "if": {
             "p": "inStance",
             "stance": "gorefire"
@@ -1751,10 +1769,12 @@
   },
   {
     "id": "bloodTithe",
+    "costRule": "fixed",
+    "manaCost": 1,
     "name": "Blood Tithe",
     "class": "reaver",
     "rarity": "rare",
-    "cost": 2,
+    "cost": 0,
     "type": "attack",
     "attack": {
       "weaponDamage": {
@@ -1786,7 +1806,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 2
       },
       {
         "op": "damage",
@@ -1817,7 +1837,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 9
+          "amount": 3
         },
         {
           "op": "damage",
@@ -1857,7 +1877,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 11
+        "amount": 2
       },
       {
         "op": "poiseDamage",
@@ -1881,7 +1901,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 14
+          "amount": 3
         },
         {
           "op": "poiseDamage",
@@ -1903,6 +1923,7 @@
   },
   {
     "id": "rondelParry",
+    "costRule": "fixed",
     "name": "Rondel Parry",
     "class": "reaver",
     "rarity": "common",
@@ -1915,7 +1936,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 2
+        "amount": 3
       },
       {
         "op": "poiseDamage",
@@ -1929,7 +1950,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 3
+          "amount": 4
         },
         {
           "op": "poiseDamage",
@@ -1953,7 +1974,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 9
+        "amount": 2
       },
       {
         "op": "poiseDamage",
@@ -1978,7 +1999,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 12
+          "amount": 2
         },
         {
           "op": "poiseDamage",
@@ -2047,7 +2068,7 @@
       {
         "op": "damage",
         "target": "allEnemies",
-        "amount": 6
+        "amount": 1
       },
       {
         "op": "applyStatus",
@@ -2067,7 +2088,7 @@
         {
           "op": "damage",
           "target": "allEnemies",
-          "amount": 8
+          "amount": 1
         },
         {
           "op": "applyStatus",
@@ -2084,6 +2105,7 @@
   },
   {
     "id": "sunderingChop",
+    "costRule": "fixed",
     "name": "Sundering Chop",
     "class": "reaver",
     "rarity": "uncommon",
@@ -2096,7 +2118,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 9
+        "amount": 3
       },
       {
         "op": "poiseDamage",
@@ -2114,7 +2136,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 12
+          "amount": 5
         },
         {
           "op": "poiseDamage",
@@ -2130,6 +2152,7 @@
   },
   {
     "id": "setTheShield",
+    "costRule": "fixed",
     "name": "Set the Shield",
     "class": "reaver",
     "rarity": "uncommon",
@@ -2142,7 +2165,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 3
+        "amount": 5
       },
       {
         "op": "enterStance",
@@ -2155,7 +2178,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 4
+          "amount": 7
         },
         {
           "op": "enterStance",
@@ -2166,10 +2189,11 @@
   },
   {
     "id": "aegisOfEmbers",
+    "costRule": "fixed",
     "name": "Aegis of Embers",
     "class": "reaver",
     "rarity": "rare",
-    "cost": 2,
+    "cost": 1,
     "type": "skill",
     "flavor": "A shield held into the fire until it glows.\n\nThe last captain of the Vanguard held the causeway so through the whole of the Burning. His shield was found welded to the stones, and his arm was not found at all.\n\nThe stones there are warm still, and soldiers kneel on them.",
     "keywords": [],
@@ -2178,7 +2202,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 6
+        "amount": 10
       },
       {
         "op": "applyStatus",
@@ -2198,7 +2222,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 8
+          "amount": 13
         },
         {
           "op": "applyStatus",
@@ -2215,6 +2239,7 @@
   },
   {
     "id": "shieldCrash",
+    "costRule": "fixed",
     "name": "Shield Crash",
     "class": "reaver",
     "rarity": "rare",
@@ -2227,7 +2252,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 3
+        "amount": 6
       },
       {
         "op": "damage",
@@ -2244,7 +2269,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 5
+          "amount": 10
         },
         {
           "op": "damage",
@@ -2344,7 +2369,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 3
+        "amount": 1
       },
       {
         "op": "loseHp",
@@ -2363,7 +2388,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 5
+          "amount": 1
         },
         {
           "op": "loseHp",
@@ -2399,7 +2424,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 3
+        "amount": 1
       },
       {
         "op": "block",
@@ -2418,7 +2443,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 4
+          "amount": 1
         },
         {
           "op": "block",
@@ -2458,7 +2483,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 1
       }
     ],
     "upgrade": {
@@ -2466,7 +2491,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 8
+          "amount": 2
         }
       ]
     },

@@ -8,8 +8,115 @@
     "primary": "damage",
     "hits": 1,
     "abilityRank": 0,
-    "primaryValues": [4,6,7,10,13,17],
-    "actionCosts": [1,1,1,1,2,2]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 4
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "bleed",
+            "stacks": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 5
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "bleed",
+            "stacks": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 3,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 7
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "bleed",
+            "stacks": 2
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 3,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 9
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "bleed",
+            "stacks": 2
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "progression-cinder-guard",
@@ -20,8 +127,139 @@
     "primary": "block",
     "hits": 1,
     "abilityRank": 0,
-    "primaryValues": [4,6,7,10,13,17],
-    "actionCosts": [1,1,1,1,2,2]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 4
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "guarded-strike",
+            "cardType": "attack",
+            "damage": 3,
+            "if": {
+              "p": "hasBlock",
+              "of": "self",
+              "snapshot": "beforePlay"
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 5
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "guarded-strike",
+            "cardType": "attack",
+            "damage": 3,
+            "if": {
+              "p": "hasBlock",
+              "of": "self",
+              "snapshot": "beforePlay"
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 7
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "guarded-strike",
+            "cardType": "attack",
+            "damage": 3,
+            "if": {
+              "p": "hasBlock",
+              "of": "self",
+              "snapshot": "beforePlay"
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 9
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "guarded-strike",
+            "cardType": "attack",
+            "damage": 3,
+            "if": {
+              "p": "hasBlock",
+              "of": "self",
+              "snapshot": "beforePlay"
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 12
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "progression-bloodstep",
@@ -32,8 +270,131 @@
     "primary": "block",
     "hits": 1,
     "abilityRank": 1,
-    "primaryValues": [4,5,6,9,12,16],
-    "actionCosts": [1,1,1,1,2,2]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 3
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 4
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "target",
+              "status": "bleed",
+              "snapshot": "beforePlay"
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 6
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "target",
+              "status": "bleed",
+              "snapshot": "beforePlay"
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 8
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "target",
+              "status": "bleed",
+              "snapshot": "beforePlay"
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 11
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "target",
+              "status": "bleed",
+              "snapshot": "beforePlay"
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "progression-breaker-s-toll",
@@ -48,40 +409,114 @@
       {
         "actionCost": 2,
         "manaCost": 0,
-        "effects": [{"op":"damage","target":"enemy","amount":11},{"op":"poiseDamage","target":"enemy","amount":3}]
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 3
+          }
+        ]
       },
       {
         "actionCost": 2,
         "manaCost": 0,
-        "effects": [{"op":"damage","target":"enemy","amount":11},{"op":"poiseDamage","target":"enemy","amount":3}]
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 3
+          }
+        ]
       },
       {
         "actionCost": 3,
-        "manaCost": 0,
-        "effects": [{"op":"damage","target":"enemy","amount":22},{"op":"poiseDamage","target":"enemy","amount":7}]
-      },
-      {
-        "actionCost": 3,
-        "manaCost": 0,
-        "effects": [{"op":"damage","target":"enemy","amount":27},{"op":"poiseDamage","target":"enemy","amount":7}]
-      },
-      {
-        "actionCost": 4,
         "manaCost": 0,
         "effects": [
-          {"op":"damage","target":"enemy","amount":35},
-          {"op":"poiseDamage","target":"enemy","amount":7},
-          {"op":"block","target":"self","amount":4,"oncePerTurn":"grade-block"}
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 5
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 7
+          }
+        ]
+      },
+      {
+        "actionCost": 3,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 6
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 7
+          }
         ]
       },
       {
         "actionCost": 4,
         "manaCost": 0,
         "effects": [
-          {"op":"damage","target":"enemy","amount":47},
-          {"op":"poiseDamage","target":"enemy","amount":7},
-          {"op":"block","target":"self","amount":4,"oncePerTurn":"grade-block"},
-          {"op":"draw","amount":1,"oncePerTurn":"grade-draw"}
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 8
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 7
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 4,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 11
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 7
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
         ]
       }
     ]
@@ -95,8 +530,135 @@
     "primary": "damage",
     "hits": 1,
     "abilityRank": 2,
-    "primaryValues": [5,7,8,11,14,18],
-    "actionCosts": [1,1,1,1,2,2]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 4
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2,
+            "if": {
+              "p": "turnMetric",
+              "metric": "tagPlays",
+              "atLeast": 1,
+              "tag": "guard"
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 5
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2,
+            "if": {
+              "p": "turnMetric",
+              "metric": "tagPlays",
+              "atLeast": 1,
+              "tag": "guard"
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 7
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2,
+            "if": {
+              "p": "turnMetric",
+              "metric": "tagPlays",
+              "atLeast": 1,
+              "tag": "guard"
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 9
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2,
+            "if": {
+              "p": "turnMetric",
+              "metric": "tagPlays",
+              "atLeast": 1,
+              "tag": "guard"
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "progression-crimson-reprisal",
@@ -107,8 +669,131 @@
     "primary": "damage",
     "hits": 1,
     "abilityRank": 2,
-    "primaryValues": [5,7,8,11,14,18],
-    "actionCosts": [1,1,1,1,2,2]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "turnMetric",
+              "metric": "hpLostSinceTurnStart",
+              "atLeast": 1
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 4
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "turnMetric",
+              "metric": "hpLostSinceTurnStart",
+              "atLeast": 1
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 6
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "turnMetric",
+              "metric": "hpLostSinceTurnStart",
+              "atLeast": 1
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 7
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "turnMetric",
+              "metric": "hpLostSinceTurnStart",
+              "atLeast": 1
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "progression-warbound-defiance",
@@ -119,8 +804,135 @@
     "primary": "block",
     "hits": 1,
     "abilityRank": 3,
-    "primaryValues": [6,8,10,13,16,20],
-    "actionCosts": [1,1,1,1,2,2]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 4
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 5
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 6
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2,
+            "if": {
+              "p": "hpBelowPct",
+              "of": "self",
+              "pct": 50,
+              "snapshot": "beforePlay"
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 9
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2,
+            "if": {
+              "p": "hpBelowPct",
+              "of": "self",
+              "pct": 50,
+              "snapshot": "beforePlay"
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 11
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2,
+            "if": {
+              "p": "hpBelowPct",
+              "of": "self",
+              "pct": 50,
+              "snapshot": "beforePlay"
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 14
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2,
+            "if": {
+              "p": "hpBelowPct",
+              "of": "self",
+              "pct": 50,
+              "snapshot": "beforePlay"
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "progression-red-standard",
@@ -131,8 +943,131 @@
     "primary": "block",
     "hits": 1,
     "abilityRank": 3,
-    "primaryValues": [6,8,10,13,16,20],
-    "actionCosts": [1,1,1,1,2,2]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 4
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 5
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 7
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "if": {
+              "p": "turnMetric",
+              "metric": "tagPlays",
+              "atLeast": 2,
+              "tag": "heavy"
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 9
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "if": {
+              "p": "turnMetric",
+              "metric": "tagPlays",
+              "atLeast": 2,
+              "tag": "heavy"
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 11
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "if": {
+              "p": "turnMetric",
+              "metric": "tagPlays",
+              "atLeast": 2,
+              "tag": "heavy"
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 14
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "if": {
+              "p": "turnMetric",
+              "metric": "tagPlays",
+              "atLeast": 2,
+              "tag": "heavy"
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "progression-ashen-cleaver",
@@ -143,8 +1078,115 @@
     "primary": "damage",
     "hits": 1,
     "abilityRank": 4,
-    "primaryValues": [6,8,10,13,16,20],
-    "actionCosts": [2,1,2,2,3,3]
+    "grades": [
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "weak",
+            "stacks": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "allEnemies",
+            "amount": 3
+          },
+          {
+            "op": "applyStatus",
+            "target": "allEnemies",
+            "status": "weak",
+            "stacks": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 3,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "allEnemies",
+            "amount": 3
+          },
+          {
+            "op": "applyStatus",
+            "target": "allEnemies",
+            "status": "weak",
+            "stacks": 1
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 3,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "allEnemies",
+            "amount": 4
+          },
+          {
+            "op": "applyStatus",
+            "target": "allEnemies",
+            "status": "weak",
+            "stacks": 1
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "progression-crown-of-cinders",
@@ -155,8 +1197,119 @@
     "primary": "block",
     "hits": 1,
     "abilityRank": 5,
-    "primaryValues": [6,9,13,17,20,24],
-    "actionCosts": [2,1,2,2,3,3]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 4
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 6
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 9
+          },
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "ember-crown",
+            "cardType": "attack",
+            "damage": 6
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 12
+          },
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "ember-crown",
+            "cardType": "attack",
+            "damage": 6
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 14
+          },
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "ember-crown",
+            "cardType": "attack",
+            "damage": 6
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 17
+          },
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "ember-crown",
+            "cardType": "attack",
+            "damage": 6
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "progression-cinder-orbit",
@@ -168,18 +1321,25 @@
     "hits": 1,
     "abilityRank": 0,
     "grades": [
-      {"actionCost":1,"manaCost":0,"effects":[{"op":"damage","target":"enemy","amount":8}]},
-      {"actionCost":1,"manaCost":1,"effects":[{"op":"damage","target":"enemy","amount":10}]},
       {
         "actionCost": 1,
-        "manaCost": 2,
+        "manaCost": 1,
         "effects": [
-          {"op":"damage","target":"enemy","amount":12},
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 3,
-            "if": {"p":"turnMetric","metric":"previousSpell","atLeast":1}
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3
           }
         ]
       },
@@ -187,12 +1347,41 @@
         "actionCost": 1,
         "manaCost": 2,
         "effects": [
-          {"op":"damage","target":"enemy","amount":14},
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 3,
-            "if": {"p":"turnMetric","metric":"previousSpell","atLeast":1}
+            "amount": 3
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "turnMetric",
+              "metric": "previousSpell",
+              "atLeast": 1
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 4
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "turnMetric",
+              "metric": "previousSpell",
+              "atLeast": 1
+            }
           }
         ]
       },
@@ -200,29 +1389,59 @@
         "actionCost": 1,
         "manaCost": 3,
         "effects": [
-          {"op":"damage","target":"enemy","amount":16},
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 3,
-            "if": {"p":"turnMetric","metric":"previousSpell","atLeast":1}
+            "amount": 4
           },
-          {"op":"block","target":"self","amount":2,"oncePerTurn":"grade-block"}
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "turnMetric",
+              "metric": "previousSpell",
+              "atLeast": 1
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
         ]
       },
       {
         "actionCost": 1,
         "manaCost": 3,
         "effects": [
-          {"op":"damage","target":"enemy","amount":18},
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 3,
-            "if": {"p":"turnMetric","metric":"previousSpell","atLeast":1}
+            "amount": 5
           },
-          {"op":"block","target":"self","amount":2,"oncePerTurn":"grade-block"},
-          {"op":"draw","amount":1,"oncePerTurn":"grade-draw"}
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "turnMetric",
+              "metric": "previousSpell",
+              "atLeast": 1
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
         ]
       }
     ]
@@ -237,41 +1456,127 @@
     "hits": 1,
     "abilityRank": 0,
     "grades": [
-      {"actionCost":1,"manaCost":0,"effects":[{"op":"block","target":"self","amount":8}]},
-      {"actionCost":1,"manaCost":0,"effects":[{"op":"block","target":"self","amount":10}]},
       {
         "actionCost": 1,
         "manaCost": 1,
         "effects": [
-          {"op":"block","target":"self","amount":12},
-          {"op":"block","target":"self","amount":3,"if":{"p":"turnMetric","metric":"manaSpent","atLeast":2}}
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 3
+          }
         ]
       },
       {
         "actionCost": 1,
         "manaCost": 1,
         "effects": [
-          {"op":"block","target":"self","amount":14},
-          {"op":"block","target":"self","amount":3,"if":{"p":"turnMetric","metric":"manaSpent","atLeast":2}}
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 4
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 5
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "if": {
+              "p": "turnMetric",
+              "metric": "manaSpent",
+              "atLeast": 2
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 6
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "if": {
+              "p": "turnMetric",
+              "metric": "manaSpent",
+              "atLeast": 2
+            }
+          }
         ]
       },
       {
         "actionCost": 1,
         "manaCost": 2,
         "effects": [
-          {"op":"block","target":"self","amount":16},
-          {"op":"block","target":"self","amount":3,"if":{"p":"turnMetric","metric":"manaSpent","atLeast":2}},
-          {"op":"block","target":"self","amount":2,"oncePerTurn":"grade-block"}
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 7
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "if": {
+              "p": "turnMetric",
+              "metric": "manaSpent",
+              "atLeast": 2
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
         ]
       },
       {
         "actionCost": 1,
         "manaCost": 2,
         "effects": [
-          {"op":"block","target":"self","amount":18},
-          {"op":"block","target":"self","amount":3,"if":{"p":"turnMetric","metric":"manaSpent","atLeast":2}},
-          {"op":"block","target":"self","amount":2,"oncePerTurn":"grade-block"},
-          {"op":"draw","amount":1,"oncePerTurn":"grade-draw"}
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 8
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "if": {
+              "p": "turnMetric",
+              "metric": "manaSpent",
+              "atLeast": 2
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
         ]
       }
     ]
@@ -285,8 +1590,115 @@
     "primary": "damage",
     "hits": 1,
     "abilityRank": 1,
-    "primaryValues": [5,8,9,12,15,19],
-    "actionCosts": [1,1,1,1,2,2]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "vulnerable",
+            "stacks": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "vulnerable",
+            "stacks": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 4
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "vulnerable",
+            "stacks": 1
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 10
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "vulnerable",
+            "stacks": 1
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "progression-rime-mirror",
@@ -297,8 +1709,115 @@
     "primary": "block",
     "hits": 1,
     "abilityRank": 1,
-    "primaryValues": [5,8,9,12,15,19],
-    "actionCosts": [1,1,1,1,2,2]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 3
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 4
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "frost",
+            "stacks": 3
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 5
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "frost",
+            "stacks": 3
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 7
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "frost",
+            "stacks": 3
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 9
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "frost",
+            "stacks": 3
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "progression-falling-constellation",
@@ -309,8 +1828,135 @@
     "primary": "damage",
     "hits": 1,
     "abilityRank": 2,
-    "primaryValues": [5,7,8,11,14,18],
-    "actionCosts": [2,1,2,2,3,3]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "turnMetric",
+              "metric": "distinctTagPlays",
+              "atLeast": 2,
+              "tag": "starstone"
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "allEnemies",
+            "amount": 3
+          },
+          {
+            "op": "damage",
+            "target": "allEnemies",
+            "amount": 1,
+            "if": {
+              "p": "turnMetric",
+              "metric": "distinctTagPlays",
+              "atLeast": 2,
+              "tag": "starstone"
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "allEnemies",
+            "amount": 4
+          },
+          {
+            "op": "damage",
+            "target": "allEnemies",
+            "amount": 1,
+            "if": {
+              "p": "turnMetric",
+              "metric": "distinctTagPlays",
+              "atLeast": 2,
+              "tag": "starstone"
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "allEnemies",
+            "amount": 5
+          },
+          {
+            "op": "damage",
+            "target": "allEnemies",
+            "amount": 1,
+            "if": {
+              "p": "turnMetric",
+              "metric": "distinctTagPlays",
+              "atLeast": 2,
+              "tag": "starstone"
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "progression-wellspring-sigil",
@@ -321,8 +1967,119 @@
     "primary": "block",
     "hits": 1,
     "abilityRank": 2,
-    "primaryValues": [3,4,5,8,11,15],
-    "actionCosts": [1,1,1,1,2,2]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2
+          },
+          {
+            "op": "restoreMana",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "mana-weave",
+            "funded": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 3
+          },
+          {
+            "op": "restoreMana",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "mana-weave",
+            "funded": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 5
+          },
+          {
+            "op": "restoreMana",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "mana-weave",
+            "funded": 1
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 7
+          },
+          {
+            "op": "restoreMana",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "mana-weave",
+            "funded": 1
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "progression-gravitic-knot",
@@ -333,8 +2090,115 @@
     "primary": "damage",
     "hits": 1,
     "abilityRank": 3,
-    "primaryValues": [6,8,10,13,16,20],
-    "actionCosts": [1,1,1,1,2,2]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "weak",
+            "stacks": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 4
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "weak",
+            "stacks": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 4
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "weak",
+            "stacks": 1
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 6
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "weak",
+            "stacks": 1
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "progression-nightglass-reading",
@@ -345,8 +2209,139 @@
     "primary": "block",
     "hits": 1,
     "abilityRank": 3,
-    "primaryValues": [3,4,4,7,10,14],
-    "actionCosts": [1,1,1,1,2,2]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1
+          },
+          {
+            "op": "draw",
+            "amount": 2
+          },
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "nightglass",
+            "abilityKind": "spell",
+            "cardType": "attack",
+            "damage": 3
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 3
+          },
+          {
+            "op": "draw",
+            "amount": 2
+          },
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "nightglass",
+            "abilityKind": "spell",
+            "cardType": "attack",
+            "damage": 3
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 4
+          },
+          {
+            "op": "draw",
+            "amount": 2
+          },
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "nightglass",
+            "abilityKind": "spell",
+            "cardType": "attack",
+            "damage": 3
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 6
+          },
+          {
+            "op": "draw",
+            "amount": 2
+          },
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "nightglass",
+            "abilityKind": "spell",
+            "cardType": "attack",
+            "damage": 3
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "progression-eclipse-lance",
@@ -357,8 +2352,179 @@
     "primary": "damage",
     "hits": 1,
     "abilityRank": 4,
-    "primaryValues": [6,9,13,18,24,28],
-    "actionCosts": [2,1,2,2,3,3]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "any",
+              "preds": [
+                {
+                  "p": "hasStatus",
+                  "of": "target",
+                  "status": "frost",
+                  "snapshot": "beforePlay"
+                },
+                {
+                  "p": "hasStatus",
+                  "of": "target",
+                  "status": "frostExposed",
+                  "snapshot": "beforePlay"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 4
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "any",
+              "preds": [
+                {
+                  "p": "hasStatus",
+                  "of": "target",
+                  "status": "frost",
+                  "snapshot": "beforePlay"
+                },
+                {
+                  "p": "hasStatus",
+                  "of": "target",
+                  "status": "frostExposed",
+                  "snapshot": "beforePlay"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 5
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "any",
+              "preds": [
+                {
+                  "p": "hasStatus",
+                  "of": "target",
+                  "status": "frost",
+                  "snapshot": "beforePlay"
+                },
+                {
+                  "p": "hasStatus",
+                  "of": "target",
+                  "status": "frostExposed",
+                  "snapshot": "beforePlay"
+                }
+              ]
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 12
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3,
+            "if": {
+              "p": "any",
+              "preds": [
+                {
+                  "p": "hasStatus",
+                  "of": "target",
+                  "status": "frost",
+                  "snapshot": "beforePlay"
+                },
+                {
+                  "p": "hasStatus",
+                  "of": "target",
+                  "status": "frostExposed",
+                  "snapshot": "beforePlay"
+                }
+              ]
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "progression-firmament-ward",
@@ -369,8 +2535,119 @@
     "primary": "block",
     "hits": 1,
     "abilityRank": 5,
-    "primaryValues": [6,9,13,18,22,26],
-    "actionCosts": [2,1,2,2,3,3]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 4
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 6
+          },
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "warded-casting",
+            "abilityKind": "spell",
+            "manaDiscount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 8
+          },
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "warded-casting",
+            "abilityKind": "spell",
+            "manaDiscount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 10
+          },
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "warded-casting",
+            "abilityKind": "spell",
+            "manaDiscount": 1
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 12
+          },
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "warded-casting",
+            "abilityKind": "spell",
+            "manaDiscount": 1
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "progression-shiv-of-ash",
@@ -381,8 +2658,123 @@
     "primary": "damage",
     "hits": 1,
     "abilityRank": 0,
-    "primaryValues": [4,5,6,9,12,16],
-    "actionCosts": [1,1,1,1,2,2]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "firstCardThisTurn"
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 4
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "firstCardThisTurn"
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 6
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "firstCardThisTurn"
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 8
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "firstCardThisTurn"
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "progression-pocket-coil",
@@ -393,8 +2785,127 @@
     "primary": "block",
     "hits": 1,
     "abilityRank": 0,
-    "primaryValues": [3,4,5,8,11,15],
-    "actionCosts": [1,1,1,1,2,2]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 3
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "if": {
+              "p": "turnMetric",
+              "metric": "discarded",
+              "atLeast": 1
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 5
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "if": {
+              "p": "turnMetric",
+              "metric": "discarded",
+              "atLeast": 1
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 8
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "if": {
+              "p": "turnMetric",
+              "metric": "discarded",
+              "atLeast": 1
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 11
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "if": {
+              "p": "turnMetric",
+              "metric": "discarded",
+              "atLeast": 1
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "progression-needle-feint",
@@ -405,8 +2916,115 @@
     "primary": "damage",
     "hits": 1,
     "abilityRank": 1,
-    "primaryValues": [4,6,7,10,13,17],
-    "actionCosts": [1,1,1,1,2,2]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 4
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "weak",
+            "stacks": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 5
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "weak",
+            "stacks": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 7
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "weak",
+            "stacks": 1
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 3,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 9
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "weak",
+            "stacks": 1
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "progression-back-alley-cut",
@@ -417,8 +3035,143 @@
     "primary": "damage",
     "hits": 1,
     "abilityRank": 1,
-    "primaryValues": [5,7,8,11,14,18],
-    "actionCosts": [1,1,1,1,2,2]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 4
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2,
+            "if": {
+              "p": "not",
+              "pred": {
+                "p": "hasBlock",
+                "of": "target",
+                "snapshot": "beforePlay"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 5
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2,
+            "if": {
+              "p": "not",
+              "pred": {
+                "p": "hasBlock",
+                "of": "target",
+                "snapshot": "beforePlay"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 7
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2,
+            "if": {
+              "p": "not",
+              "pred": {
+                "p": "hasBlock",
+                "of": "target",
+                "snapshot": "beforePlay"
+              }
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 9
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2,
+            "if": {
+              "p": "not",
+              "pred": {
+                "p": "hasBlock",
+                "of": "target",
+                "snapshot": "beforePlay"
+              }
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "progression-silent-exchange",
@@ -429,8 +3182,127 @@
     "primary": "block",
     "hits": 1,
     "abilityRank": 2,
-    "primaryValues": [2,3,3,6,9,13],
-    "actionCosts": [1,1,1,1,2,2]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2
+          },
+          {
+            "op": "draw",
+            "amount": 2
+          },
+          {
+            "op": "discard",
+            "amount": 1,
+            "choose": true
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 4
+          },
+          {
+            "op": "draw",
+            "amount": 2
+          },
+          {
+            "op": "discard",
+            "amount": 1,
+            "choose": true
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 6
+          },
+          {
+            "op": "draw",
+            "amount": 2
+          },
+          {
+            "op": "discard",
+            "amount": 1,
+            "choose": true
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 9
+          },
+          {
+            "op": "draw",
+            "amount": 2
+          },
+          {
+            "op": "discard",
+            "amount": 1,
+            "choose": true
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "progression-wire-snare",
@@ -441,8 +3313,183 @@
     "primary": "damage",
     "hits": 1,
     "abilityRank": 2,
-    "primaryValues": [5,8,9,12,15,19],
-    "actionCosts": [1,1,1,1,2,2]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 4
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "bleed",
+            "stacks": 3,
+            "if": {
+              "p": "any",
+              "preds": [
+                {
+                  "p": "hasStatus",
+                  "of": "target",
+                  "status": "weak",
+                  "snapshot": "beforePlay"
+                },
+                {
+                  "p": "hasStatus",
+                  "of": "target",
+                  "status": "vulnerable",
+                  "snapshot": "beforePlay"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 3,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 6
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "bleed",
+            "stacks": 3,
+            "if": {
+              "p": "any",
+              "preds": [
+                {
+                  "p": "hasStatus",
+                  "of": "target",
+                  "status": "weak",
+                  "snapshot": "beforePlay"
+                },
+                {
+                  "p": "hasStatus",
+                  "of": "target",
+                  "status": "vulnerable",
+                  "snapshot": "beforePlay"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 3,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 8
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "bleed",
+            "stacks": 3,
+            "if": {
+              "p": "any",
+              "preds": [
+                {
+                  "p": "hasStatus",
+                  "of": "target",
+                  "status": "weak",
+                  "snapshot": "beforePlay"
+                },
+                {
+                  "p": "hasStatus",
+                  "of": "target",
+                  "status": "vulnerable",
+                  "snapshot": "beforePlay"
+                }
+              ]
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 3,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 9
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "bleed",
+            "stacks": 3,
+            "if": {
+              "p": "any",
+              "preds": [
+                {
+                  "p": "hasStatus",
+                  "of": "target",
+                  "status": "weak",
+                  "snapshot": "beforePlay"
+                },
+                {
+                  "p": "hasStatus",
+                  "of": "target",
+                  "status": "vulnerable",
+                  "snapshot": "beforePlay"
+                }
+              ]
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "progression-nightstep",
@@ -454,7 +3501,12 @@
     "hits": 1,
     "abilityRank": 3,
     "wither": 3,
-    "costGrowth": { "stamina": 1, "perUse": 1, "max": 3, "scope": "card" },
+    "costGrowth": {
+      "stamina": 1,
+      "perUse": 1,
+      "max": 3,
+      "scope": "card"
+    },
     "grades": [
       {
         "actionCost": 1,
@@ -577,7 +3629,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 2,
+            "amount": 1,
             "oncePerTurn": "grade-block"
           }
         ]
@@ -607,7 +3659,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 2,
+            "amount": 1,
             "oncePerTurn": "grade-block"
           },
           {
@@ -628,8 +3680,135 @@
     "primary": "damage",
     "hits": 1,
     "abilityRank": 3,
-    "primaryValues": [6,9,11,14,17,21],
-    "actionCosts": [1,1,1,1,2,2]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 4
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2,
+            "if": {
+              "p": "hpBelowPct",
+              "of": "target",
+              "pct": 50,
+              "snapshot": "beforePlay"
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 7
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2,
+            "if": {
+              "p": "hpBelowPct",
+              "of": "target",
+              "pct": 50,
+              "snapshot": "beforePlay"
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 9
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2,
+            "if": {
+              "p": "hpBelowPct",
+              "of": "target",
+              "pct": 50,
+              "snapshot": "beforePlay"
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 11
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2,
+            "if": {
+              "p": "hpBelowPct",
+              "of": "target",
+              "pct": 50,
+              "snapshot": "beforePlay"
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "progression-twinshade",
@@ -640,8 +3819,97 @@
     "primary": "damage",
     "hits": 2,
     "abilityRank": 4,
-    "primaryValues": [3,4,6,9,12,15],
-    "actionCosts": [2,1,2,2,3,3]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "hits": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "hits": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3,
+            "hits": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 4,
+            "hits": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 5,
+            "hits": 2
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 7,
+            "hits": 2
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "progression-last-laugh",
@@ -652,8 +3920,179 @@
     "primary": "damage",
     "hits": 1,
     "abilityRank": 5,
-    "primaryValues": [6,9,13,17,20,24],
-    "actionCosts": [2,1,2,2,3,3]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 4
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2,
+            "if": {
+              "p": "all",
+              "preds": [
+                {
+                  "p": "turnMetric",
+                  "metric": "tagPlays",
+                  "atLeast": 1,
+                  "tag": "guile"
+                },
+                {
+                  "p": "turnMetric",
+                  "metric": "tagPlays",
+                  "atLeast": 1,
+                  "tag": "guard"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 7
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2,
+            "if": {
+              "p": "all",
+              "preds": [
+                {
+                  "p": "turnMetric",
+                  "metric": "tagPlays",
+                  "atLeast": 1,
+                  "tag": "guile"
+                },
+                {
+                  "p": "turnMetric",
+                  "metric": "tagPlays",
+                  "atLeast": 1,
+                  "tag": "guard"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 9
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2,
+            "if": {
+              "p": "all",
+              "preds": [
+                {
+                  "p": "turnMetric",
+                  "metric": "tagPlays",
+                  "atLeast": 1,
+                  "tag": "guile"
+                },
+                {
+                  "p": "turnMetric",
+                  "metric": "tagPlays",
+                  "atLeast": 1,
+                  "tag": "guard"
+                }
+              ]
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 12
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2,
+            "if": {
+              "p": "all",
+              "preds": [
+                {
+                  "p": "turnMetric",
+                  "metric": "tagPlays",
+                  "atLeast": 1,
+                  "tag": "guile"
+                },
+                {
+                  "p": "turnMetric",
+                  "metric": "tagPlays",
+                  "atLeast": 1,
+                  "tag": "guard"
+                }
+              ]
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "progression-ash-benediction",
@@ -665,35 +4104,107 @@
     "hits": 1,
     "abilityRank": 0,
     "grades": [
-      {"actionCost":1,"manaCost":0,"effects":[{"op":"block","target":"self","amount":8}]},
-      {"actionCost":1,"manaCost":0,"effects":[{"op":"block","target":"self","amount":10}]},
       {
         "actionCost": 1,
         "manaCost": 1,
-        "effects": [{"op":"block","target":"self","amount":12},{"op":"heal","target":"self","amount":2}]
-      },
-      {
-        "actionCost": 1,
-        "manaCost": 1,
-        "effects": [{"op":"block","target":"self","amount":14},{"op":"heal","target":"self","amount":2}]
-      },
-      {
-        "actionCost": 1,
-        "manaCost": 2,
         "effects": [
-          {"op":"block","target":"self","amount":16},
-          {"op":"heal","target":"self","amount":2},
-          {"op":"block","target":"self","amount":2,"oncePerTurn":"grade-block"}
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 3
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 4
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 5
+          },
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 6
+          },
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 2
+          }
         ]
       },
       {
         "actionCost": 1,
         "manaCost": 2,
         "effects": [
-          {"op":"block","target":"self","amount":18},
-          {"op":"heal","target":"self","amount":2},
-          {"op":"block","target":"self","amount":2,"oncePerTurn":"grade-block"},
-          {"op":"draw","amount":1,"oncePerTurn":"grade-draw"}
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 7
+          },
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 2
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 8
+          },
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 2
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
         ]
       }
     ]
@@ -708,45 +4219,135 @@
     "hits": 1,
     "abilityRank": 0,
     "grades": [
-      {"actionCost":1,"manaCost":0,"effects":[{"op":"damage","target":"enemy","amount":8}]},
-      {"actionCost":1,"manaCost":1,"effects":[{"op":"damage","target":"enemy","amount":10}]},
       {
         "actionCost": 1,
-        "manaCost": 2,
+        "manaCost": 1,
         "effects": [
-          {"op":"loseHp","target":"self","amount":2,"nonlethal":true,"offering":true},
-          {"op":"damage","target":"enemy","amount":12},
-          {"op":"block","target":"self","amount":3}
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          }
         ]
       },
       {
         "actionCost": 1,
         "manaCost": 2,
         "effects": [
-          {"op":"loseHp","target":"self","amount":2,"nonlethal":true,"offering":true},
-          {"op":"damage","target":"enemy","amount":14},
-          {"op":"block","target":"self","amount":3}
+          {
+            "op": "loseHp",
+            "target": "self",
+            "amount": 2,
+            "nonlethal": true,
+            "offering": true
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "loseHp",
+            "target": "self",
+            "amount": 2,
+            "nonlethal": true,
+            "offering": true
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1
+          }
         ]
       },
       {
         "actionCost": 1,
         "manaCost": 3,
         "effects": [
-          {"op":"loseHp","target":"self","amount":2,"nonlethal":true,"offering":true},
-          {"op":"damage","target":"enemy","amount":16},
-          {"op":"block","target":"self","amount":3},
-          {"op":"block","target":"self","amount":2,"oncePerTurn":"grade-block"}
+          {
+            "op": "loseHp",
+            "target": "self",
+            "amount": 2,
+            "nonlethal": true,
+            "offering": true
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
         ]
       },
       {
         "actionCost": 1,
         "manaCost": 3,
         "effects": [
-          {"op":"loseHp","target":"self","amount":2,"nonlethal":true,"offering":true},
-          {"op":"damage","target":"enemy","amount":18},
-          {"op":"block","target":"self","amount":3},
-          {"op":"block","target":"self","amount":2,"oncePerTurn":"grade-block"},
-          {"op":"draw","amount":1,"oncePerTurn":"grade-draw"}
+          {
+            "op": "loseHp",
+            "target": "self",
+            "amount": 2,
+            "nonlethal": true,
+            "offering": true
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
         ]
       }
     ]
@@ -760,8 +4361,115 @@
     "primary": "damage",
     "hits": 1,
     "abilityRank": 1,
-    "primaryValues": [4,6,7,10,13,17],
-    "actionCosts": [1,1,1,1,2,2]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "crimsonBlight",
+            "stacks": 3
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "crimsonBlight",
+            "stacks": 3
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 5
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "crimsonBlight",
+            "stacks": 3
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 4,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 5
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "crimsonBlight",
+            "stacks": 3
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "progression-pallbearer-s-ward",
@@ -772,8 +4480,131 @@
     "primary": "block",
     "hits": 1,
     "abilityRank": 1,
-    "primaryValues": [5,8,9,12,15,19],
-    "actionCosts": [1,1,1,1,2,2]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 3
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 4
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "if": {
+              "p": "hpBelowPct",
+              "of": "self",
+              "pct": 50,
+              "snapshot": "beforePlay"
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 5
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "if": {
+              "p": "hpBelowPct",
+              "of": "self",
+              "pct": 50,
+              "snapshot": "beforePlay"
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 7
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "if": {
+              "p": "hpBelowPct",
+              "of": "self",
+              "pct": 50,
+              "snapshot": "beforePlay"
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 9
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "if": {
+              "p": "hpBelowPct",
+              "of": "self",
+              "pct": 50,
+              "snapshot": "beforePlay"
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "progression-ember-tithe",
@@ -784,8 +4615,143 @@
     "primary": "damage",
     "hits": 1,
     "abilityRank": 2,
-    "primaryValues": [6,8,10,13,16,20],
-    "actionCosts": [1,1,1,1,2,2]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "loseHp",
+            "target": "self",
+            "amount": 3,
+            "nonlethal": true,
+            "offering": true
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "regen",
+            "stacks": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "loseHp",
+            "target": "self",
+            "amount": 3,
+            "nonlethal": true,
+            "offering": true
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "regen",
+            "stacks": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "loseHp",
+            "target": "self",
+            "amount": 3,
+            "nonlethal": true,
+            "offering": true
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "regen",
+            "stacks": 1
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "loseHp",
+            "target": "self",
+            "amount": 3,
+            "nonlethal": true,
+            "offering": true
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 4
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "regen",
+            "stacks": 1
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "progression-ossuary-cant",
@@ -796,8 +4762,179 @@
     "primary": "block",
     "hits": 1,
     "abilityRank": 2,
-    "primaryValues": [5,7,8,11,14,18],
-    "actionCosts": [1,1,1,1,2,2]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 3
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 3
+          },
+          {
+            "op": "gainEnergy",
+            "amount": 1,
+            "if": {
+              "p": "any",
+              "preds": [
+                {
+                  "p": "hasStatus",
+                  "of": "allEnemies",
+                  "status": "crimsonBlight",
+                  "snapshot": "beforePlay"
+                },
+                {
+                  "p": "hasStatus",
+                  "of": "allEnemies",
+                  "status": "necroticBlight",
+                  "snapshot": "beforePlay"
+                }
+              ]
+            },
+            "funded": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 5
+          },
+          {
+            "op": "gainEnergy",
+            "amount": 1,
+            "if": {
+              "p": "any",
+              "preds": [
+                {
+                  "p": "hasStatus",
+                  "of": "allEnemies",
+                  "status": "crimsonBlight",
+                  "snapshot": "beforePlay"
+                },
+                {
+                  "p": "hasStatus",
+                  "of": "allEnemies",
+                  "status": "necroticBlight",
+                  "snapshot": "beforePlay"
+                }
+              ]
+            },
+            "funded": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 6
+          },
+          {
+            "op": "gainEnergy",
+            "amount": 1,
+            "if": {
+              "p": "any",
+              "preds": [
+                {
+                  "p": "hasStatus",
+                  "of": "allEnemies",
+                  "status": "crimsonBlight",
+                  "snapshot": "beforePlay"
+                },
+                {
+                  "p": "hasStatus",
+                  "of": "allEnemies",
+                  "status": "necroticBlight",
+                  "snapshot": "beforePlay"
+                }
+              ]
+            },
+            "funded": 1
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 8
+          },
+          {
+            "op": "gainEnergy",
+            "amount": 1,
+            "if": {
+              "p": "any",
+              "preds": [
+                {
+                  "p": "hasStatus",
+                  "of": "allEnemies",
+                  "status": "crimsonBlight",
+                  "snapshot": "beforePlay"
+                },
+                {
+                  "p": "hasStatus",
+                  "of": "allEnemies",
+                  "status": "necroticBlight",
+                  "snapshot": "beforePlay"
+                }
+              ]
+            },
+            "funded": 1
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "progression-requiem-brand",
@@ -808,8 +4945,183 @@
     "primary": "damage",
     "hits": 1,
     "abilityRank": 3,
-    "primaryValues": [6,9,12,15,18,22],
-    "actionCosts": [1,1,1,1,2,2]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "weak",
+            "stacks": 1,
+            "if": {
+              "p": "any",
+              "preds": [
+                {
+                  "p": "hasStatus",
+                  "of": "target",
+                  "status": "crimsonBlight",
+                  "snapshot": "beforePlay"
+                },
+                {
+                  "p": "hasStatus",
+                  "of": "target",
+                  "status": "necroticBlight",
+                  "snapshot": "beforePlay"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "weak",
+            "stacks": 1,
+            "if": {
+              "p": "any",
+              "preds": [
+                {
+                  "p": "hasStatus",
+                  "of": "target",
+                  "status": "crimsonBlight",
+                  "snapshot": "beforePlay"
+                },
+                {
+                  "p": "hasStatus",
+                  "of": "target",
+                  "status": "necroticBlight",
+                  "snapshot": "beforePlay"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "weak",
+            "stacks": 1,
+            "if": {
+              "p": "any",
+              "preds": [
+                {
+                  "p": "hasStatus",
+                  "of": "target",
+                  "status": "crimsonBlight",
+                  "snapshot": "beforePlay"
+                },
+                {
+                  "p": "hasStatus",
+                  "of": "target",
+                  "status": "necroticBlight",
+                  "snapshot": "beforePlay"
+                }
+              ]
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 4
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "weak",
+            "stacks": 1,
+            "if": {
+              "p": "any",
+              "preds": [
+                {
+                  "p": "hasStatus",
+                  "of": "target",
+                  "status": "crimsonBlight",
+                  "snapshot": "beforePlay"
+                },
+                {
+                  "p": "hasStatus",
+                  "of": "target",
+                  "status": "necroticBlight",
+                  "snapshot": "beforePlay"
+                }
+              ]
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "progression-pilgrim-s-shelter",
@@ -820,8 +5132,131 @@
     "primary": "block",
     "hits": 1,
     "abilityRank": 3,
-    "primaryValues": [6,9,12,15,18,22],
-    "actionCosts": [1,1,1,1,2,2]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 4
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 5
+          },
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 3,
+            "if": {
+              "p": "turnMetric",
+              "metric": "turnStartHpPct",
+              "atMost": 50
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 7
+          },
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 3,
+            "if": {
+              "p": "turnMetric",
+              "metric": "turnStartHpPct",
+              "atMost": 50
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 8
+          },
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 3,
+            "if": {
+              "p": "turnMetric",
+              "metric": "turnStartHpPct",
+              "atMost": 50
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 10
+          },
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 3,
+            "if": {
+              "p": "turnMetric",
+              "metric": "turnStartHpPct",
+              "atMost": 50
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "progression-crown-of-scars",
@@ -832,8 +5267,159 @@
     "primary": "damage",
     "hits": 1,
     "abilityRank": 4,
-    "primaryValues": [6,9,13,18,21,25],
-    "actionCosts": [2,1,2,2,3,3]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "loseHp",
+            "target": "self",
+            "amount": 3,
+            "nonlethal": true,
+            "offering": true
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "turnMetric",
+              "metric": "offeringsPaid",
+              "atLeast": 1
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "loseHp",
+            "target": "self",
+            "amount": 3,
+            "nonlethal": true,
+            "offering": true
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "turnMetric",
+              "metric": "offeringsPaid",
+              "atLeast": 1
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "loseHp",
+            "target": "self",
+            "amount": 3,
+            "nonlethal": true,
+            "offering": true
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "turnMetric",
+              "metric": "offeringsPaid",
+              "atLeast": 1
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "loseHp",
+            "target": "self",
+            "amount": 3,
+            "nonlethal": true,
+            "offering": true
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 5
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "turnMetric",
+              "metric": "offeringsPaid",
+              "atLeast": 1
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "progression-dawn-after-ash",
@@ -844,7 +5430,114 @@
     "primary": "block",
     "hits": 1,
     "abilityRank": 5,
-    "primaryValues": [6,9,13,18,21,25],
-    "actionCosts": [2,1,2,2,3,3]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 4
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 6
+          },
+          {
+            "op": "removeStatus",
+            "target": "self",
+            "status": "weak",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 8
+          },
+          {
+            "op": "removeStatus",
+            "target": "self",
+            "status": "weak",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 10
+          },
+          {
+            "op": "removeStatus",
+            "target": "self",
+            "status": "weak",
+            "amount": 1
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 12
+          },
+          {
+            "op": "removeStatus",
+            "target": "self",
+            "status": "weak",
+            "amount": 1
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   }
 ]

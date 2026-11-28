@@ -15,7 +15,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 8
+        "amount": 2
       }
     ],
     "tags": [
@@ -43,7 +43,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 2
+        "amount": 4
       }
     ],
     "tags": [
@@ -97,7 +97,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 1
       }
     ],
     "tags": [
@@ -125,7 +125,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 3,
+        "amount": 1,
         "hits": 2
       }
     ],
@@ -154,7 +154,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 15
+        "amount": 4
       }
     ],
     "tags": [
@@ -219,7 +219,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 3
+        "amount": 5
       }
     ],
     "tags": [
@@ -279,7 +279,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 8
+        "amount": 2
       },
       {
         "op": "heal",
@@ -341,7 +341,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 17
+        "amount": 5
       }
     ],
     "tags": [
@@ -369,7 +369,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 11
+        "amount": 3
       },
       {
         "op": "applyStatus",
@@ -403,7 +403,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 4
+        "amount": 7
       },
       {
         "op": "heal",
@@ -436,7 +436,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 8
+        "amount": 2
       }
     ],
     "tags": [
@@ -464,7 +464,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 5,
+        "amount": 1,
         "hits": 2
       }
     ],
@@ -493,7 +493,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 9,
+        "amount": 2,
         "breakBlock": 9
       }
     ],
@@ -522,7 +522,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 4,
+        "amount": 1,
         "hits": 3
       }
     ],
@@ -578,7 +578,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 4,
+        "amount": 1,
         "hits": 2
       }
     ],
@@ -607,7 +607,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 3
+        "amount": 5
       }
     ],
     "tags": [
@@ -634,7 +634,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 16
+        "amount": 4
       },
       {
         "op": "applyStatus",
@@ -698,7 +698,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 20
+        "amount": 5
       }
     ],
     "tags": [
@@ -727,7 +727,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 1
       },
       {
         "op": "applyStatus",
@@ -763,7 +763,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 27,
+        "amount": 6,
         "breakBlock": 27
       }
     ],
@@ -793,7 +793,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 13,
+        "amount": 3,
         "breakBlock": 13
       }
     ],
@@ -822,7 +822,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 9
+        "amount": 2
       }
     ],
     "tags": [
@@ -850,7 +850,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 4
+        "amount": 6
       }
     ],
     "tags": [
@@ -877,7 +877,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6,
+        "amount": 1,
         "hits": 3
       }
     ],
@@ -906,7 +906,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 3
+        "amount": 5
       }
     ],
     "tags": [
@@ -933,7 +933,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 4,
+        "amount": 1,
         "hits": 3
       }
     ],
@@ -962,7 +962,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 10,
+        "amount": 2,
         "breakBlock": 10
       },
       {
@@ -997,7 +997,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 11
+        "amount": 3
       }
     ],
     "tags": [
@@ -1025,12 +1025,12 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 4
+        "amount": 5
       },
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 1
       }
     ],
     "tags": [
@@ -1091,7 +1091,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 3
+        "amount": 1
       }
     ],
     "tags": [
@@ -1119,7 +1119,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 7
+        "amount": 2
       },
       {
         "op": "addCard",
@@ -1220,7 +1220,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 4,
+        "amount": 1,
         "hits": 2
       }
     ],
@@ -1249,7 +1249,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 1
       },
       {
         "op": "applyStatus",
@@ -1283,7 +1283,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 4,
+        "amount": 1,
         "hits": 2
       }
     ],
@@ -1312,7 +1312,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 3
+        "amount": 1
       },
       {
         "op": "applyStatus",
@@ -1346,7 +1346,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 10
+        "amount": 2
       }
     ],
     "tags": [
@@ -1374,7 +1374,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 4
+        "amount": 7
       }
     ],
     "tags": [
@@ -1401,7 +1401,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 14
+        "amount": 4
       }
     ],
     "tags": [
@@ -1429,7 +1429,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 8
+        "amount": 2
       },
       {
         "op": "applyStatus",
@@ -1490,7 +1490,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 5,
+        "amount": 1,
         "hits": 3
       }
     ],
@@ -1519,7 +1519,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 14
+        "amount": 4
       }
     ],
     "tags": [
@@ -1547,12 +1547,12 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 4
+        "amount": 6
       },
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 1
       }
     ],
     "tags": [
@@ -1581,7 +1581,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 4
+        "amount": 1
       }
     ],
     "tags": [
@@ -1609,7 +1609,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 11
+        "amount": 3
       }
     ],
     "tags": [
@@ -1637,7 +1637,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 5,
+        "amount": 1,
         "hits": 3
       }
     ],
@@ -1666,7 +1666,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 5
+        "amount": 8
       },
       {
         "op": "applyStatus",
@@ -1699,7 +1699,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6,
+        "amount": 1,
         "hits": 3
       }
     ],
@@ -1758,7 +1758,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 4,
+        "amount": 1,
         "hits": 2
       }
     ],
@@ -1787,12 +1787,12 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 2
+        "amount": 3
       },
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 1
       }
     ],
     "tags": [
@@ -1821,7 +1821,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 5
+        "amount": 8
       }
     ],
     "tags": [
@@ -1848,7 +1848,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 4,
+        "amount": 1,
         "hits": 2
       },
       {
@@ -1883,7 +1883,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 13
+        "amount": 4
       }
     ],
     "tags": [
@@ -1938,7 +1938,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 15
+        "amount": 4
       }
     ],
     "tags": [
@@ -1966,7 +1966,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6,
+        "amount": 1,
         "hits": 3
       }
     ],
@@ -1995,7 +1995,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 8,
+        "amount": 1,
         "hits": 3,
         "breakBlock": 8
       }
@@ -2052,7 +2052,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 8,
+        "amount": 2,
         "hits": 3
       }
     ],
@@ -2081,7 +2081,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 19,
+        "amount": 4,
         "breakBlock": 19
       }
     ],
@@ -2137,7 +2137,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 12
+        "amount": 3
       }
     ],
     "tags": [
@@ -2200,7 +2200,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 9
+        "amount": 2
       }
     ],
     "tags": [
@@ -2267,7 +2267,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 5,
+        "amount": 1,
         "hits": 2
       }
     ],
@@ -2296,7 +2296,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 5
+        "amount": 1
       },
       {
         "op": "applyStatus",
@@ -2330,7 +2330,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 16
+        "amount": 4
       }
     ],
     "tags": [
@@ -2385,7 +2385,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 4
+        "amount": 7
       }
     ],
     "tags": [
@@ -2439,7 +2439,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 15
+        "amount": 4
       }
     ],
     "tags": [
@@ -2467,7 +2467,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 8
+        "amount": 2
       },
       {
         "op": "applyStatus",
@@ -2501,7 +2501,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 5
+        "amount": 8
       },
       {
         "op": "heal",
@@ -2534,7 +2534,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 12
+        "amount": 3
       },
       {
         "op": "applyStatus",
@@ -2568,7 +2568,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 10,
+        "amount": 2,
         "hits": 2
       },
       {
@@ -2603,7 +2603,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 4
+        "amount": 7
       },
       {
         "op": "applyStatus",
@@ -2636,7 +2636,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 12,
+        "amount": 2,
         "hits": 2
       }
     ],
@@ -2665,7 +2665,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 5,
+        "amount": 1,
         "hits": 2
       }
     ],
@@ -2694,7 +2694,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 12,
+        "amount": 2,
         "breakBlock": 12
       }
     ],
@@ -2723,12 +2723,12 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 3
+        "amount": 4
       },
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 1
       }
     ],
     "tags": [
@@ -2784,7 +2784,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 11
+        "amount": 3
       }
     ],
     "tags": [
@@ -2812,7 +2812,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 1
       },
       {
         "op": "addCard",
@@ -2850,7 +2850,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 21,
+        "amount": 5,
         "breakBlock": 21
       }
     ],
@@ -2879,7 +2879,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 22
+        "amount": 6
       }
     ],
     "tags": [
@@ -2964,7 +2964,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 11,
+        "amount": 2,
         "hits": 3
       }
     ],
@@ -2993,7 +2993,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 20,
+        "amount": 4,
         "breakBlock": 20
       },
       {
@@ -3028,7 +3028,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 10,
+        "amount": 2,
         "hits": 3
       }
     ],
@@ -3057,7 +3057,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 12,
+        "amount": 3,
         "hits": 2
       }
     ],
@@ -3086,7 +3086,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 4
+        "amount": 7
       }
     ],
     "tags": [
@@ -3140,7 +3140,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 12,
+        "amount": 4,
         "hits": 2,
         "breakBlock": 12
       }
@@ -4195,7 +4195,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 7
+        "amount": 2
       }
     ],
     "tags": [
@@ -4223,7 +4223,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 3
+        "amount": 5
       }
     ],
     "tags": [
@@ -4250,7 +4250,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 4,
+        "amount": 1,
         "breakBlock": 4
       }
     ],
@@ -4304,7 +4304,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 1
       }
     ],
     "tags": [
@@ -4332,7 +4332,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 5
+        "amount": 1
       },
       {
         "op": "applyStatus",
@@ -4366,7 +4366,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 2
+        "amount": 4
       }
     ],
     "tags": [
@@ -4443,7 +4443,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 5
+        "amount": 1
       }
     ],
     "tags": [
@@ -4548,7 +4548,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 7
+        "amount": 2
       }
     ],
     "tags": [
@@ -4603,7 +4603,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 3
+        "amount": 5
       }
     ],
     "tags": [
@@ -4655,7 +4655,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 7
+        "amount": 2
       }
     ],
     "tags": [
@@ -4683,7 +4683,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 11,
+        "amount": 2,
         "breakBlock": 11
       }
     ],
@@ -4712,7 +4712,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 27
+        "amount": 8
       },
       {
         "op": "applyStatus",
@@ -4746,7 +4746,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 3
+        "amount": 5
       }
     ],
     "tags": [
@@ -4798,7 +4798,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 7
+        "amount": 2
       }
     ],
     "tags": [
@@ -4826,7 +4826,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 8
+        "amount": 2
       }
     ],
     "tags": [
@@ -4854,7 +4854,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 11,
+        "amount": 2,
         "breakBlock": 11
       }
     ],
@@ -4960,7 +4960,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 7
+        "amount": 2
       }
     ],
     "tags": [
@@ -4988,7 +4988,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 12,
+        "amount": 2,
         "breakBlock": 12
       }
     ],
@@ -5017,7 +5017,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 27
+        "amount": 8
       }
     ],
     "tags": [
@@ -5045,7 +5045,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 3
+        "amount": 5
       }
     ],
     "tags": [
@@ -5122,7 +5122,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 1
       }
     ],
     "tags": [
@@ -5150,7 +5150,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 11,
+        "amount": 2,
         "breakBlock": 11
       }
     ],
@@ -5179,7 +5179,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 4
+        "amount": 7
       }
     ],
     "tags": [
@@ -5206,7 +5206,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 5
+        "amount": 8
       }
     ],
     "tags": [
@@ -5258,7 +5258,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 7
+        "amount": 2
       }
     ],
     "tags": [
@@ -5286,7 +5286,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 5
+        "amount": 1
       }
     ],
     "tags": [
@@ -5314,7 +5314,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 13
+        "amount": 3
       }
     ],
     "tags": [
@@ -5342,7 +5342,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 28
+        "amount": 9
       }
     ],
     "tags": [
@@ -5370,7 +5370,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 3
+        "amount": 5
       }
     ],
     "tags": [
@@ -5422,7 +5422,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 8
+        "amount": 2
       }
     ],
     "tags": [
@@ -5450,7 +5450,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 13,
+        "amount": 3,
         "breakBlock": 13
       }
     ],
@@ -5479,7 +5479,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 13
+        "amount": 3
       }
     ],
     "tags": [
@@ -5507,7 +5507,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 3
+        "amount": 5
       }
     ],
     "tags": [
@@ -5567,7 +5567,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 13,
+        "amount": 3,
         "breakBlock": 13
       }
     ],
@@ -5621,7 +5621,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 7
+        "amount": 2
       }
     ],
     "tags": [
@@ -5649,7 +5649,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 8
+        "amount": 2
       }
     ],
     "tags": [
@@ -5710,7 +5710,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 12,
+        "amount": 2,
         "breakBlock": 12
       }
     ],
@@ -5739,7 +5739,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 13
+        "amount": 3
       }
     ],
     "tags": [
@@ -5767,7 +5767,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 3
+        "amount": 5
       }
     ],
     "tags": [
@@ -5794,7 +5794,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 28
+        "amount": 9
       }
     ],
     "tags": [
@@ -5872,7 +5872,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 7
+        "amount": 2
       }
     ],
     "tags": [
@@ -5900,7 +5900,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 4,
+        "amount": 1,
         "breakBlock": 4
       }
     ],
@@ -5929,7 +5929,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 3
+        "amount": 5
       }
     ],
     "tags": [
@@ -5981,7 +5981,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 7
+        "amount": 2
       }
     ],
     "tags": [
@@ -6009,7 +6009,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 1
       },
       {
         "op": "applyStatus",
@@ -6043,7 +6043,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 3
+        "amount": 5
       }
     ],
     "tags": [
@@ -6120,7 +6120,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 7
+        "amount": 2
       }
     ],
     "tags": [
@@ -6181,7 +6181,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 3,
+        "amount": 1,
         "breakBlock": 3
       }
     ],
@@ -6210,7 +6210,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 3
+        "amount": 5
       }
     ],
     "tags": [
@@ -6262,7 +6262,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 7
+        "amount": 2
       }
     ],
     "tags": [
@@ -6290,7 +6290,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 5
+        "amount": 1
       },
       {
         "op": "applyStatus",
@@ -6324,7 +6324,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 5,
+        "amount": 1,
         "breakBlock": 5
       }
     ],
@@ -6353,7 +6353,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 3
+        "amount": 5
       }
     ],
     "tags": [
@@ -6405,7 +6405,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 1
       }
     ],
     "tags": [
@@ -6433,7 +6433,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 3,
+        "amount": 1,
         "breakBlock": 3
       }
     ],
@@ -6462,7 +6462,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 3
+        "amount": 5
       }
     ],
     "tags": [
@@ -6514,7 +6514,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 7
+        "amount": 2
       }
     ],
     "tags": [
@@ -6542,7 +6542,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 8
+        "amount": 2
       }
     ],
     "tags": [
@@ -6570,7 +6570,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 12,
+        "amount": 2,
         "breakBlock": 12
       }
     ],
@@ -6599,7 +6599,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 4
+        "amount": 7
       }
     ],
     "tags": [
@@ -6626,7 +6626,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 26
+        "amount": 7
       }
     ],
     "tags": [
@@ -6679,7 +6679,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 8
+        "amount": 2
       }
     ],
     "tags": [
@@ -6740,7 +6740,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 26
+        "amount": 9
       }
     ],
     "tags": [
@@ -6768,7 +6768,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 3
+        "amount": 5
       }
     ],
     "tags": [
@@ -6845,7 +6845,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 7
+        "amount": 2
       }
     ],
     "tags": [
@@ -6873,12 +6873,12 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 4
+        "amount": 6
       },
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 7
+        "amount": 1
       }
     ],
     "tags": [
@@ -6907,7 +6907,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 17
+        "amount": 6
       }
     ],
     "tags": [
@@ -6935,7 +6935,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 3
+        "amount": 5
       }
     ],
     "tags": [
@@ -6987,7 +6987,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 7
+        "amount": 2
       }
     ],
     "tags": [
@@ -7015,7 +7015,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 12,
+        "amount": 2,
         "breakBlock": 12
       }
     ],
@@ -7077,7 +7077,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 4
+        "amount": 7
       }
     ],
     "tags": [
@@ -7154,7 +7154,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 8
+        "amount": 2
       }
     ],
     "tags": [
@@ -7182,7 +7182,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 20
+        "amount": 6
       }
     ],
     "tags": [
@@ -7237,7 +7237,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 3
+        "amount": 5
       }
     ],
     "tags": [
@@ -7289,7 +7289,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 8
+        "amount": 2
       }
     ],
     "tags": [
@@ -7317,7 +7317,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 13,
+        "amount": 3,
         "breakBlock": 13
       }
     ],
@@ -7346,7 +7346,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 18
+        "amount": 6
       }
     ],
     "tags": [
@@ -7407,7 +7407,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 3
+        "amount": 5
       }
     ],
     "tags": [
@@ -7434,7 +7434,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 30
+        "amount": 10
       }
     ],
     "tags": [
@@ -7487,7 +7487,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 8
+        "amount": 2
       }
     ],
     "tags": [
@@ -7515,7 +7515,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 13,
+        "amount": 3,
         "breakBlock": 13
       }
     ],
@@ -7544,7 +7544,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 13
+        "amount": 3
       }
     ],
     "tags": [
@@ -7572,7 +7572,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 3
+        "amount": 5
       }
     ],
     "tags": [
@@ -7632,7 +7632,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 28
+        "amount": 9
       }
     ],
     "tags": [
@@ -7685,7 +7685,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 1
       }
     ],
     "tags": [
@@ -7713,7 +7713,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 7
+        "amount": 2
       }
     ],
     "tags": [
@@ -7741,7 +7741,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 3
+        "amount": 5
       }
     ],
     "tags": [
@@ -7768,7 +7768,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 4
+        "amount": 7
       }
     ],
     "tags": [
@@ -7820,7 +7820,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 7
+        "amount": 2
       }
     ],
     "tags": [
@@ -7848,7 +7848,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 1
       }
     ],
     "tags": [
@@ -7953,7 +7953,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 2,
+        "amount": 1,
         "hits": 3
       }
     ],
@@ -7982,7 +7982,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 5
+        "amount": 1
       },
       {
         "op": "applyStatus",
@@ -8066,7 +8066,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 7
+        "amount": 2
       }
     ],
     "tags": [
@@ -8094,7 +8094,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 8
+        "amount": 2
       }
     ],
     "tags": [
@@ -8122,7 +8122,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 13,
+        "amount": 3,
         "breakBlock": 13
       }
     ],
@@ -8151,7 +8151,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 27
+        "amount": 9
       },
       {
         "op": "applyStatus",
@@ -8235,7 +8235,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 12,
+        "amount": 2,
         "breakBlock": 12
       }
     ],
@@ -8264,7 +8264,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 18
+        "amount": 6
       }
     ],
     "tags": [
@@ -8292,7 +8292,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 27
+        "amount": 9
       }
     ],
     "tags": [
@@ -8320,7 +8320,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 4
+        "amount": 7
       }
     ],
     "tags": [
@@ -8347,7 +8347,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 3
+        "amount": 5
       }
     ],
     "tags": [
@@ -8399,7 +8399,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 7
+        "amount": 2
       }
     ],
     "tags": [
@@ -8427,7 +8427,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 13,
+        "amount": 3,
         "breakBlock": 13
       }
     ],
@@ -8456,7 +8456,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 28
+        "amount": 9
       }
     ],
     "tags": [
@@ -8484,7 +8484,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 3
+        "amount": 5
       }
     ],
     "tags": [
@@ -8561,7 +8561,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 7
+        "amount": 2
       }
     ],
     "tags": [
@@ -8622,7 +8622,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 11,
+        "amount": 2,
         "breakBlock": 11
       }
     ],
@@ -8651,7 +8651,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 26
+        "amount": 9
       }
     ],
     "tags": [
@@ -8729,7 +8729,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 7
+        "amount": 2
       }
     ],
     "tags": [
@@ -8757,7 +8757,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 8
+        "amount": 2
       }
     ],
     "tags": [
@@ -8785,7 +8785,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 12,
+        "amount": 2,
         "breakBlock": 12
       }
     ],
@@ -8814,7 +8814,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 4
+        "amount": 7
       }
     ],
     "tags": [
@@ -8893,7 +8893,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 8
+        "amount": 2
       }
     ],
     "tags": [
@@ -8921,7 +8921,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 13,
+        "amount": 3,
         "breakBlock": 13
       }
     ],
@@ -8950,7 +8950,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 13
+        "amount": 3
       }
     ],
     "tags": [
@@ -8978,7 +8978,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 8
+        "amount": 2
       }
     ],
     "tags": [
@@ -9006,7 +9006,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 3
+        "amount": 5
       }
     ],
     "tags": [
@@ -9033,7 +9033,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 30
+        "amount": 10
       }
     ],
     "tags": [

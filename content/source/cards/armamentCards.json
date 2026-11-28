@@ -1,6 +1,8 @@
 [
   {
     "id": "shieldGuardian",
+    "costRule": "fixed",
+    "manaCost": 1,
     "name": "Guardian",
     "class": "colorless",
     "rarity": "special",
@@ -15,7 +17,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 2
+        "amount": 3
       },
       {
         "op": "addCard",
@@ -31,7 +33,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 3
+          "amount": 5
         },
         {
           "op": "addCard",
@@ -78,6 +80,8 @@
   },
   {
     "id": "shieldBastion",
+    "costRule": "fixed",
+    "manaCost": 1,
     "name": "Bastion",
     "class": "colorless",
     "rarity": "special",
@@ -92,7 +96,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 5
+        "amount": 8
       },
       {
         "op": "applyStatus",
@@ -107,7 +111,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 7
+          "amount": 11
         },
         {
           "op": "applyStatus",
@@ -120,10 +124,12 @@
   },
   {
     "id": "spikedReprisal",
+    "costRule": "fixed",
+    "manaCost": 1,
     "name": "Spiked Reprisal",
     "class": "colorless",
     "rarity": "special",
-    "cost": 1,
+    "cost": 2,
     "type": "attack",
     "flavor": "Shield with nails driven through the boss.\n\nThe nails are from the Bastion's own gates. It is said a sellsword made it on the night of the Burning, from the gate he was hired to hold. His name is not known.\n\nNo bearer since has drawn the nails.",
     "keywords": [],
@@ -134,12 +140,12 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 1
+        "amount": 4
       },
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 4
+        "amount": 1
       },
       {
         "op": "applyStatus",
@@ -154,12 +160,12 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 2
+          "amount": 6
         },
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 6
+          "amount": 2
         },
         {
           "op": "applyStatus",
@@ -172,11 +178,13 @@
   },
   {
     "id": "rimeThrust",
+    "costRule": "fixed",
+    "manaCost": 1,
     "flavor": "Frost spear of the Pale Marches.\n\nIts point was reforged from the broken blade of a Court knight, and marches steel keeps its frost long after leaving the cold. The ice-fishers who made it say the knight gave the blade freely, before the Decree, for a winter's fish.\n\nThe ice-fishers keep no records.",
     "name": "Rime Thrust",
     "class": "colorless",
     "rarity": "special",
-    "cost": 1,
+    "cost": 2,
     "type": "attack",
     "keywords": [],
     "icon": "frost",
@@ -186,7 +194,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 5
+        "amount": 2
       },
       {
         "op": "applyStatus",
@@ -197,11 +205,12 @@
     ],
     "textTemplate": "Deal {damage} damage. Apply {frost} Frost.",
     "upgrade": {
+      "cost": 3,
       "effects": [
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 7
+          "amount": 4
         },
         {
           "op": "applyStatus",
@@ -214,11 +223,13 @@
   },
   {
     "id": "kilnCleave",
+    "costRule": "fixed",
+    "manaCost": 1,
     "flavor": "Axe of the Dead Foundry.\n\nThe Foundry's fires went out with the Crown Flame, and its forges have been warm ever since, though none has lit them. Corran, a foundryman, broke this axe from a cold mould at dawn and carried it up the Basalt Stair.\n\nHe says no one poured it.",
     "name": "Kiln Cleave",
     "class": "colorless",
     "rarity": "special",
-    "cost": 2,
+    "cost": 3,
     "type": "attack",
     "keywords": [],
     "icon": "burn",
@@ -228,7 +239,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 10
+        "amount": 4
       },
       {
         "op": "applyStatus",
@@ -248,7 +259,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 13
+          "amount": 5
         },
         {
           "op": "applyStatus",
@@ -266,6 +277,8 @@
   },
   {
     "id": "vesperWard",
+    "costRule": "fixed",
+    "manaCost": 1,
     "flavor": "Ward of the Chapel's evening bell-ringers.\n\nA chime rung at vespers to close the day. Its bell was taken long ago; only the frame and the ward remain. Climbers who carry it say it rings at dusk regardless.\n\nA Chapel ward, rung at vespers. The bell is gone.",
     "name": "Vesper Ward",
     "class": "colorless",

@@ -36,7 +36,7 @@ function lessonGrade(recipe, rank) {
   // letting a stronger effect silently buy another resource tax.
   if (options.grades) {
     const grade = structuredClone(options.grades[rank]);
-    return { rank, ...grade, textTemplate: withDrawbacks(recipeText(grade.effects, combatProfileFor(id)), id), faceTemplate: recipeFace(grade.effects, combatProfileFor(id)),
+    return { rank, ...grade, textTemplate: withDrawbacks(recipeText(grade.effects, combatProfileFor(id)), id), faceTemplate: options.face ?? recipeFace(grade.effects, combatProfileFor(id)),
       traits: { costRule: 'fixed',
         ...(original.effects.some(e => e.op === 'damage') ? { damageSchool: abilityKind === 'spell' ? 'magic' : 'physical', exposureBuildupPerHit: abilityKind === 'spell' ? (rank > 0 ? 5 : 1) : 0 } : {}),
       },

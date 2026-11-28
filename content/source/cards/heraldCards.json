@@ -122,7 +122,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 5
+        "amount": 1
       },
       {
         "op": "applyStatus",
@@ -137,7 +137,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 7
+          "amount": 1
         },
         {
           "op": "applyStatus",
@@ -150,10 +150,12 @@
   },
   {
     "id": "flagellation",
+    "costRule": "fixed",
+    "manaCost": 1,
     "name": "Flagellation",
     "class": "herald",
     "rarity": "common",
-    "cost": 1,
+    "cost": 0,
     "type": "attack",
     "flavor": "Penance of the Chapel's novices.\n\nPerformed with a knotted cord upon the bare back. The Saints taught that pain offered freely spares the fire the trouble of taking it. Novice Wen kept the penance daily for three years.\n\nShe wrote that she could not say whom it had spared.",
     "keywords": [],
@@ -167,7 +169,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 9
+        "amount": 3
       }
     ],
     "textTemplate": "Lose {loseHp} HP. Deal {damage} damage.",
@@ -181,7 +183,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 12
+          "amount": 3
         }
       ]
     }
@@ -228,6 +230,8 @@
   },
   {
     "id": "litany",
+    "costRule": "fixed",
+    "manaCost": 1,
     "name": "Litany",
     "class": "herald",
     "rarity": "common",
@@ -252,6 +256,8 @@
     ],
     "textTemplate": "Apply {weak} Weak and {insanity} Insanity.",
     "upgrade": {
+      "cost": 1,
+      "manaCost": 2,
       "effects": [
         {
           "op": "applyStatus",
@@ -348,6 +354,7 @@
   },
   {
     "id": "contagion",
+    "costRule": "fixed",
     "name": "Contagion",
     "class": "herald",
     "rarity": "common",
@@ -531,10 +538,12 @@
   },
   {
     "id": "martyrBlood",
+    "costRule": "fixed",
+    "manaCost": 1,
     "name": "Martyr's Blood",
     "class": "herald",
     "rarity": "uncommon",
-    "cost": 1,
+    "cost": 3,
     "type": "skill",
     "flavor": "Offering of the Saint's own blood.\n\nMade at the altar when the censer ran low, for a Saint's blood was held to burn hotter than any incense. When the censers were cleaned in the years of the Spire, dried blood lay layered beneath the ash.\n\nWe spend ourselves at the altar, and the censer swings faster.",
     "keywords": [
@@ -577,6 +586,7 @@
   },
   {
     "id": "blightBloom",
+    "costRule": "fixed",
     "name": "Blight Bloom",
     "class": "herald",
     "rarity": "uncommon",
@@ -810,6 +820,7 @@
   },
   {
     "id": "plagueBearer",
+    "costRule": "fixed",
     "name": "Plague Bearer",
     "class": "herald",
     "rarity": "uncommon",
@@ -823,7 +834,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 5
+        "amount": 2
       },
       {
         "op": "applyStatus",
@@ -842,7 +853,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 5
+          "amount": 2
         },
         {
           "op": "applyStatus",
@@ -1038,10 +1049,11 @@
   },
   {
     "id": "secondBloom",
+    "costRule": "fixed",
     "name": "Second Bloom",
     "class": "herald",
     "rarity": "rare",
-    "cost": 2,
+    "cost": 1,
     "manaCost": 1,
     "type": "skill",
     "flavor": "Rite of recovery, named for the weald's second flowering.\n\nThe orchards bloomed a second time in years when the Field Flame burned strong, and the Chapel claimed both the blossom and the healing as its work. Neither has come since the Burning.\n\nThe last novice performs the rite regardless, and says it works.",
@@ -1473,6 +1485,7 @@
   },
   {
     "id": "witheringTouch",
+    "costRule": "fixed",
     "name": "Withering Touch",
     "class": "herald",
     "rarity": "common",
@@ -1486,7 +1499,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 4
+        "amount": 2
       },
       {
         "op": "applyStatus",
@@ -1501,7 +1514,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 6
+          "amount": 2
         },
         {
           "op": "applyStatus",
@@ -1675,10 +1688,12 @@
   },
   {
     "id": "blightwardLash",
+    "costRule": "fixed",
+    "manaCost": 1,
     "name": "Blightward Lash",
     "class": "herald",
     "rarity": "common",
-    "cost": 1,
+    "cost": 0,
     "type": "attack",
     "flavor": "Scourge turned upon one's own rot.\n\nA discipline the Herald took up after the Burning: to cut the Blight from their own flesh and turn it outward. The Chapel remnant condemns it as heresy against the fire's gift.\n\nTwice the remnant has sent a novice to ask how it is done.",
     "keywords": [],
@@ -1687,7 +1702,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 2
       },
       {
         "op": "applyStatus",
@@ -1707,7 +1722,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 8
+          "amount": 2
         },
         {
           "op": "applyStatus",
@@ -1947,12 +1962,12 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 3
+        "amount": 1
       },
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 4,
+        "amount": 1,
         "if": {
           "p": "hasStatus",
           "of": "target",
@@ -1966,12 +1981,12 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 4
+          "amount": 1
         },
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 5,
+          "amount": 1,
           "if": {
             "p": "hasStatus",
             "of": "target",

@@ -168,12 +168,12 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 3
+        "amount": 1
       },
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 3,
+        "amount": 1,
         "if": {
           "p": "hasStatus",
           "of": "self",
@@ -192,12 +192,12 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 4
+          "amount": 1
         },
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 4,
+          "amount": 1,
           "if": {
             "p": "hasStatus",
             "of": "self",
@@ -357,10 +357,11 @@
   },
   {
     "id": "twinPrick",
+    "costRule": "fixed",
     "name": "Twin Prick",
     "class": "rogue",
     "rarity": "common",
-    "cost": 1,
+    "cost": 2,
     "type": "attack",
     "keywords": [],
     "icon": "history",
@@ -369,13 +370,13 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 3,
+        "amount": 1,
         "hits": 2
       },
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 2,
+        "amount": 1,
         "hits": 2,
         "if": {
           "p": "hasStatus",
@@ -395,13 +396,13 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 4,
+          "amount": 2,
           "hits": 2
         },
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 2,
+          "amount": 1,
           "hits": 2,
           "if": {
             "p": "hasStatus",
@@ -459,10 +460,11 @@
   },
   {
     "id": "hamstringRogue",
+    "costRule": "fixed",
     "name": "Hamstring",
     "class": "rogue",
     "rarity": "common",
-    "cost": 1,
+    "cost": 2,
     "type": "attack",
     "keywords": [],
     "icon": "motion",
@@ -471,7 +473,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 3
       },
       {
         "op": "applyStatus",
@@ -486,7 +488,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 9
+          "amount": 4
         },
         {
           "op": "applyStatus",
@@ -499,10 +501,11 @@
   },
   {
     "id": "serratedShiv",
+    "costRule": "fixed",
     "name": "Serrated Shiv",
     "class": "rogue",
     "rarity": "common",
-    "cost": 1,
+    "cost": 3,
     "type": "attack",
     "keywords": [],
     "icon": "bleed",
@@ -511,7 +514,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 5
+        "amount": 2
       },
       {
         "op": "applyStatus",
@@ -538,11 +541,12 @@
     ],
     "textTemplate": "Deal {damage} damage. Apply {bleed} Bleed. Prepared: apply {bleed.2} more. Consume Prepared.",
     "upgrade": {
+      "cost": 4,
       "effects": [
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 7
+          "amount": 4
         },
         {
           "op": "applyStatus",
@@ -611,6 +615,7 @@
   },
   {
     "id": "ricochet",
+    "costRule": "fixed",
     "name": "Ricochet",
     "class": "rogue",
     "rarity": "common",
@@ -623,16 +628,17 @@
       {
         "op": "damage",
         "target": "allEnemies",
-        "amount": 4
+        "amount": 1
       }
     ],
     "textTemplate": "Deal {damage} damage to ALL enemies.",
     "upgrade": {
+      "cost": 2,
       "effects": [
         {
           "op": "damage",
           "target": "allEnemies",
-          "amount": 7
+          "amount": 4
         }
       ]
     }
@@ -807,10 +813,11 @@
   },
   {
     "id": "cheapShot",
+    "costRule": "fixed",
     "name": "Cheap Shot",
     "class": "rogue",
     "rarity": "common",
-    "cost": 2,
+    "cost": 1,
     "type": "attack",
     "keywords": [],
     "icon": "skill",
@@ -819,12 +826,12 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 10
+        "amount": 2
       },
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6,
+        "amount": 1,
         "if": {
           "p": "hasStatus",
           "of": "target",
@@ -838,12 +845,12 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 13
+          "amount": 4
         },
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 8,
+          "amount": 2,
           "if": {
             "p": "hasStatus",
             "of": "target",
@@ -855,6 +862,7 @@
   },
   {
     "id": "aspDart",
+    "costRule": "fixed",
     "name": "Asp Dart",
     "class": "rogue",
     "rarity": "common",
@@ -867,26 +875,28 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 1
       }
     ],
     "textTemplate": "Deal {damage} damage. Poison damage leaves Venom behind.",
     "upgrade": {
+      "cost": 2,
       "effects": [
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 9
+          "amount": 4
         }
       ]
     }
   },
   {
     "id": "viperStrike",
+    "costRule": "fixed",
     "name": "Viper Strike",
     "class": "rogue",
     "rarity": "common",
-    "cost": 1,
+    "cost": 2,
     "type": "attack",
     "keywords": [],
     "icon": "unknown",
@@ -895,7 +905,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 5
+        "amount": 2
       },
       {
         "op": "applyStatus",
@@ -910,7 +920,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 8
+          "amount": 4
         },
         {
           "op": "applyStatus",
@@ -985,10 +995,11 @@
   },
   {
     "id": "garrote",
+    "costRule": "fixed",
     "name": "Garrote",
     "class": "rogue",
     "rarity": "uncommon",
-    "cost": 1,
+    "cost": 3,
     "type": "attack",
     "keywords": [],
     "icon": "unknown",
@@ -997,7 +1008,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 4
+        "amount": 2
       },
       {
         "op": "applyStatus",
@@ -1018,7 +1029,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 6
+          "amount": 3
         },
         {
           "op": "applyStatus",
@@ -1037,10 +1048,11 @@
   },
   {
     "id": "fanOfKnives",
+    "costRule": "fixed",
     "name": "Fan of Knives",
     "class": "rogue",
     "rarity": "uncommon",
-    "cost": 1,
+    "cost": 2,
     "type": "attack",
     "keywords": [],
     "icon": "sword",
@@ -1049,7 +1061,7 @@
       {
         "op": "damage",
         "target": "allEnemies",
-        "amount": 5
+        "amount": 2
       },
       {
         "op": "draw",
@@ -1062,7 +1074,7 @@
         {
           "op": "damage",
           "target": "allEnemies",
-          "amount": 7
+          "amount": 4
         },
         {
           "op": "draw",
@@ -1259,6 +1271,7 @@
   },
   {
     "id": "coupDeGrace",
+    "costRule": "fixed",
     "name": "Coup de Grace",
     "class": "rogue",
     "rarity": "uncommon",
@@ -1271,12 +1284,12 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 10
+        "amount": 5
       },
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 10,
+        "amount": 5,
         "if": {
           "p": "hasStatus",
           "of": "target",
@@ -1290,12 +1303,12 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 13
+          "amount": 7
         },
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 13,
+          "amount": 7,
           "if": {
             "p": "hasStatus",
             "of": "target",
@@ -1606,10 +1619,11 @@
   },
   {
     "id": "septicBlade",
+    "costRule": "fixed",
     "name": "Septic Blade",
     "class": "rogue",
     "rarity": "uncommon",
-    "cost": 2,
+    "cost": 3,
     "type": "attack",
     "keywords": [],
     "icon": "attack",
@@ -1618,12 +1632,12 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 8
+        "amount": 4
       },
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 4,
+        "amount": 2,
         "if": {
           "p": "hasStatus",
           "of": "target",
@@ -1644,12 +1658,12 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 12
+          "amount": 6
         },
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 4,
+          "amount": 2,
           "if": {
             "p": "hasStatus",
             "of": "target",
@@ -1668,6 +1682,7 @@
   },
   {
     "id": "assassinate",
+    "costRule": "fixed",
     "name": "Assassinate",
     "class": "rogue",
     "rarity": "rare",
@@ -1682,12 +1697,12 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 14
+        "amount": 7
       },
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 14,
+        "amount": 7,
         "if": {
           "p": "hasStatus",
           "of": "self",
@@ -1706,12 +1721,12 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 18
+          "amount": 9
         },
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 18,
+          "amount": 9,
           "if": {
             "p": "hasStatus",
             "of": "self",
@@ -1728,6 +1743,7 @@
   },
   {
     "id": "thousandCutsRogue",
+    "costRule": "fixed",
     "name": "Thousand Cuts",
     "class": "rogue",
     "rarity": "rare",
@@ -1740,7 +1756,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 2,
+        "amount": 1,
         "hits": 6
       },
       {
@@ -1766,7 +1782,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 3,
+          "amount": 1,
           "hits": 6
         },
         {
@@ -1876,10 +1892,11 @@
   },
   {
     "id": "toxicVolley",
+    "costRule": "fixed",
     "name": "Toxic Volley",
     "class": "rogue",
     "rarity": "rare",
-    "cost": 2,
+    "cost": 3,
     "type": "skill",
     "keywords": [],
     "icon": "attack",
@@ -1961,6 +1978,7 @@
   },
   {
     "id": "executionWindow",
+    "costRule": "fixed",
     "name": "Execution Window",
     "class": "rogue",
     "rarity": "rare",
@@ -1996,6 +2014,7 @@
     ],
     "textTemplate": "Apply {vulnerable} Vulnerable. Become Prepared. Draw {draw} card. Exhaust.",
     "upgrade": {
+      "cost": 2,
       "effects": [
         {
           "op": "applyStatus",
@@ -2139,6 +2158,7 @@
   },
   {
     "id": "lethalDose",
+    "costRule": "fixed",
     "name": "Lethal Dose",
     "class": "rogue",
     "rarity": "rare",
@@ -2258,10 +2278,11 @@
   },
   {
     "id": "pinningShot",
+    "costRule": "fixed",
     "name": "Pinning Shot",
     "class": "rogue",
     "rarity": "common",
-    "cost": 1,
+    "cost": 2,
     "type": "attack",
     "keywords": [],
     "icon": "attack",
@@ -2270,7 +2291,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 3
       },
       {
         "op": "applyStatus",
@@ -2285,7 +2306,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 9
+          "amount": 4
         },
         {
           "op": "applyStatus",
@@ -2298,10 +2319,11 @@
   },
   {
     "id": "arrowVolley",
+    "costRule": "fixed",
     "name": "Arrow Volley",
     "class": "rogue",
     "rarity": "common",
-    "cost": 1,
+    "cost": 2,
     "type": "attack",
     "keywords": [],
     "icon": "attack",
@@ -2310,7 +2332,7 @@
       {
         "op": "damage",
         "target": "allEnemies",
-        "amount": 3,
+        "amount": 1,
         "hits": 2
       }
     ],
@@ -2321,7 +2343,7 @@
         {
           "op": "damage",
           "target": "allEnemies",
-          "amount": 4,
+          "amount": 2,
           "hits": 2
         }
       ]
@@ -2329,6 +2351,7 @@
   },
   {
     "id": "nockAndWait",
+    "costRule": "fixed",
     "name": "Nock and Wait",
     "class": "rogue",
     "rarity": "common",
@@ -2377,10 +2400,11 @@
   },
   {
     "id": "aimedShot",
+    "costRule": "fixed",
     "name": "Aimed Shot",
     "class": "rogue",
     "rarity": "uncommon",
-    "cost": 2,
+    "cost": 3,
     "type": "attack",
     "keywords": [],
     "icon": "target",
@@ -2389,12 +2413,12 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 10
+        "amount": 5
       },
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 8,
+        "amount": 4,
         "if": {
           "p": "hasStatus",
           "of": "self",
@@ -2424,12 +2448,12 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 13
+          "amount": 7
         },
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 10,
+          "amount": 5,
           "if": {
             "p": "hasStatus",
             "of": "self",
@@ -2457,10 +2481,11 @@
   },
   {
     "id": "barbedArrow",
+    "costRule": "fixed",
     "name": "Barbed Arrow",
     "class": "rogue",
     "rarity": "uncommon",
-    "cost": 1,
+    "cost": 3,
     "type": "attack",
     "keywords": [],
     "icon": "attack",
@@ -2469,7 +2494,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 5
+        "amount": 2
       },
       {
         "op": "applyStatus",
@@ -2480,11 +2505,12 @@
     ],
     "textTemplate": "Deal {damage} damage. Apply {bleed} Bleed.",
     "upgrade": {
+      "cost": 4,
       "effects": [
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 7
+          "amount": 4
         },
         {
           "op": "applyStatus",
@@ -2497,6 +2523,7 @@
   },
   {
     "id": "bindingParry",
+    "costRule": "fixed",
     "name": "Binding Parry",
     "class": "rogue",
     "rarity": "rare",
@@ -2509,7 +2536,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 4
+        "amount": 5
       },
       {
         "op": "applyStatus",
@@ -2533,7 +2560,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 6
+          "amount": 7
         },
         {
           "op": "applyStatus",
@@ -2555,10 +2582,11 @@
   },
   {
     "id": "whirlingGuard",
+    "costRule": "fixed",
     "name": "Whirling Guard",
     "class": "rogue",
     "rarity": "rare",
-    "cost": 1,
+    "cost": 2,
     "type": "attack",
     "keywords": [],
     "icon": "madness",
@@ -2567,12 +2595,12 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 3
+        "amount": 6
       },
       {
         "op": "damage",
         "target": "allEnemies",
-        "amount": 3,
+        "amount": 1,
         "hits": 3
       }
     ],
@@ -2582,12 +2610,12 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 4
+          "amount": 8
         },
         {
           "op": "damage",
           "target": "allEnemies",
-          "amount": 4,
+          "amount": 1,
           "hits": 3
         }
       ]
@@ -2650,7 +2678,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 3
+        "amount": 1
       },
       {
         "op": "loseHp",
@@ -2669,7 +2697,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 4
+          "amount": 1
         },
         {
           "op": "loseHp",
@@ -2705,12 +2733,12 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 3
+        "amount": 1
       },
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 3,
+        "amount": 1,
         "if": {
           "p": "hasStatus",
           "of": "target",
@@ -2724,12 +2752,12 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 4
+          "amount": 1
         },
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 4,
+          "amount": 1,
           "if": {
             "p": "hasStatus",
             "of": "target",
@@ -2760,12 +2788,12 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 3
+        "amount": 1
       },
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 3,
+        "amount": 1,
         "if": {
           "p": "atRange",
           "range": "melee"
@@ -2777,12 +2805,12 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 4
+          "amount": 1
         },
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 4,
+          "amount": 1,
           "if": {
             "p": "atRange",
             "range": "melee"

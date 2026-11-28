@@ -83,7 +83,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 4
+        "amount": 1
       },
       {
         "op": "applyStatus",
@@ -103,7 +103,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 6
+          "amount": 1
         },
         {
           "op": "applyStatus",
@@ -275,13 +275,13 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 3,
+        "amount": 1,
         "hits": 3
       },
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 3,
+        "amount": 1,
         "if": {
           "p": "hasStatus",
           "of": "self",
@@ -306,13 +306,13 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 4,
+          "amount": 1,
           "hits": 3
         },
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 4,
+          "amount": 1,
           "if": {
             "p": "hasStatus",
             "of": "self",
@@ -383,6 +383,8 @@
   },
   {
     "id": "frostVeil",
+    "costRule": "fixed",
+    "manaCost": 1,
     "name": "Frost Veil",
     "class": "starseer",
     "rarity": "common",
@@ -447,6 +449,8 @@
   },
   {
     "id": "starSlicer",
+    "costRule": "fixed",
+    "manaCost": 1,
     "name": "Star Slicer",
     "class": "starseer",
     "rarity": "common",
@@ -459,13 +463,13 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 3,
+        "amount": 1,
         "hits": 2
       },
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 3,
+        "amount": 1,
         "if": {
           "p": "hasStatus",
           "of": "self",
@@ -490,13 +494,13 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 4,
+          "amount": 1,
           "hits": 2
         },
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 4,
+          "amount": 1,
           "if": {
             "p": "hasStatus",
             "of": "self",
@@ -519,6 +523,8 @@
   },
   {
     "id": "starstoneWard",
+    "costRule": "fixed",
+    "manaCost": 1,
     "name": "Starstone Ward",
     "class": "starseer",
     "rarity": "common",
@@ -759,7 +765,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 4
+        "amount": 1
       },
       {
         "op": "applyStatus",
@@ -796,7 +802,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 6
+          "amount": 1
         },
         {
           "op": "applyStatus",
@@ -844,7 +850,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 7
+        "amount": 2
       },
       {
         "op": "applyStatus",
@@ -875,7 +881,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 9
+          "amount": 3
         },
         {
           "op": "applyStatus",
@@ -904,10 +910,12 @@
   },
   {
     "id": "lucidity",
+    "costRule": "fixed",
+    "manaCost": 1,
     "name": "Lucidity",
     "class": "starseer",
     "rarity": "uncommon",
-    "cost": 1,
+    "cost": 2,
     "type": "skill",
     "flavor": "Clarity for the work.\n\nPractised on the one clear night in forty the reach allowed. The Astronomer worked such nights without sleep, and bade his apprentices do the same.\n\nThey believed he saw more than the charts show, and wrote it elsewhere.",
     "keywords": [],
@@ -1033,10 +1041,11 @@
   },
   {
     "id": "moonrendCut",
+    "costRule": "fixed",
     "name": "Moonrend Cut",
     "class": "starseer",
     "rarity": "uncommon",
-    "cost": 2,
+    "cost": 1,
     "manaCost": 1,
     "type": "attack",
     "flavor": "Crescent stroke of the Observatory's night-porters.\n\nThe porters walked the Basalt Stair with lanterns and curved blades, and claimed the moon's passage over the caldera showed them where to cut. The Starwatch called it folklore, and employed them regardless.\n\nTheir blades are found in the lower galleries, in hands no longer quite their own.",
@@ -1046,7 +1055,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 8
+        "amount": 2
       },
       {
         "op": "poiseDamage",
@@ -1072,7 +1081,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 11
+          "amount": 3
         },
         {
           "op": "poiseDamage",
@@ -1365,10 +1374,11 @@
   },
   {
     "id": "astralCleave",
+    "costRule": "fixed",
     "name": "Astral Cleave",
     "class": "starseer",
     "rarity": "uncommon",
-    "cost": 2,
+    "cost": 1,
     "manaCost": 1,
     "type": "attack",
     "flavor": "Cut of cold force.\n\nFirst seen when a falling fragment passed through the lens gallery and sheared the telescope in two before cooling upon the floor. The Astronomer recorded a fall. Maud Vell, at the eyepiece, called it a throw.\n\nShe was dismissed at the season's end.",
@@ -1378,7 +1388,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 10
+        "amount": 3
       },
       {
         "op": "poiseDamage",
@@ -1388,7 +1398,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 5,
+        "amount": 1,
         "if": {
           "p": "hasStatus",
           "of": "self",
@@ -1414,7 +1424,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 13
+          "amount": 4
         },
         {
           "op": "poiseDamage",
@@ -1424,7 +1434,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 5,
+          "amount": 1,
           "if": {
             "p": "hasStatus",
             "of": "self",
@@ -1634,6 +1644,7 @@
   },
   {
     "id": "starstoneKris",
+    "costRule": "fixed",
     "name": "Starstone Kris",
     "class": "starseer",
     "rarity": "rare",
@@ -1647,7 +1658,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 5
+        "amount": 1
       },
       {
         "op": "draw",
@@ -1661,7 +1672,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 5,
+        "amount": 1,
         "if": {
           "p": "hasStatus",
           "of": "self",
@@ -1686,7 +1697,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 7
+          "amount": 2
         },
         {
           "op": "draw",
@@ -1700,7 +1711,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 7,
+          "amount": 2,
           "if": {
             "p": "hasStatus",
             "of": "self",
@@ -2275,10 +2286,11 @@
   },
   {
     "id": "celestialLance",
+    "costRule": "fixed",
     "name": "Celestial Lance",
     "class": "starseer",
     "rarity": "rare",
-    "cost": 2,
+    "cost": 1,
     "manaCost": 1,
     "type": "attack",
     "flavor": "Spear of light, horizon to zenith.\n\nChart 58 records such a line, lasting a single breath, sourced to a star upon no other chart. The Astronomer entered it as a fault of optics, then spent a week grinding a new lens he was never seen to use.\n\nChart 58 is the last he signed.",
@@ -2288,7 +2300,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 10,
+        "amount": 3,
         "if": {
           "p": "not",
           "pred": {
@@ -2301,7 +2313,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 22,
+        "amount": 6,
         "if": {
           "p": "hasStatus",
           "of": "self",
@@ -2327,7 +2339,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 13,
+          "amount": 4,
           "if": {
             "p": "not",
             "pred": {
@@ -2340,7 +2352,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 28,
+          "amount": 8,
           "if": {
             "p": "hasStatus",
             "of": "self",
@@ -2393,6 +2405,8 @@
   },
   {
     "id": "starSpark",
+    "costRule": "fixed",
+    "manaCost": 1,
     "name": "Star Spark",
     "class": "starseer",
     "rarity": "common",
@@ -2405,7 +2419,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 5
+        "amount": 1
       },
       {
         "op": "applyStatus",
@@ -2436,7 +2450,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 7
+          "amount": 2
         },
         {
           "op": "applyStatus",
@@ -2592,7 +2606,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 7
+        "amount": 2
       },
       {
         "op": "applyStatus",
@@ -2623,7 +2637,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 10
+          "amount": 3
         },
         {
           "op": "applyStatus",
@@ -2664,12 +2678,12 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 5
+        "amount": 1
       },
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 3,
+        "amount": 1,
         "if": {
           "p": "hasStatus",
           "of": "self",
@@ -2694,12 +2708,12 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 7
+          "amount": 2
         },
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 4,
+          "amount": 1,
           "if": {
             "p": "hasStatus",
             "of": "self",
@@ -2838,6 +2852,7 @@
   },
   {
     "id": "pyreOfCharts",
+    "costRule": "fixed",
     "name": "Pyre of Charts",
     "class": "starseer",
     "rarity": "uncommon",
@@ -2851,7 +2866,7 @@
       {
         "op": "damage",
         "target": "allEnemies",
-        "amount": 5
+        "amount": 1
       },
       {
         "op": "applyStatus",
@@ -2882,7 +2897,7 @@
         {
           "op": "damage",
           "target": "allEnemies",
-          "amount": 7
+          "amount": 2
         },
         {
           "op": "applyStatus",
@@ -2987,6 +3002,7 @@
   },
   {
     "id": "kindledOmen",
+    "costRule": "fixed",
     "name": "Kindled Omen",
     "class": "starseer",
     "rarity": "uncommon",
@@ -3034,6 +3050,8 @@
     ],
     "textTemplate": "Apply {vulnerable} Vulnerable and {burn} Burn. Starstone: draw {draw} card.",
     "upgrade": {
+      "cost": 1,
+      "manaCost": 2,
       "effects": [
         {
           "op": "applyStatus",
@@ -3072,10 +3090,12 @@
   },
   {
     "id": "cinderLance",
+    "costRule": "fixed",
+    "manaCost": 1,
     "name": "Cinder Lance",
     "class": "starseer",
     "rarity": "uncommon",
-    "cost": 2,
+    "cost": 1,
     "type": "attack",
     "flavor": "A shaft of burning ash, cold at its point.\n\nThe Astronomer's first experiment with the ash of starstone, logged as a failure: the ash burned without heat. His apprentices kept the log.\n\nWhere the lance struck the Observatory's wall, frost still forms each night.",
     "keywords": [],
@@ -3084,7 +3104,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 12
+        "amount": 3
       },
       {
         "op": "applyStatus",
@@ -3111,11 +3131,13 @@
     ],
     "textTemplate": "Deal {damage} damage. Starstone: apply {frost} Frost.",
     "upgrade": {
+      "cost": 1,
+      "manaCost": 2,
       "effects": [
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 16
+          "amount": 4
         },
         {
           "op": "applyStatus",
@@ -3535,7 +3557,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 3
+        "amount": 1
       },
       {
         "op": "loseHp",
@@ -3554,7 +3576,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 5
+          "amount": 1
         },
         {
           "op": "loseHp",
@@ -3591,12 +3613,12 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 3
+        "amount": 1
       },
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 3,
+        "amount": 1,
         "if": {
           "p": "inStance",
           "of": "self",
@@ -3610,12 +3632,12 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 4
+          "amount": 1
         },
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 4,
+          "amount": 1,
           "if": {
             "p": "inStance",
             "of": "self",
@@ -3647,7 +3669,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 4
+        "amount": 1
       },
       {
         "op": "applyStatus",
@@ -3667,7 +3689,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 5
+          "amount": 1
         },
         {
           "op": "applyStatus",
@@ -3709,7 +3731,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 5
+        "amount": 1
       },
       {
         "op": "applyStatus",
@@ -3723,7 +3745,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 7
+          "amount": 2
         },
         {
           "op": "applyStatus",

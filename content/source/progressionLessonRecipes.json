@@ -3,44 +3,132 @@
     "id": "cometFragment",
     "abilityKind": "spell",
     "abilityRank": 0,
-    "actionCost": 1,
-    "primaryIndex": 0,
     "grades": [
-      {"actionCost":1,"manaCost":0,"effects":[{"op":"damage","target":"enemy","amount":8}]},
-      {"actionCost":1,"manaCost":1,"effects":[{"op":"damage","target":"enemy","amount":10}]},
       {
         "actionCost": 1,
         "manaCost": 1,
         "effects": [
-          {"op":"damage","target":"enemy","amount":12},
-          {"op":"applyStatus","target":"self","status":"starstoneCharge","stacks":{"f":"add","args":[1]}}
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          }
         ]
       },
       {
         "actionCost": 2,
         "manaCost": 2,
         "effects": [
-          {"op":"damage","target":"enemy","amount":14},
-          {"op":"applyStatus","target":"self","status":"starstoneCharge","stacks":{"f":"add","args":[1]}}
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 4
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          }
         ]
       },
       {
         "actionCost": 2,
         "manaCost": 3,
         "effects": [
-          {"op":"damage","target":"enemy","amount":18},
-          {"op":"applyStatus","target":"self","status":"starstoneCharge","stacks":{"f":"add","args":[1]}},
-          {"op":"block","target":"self","amount":1,"oncePerTurn":"grade-block"}
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 5
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          }
         ]
       },
       {
         "actionCost": 2,
         "manaCost": 3,
         "effects": [
-          {"op":"damage","target":"enemy","amount":25},
-          {"op":"applyStatus","target":"self","status":"starstoneCharge","stacks":{"f":"add","args":[1]}},
-          {"op":"block","target":"self","amount":1,"oncePerTurn":"grade-block"},
-          {"op":"draw","amount":1,"oncePerTurn":"grade-draw"}
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 7
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
         ]
       }
     ]
@@ -49,52 +137,300 @@
     "id": "crystalBarrier",
     "abilityKind": "spell",
     "abilityRank": 0,
-    "actionCost": 1,
-    "primaryIndex": 0,
-    "values": [1,1,2,3,5,7]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 3
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 5
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 13
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 3,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "scholarsInsight",
     "abilityKind": "spell",
     "abilityRank": 0,
-    "actionCost": 1,
-    "primaryIndex": 0,
     "grades": [
-      {"actionCost":1,"manaCost":0,"effects":[{"op":"draw","amount":2}]},
-      {"actionCost":1,"manaCost":0,"effects":[{"op":"draw","amount":2}]},
       {
         "actionCost": 1,
         "manaCost": 1,
         "effects": [
-          {"op":"draw","amount":2},
-          {"op":"applyStatus","target":"self","status":"starstoneCharge","stacks":{"f":"add","args":[1]}}
+          {
+            "op": "draw",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "draw",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "draw",
+            "amount": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          }
         ]
       },
       {
         "actionCost": 1,
         "manaCost": 2,
         "effects": [
-          {"op":"draw","amount":3},
-          {"op":"applyStatus","target":"self","status":"starstoneCharge","stacks":{"f":"add","args":[1]}}
+          {
+            "op": "draw",
+            "amount": 3
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          }
         ]
       },
       {
         "actionCost": 1,
         "manaCost": 2,
         "effects": [
-          {"op":"draw","amount":3},
-          {"op":"applyStatus","target":"self","status":"starstoneCharge","stacks":{"f":"add","args":[1]}},
-          {"op":"block","target":"self","amount":0,"oncePerTurn":"grade-block"}
+          {
+            "op": "draw",
+            "amount": 3
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
         ]
       },
       {
         "actionCost": 1,
         "manaCost": 3,
         "effects": [
-          {"op":"draw","amount":4},
-          {"op":"applyStatus","target":"self","status":"starstoneCharge","stacks":{"f":"add","args":[1]}},
-          {"op":"block","target":"self","amount":0,"oncePerTurn":"grade-block"},
-          {"op":"draw","amount":1,"oncePerTurn":"grade-draw"}
+          {
+            "op": "draw",
+            "amount": 4
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
         ]
       }
     ]
@@ -103,68 +439,172 @@
     "id": "ashenMote",
     "abilityKind": "spell",
     "abilityRank": 0,
-    "actionCost": 1,
-    "primaryIndex": 0,
     "grades": [
-      {"actionCost":1,"manaCost":0,"effects":[{"op":"damage","target":"enemy","amount":8}]},
-      {"actionCost":1,"manaCost":1,"effects":[{"op":"damage","target":"enemy","amount":10}]},
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3
+          }
+        ]
+      },
       {
         "actionCost": 1,
         "manaCost": 2,
         "effects": [
-          {"op":"damage","target":"enemy","amount":12},
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 3,
-            "if": {"p":"hasStatus","of":"self","status":"starstoneCharge"}
+            "amount": 3
           },
-          {"op":"applyStatus","target":"self","status":"starstoneCharge","stacks":{"f":"add","args":[1]}}
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          }
         ]
       },
       {
         "actionCost": 2,
         "manaCost": 2,
         "effects": [
-          {"op":"damage","target":"enemy","amount":14},
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 5,
-            "if": {"p":"hasStatus","of":"self","status":"starstoneCharge"}
+            "amount": 4
           },
-          {"op":"applyStatus","target":"self","status":"starstoneCharge","stacks":{"f":"add","args":[1]}}
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          }
         ]
       },
       {
         "actionCost": 2,
         "manaCost": 3,
         "effects": [
-          {"op":"damage","target":"enemy","amount":20},
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 5,
-            "if": {"p":"hasStatus","of":"self","status":"starstoneCharge"}
+            "amount": 6
           },
-          {"op":"applyStatus","target":"self","status":"starstoneCharge","stacks":{"f":"add","args":[1]}},
-          {"op":"block","target":"self","amount":1,"oncePerTurn":"grade-block"}
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          }
         ]
       },
       {
         "actionCost": 2,
         "manaCost": 3,
         "effects": [
-          {"op":"damage","target":"enemy","amount":27},
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 5,
-            "if": {"p":"hasStatus","of":"self","status":"starstoneCharge"}
+            "amount": 8
           },
-          {"op":"applyStatus","target":"self","status":"starstoneCharge","stacks":{"f":"add","args":[1]}},
-          {"op":"block","target":"self","amount":1,"oncePerTurn":"grade-block"},
-          {"op":"draw","amount":1,"oncePerTurn":"grade-draw"}
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
         ]
       }
     ]
@@ -173,48 +613,168 @@
     "id": "emberVigil",
     "abilityKind": "spell",
     "abilityRank": 0,
-    "actionCost": 1,
-    "primaryIndex": 0,
     "grades": [
-      {"actionCost":1,"manaCost":0,"effects":[{"op":"block","target":"self","amount":3}]},
-      {"actionCost":1,"manaCost":0,"effects":[{"op":"block","target":"self","amount":4}]},
       {
         "actionCost": 1,
         "manaCost": 1,
         "effects": [
-          {"op":"block","target":"self","amount":5},
-          {"op":"draw","amount":1,"if":{"p":"hasStatus","of":"self","status":"starstoneCharge"}},
-          {"op":"applyStatus","target":"self","status":"starstoneCharge","stacks":{"f":"add","args":[1]}}
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 3
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 4
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 5
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          }
         ]
       },
       {
         "actionCost": 1,
         "manaCost": 2,
         "effects": [
-          {"op":"block","target":"self","amount":6},
-          {"op":"draw","amount":1,"if":{"p":"hasStatus","of":"self","status":"starstoneCharge"}},
-          {"op":"applyStatus","target":"self","status":"starstoneCharge","stacks":{"f":"add","args":[1]}}
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 6
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          }
         ]
       },
       {
         "actionCost": 1,
         "manaCost": 2,
         "effects": [
-          {"op":"block","target":"self","amount":7},
-          {"op":"draw","amount":1,"if":{"p":"hasStatus","of":"self","status":"starstoneCharge"}},
-          {"op":"applyStatus","target":"self","status":"starstoneCharge","stacks":{"f":"add","args":[1]}},
-          {"op":"block","target":"self","amount":0,"oncePerTurn":"grade-block"}
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 7
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
         ]
       },
       {
         "actionCost": 1,
         "manaCost": 3,
         "effects": [
-          {"op":"block","target":"self","amount":8},
-          {"op":"draw","amount":1,"if":{"p":"hasStatus","of":"self","status":"starstoneCharge"}},
-          {"op":"applyStatus","target":"self","status":"starstoneCharge","stacks":{"f":"add","args":[1]}},
-          {"op":"block","target":"self","amount":0,"oncePerTurn":"grade-block"},
-          {"op":"draw","amount":1,"oncePerTurn":"grade-draw"}
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 8
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
         ]
       }
     ]
@@ -223,44 +783,126 @@
     "id": "readTheAsh",
     "abilityKind": "spell",
     "abilityRank": 0,
-    "actionCost": 1,
-    "primaryIndex": 0,
     "grades": [
-      {"actionCost":1,"manaCost":0,"effects":[{"op":"draw","amount":2}]},
-      {"actionCost":1,"manaCost":0,"effects":[{"op":"draw","amount":2}]},
       {
         "actionCost": 1,
         "manaCost": 1,
         "effects": [
-          {"op":"draw","amount":2},
-          {"op":"applyStatus","target":"self","status":"starstoneCharge","stacks":{"f":"add","args":[1]}}
+          {
+            "op": "draw",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "draw",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "draw",
+            "amount": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          }
         ]
       },
       {
         "actionCost": 1,
         "manaCost": 2,
         "effects": [
-          {"op":"draw","amount":3},
-          {"op":"applyStatus","target":"self","status":"starstoneCharge","stacks":{"f":"add","args":[1]}}
+          {
+            "op": "draw",
+            "amount": 3
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          }
         ]
       },
       {
         "actionCost": 1,
         "manaCost": 2,
         "effects": [
-          {"op":"draw","amount":3},
-          {"op":"applyStatus","target":"self","status":"starstoneCharge","stacks":{"f":"add","args":[1]}},
-          {"op":"block","target":"self","amount":0,"oncePerTurn":"grade-block"}
+          {
+            "op": "draw",
+            "amount": 3
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
         ]
       },
       {
         "actionCost": 1,
         "manaCost": 3,
         "effects": [
-          {"op":"draw","amount":4},
-          {"op":"applyStatus","target":"self","status":"starstoneCharge","stacks":{"f":"add","args":[1]}},
-          {"op":"block","target":"self","amount":0,"oncePerTurn":"grade-block"},
-          {"op":"draw","amount":1,"oncePerTurn":"grade-draw"}
+          {
+            "op": "draw",
+            "amount": 4
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
         ]
       }
     ]
@@ -269,72 +911,176 @@
     "id": "cinderSigil",
     "abilityKind": "spell",
     "abilityRank": 1,
-    "actionCost": 1,
-    "primaryIndex": 0,
     "grades": [
-      {"actionCost":1,"manaCost":0,"effects":[{"op":"damage","target":"enemy","amount":8}]},
-      {"actionCost":1,"manaCost":1,"effects":[{"op":"damage","target":"enemy","amount":8}]},
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          }
+        ]
+      },
       {
         "actionCost": 1,
         "manaCost": 2,
         "effects": [
-          {"op":"damage","target":"enemy","amount":10},
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3
+          },
           {
             "op": "applyStatus",
             "target": "enemy",
             "status": "burn",
             "stacks": 2,
-            "if": {"p":"hasStatus","of":"self","status":"starstoneCharge"}
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
           },
-          {"op":"applyStatus","target":"self","status":"starstoneCharge","stacks":{"f":"add","args":[1]}}
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          }
         ]
       },
       {
         "actionCost": 2,
         "manaCost": 3,
         "effects": [
-          {"op":"damage","target":"enemy","amount":18},
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 5
+          },
           {
             "op": "applyStatus",
             "target": "enemy",
             "status": "burn",
             "stacks": 2,
-            "if": {"p":"hasStatus","of":"self","status":"starstoneCharge"}
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
           },
-          {"op":"applyStatus","target":"self","status":"starstoneCharge","stacks":{"f":"add","args":[1]}}
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          }
         ]
       },
       {
         "actionCost": 2,
         "manaCost": 3,
         "effects": [
-          {"op":"damage","target":"enemy","amount":23},
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 7
+          },
           {
             "op": "applyStatus",
             "target": "enemy",
             "status": "burn",
             "stacks": 2,
-            "if": {"p":"hasStatus","of":"self","status":"starstoneCharge"}
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
           },
-          {"op":"applyStatus","target":"self","status":"starstoneCharge","stacks":{"f":"add","args":[1]}},
-          {"op":"block","target":"self","amount":1,"oncePerTurn":"grade-block"}
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          }
         ]
       },
       {
         "actionCost": 2,
         "manaCost": 4,
         "effects": [
-          {"op":"damage","target":"enemy","amount":31},
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 9
+          },
           {
             "op": "applyStatus",
             "target": "enemy",
             "status": "burn",
             "stacks": 2,
-            "if": {"p":"hasStatus","of":"self","status":"starstoneCharge"}
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
           },
-          {"op":"applyStatus","target":"self","status":"starstoneCharge","stacks":{"f":"add","args":[1]}},
-          {"op":"block","target":"self","amount":1,"oncePerTurn":"grade-block"},
-          {"op":"draw","amount":1,"oncePerTurn":"grade-draw"}
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
         ]
       }
     ]
@@ -343,52 +1089,302 @@
     "id": "starstoneArc",
     "abilityKind": "spell",
     "abilityRank": 1,
-    "actionCost": 1,
-    "primaryIndex": 0,
-    "values": [4,6,7,10,13,17]
-  },
-  {
-    "id": "blightTouch",
-    "abilityKind": "spell",
-    "abilityRank": 0,
-    "actionCost": 1,
-    "primaryIndex": 0,
     "grades": [
-      {"actionCost":1,"manaCost":0,"effects":[{"op":"damage","target":"enemy","amount":8},{"op":"applyStatus","target":"enemy","status":"crimsonBlight","stacks":1}]},
-      {"actionCost":1,"manaCost":1,"effects":[{"op":"damage","target":"enemy","amount":12},{"op":"applyStatus","target":"enemy","status":"crimsonBlight","stacks":3}]},
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
       {
         "actionCost": 1,
         "manaCost": 2,
         "effects": [
-          {"op":"damage","target":"enemy","amount":12},
-          {"op":"applyStatus","target":"enemy","status":"crimsonBlight","stacks":3}
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "vulnerable",
+            "stacks": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          }
         ]
       },
       {
-        "actionCost": 1,
+        "actionCost": 2,
         "manaCost": 3,
         "effects": [
-          {"op":"damage","target":"enemy","amount":14},
-          {"op":"applyStatus","target":"enemy","status":"crimsonBlight","stacks":3}
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 5
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "vulnerable",
+            "stacks": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          }
         ]
       },
       {
-        "actionCost": 1,
+        "actionCost": 2,
         "manaCost": 3,
         "effects": [
-          {"op":"damage","target":"enemy","amount":16},
-          {"op":"applyStatus","target":"enemy","status":"crimsonBlight","stacks":3},
-          {"op":"block","target":"self","amount":0,"oncePerTurn":"grade-block"}
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 7
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "vulnerable",
+            "stacks": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          }
         ]
       },
       {
         "actionCost": 2,
         "manaCost": 4,
         "effects": [
-          {"op":"damage","target":"enemy","amount":27},
-          {"op":"applyStatus","target":"enemy","status":"crimsonBlight","stacks":3},
-          {"op":"block","target":"self","amount":1,"oncePerTurn":"grade-block"},
-          {"op":"draw","amount":1,"oncePerTurn":"grade-draw"}
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 9
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "vulnerable",
+            "stacks": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "blightTouch",
+    "abilityKind": "spell",
+    "abilityRank": 0,
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "crimsonBlight",
+            "stacks": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "crimsonBlight",
+            "stacks": 3
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "crimsonBlight",
+            "stacks": 3
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 5
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "crimsonBlight",
+            "stacks": 3
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 5
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "crimsonBlight",
+            "stacks": 3
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 4,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 9
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "crimsonBlight",
+            "stacks": 3
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
         ]
       }
     ]
@@ -397,38 +1393,108 @@
     "id": "penance",
     "abilityKind": "spell",
     "abilityRank": 0,
-    "actionCost": 1,
-    "primaryIndex": 0,
     "grades": [
-      {"actionCost":1,"manaCost":0,"effects":[{"op":"block","target":"self","amount":3}]},
-      {"actionCost":1,"manaCost":0,"effects":[{"op":"block","target":"self","amount":4}]},
       {
         "actionCost": 1,
         "manaCost": 1,
-        "effects": [{"op":"block","target":"self","amount":5},{"op":"heal","target":"self","amount":2}]
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 3
+          }
+        ]
       },
       {
         "actionCost": 1,
         "manaCost": 1,
-        "effects": [{"op":"block","target":"self","amount":6},{"op":"heal","target":"self","amount":2}]
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 4
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 5
+          },
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 6
+          },
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 2
+          }
+        ]
       },
       {
         "actionCost": 1,
         "manaCost": 2,
         "effects": [
-          {"op":"block","target":"self","amount":7},
-          {"op":"heal","target":"self","amount":2},
-          {"op":"block","target":"self","amount":0,"oncePerTurn":"grade-block"}
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 7
+          },
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 2
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
         ]
       },
       {
         "actionCost": 2,
         "manaCost": 2,
         "effects": [
-          {"op":"block","target":"self","amount":13},
-          {"op":"heal","target":"self","amount":4},
-          {"op":"block","target":"self","amount":1,"oncePerTurn":"grade-block"},
-          {"op":"draw","amount":1,"oncePerTurn":"grade-draw"}
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 13
+          },
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 4
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
         ]
       }
     ]
@@ -437,55 +1503,232 @@
     "id": "crimsonCleave",
     "abilityKind": "maneuver",
     "abilityRank": 0,
-    "actionCost": 2,
-    "primaryIndex": 0,
-    "values": [5,7,8,11,14,18],
-    "fixedGradeCosts": {"4":{"actionCost":3,"manaCost":0}}
-  },
-  {
-    "id": "shieldBash",
-    "abilityKind": "maneuver",
-    "abilityRank": 0,
-    "actionCost": 1,
-    "primaryIndex": 0,
     "grades": [
       {
         "actionCost": 2,
         "manaCost": 0,
-        "effects": [{"op":"damage","target":"enemy","amount":8},{"op":"poiseDamage","target":"enemy","amount":3}]
-      },
-      {
-        "actionCost": 1,
-        "manaCost": 0,
-        "effects": [{"op":"damage","target":"enemy","amount":10},{"op":"poiseDamage","target":"enemy","amount":3}]
-      },
-      {
-        "actionCost": 2,
-        "manaCost": 0,
-        "effects": [{"op":"damage","target":"enemy","amount":12},{"op":"poiseDamage","target":"enemy","amount":7}]
-      },
-      {
-        "actionCost": 2,
-        "manaCost": 0,
-        "effects": [{"op":"damage","target":"enemy","amount":14},{"op":"poiseDamage","target":"enemy","amount":7}]
+        "effects": [
+          {
+            "op": "damage",
+            "target": "allEnemies",
+            "amount": 1
+          }
+        ]
       },
       {
         "actionCost": 2,
         "manaCost": 0,
         "effects": [
-          {"op":"damage","target":"enemy","amount":20},
-          {"op":"poiseDamage","target":"enemy","amount":7},
-          {"op":"block","target":"self","amount":1,"oncePerTurn":"grade-block"}
+          {
+            "op": "damage",
+            "target": "allEnemies",
+            "amount": 1
+          }
         ]
       },
       {
         "actionCost": 3,
         "manaCost": 0,
         "effects": [
-          {"op":"damage","target":"enemy","amount":27},
-          {"op":"poiseDamage","target":"enemy","amount":7},
-          {"op":"block","target":"self","amount":1,"oncePerTurn":"grade-block"},
-          {"op":"draw","amount":1,"oncePerTurn":"grade-draw"}
+          {
+            "op": "damage",
+            "target": "allEnemies",
+            "amount": 1
+          },
+          {
+            "op": "applyStatus",
+            "target": "allEnemies",
+            "status": "bleed",
+            "stacks": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 3,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "allEnemies",
+            "amount": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "allEnemies",
+            "status": "bleed",
+            "stacks": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 3,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "allEnemies",
+            "amount": 3
+          },
+          {
+            "op": "applyStatus",
+            "target": "allEnemies",
+            "status": "bleed",
+            "stacks": 2
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 4,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "allEnemies",
+            "amount": 4
+          },
+          {
+            "op": "applyStatus",
+            "target": "allEnemies",
+            "status": "bleed",
+            "stacks": 2
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "shieldBash",
+    "abilityKind": "maneuver",
+    "abilityRank": 0,
+    "grades": [
+      {
+        "actionCost": 2,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 3
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 3
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 7
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 7
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 4
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 7
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 3,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 6
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 7
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
         ]
       }
     ]
@@ -494,8 +1737,6 @@
     "id": "quickstep",
     "abilityKind": "maneuver",
     "abilityRank": 0,
-    "actionCost": 1,
-    "primaryIndex": 0,
     "grades": [
       {
         "actionCost": 1,
@@ -514,7 +1755,7 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 2
+            "amount": 1
           },
           {
             "op": "draw",
@@ -539,7 +1780,7 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 3
+            "amount": 1
           },
           {
             "op": "draw",
@@ -564,7 +1805,7 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 4
+            "amount": 1
           },
           {
             "op": "draw",
@@ -590,7 +1831,7 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 4
+            "amount": 1
           },
           {
             "op": "draw",
@@ -616,7 +1857,7 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 5
+            "amount": 1
           },
           {
             "op": "draw",
@@ -625,7 +1866,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 0,
+            "amount": 1,
             "oncePerTurn": "grade-block"
           }
         ]
@@ -648,7 +1889,7 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 6
+            "amount": 1
           },
           {
             "op": "draw",
@@ -657,7 +1898,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 0,
+            "amount": 1,
             "oncePerTurn": "grade-block"
           },
           {
@@ -673,40 +1914,562 @@
     "id": "guardCounter",
     "abilityKind": "maneuver",
     "abilityRank": 0,
-    "actionCost": 1,
-    "primaryIndex": 0,
-    "values": [3,4,4,7,10,14]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2,
+            "if": {
+              "p": "hasBlock",
+              "of": "self"
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2,
+            "if": {
+              "p": "hasBlock",
+              "of": "self"
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 4
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2,
+            "if": {
+              "p": "hasBlock",
+              "of": "self"
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 6
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2,
+            "if": {
+              "p": "hasBlock",
+              "of": "self"
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "riposte",
     "abilityKind": "maneuver",
     "abilityRank": 0,
-    "actionCost": 1,
-    "primaryIndex": 0,
-    "values": [4,5,6,9,12,16]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 7,
+            "if": {
+              "p": "hasBlock",
+              "of": "self"
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 7,
+            "if": {
+              "p": "hasBlock",
+              "of": "self"
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 5
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 7,
+            "if": {
+              "p": "hasBlock",
+              "of": "self"
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 3,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 7
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 7,
+            "if": {
+              "p": "hasBlock",
+              "of": "self"
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "rend",
     "abilityKind": "maneuver",
     "abilityRank": 0,
-    "actionCost": 1,
-    "primaryIndex": 0,
-    "values": [3,4,5,8,11,15]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 3,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "bleed",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "bleed",
+            "stacks": 2,
+            "if": {
+              "p": "inStance",
+              "stance": "gorefire"
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 3,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 4
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "bleed",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "bleed",
+            "stacks": 2,
+            "if": {
+              "p": "inStance",
+              "stance": "gorefire"
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 4,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 5
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "bleed",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "bleed",
+            "stacks": 2,
+            "if": {
+              "p": "inStance",
+              "stance": "gorefire"
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 4,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 8
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "bleed",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "bleed",
+            "stacks": 2,
+            "if": {
+              "p": "inStance",
+              "stance": "gorefire"
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "quickCut",
     "abilityKind": "maneuver",
     "abilityRank": 0,
-    "actionCost": 1,
-    "primaryIndex": 0,
-    "values": [2,3,3,6,9,13]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "prepared"
+            }
+          },
+          {
+            "op": "removeStatus",
+            "target": "self",
+            "status": "prepared"
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "prepared"
+            }
+          },
+          {
+            "op": "removeStatus",
+            "target": "self",
+            "status": "prepared"
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 4
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "prepared"
+            }
+          },
+          {
+            "op": "removeStatus",
+            "target": "self",
+            "status": "prepared"
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 3,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 7
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "prepared"
+            }
+          },
+          {
+            "op": "removeStatus",
+            "target": "self",
+            "status": "prepared"
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "backstep",
     "abilityKind": "maneuver",
     "abilityRank": 0,
-    "actionCost": 1,
-    "primaryIndex": 0,
     "grades": [
       {
         "actionCost": 1,
@@ -883,7 +2646,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 0,
+            "amount": 1,
             "oncePerTurn": "grade-block"
           }
         ]
@@ -922,6 +2685,562 @@
           {
             "op": "draw",
             "amount": 1
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "starbladePhalanx",
+    "abilityKind": "spell",
+    "abilityRank": 1,
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 7
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "starShower",
+    "abilityKind": "spell",
+    "abilityRank": 2,
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "hits": 3
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "hits": 3
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "hits": 3
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2,
+            "hits": 3
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3,
+            "hits": 3
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 4,
+            "hits": 3
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "frostNova",
+    "abilityKind": "spell",
+    "abilityRank": 2,
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "frost",
+            "stacks": 4
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "frost",
+            "stacks": 3,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 4,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "frost",
+            "stacks": 4
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "frost",
+            "stacks": 3,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 5,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "frost",
+            "stacks": 4
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "frost",
+            "stacks": 3,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 5,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 4
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "frost",
+            "stacks": 4
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "frost",
+            "stacks": 3,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
           },
           {
             "op": "block",
@@ -939,91 +3258,547 @@
     ]
   },
   {
-    "id": "starbladePhalanx",
-    "abilityKind": "spell",
-    "abilityRank": 1,
-    "actionCost": 1,
-    "primaryIndex": 0,
-    "values": [2,3,4,7,10,14]
-  },
-  {
-    "id": "starShower",
-    "abilityKind": "spell",
-    "abilityRank": 2,
-    "actionCost": 2,
-    "primaryIndex": 0,
-    "values": [2,3,3,4,6,8]
-  },
-  {
-    "id": "frostNova",
-    "abilityKind": "spell",
-    "abilityRank": 2,
-    "actionCost": 1,
-    "primaryIndex": 0,
-    "values": [2,3,4,7,10,14]
-  },
-  {
     "id": "gravityWell",
     "abilityKind": "spell",
     "abilityRank": 3,
-    "actionCost": 2,
-    "primaryIndex": 0,
-    "values": [1,1,2,2,3,3]
-  },
-  {
-    "id": "radiantSpray",
-    "abilityKind": "spell",
-    "abilityRank": 3,
-    "actionCost": 2,
-    "primaryIndex": 0,
-    "values": [2,3,4,7,10,14]
-  },
-  {
-    "id": "starPath",
-    "abilityKind": "spell",
-    "abilityRank": 1,
-    "actionCost": 1,
-    "primaryIndex": 0,
     "grades": [
-      {"actionCost":1,"manaCost":0,"effects":[{"op":"draw","amount":2}]},
-      {"actionCost":1,"manaCost":0,"effects":[{"op":"draw","amount":2}]},
       {
         "actionCost": 1,
         "manaCost": 1,
         "effects": [
-          {"op":"draw","amount":2},
-          {"op":"draw","amount":1,"if":{"p":"hasStatus","of":"self","status":"starstoneCharge"}},
-          {"op":"applyStatus","target":"self","status":"starstoneCharge","stacks":{"f":"add","args":[1]}}
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "vulnerable",
+            "stacks": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "vulnerable",
+            "stacks": 1
+          }
         ]
       },
       {
         "actionCost": 1,
         "manaCost": 2,
         "effects": [
-          {"op":"draw","amount":2},
-          {"op":"draw","amount":1,"if":{"p":"hasStatus","of":"self","status":"starstoneCharge"}},
-          {"op":"applyStatus","target":"self","status":"starstoneCharge","stacks":{"f":"add","args":[1]}}
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "vulnerable",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "weak",
+            "stacks": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          }
         ]
       },
       {
         "actionCost": 1,
         "manaCost": 2,
         "effects": [
-          {"op":"draw","amount":2},
-          {"op":"draw","amount":1,"if":{"p":"hasStatus","of":"self","status":"starstoneCharge"}},
-          {"op":"applyStatus","target":"self","status":"starstoneCharge","stacks":{"f":"add","args":[1]}},
-          {"op":"block","target":"self","amount":0,"oncePerTurn":"grade-block"}
+          {
+            "op": "applyStatus",
+            "target": "allEnemies",
+            "status": "vulnerable",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "allEnemies",
+            "status": "weak",
+            "stacks": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          }
         ]
       },
       {
         "actionCost": 1,
         "manaCost": 3,
         "effects": [
-          {"op":"draw","amount":3},
-          {"op":"draw","amount":1,"if":{"p":"hasStatus","of":"self","status":"starstoneCharge"}},
-          {"op":"applyStatus","target":"self","status":"starstoneCharge","stacks":{"f":"add","args":[1]}},
-          {"op":"block","target":"self","amount":0,"oncePerTurn":"grade-block"},
-          {"op":"draw","amount":1,"oncePerTurn":"grade-draw"}
+          {
+            "op": "applyStatus",
+            "target": "allEnemies",
+            "status": "vulnerable",
+            "stacks": 3
+          },
+          {
+            "op": "applyStatus",
+            "target": "allEnemies",
+            "status": "weak",
+            "stacks": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "allEnemies",
+            "status": "vulnerable",
+            "stacks": 3
+          },
+          {
+            "op": "applyStatus",
+            "target": "allEnemies",
+            "status": "weak",
+            "stacks": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "radiantSpray",
+    "abilityKind": "spell",
+    "abilityRank": 3,
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "vulnerable",
+            "stacks": 1
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "allEnemies",
+            "amount": 4
+          },
+          {
+            "op": "applyStatus",
+            "target": "allEnemies",
+            "status": "vulnerable",
+            "stacks": 1
+          },
+          {
+            "op": "damage",
+            "target": "allEnemies",
+            "amount": 2,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "allEnemies",
+            "amount": 5
+          },
+          {
+            "op": "applyStatus",
+            "target": "allEnemies",
+            "status": "vulnerable",
+            "stacks": 1
+          },
+          {
+            "op": "damage",
+            "target": "allEnemies",
+            "amount": 2,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 4,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "allEnemies",
+            "amount": 7
+          },
+          {
+            "op": "applyStatus",
+            "target": "allEnemies",
+            "status": "vulnerable",
+            "stacks": 1
+          },
+          {
+            "op": "damage",
+            "target": "allEnemies",
+            "amount": 2,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "starPath",
+    "abilityKind": "spell",
+    "abilityRank": 1,
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "draw",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "draw",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "draw",
+            "amount": 2
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "draw",
+            "amount": 2
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "draw",
+            "amount": 2
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "draw",
+            "amount": 3
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "starstoneCharge"
+            }
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "starstoneCharge",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
         ]
       }
     ]
@@ -1032,111 +3807,1211 @@
     "id": "blightward",
     "abilityKind": "spell",
     "abilityRank": 1,
-    "actionCost": 1,
-    "primaryIndex": 0,
-    "values": [1,2,2,4,5,7]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "if": {
+              "p": "hpBelowPct",
+              "of": "self",
+              "pct": 50
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 4
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "if": {
+              "p": "hpBelowPct",
+              "of": "self",
+              "pct": 50
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 5
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "if": {
+              "p": "hpBelowPct",
+              "of": "self",
+              "pct": 50
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 14
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 3,
+            "if": {
+              "p": "hpBelowPct",
+              "of": "self",
+              "pct": 50
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "gildedOath",
     "abilityKind": "spell",
     "abilityRank": 2,
-    "actionCost": 2,
-    "primaryIndex": 0,
-    "values": [1,1,2,2,3,3]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "dexterity",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "wisdom",
+            "stacks": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "dexterity",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "wisdom",
+            "stacks": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 3
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "dexterity",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "wisdom",
+            "stacks": 2
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 3
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "dexterity",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "wisdom",
+            "stacks": 2
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "scourge",
     "abilityKind": "spell",
     "abilityRank": 3,
-    "actionCost": 2,
-    "primaryIndex": 0,
-    "values": [4,5,6,9,12,16]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "crimsonBlight",
+            "stacks": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "allEnemies",
+            "amount": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "allEnemies",
+            "status": "crimsonBlight",
+            "stacks": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "allEnemies",
+            "amount": 4
+          },
+          {
+            "op": "applyStatus",
+            "target": "allEnemies",
+            "status": "crimsonBlight",
+            "stacks": 2
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 4,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "allEnemies",
+            "amount": 6
+          },
+          {
+            "op": "applyStatus",
+            "target": "allEnemies",
+            "status": "crimsonBlight",
+            "stacks": 2
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "reclamation",
     "abilityKind": "spell",
     "abilityRank": 2,
-    "actionCost": 1,
-    "primaryIndex": 0,
-    "face": ["Heal per Blight, capped."],
-    "values": [2,3,5,7,9,12]
+    "face": [
+      "Heal per Blight, capped."
+    ],
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": {
+              "f": "mul",
+              "args": [
+                0.5,
+                {
+                  "f": "add",
+                  "args": [
+                    {
+                      "f": "stacks",
+                      "status": "crimsonBlight",
+                      "of": "allEnemies"
+                    },
+                    {
+                      "f": "stacks",
+                      "status": "necroticBlight",
+                      "of": "allEnemies"
+                    }
+                  ]
+                }
+              ],
+              "max": 2
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": {
+              "f": "mul",
+              "args": [
+                0.5,
+                {
+                  "f": "add",
+                  "args": [
+                    {
+                      "f": "stacks",
+                      "status": "crimsonBlight",
+                      "of": "allEnemies"
+                    },
+                    {
+                      "f": "stacks",
+                      "status": "necroticBlight",
+                      "of": "allEnemies"
+                    }
+                  ]
+                }
+              ],
+              "max": 3
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": {
+              "f": "mul",
+              "args": [
+                0.5,
+                {
+                  "f": "add",
+                  "args": [
+                    {
+                      "f": "stacks",
+                      "status": "crimsonBlight",
+                      "of": "allEnemies"
+                    },
+                    {
+                      "f": "stacks",
+                      "status": "necroticBlight",
+                      "of": "allEnemies"
+                    }
+                  ]
+                }
+              ],
+              "max": 5
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": {
+              "f": "mul",
+              "args": [
+                0.5,
+                {
+                  "f": "add",
+                  "args": [
+                    {
+                      "f": "stacks",
+                      "status": "crimsonBlight",
+                      "of": "allEnemies"
+                    },
+                    {
+                      "f": "stacks",
+                      "status": "necroticBlight",
+                      "of": "allEnemies"
+                    }
+                  ]
+                }
+              ],
+              "max": 7
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": {
+              "f": "mul",
+              "args": [
+                0.5,
+                {
+                  "f": "add",
+                  "args": [
+                    {
+                      "f": "stacks",
+                      "status": "crimsonBlight",
+                      "of": "allEnemies"
+                    },
+                    {
+                      "f": "stacks",
+                      "status": "necroticBlight",
+                      "of": "allEnemies"
+                    }
+                  ]
+                }
+              ],
+              "max": 9
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": {
+              "f": "mul",
+              "args": [
+                0.5,
+                {
+                  "f": "add",
+                  "args": [
+                    {
+                      "f": "stacks",
+                      "status": "crimsonBlight",
+                      "of": "allEnemies"
+                    },
+                    {
+                      "f": "stacks",
+                      "status": "necroticBlight",
+                      "of": "allEnemies"
+                    }
+                  ]
+                }
+              ],
+              "max": 12
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "desperateRite",
     "abilityKind": "spell",
     "abilityRank": 2,
-    "actionCost": 1,
-    "primaryIndex": 0,
-    "values": [4,6,9,12,15,19]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "hpBelowPct",
+              "of": "self",
+              "pct": 50
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "hpBelowPct",
+              "of": "self",
+              "pct": 50
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "hpBelowPct",
+              "of": "self",
+              "pct": 50
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 4
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1,
+            "if": {
+              "p": "hpBelowPct",
+              "of": "self",
+              "pct": 50
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "lastMercy",
     "abilityKind": "spell",
     "abilityRank": 2,
-    "actionCost": 1,
-    "primaryIndex": 0,
-    "values": [2,3,5,6,7,8]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 3
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 5
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 6
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 7
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 14
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 3
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "bracingStance",
     "abilityKind": "maneuver",
     "abilityRank": 1,
-    "actionCost": 1,
-    "primaryIndex": 0,
-    "values": [1,2,2,4,5,7]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 3
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 4
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2,
+            "if": {
+              "p": "inStance",
+              "stance": "bulwark"
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 6
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2,
+            "if": {
+              "p": "inStance",
+              "stance": "bulwark"
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 8
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2,
+            "if": {
+              "p": "inStance",
+              "stance": "bulwark"
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 11
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2,
+            "if": {
+              "p": "inStance",
+              "stance": "bulwark"
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "stomp",
     "abilityKind": "maneuver",
     "abilityRank": 1,
-    "actionCost": 1,
-    "primaryIndex": 0,
-    "values": [6,9,12,15,18,22]
+    "grades": [
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 3
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 3
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 5
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 14
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 6
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 14
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 7
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 14
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 9
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 14
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "kickOff",
     "abilityKind": "maneuver",
     "abilityRank": 1,
-    "actionCost": 1,
-    "primaryIndex": 0,
     "grades": [
       {
         "actionCost": 2,
         "manaCost": 0,
-        "effects": [{"op":"damage","target":"enemy","amount":6},{"op":"poiseDamage","target":"enemy","amount":3}]
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 3
+          }
+        ]
       },
       {
         "actionCost": 2,
         "manaCost": 0,
-        "effects": [{"op":"damage","target":"enemy","amount":9},{"op":"poiseDamage","target":"enemy","amount":3}]
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 3
+          }
+        ]
       },
       {
         "actionCost": 3,
-        "manaCost": 0,
-        "effects": [{"op":"damage","target":"enemy","amount":20},{"op":"poiseDamage","target":"enemy","amount":3}]
-      },
-      {
-        "actionCost": 3,
-        "manaCost": 0,
-        "effects": [{"op":"damage","target":"enemy","amount":27},{"op":"poiseDamage","target":"enemy","amount":3}]
-      },
-      {
-        "actionCost": 4,
         "manaCost": 0,
         "effects": [
-          {"op":"damage","target":"enemy","amount":35},
-          {"op":"poiseDamage","target":"enemy","amount":5},
-          {"op":"block","target":"self","amount":1,"oncePerTurn":"grade-block"}
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 4
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 3
+          }
+        ]
+      },
+      {
+        "actionCost": 3,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 6
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 3
+          }
         ]
       },
       {
         "actionCost": 4,
         "manaCost": 0,
         "effects": [
-          {"op":"damage","target":"enemy","amount":47},
-          {"op":"poiseDamage","target":"enemy","amount":5},
-          {"op":"block","target":"self","amount":1,"oncePerTurn":"grade-block"},
-          {"op":"draw","amount":1,"oncePerTurn":"grade-draw"}
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 8
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 5
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 4,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 11
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 5
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
         ]
       }
     ]
@@ -1145,73 +5020,1242 @@
     "id": "warcry",
     "abilityKind": "maneuver",
     "abilityRank": 2,
-    "actionCost": 1,
-    "primaryIndex": 0,
-    "values": [1,1,1,2,2,3]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 1
+          },
+          {
+            "op": "draw",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 2
+          },
+          {
+            "op": "draw",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 2
+          },
+          {
+            "op": "draw",
+            "amount": 1
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 3
+          },
+          {
+            "op": "draw",
+            "amount": 1
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "sunderplate",
     "abilityKind": "maneuver",
     "abilityRank": 2,
-    "actionCost": 2,
-    "primaryIndex": 0,
-    "values": [5,7,9,12,15,19]
+    "grades": [
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 3
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 3
+          }
+        ]
+      },
+      {
+        "actionCost": 3,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 18
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "bleed",
+            "stacks": 3,
+            "if": {
+              "p": "hasStatus",
+              "of": "target",
+              "status": "staggered"
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 3,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 5
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 18
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "bleed",
+            "stacks": 3,
+            "if": {
+              "p": "hasStatus",
+              "of": "target",
+              "status": "staggered"
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 3,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 6
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 18
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "bleed",
+            "stacks": 3,
+            "if": {
+              "p": "hasStatus",
+              "of": "target",
+              "status": "staggered"
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 3,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 8
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 18
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "bleed",
+            "stacks": 3,
+            "if": {
+              "p": "hasStatus",
+              "of": "target",
+              "status": "staggered"
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "poiseBreaker",
     "abilityKind": "maneuver",
     "abilityRank": 3,
-    "actionCost": 2,
-    "primaryIndex": 0,
-    "values": [6,8,11,14,17,21]
+    "grades": [
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 2
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 3
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 3
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 4
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 18
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 14,
+            "if": {
+              "p": "hasStatus",
+              "of": "target",
+              "status": "staggered"
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 6
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 18
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 14,
+            "if": {
+              "p": "hasStatus",
+              "of": "target",
+              "status": "staggered"
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 7
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 18
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 14,
+            "if": {
+              "p": "hasStatus",
+              "of": "target",
+              "status": "staggered"
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 3,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 9
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 18
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 14,
+            "if": {
+              "p": "hasStatus",
+              "of": "target",
+              "status": "staggered"
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "feint",
     "abilityKind": "maneuver",
     "abilityRank": 1,
-    "actionCost": 1,
-    "primaryIndex": 1,
-    "values": [1,1,1,2,2,3],
-    "alwaysRiders": true
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "draw",
+            "amount": 1
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "prepared",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "draw",
+            "amount": 1
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "prepared",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "draw",
+            "amount": 1
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "prepared",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "draw",
+            "amount": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "prepared",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "draw",
+            "amount": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "prepared",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "draw",
+            "amount": 3
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "prepared",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "pocketSand",
     "abilityKind": "maneuver",
     "abilityRank": 1,
-    "actionCost": 1,
-    "primaryIndex": 0,
-    "values": [0,1,1,3,4,6]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "weak",
+            "stacks": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 5
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "weak",
+            "stacks": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 7
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "weak",
+            "stacks": 2
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 10
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "weak",
+            "stacks": 2
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "lowBlow",
     "abilityKind": "maneuver",
     "abilityRank": 1,
-    "actionCost": 1,
-    "primaryIndex": 0,
-    "values": [4,5,6,9,12,16]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 7
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 9,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "prepared"
+            }
+          },
+          {
+            "op": "removeStatus",
+            "target": "self",
+            "status": "prepared"
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 4
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 7
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 9,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "prepared"
+            }
+          },
+          {
+            "op": "removeStatus",
+            "target": "self",
+            "status": "prepared"
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 6
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 7
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 9,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "prepared"
+            }
+          },
+          {
+            "op": "removeStatus",
+            "target": "self",
+            "status": "prepared"
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 3,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 8
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 7
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 9,
+            "if": {
+              "p": "hasStatus",
+              "of": "self",
+              "status": "prepared"
+            }
+          },
+          {
+            "op": "removeStatus",
+            "target": "self",
+            "status": "prepared"
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "vanish",
     "abilityKind": "maneuver",
     "abilityRank": 2,
-    "actionCost": 1,
-    "primaryIndex": 0,
-    "values": [1,2,3,5,6,8]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 4
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 5
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "prepared",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          },
+          {
+            "op": "addCard",
+            "card": "smokePellet",
+            "pile": "hand"
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 8
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "prepared",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          },
+          {
+            "op": "addCard",
+            "card": "smokePellet",
+            "pile": "hand"
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 10
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "prepared",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          },
+          {
+            "op": "addCard",
+            "card": "smokePellet",
+            "pile": "hand"
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 13
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "prepared",
+            "stacks": {
+              "f": "add",
+              "args": [
+                1
+              ]
+            }
+          },
+          {
+            "op": "addCard",
+            "card": "smokePellet",
+            "pile": "hand"
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "smokeBomb",
     "abilityKind": "maneuver",
     "abilityRank": 2,
-    "actionCost": 1,
-    "primaryIndex": 0,
-    "values": [1,2,3,5,6,8]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 4
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 5
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "weak",
+            "stacks": 3
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 8
+          },
+          {
+            "op": "applyStatus",
+            "target": "allEnemies",
+            "status": "weak",
+            "stacks": 3
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 10
+          },
+          {
+            "op": "applyStatus",
+            "target": "allEnemies",
+            "status": "weak",
+            "stacks": 3
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 1,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 23
+          },
+          {
+            "op": "applyStatus",
+            "target": "allEnemies",
+            "status": "weak",
+            "stacks": 3
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "perfectHeist",
     "abilityKind": "maneuver",
     "abilityRank": 3,
-    "actionCost": 1,
-    "primaryIndex": 0,
-    "values": [1,2,3,3,4,4]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "draw",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "draw",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "draw",
+            "amount": 3
+          },
+          {
+            "op": "gainEnergy",
+            "amount": 1,
+            "funded": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "draw",
+            "amount": 3
+          },
+          {
+            "op": "gainEnergy",
+            "amount": 1,
+            "funded": 1
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "draw",
+            "amount": 4
+          },
+          {
+            "op": "gainEnergy",
+            "amount": 1,
+            "funded": 1
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "draw",
+            "amount": 4
+          },
+          {
+            "op": "gainEnergy",
+            "amount": 1,
+            "funded": 1
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 0,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   }
 ]
