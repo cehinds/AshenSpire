@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { productionBundle } from './helpers/production-bundle.mjs';
+import { REACTION_CARRIER_IDS, REACTION_TAG } from './helpers/reaction-carriers.mjs';
 const require = productionBundle();
 const { contentBundle } = require('src/content/index.js');
 const { createRegistries } = require('src/model/registries.js');
@@ -15,9 +16,25 @@ const { ScalePhysicalDamage } = require('src/model/combatCardProfile.js');
 const { guardHitFloatParts } = require('src/ui/fx.js');
 const profile = resolveGameProfile('core');
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
-function fixture(enemyId, moveId, normalize = true) {
-  const run = createRunState({ registries, classId: 'reaver', seed: 511, runId: 'enemy-action-preview' });
-  const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: [enemyId] });
+const { resolveGameAuthor, dataClone } = require('engine/kernel/gameConfig.js');
+const { gameProfileCatalog, gameProfileAuthors } = require('src/content/generated/gameProfiles.js');
+const CORE_CONTENT_PACK = 'ashen.core-content@2.0.0';
+// The bundle checks its own realm's plain objects, so the Reaction tag is added to a bundle-made
+// copy of the catalog (tests/fixtures/reaction-carriers.json; owner ruling 2026-11-28).
+function bundledCarrierRegistries()
+{
+  const catalog = dataClone(gameProfileCatalog);
+  for (const card of catalog.packs[CORE_CONTENT_PACK].content.cards)
+  {
+    if (REACTION_CARRIER_IDS.includes(card.id)) card.tags.push(REACTION_TAG);
+  }
+  const carrierProfile = resolveGameAuthor(gameProfileAuthors.core, catalog);
+  const content = applyGameProfileToContent(contentBundle, carrierProfile);
+  return bindGameProfileRegistries(createRegistries(content), carrierProfile);
+}
+function fixture(enemyId, moveId, normalize = true, fightRegistries = registries) {
+  const run = createRunState({ registries: fightRegistries, classId: 'reaver', seed: 511, runId: 'enemy-action-preview' });
+  const combat = createRunCombat({ registries: fightRegistries, run, rng: createRng(511), enemyIds: [enemyId] });
   const enemy = combat.enemies[0];
   for (const entity of normalize ? [combat.player, enemy] : []) {
     Object.assign(entity, { hp: 1000, maxHp: 1000, block: 0, barrier: 0, statuses: {}, ratings: {}, ratingSources: [],
@@ -26,7 +43,7 @@ function fixture(enemyId, moveId, normalize = true) {
   }
   // The normalized player holds no stance (Idle); these cases pin the authored per-hit amounts, so the Idle stance weakness (theme B, 2026-11-17) is left out.
   if (normalize) delete combat.fixCoreRules?.stanceBenefits?.neutral?.damageTakenMultiplier;
-  const move = registries.enemies.get(enemyId).moves[moveId];
+  const move = fightRegistries.enemies.get(enemyId).moves[moveId];
   const projection = previewEnemyAction(combat, enemy, moveId);
   enemy.intent = { kind: move.intent, moveId, damage: move.damage ?? null, hits: move.hits ?? 1, combatProfile: projection.profile };
   enemy.intentRevealed = true; enemy.plannedMoves = []; enemy.maxStamina = 100; enemy.stamina = 100;
@@ -83,7 +100,7 @@ test('revealed support intents expose actual heal, card injection and status act
 });
 
 test('bundled authored hound lunge opens and settles a fresh paid Counter on EACH contact', () => {
-  const { combat, enemy } = fixture('blightHound', 'lunge');
+  const { combat, enemy } = fixture('blightHound', 'lunge', true, bundledCarrierRegistries());
   combat.piles.hand = [0, 1].map(n => ({ instanceId: `counter-${n}`, cardId: 'core.counter' }));
   combat.player.stamina = 100; combat.player.energy = 100;
   dispatch(combat, { type: 'endTurn' });
