@@ -1,0 +1,11 @@
+{
+  "$note": "Base attributes: 1 in the main stat, 0 elsewhere (owner, 2026-11-28).",
+  "total": 1,
+  "mainValue": 1,
+  "mainAttribute": {
+    "reaver": "strength",
+    "starseer": "intelligence",
+    "rogue": "dexterity",
+    "herald": "wisdom"
+  }
+}

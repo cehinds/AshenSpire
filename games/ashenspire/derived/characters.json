@@ -11,52 +11,52 @@
     "kind": "player",
     "tier": null,
     "level": 1,
-    "attributePoints": 6,
+    "attributePoints": 1,
     "attributes": {
       "strength": {
-        "own": 2,
+        "own": 1,
         "bonuses": [],
-        "total": 2
+        "total": 1
       },
       "dexterity": {
-        "own": 1,
+        "own": 0,
         "bonuses": [],
-        "total": 1
+        "total": 0
       },
       "constitution": {
-        "own": 1,
+        "own": 0,
         "bonuses": [],
-        "total": 1
+        "total": 0
       },
       "wisdom": {
-        "own": 1,
+        "own": 0,
         "bonuses": [],
-        "total": 1
+        "total": 0
       },
       "intelligence": {
-        "own": 1,
+        "own": 0,
         "bonuses": [],
-        "total": 1
+        "total": 0
       }
     },
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 10,
-        "strength": 10,
-        "dexterity": 3,
-        "wisdom": 2,
-        "intelligence": 1,
+        "constitution": 0,
+        "strength": 5,
+        "dexterity": 0,
+        "wisdom": 0,
+        "intelligence": 0,
         "level": 0
       },
-      "total": 36,
-      "formula": "10+10+10+3+2+1+0 = 36"
+      "total": 15,
+      "formula": "10+0+5+0+0+0+0 = 15"
     },
     "pools": {
-      "hp": 36,
+      "hp": 15,
       "sp": 3,
       "mp": 0,
-      "hand": 5
+      "hand": 4
     },
     "gear": [
       {
@@ -124,52 +124,52 @@
     "kind": "player",
     "tier": null,
     "level": 1,
-    "attributePoints": 6,
+    "attributePoints": 1,
     "attributes": {
       "strength": {
-        "own": 1,
+        "own": 0,
         "bonuses": [],
-        "total": 1
+        "total": 0
       },
       "dexterity": {
-        "own": 1,
+        "own": 0,
         "bonuses": [],
-        "total": 1
+        "total": 0
       },
       "constitution": {
-        "own": 1,
+        "own": 0,
         "bonuses": [],
-        "total": 1
+        "total": 0
       },
       "wisdom": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      },
+      "intelligence": {
         "own": 1,
         "bonuses": [],
         "total": 1
-      },
-      "intelligence": {
-        "own": 2,
-        "bonuses": [],
-        "total": 2
       }
     },
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 10,
-        "strength": 5,
-        "dexterity": 3,
-        "wisdom": 2,
-        "intelligence": 2,
+        "constitution": 0,
+        "strength": 0,
+        "dexterity": 0,
+        "wisdom": 0,
+        "intelligence": 1,
         "level": 0
       },
-      "total": 32,
-      "formula": "10+10+5+3+2+2+0 = 32"
+      "total": 11,
+      "formula": "10+0+0+0+0+1+0 = 11"
     },
     "pools": {
-      "hp": 32,
+      "hp": 11,
       "sp": 3,
       "mp": 1,
-      "hand": 6
+      "hand": 5
     },
     "gear": [
       {
@@ -217,52 +217,52 @@
     "kind": "player",
     "tier": null,
     "level": 1,
-    "attributePoints": 6,
+    "attributePoints": 1,
     "attributes": {
       "strength": {
-        "own": 1,
+        "own": 0,
         "bonuses": [],
-        "total": 1
+        "total": 0
       },
       "dexterity": {
-        "own": 2,
+        "own": 1,
         "bonuses": [],
-        "total": 2
+        "total": 1
       },
       "constitution": {
-        "own": 1,
+        "own": 0,
         "bonuses": [],
-        "total": 1
+        "total": 0
       },
       "wisdom": {
-        "own": 1,
+        "own": 0,
         "bonuses": [],
-        "total": 1
+        "total": 0
       },
       "intelligence": {
-        "own": 1,
+        "own": 0,
         "bonuses": [],
-        "total": 1
+        "total": 0
       }
     },
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 10,
-        "strength": 5,
-        "dexterity": 6,
-        "wisdom": 2,
-        "intelligence": 1,
+        "constitution": 0,
+        "strength": 0,
+        "dexterity": 3,
+        "wisdom": 0,
+        "intelligence": 0,
         "level": 0
       },
-      "total": 34,
-      "formula": "10+10+5+6+2+1+0 = 34"
+      "total": 13,
+      "formula": "10+0+0+3+0+0+0 = 13"
     },
     "pools": {
-      "hp": 34,
+      "hp": 13,
       "sp": 3,
       "mp": 1,
-      "hand": 5
+      "hand": 4
     },
     "gear": [
       {
@@ -335,52 +335,52 @@
     "kind": "player",
     "tier": null,
     "level": 1,
-    "attributePoints": 6,
+    "attributePoints": 1,
     "attributes": {
       "strength": {
-        "own": 1,
+        "own": 0,
         "bonuses": [],
-        "total": 1
+        "total": 0
       },
       "dexterity": {
-        "own": 1,
+        "own": 0,
         "bonuses": [],
-        "total": 1
+        "total": 0
       },
       "constitution": {
-        "own": 1,
+        "own": 0,
         "bonuses": [],
-        "total": 1
+        "total": 0
       },
       "wisdom": {
-        "own": 2,
-        "bonuses": [],
-        "total": 2
-      },
-      "intelligence": {
         "own": 1,
         "bonuses": [],
         "total": 1
+      },
+      "intelligence": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
       }
     },
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 10,
-        "strength": 5,
-        "dexterity": 3,
-        "wisdom": 4,
-        "intelligence": 1,
+        "constitution": 0,
+        "strength": 0,
+        "dexterity": 0,
+        "wisdom": 2,
+        "intelligence": 0,
         "level": 0
       },
-      "total": 33,
-      "formula": "10+10+5+3+4+1+0 = 33"
+      "total": 12,
+      "formula": "10+0+0+0+2+0+0 = 12"
     },
     "pools": {
-      "hp": 33,
+      "hp": 12,
       "sp": 3,
-      "mp": 2,
-      "hand": 5
+      "mp": 1,
+      "hand": 4
     },
     "gear": [
       {

@@ -124,9 +124,10 @@
         "player"
       ],
       "attributeBudget": [
-        6,
-        6
+        1,
+        1
       ],
+      "attributeFloor": 0,
       "deckSize": [
         5,
         40

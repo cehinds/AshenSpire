@@ -7,6 +7,7 @@ import { configuredModule } from './profileModule.js';
 import { upgradeStepsProblems } from './cardUpgrade.js';
 import { compactRun, expandStoredRun } from './runStorage.js';
 import { recordCollectedCards, collectedCardProblems } from './collectedCards.js';
+import { FixedAttributeModeRules } from './fixedAttributeMode.js';
 import { isConfiguredRun, gameProfileAttributes, gameProfileClassAvailable, gameProfileStatOptions, initializeGameProfileRun } from './gameProfileRun.js';
 import { startingAbilityRefs } from './startingAbilities.js';
 import {abilityDraftClaimProblems} from './abilityDraftReceipts.js';
@@ -271,7 +272,7 @@ export function createRunState({
     ? classAttributePreset(registries, classId, selectedAttributeMode)
     : normalizeRunAttributes({ class: classId, attributeMode: selectedAttributeMode, attributes: requestedAttributes }, registries).attributes;
   const attributeModeSnapshot = creationModeSnapshot(registries, selectedAttributeMode);
-  if (fixedAttributes) Object.assign(attributeModeSnapshot, { baseline: 1, bonusPool: Object.values(fixedAttributes).reduce((a,b)=>a+b,0)-5, minimum: 1, maximum: Math.max(...Object.values(fixedAttributes)) });
+  if (fixedAttributes) Object.assign(attributeModeSnapshot, FixedAttributeModeRules(profileSubject, classId, fixedAttributes));
   const idGen = createIdGen('rc');
   const baseStartingKit = resolveStartingKit(registries, classId, startingKitId, profileMeta);
   const hands = resolveCreationHands(registries, classId, configured ? undefined : startingHands, baseStartingKit, profileMeta);

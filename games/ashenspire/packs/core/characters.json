@@ -8,11 +8,11 @@
       "training.basic"
     ],
     "attributes": {
-      "strength": 2,
-      "dexterity": 1,
-      "constitution": 1,
-      "wisdom": 1,
-      "intelligence": 1
+      "strength": 1,
+      "dexterity": 0,
+      "constitution": 0,
+      "wisdom": 0,
+      "intelligence": 0
     },
     "attributePriority": [
       "strength",
@@ -81,11 +81,11 @@
       "training.graduate"
     ],
     "attributes": {
-      "strength": 1,
-      "dexterity": 1,
-      "constitution": 1,
-      "wisdom": 1,
-      "intelligence": 2
+      "strength": 0,
+      "dexterity": 0,
+      "constitution": 0,
+      "wisdom": 0,
+      "intelligence": 1
     },
     "attributePriority": [
       "intelligence",
@@ -138,11 +138,11 @@
       "training.basic"
     ],
     "attributes": {
-      "strength": 1,
-      "dexterity": 2,
-      "constitution": 1,
-      "wisdom": 1,
-      "intelligence": 1
+      "strength": 0,
+      "dexterity": 1,
+      "constitution": 0,
+      "wisdom": 0,
+      "intelligence": 0
     },
     "attributePriority": [
       "dexterity",
@@ -215,11 +215,11 @@
       "training.graduate"
     ],
     "attributes": {
-      "strength": 1,
-      "dexterity": 1,
-      "constitution": 1,
-      "wisdom": 2,
-      "intelligence": 1
+      "strength": 0,
+      "dexterity": 0,
+      "constitution": 0,
+      "wisdom": 1,
+      "intelligence": 0
     },
     "attributePriority": [
       "wisdom",
