@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
+import { applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat as createRunCombatWithBenefits } from '../src/engine/runCombat.js';
@@ -19,12 +19,12 @@ import { withKitDom } from './helpers/dom.mjs';
 import { startQueuedEnemy } from '../src/engine/combatReactions.js';
 import { prepareTacticalCard, tacticalCarrier, enemyMoveCarrier } from '../src/engine/combatCardTactics.js';
 import { resolveCombatCard } from '../src/engine/combatExpansion.js';
-// Fund the authored three-contact Slash before the planner selects its head. The Core 0.5 base-damage scale and the 0.7 side and Block scales are off: this file pins
-// the per-contact contract, and halved 5-damage contacts leave a Counter's floor(0.25 x hit) Block at 0.
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {
+import { ReactionCarrierProfile } from './helpers/reaction-carriers.mjs';
+// Fund the authored three-contact Slash before the planner selects its head. This file pins the
+// per-contact contract, and the Core Counter answers as a Reaction card from tests/fixtures/reaction-carriers.json.
+const profile = ReactionCarrierProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {
   // The minion SP cap (characters.enemyLevelScaling.spCap, owner 2026-11-20) is lifted with the pool so the fixture keeps its funded slash.
   characters: { tagRules: { 'tier.minion': { pools: { sp: 4 } } }, enemyLevelScaling: { spCap: { minion: 4 } } },
-  effects: { baseDamageMultiplier: 1, physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 },
 } });
 const baseRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 // Moves are compiled from shared authored sources by createRegistries; alter the
