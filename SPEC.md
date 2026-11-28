@@ -1089,7 +1089,7 @@ Version-2 combat expansion: [docs/combat-expansion-contract.md](docs/combat-expa
 Reaction prompts, the combat log and enemy-action presentation. Detailed contract (persistence, privacy, accessibility, responsive geometry): [docs/combat-reaction-contract.md](docs/combat-reaction-contract.md).
 
 **Reaction modal and log**
-- The reaction modal uses **Skip, Play** (2026-11-14; the exit read Back before); Skip declines the offered reaction and resumes the incoming action. Its numbers are HP the player will lose (§17, *Plannable and quick turns*). A combat-scoped, owned Reaction switch controls optional prompts.
+- The reaction modal uses **Skip, Play** (2026-11-14; the exit read Back before); Skip declines the offered reaction and resumes the incoming action. Its numbers are HP the player will lose (§17, *Plannable and quick turns*). A combat-scoped, owned Reaction switch controls optional prompts. A profile can hide that switch (`reactions.playerToggle: false`, as Core does); reactions then follow their default.
 - The right-side combat log unfolds in place, groups completed public actions by round, and supports Small, Medium and Large heights bounded below the menu controls.
 - Accuracy, contest, critical-hit, Intent-read perception, status buildup and status recovery rolls are logged as total vs DC ("Strike: 18 vs 9 · hit"). Dodge and Evade rows keep their sentences and gain an itemised receipt; range-distance rows keep their sentence alone. In Full detail mode each receipt is itemised (die, every bonus, the DC parts, the verdict) from the row's `rollReceipt`.
 
