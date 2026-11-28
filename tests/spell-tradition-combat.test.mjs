@@ -17,8 +17,9 @@ import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/co
 import { SpellScalingValue, SpellTraditionsActive, TraditionSpellPower } from '../src/model/spellTraditions.js';
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { validateGameProfileSnapshot } from '../src/model/gameProfile.js';
+import { POISE_ON_MODULES } from './helpers/poise-on.mjs';
 
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { ...POISE_ON_MODULES,
   effects: { physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 },
 } });
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);

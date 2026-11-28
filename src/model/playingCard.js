@@ -7,6 +7,7 @@ import { FaceCostProfile } from './faceCosts.js';
 import { evadeStackGainPhrase } from './fixCoreMechanics.js';
 import { core2MultiHitRulesEnabled } from './core2ActionPolicy.js';
 import { SpellScalingValue, SpellTraditionsActive } from './spellTraditions.js';
+import { PoiseEnabled } from './simpleCombatFlags.js';
 // src/model/playingCard.js — what a playing card IS, with no opinion about
 // how it looks.
 //
@@ -179,6 +180,29 @@ export function CardPresentationContext(def, preview = null, rules = null) {
  * predicate phrase (`condition`), the combat profile, the token bindings and the
  * static tokens. Every card-face text model reads through this one context.
  */
+const POISE_FACE_OPS = new Set([
+  'poiseDamage',
+  'gainBarrier',
+  'gainPoise',
+  'restorePoise',
+]);
+const POISE_FACE_STATUS = 'barrier';
+
+/**
+ * Whether a Poise row is left off a card face: stagger.poise off gives and deals no Poise, so the
+ * "N Poise" clause (or a Ward row merged into it) says nothing true. No profile keeps it.
+ */
+export function PoiseFaceClauseHidden(
+  effect,
+  merged,
+  registries,
+)
+{
+  const barrierRow = effect.op === 'applyStatus' && effect.status === POISE_FACE_STATUS;
+  const poiseRow = POISE_FACE_OPS.has(effect.op) || barrierRow || Boolean(merged);
+  return poiseRow && !PoiseEnabled(registries);
+}
+
 export function cardSummaryContext(def, preview = null, registries = null, rules = null) {
   const bindings = computeTokenBindings(def.effects || []), tokens = staticCardTokens(def, registries, CardPresentationContext(def, preview, rules));
   const value = (effect, index, field = 'amount') => {
@@ -254,6 +278,15 @@ export function combatCardSummary(def, preview = null, registries = null, rules 
     const n = value(effect, index), area = effect.target === 'allEnemies' ? ' to all enemies'
       : effect.target === 'randomEnemy' ? ' to a random enemy' : effect.target === 'otherEnemy' ? ' to another enemy' : '';
     let text;
+    const poiseHidden = PoiseFaceClauseHidden(
+      effect,
+      poiseMerge?.get(index),
+      registries,
+    );
+    if (poiseHidden)
+    {
+      continue;
+    }
     switch (effect.op) {
       case 'damage': {
         const live = preview?.values?.[index], hits = live?.hits ?? effect.hits ?? 1;

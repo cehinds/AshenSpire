@@ -15,8 +15,9 @@ import { computeBlockGain } from '../src/engine/actions.js';
 import { cardFaceLines } from '../src/model/cardFaceText.js';
 import { playingCardDefinition } from '../src/model/playingCard.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
+import { CORE_POISE_ON_AUTHOR } from './helpers/poise-on.mjs';
 
-const shipped = Profile.resolveGameProfile('default');
+const shipped = Profile.resolveGameProfile(CORE_POISE_ON_AUTHOR);
 // The soldier opens with its Slash, so the enemy side has a hit to price.
 const bundle = { ...contentBundle, enemies: contentBundle.enemies.map(enemy => enemy.id === 'wanderingSoldier' ? { ...enemy, firstMove: 'slash' } : enemy) };
 const KEYS = ['playerDamageMultiplier', 'enemyDamageMultiplier', 'blockGainMultiplier', 'spellPoiseDamageMultiplier', 'physicalDamageMultiplier'];

@@ -8,8 +8,9 @@ import { cardFaceLines } from '../src/model/cardFaceText.js';
 import { cardPlainText } from '../src/ui/components/card.js';
 import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
 import { legacyRules } from './legacyHitRules.mjs';
+import { POISE_ON_MODULES } from './helpers/poise-on.mjs';
 
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { ...POISE_ON_MODULES } });
 const core = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const plain = html => html.replace(/<[^>]+>/g, '');
 const faceOf = (def, rules = null) => (cardFaceLines(def, null, core, rules) || []).map(line => plain(line.html)).join(' | ');

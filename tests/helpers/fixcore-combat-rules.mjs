@@ -6,9 +6,10 @@ import { createRng } from '../../src/engine/rng.js';
 import { createRunCombat } from '../../src/engine/runCombat.js';
 import { legacyRolls } from '../legacyHitRules.mjs';
 import { withoutStanceBenefits } from '../legacyStanceRules.mjs';
+import { POISE_ON_MODULES } from '../helpers/poise-on.mjs';
 // These suites pin other rules' arithmetic, so the Core side damage and Block scales (owner, 2026-11-18: x0.7 each) are pinned to 1, as the Core base-damage
 // halving's own suites do; tests/side-damage-scale-2026-11-18.test.mjs owns the scaled numbers.
-export const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
+export const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { ...POISE_ON_MODULES, effects: { physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
 export const baseRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 // Moves are compiled from shared authored sources by createRegistries; alter the
 // final registered move so this fixture fixes an exact 5-per-hit contract.

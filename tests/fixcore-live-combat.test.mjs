@@ -20,7 +20,8 @@ import { attackHitPreview } from '../src/engine/stanceHit.js';
 import { chargeFlaskId,utilityFlaskIds } from '../src/model/gracerefill.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { withLegacyDefaults } from './legacyHitRules.mjs';
-const profile=resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules:{effects:{physicalDamageMultiplier: 1, playerDamageMultiplier: 1,enemyDamageMultiplier:1,blockGainMultiplier:1}}});
+import { POISE_ON_MODULES } from './helpers/poise-on.mjs';
+const profile=resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules:{ ...POISE_ON_MODULES, effects:{physicalDamageMultiplier: 1, playerDamageMultiplier: 1,enemyDamageMultiplier:1,blockGainMultiplier:1}}});
 const reg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile);
 function live(classId='reaver') {
  const run=createRunState({registries:reg,classId,seed:511,profileMeta:{gameProfileUnlocks:{core:{completedRunIds:['a','b','c']}}}});

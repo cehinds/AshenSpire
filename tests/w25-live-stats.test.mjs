@@ -16,8 +16,9 @@ import { runCombatEnd } from '../src/engine/runCombat.js';
 import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
 import { ChangeAttribute, ClearTurnAttributeBoosts, RestoreLiveStats, LiveAttribute, ElementStatScale, StatScaledNumber } from '../src/engine/liveStats.js';
 import { ratingValue } from '../src/model/combatRatings.js';
+import { POISE_ON_MODULES } from './helpers/poise-on.mjs';
 
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { physicalDamageMultiplier: 1, playerDamageMultiplier: 1 } } }); // Disable both output scales so live damage deltas are directly observable.
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { ...POISE_ON_MODULES, effects: { physicalDamageMultiplier: 1, playerDamageMultiplier: 1 } } }); // Disable both output scales so live damage deltas are directly observable.
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 function live(classId = 'reaver', seed = 511) {
   const run = createRunState({ registries: reg, classId, seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });

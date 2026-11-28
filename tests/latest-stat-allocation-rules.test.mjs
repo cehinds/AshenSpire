@@ -18,8 +18,9 @@ import { previewCard, dispatch } from '../src/engine/combat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { ElementProtectionView } from '../src/engine/elementIdentity.js';
 import { ChannelRowValue } from '../src/model/channelRowValue.js';
+import { CORE_POISE_ON_AUTHOR } from './helpers/poise-on.mjs';
 
-const profile = resolveGameProfile('core');
+const profile = resolveGameProfile(CORE_POISE_ON_AUTHOR);
 const registriesFor = own => bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, own)), own);
 const registries = registriesFor(profile);
 const makeRun = (reg = registries) => createRunState({ registries: reg, classId: 'reaver', seed: 4242 });

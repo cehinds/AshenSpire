@@ -24,8 +24,8 @@ import { GearSelectorMatches } from '../src/model/gearEffects.js';
 const preRegistryRuntime = 'sha256:777939d6ee4065a02491fcd7ff21fc2d9f44271a0d7f10ec3b2435d1786a72cd';
 const registryRuntime = 'sha256:c77d4f30494cb821fc66b9b9ef19b91fbb2c699633fe0137b72ab89d261ec831';
 const preScalingRuntime = 'sha256:eff6f5c38dcdba3c78d012bf55c8baf6fe703f664bc3f3416244b15d1fa07216';
-// Re-pinned at the #3017 merge onto #3031; 6b8f59... is now in PREVIOUS_RUNTIMES.
-const catalogRuntime = 'sha256:86b335d2ec3ae5b290afd68343bf41686eb9e8f67e15a5eee6ec1f4b2420a21c';
+// Re-pinned at the stances.ruleset triangle switch (#3052); 86b335... is now in PREVIOUS_RUNTIMES.
+const catalogRuntime = 'sha256:8285db7e6ab355d97ccb9c2c7d214587c9413f766c8f7a346821cb96afd51081';
 const preRegistrySave = () => gunzipSync(readFileSync(new URL('./fixtures/pre-registry-dev-7dff4b03-save.json.gz', import.meta.url))).toString('utf8');
 
 test('the real Dev 7dff4b03 save resumes its active fight without changing the old profile or policy', () => {

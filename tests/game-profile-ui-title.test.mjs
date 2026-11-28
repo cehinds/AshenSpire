@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { loadableTitleSlots, profileStarterCount } from '../src/ui/models/GameProfileTitleModel.js';
+import { CORE_POISE_ON_AUTHOR } from './helpers/poise-on.mjs';
 
 test('Continue selects latest eligible save and hides both save doors without one', () => {
   const old = { slot: 1, summary: { savedAt: '2026-10-01' } };
@@ -24,7 +25,7 @@ test('configured editor definition keeps authored effects instead of adding lega
   const { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } = await import('../src/model/gameProfile.js');
   const { playingCardDefinition } = await import('../src/model/playingCard.js');
   const { cardFaceLines } = await import('../src/model/cardFaceText.js');
-  const profile = resolveGameProfile('core');
+  const profile = resolveGameProfile(CORE_POISE_ON_AUTHOR);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const definition = playingCardDefinition(registries, { cardId: 'core.defend' }, { rules: { gameProfile: profile, combatExpansionVersion: 2 } });
   const lines = cardFaceLines(definition, null, registries).map(line => line.html).join(' ');
@@ -37,7 +38,7 @@ test('configured Counter face describes Block and its deferred return', async ()
   const { createRegistries } = await import('../src/model/registries.js');
   const { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries, projectGameCard } = await import('../src/model/gameProfile.js');
   const { cardFaceLines } = await import('../src/model/cardFaceText.js');
-  const profile = resolveGameProfile('core');
+  const profile = resolveGameProfile(CORE_POISE_ON_AUTHOR);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const lines = cardFaceLines(projectGameCard(profile, 'core.counter'), null, registries).map(row => row.html).join(' ');
   assert.match(lines, /Block/);
@@ -51,7 +52,7 @@ test('concise Counter retains live Block and return amounts and change marks', a
   const { createRegistries } = await import('../src/model/registries.js');
   const { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries, projectGameCard } = await import('../src/model/gameProfile.js');
   const { cardFaceLines } = await import('../src/model/cardFaceText.js');
-  const profile = resolveGameProfile('core');
+  const profile = resolveGameProfile(CORE_POISE_ON_AUTHOR);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const def = projectGameCard(profile, 'core.counter');
   const values = def.effects.map(effect => ({ op: effect.op, value: effect.op === 'damage' ? 7 : 9, hits: 1 }));
@@ -66,7 +67,7 @@ test('configured long damage faces retain type, damage and Poise in compact word
   const { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } = await import('../src/model/gameProfile.js');
   const { applyCombatExpansionCard } = await import('../src/content/combatExpansionCards.js');
   const { cardFaceLines } = await import('../src/model/cardFaceText.js');
-  const profile = resolveGameProfile('core');
+  const profile = resolveGameProfile(CORE_POISE_ON_AUTHOR);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const def = applyCombatExpansionCard(registries.cards.get('sunderingChop'));
   const lines = cardFaceLines(def, null, registries, null, { stanceEntry: false });
