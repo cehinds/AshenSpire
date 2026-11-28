@@ -19,7 +19,8 @@ for (const cardId of ['crystalBarrier', 'starbladePhalanx', 'cinderSigil', 'stri
 }
 test('reward and deck descriptions show Gain N Poise (Barrier stacks x5) while legacy runs retain Block', () => {
   const ref = { cardId: 'crystalBarrier', abilityRank: 1 };
-  assert.match(cardPlainText(registries, ref, { rules }), /Gain 20 Poise/);
+  // Owner ruling 2026-11-28: Crystal Barrier stores 2 Block (1:1), one Barrier stack, so 5 Poise.
+  assert.match(cardPlainText(registries, ref, { rules }), /Gain 5 Poise/);
   assert.match(cardPlainText(registries, ref, { rules: { combatExpansionVersion: 1 } }), /Block/);
   assert.deepEqual(playingCardDefinition(registries, ref), resolveCard(registries, ref));
 });
