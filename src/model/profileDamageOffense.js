@@ -36,7 +36,7 @@ export const PacketMagicMultiplier = (flux) => (Number.isFinite(flux) ? flux : 1
 
 export function DamageIncoming(amount) { return Math.max(0, Math.floor(amount)); }
 
-/** Whether the attacking stance beats the defending one: the triangle's edges, else the maneuver matchups. */
+/** Whether the attacking stance beats the defending one: the triangle, else the matchups. */
 function StanceAdvantage(stances, triangle, attacking, defending)
 {
   if (triangle)

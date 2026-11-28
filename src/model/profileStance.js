@@ -5,6 +5,13 @@ import { configuredModule } from './profileModule.js';
 import { TriangleRules, TriangleStance } from './stanceTriangle.js';
 
 const NEUTRAL_STANCE = 'neutral';
+const LEGACY_ALIASES = Object.freeze({
+  casting: 'prepared',
+  cast: 'prepared',
+  spell: 'prepared',
+  ranged: 'attack',
+  evade: 'defend',
+});
 
 export const MIRRORED_TYPES = new Set(['attack', 'smash', 'sweep', 'defend', 'counter']);
 // A Spell that mirrors a basic card (owner 2026-10-18) takes that basic's maneuver; it stays a Spell. Only Core 2 content sets `mirrors`.
@@ -22,9 +29,9 @@ function legacyStance(carrier) {
   const raw = (trigger === 'evade' && carrier?.combatProfile?.maneuver === 'counter' ? 'counter' : trigger) || carrier?.combatProfile?.maneuver || carrier?.maneuver
     || (carrier?.cardTags || carrier?.tags || []).map(tag => typeof tag === 'string' ? tag : tag.id).find(tag => tag.startsWith('maneuver:'))?.slice(9);
   // Owner 2026-11-01: Evade is a tag, not a stance, so an authored 'evade' stance trigger (core.evade and kin) stands in Defend.
-  return ({ casting: 'prepared', cast: 'prepared', spell: 'prepared', ranged: 'attack', evade: 'defend' })[raw] || raw || null;
+  return LEGACY_ALIASES[raw] || raw || null;
 }
-/** The stance a carrier plays. With a `subject` whose stances.ruleset is triangle, the triangle stance. */
+/** The stance a carrier plays; under a `subject` on the triangle ruleset, its triangle stance. */
 export function configuredStance(carrier, subject = null)
 {
   const legacy = legacyStance(carrier);

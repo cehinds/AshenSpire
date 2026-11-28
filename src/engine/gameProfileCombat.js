@@ -797,7 +797,12 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
   const winnerMultiplier = triangle
     ? triangle.winnerMultiplier
     : stances.advantageMultiplier;
-  const matchupMultiplier = smashRule ? smashMultiplier : advantage && !flatReturn ? winnerMultiplier ?? 1 : 1;
+  const winnerApplies = advantage && !flatReturn;
+  const matchupMultiplier = smashRule
+    ? smashMultiplier
+    : winnerApplies
+      ? winnerMultiplier ?? 1
+      : 1;
   // Owner, 2026-11-17 (stance decisions): a stance advantage and the target's stance weakness (Attack or Smash beating Prepared, and Prepared's melee
   // weakness) never stack: the hit takes the larger of the two. The weakness already sits in `raw`, so the advantage stage adds only what it exceeds.
   const sharesWeakness = !triangle && matchupMultiplier > 1 && weaknessMultiplier > 1;

@@ -1,5 +1,5 @@
-// The stance triangle (stances.ruleset triangle): which of the triangle stances a card or enemy move
-// plays, and who wins a matchup, read from the stances.triangle block. Leaf: imports only the flags.
+// The stance triangle (stances.ruleset triangle): the stance a card or enemy move plays and who
+// wins a matchup, read from the stances.triangle block. Leaf: imports only the flags.
 import { TriangleRules } from './simpleCombatFlags.js';
 
 const BY_EFFECT = 'byEffect';
@@ -85,7 +85,7 @@ export function TriangleStance(subject, carrier, legacyId)
     : mapped;
 }
 
-/** Whether `attacking` beats `defending` under the triangle; a neutral stance never wins or loses. */
+/** Whether `attacking` beats `defending` under the triangle; a neutral one never wins or loses. */
 export function TriangleBeats(rules, attacking, defending)
 {
   const neutral = rules?.neutral || [];

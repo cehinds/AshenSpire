@@ -75,7 +75,7 @@ export function StanceRuleset(subject)
     : STANCE_RULESET_MANEUVERS;
 }
 
-/** The stances.triangle block while the triangle plays, else null (a profile without the block too). */
+/** The stances.triangle block while the triangle plays, else null (also with no block). */
 export function TriangleRules(subject)
 {
   if (StanceRuleset(subject) !== STANCE_RULESET_TRIANGLE)
