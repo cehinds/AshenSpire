@@ -1,5 +1,5 @@
-// Owner, 2026-11-18: physical damage drops another x0.7 for both sides (`effects.physicalDamageMultiplier`), on top of the side scale,
-// and Core Block gain is 0.49. Only the physical share of a hit takes it; every number here is measured in the engine.
+// ScalePhysicalDamage cuts only the physical share of a hit. Owner ruling 2026-11-28: physicalDamageMultiplier and
+// blockGainMultiplier read as 1 in every profile, so a profile saved with 0.7 and 0.49 plays 1:1.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -26,7 +26,15 @@ function variant(overrides = {}) {
   return { profile, registries: Profile.bindGameProfileRegistries(createRegistries(Profile.applyGameProfileToContent(bundle, profile)), profile) };
 }
 const META = { gameProfileUnlocks: { [shipped.id]: { completedRunIds: ['a', 'b', 'c'] } } };
-const cut = variant(), flat = variant({ physicalDamageMultiplier: 1 });
+// The cuts a profile saved before the 1:1 ruling may carry.
+const SAVED_PHYSICAL_SCALE = 0.7;
+const SAVED_BLOCK_SCALE = 0.49;
+const SHIPPED_SCALE = 1;
+const cut = variant({
+  physicalDamageMultiplier: SAVED_PHYSICAL_SCALE,
+  blockGainMultiplier: SAVED_BLOCK_SCALE,
+});
+const flat = variant({ physicalDamageMultiplier: 1 });
 
 function begin(world, { classId = 'reaver', seed = 31 } = {}) {
   const run = createRunState({ registries: world.registries, classId, seed, profileMeta: META });
@@ -52,11 +60,11 @@ function playCard(world, cardId, classId = 'reaver') {
   return { combat, enemy, preview, hpLoss: hp0 - enemy.hp, blockGain: (combat.player.block || 0) - block0, hit: hits(combat, mark).find(({ event }) => event.sourceId === 'player')?.hit };
 }
 
-test('Core sets physicalDamageMultiplier 0.7 and blockGainMultiplier 0.49; the module default is 1', () => {
-  assert.equal(shipped.modules.effects.physicalDamageMultiplier, 0.7);
-  assert.equal(shipped.modules.effects.blockGainMultiplier, 0.49);
-  assert.equal(shipped.modules.effects.playerDamageMultiplier, 0.7);
-  assert.equal(shipped.modules.effects.enemyDamageMultiplier, 0.7);
+test('Core sets physicalDamageMultiplier and blockGainMultiplier to 1; the module default is 1', () => {
+  assert.equal(shipped.modules.effects.physicalDamageMultiplier, SHIPPED_SCALE);
+  assert.equal(shipped.modules.effects.blockGainMultiplier, SHIPPED_SCALE);
+  assert.equal(shipped.modules.effects.playerDamageMultiplier, SHIPPED_SCALE);
+  assert.equal(shipped.modules.effects.enemyDamageMultiplier, SHIPPED_SCALE);
   const defaults = JSON.parse(readFileSync(new URL('../engine/modules/effects/defaults.json', import.meta.url), 'utf8'));
   assert.equal(defaults.physicalDamageMultiplier, 1);
 });
@@ -70,39 +78,42 @@ test('ScalePhysicalDamage cuts only the physical fraction and never rounds a pos
   assert.equal(ScalePhysicalDamage(10, 1, 0), 0, 'a 0 multiplier removes the physical part');
 });
 
-test('a player physical hit takes the physical stage, and the preview, the receipt and the HP loss agree', () => {
-  const a = playCard(cut, 'core.strike'), b = playCard(flat, 'core.strike');
-  assert.equal(physRow(a.hit)?.multiplier, 0.7);
+test('a player physical hit under a saved physical cut takes no physical stage; preview, receipt and HP loss agree', () => {
+  const a = playCard(cut, 'core.strike');
+  const b = playCard(flat, 'core.strike');
+  assert.equal(physRow(a.hit), undefined, 'the saved cut reads as 1');
   assert.equal(physRow(b.hit), undefined, 'a neutral profile has no physical stage');
-  assert.ok(a.hpLoss > 0 && a.hpLoss < b.hpLoss, `${b.hpLoss} -> ${a.hpLoss}`);
+  assert.ok(a.hpLoss > 0);
+  assert.equal(a.hpLoss, b.hpLoss);
   assert.equal(a.preview.values.find(v => v.op === 'damage').value, a.hpLoss, 'preview == played');
   assert.equal(a.hit.incoming, a.hpLoss);
 });
 
-test('only the physical share is cut: Arcane Spark is half physical in Core, a fire spell is pure magic', () => {
+test('a saved physical cut leaves a mixed Arcane spell and a pure fire spell at their 1:1 damage', () => {
   const spark = playCard(cut, 'core.cantrip', 'starseer');
-  const row = physRow(spark.hit);
-  assert.ok(row, 'Arcane Spark carries a physical part in the receipt split');
-  assert.ok(row.effective > Math.floor(row.requested * 0.7), `${row.requested} -> ${row.effective}: the magic share is not cut`);
-  assert.ok(row.effective < row.requested);
+  const sparkFlat = playCard(flat, 'core.cantrip', 'starseer');
+  assert.equal(physRow(spark.hit), undefined, 'no physical stage on the mixed spell');
+  assert.ok(spark.hpLoss > 0);
+  assert.equal(spark.hpLoss, sparkFlat.hpLoss);
   const fire = playCard(cut, 'core.cinderDart', 'starseer'), fireFlat = playCard(flat, 'core.cinderDart', 'starseer');
   assert.ok(fire.hpLoss > 0);
   assert.equal(physRow(fire.hit), undefined, 'a pure magic hit has no physical stage');
   assert.equal(fire.hpLoss, fireFlat.hpLoss, 'and its damage is unchanged');
 });
 
-test('an enemy physical hit takes the physical stage too', () => {
+test('an enemy physical hit under a saved physical cut takes no physical stage either', () => {
   const enemyHit = world => {
     const { combat } = begin(world);
     const mark = combat.eventLog.length;
     dispatch(combat, { type: 'endTurn' });
     return hits(combat, mark).find(({ event }) => event.sourceId === combat.enemies[0].id)?.hit;
   };
-  const a = enemyHit(cut), b = enemyHit(flat);
+  const a = enemyHit(cut);
+  const b = enemyHit(flat);
   assert.ok(a && b, 'the Slash lands');
-  assert.equal(physRow(a)?.multiplier, 0.7);
+  assert.equal(physRow(a), undefined);
   assert.equal(physRow(b), undefined);
-  assert.ok(a.incoming < b.incoming, `${b.incoming} -> ${a.incoming}`);
+  assert.equal(a.incoming, b.incoming);
 });
 
 test('a Counter return is final damage: no physical stage', () => {
@@ -118,12 +129,12 @@ test('a Counter return is final damage: no physical stage', () => {
   assert.equal(ret.incoming, trigger.amount);
 });
 
-test('Block gain takes the 0.49 Core factor in the preview and in the play', () => {
-  const a = playCard(cut, 'core.defend'), b = playCard(variant({ blockGainMultiplier: 1 }), 'core.defend');
-  assert.ok(a.blockGain > 0 && a.blockGain < b.blockGain);
+test('Block gain is 1:1 under a saved Block factor, in the preview and in the play', () => {
+  const a = playCard(cut, 'core.defend');
+  const b = playCard(variant({ blockGainMultiplier: 1 }), 'core.defend');
+  assert.ok(a.blockGain > 0);
+  assert.equal(a.blockGain, b.blockGain, 'the saved 0.49 reads as 1');
   assert.equal(a.preview.values.find(v => v.op === 'block').value, a.blockGain, 'preview == played');
-  const seven = playCard(variant({ blockGainMultiplier: 0.7 }), 'core.defend');
-  assert.ok(a.blockGain < seven.blockGain, 'the 0.49 factor gives less than the earlier 0.7');
 });
 
 test('the in-combat hand face shows the number the card deals and gains', () => {
@@ -137,7 +148,7 @@ test('the in-combat hand face shows the number the card deals and gains', () => 
   }
 });
 
-test('a static card face applies the physical cut to a physical damage figure, and not to a spell', () => {
+test('a static card face shows the 1:1 figure under a saved physical cut, for a physical card and a spell', () => {
   const faceOf = (world, cardId, classId) => {
     const run = createRunState({ registries: world.registries, classId, seed: 7, profileMeta: META });
     const def = world.registries.cards.get(cardId);
@@ -147,9 +158,11 @@ test('a static card face applies the physical cut to a physical damage figure, a
   const plain = variant({ ...neutral, physicalDamageMultiplier: 1 }), halved = variant({ ...neutral, physicalDamageMultiplier: 0.5 });
   const run = createRunState({ registries: plain.registries, classId: 'reaver', seed: 7, profileMeta: META });
   const strength = gameProfileEffectiveAttributes(plain.registries, run).strength;
-  assert.equal(faceOf(plain, 'core.strike', 'reaver'), 6 + strength);
-  assert.equal(faceOf(halved, 'core.strike', 'reaver'), Math.floor((6 + strength) * 0.5), 'floor((6 + STR) x 0.5)');
-  assert.equal(faceOf(halved, 'core.cinderDart', 'starseer'), faceOf(plain, 'core.cinderDart', 'starseer'), 'a pure-magic spell face is untouched');
-  // Codex on PR #2835: a Starseer's Arcane Spark resolves to Arcane (half physical) from the wielded staff, so the cut reaches its physical half.
-  assert.ok(faceOf(halved, 'core.cantrip', 'starseer') < faceOf(plain, 'core.cantrip', 'starseer'), 'a mixed Arcane spell face takes the cut on its physical share');
+  const stored = plain.registries.cards.get('core.strike').effects.find(effect => effect.op === 'damage').amount;
+  assert.equal(faceOf(plain, 'core.strike', 'reaver'), stored + strength);
+  assert.equal(faceOf(halved, 'core.strike', 'reaver'), stored + strength, 'the saved cut reads as 1');
+  for (const cardId of ['core.cinderDart', 'core.cantrip'])
+  {
+    assert.equal(faceOf(halved, cardId, 'starseer'), faceOf(plain, cardId, 'starseer'), cardId);
+  }
 });
