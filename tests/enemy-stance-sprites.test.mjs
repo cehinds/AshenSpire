@@ -5,7 +5,11 @@ import { act1Enemies } from '../src/content/enemies/act1.js';
 import { act2Enemies } from '../src/content/enemies/act2.js';
 import { act3Enemies } from '../src/content/enemies/act3.js';
 import { enemyExpansion } from '../src/content/enemyExpansion.js';
-import { enemyStanceSprites, enemyStanceAssets, ENEMY_STANCE_FAMILIES } from '../src/content/enemyStanceSprites.js';
+import {
+    enemyStanceSprites,
+    enemyStanceAssets,
+    ENEMY_STANCE_FAMILIES,
+} from '../src/content/enemyStanceSprites.js';
 import { readFileSync } from 'node:fs';
 import { enemyStanceCategory } from '../src/model/enemyStancePose.js';
 import { concealIntent } from '../src/model/combatIntentVisibility.js';
@@ -20,112 +24,252 @@ const FRAME_TICK_MARGIN_MS = 20;
 
 // Exercise the extracted paced reducer directly, without mounting screen DOM.
 const applyMoveBeat = (event, disp, combat, registries) => ApplyCombatBeat(disp, [event], {
-  combat, registries, reduceFollowRows() {},
+    combat,
+    registries,
+    reduceFollowRows()
+    {},
 });
 
-test('paced pooled follow-ups use the performed move, not the final live intent', () => {
-  const moves = Object.fromEntries(['smash', 'attack', 'counter', 'sweep', 'defend'].map(maneuver =>
-    [maneuver, { intent: 'attack', tags: ['camp:physical', `maneuver:${maneuver}`] }]));
-  moves.spell = { intent: 'attack', tags: ['camp:spell'] };
-  const enemy = { id: 'e1', enemyId: 'probe', intent: { kind: 'block' } };
-  const combat = { enemies: [enemy], eventLog: [] }, disp = { ents: { e1: { presentationStance: 'defend', intentPreview: { hidden: true } } } };
-  const registries = { enemies: new Map([['probe', { moves }]]) };
-  for (const [moveId, expected] of [...Object.keys(moves).map(id => [id, id === 'spell' ? 'preparing' : id])]) {
-    applyMoveBeat({ type: 'enemyMoveStarted', sourceId: 'e1', enemyId: 'probe', moveId }, disp, combat, registries);
-    assert.equal(disp.ents.e1.presentationStance, expected);
-    assert.deepEqual(disp.ents.e1.intentPreview, { hidden: true }, 'body pose does not reveal private intent');
-  }
-});
-
-test('reaction and unknown move receipts preserve the current planned hold', () => {
-  const enemy = { id: 'e1', enemyId: 'probe' }, combat = { enemies: [enemy], eventLog: [] };
-  const disp = { ents: { e1: { presentationStance: 'smash' } } };
-  const registries = { enemies: new Map([['probe', { moves: { defend: { intent: 'block' } } }]]) };
-  for (const event of [{ moveId: 'defend', reaction: true }, { moveId: 'missing' }, { sourceId: 'missing', moveId: 'defend' }]) {
-    applyMoveBeat({ type: 'enemyMoveStarted', sourceId: 'e1', ...event }, disp, combat, registries);
-    assert.equal(disp.ents.e1.presentationStance, 'smash');
-  }
-});
-
-test('all 33 enemies have six valid held stance frames without altering action clips', () => {
-  const canonical = [...act1Enemies, ...act2Enemies, ...act3Enemies].map(enemy => enemy.id).sort();
-  assert.deepEqual(Object.keys(enemyStanceSprites).sort(), canonical, 'new canonical enemies cannot silently lack held stances');
-  assert.equal(ENEMY_POSES.length, 65);
-  assert.deepEqual(Object.keys(enemyStanceSprites).sort(), [...ENEMY_POSES].sort());
-  for (const id of ENEMY_POSES) {
-    assert.deepEqual(Object.keys(enemyStanceSprites[id]), ENEMY_STANCE_FAMILIES);
-    for (const [category, pose] of Object.entries(enemyStanceSprites[id])) {
-      assert.equal(enemyStanceAssets[id][category], `assets/enemy-poses/expansion/${id}/${pose}.webp`);
-      if (!pose.startsWith('stance-')) assert.ok(enemyExpansion[id].poses.includes(pose), `${id}: ${pose}`);
-      else { assert.equal(pose, `stance-${category}`); assert.ok(!enemyExpansion[id].poses.includes(pose), 'additive hold does not replace a committed frame'); }
+test('paced pooled follow-ups use the performed move, not the final live intent', () =>
+{
+    const moves = Object.fromEntries(
+        ['smash', 'attack', 'counter', 'sweep', 'defend'].map(
+            maneuver => [maneuver, {
+                intent: 'attack',
+                tags: ['camp:physical', `maneuver:${maneuver}`],
+            }],
+        ),
+    );
+    moves.spell = { intent: 'attack', tags: ['camp:spell'] };
+    const enemy = { id: 'e1', enemyId: 'probe', intent: { kind: 'block' } };
+    const combat = { enemies: [enemy], eventLog: [] },
+        disp = { ents: { e1: { presentationStance: 'defend', intentPreview: { hidden: true } } } };
+    const registries = { enemies: new Map([['probe', { moves }]]) };
+    for (
+        const [moveId, expected] of [
+            ...Object.keys(moves).map(id => [id, id === 'spell' ? 'preparing' : id]),
+        ]
+    )
+    {
+        applyMoveBeat(
+            { type: 'enemyMoveStarted', sourceId: 'e1', enemyId: 'probe', moveId },
+            disp,
+            combat,
+            registries,
+        );
+        assert.equal(disp.ents.e1.presentationStance, expected);
+        assert.deepEqual(
+            disp.ents.e1.intentPreview,
+            { hidden: true },
+            'body pose does not reveal private intent',
+        );
     }
-    for (const clip of Object.values(enemyExpansion[id].actions)) assert.equal(clip.reduce((sum, frame) => sum + frame.duration, 0), 260);
-  }
 });
 
-test('every held stance asset is published in both pinned art tiers', () => {
-  const manifest = JSON.parse(readFileSync(new URL('../art-manifest.json', import.meta.url), 'utf8'));
-  for (const [id, stances] of Object.entries(enemyStanceAssets)) for (const [category, assetId] of Object.entries(stances)) {
-    assert.ok(manifest.assets[assetId]?.high, `${id} ${category}: published high asset`);
-    assert.ok(manifest.assets[assetId]?.light, `${id} ${category}: published light asset`);
-  }
+test('reaction and unknown move receipts preserve the current planned hold', () =>
+{
+    const enemy = { id: 'e1', enemyId: 'probe' }, combat = { enemies: [enemy], eventLog: [] };
+    const disp = { ents: { e1: { presentationStance: 'smash' } } };
+    const registries = {
+        enemies: new Map([['probe', { moves: { defend: { intent: 'block' } } }]]),
+    };
+    for (
+        const event of [
+            { moveId: 'defend', reaction: true },
+            { moveId: 'missing' },
+            { sourceId: 'missing', moveId: 'defend' },
+        ]
+    )
+    {
+        applyMoveBeat(
+            { type: 'enemyMoveStarted', sourceId: 'e1', ...event },
+            disp,
+            combat,
+            registries,
+        );
+        assert.equal(disp.ents.e1.presentationStance, 'smash');
+    }
 });
 
-test('hidden and visible plans select the same category while exact intent remains concealed', () => {
-  for (const [maneuver, expected] of [['smash', 'smash'], ['attack', 'attack'], ['counter', 'counter'], ['sweep', 'sweep'], ['defend', 'defend'], ['ranged', 'attack']]) {
-    const intent = { kind: 'attack', moveId: 'privateMove', damage: 99, combatProfile: { camp: 'attack', maneuver } };
-    const hidden = concealIntent(intent, intent.combatProfile);
-    assert.equal(enemyStanceCategory(intent), expected);
-    assert.equal(enemyStanceCategory(hidden), expected);
-    assert.equal(hidden.moveId, null);
-    assert.equal(hidden.damage, undefined);
-    assert.equal(hidden.hidden, true);
-  }
-  for (const camp of ['skill', 'power', 'spell']) assert.equal(enemyStanceCategory({ kind: 'buff', combatProfile: { camp } }), 'preparing');
-  assert.equal(enemyStanceCategory({ kind: 'attack', combatProfile: { camp: 'spell' } }), 'preparing');
-  assert.equal(enemyStanceCategory({ kind: 'block', combatProfile: { camp: 'skill', maneuver: 'defend' } }), 'defend');
-  assert.equal(enemyStanceCategory({ statuses: { prepared: { stacks: 1 } } }), null);
-  assert.equal(enemyStanceCategory({ kind: 'unknown', moveId: null }), null);
-  for (const stance of ['__proto__', 'constructor', 'toString', 'assets/private.png']) assert.equal(enemyStanceCategory({ stance }), null);
+test('all 33 enemies have six valid held stance frames without altering action clips', () =>
+{
+    const canonical = [...act1Enemies, ...act2Enemies, ...act3Enemies].map(enemy => enemy.id)
+        .sort();
+    assert.deepEqual(
+        Object.keys(enemyStanceSprites).sort(),
+        canonical,
+        'new canonical enemies cannot silently lack held stances',
+    );
+    assert.equal(ENEMY_POSES.length, 65);
+    assert.deepEqual(Object.keys(enemyStanceSprites).sort(), [...ENEMY_POSES].sort());
+    for (const id of ENEMY_POSES)
+    {
+        assert.deepEqual(Object.keys(enemyStanceSprites[id]), ENEMY_STANCE_FAMILIES);
+        for (const [category, pose] of Object.entries(enemyStanceSprites[id]))
+        {
+            assert.equal(
+                enemyStanceAssets[id][category],
+                `assets/enemy-poses/expansion/${id}/${pose}.webp`,
+            );
+            if (!pose.startsWith('stance-'))
+            {
+                assert.ok(enemyExpansion[id].poses.includes(pose), `${id}: ${pose}`);
+            }
+            else
+            {
+                assert.equal(pose, `stance-${category}`);
+                assert.ok(
+                    !enemyExpansion[id].poses.includes(pose),
+                    'additive hold does not replace a committed frame',
+                );
+            }
+        }
+        for (const clip of Object.values(enemyExpansion[id].actions))
+        {
+            assert.equal(clip.reduce((sum, frame) => sum + frame.duration, 0), 260);
+        }
+    }
 });
 
-test('new and cleared enemy intents safely retain idle until a plan exists', () => {
-  const initialEnemy = { intent: null, hp: 10, maxHp: 10 };
-  assert.equal(enemyStanceCategory(initialEnemy.intent), null);
-  for (const value of [undefined, false, 1, 'attack', []]) assert.equal(enemyStanceCategory(value), null);
-  assert.equal(enemyStanceCategory({ kind: 'unknown', combatProfile: null, profile: null }), null);
-  assert.equal(enemyStanceCategory({ kind: 'block', combatProfile: null }), 'defend');
+test('every held stance asset is published in both pinned art tiers', () =>
+{
+    const manifest = JSON.parse(
+        readFileSync(new URL('../art-manifest.json', import.meta.url), 'utf8'),
+    );
+    for (const [id, stances] of Object.entries(enemyStanceAssets))
+    {
+        for (const [category, assetId] of Object.entries(stances))
+        {
+            assert.ok(manifest.assets[assetId]?.high, `${id} ${category}: published high asset`);
+            assert.ok(manifest.assets[assetId]?.light, `${id} ${category}: published light asset`);
+        }
+    }
 });
 
-test('planned stance persists through status changes and reactions, then follows the next plan; defeat wins', t => {
-  const documentBefore = globalThis.document, imageBefore = globalThis.Image;
-  class Element { constructor() { this.dataset = {}; this.style = {}; } append() {} addEventListener() {} setAttribute() {} }
-  let reducedMotion = false;
-  globalThis.document = { createElement: () => new Element(), body: { classList: { contains: () => reducedMotion } } };
-  globalThis.Image = Element;
-  t.after(() => { globalThis.document = documentBefore; globalThis.Image = imageBefore; });
-  t.mock.timers.enable({ apis: ['setTimeout', 'Date'] });
-  installMockRaf(t);
-  const entity = { hp: 2, maxHp: 10, block: 5, statuses: { prepared: { stacks: 1 }, weak: { stacks: 1 } }, presentationStance: 'smash' };
-  const el = enemyExpansionSprite({ id: 'stitchedHound' }, entity), stage = stageFor(el);
-  assert.equal(el.dataset.pose, enemyStanceSprites.stitchedHound.smash);
-  assert.equal(el.dataset.stance, 'smash');
-  stage.play('hurt', 200);
-  stage.setState({ ...entity, presentationStance: 'defend' });
-  assert.equal(el.dataset.pose, 'hit', 'plan update does not interrupt a live reaction');
-  t.mock.timers.tick(200);
-  assert.equal(el.dataset.pose, enemyStanceSprites.stitchedHound.defend);
-  stage.play('attack', 260);
-  // The attack clip's frames at the shipped default frame hold, plus one tick of slack.
-  tickFrames(t, ATTACK_CLIP_FRAMES * frameHoldMs() + FRAME_TICK_MARGIN_MS);
-  assert.equal(el.dataset.pose, enemyStanceSprites.stitchedHound.defend);
-  stage.setState({ ...entity, presentationStance: 'preparing' });
-  assert.equal(el.dataset.pose, enemyStanceSprites.stitchedHound.preparing);
-  reducedMotion = true;
-  stage.play('attack', 260);
-  assert.equal(el.dataset.pose, enemyStanceSprites.stitchedHound.preparing, 'reduced motion keeps the chosen held stance');
-  stage.setState({ ...entity, hp: 0, presentationStance: 'attack' });
-  assert.equal(el.dataset.pose, 'defeated');
-  assert.equal(el.dataset.stance, undefined);
-  stage.dispose();
+test('hidden and visible plans select the same category while exact intent remains concealed', () =>
+{
+    for (
+        const [maneuver, expected] of [
+            ['smash', 'smash'],
+            ['attack', 'attack'],
+            ['counter', 'counter'],
+            ['sweep', 'sweep'],
+            ['defend', 'defend'],
+            ['ranged', 'attack'],
+        ]
+    )
+    {
+        const intent = {
+            kind: 'attack',
+            moveId: 'privateMove',
+            damage: 99,
+            combatProfile: { camp: 'attack', maneuver },
+        };
+        const hidden = concealIntent(intent, intent.combatProfile);
+        assert.equal(enemyStanceCategory(intent), expected);
+        assert.equal(enemyStanceCategory(hidden), expected);
+        assert.equal(hidden.moveId, null);
+        assert.equal(hidden.damage, undefined);
+        assert.equal(hidden.hidden, true);
+    }
+    for (const camp of ['skill', 'power', 'spell'])
+    {
+        assert.equal(enemyStanceCategory({ kind: 'buff', combatProfile: { camp } }), 'preparing');
+    }
+    assert.equal(
+        enemyStanceCategory({ kind: 'attack', combatProfile: { camp: 'spell' } }),
+        'preparing',
+    );
+    assert.equal(
+        enemyStanceCategory({
+            kind: 'block',
+            combatProfile: { camp: 'skill', maneuver: 'defend' },
+        }),
+        'defend',
+    );
+    assert.equal(enemyStanceCategory({ statuses: { prepared: { stacks: 1 } } }), null);
+    assert.equal(enemyStanceCategory({ kind: 'unknown', moveId: null }), null);
+    for (const stance of ['__proto__', 'constructor', 'toString', 'assets/private.png'])
+    {
+        assert.equal(enemyStanceCategory({ stance }), null);
+    }
+});
+
+test('new and cleared enemy intents safely retain idle until a plan exists', () =>
+{
+    const initialEnemy = { intent: null, hp: 10, maxHp: 10 };
+    assert.equal(enemyStanceCategory(initialEnemy.intent), null);
+    for (const value of [undefined, false, 1, 'attack', []])
+    {
+        assert.equal(enemyStanceCategory(value), null);
+    }
+    assert.equal(
+        enemyStanceCategory({ kind: 'unknown', combatProfile: null, profile: null }),
+        null,
+    );
+    assert.equal(enemyStanceCategory({ kind: 'block', combatProfile: null }), 'defend');
+});
+
+test('planned stance persists through status changes and reactions, then follows the next plan; defeat wins', t =>
+{
+    const documentBefore = globalThis.document, imageBefore = globalThis.Image;
+    class Element
+    {
+        constructor()
+        {
+            this.dataset = {};
+            this.style = {};
+        }
+        append()
+        {}
+        addEventListener()
+        {}
+        setAttribute()
+        {}
+    }
+    let reducedMotion = false;
+    globalThis.document = {
+        createElement: () => new Element(),
+        body: { classList: { contains: () => reducedMotion } },
+    };
+    globalThis.Image = Element;
+    t.after(() =>
+    {
+        globalThis.document = documentBefore;
+        globalThis.Image = imageBefore;
+    });
+    t.mock.timers.enable({ apis: ['setTimeout', 'Date'] });
+    installMockRaf(t);
+    const entity = {
+        hp: 2,
+        maxHp: 10,
+        block: 5,
+        statuses: { prepared: { stacks: 1 }, weak: { stacks: 1 } },
+        presentationStance: 'smash',
+    };
+    const el = enemyExpansionSprite({ id: 'stitchedHound' }, entity), stage = stageFor(el);
+    assert.equal(el.dataset.pose, enemyStanceSprites.stitchedHound.smash);
+    assert.equal(el.dataset.stance, 'smash');
+    stage.play('hurt', 200);
+    stage.setState({ ...entity, presentationStance: 'defend' });
+    assert.equal(el.dataset.pose, 'hit', 'plan update does not interrupt a live reaction');
+    t.mock.timers.tick(200);
+    assert.equal(el.dataset.pose, enemyStanceSprites.stitchedHound.defend);
+    stage.play('attack', 260);
+    // The attack clip's frames at the shipped default frame hold, plus one tick of slack.
+    tickFrames(t, ATTACK_CLIP_FRAMES * frameHoldMs() + FRAME_TICK_MARGIN_MS);
+    assert.equal(el.dataset.pose, enemyStanceSprites.stitchedHound.defend);
+    stage.setState({ ...entity, presentationStance: 'preparing' });
+    assert.equal(el.dataset.pose, enemyStanceSprites.stitchedHound.preparing);
+    reducedMotion = true;
+    stage.play('attack', 260);
+    assert.equal(
+        el.dataset.pose,
+        enemyStanceSprites.stitchedHound.preparing,
+        'reduced motion keeps the chosen held stance',
+    );
+    stage.setState({ ...entity, hp: 0, presentationStance: 'attack' });
+    assert.equal(el.dataset.pose, 'defeated');
+    assert.equal(el.dataset.stance, undefined);
+    stage.dispose();
 });
