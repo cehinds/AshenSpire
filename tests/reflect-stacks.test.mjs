@@ -260,7 +260,8 @@ test('a solo player preview binds its detached attacker, so level-keyed Precisio
     Object.assign(enemy, { baseEvasionBonus: 0, reflectStacks: stacks || undefined });
     const liveChance = profileDamageReceipt(combat, combat.player, enemy, 20, carrier).hitChance;
     const view = previewDamageHits(combat, combat.player, enemy, 20, [], carrier, 2);
-    assert.equal(liveChance, 0.8, 'control: level-1 Core Reaver vs no bonus Evasion is an 80% hit under the #2436 formula (Evasion 8 + DEX + 2/stack), unclamped so a level-0 preview would differ');
+    // The 1-point Reaver (owner, 2026-11-28) brings one less Precision than the 80% example was worked at.
+    assert.equal(liveChance, 0.75, 'control: level-1 Core Reaver vs no bonus Evasion is a 75% hit under the #2436 formula (Evasion 8 + DEX + 2/stack), unclamped so a level-0 preview would differ');
     assert.equal(view.hitChance, liveChance, `${stacks} Reflect stack(s): preview chance == live receipt chance`);
   }
 });
@@ -330,7 +331,8 @@ test('per-root Counter forecast prices later contacts from the Poise-broken atta
   const fullProfile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { baseDamageMultiplier: 1, physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
   const legacy = withoutBatch2Rules(() => run(0, legacyGearProfile(fullProfile), 20));
   assert.equal(legacy.forecast.hp, legacy.liveHp, 'pre-batch-2 rules: forecast == live');
-  assert.equal(legacy.forecast.hp, 111, 'pre-batch-2 control forecast unchanged');
+  // 111 before the 1-point Reaver (owner, 2026-11-28); its lower starting attributes take 5 off the three returns.
+  assert.equal(legacy.forecast.hp, 106, 'pre-batch-2 control forecast');
   assert.ok(broken.liveHp < control.liveHp, 'the Poise break really removed the later-hit bonus');
 });
 
