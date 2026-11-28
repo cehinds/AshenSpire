@@ -126,104 +126,18 @@ export function digest(combat) {
     state: createHash('sha256').update(text).digest('hex').slice(0, 16), events: combat.eventLog.length, turn: combat.turn };
 }
 
-// Re-pinned 2026-10-31 after merging dev cf6417b4d9: the same fights on the dev tree
-// (no transaction caches) give these digests, so the rules moved, not the caches.
-// Core 2 accuracy: Precision = 1 + stat mix + stacks, Evasion = 8 + DEX + 2/stack moves the seeded hit rolls.
-// Re-pinned again 2026-10-31 on merging #2430 (enemy weaknesses) with #2436 (Core 2 accuracy): both change the
-// seeded fights, #2436 through the hit rolls and #2430 through the weakness damage stage (reaver rows only; turn unchanged).
-// Re-pinned 2026-11-01 on merging #2434 (roll log): it adds six roll-receipt log entries per fight and
-// itemised perception dcParts on the enemy's read; RNG counters, HP, turn and every other state field match dev.
-// Re-pinned 2026-11-01 for Precision swift decay (accuracy.precisionDecayPerTurn 1 -> 3): the PERF1/reaver fight's hit
-// chances change, so one log entry fewer (196 -> 195); log 1bb7a14785574ec3 -> c53a18793f401fb2, state 95f05cf25b2cb35a -> ff21e46141b6f702.
-// The 4242/reaver fight is unchanged.
-// Re-pinned 2026-11-01 for one weapon set per hand (equipSlots.csv sets 3 -> 1): the state hashes change only through the
-// loadout's shape (one cell per hand, not three). Log hashes, event counts, turns and RNG counters are identical, and the same
-// fights built with three-set hands (tests/withWeaponRack.mjs) reproduce the previous state hashes exactly.
-// Re-pinned 2026-11-01 for the per-stat Precision receipt lines (precisionParts only; events, turn and RNG unchanged).
-// Re-pinned 2026-11-01 for Core weapon arts (#2474): the Reaver's starter deck trades its class special for the
-// greatsword's Sundering Hew, so both reaver fights draw and play a different card (PERF1 195 -> 197 events; turns unchanged).
-// Re-pinned 2026-11-01 for Ward/Barrier as stacked statuses (SPEC 4.1a): the old numeric barrier pool is gone from
-// combat state and Barrier grants are stacks, so both reaver fights' state and log hashes move; event counts and turns are unchanged.
-// Combined (#2483 after #2474): Sundering Hew plus Barrier stacks; re-pinned from the merged run.
-// Re-pinned 2026-11-02 for enemy intent commitment (SPEC 4.6b, fix/EnemyIntentCommit). Each fight has two turns where a
-// Poise break took the Wandering Soldier's only SP: it used to show Slash/Warcry and then refuse it at act time
-// (enemyActorTurnStarted + enemyMoveUnavailable + enemyMoveEnded). The intent now drops to "no move" during the player's turn,
-// so the enemy turn logs one fewer event pair (event counts 197 -> 195 and 234 -> 232); turns and the RNG position are unchanged.
-// Verified by diffing the two event logs: those are the only differences.
-// Re-pinned 2026-11-03 for raw-hit damage previews (owner: intents and quotes show the hit before Block/Poise/Ward/Counter/Reflect/defensive
-// stance): the stored enemy intent previews (hitDamages/totalDamage) carry the raw hit. Verified by running the fight on the previous engine:
-// player and enemy HP, turn and every RNG counter are identical (PERF1: player 60, enemy 4903, turn 6); only the preview figures differ.
-// Re-pinned 2026-11-05 for the Reach cap (maxRange): the run's range policy snapshot gains "maxRange":"reach", so the state hashes move.
-// Event logs, counts, turns and RNG are identical; removing that one field from the state text reproduces the previous hashes exactly.
-// Re-pinned 2026-11-06 for the enemy-turn order (fix/CombatReachPacingOrder): each move an enemy plays now emits one
-// enemyStaminaSpent receipt for the SP it pays (PERF1 195 -> 198 events, 4242 232 -> 235; the receipt also carries the
-// SP the enemy is due to have left, which the mid-turn plan trim reads). Turns and RNG are unchanged.
-// Re-pinned 2026-11-07 for the foundation removal (cleanup 3i-B): combat state no longer carries the always-null `foundation` key.
-// Logs, event counts, turns and RNG are identical; putting `foundation: null` back at its old position reproduces the previous state hashes exactly.
-// Re-pinned 2026-11-07 for the skill-feat removal (cleanup P4b): combat state no longer carries the always-empty `skillFeats` list.
-// Logs, event counts, turns and RNG are identical; only the state hashes move.
-// Re-pinned 2026-11-08 for the enemy level budget (owner, 2026-11-07, SPEC 17): enemies are level 1-5 and carry 5 + level attribute
-// points with a floor of 1 and no STR/DEX/CON offset, so their pools, Evasion and Precision differ. PERF1 198 -> 201 events; 4242
-// keeps 235 events; turns are unchanged. The two plays of one seed still agree.
-// Re-pinned 2026-11-14 for the 11-card Core starter decks and 2 SP Ironbreaker / Rallying Roar (SPEC 5.1, owner 2026-11-14): the
-// Reaver draws and plays different cards, so both reaver logs move (PERF1 201 -> 218 events, 4242 235 -> 215; turns unchanged).
-// Verified the engine did not move: with the content files of 7b6ac01016 (the starter decks, card costs and generated catalog
-// from before that change) laid over this tree, the previous digests (171b2290e0e5728c/30419cc524dfe0b2 and
-// 3b5d5f1e6bff1a0b/17b2a175fd3bcb97) reproduce exactly. The new values are this test's own digest() on the shipped content.
-// Re-pinned 2026-11-14 for exact hits and intents (accuracy.hitRoll false, perception.roll false): no d20 is drawn for any attack and no
-// perception check is made, so the combatAvoidance and intent streams stay at their start and the logs lose their roll receipts.
-// Verified the engine only changed through those two keys: the same fights built with the keys absent (a fight saved before the ruling,
-// LEGACY_PINNED below, built through withLegacyDefaults) reproduce the previous digests exactly. The new values are this test's own digest().
-// Re-pinned 2026-11-14 for shown = dealt (W2-F): intents, card faces and reaction prompts carry the HP lost instead of the raw hit, so the stored
-// intentPreview payloads in the log (and the pending-reaction incomingHp fields) change, and an offensive stance no longer grants Precision while
-// accuracy.hitRoll is false. Verified on the previous engine (1f0a16daee): with the roll keys absent (the LEGACY_PINNED fights) player and enemy HP, turn,
-// every RNG counter, the event types, the damage sequence and the whole log with the display keys (intentPreview, incomingHp, hitDamages, totalDamage,
-// projectedDamage, hpLossBounds) removed are identical, so only the preview figures moved. The shipped fights lose exactly the Precision stance-entry
-// receipts (PERF1 216 -> 195 events, 4242 211 -> 193): player and enemy HP, turn, RNG counters and the damage sequence are identical.
-// 2026-11-14 (#2754): damageDealt events gained `hpRemoved` (the HP a hit actually took, for the no-overkill floater). With that one field
-// removed from the three emit sites in src/engine/actions.js all four digests and the cleanup baseline reproduce their previous values exactly,
-// so only the event payload moved; HP, turns, RNG counters and event counts are unchanged.
-// Re-pinned 2026-11-14 for Ward as a Poise effect (W25-B): the fight's rules snapshot gains ward.poisePerStack 5, so only the state hashes move. Logs, event
-// counts, turns and RNG are identical, and removing that one field from the state text reproduces all four previous state hashes exactly
-// (the legacy fights' were bfab34c0ca8fef2d / aec32fc07e375e4d, the shipped fights' bea7224313f1fa40 / bde8c04ced638abb).
-// Re-pinned 2026-11-14 for the Broken rule (poise.breakRule "broken", batch 1): a Poise break cancels the enemy's next action instead of taking its SP, so
-// the shipped fights and the roll-legacy fights below lose the two Slash/Warcry pairs the SP loss refused (legacy-roll fights 218 -> 216 and 215 -> 214 events; shipped
-// fights 195 -> 193 and 193 -> 188; turns unchanged). Verified: the fights built with `poise.breakRule` and `brokenDamageMultiplier` absent (a fight saved before the rule, STAGGERED_LEGACY
-// below, which keeps the Staggered stance) reproduce the previous legacy digests exactly, and the shipped fights built that way reproduce the previous shipped logs 68045e4bda0ffd02 / 714e5d0f2a83d7e3 (218/215 events, logs aa763c4b47aaef38 / 75301c4daabf3238,
-// states 1050e65e93b6c50b / 74dc222af3960b7b), so only the rule moved. The roll-legacy fights under the shipped Broken rule have their own pin.
-// Recaptured 2026-11-15 for batch 3's Core card content (school-matched status riders and cantrip statuses: Pommel Strike +Weak, Driving Thrust +Bleed,
-// Hammer Blow +Vulnerable, Whirlwind +Bleed, Hit and Run +Draw and others; 21 core cards in all, the Reaver's deck among them). The legacy-rules, roll-legacy
-// and pre-batch-2 fights moved too, because card content is not a rule key: all eight fights play the extra effects (+4 events each, +1 for the shipped 4242 fight) and no turn moves. Verified: with only those 21 cards' content reverted to the pre-batch-3 catalog (a scratch run over the old gameProfiles.js card rows),
-// all nine previous pins reproduce exactly, and every RNG counter of every fight is identical with and without the riders, so no rng stream moved.
+// Each pin is this test's own digest() of the fight on the shipped content; a pin moves only when rules or content move.
 /** Runs `build` with the shipped rules reading as a fight saved before the Broken rule (no `poise.breakRule`): it keeps the Staggered stance. */
 function withStaggeredRule(build) {
   const held = { breakRule: fixCoreMechanics.poise.breakRule, mult: fixCoreMechanics.poise.brokenDamageMultiplier };
   delete fixCoreMechanics.poise.breakRule; delete fixCoreMechanics.poise.brokenDamageMultiplier;
   try { return build(); } finally { fixCoreMechanics.poise.breakRule = held.breakRule; fixCoreMechanics.poise.brokenDamageMultiplier = held.mult; }
 }
-// Recaptured 2026-11-17 for theme A (base damage halved through the profile's effects module, player HP 30 + 5 x (CON + level), SP and MP at 3 points,
-// gear granting attribute points and Poise instead of AR and DR): these are profile content, not fight rule keys, so every fight below plays them and
-// every pin moved (logs, event counts and states); no turn moved. The layered relations still hold: the pre-W25-F, pre-no-caps, pre-batch-5,
-// pre-Evade-cards and pre-theme-B fights share one log per seed and differ only in state, as before.
-// Recaptured 2026-11-17 after the balance review tuned Core's pool thresholds, starter gear and tier HP.
-// Recaptured 2026-11-18 for the owner's balance ruling (player and enemy damage x0.7, Block gain x0.7, enemy HP 70%, spell Poise damage x2): profile content again,
-// so every pin moved by its log and state hashes (a few by one event); the turns did not.
-// Recaptured 2026-11-18 (second cut, owner's playtest): physicalDamageMultiplier 0.7 and blockGainMultiplier 0.49 are profile content too, so all pins moved by log
-// and state hashes (event counts and turns unchanged). Measured with this test's own digest(), not derived.
-// Recaptured 2026-11-18 on the merge of the physical cut with the ratings removal (STR, DEX and magic stat replace AR, DR and PR; the runtime hash moved): every
-// pin moved by log and state hashes (a few by event count); no turn moved. Measured with this test's own digest().
-// These legacy-policy lanes retain the exact preceding Dev profile; the current PINNED lanes below resolve the new default.
-// RNG counters, event types, event counts and turns are unchanged. The exact pre-tuning resolved profile
-// from 174714e7d8 still reproduces all 18 previous digests in this engine.
-// Re-pinned 2026-11-21 for the score-engine starter decks and card retunes (owner rulings A-F, branch worker/score-engine/templates):
-// the Reaver starter deck and the cards it plays changed (new Strike/Defend/weapon-art numbers, Defend Block 4), so every seeded fight
-// draws and plays different cards and 20 of the 36 pinned digests moved (events 218 -> 216 in the first lane, and so on). src/engine
-// combat code is unchanged on this branch (only data and scoring modules moved), the in-test controls (assertStatPolicyOnly, the
-// override-removal controls, the PRE_STAT and incoming-Smash cross-checks) still pass on the new values. The incoming-Smash golden
-// strings are the new SMASH_PARENT_PINNED state hashes. The values are this test's own digest().
+// Owner ruling 2026-11-28: saved profiles play every effects scale at 1 and Core stores 1:1 values, so every
+// lane below moved; the content before the ruling with the scales on reproduces the previous pins exactly.
 const LEGACY_PINNED = [
-  [['PERF1', 'reaver'], { log: '67da47d0ff9332e9', state: '8c72620abcea0291', events: 216, turn: 6 }],
-  [[4242, 'reaver'], { log: '87d3cc66dd3d091f', state: '24e6e62642326bbf', events: 217, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '1313391141c3ca3e', state: 'bb8a2b6b33a19104', events: 217, turn: 6 }],
+  [[4242, 'reaver'], { log: 'a391d85098bb38fa', state: '6624163d9158cbc0', events: 217, turn: 6 }],
 ];
 for (const [setup, expected] of LEGACY_PINNED) {
   test(`legacy-rules fight ${setup[0]}/${setup[1]} still reproduces the pre-ruling digest`, () => {
@@ -232,8 +146,8 @@ for (const [setup, expected] of LEGACY_PINNED) {
   });
 }
 const LEGACY_ROLL_BROKEN_PINNED = [
-  [['PERF1', 'reaver'], { log: 'aacad8e740d048eb', state: '69ebce7bf7d1f375', events: 216, turn: 6 }],
-  [[4242, 'reaver'], { log: 'c13caf38707a8c17', state: '9d62eb6b393cc74b', events: 217, turn: 6 }],
+  [['PERF1', 'reaver'], { log: 'ac0f88d89d95f308', state: '5245d6b3a91ea935', events: 216, turn: 6 }],
+  [[4242, 'reaver'], { log: '75c6fd6fb56d4012', state: '0473275ab3c3a1ae', events: 216, turn: 6 }],
 ];
 for (const [setup, expected] of LEGACY_ROLL_BROKEN_PINNED) {
   test(`roll-legacy fight ${setup[0]}/${setup[1]} under the Broken rule reproduces its digest`, () => {
@@ -243,8 +157,8 @@ for (const [setup, expected] of LEGACY_ROLL_BROKEN_PINNED) {
 // Batch 2 (stance benefits, element identities, PR from max(INT, WIS)): these are the shipped digests before it. A fight whose rules lack those three keys
 // (one created earlier) still reproduces them exactly, which is the proof that the new PINNED values below moved only through those rules.
 const PRE_BATCH2_PINNED = [
-  [['PERF1', 'reaver'], { log: '3f9282ae3fb76cd1', state: '0a79e15c362a8296', events: 193, turn: 6 }],
-  [[4242, 'reaver'], { log: 'fe5085cbfedd4172', state: '3295d2915054600c', events: 196, turn: 6 }],
+  [['PERF1', 'reaver'], { log: 'c8617e1ae127b9a2', state: 'ae97ae3a40f5fbc8', events: 193, turn: 6 }],
+  [[4242, 'reaver'], { log: '11d0e5df17d42044', state: '99b54120ac2f9831', events: 192, turn: 6 }],
 ];
 for (const [setup, expected] of PRE_BATCH2_PINNED) {
   test(`pre-batch-2 fight ${setup[0]}/${setup[1]} still reproduces the digest from before the Wave 2.5 rules`, () => {
@@ -254,8 +168,8 @@ for (const [setup, expected] of PRE_BATCH2_PINNED) {
 // W25-F (spell costs and elemental flux): these are the shipped digests before it. A fight whose rules lack `spellCosts` and `elementFlux` still reproduces them exactly,
 // which is the proof that the new PINNED values below moved only through those rules.
 const PRE_W25F_PINNED = [
-  [['PERF1', 'reaver'], { log: '911696bce225bba7', state: 'e575074e6d08ed01', events: 191, turn: 6 }],
-  [[4242, 'reaver'], { log: '8a90cb432c0c97b9', state: 'e972022a2101d257', events: 195, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '4210e7b7a80c0e99', state: 'bc08212e09fd7bf2', events: 192, turn: 6 }],
+  [[4242, 'reaver'], { log: '3e7cbed1ed799eb6', state: '9cbd0d998b791b5f', events: 195, turn: 6 }],
 ];
 for (const [setup, expected] of PRE_W25F_PINNED) {
   test(`pre-W25-F fight ${setup[0]}/${setup[1]} still reproduces the digest from before spell costs and flux`, () => {
@@ -270,8 +184,8 @@ for (const [setup, expected] of PRE_W25F_PINNED) {
 // rules snapshot. Verified: PRE_NO_CAPS_PINNED below (the previous shipped values) is reproduced exactly by the shipped rules with `statusCaps` and the Counter-stack keys removed, as are the legacy, roll-legacy,
 // pre-batch-2 and pre-W25-F fights (their helpers in tests/legacyHitRules.mjs remove them too).
 const PRE_NO_CAPS_PINNED = [
-  [['PERF1', 'reaver'], { log: '911696bce225bba7', state: 'ec53043cdfa93873', events: 191, turn: 6 }],
-  [[4242, 'reaver'], { log: '8a90cb432c0c97b9', state: 'da4dbb517e9843fa', events: 195, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '4210e7b7a80c0e99', state: '39b11233d3ca27ab', events: 192, turn: 6 }],
+  [[4242, 'reaver'], { log: '3e7cbed1ed799eb6', state: '561e930618244003', events: 195, turn: 6 }],
 ];
 for (const [setup, expected] of PRE_NO_CAPS_PINNED) {
   test(`pre-no-caps fight ${setup[0]}/${setup[1]} still reproduces the digest from before statusCaps`, () => {
@@ -282,8 +196,8 @@ for (const [setup, expected] of PRE_NO_CAPS_PINNED) {
 // keys (and keep the stance's hpReturnFraction), built through withoutCounterStackDefaults, reproduces PRE_BATCH5_PINNED (the values shipped after the no-caps rule) exactly, which proves the new PINNED
 // values below moved only through those rules: log, event counts and turns are identical (the Counter is never armed in these fights), only the state hashes move through the new keys in the fight's snapshot.
 const PRE_BATCH5_PINNED = [
-  [['PERF1', 'reaver'], { log: '911696bce225bba7', state: '48fb3d0c2f7effe7', events: 191, turn: 6 }],
-  [[4242, 'reaver'], { log: '8a90cb432c0c97b9', state: '5fe67d75a6558ece', events: 195, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '4210e7b7a80c0e99', state: '4b901e721a77dbb7', events: 192, turn: 6 }],
+  [[4242, 'reaver'], { log: '3e7cbed1ed799eb6', state: 'df49977a16f35ae2', events: 195, turn: 6 }],
 ];
 for (const [setup, expected] of PRE_BATCH5_PINNED) {
   test(`pre-batch-5 fight ${setup[0]}/${setup[1]} still reproduces the digest from before the Counter stack rule`, () => {
@@ -293,8 +207,8 @@ for (const [setup, expected] of PRE_BATCH5_PINNED) {
 // Recaptured 2026-11-15 for W25-EvadeCards (Quickstep joins `counter.stacksByCard`): log, event counts and turns are identical, only the state hashes move, through the new key in the fight's rules
 // snapshot. Verified: a fight built through withoutQuickstepCounterStacks reproduces PRE_EVADECARDS_PINNED (the values shipped before) exactly.
 const PRE_EVADECARDS_PINNED = [
-  [['PERF1', 'reaver'], { log: '911696bce225bba7', state: '0c7901d04748b8d9', events: 191, turn: 6 }],
-  [[4242, 'reaver'], { log: '8a90cb432c0c97b9', state: '7f9864db4bff3bf8', events: 195, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '4210e7b7a80c0e99', state: '5ada31b6f1df3fb4', events: 192, turn: 6 }],
+  [[4242, 'reaver'], { log: '3e7cbed1ed799eb6', state: '44b22877b7408468', events: 195, turn: 6 }],
 ];
 for (const [setup, expected] of PRE_EVADECARDS_PINNED) {
   test(`pre-Evade-cards fight ${setup[0]}/${setup[1]} still reproduces the digest from before Quickstep's Counter stack`, () => {
@@ -305,8 +219,8 @@ for (const [setup, expected] of PRE_EVADECARDS_PINNED) {
 // a fight built through withoutThemeBRules reproduces PRE_THEME_B_PINNED (the values shipped before) exactly. PERF1's log moves (an Idle target takes x1.25, same
 // event count and turn); 4242's log is identical and only its state hash moves, through the new keys in the fight's rules snapshot.
 const PRE_THEME_B_PINNED = [
-  [['PERF1', 'reaver'], { log: '911696bce225bba7', state: '15584821f2ae29ea', events: 191, turn: 6 }],
-  [[4242, 'reaver'], { log: '8a90cb432c0c97b9', state: '005eced03ee344d8', events: 195, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '4210e7b7a80c0e99', state: 'e0d50afb45a48181', events: 192, turn: 6 }],
+  [[4242, 'reaver'], { log: '3e7cbed1ed799eb6', state: 'b6ddd39d6158ec1c', events: 195, turn: 6 }],
 ];
 for (const [setup, expected] of PRE_THEME_B_PINNED) {
   test(`pre-theme-B fight ${setup[0]}/${setup[1]} still reproduces the digest from before the 2026-11-17 status and stance rules`, () => {
@@ -324,12 +238,12 @@ for (const [setup, expected] of PRE_THEME_B_PINNED) {
 // and PRE_STAT_PINNED still prove logs, RNG and every non-Poise field are unchanged.
 // Recaptured 2026-11-24 for Ward as a health buffer (fixCoreMechanics.ward: hpPerStack 5, routing "hpBuffer"): only the state hashes of the current/stat/Smash pins moved; every log, event count, turn, RNG counter, and all 16 legacy pins are unchanged.
 const PRE_STAT_PINNED = [
-  { log: '72f173c08a17d9ae', state: '44e71f51b274b675', events: 205, turn: 6 },
-  { log: '32ede5df457c6309', state: '2adf48d895f8f44d', events: 217, turn: 6 },
+  { log: '68cf1adf9990aeb4', state: 'e370309728f74bd8', events: 206, turn: 6 },
+  { log: '75d969a68dc95611', state: '55ff4d68b1734dbd', events: 224, turn: 6 },
 ];
 const PINNED = [
-  [['PERF1', 'reaver'], { log: '72f173c08a17d9ae', state: 'ee31bf2123fb5bd7', events: 205, turn: 6 }],
-  [[4242, 'reaver'], { log: '32ede5df457c6309', state: 'c7d0124ab9e0713d', events: 217, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '68cf1adf9990aeb4', state: '6cf6853480b85df9', events: 206, turn: 6 }],
+  [[4242, 'reaver'], { log: '75d969a68dc95611', state: 'f0ed0c49bfc48a69', events: 224, turn: 6 }],
 ];
 function assertStatPolicyOnly(current, previous) {
   assert.deepEqual(current.eventLog, previous.eventLog, 'stat metadata changes no log payload');
@@ -357,11 +271,11 @@ for (const [index, [setup, expected]] of PINNED.entries()) {
 }
 
 // New Smash pins are additional controls; every historical array and pre-Smash pin above stays intact.
-// PERF1 adds only the saved Defend multiplier. Seed4242 has one Smash into Defend: HP7 ->9 and Poise4 ->5.
+// PERF1 adds only the saved Defend multiplier. Seed4242 has one Smash into Defend: HP 25 -> 30, Poise 5 -> 5.
 // That hit's HP/Poise receipts and subsequent HP snapshots change; event counts, turns and all RNG counters do not.
 const SMASH_PINNED = [
-  [['PERF1', 'reaver'], { log: '72f173c08a17d9ae', state: 'a64d822b2582969a', events: 205, turn: 6 }, 'c67e6243ead534a4'],
-  [[4242, 'reaver'], { log: '0436771adacf8d08', state: 'eabca0bd44978f7c', events: 217, turn: 6 }, 'eac1bbe186ab2213'],
+  [['PERF1', 'reaver'], { log: '68cf1adf9990aeb4', state: '13377afc992154bc', events: 206, turn: 6 }, 'a8a7d26d207ba994'],
+  [[4242, 'reaver'], { log: 'fdf934402c9ab224', state: 'eca16a5a508a8876', events: 224, turn: 6 }, '78e4521340e8cf4d'],
 ];
 for (const [index, [setup, expected, incomingState]] of SMASH_PINNED.entries()) {
   test(`pre-Retreat pre-gear Smash fight ${setup[0]}/${setup[1]} matches genuine Dev and preserves pre-ruling controls`, () => {
@@ -378,7 +292,7 @@ for (const [index, [setup, expected, incomingState]] of SMASH_PINNED.entries()) 
     assert.deepEqual(current.rng.getCounters(), prior.rng.getCounters());
     const changedHits = current.eventLog.flatMap((event, i) => event.type === 'damageDealt' && event.hpLoss !== prior.eventLog[i].hpLoss
       ? [[prior.eventLog[i].hpLoss, event.hpLoss, prior.eventLog[i].poiseDamage, event.poiseDamage]] : []);
-    assert.deepEqual(changedHits, index === 0 ? [] : [[7, 9, 4, 5]], 'only the documented Defend Smash hit changes HP and Poise');
+    assert.deepEqual(changedHits, index === 0 ? [] : [[25, 30, 5, 5]], 'only the documented Defend Smash hit changes HP and Poise');
     if (index === 0) {
       const restored = JSON.parse(JSON.stringify(stateData(current), replacer));
       delete restored.fixCoreRules.smashVsDefensive.defendDamageMultiplier;
@@ -390,8 +304,8 @@ for (const [index, [setup, expected, incomingState]] of SMASH_PINNED.entries()) 
 // Incoming Dev's exact current-Smash goldens use its preceding Gear stat policy, before type effects.
 // This is a derived control from the genuine archived parent, never a rewrite of that archive.
 const SMASH_PARENT_PINNED = [
-  [['PERF1', 'reaver'], { log: '72f173c08a17d9ae', state: 'c67e6243ead534a4', events: 205, turn: 6 }],
-  [[4242, 'reaver'], { log: '0436771adacf8d08', state: 'eac1bbe186ab2213', events: 217, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '68cf1adf9990aeb4', state: 'a8a7d26d207ba994', events: 206, turn: 6 }],
+  [[4242, 'reaver'], { log: 'fdf934402c9ab224', state: '78e4521340e8cf4d', events: 224, turn: 6 }],
 ];
 for (const [setup, expected] of SMASH_PARENT_PINNED) {
   test(`derived Gear-parent pre-type fight ${setup[0]}/${setup[1]} preserves incoming Smash goldens`, () => {
