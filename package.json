@@ -44,6 +44,8 @@
     "code:format": "npm --prefix tools/code-quality run format",
     "format:changed": "node tools/code-quality/format-changed.mjs --write",
     "format:changed:check": "node tools/code-quality/format-changed.mjs --check",
+    "code:smells": "node tools/code-quality/smells.mjs",
+    "code:smells:strict": "node tools/code-quality/smells.mjs --strict",
     "art:fetch": "node tools/fetch-art.mjs --pack light,common",
     "receipts": "node tools/receipts.mjs --check"
   }

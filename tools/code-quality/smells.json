@@ -21,7 +21,7 @@
     "formatExclude": [
         "src/"
     ],
-    "$formatExcludeNote": "Prefixes format-changed skips: tools/bundle.mjs cannot parse split export lists.",
+    "$formatExcludeNote": "Skipped by format-changed: tools/bundle.mjs cannot parse split exports.",
     "allowedNumbers": [
         0,
         1,
@@ -31,13 +31,13 @@
     ],
     "$allowedNumbersNote": "Numeric literals that never count as magic numbers.",
     "minDuplicateTokens": 60,
-    "$minDuplicateTokensNote": "Shortest normalized token run, statement-aligned, reported as duplicated.",
+    "$minDuplicateTokensNote": "Shortest repeated run of normalized tokens, in whole statements.",
     "maxFunctionLines": 40,
     "$maxFunctionLinesNote": "Longest function, in source lines from its first to its last line.",
     "maxNesting": 3,
     "$maxNestingNote": "Deepest block nesting (if, loop, switch, try) inside one function.",
     "minRepeatedStrings": 2,
-    "$minRepeatedStringsNote": "Times one string literal must appear in function bodies of a file to count as repeated.",
+    "$minRepeatedStringsNote": "Uses of one string in a file's functions that count as repeated.",
     "testPathPrefixes": [
         "tests/"
     ],

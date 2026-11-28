@@ -18,12 +18,13 @@ const UNTRACKED_FLAGS = [
 const ANY_DEPTH = '**';
 const ANY_NAME = '*';
 const HEAD_REF = 'HEAD';
+const TEXT_ENCODING = 'utf8';
 
 export const RepoRoot = fileURLToPath(new URL('../..', import.meta.url));
 
 function readToolJson(name)
 {
-    return JSON.parse(readFileSync(new URL(name, import.meta.url), 'utf8'));
+    return JSON.parse(readFileSync(new URL(name, import.meta.url), TEXT_ENCODING));
 }
 
 function escapeRegExp(text)
@@ -41,7 +42,7 @@ function globToRegExp(pattern)
 
 function gitLines(root, flags)
 {
-    const output = execFileSync('git', flags, { cwd: root, encoding: 'utf8' });
+    const output = execFileSync('git', flags, { cwd: root, encoding: TEXT_ENCODING });
     return output.split('\n').map(line => line.trim()).filter(Boolean);
 }
 
