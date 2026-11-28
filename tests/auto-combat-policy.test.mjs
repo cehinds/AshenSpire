@@ -13,9 +13,10 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch, cardChoicePlan } from '../src/engine/combat.js';
 import { AutoCardChoice } from '../src/model/cardChoices.js';
 
-test('policy defaults are off, ×1.25, offense, 550 ms animation and a half-second delay', () => {
-  assert.deepEqual(resolveCombatAutomation(), { enabled: false, speed: 1.25, preference: 'offense', autoSpeed: 1.5, animationMs: 550, enemyAttackMs: 750, enemyFloaterIntervalMs: 750, delayMs: 500 });
-  assert.equal(resolveCombatAutomation({ combatSpeed: NaN }).speed, 1.25);
+test('policy defaults are off, the JSON speed, offense, 550 ms animation and a half-second delay', () => {
+  const defaultSpeed = policy.AUTOMATION_DEFAULTS.combatSpeed;
+  assert.deepEqual(resolveCombatAutomation(), { enabled: false, speed: defaultSpeed, preference: 'offense', autoSpeed: 1.5, animationMs: 550, enemyAttackMs: 750, enemyFloaterIntervalMs: 750, delayMs: 500 });
+  assert.equal(resolveCombatAutomation({ combatSpeed: NaN }).speed, defaultSpeed);
   assert.equal(resolveCombatAutomation({ combatSpeed: 999 }).speed, 8);
 });
 const matchups = { attack: ['evade'], evade: ['smash'], smash: ['defend'], defend: ['attack'] };

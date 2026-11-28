@@ -7250,11 +7250,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'the quick utilities default to one consistent compact card on every device');
     eq(presentation.showLabels, false,
       'visible words yield to the larger universal icons while accessible names remain');
-    const model = hudQuickSettingsModel({ place: 'combat', presentation, settings: {} });
+    // Music is switched on here so the enabled state is checked whatever the shipped default is.
+    const model = hudQuickSettingsModel({ place: 'combat', presentation, settings: { musicEnabled: true } });
     eq(model.children.length, 2, 'the shared component owns exactly Fullscreen and Music');
     const html = hudQuickSettingsHtml(model);
     assert(/aria-label="Enter fullscreen"/.test(html), 'Fullscreen keeps an accessible label');
-    assert(/aria-label="Turn music (on|off)"/.test(html), 'Music keeps an accessible stateful label');
+    assert(/aria-label="Turn music off"/.test(html), 'Music keeps an accessible stateful label');
     // THE KIT SWEEP (2026-09-04): the two controls are kit IconButtons, the
     // same box as Armoury, the menu and every door's close — one class, one
     // size, one inset — so the compact-card tokens the old renderer inlined
@@ -7280,8 +7281,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'disabled Music names the available action and exposes its inactive state');
     assert(!/class="[^"]*\bon\b/.test(offControl.button), 'disabled Music drops the visible active class');
 
-    const audibleMusic = musicQuickSettingsPlan({});
-    eq(audibleMusic.active, true, 'Music is enabled by default');
+    eq(musicQuickSettingsPlan({}).active, REG.balance.ui.audio.musicEnabled, 'Music starts at the balanceUi.json default');
+    const audibleMusic = musicQuickSettingsPlan({ musicEnabled: true });
+    eq(audibleMusic.active, true, 'enabled Music is active');
     eq(audibleMusic.change.musicEnabled, false, 'the active quick control disables Music alone');
     const musicMuted = musicQuickSettingsPlan({ muteMusic: true });
     eq(musicMuted.active, false, 'the quick control migrates an explicit legacy Music mute');

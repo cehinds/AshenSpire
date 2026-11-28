@@ -105,6 +105,7 @@ const baselineTierA = readFixture('config-migration-baseline-tier-a.json');
 // No dashes in player text (2026-11-17, chore/EventCopy): uiContent re-points only the leaves whose em dash
 // became a colon or full stop (the three ACT titles and the two actTitle probes, the two fight blurbs, the
 // staggered and committed tooltips); tooltipHelp re-points messages.playerPoise the same way. No recapture.
+// Owner's defaults (2026-11-27): TITLE_ENTRANCE_TIMING.holdDefault "2s" -> "1s" in StartupGateModels.js. Only that leaf.
 
 /** Every path at which `want` and `got` differ, as readable lines. */
 function differences(want, got, path = '') {

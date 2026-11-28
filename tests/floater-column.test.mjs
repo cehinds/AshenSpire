@@ -7,12 +7,20 @@ import { readFileSync } from 'node:fs';
 import { floatNum, callout, clearCallouts, floaterLanesFit, setAnimSpeed } from '../src/ui/fx.js';
 import { floaterLifeMs, floaterStaggerMs, setCombatPacing } from '../src/ui/animationPace.js';
 import { FLOATER_STACK } from '../src/ui/floaterStack.js';
+import { AUTOMATION_DEFAULTS } from '../src/model/autoCombatPolicy.js';
 import { flushMeasureJobs } from '../src/ui/frameMeasure.js';
 import { withKitDom } from './helpers/dom.mjs';
 import { setFloaterPolicyEnabled } from '../src/ui/models/FloaterPolicyModel.js';
 setFloaterPolicyEnabled(false); // this file tests the floater mechanics for every kind; the allowlist is tests/floater-policy.test.mjs
 
 const GAP = FLOATER_STACK.floaterLineGapPx;
+const DEFAULT_SPEED = AUTOMATION_DEFAULTS.combatSpeed;
+const STAGGER_MS = FLOATER_STACK.floaterStaggerMs;
+// The floater life at the shipped default speed, read once before any test changes the pacing.
+setCombatPacing({ combatSpeed: DEFAULT_SPEED });
+const DEFAULT_LIFE_MS = floaterLifeMs();
+setCombatPacing();
+const staggerFor = (life) => Math.max(1, Math.round(STAGGER_MS * life / DEFAULT_LIFE_MS));
 // A layer and anchors with fixed boxes; every element measures 40 x 20. `spawns` records each floater as it joins the layer.
 function scene(document, { combat = false } = {}) {
   const create = document.createElement.bind(document);
@@ -48,7 +56,7 @@ const setup = (t, fn) => {
 
 test('floaters over one combatant spawn one stagger apart, in order, never two at once', (t) => setup(t, ({ fx, a, spawns }) => {
   const stagger = floaterStaggerMs();
-  assert.equal(stagger, 938, 'the stagger at Combat speed x1 (750 ms at the shipped default x1.25)');
+  assert.equal(stagger, staggerFor(floaterLifeMs()), 'the stagger at Combat speed x1 scales from the shipped default');
   const nodes = [['-11', 'heal'], ['+5', 'blk'], ['+2', 'heal'], ['BURN', 'heal']].map(([text, cls]) => floatNum(fx, a, text, cls));
   assert.deepEqual(spawns.map((s) => s.node.textContent), ['-11'], 'only the first is in the layer yet');
   advance(t, stagger * 3);
@@ -119,26 +127,26 @@ test('Reduced motion: still sequenced and stacked (the CSS makes it fade only, w
 }));
 
 test('stagger scales with the Combat speed the way the lifetime does, and shortens on Instant', (t) => setup(t, ({ fx, a, spawns }) => {
-  const ratio = (life) => life / 1920; // the life at the default x1.25 speed
-  assert.equal(floaterStaggerMs(), Math.round(750 * ratio(floaterLifeMs())));
-  setCombatPacing({ combatSpeed: 1.25 });
-  assert.equal(floaterStaggerMs(), 750, 'the owner\'s 750 ms at the shipped default speed');
+  assert.equal(floaterStaggerMs(), staggerFor(floaterLifeMs()));
+  setCombatPacing({ combatSpeed: DEFAULT_SPEED });
+  assert.equal(floaterStaggerMs(), STAGGER_MS, 'the owner\'s 750 ms at the shipped default speed');
   setCombatPacing({ combatSpeed: 1 });
   setCombatPacing({ combatSpeed: 2 });
   assert.equal(floaterLifeMs(), 1200);
-  assert.equal(floaterStaggerMs(), 469, 'half the life, half the stagger');
+  assert.equal(floaterStaggerMs(), staggerFor(1200), 'half the life, half the stagger');
   setCombatPacing({ combatSpeed: 8 });
   assert.equal(floaterLifeMs(), 400, 'the life floors at 400 ms');
-  assert.equal(floaterStaggerMs(), Math.round(750 * 400 / 1920), 'and the stagger floors with it');
+  assert.equal(floaterStaggerMs(), staggerFor(400), 'and the stagger floors with it');
   setCombatPacing({ combatSpeed: 1 });
   setAnimSpeed('instant');
   assert.equal(floaterLifeMs(), 480);
-  assert.equal(floaterStaggerMs(), Math.round(750 * 480 / 1920));
+  assert.equal(floaterStaggerMs(), staggerFor(480));
   setAnimSpeed('normal');
   setCombatPacing({ combatSpeed: 2 });
   floatNum(fx, a, '-1', 'heal'); floatNum(fx, a, '-2', 'heal');
-  advance(t, 469);
-  assert.deepEqual(spawns.map((s) => s.at), [0, 469]);
+  const halfStagger = staggerFor(1200);
+  advance(t, halfStagger);
+  assert.deepEqual(spawns.map((s) => s.at), [0, halfStagger]);
 }));
 
 test('words and numbers share one column and one clock', (t) => setup(t, ({ fx, a, spawns }) => {

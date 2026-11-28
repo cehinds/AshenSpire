@@ -5,9 +5,11 @@ import assert from 'node:assert/strict';
 import { settingsRows, resetKeys, commitNumberRow } from '../src/ui/screens/settings.js';
 import { profileKeys } from '../src/model/settingsSync.js';
 import { actionPacing, setAnimSpeed, setCombatPacing } from '../src/ui/animationPace.js';
-import { ACTION_PACING } from '../src/model/autoCombatPolicy.js';
+import { ACTION_PACING, AUTOMATION_DEFAULTS } from '../src/model/autoCombatPolicy.js';
 
 const row = key => settingsRows().find(r => r.key === key);
+const DEFAULT_SPEED = AUTOMATION_DEFAULTS.combatSpeed;
+const assertNear = (actual, expected, message) => assert.ok(Math.abs(actual - expected) < 1e-9, `${message || ''} ${actual} vs ${expected}`);
 
 test('Pause between steps defaults to 0.5 s and ranges 0 to 2 s', () => {
   const gap = row('combatStepPause');
@@ -19,7 +21,7 @@ test('Auto combat speed defaults to ×1.5 and ranges ×1 to ×3, beside the manu
   const auto = row('autoCombatSpeed');
   assert.deepEqual([auto.def, auto.min, auto.max, auto.type], [1.5, 1, 3, 'number']);
   assert.match(auto.label, /Auto combat speed/);
-  assert.equal(row('combatSpeed').def, 1.25, 'the manual multiplier defaults to ×1.25 (owner 2026-10-26)');
+  assert.equal(row('combatSpeed').def, DEFAULT_SPEED, 'the manual multiplier default comes from actionPacing.json');
 });
 
 test('both rows persist and export with the settings profile', () => {
@@ -34,7 +36,7 @@ test('saved values reach the pacing, and a cleared value falls back to the defau
   setCombatPacing({ autoCombat: true, autoCombatSpeed: undefined, combatStepPause: undefined });
   assert.ok(Math.abs(actionPacing().gapMs - 500 / 1.5) < 1e-9);
   setCombatPacing({});
-  assert.equal(actionPacing().gapMs, 500 / 1.25, 'the default 500 ms at the ×1.25 manual default');
+  assertNear(actionPacing().gapMs, 500 / DEFAULT_SPEED, 'the default 500 ms at the manual default speed');
   setCombatPacing();
 });
 
@@ -58,9 +60,9 @@ test('the shorter default preserves an explicitly saved pause and authored sprit
 
 test('a saved pre-D11 combatActionDelay (old Action delay) does not carry into the new pause', () => {
   setAnimSpeed('normal'); setCombatPacing({ combatActionDelay: 0 });
-  assert.equal(actionPacing().gapMs, 500 / 1.25);
+  assertNear(actionPacing().gapMs, 500 / DEFAULT_SPEED);
   setCombatPacing({ combatActionDelay: 5000 });
-  assert.equal(actionPacing().gapMs, 500 / 1.25);
+  assertNear(actionPacing().gapMs, 500 / DEFAULT_SPEED);
   setCombatPacing();
 });
 
@@ -143,11 +145,11 @@ test('enemy pacing is its own pair of settings, both 750 ms by default, and move
   setAnimSpeed('normal'); setCombatPacing();
   assert.equal(floaterStaggerMs(), 750);
   assert.equal(floaterStaggerMs({ enemy: true }), Math.round(750 * floaterShare), 'the enemies act on motion.enemyTurn: a shorter floater interval than the player\'s');
-  assert.equal(actionPacing({ enemy: true }).spriteSpeed.lungeMs, Math.round(actionPacing().spriteSpeed.lungeMs * clipShare), 'the same animation step, played at the enemy clip rate');
+  assert.equal(Math.round(actionPacing({ enemy: true }).spriteSpeed.lungeMs), Math.round(actionPacing().spriteSpeed.lungeMs * clipShare), 'the same animation step, played at the enemy clip rate');
   setCombatPacing({ enemyAttackMs: 1500, enemyFloaterIntervalMs: 375 });
   assert.equal(floaterStaggerMs({ enemy: true }), Math.round(375 * floaterShare));
   assert.equal(floaterStaggerMs(), 750, 'the player interval is untouched');
-  assert.equal(actionPacing({ enemy: true }).spriteSpeed.lungeMs, Math.round(2 * actionPacing().spriteSpeed.lungeMs * clipShare));
+  assert.equal(Math.round(actionPacing({ enemy: true }).spriteSpeed.lungeMs), Math.round(2 * actionPacing().spriteSpeed.lungeMs * clipShare));
   setCombatPacing({ enemyAttackMs: 1, enemyFloaterIntervalMs: 99999 });
   assert.equal(actionPacing({ enemy: true }).spriteSpeed.lungeMs > 0, true);
   assert.equal(floaterStaggerMs({ enemy: true }), Math.round(3000 * floaterShare), 'the setting is bounded to 3000 ms before the enemy turn pacing scales it');
@@ -157,8 +159,8 @@ test('enemy pacing is its own pair of settings, both 750 ms by default, and move
 test('the enemies\' turn runs on its own, shorter stage gaps; the player\'s plays keep the pinned stages', () => {
   setAnimSpeed('normal'); setCombatPacing();
   const turn = ACTION_PACING.enemyTurn, player = actionPacing(), enemy = actionPacing({ enemy: true });
-  assert.equal(player.gapMs, ACTION_PACING.stageGapMs * 0.8, 'the player stage gap is unchanged (500 ms at the default speed 1.25)');
-  assert.equal(enemy.gapMs, turn.stageGapMs * 0.8, 'the enemy stage gap is motion.enemyTurn.stageGapMs at the same speed');
+  assertNear(player.gapMs, ACTION_PACING.stageGapMs / DEFAULT_SPEED, 'the player stage gap is the JSON gap at the default speed');
+  assertNear(enemy.gapMs, turn.stageGapMs / DEFAULT_SPEED, 'the enemy stage gap is motion.enemyTurn.stageGapMs at the same speed');
   assert.ok(enemy.gapMs < player.gapMs && enemy.bannerMs < player.bannerMs && enemy.telegraphMs > 0 && player.telegraphMs === 0);
   setCombatPacing({ combatStepPause: 1000 });
   assert.equal(actionPacing({ enemy: true }).gapMs, 2 * enemy.gapMs, 'the Pause between steps row still scales the enemy gap');

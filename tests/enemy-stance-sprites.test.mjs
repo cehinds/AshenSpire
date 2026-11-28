@@ -12,7 +12,11 @@ import { concealIntent } from '../src/model/combatIntentVisibility.js';
 import { enemyExpansionSprite } from '../src/ui/enemyExpansionStage.js';
 import { stageFor } from '../src/ui/services/PoseAnimator.js';
 import { installMockRaf, tickFrames } from './helpers/mock-raf.mjs';
+import { frameHoldMs } from '../src/ui/animationPace.js';
 import { ApplyCombatBeat } from '../src/ui/models/CombatPlaybackModel.js';
+
+const ATTACK_CLIP_FRAMES = 4;
+const FRAME_TICK_MARGIN_MS = 20;
 
 // Exercise the extracted paced reducer directly, without mounting screen DOM.
 const applyMoveBeat = (event, disp, combat, registries) => ApplyCombatBeat(disp, [event], {
@@ -112,7 +116,8 @@ test('planned stance persists through status changes and reactions, then follows
   t.mock.timers.tick(200);
   assert.equal(el.dataset.pose, enemyStanceSprites.stitchedHound.defend);
   stage.play('attack', 260);
-  tickFrames(t, 520); // 4 frames at the 125 ms frame hold (89 ms before the 550 ms default Animation step, 2026-11-06)
+  // The attack clip's frames at the shipped default frame hold, plus one tick of slack.
+  tickFrames(t, ATTACK_CLIP_FRAMES * frameHoldMs() + FRAME_TICK_MARGIN_MS);
   assert.equal(el.dataset.pose, enemyStanceSprites.stitchedHound.defend);
   stage.setState({ ...entity, presentationStance: 'preparing' });
   assert.equal(el.dataset.pose, enemyStanceSprites.stitchedHound.preparing);
