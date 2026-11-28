@@ -19,8 +19,17 @@ const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0',
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const melee = { combatProfile: { camp: 'physical', maneuver: 'attack', range: 'melee' } };
 const draws = combat => combat.rng.getCounters().combatAvoidance || 0;
+function rewardRun(classId, seed = 511)
+{
+  return createRunState({
+    registries: reg,
+    classId,
+    seed,
+    profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } },
+  });
+}
 function live(seed = 511) {
-  const run = createRunState({ registries: reg, classId: 'reaver', seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  const run = rewardRun('reaver', seed);
   const combat = createRunCombat({ registries: reg, run, rng: createRng(seed), enemyIds: ['wanderingSoldier'] });
   const target = combat.enemies[0];
   Object.assign(target, { hp: 500, maxHp: 500, block: 0, statuses: {} });
@@ -121,13 +130,15 @@ test('Precision is gone from new card effects and Guiding Whisper offers useful 
     assert.ok(!/Precision/.test(def.textTemplate), id);
   }
   assert.ok(reg.cards.has('core.guidingWhisper'), 'the stable card ID still resolves');
-  const { run } = live();
-  run.attributes.wisdom = 10;
-  run.attributes.intelligence = 1;
-  const pool = gameProfileRewardPools(reg, run).combatCards;
-  assert.ok(pool.includes('core.guidingWhisper'), 'the redesigned Divine support card is offered');
-  assert.ok(!pool.includes('base.evade'));
-  assert.ok(pool.includes('core.evade'));
+  // rewards.json classPools lists Guiding Whisper for the Herald and Evade for the Rogue.
+  const herald = rewardRun('herald');
+  herald.attributes.wisdom = 10;
+  herald.attributes.intelligence = 1;
+  const heraldPool = gameProfileRewardPools(reg, herald).combatCards;
+  assert.ok(heraldPool.includes('core.guidingWhisper'), 'the redesigned Divine support card is offered');
+  const roguePool = gameProfileRewardPools(reg, rewardRun('rogue')).combatCards;
+  assert.ok(!roguePool.includes('base.evade'));
+  assert.ok(roguePool.includes('core.evade'));
 });
 
 test('legacy rules still roll the d20 (a fight saved before this ruling)', () => {
