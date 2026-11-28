@@ -121,6 +121,18 @@ test('the card door footer is just Skip and Continue; the confirmation answers A
     document.querySelector('.confirmation-cancel').click();
   });
 });
+test('Continue opens a confirmation modal with both answers, not an inline section', async () => {
+  await withDom(async () => {
+    const { app } = mount();
+    review(app);
+    const modal = document.querySelector('.confirmation-modal');
+    assert.ok(modal, 'Continue opens the confirmation modal');
+    assert.ok(modal.querySelector('.confirmation-confirm'), 'Add to deck is in the modal');
+    assert.ok(modal.querySelector('.confirmation-alternate'), 'Send to library is in the modal');
+    assert.equal(app.querySelector('.reward-inline-confirm'), null, 'no inline confirm on the reward');
+    document.querySelector('.confirmation-cancel').click();
+  });
+});
 test('Add to deck claims straight into the deck once', async () => {
   await withDom(async () => {
     const { app, calls } = mount();
