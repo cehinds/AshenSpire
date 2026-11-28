@@ -5,11 +5,22 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { withModalDom } from './helpers/dom.mjs';
 import { mountCombatTools } from '../src/ui/components/combatTools.js';
-import { resolveGameProfile } from '../src/model/gameProfile.js';
+import {
+  resolveGameProfile,
+  applyGameProfileToContent,
+  bindGameProfileRegistries,
+} from '../src/model/gameProfile.js';
+import { contentBundle } from '../src/content/index.js';
+import { createRegistries } from '../src/model/registries.js';
+import { createRunState } from '../src/model/state.js';
+import { createRng } from '../src/engine/rng.js';
+import { createRunCombat } from '../src/engine/runCombat.js';
+import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { presentationConfig } from '../src/model/advancedConfig.js';
 import {
   FormationGridOptionEnabled,
   ReactionToggleEnabled,
+  ForgetHiddenReactionSwitch,
 } from '../src/model/combatToolOptions.js';
 
 const FIXTURE = JSON.parse(readFileSync(
@@ -107,3 +118,40 @@ test('combat.css keeps the overlay off while the grid option reads off', () =>
   const css = readFileSync(new URL('../styles/combat.css', import.meta.url), 'utf8');
   assert.match(css, OVERLAY_GATE);
 });
+
+const RESUME_SEED = 511;
+const RESUME_CLASS = 'reaver';
+const RESUME_ENEMY = 'fellWarden';
+const CORE_SPEC = FIXTURE.toolsOnProfile;
+
+function resumedReactionSwitch(playerToggle)
+{
+  const profile = resolveGameProfile({
+    ...CORE_SPEC,
+    modules: { reactions: { playerToggle } },
+  });
+  const content = applyGameProfileToContent(contentBundle, profile);
+  const registries = bindGameProfileRegistries(createRegistries(content), profile);
+  const run = createRunState({ registries, classId: RESUME_CLASS, seed: RESUME_SEED });
+  const combat = createRunCombat({
+    registries,
+    run,
+    rng: createRng(RESUME_SEED),
+    enemyIds: [RESUME_ENEMY],
+  });
+  combat.player.reactionsEnabled = false;
+  const snapshot = JSON.parse(JSON.stringify(serializeCombatSnapshot(combat)));
+  const restored = restoreCombatSnapshot({ registries, rng: createRng(RESUME_SEED), snapshot });
+  ForgetHiddenReactionSwitch(restored);
+  return restored.player.reactionsEnabled;
+}
+
+for (const entry of FIXTURE.resumedReactionsOff)
+{
+  test(entry.name, () =>
+  {
+    const stored = resumedReactionSwitch(entry.playerToggle);
+    assert.equal(stored ?? null, entry.expect.reactionsEnabled);
+    assert.equal(stored !== false, entry.expect.toolsEnabled, 'reactions read as on');
+  });
+}

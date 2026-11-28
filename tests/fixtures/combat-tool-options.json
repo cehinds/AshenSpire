@@ -1,5 +1,5 @@
 {
-  "$note": "Combat tools row per profile: which optional controls mount and whether the overlay gate reads off. savedGridPreference is the stored showFormationGrid value. toolsOnProfile is Core with both controls back, for browser checks that need the Grid overlay or the Reaction switch.",
+  "$note": "Combat tools row per profile: which optional controls mount and whether the overlay gate reads off. savedGridPreference is the stored showFormationGrid value. toolsOnProfile is Core with both controls back, for browser checks that need the Grid overlay or the Reaction switch. resumedReactionsOff: a fight resumed with player.reactionsEnabled=false under each playerToggle value.",
   "settingKey": "gameConfig.presentation.showFormationGrid",
   "toolsOnProfile": {
     "formatVersion": 1,
@@ -58,6 +58,24 @@
         "auto": true,
         "log": true,
         "gridOption": "on"
+      }
+    }
+  ],
+  "resumedReactionsOff": [
+    {
+      "name": "a saved Reaction switch off resumes at the default while Core hides the switch",
+      "playerToggle": false,
+      "expect": {
+        "reactionsEnabled": null,
+        "toolsEnabled": true
+      }
+    },
+    {
+      "name": "a saved Reaction switch off still holds while the profile shows the switch",
+      "playerToggle": true,
+      "expect": {
+        "reactionsEnabled": false,
+        "toolsEnabled": false
       }
     }
   ]

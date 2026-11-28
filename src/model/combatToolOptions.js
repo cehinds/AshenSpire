@@ -32,3 +32,19 @@ export function ReactionToggleEnabled(subject)
 {
   return optionOn(subject, REACTIONS_MODULE, PLAYER_TOGGLE_SETTING);
 }
+
+/**
+ * A resumed fight plays with reactions at their default while its profile hides the Reaction
+ * switch: a stored "off" would otherwise hold for the rest of the fight with no way to undo it.
+ */
+export function ForgetHiddenReactionSwitch(combat)
+{
+  if (ReactionToggleEnabled(combat))
+  {
+    return;
+  }
+  if (combat?.player)
+  {
+    delete combat.player.reactionsEnabled;
+  }
+}
