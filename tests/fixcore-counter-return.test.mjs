@@ -69,7 +69,7 @@ test('without advantage (Sweep) the same 8 damage returns the base 4, Poise 0, a
   assert.deepEqual(counterReturn(combat, 0, true), { hp: 0, poise: 0, block: 0 });
 });
 
-test('live: the Counter adds 2 Block before the hit, then returns 13 damage and 6 Poise damage (9 stacks)', () => {
+test('live: the Counter adds 2 Block before the hit, then returns 12 damage and 6 Poise damage (9 stacks)', () => {
   const { enemy, events } = exchange();
   const gained = events.find(e => e.type === 'blockGained' && e.source === 'counter');
   assert.equal(gained.amount, 2); assert.equal(gained.total, 7);
@@ -77,8 +77,9 @@ test('live: the Counter adds 2 Block before the hit, then returns 13 damage and 
   assert.equal(taken.amount, 7); assert.equal(taken.blocked, 7);
   const returned = events.filter(e => e.type === 'damageDealt' && e.targetId === enemy.id);
   // The enemy's Poise absorbs a quarter of the 6 (SPEC §17 Poise); the return itself skips the chain's own stance multiplier.
-  // Re-pin (SPEC §17, stacks rule): played behind 9 Block = 9 stacks, so 4 base + floor(0.9 x 8) + 2 advantage = 13, Poise floor(0.5 x 13) = 6.
-  assert.equal(returned.reduce((sum, e) => sum + e.hpLoss + e.poiseAbsorbed, 0), 13);
+  // Re-pin (SPEC §17, stacks rule): played behind 9 Block = 9 stacks, so 3 base (the card's damage with the Reaver's
+  // 1 Strength, owner 2026-11-28) + floor(0.9 x 8) + 2 advantage = 12, Poise floor(0.5 x 12) = 6.
+  assert.equal(returned.reduce((sum, e) => sum + e.hpLoss + e.poiseAbsorbed, 0), 12);
   const poise = events.find(e => e.type === 'persistentPoiseChanged' && e.targetId === enemy.id && e.source === 'poiseDamage' && e.cardId === 'core.counter');
   assert.equal(poise.spent, 6);
 });
@@ -87,11 +88,11 @@ import { previewCard } from '../src/engine/combat.js';
 test('the Counter card preview names the same return the live exchange deals (no attack-rating mismatch)', () => {
   const { combat, enemy } = live();
   const damage = previewCard(combat, 'cx1', enemy.id).values.find(row => row.op === 'damage');
-  // Preview against the revealed 8-damage Attack. Re-pin (SPEC §17, stacks rule): 13 return damage (4 + floor(0.9 x 8) + 2), less the enemy's Poise share.
+  // Preview against the revealed 8-damage Attack. Re-pin (SPEC §17, stacks rule): 12 return damage (3 + floor(0.9 x 8) + 2), less the enemy's Poise share.
   const receipt = damage.damageReceipt.hits[0];
-  assert.equal(receipt.incoming, 13, 'the card previews base 4 + floor(9 stacks x 0.1 x 8) + floor(0.25 x 8)');
+  assert.equal(receipt.incoming, 12, 'the card previews base 3 + floor(9 stacks x 0.1 x 8) + floor(0.25 x 8)');
   const protectedLoss = damage.damageReceipt.hits.reduce((sum, hit) => sum + (hit.hpLoss ?? hit.hp ?? 0), 0);
-  assert.equal(damage.totalDamage, 13, 'the face token reads the return');
+  assert.equal(damage.totalDamage, 12, 'the face token reads the return');
   const { events } = exchange();
   const live6 = events.filter(e => e.type === 'damageDealt' && e.cardId === 'core.counter');
   assert.equal(live6.reduce((sum, e) => sum + e.hpLoss, 0), protectedLoss);
@@ -143,7 +144,7 @@ test('own-turn reaction and ordinary card previews preserve authored SP without 
   assert.equal(previewCard(combat, strike.instanceId).costShift, undefined);
 });
 
-test('Core: the Counter returns even when damage gets through (no Poise: 8 into 7 Block leaves 1, return still 13)', () => {
+test('Core: the Counter returns even when damage gets through (no Poise: 8 into 7 Block leaves 1, return still 12)', () => {
   const { combat, enemy } = live();
   dispatch(combat, { type: 'playCard', cardInstanceId: 'cx1' });
   Object.assign(combat.player, { block: 5, persistentPoise: { value: 0, max: 0 } });
@@ -154,7 +155,7 @@ test('Core: the Counter returns even when damage gets through (no Poise: 8 into 
   const taken = events.find(e => e.type === 'damageDealt' && e.targetId === 'player');
   assert.equal(taken.blocked, 7); assert.equal(taken.hpLoss, 1);
   const returned = events.filter(e => e.type === 'damageDealt' && e.cardId === 'core.counter');
-  assert.equal(returned.reduce((sum, e) => sum + e.hpLoss + e.poiseAbsorbed, 0), 13); // stacks rule: 4 + 7 + 2
+  assert.equal(returned.reduce((sum, e) => sum + e.hpLoss + e.poiseAbsorbed, 0), 12); // stacks rule: 3 + 7 + 2
 });
 
 import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
@@ -261,10 +262,10 @@ test('a per-hit Counter preview covers the current contact, while saved whole-ro
 test('the Counter preview carries the return\'s Poise damage and the Block it adds (8-damage attack, 9 stacks: Poise 6, Block +2)', () => {
   const { combat, enemy } = live();
   const damage = previewCard(combat, 'cx1', enemy.id).values.find(row => row.op === 'damage');
-  // Re-pin (SPEC §17, stacks rule): 4 + floor(0.9 x 8) + 2 = 13, Poise floor(0.5 x 13) = 6.
+  // Re-pin (SPEC §17, stacks rule): 3 + floor(0.9 x 8) + 2 = 12, Poise floor(0.5 x 12) = 6.
   assert.equal(damage.counterReturn.poise, 6);
   assert.equal(damage.counterReturn.block, 2);
-  assert.equal(damage.counterReturn.hp, 13);
+  assert.equal(damage.counterReturn.hp, 12);
 });
 
 import { cardDetailHtml } from '../src/ui/components/card.js';
@@ -307,19 +308,19 @@ test('Core card and health Counter copy share the configured percentage without 
   } finally { mechanics.counter.stackFraction = held; }
 });
 
-test('the Counter face token reads the return (13), not the post-protection HP loss', () => {
+test('the Counter face token reads the return (12), not the post-protection HP loss', () => {
   const { combat, enemy } = live();
   const row = previewCard(combat, 'cx1', enemy.id).values.find(v => v.op === 'damage');
-  assert.equal(row.value, 13); assert.equal(row.totalDamage, 13); assert.deepEqual(row.hitDamages, [13]); // stacks rule re-pin
+  assert.equal(row.value, 12); assert.equal(row.totalDamage, 12); assert.deepEqual(row.hitDamages, [12]); // stacks rule re-pin
 });
 
-test('the Counter preview answers a covered Attack (13) but not an uncovered area Sweep (wyrmLord tailSweep)', () => {
+test('the Counter preview answers a covered Attack (12) but not an uncovered area Sweep (wyrmLord tailSweep)', () => {
   const sweep = live('wyrmLord');
   assert.equal(sweep.enemy.intent.moveId, 'tailSweep');
   const row = previewCard(sweep.combat, 'cx1', sweep.enemy.id).values.find(v => v.op === 'damage');
   assert.equal(row.counterReturn, undefined, 'no return previewed for an uncovered hit');
   const soldier = live();
-  assert.equal(previewCard(soldier.combat, 'cx1', soldier.enemy.id).values.find(v => v.op === 'damage').counterReturn.hp, 13); // stacks rule re-pin
+  assert.equal(previewCard(soldier.combat, 'cx1', soldier.enemy.id).values.find(v => v.op === 'damage').counterReturn.hp, 12); // stacks rule re-pin
 });
 
 test('multi-hit preview starts from the player after the Counter\'s own Block, so Poise breaks when live play breaks it', () => {
@@ -451,7 +452,10 @@ test('the Counter\'s pre-hit Block honors the Unbreakable cap (29 Block, cap 30,
 
 test('Counter preview grants capped Block like live: Unbreakable at 29/30 previews +1, not +2', () => {
   let { combat, enemy } = live();
-  Object.assign(combat.player, { block: 20, statuses: { unbreakable: { stacks: 1 } }, persistentPoise: { value: 20, max: 20 } }); // the card's own 9 Block brings it to 29
+  // Start the preview one short of the cap once the card's own Block lands (8 with the 1-point Reaver).
+  const UNBREAKABLE_CAP = 30;
+  const ownBlock = previewCard(combat, 'cx1', enemy.id).values.find(row => row.op === 'block').value;
+  Object.assign(combat.player, { block: UNBREAKABLE_CAP - 1 - ownBlock, statuses: { unbreakable: { stacks: 1 } }, persistentPoise: { value: 20, max: 20 } });
   const damage = previewCard(combat, 'cx1', enemy.id).values.find(row => row.op === 'damage');
   const fresh = live(); combat = fresh.combat;
   dispatch(combat, { type: 'playCard', cardInstanceId: 'cx1' });
@@ -556,7 +560,7 @@ test('a support-only Core Counter vs a hidden intent keeps the authored payload;
   assert.match(hidden.text, /Poise/, hidden.text);
   const covered = supportFace('wanderingSoldier');
   assert.ok(covered.view.counterReturn?.poise > 0 && !covered.view.counterReturn.uncovered);
-  assert.match(covered.text, /Counter 11/, covered.text); // stacks rule re-pin: 12 Block = 12 stacks (no cap): floor(1.2 x 8) + 2
+  assert.match(covered.text, /Counter 10/, covered.text); // stacks rule re-pin: 11 Block = 11 stacks (no cap): floor(1.1 x 8) + 2
   assert.doesNotMatch(covered.text, /Poise/, 'computed automatic reply stays in Counter inspection');
 });
 
@@ -576,7 +580,7 @@ test('a Counter already returned this owner cycle previews no return, and live a
   dispatch(combat, { type: 'endTurn' });
   assert.equal(combat.eventLog.slice(start).filter(e => e.type === 'damageDealt' && e.cardId === 'core.counter').length, 0, 'live returns nothing');
   const fresh = live();
-  assert.equal(previewCard(fresh.combat, 'cx1', fresh.enemy.id).values.find(r => r.op === 'damage').counterReturn.hp, 13, 'control: an unspent Counter previews 13 (stacks rule re-pin)');
+  assert.equal(previewCard(fresh.combat, 'cx1', fresh.enemy.id).values.find(r => r.op === 'damage').counterReturn.hp, 12, 'control: an unspent Counter previews 12 (stacks rule re-pin)');
 });
 
 test('a Counter with several damage rows (rank-3 Guard Counter) previews the one computed return in one row, as live deals it', () => {
