@@ -49,6 +49,11 @@ export function uiHoldProblems(b, err, ctx) {
     } else if (typeof lh.ms !== 'number' || !Number.isFinite(lh.ms) || lh.ms <= 0) {
       err('balance.ui.titleLoadHold.ms', `must be a positive number of milliseconds — got ${JSON.stringify(lh.ms)}. `
         + `The title quick-load gesture needs a real hold boundary distinct from an ordinary tap.`);
+    } else if (typeof lh.trailingClickMs !== 'number' || !Number.isFinite(lh.trailingClickMs)
+      || lh.trailingClickMs <= 0)
+    {
+      err('balance.ui.titleLoadHold.trailingClickMs', 'must be a positive number of milliseconds — got '
+        + `${JSON.stringify(lh.trailingClickMs)}. Without it a phone's trailing click presses the map.`);
     }
   }
   // balance.ui.holdBeat — THE SAME FAILURE SHAPE AS holdConfirm, one control
