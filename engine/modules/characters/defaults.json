@@ -2,6 +2,7 @@
   "mode": "configured",
   "rounding": "down",
   "levelFrom": "levelProfile.min",
+  "enemyStartingBudget": 6,
   "statRules": {
     "hp": {
       "strength": 5,

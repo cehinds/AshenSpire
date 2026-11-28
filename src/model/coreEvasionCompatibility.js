@@ -221,6 +221,8 @@ const COMPATIBLE_HOST_RUNTIMES = new Set([
   'sha256:26b1b0c446b58265c9a7c6264f824e0455cef63f7ea8ee5f937aac06049ad85e',
   // breakBlock/breakPoise op fields merged onto the cost.manaOnly manifest move the host runtime.
   'sha256:86b335d2ec3ae5b290afd68343bf41686eb9e8f67e15a5eee6ec1f4b2420a21c',
+  // Per-tag attributeFloor and enemyStartingBudget (engine/kernel/gameConfig.js) move the host runtime.
+  'sha256:bcd52f05f1070ebba6fe36bf95b2073274ab37bd74d034a0d719f5d47f28f24d',
 ]);
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return COMPATIBLE_HOST_RUNTIMES.has(currentRuntime)

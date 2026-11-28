@@ -19,8 +19,9 @@ Shared: `id`, `name` (`_` for spaces), `tags`, `attributes` (points you set; kep
 Base rule = the sum of every tag's `tagRules` entry (pools HP/SP/MP and hand); the last tag that sets
 `deckSize`, `deckDefault` or `spRange` wins. Then:
 
-- attributes: every attribute starts at `attributeFill.floor` (1) or its authored points, if more; the rest of the
-  level budget (player starting budget 6 + `progression.attributePointsPerLevel` × (level − 1), so 5 + level; an authored
+- attributes: every attribute starts at the floor (a tag's `attributeFloor`, else `attributeFill.floor` (1)) or its
+  authored points, if more; the rest of the budget (a tag's `attributeBudget`, so a Core player has 1; an enemy has
+  `enemyStartingBudget` 6 + `progression.attributePointsPerLevel` × (level − 1), so 5 + level; an authored
   `attributePoints` wins) is filled by `attributePriority` × rank weights, capped per `attributeFill.caps` (none by default),
   with seeded `variance` for tags that allow it (`character.enemy`)
 - stats: `statRules` (HP = 10 + CON×10 + STR×5 + DEX×3 + WIS×2 + INT×1 + 5/level; SP/MP from the

@@ -393,14 +393,26 @@ export function enemyAttributeBudget(row, settings, level = enemyLevel(row, sett
   if (characterTags(row).some(tag => settings.tagRules?.[tag]?.attributeBudget)) {
     return characterRule(row, settings).attributeBudget[1];
   }
-  const player = settings.tagRules?.['character.player']?.attributeBudget;
-  if (!player) return characterRule(row, settings).attributeBudget[1];
+  const start = enemyStartingBudget(settings);
+  if (start === null) return characterRule(row, settings).attributeBudget[1];
   const perLevel = Number.isFinite(settings.attributePointsPerLevel) ? settings.attributePointsPerLevel : 1;
-  return player[1] + perLevel * (Math.max(1, level) - 1);
+  return start + perLevel * (Math.max(1, level) - 1);
 }
-// The lowest each own attribute may be: the larger of the configured floor and the authored points.
+// A level-1 enemy's budget: `enemyStartingBudget` when set, else the player's starting budget
+// (profiles saved before the player and enemy budgets were split).
+function enemyStartingBudget(settings)
+{
+  if (Number.isSafeInteger(settings.enemyStartingBudget)) return settings.enemyStartingBudget;
+  const player = settings.tagRules?.['character.player']?.attributeBudget;
+  return player
+    ? player[1]
+    : null;
+}
+// The lowest each own attribute may be: the larger of the floor (a tag's `attributeFloor`, else
+// `attributeFill.floor`) and the authored points.
 function enemyAttributeMinimums(row, settings) {
-  const floor = settings.attributeFill?.floor ?? 0;
+  const tagFloor = characterRule(row, settings).attributeFloor;
+  const floor = tagFloor ?? settings.attributeFill?.floor ?? 0;
   return Object.fromEntries(ENEMY_ATTRIBUTES.map(id => [id, Math.max(floor, row.attributes?.[id] || 0)]));
 }
 // Attribute caps: the fill's, then the tier's under enemyLevelScaling (owner, 2026-11-20: elite and boss Dex and Wis at most 4),
@@ -478,6 +490,7 @@ export function characterRule(row, settings) {
     rule.hand += r.hand || 0;
     for (const k of ['attributeBudget', 'deckSize', 'spRange', 'deckDefault']) if (r[k]) rule[k] = r[k];
     if (r.variance) rule.variance = true;
+    if (Number.isSafeInteger(r.attributeFloor)) rule.attributeFloor = r.attributeFloor;
   }
   return rule;
 }

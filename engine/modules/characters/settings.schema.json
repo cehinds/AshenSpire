@@ -65,6 +65,12 @@
       ],
       "additionalProperties": false
     },
+    "enemyStartingBudget": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 200,
+      "description": "A level-1 enemy's attribute budget, before attributePointsPerLevel per level (owner 2026-11-28: 6, apart from the player's 1). Absent: the player's starting budget."
+    },
     "attributeFill": {
       "type": "object",
       "properties": {
@@ -266,6 +272,12 @@
             "type": "integer",
             "minimum": -20,
             "maximum": 20
+          },
+          "attributeFloor": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 99,
+            "description": "The lowest own attribute a character with this tag starts at; replaces attributeFill.floor (Core players: 0, owner 2026-11-28)."
           },
           "attributeBudget": {
             "type": "array",
