@@ -15,9 +15,11 @@ export function runCardRemovalFlickTests() {
   let checks = 0;
   const check = (value, message) => { assert.ok(value, message); checks++; };
   const rules = contentBundle.balance.ui.touchFlick;
+  // The gesture checks below are drawn for a 64 px threshold, not for the shipped default.
+  const referenceSettings = { touchFlickDistance: 64 };
   const start = { x: 90, y: 700, time: 0 };
   const end = { x: 100, y: 630, time: 100 };
-  const verdict = (point = end, settings = {}) => flickVerdict(start, point, [start, end], settings, rules);
+  const verdict = (point = end, settings = referenceSettings) => flickVerdict(start, point, [start, end], settings, rules);
   check(verdict().qualifies, 'a short intentional upward flick qualifies');
   check(!verdict(end, { touchFlickPlay: false }).qualifies, 'disabled stays disabled');
   check(!verdict(end, { touchFlickDistance: 160 }).qualifies, 'live distance changes recognition');
@@ -26,8 +28,8 @@ export function runCardRemovalFlickTests() {
   check(!verdict({ x: 90, y: 730, time: 100 }).qualifies, 'downward release is not play');
   check(!verdict({ x: 180, y: 630, time: 100 }).qualifies, 'sideways hand movement is not play');
   check(!verdict({ ...end, time: 500 }).qualifies, 'pausing above threshold is not a flick');
-  check(!flickVerdict(start, { x: 90, y: 645, time: 110 }, [start, end], {}, rules).qualifies, 'reversing toward hand cancels');
-  check(flickPreferences({ touchFlickDistance: NaN }, rules).distance === 64, 'invalid settings fall back');
+  check(!flickVerdict(start, { x: 90, y: 645, time: 110 }, [start, end], referenceSettings, rules).qualifies, 'reversing toward hand cancels');
+  check(flickPreferences({ touchFlickDistance: NaN }, rules).distance === rules.distance.def, 'invalid settings fall back');
   check(flickPreferences({ touchFlickDistance: 999 }, rules).distance === 160, 'settings clamp to the upper bound');
   check(nearestFlickTarget([{ id: 'b', x: 0, y: 0 }, { id: 'a', x: 2, y: 0 }], { x: 1, y: 0 }).id === 'a', 'equidistant targets have a stable tie-break');
   check(nearestFlickTarget([], end) === null, 'no legal target returns none');

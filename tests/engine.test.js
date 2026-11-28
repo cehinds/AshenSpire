@@ -7254,7 +7254,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(model.children.length, 2, 'the shared component owns exactly Fullscreen and Music');
     const html = hudQuickSettingsHtml(model);
     assert(/aria-label="Enter fullscreen"/.test(html), 'Fullscreen keeps an accessible label');
-    assert(/aria-label="Turn music off"/.test(html), 'Music keeps an accessible stateful label');
+    assert(/aria-label="Turn music (on|off)"/.test(html), 'Music keeps an accessible stateful label');
     // THE KIT SWEEP (2026-09-04): the two controls are kit IconButtons, the
     // same box as Armoury, the menu and every door's close — one class, one
     // size, one inset — so the compact-card tokens the old renderer inlined

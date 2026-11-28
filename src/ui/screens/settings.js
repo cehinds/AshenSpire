@@ -683,9 +683,15 @@ export function resolveArmamentsPresentation(settings = {}) {
     ? settings.armamentsPresentation : 'radial';
 }
 
-export function resolveArmamentsPhonePlacement(settings = {}) {
-  return ['left', 'center', 'right'].includes(settings.armamentsPhonePlacement)
-    ? settings.armamentsPhonePlacement : 'left';
+const ARMAMENTS_PLACEMENT_KEY = 'armamentsPhonePlacement';
+
+export function resolveArmamentsPhonePlacement(settings = {})
+{
+  const placementRow = SETTINGS_ROWS.find((row) => row.key === ARMAMENTS_PLACEMENT_KEY);
+  const stored = settings[ARMAMENTS_PLACEMENT_KEY];
+  return placementRow.choices.includes(stored)
+    ? stored
+    : UI_DEFAULTS.armaments.phonePlacement;
 }
 
 function rowNote(settings, row) {
