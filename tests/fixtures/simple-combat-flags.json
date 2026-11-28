@@ -21,6 +21,11 @@
       "stances": {
         "sameStanceDiscount": false
       }
+    },
+    "authoredUpgrades": {
+      "progression": {
+        "upgradeMode": "authored"
+      }
     }
   },
   "stanceProbe": {
@@ -37,5 +42,8 @@
     },
     "baseSp": 2,
     "secondTurn": 2
+  },
+  "upgradeProbe": {
+    "choices": 3
   }
 }

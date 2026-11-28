@@ -99,6 +99,7 @@
       "settings": {
         "entitlementPolicy": "authored",
         "cardRanks": true,
+        "upgradeMode": "rolled",
         "characterLevels": true,
         "attributePointsPerLevel": 1,
         "classXpMultiplier": 1,

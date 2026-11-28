@@ -5,10 +5,15 @@ import { gameModule } from './gameProfile.js';
 
 const STAGGER_MODULE = 'stagger';
 const STANCES_MODULE = 'stances';
+const PROGRESSION_MODULE = 'progression';
 
 const POISE_SETTING = 'poise';
 const BUILT_IN_BENEFITS_SETTING = 'builtInBenefits';
 const SAME_STANCE_DISCOUNT_SETTING = 'sameStanceDiscount';
+const UPGRADE_MODE_SETTING = 'upgradeMode';
+
+export const UPGRADE_MODE_ROLLED = 'rolled';
+export const UPGRADE_MODE_AUTHORED = 'authored';
 
 function settingOf(subject, moduleId, settingId)
 {
@@ -40,4 +45,10 @@ export function StanceBenefitsEnabled(subject)
 export function SameStanceDiscountEnabled(subject)
 {
   return switchOn(subject, STANCES_MODULE, SAME_STANCE_DISCOUNT_SETTING);
+}
+
+/** Whether a card upgrade is only its hand-authored `upgrade` block (progression.upgradeMode). */
+export function AuthoredUpgradesOnly(subject)
+{
+  return settingOf(subject, PROGRESSION_MODULE, UPGRADE_MODE_SETTING) === UPGRADE_MODE_AUTHORED;
 }

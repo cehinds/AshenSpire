@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:ca6d41de3482ee390079426960f45911490c670dd48a37f0ffa04494baa5188d",
+      "hash": "sha256:4af70a2dfd1bfbd29c47e9712717aa4949d0d86c872dd287274b924c0860e8f3",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -364,7 +364,7 @@
           "path": "engine/modules/progression/defaults.json",
           "id": "progression",
           "version": "1.0.0",
-          "hash": "sha256:2a64ef7652726885ea0e1f1455c649133e5b384576129af3e08c8c908aafc8d1"
+          "hash": "sha256:5a5ae833dc208e5a88e28b87f53459d33b839bfd8a3a9a354f17a219d7b84f60"
         },
         {
           "path": "engine/modules/progression/module.json",
@@ -376,7 +376,7 @@
           "path": "engine/modules/progression/settings.schema.json",
           "id": "progression",
           "version": "1.0.0",
-          "hash": "sha256:5d4e45bb490f5eaae2192109327da777fbc46d704d0067986dc9f1165e2e36f3"
+          "hash": "sha256:3fd5b17ffc8a55adb61ac627cea33c5ab20137db78167bf6f81584bafb36aa76"
         },
         {
           "path": "engine/modules/reactions/defaults.json",
@@ -586,7 +586,7 @@
           "path": "games/ashenspire/bundles/core/bundle.json",
           "id": "ashen.core",
           "version": "2.0.0",
-          "hash": "sha256:90e9a0bdc571700b36bfaae90cdd37bd90909ffd201f0da1cbf972187d67b8a0"
+          "hash": "sha256:c5648d0933e2467c3b577ac4c2707b39dee34fa0be67d507d381e656f8614945"
         },
         {
           "path": "games/ashenspire/packs/base-cards/cards.json",
@@ -732,7 +732,7 @@
       "runtimeHash": "sha256:86b335d2ec3ae5b290afd68343bf41686eb9e8f67e15a5eee6ec1f4b2420a21c"
     },
     "core": {
-      "hash": "sha256:ca6d41de3482ee390079426960f45911490c670dd48a37f0ffa04494baa5188d",
+      "hash": "sha256:4af70a2dfd1bfbd29c47e9712717aa4949d0d86c872dd287274b924c0860e8f3",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -1094,7 +1094,7 @@
           "path": "engine/modules/progression/defaults.json",
           "id": "progression",
           "version": "1.0.0",
-          "hash": "sha256:2a64ef7652726885ea0e1f1455c649133e5b384576129af3e08c8c908aafc8d1"
+          "hash": "sha256:5a5ae833dc208e5a88e28b87f53459d33b839bfd8a3a9a354f17a219d7b84f60"
         },
         {
           "path": "engine/modules/progression/module.json",
@@ -1106,7 +1106,7 @@
           "path": "engine/modules/progression/settings.schema.json",
           "id": "progression",
           "version": "1.0.0",
-          "hash": "sha256:5d4e45bb490f5eaae2192109327da777fbc46d704d0067986dc9f1165e2e36f3"
+          "hash": "sha256:3fd5b17ffc8a55adb61ac627cea33c5ab20137db78167bf6f81584bafb36aa76"
         },
         {
           "path": "engine/modules/reactions/defaults.json",
@@ -1316,7 +1316,7 @@
           "path": "games/ashenspire/bundles/core/bundle.json",
           "id": "ashen.core",
           "version": "2.0.0",
-          "hash": "sha256:90e9a0bdc571700b36bfaae90cdd37bd90909ffd201f0da1cbf972187d67b8a0"
+          "hash": "sha256:c5648d0933e2467c3b577ac4c2707b39dee34fa0be67d507d381e656f8614945"
         },
         {
           "path": "games/ashenspire/packs/base-cards/cards.json",
