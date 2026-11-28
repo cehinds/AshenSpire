@@ -70,6 +70,10 @@ function isolateAttributeColours(world) {
   delete world.combat.fixCoreRules.elements;
   world.combat.stanceRules = { ...world.combat.stanceRules, offensiveRating: 0 };
 }
+// Owner ruling 2026-11-28: Cinder Dart stores 1:1 damage; its upgrade's damage rounds to the base 1.
+const CINDER_DART_DAMAGE = 1;
+const CINDER_DART_UPGRADED_DAMAGE = 1;
+const CINDER_DART_RANK3_DAMAGE = 3;
 const unitDamageProfile = (modules = {}) => Profile.resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {
   ...modules,
   effects: { spellTraditionsVersion: 1, physicalDamageMultiplier: 1, playerDamageMultiplier: 1 },
@@ -207,6 +211,8 @@ test('a genuine incoming Dev profile keeps its max(INT, WIS) face and live colou
   const hash = ownProfile.hash;
   const world = fight('starseer', { ownProfile, attributes: { intelligence: 8, wisdom: 2 } });
   assert.equal(world.combat.fixCoreRules.spellTraditionsVersion, undefined);
+  // Necrotic's cut and the stance advantage are combat-only; isolate them so only attributes colour the face.
+  isolateAttributeColours(world);
   const before = damageFace(world, 'blightTouch');
   assert.equal(before.value, before.baseline);
   assert.deepEqual(before.classes, ['black']);
@@ -242,8 +248,8 @@ test('current Sceptre damage enters the spell baseline once, while a triggered G
   assert.equal(world.combat.gameProfile.modules.effects.spellTraditionsVersion, 1);
   const calm = damageFace(world, 'core.cinderDart');
   const base = calm.preview.faceRules.faceDefinition;
-  assert.equal(base.effects[0].amount, 3, 'the selected card before combat Gear projection');
-  assert.equal(calm.preview.resolvedDefinition.effects[0].amount, 4, 'Sceptre adds exactly one base damage');
+  assert.equal(base.effects[0].amount, CINDER_DART_DAMAGE, 'the selected card before combat Gear projection');
+  assert.equal(calm.preview.resolvedDefinition.effects[0].amount, CINDER_DART_DAMAGE + 1, 'Sceptre adds exactly one base damage');
   assert.equal(calm.baseline, calm.value);
   assert.deepEqual(calm.classes, ['black']);
   assert.deepEqual(damageTints(cardFaceLines(calm.preview.resolvedDefinition, calm.preview, world.registries).find(row => row.kind === 'damage').html, calm.preview), ['black'], 'the renderer also accepts its already projected live definition');
@@ -257,7 +263,7 @@ test('current Sceptre damage enters the spell baseline once, while a triggered G
   lit.preview.faceRules.faceDefinition.effects[0].amount = 999;
   const card = world.combat.piles.hand.at(-1);
   const quote = previewCard(world.combat, card.instanceId, world.enemy.id);
-  assert.equal(quote.faceRules.faceDefinition.effects[0].amount, 3, 'baseline metadata is detached');
+  assert.equal(quote.faceRules.faceDefinition.effects[0].amount, CINDER_DART_DAMAGE, 'baseline metadata is detached');
   const expected = quote.values.find(row => row.op === 'damage').perTargetHitDamages[world.enemy.id].reduce((sum, amount) => sum + amount, 0);
   const before = world.enemy.hp;
   world.combat.player.energy = world.combat.player.stamina = world.combat.player.mana = 100;
@@ -267,13 +273,13 @@ test('current Sceptre damage enters the spell baseline once, while a triggered G
 
 test('the pre-Gear baseline preserves an upgraded copy, card rank and the selected effect variant', () => {
   const ownProfile = unitDamageProfile({ progression: { cardRanks: true } });
-  for (const [instance, amount] of [[{ upgraded: true }, 4], [{ rank: 3 }, 5]]) {
+  for (const [instance, amount] of [[{ upgraded: true }, CINDER_DART_UPGRADED_DAMAGE], [{ rank: 3 }, CINDER_DART_RANK3_DAMAGE]]) {
     const world = fight('starseer', { ownProfile });
     isolateAttributeColours(world);
     const face = damageFace(world, 'core.cinderDart', instance);
     const card = world.combat.piles.hand.at(-1);
     const projected = Profile.projectGameCard(world.combat, card);
-    assert.equal(projected.effects[0].amount, amount, 'the upgraded/ranked card differs from the raw registry');
+    assert.equal(projected.effects[0].amount, amount, 'the upgraded/ranked card reads its own stored damage');
     assert.deepEqual(face.preview.faceRules.faceDefinition.effects, projected.effects);
     assert.equal(face.preview.resolvedDefinition.effects[0].amount, amount + 1, 'Sceptre applies after upgrade/rank');
     assert.equal(face.value, face.baseline);
