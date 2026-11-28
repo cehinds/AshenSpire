@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { productionBundle } from './helpers/production-bundle.mjs';
+import { REACTION_CARRIER_IDS, REACTION_TAG } from './helpers/reaction-carriers.mjs';
 
 // Use main's real compiled import order: native ESM bindings hide this cycle.
 const require = productionBundle();
@@ -10,14 +11,29 @@ const { createCombat, dispatch } = require('src/engine/combat.js');
 const { createRng } = require('src/engine/rng.js');
 const { resolveCombatRatings } = require('src/model/combatRatings.js');
 const { reactionPaused } = require('src/engine/combatReactions.js');
-const { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } = require('src/model/gameProfile.js');
+const { applyGameProfileToContent, bindGameProfileRegistries } = require('src/model/gameProfile.js');
 const { createRunState } = require('src/model/state.js');
 const { createRunCombat } = require('src/engine/runCombat.js');
 const { previewCard, previewIntent } = require('src/engine/combat.js');
 const { CounterPreviewAgainst } = require('src/engine/combatCounterPreview.js');
+const { resolveGameAuthor, dataClone } = require('engine/kernel/gameConfig.js');
+const { gameProfileCatalog, gameProfileAuthors } = require('src/content/generated/gameProfiles.js');
+const CORE_CONTENT_PACK = 'ashen.core-content@2.0.0';
+
+// The bundle checks its own realm's plain objects, so the Reaction tag is added to a bundle-made
+// copy of the catalog (tests/fixtures/reaction-carriers.json; owner ruling 2026-11-28).
+function bundledCarrierProfile()
+{
+  const catalog = dataClone(gameProfileCatalog);
+  for (const card of catalog.packs[CORE_CONTENT_PACK].content.cards)
+  {
+    if (REACTION_CARRIER_IDS.includes(card.id)) card.tags.push(REACTION_TAG);
+  }
+  return resolveGameAuthor(gameProfileAuthors.core, catalog);
+}
 
 function coreCounterFixture({ cardStacks = false } = {}) {
-  const profile = resolveGameProfile('core');
+  const profile = bundledCarrierProfile();
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const run = createRunState({ registries, classId: 'reaver', seed: 511, runId: 'bundled-counter-preview' });
   const combat = createRunCombat({ registries, run, rng: createRng(run.seed), enemyIds: ['wanderingSoldier'] });
@@ -39,23 +55,24 @@ test('bundled Core Counter previews a revealed attack without mutating live stat
   const before = JSON.stringify({ player: combat.player, enemy, piles: combat.piles, rng: combat.rng.getCounters() });
   const view = previewCard(combat, 'bundled-core-counter', enemy.id);
   const returned = view.values.find(row => row.op === 'damage').counterReturn;
-  // The soldier's 8 is halved by the Core base-damage scale (effects.baseDamageMultiplier 0.5): 4 incoming.
-  // Owner, 2026-11-18: the enemy side scale (x0.7) takes that 4 to 3.
-  // The second 2026-11-18 cut (physical x0.7) takes it to 2.
+  // Owner ruling 2026-11-28: the soldier's stored 2 Slash lands as 2 and the card's 6 Block become
+  // 6 stacks: the stored base 1 + floor(0.6 x 2) = 2, Poise floor(0.5 x 2) = 1.
   assert.equal(returned.incoming, 2);
-  // Owner, 2026-11-18 (second cut): the 9 Block, scaled by blockGainMultiplier 0.49, become 4 stacks: the scaled base 2 + floor(0.4 x 2) = 2, Poise floor(0.5 x 2) = 1.
   assert.equal(returned.hp, 2);
   assert.equal(returned.poise, 1);
-  assert.equal(returned.block, 0, "the Counter Block grant is a share of the scaled 2-damage hit (floor(0.25 x 2) = 0) and takes no blockGainMultiplier");
+  // The Counter Block grant is a share of the 2-damage hit: floor(0.25 x 2) = 0.
+  assert.equal(returned.block, 0);
   assert.equal(JSON.stringify({ player: combat.player, enemy, piles: combat.piles, rng: combat.rng.getCounters() }), before);
 });
 
-test('bundled Core Counter under the card-stack rule previews 2 + floor(0.1 x 4 x 1 stack) and mutates nothing', () => {
+test('bundled Core Counter under the card-stack rule previews 1 + floor(0.1 x 2 x 1 stack) and mutates nothing', () => {
   const { combat, enemy } = coreCounterFixture({ cardStacks: true });
   const before = JSON.stringify({ player: combat.player, enemy, piles: combat.piles, rng: combat.rng.getCounters() });
   const returned = previewCard(combat, 'bundled-core-counter', enemy.id).values.find(row => row.op === 'damage').counterReturn;
-  assert.equal(returned.incoming, 2, 'the soldier\'s 8, halved by the Core base-damage scale, then the physical and enemy side x0.7 cuts');
-  assert.equal(returned.hp, 2, 'core.counter grants 1 stack: floor(4 x 0.1 x 1) = 0 on top of the scaled base 2');
+  // Owner ruling 2026-11-28: the stored 2 Slash lands as 2, and core.counter's 1 stack adds
+  // floor(2 x 0.1 x 1) = 0 to the stored base 1.
+  assert.equal(returned.incoming, 2);
+  assert.equal(returned.hp, 1);
   assert.equal(JSON.stringify({ player: combat.player, enemy, piles: combat.piles, rng: combat.rng.getCounters() }), before);
 });
 
