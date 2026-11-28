@@ -74,5 +74,16 @@ test('hits and area-to-single upgrades obey the same mechanical cap, and rounded
   const hit={...base,cost:2,staminaCost:2,upgradeMenu:['hits']};assert.ok(roll(hit,[],{cardRank:3,scoring:withCap(100)}).some(step=>step.k==='hits'));assert.equal(roll(hit,[],{cardRank:3,scoring:withCap(actual(hit)[0].amount)}).some(step=>step.k==='hits'),false);
   const area=authoredFor({...base,upgradeMenu:['targeting'],effects:[{op:'damage',target:'allEnemies',amount:1}]},16);
   assert.ok(roll(area,[],{cardRank:3,scoring:withCap(100)}).some(step=>step.k==='tag'&&step.retarget==='single'));assert.equal(roll(area,[],{cardRank:3,scoring:withCap(18)}).some(step=>step.k==='tag'&&step.retarget==='single'),false);
-  const rounded={...base,upgradeMenu:['targeting'],effects:[{op:'damage',target:'allEnemies',amount:8}]};assert.equal(actual(rounded)[0].amount,actual(applyUpgradeSteps(rounded,[{k:'tag',tag:'targeting:single',retarget:'single'}]))[0].amount);assert.equal(roll(rounded,[],{cardRank:3}).some(step=>step.k==='tag'&&step.retarget==='single'),false);
+  // The first authored area hit from 8 up whose area and single faces round to the same number.
+  const retarget=[{k:'tag',tag:'targeting:single',retarget:'single'}];
+  const areaCard=amount=>({...base,upgradeMenu:['targeting'],effects:[{op:'damage',target:'allEnemies',amount}]});
+  const roundsEqual=card=>actual(card)[0].amount===actual(applyUpgradeSteps(card,retarget))[0].amount;
+  const ROUNDING_SEARCH_START=8;
+  const ROUNDING_SEARCH_END=240;
+  let rounded=null;
+  for(let amount=ROUNDING_SEARCH_START;amount<=ROUNDING_SEARCH_END&&!rounded;amount++)
+  {
+    if(roundsEqual(areaCard(amount)))rounded=areaCard(amount);
+  }
+  assert.ok(rounded,'an area hit whose retarget rounds to the same face exists');assert.equal(actual(rounded)[0].amount,actual(applyUpgradeSteps(rounded,[{k:'tag',tag:'targeting:single',retarget:'single'}]))[0].amount);assert.equal(roll(rounded,[],{cardRank:3}).some(step=>step.k==='tag'&&step.retarget==='single'),false);
 });
