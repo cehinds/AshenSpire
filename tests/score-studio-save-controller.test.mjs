@@ -246,7 +246,7 @@ test('studio save: no file and no edits reads none; an edit reads Draft; '
   studio.cards = [qaCard];
   assert.equal(controller.status(), StudioSaveStatus.Draft);
   assert.equal(controller.describe().text, 'Draft');
-  assert.match(controller.describe().title, /content\/source\/studio\/cards\.json/);
+  assert.match(controller.describe().title, /games\/ashenspire\/packs\/core\/cards\.json/);
   const saved = await controller.save();
   assert.equal(saved.result, StudioSaveResult.Saved);
   const post = findPost(requests);
@@ -258,7 +258,6 @@ test('studio save: no file and no edits reads none; an edit reads Draft; '
   assert.deepEqual(Object.keys(body.files.cards), [
     'kind',
     'formatVersion',
-    'savedAt',
     'cards',
     'removedCardIds',
   ]);

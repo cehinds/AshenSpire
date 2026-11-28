@@ -36,14 +36,16 @@ export const StudioSaveFileNames = Object.freeze({
 });
 
 export const StudioSaveFiles = Object.freeze({
+  // Card changes are merged into the game's card file, which has no header of its own.
   [StudioSaveFileNames.Cards]: Object.freeze({
-    path: studioSavePath(StudioSaveFileNames.Cards),
+    path: StudioPackCardsPath,
     kind: StudioCardsKind,
     dataKeys: Object.freeze([
       'cards',
       'removedCardIds',
     ]),
-    stampsSavedAt: true,
+    stampsSavedAt: false,
+    savesToGame: true,
   }),
   [StudioSaveFileNames.ArtLayers]: Object.freeze({
     path: studioSavePath(StudioSaveFileNames.ArtLayers),
@@ -62,6 +64,11 @@ export const StudioSaveFiles = Object.freeze({
     stampsSavedAt: false,
   }),
 });
+
+/** The names of the files the Save keeps in StudioSaveDir, not in the game. */
+export const StudioSaveDirFileNames = Object.freeze(
+  Object.keys(StudioSaveFiles).filter((name) => !StudioSaveFiles[name].savesToGame),
+);
 
 function studioSavePath(fileName)
 {

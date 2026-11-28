@@ -67,7 +67,11 @@ import { FORM_FACTORS as HUD_FORM_FACTORS } from './hud-layout-tokens.mjs';
 import { manifestIds } from './art-source.mjs';
 import { holdForCli } from './lib/build-lock.mjs';
 import { RANGES as WEAPON_RANGES } from '../src/model/combatRanges.js';
-import { StudioSaveDir, StudioSaveFiles } from './score-studio/studioSaveFiles.js';
+import {
+  StudioSaveDir,
+  StudioSaveDirFileNames,
+  StudioSaveFiles,
+} from './score-studio/studioSaveFiles.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = join(ROOT, 'content', 'source');
@@ -91,7 +95,7 @@ const MUTATE = process.argv.includes('--mutate');
 const contentSourceFolder = 'source';
 const studioSaveFolder = basename(StudioSaveDir);
 const studioSaveFileNames = Object.freeze(
-  Object.values(StudioSaveFiles).map((spec) => basename(spec.path)),
+  StudioSaveDirFileNames.map((name) => basename(StudioSaveFiles[name].path)),
 );
 const studioSelftestFixture = Object.freeze({
   contentFolder: 'content-studio',
@@ -100,7 +104,9 @@ const studioSelftestFixture = Object.freeze({
   gameSourceName: 'ok',
   gameSourceCsv: 'a,b\n1,2\n',
   emptyJson: '{}\n',
+  // cards.json is the retired Studio cards file: card edits now go into the game pack.
   strayFiles: Object.freeze([
+    'cards.json',
     'extra.json',
     'cards.csv',
     'sub/cards.json',
