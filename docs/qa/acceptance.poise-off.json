@@ -1,0 +1,52 @@
+{
+  "request": "remove poise",
+  "viewports": [
+    { "name": "desktop", "width": 1280, "height": 800 },
+    { "name": "phone", "width": 390, "height": 844 }
+  ],
+  "scenes": [
+    {
+      "name": "combat",
+      "url": "?shot=combat&shotSeed=4",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [
+        { "wait": { "ms": 300 } }
+      ],
+      "success": [
+        { "kind": "visible", "label": "Enemy HP bar is on screen", "selector": ".combatant.enemy .as-meter[data-res=\"hp\"]" },
+        { "kind": "visible", "label": "Player HP bar is on screen", "selector": ".combatant.player .as-meter[data-res=\"hp\"]" },
+        { "kind": "count", "label": "No Poise bar in combat", "selector": ".combat .as-meter[data-res=\"poise\"]", "eq": 0 },
+        { "kind": "count", "label": "No Poise mark on an enemy intent", "selector": ".combat .intent-poise", "eq": 0 },
+        { "kind": "within", "label": "Player mini HUD stays inside the combat screen", "selector": ".combatant.player .target-hud-overhead-meters", "container": ".combat" },
+        { "kind": "noOverlap", "label": "Player HP bar and badge row do not overlap", "a": ".combatant.player .as-meter[data-res=\"hp\"] .m-track", "b": ".combatant.player .combat-health-badges" },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["navigator.vibrate", "status of 404"] }
+      ],
+      "failure": [
+        { "kind": "visible", "label": "Poise bar still shown on an enemy", "selector": ".combatant.enemy .as-meter[data-res=\"poise\"]" },
+        { "kind": "visible", "label": "Poise bar still shown on the player", "selector": ".combatant.player .as-meter[data-res=\"poise\"]" },
+        { "kind": "visible", "label": "Poise forecast still shown on an intent", "selector": ".combat .intent-poise" },
+        { "kind": "count", "label": "Hand is empty", "selector": ".hand .card", "eq": 0 }
+      ]
+    },
+    {
+      "name": "boss",
+      "url": "?shot=combat&shotSeed=4&shotEnemies=ashheartDragon",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [
+        { "wait": { "ms": 300 } }
+      ],
+      "success": [
+        { "kind": "visible", "label": "Boss HP bar is on screen", "selector": ".combatant.enemy .as-meter[data-res=\"hp\"]" },
+        { "kind": "count", "label": "No Poise bar in the boss fight", "selector": ".combat .as-meter[data-res=\"poise\"]", "eq": 0 },
+        { "kind": "within", "label": "Player mini HUD stays inside the combat screen", "selector": ".combatant.player .target-hud-overhead-meters", "container": ".combat" },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["navigator.vibrate", "status of 404"] }
+      ],
+      "failure": [
+        { "kind": "visible", "label": "Poise bar still shown on the boss", "selector": ".combatant.enemy .as-meter[data-res=\"poise\"]" },
+        { "kind": "visible", "label": "Poise forecast still shown on the boss intent", "selector": ".combat .intent-poise" }
+      ]
+    }
+  ]
+}
