@@ -109,6 +109,157 @@
     "sameStanceDiscount": {
       "type": "boolean",
       "description": "Every cut and bonus for playing into the stance already held: the same-stance SP and Mana cuts and effectiveness bonus (fixCoreMechanics.json stance), the Martial and Magic Adept cuts, the spell-chain Mana cut and the Counter reaction discount. false turns all of them off; matchup advantage stays. Absent or true is on."
+    },
+    "ruleset": {
+      "enum": [
+        "maneuvers",
+        "triangle"
+      ],
+      "description": "Which stance rules play. maneuvers (today) is the six maneuvers and their matchups; triangle is attack, defend, smash and skill under the triangle block. Absent is maneuvers."
+    },
+    "triangle": {
+      "type": "object",
+      "description": "The triangle ruleset, read only while ruleset is triangle. Attack beats smash, smash beats defend, defend beats attack; skill never wins or loses.",
+      "properties": {
+        "$note": {
+          "type": "object",
+          "description": "One short note per key.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "include": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "The triangle stances."
+        },
+        "beats": {
+          "type": "object",
+          "description": "Directed edges: the key beats every stance in its list.",
+          "additionalProperties": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "winnerMultiplier": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "The winner's damage or Block multiplier; the loser is unchanged."
+        },
+        "neutral": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Stances that never win or lose; not Idle."
+        },
+        "map": {
+          "type": "object",
+          "description": "Old maneuver id to triangle stance, or byEffect.",
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "noManeuver": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The stance, or byEffect, for a card with no maneuver."
+        },
+        "byEffect": {
+          "type": "object",
+          "description": "Rules read in order: the first whose op (effects) or key (enemy move field) the card has gives its stance; else the fallback.",
+          "properties": {
+            "rules": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "stance": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "ops": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "keys": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                },
+                "required": [
+                  "stance"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "fallback": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "rules",
+            "fallback"
+          ],
+          "additionalProperties": false
+        },
+        "overrides": {
+          "type": "object",
+          "description": "cardId to stance, for hand fixes.",
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "blockBonus": {
+          "type": "object",
+          "description": "When a defend card's Block takes winnerMultiplier.",
+          "properties": {
+            "mode": {
+              "enum": [
+                "anyEnemyIntent"
+              ]
+            }
+          },
+          "required": [
+            "mode"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "include",
+        "beats",
+        "winnerMultiplier",
+        "neutral",
+        "map",
+        "noManeuver",
+        "byEffect",
+        "overrides",
+        "blockBonus"
+      ],
+      "additionalProperties": false
     }
   },
   "required": [

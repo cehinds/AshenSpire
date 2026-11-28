@@ -31,6 +31,11 @@
       "enemies": {
         "turnActions": "single"
       }
+    },
+    "triangle": {
+      "stances": {
+        "ruleset": "triangle"
+      }
     }
   },
   "stanceProbe": {
@@ -76,5 +81,54 @@
       "stamina": 2,
       "mana": 0
     }
+  },
+  "triangleProbe": {
+    "$note": "Stance triangle (step 2a): ruleset readings, matchups, Block bonus and card stances.",
+    "rulesetCases": [
+      {
+        "$note": "No profile at all",
+        "subject": null,
+        "expected": "maneuvers"
+      },
+      {
+        "$note": "An old saved profile without the key",
+        "subject": {
+          "gameProfile": {
+            "modules": {
+              "stances": {
+                "mode": "configured"
+              }
+            }
+          }
+        },
+        "expected": "maneuvers"
+      },
+      {
+        "$note": "An unknown value",
+        "subject": {
+          "gameProfile": {
+            "modules": {
+              "stances": {
+                "ruleset": "other"
+              }
+            }
+          }
+        },
+        "expected": "maneuvers"
+      },
+      {
+        "$note": "Explicit triangle",
+        "subject": {
+          "gameProfile": {
+            "modules": {
+              "stances": {
+                "ruleset": "triangle"
+              }
+            }
+          }
+        },
+        "expected": "triangle"
+      }
+    ]
   }
 }
