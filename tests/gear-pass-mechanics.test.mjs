@@ -231,9 +231,10 @@ test('Resist takes 25% less damage of its element; Fire Vulnerable adds 5% per s
   const hot = hotReceipt.hpLoss;
   const coldHit = coldReceipt.damageReceipt.hits[0], hotHit = hotReceipt.damageReceipt.hits[0];
   assert.equal(hotHit.sources.find(source => source.id === 'element-vulnerable-fire').multiplier, 1.2, 'four stacks add exactly 20% before mitigation');
-  assert.deepEqual([coldHit.incoming, hotHit.incoming], [20, 24]);
+  // The 1-point Reaver (owner, 2026-11-28) brings no Wisdom or Intelligence to the spell: 19, and 19 x 1.2 floored.
+  assert.deepEqual([coldHit.incoming, hotHit.incoming], [19, 22]);
   assert.deepEqual([coldHit.poiseReduced, hotHit.poiseReduced], [0, 0]);
-  assert.deepEqual([coldHit.hpLoss, hotHit.hpLoss], [20, 24], 'the Fire increase reaches HP when both pools are empty');
+  assert.deepEqual([coldHit.hpLoss, hotHit.hpLoss], [19, 22], 'the Fire increase reaches HP when both pools are empty');
   assert.ok(hot > cold, 'four stacks of Fire Vulnerable raise a Fire hit');
 });
 
