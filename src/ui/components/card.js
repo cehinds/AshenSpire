@@ -37,7 +37,7 @@ import { cardArtFallbacks } from '../cardArtwork.js';
 import { markArtPlaceholder } from '../artFallback.js';
 import { registerCardArtRefresh } from '../cardArtStyle.js';
 import { assetUrl } from '../assetmap.js';
-import { t, UiFullText } from '../strings.js';
+import { UiShortText, UiFullText } from '../strings.js';
 import { loreLine } from './loreLine.js';
 import { buildChannel } from '../buildChannel.js';
 import { uiConfig } from '../../config/generated/ui.js';
@@ -55,6 +55,10 @@ import { roomyBudgetFor } from '../../model/cardFaceBudget.js';
 import { evadeGrantOnlyCard, CounterStacksForCard, FixCoreCounterStacks } from '../../model/fixCoreMechanics.js';
 import { wardReadsAsPoise, wardOffCardText } from '../../model/wardOffCardText.js';
 import { spellDefenseSplit } from '../../model/spellDefense.js';
+
+const WITHER_KEYWORD_STRING_ID = 'card.keyword.wither';
+// A chip whose tooltip is also printed inline under the chips.
+const EFFECT_CHIP = true;
 
 function isDevFixtureFlavor(text, prefixes)
 {
@@ -86,7 +90,7 @@ export function CardInspectorFlavor(flavor, channel = buildChannel())
 function metadataBand(rarity, owned) {
   const band = metadataFooter({ rarity, owned });
   const slot = (name, entry) => (entry
-    ? `<span data-meta-slot="${name}" data-meta-kind="${entry.kind}">${esc(entry.kind === 'owned' ? t('card.meta.owned', { count: entry.value }) : entry.value)}</span>`
+    ? `<span data-meta-slot="${name}" data-meta-kind="${entry.kind}">${esc(entry.kind === 'owned' ? UiShortText('card.meta.owned', { count: entry.value }) : entry.value)}</span>`
     : '');
   return `<div class="card-metadata" data-identity-part="metadata">${slot('start', band.start)}${slot('end', band.end)}</div>`;
 }
@@ -453,7 +457,7 @@ export function renderCard(registries, ref, opts = {}) {
       : fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences,wardPoise,registries,opts.rules ?? opts.preview?.faceRules ?? null);
     // Dynamic weapon poise fallback for authored-template cards when attacking.
     const weaponPoiseNote = !faceLines && opts.preview?.weaponPoise > 0 && !/Poise/i.test(authoredRules)
-      ? ` <span class="val">${esc(opts.preview.weaponPoise)}</span> <span class="st-bleed">${esc(t('combat.protection.poise'))}</span>.` : '';
+      ? ` <span class="val">${esc(opts.preview.weaponPoise)}</span> <span class="st-bleed">${esc(UiShortText('combat.protection.poise'))}</span>.` : '';
     // Authored faces append field-driven riders (Wither, rising cost); generated faces already include them.
     const riderRules = allFaceLines
       ? ''
@@ -997,7 +1001,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
       const bonuses = ['ar', 'pr', 'dr', 'ward'].map(id => [id, stanceRatingBonus(ctx, rated, id)]);
       const offense = bonuses.some(([id, amount]) => ['ar', 'pr'].includes(id) && amount > 0);
       const active = bonuses.filter(([, amount]) => amount > 0).map(([id, amount]) => '+' + amount + ' ' + (id === 'ward' ? 'Ward' : ChannelLabel(id)));
-      const grants = Object.entries(entry).filter(([, amount]) => amount > 0).map(([id, amount]) => '+' + (id === 'barrier' ? amount * BarrierPoisePerStack(ctx) : amount) + ' ' + ({ precision: t('card.tags.precision'), evade: 'Evade', block: 'Block', barrier: t('combat.protection.poise') })[id]);
+      const grants = Object.entries(entry).filter(([, amount]) => amount > 0).map(([id, amount]) => '+' + (id === 'barrier' ? amount * BarrierPoisePerStack(ctx) : amount) + ' ' + ({ precision: UiShortText('card.tags.precision'), evade: 'Evade', block: 'Block', barrier: UiShortText('combat.protection.poise') })[id]);
       html += '<div class="combat-rule-hint"><strong>Stance:</strong> ' + esc(active.join(', ')) + ' while active; does not stack.'
         + (grants.length ? ' On changing stance: ' + esc(grants.join(', ')) + '.' : '')
         + ' Repeating the same stance grants no entry bonuses and costs ' + esc(rules.sameStanceDiscount) + ' less Stamina.'
@@ -1012,17 +1016,17 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
     const coreCounter = inCore && armsAsCoreCounter(registries, def);
     const stackRules = inCore ? FixCoreCounterStacks({ combatExpansionVersion: 2, gameProfile: registries.gameProfile }) : null;
     const counterHelp = () => stackRules
-      ? t('card.counter.help.stacks', { stackPercent: Number((stackRules.returnPerStack * 100).toPrecision(15)), stacks: CounterStacksForCard(stackRules, def.id, !!def.upgraded) })
-      : t('card.counter.help.core', { stackPercent: CounterStackPercent() });
+      ? UiShortText('card.counter.help.stacks', { stackPercent: Number((stackRules.returnPerStack * 100).toPrecision(15)), stacks: CounterStacksForCard(stackRules, def.id, !!def.upgraded) })
+      : UiShortText('card.counter.help.core', { stackPercent: CounterStackPercent() });
     const coreIneligible = inCore && !coreCounter;
     if (def.counterCoverage) {
       const c = def.counterCoverage;
-      const names = { physical: 'Martial', spell: 'Spell', melee: t('deckEditor.range.melee'), reach: t('deckEditor.range.reach'), ranged: t('deckEditor.range.ranged'), single: 'Single', area: 'Area', damage: 'damage', status: 'status pressure' };
+      const names = { physical: 'Martial', spell: 'Spell', melee: UiShortText('deckEditor.range.melee'), reach: UiShortText('deckEditor.range.reach'), ranged: UiShortText('deckEditor.range.ranged'), single: 'Single', area: 'Area', damage: 'damage', status: 'status pressure' };
       const coverage = [c.camps, c.ranges, c.targeting, c.effects].map(ids => (ids || []).map(id => names[id] || id).join(' + ')).filter(Boolean).join(' · ');
       html += `<div class="combat-rule-hint"><strong>Counter coverage:</strong> ${esc(coverage)}${c.schools ? ` · ${esc(c.schools.join(' + '))}` : ''}. ${coreCounter ? esc(counterHelp()) : coreIneligible ? 'The prepared stance remains until another maneuver replaces it.' : 'Return once after all covered damage and status pressure is resisted. Evade and Invulnerability give no return. The prepared stance remains until another maneuver replaces it.'}</div>`;
-    } else html += `<div class="combat-rule-hint">${esc(coreCounter ? counterHelp() : t('card.counter.help.legacy'))}</div>`;
+    } else html += `<div class="combat-rule-hint">${esc(coreCounter ? counterHelp() : UiShortText('card.counter.help.legacy'))}</div>`;
   }
-  if (def.defenseRange) html += `<div class="combat-rule-hint"><strong>Defense range:</strong> ${esc(def.defenseRange[0].toUpperCase() + def.defenseRange.slice(1))} · Covers ${esc(['melee', 'reach', 'ranged'].slice(0, ['melee', 'reach', 'ranged'].indexOf(def.defenseRange) + 1).map(range => t('deckEditor.range.' + range)).join(' + '))}.</div>`;
+  if (def.defenseRange) html += `<div class="combat-rule-hint"><strong>Defense range:</strong> ${esc(def.defenseRange[0].toUpperCase() + def.defenseRange.slice(1))} · Covers ${esc(['melee', 'reach', 'ranged'].slice(0, ['melee', 'reach', 'ranged'].indexOf(def.defenseRange) + 1).map(range => UiShortText('deckEditor.range.' + range)).join(' + '))}.</div>`;
   if (identity.cardCategory === 'stance') {
     html += `<div class="combat-rule-hint"><strong>Stance group:</strong> ${esc(identity.stanceGroups.map(group => group === 'offense' ? 'Offense' : 'Defensive').join(' + '))}.</div>`;
     if (combatProfile.maneuver === 'counter' && def.defenseRulesVersion === 2)
@@ -1060,11 +1064,19 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
     // Words resolve through the framework TermRegistry (one vocabulary home);
     // an id outside the keyword vocabulary is skipped, as before.
     const k = registries.framework.keywordDisplay(kw);
-    if (k) addChip(k.name, k.tooltip, true);
+    if (k) addChip(k.name, k.tooltip, EFFECT_CHIP);
   }
   // Wither N (SPEC §4.3) is a card field, not a keyword id: its chip reads the authored count.
   const witherCount = WitherFaceCount(def);
-  if (witherCount !== null) addChip(t('card.keyword.wither', { n: witherCount }), UiFullText('card.keyword.wither', { n: witherCount }), true);
+  if (witherCount !== null)
+  {
+    const witherTokens = { n: witherCount };
+    addChip(
+      UiShortText(WITHER_KEYWORD_STRING_ID, witherTokens),
+      UiFullText(WITHER_KEYWORD_STRING_ID, witherTokens),
+      EFFECT_CHIP,
+    );
+  }
   for (const eff of def.effects || []) {
     // Status/stance WORDS resolve through the per-bundle framework term
     // overlay — verbatim text, framework authority. Unknown ids and
@@ -1086,7 +1098,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
     // (mechanics numbers for tooltip substitution)". This is that site.
     if (eff.op === 'applyStatus') {
       const s = glossaryEntry(registries, 'status', eff.status, statusContext);
-      if (s && !def.textTemplate.includes(s.name)) addChip(s.name, s.tooltip, true);
+      if (s && !def.textTemplate.includes(s.name)) addChip(s.name, s.tooltip, EFFECT_CHIP);
     }
     if (eff.op === 'enterStance') {
       // A chosen stance (Warrior's Vow) explains every stance it can offer.
