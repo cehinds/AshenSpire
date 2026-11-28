@@ -75,7 +75,8 @@ test('Core movement cards have explicit paid movement and preserve existing Evad
     assert.equal(card.staminaCost, 4); assert.equal(card.manaCost, 0); assert.equal(card.rarity, 'uncommon');
     assert.deepEqual(card.effects[0], evade.effects[0]);
     assert.deepEqual(card.effects[1], { op: 'moveEngagement', target: 'enemy', bands });
-    assert.ok(card.tags.includes('trait:reaction')); assert.equal(card.stanceTrigger.stance, 'evade');
+    // Owner ruling 2026-11-28: no shipped Core card is a Reaction card.
+    assert.equal(card.tags.includes('trait:reaction'), false); assert.equal(card.stanceTrigger.stance, 'evade');
   }
   // W25-EvadeCards (2026-11-15): Backstep is 1 Stamina: Evade, then the player Retreats one band, then becomes Prepared.
   const backstep = cards.find(row => row.id === 'core.backstep');
@@ -83,7 +84,7 @@ test('Core movement cards have explicit paid movement and preserve existing Evad
   assert.deepEqual(backstep.effects[0], evade.effects[0]);
   assert.deepEqual(backstep.effects[1], { op: 'moveEngagement', target: 'self', bands: 1 });
   assert.equal(backstep.effects[2].status, 'prepared');
-  assert.ok(backstep.tags.includes('trait:reaction')); assert.equal(backstep.stanceTrigger.stance, 'evade');
+  assert.equal(backstep.tags.includes('trait:reaction'), false); assert.equal(backstep.stanceTrigger.stance, 'evade');
   assert.equal(JSON.stringify(json(dir + 'starterDeck.json')).includes('core.advance'), false);
   // W25-EvadeCards: the Rogue's Backstep now retreats the player one band itself (it no longer moves nobody).
   assert.deepEqual(contentBundle.cards.find(row => row.id === 'backstep').effects.filter(effect => effect.op === 'moveEngagement'), [{ op: 'moveEngagement', target: 'self', bands: 1 }]);
