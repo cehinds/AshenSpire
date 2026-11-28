@@ -50,8 +50,7 @@
     "tags": [
       "camp:physical",
       "maneuver:defend",
-      "classification.skill",
-      "trait:reaction"
+      "classification.skill"
     ],
     "textTemplate": "Gain {block} Block.",
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
@@ -83,8 +82,7 @@
     "tags": [
       "camp:physical",
       "maneuver:counter",
-      "classification.attack",
-      "trait:reaction"
+      "classification.attack"
     ],
     "textTemplate": "Gain {block} Block. Prepare Melee Counter: return {damage} damage.",
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
@@ -641,8 +639,7 @@
     "tags": [
       "camp:physical",
       "maneuver:defend",
-      "classification.skill",
-      "trait:reaction"
+      "classification.skill"
     ],
     "stanceTrigger": {
       "stance": "evade"
@@ -712,7 +709,6 @@
       "camp:physical",
       "maneuver:defend",
       "classification.skill",
-      "trait:reaction",
       "lifecycle.exhaust"
     ],
     "stanceTrigger": {
@@ -794,8 +790,7 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "trait:reaction"
+      "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage. Apply {weak} Weak.",
     "upgrade": {
@@ -953,8 +948,7 @@
     "tags": [
       "camp:physical",
       "maneuver:defend",
-      "classification.skill",
-      "trait:reaction"
+      "classification.skill"
     ],
     "textTemplate": "Gain {block} Block. Draw {draw} card.",
     "upgrade": {
@@ -2746,8 +2740,7 @@
     "tags": [
       "camp:physical",
       "maneuver:defend",
-      "classification.skill",
-      "trait:reaction"
+      "classification.skill"
     ],
     "textTemplate": "Gain {block} Block. Apply {weak} Weak.",
     "upgrade": {
@@ -3541,7 +3534,6 @@
       "maneuver:casting",
       "classification.skill",
       "rank.cantrip",
-      "trait:reaction",
       "school:alteration",
       "tradition:arcane"
     ],

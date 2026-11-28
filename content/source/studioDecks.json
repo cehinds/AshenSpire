@@ -1504,7 +1504,6 @@
       "tags": [
         "camp:physical",
         "maneuver:defend",
-        "trait:reaction",
         "classification.skill"
       ],
       "kindIds": [
