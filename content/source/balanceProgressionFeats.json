@@ -30,7 +30,7 @@
     }
   },
   "last-rampart": {
-    "block": 4,
+    "block": 1,
     "hpPct": 50,
     "$note": {
       "block": "Last Rampart: Additional Block granted by the qualifying play or event.",
@@ -38,7 +38,7 @@
     }
   },
   "war-cadence": {
-    "block": 4,
+    "block": 1,
     "$note": { "block": "War Cadence: Additional Block granted by the qualifying play or event." }
   },
   "broad-sentence": {
@@ -72,7 +72,7 @@
     }
   },
   "scarred-oath": {
-    "block": 3,
+    "block": 1,
     "$note": { "block": "Scarred Oath: Additional Block granted by the qualifying play or event." }
   },
   "harvest-the-wound": {
@@ -90,7 +90,7 @@
     }
   },
   "moonward-scholar": {
-    "block": 3,
+    "block": 1,
     "manaSpent": 2,
     "$note": {
       "block": "Moonward Scholar: Additional Block granted by the qualifying play or event.",
@@ -122,7 +122,7 @@
     }
   },
   "patient-wellspring": {
-    "block": 3,
+    "block": 1,
     "$note": {
       "block": "Patient Wellspring: Additional Block granted by the qualifying play or event."
     }
@@ -134,11 +134,11 @@
     }
   },
   "firmament-keeper": {
-    "block": 4,
+    "block": 1,
     "$note": { "block": "Firmament Keeper: Additional Block granted by the qualifying play or event." }
   },
   "celestial-refrain": {
-    "block": 4,
+    "block": 1,
     "$note": { "block": "Celestial Refrain: Additional Block granted by the qualifying play or event." }
   },
   "memory-of-winter": {
@@ -158,7 +158,7 @@
     }
   },
   "pocket-method": {
-    "block": 3,
+    "block": 1,
     "$note": { "block": "Pocket Method: Additional Block granted by the qualifying play or event." }
   },
   "open-flank": {
@@ -168,7 +168,7 @@
     }
   },
   "hidden-palm": {
-    "block": 3,
+    "block": 1,
     "$note": { "block": "Hidden Palm: Additional Block granted by the qualifying play or event." }
   },
   "tighten-the-wire": {
@@ -212,7 +212,7 @@
     "$note": { "heal": "Ashen Mercy: HP restored by the qualifying play or credited kill." }
   },
   "censer-keeper": {
-    "block": 3,
+    "block": 1,
     "$note": { "block": "Censer Keeper: Additional Block granted by the qualifying play or event." }
   },
   "sower-of-blight": {
@@ -222,7 +222,7 @@
     }
   },
   "funeral-watch": {
-    "block": 3,
+    "block": 1,
     "hpPct": 50,
     "$note": {
       "block": "Funeral Watch: Additional Block granted by the qualifying play or event.",
@@ -258,7 +258,7 @@
     }
   },
   "dawn-cantor": {
-    "block": 3,
+    "block": 1,
     "$note": { "block": "Dawn Cantor: Additional Block granted by the qualifying play or event." }
   },
   "bearer-of-burdens": {

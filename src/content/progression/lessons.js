@@ -24,6 +24,9 @@ const DRAWBACK_SENTENCES = Object.freeze({ exhaust: 'Exhaust.', ethereal: 'Ether
 const drawbackWords = id => originals.get(id)?.retreatRuleFaces?.legacy?.keywords ?? originals.get(id)?.keywords ?? [];
 const withDrawbacks = (text, id) => [text, ...drawbackWords(id).filter(word => DRAWBACK_SENTENCES[word]).map(word => DRAWBACK_SENTENCES[word])].join(' ');
 const budget = progressionGradeRules.gradeBudget;
+const GRADE_BLOCK = progressionGradeRules.lessonGradeBlock;
+const GRADE_BLOCK_BUDGET = progressionGradeRules.lessonGradeBlockBudget;
+const GRADE_BLOCK_RANK = 4;
 
 function lessonGrade(recipe, rank) {
   const { id, abilityKind, actionCost, primaryIndex, values, ...options } = recipe;
@@ -58,10 +61,17 @@ function lessonGrade(recipe, rank) {
   if (rank < 3 && combatProfileFor(id).maneuver !== 'sweep') for (const effect of [primary, ...riderEffects]) if (effect.target === 'allEnemies') effect.target = 'enemy';
   if (['damage', 'block'].includes(primary.op)) {
     const extra = riderEffects.filter(e => ['damage', 'block'].includes(e.op) && typeof e.amount === 'number').reduce((sum, e) => sum + e.amount * (e.hits || 1), 0);
-    primary.amount = Math.min(primary.amount, Math.max(1, Math.floor((budget[rank] - extra - (rank >= 4 ? 2 : 0)) / (primary.hits || 1))));
+    const gradeBlockBudget = rank >= GRADE_BLOCK_RANK
+      ? GRADE_BLOCK_BUDGET
+      : 0;
+    const primaryBudget = Math.floor((budget[rank] - extra - gradeBlockBudget) / (primary.hits || 1));
+    primary.amount = Math.min(primary.amount, Math.max(1, primaryBudget));
   }
   const effects = [primary, ...riderEffects];
-  if (rank >= 4) effects.push({ op: 'block', target: 'self', amount: 2, oncePerTurn: 'grade-block' });
+  if (rank >= GRADE_BLOCK_RANK)
+  {
+    effects.push({ op: 'block', target: 'self', amount: GRADE_BLOCK, oncePerTurn: 'grade-block' });
+  }
   if (rank >= 5) effects.push({ op: 'draw', amount: 1, oncePerTurn: 'grade-draw' });
   const fixedCost=options.fixedGradeCosts?.[rank];
   return { rank, actionCost: fixedCost?.actionCost ?? (rank === 0 ? Math.max(1, Math.min(actionCost, 3)) : rank === 1 ? 1 : Math.min(rank, actionCost + (rank >= 4 ? 1 : 0))), manaCost: fixedCost?.manaCost ?? rank, effects, textTemplate: withDrawbacks(recipeText(effects, combatProfileFor(id)), id), faceTemplate: options.face ?? recipeFace(effects, combatProfileFor(id)),

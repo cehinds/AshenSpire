@@ -44,7 +44,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 10
+        "amount": 4
       }
     ],
     "tags": [
@@ -72,7 +72,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 5
+        "amount": 2
       },
       {
         "op": "damage",
@@ -229,7 +229,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 7
+        "amount": 3
       }
     ],
     "tags": [
@@ -256,7 +256,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 4
+        "amount": 1
       }
     ],
     "tags": [
@@ -363,7 +363,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 1
+        "amount": 0
       },
       {
         "op": "applyStatus",
@@ -400,7 +400,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 1
+        "amount": 0
       },
       {
         "op": "applyStatus",
@@ -439,7 +439,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 16
+        "amount": 7
       }
     ],
     "tags": [
@@ -473,7 +473,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 14
+        "amount": 6
       }
     ],
     "tags": [
@@ -943,7 +943,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 6
+        "amount": 2
       },
       {
         "op": "draw",
@@ -962,7 +962,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 8
+          "amount": 3
         },
         {
           "op": "draw",
@@ -1546,7 +1546,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 5
+        "amount": 2
       }
     ],
     "tags": [
@@ -1566,7 +1566,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 7
+          "amount": 3
         }
       ]
     },
@@ -1936,7 +1936,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 3
+        "amount": 1
       }
     ],
     "tags": [
@@ -1958,7 +1958,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 5
+          "amount": 2
         }
       ]
     },
@@ -2253,7 +2253,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 12
+        "amount": 5
       },
       {
         "op": "draw",
@@ -2274,7 +2274,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 15
+          "amount": 7
         },
         {
           "op": "draw",
@@ -2307,7 +2307,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 5
+        "amount": 2
       }
     ],
     "tags": [
@@ -2331,7 +2331,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 7
+          "amount": 3
         }
       ]
     },
@@ -2418,7 +2418,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 20
+        "amount": 9
       },
       {
         "op": "draw",
@@ -2439,7 +2439,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 26
+          "amount": 12
         },
         {
           "op": "draw",
@@ -2635,7 +2635,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 8
+        "amount": 3
       },
       {
         "op": "applyStatus",
@@ -2656,7 +2656,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 11
+          "amount": 5
         },
         {
           "op": "applyStatus",
@@ -2734,7 +2734,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 7
+        "amount": 3
       },
       {
         "op": "applyStatus",
@@ -2755,7 +2755,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 10
+          "amount": 4
         },
         {
           "op": "applyStatus",
@@ -2955,7 +2955,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 4
+        "amount": 1
       },
       {
         "op": "applyStatus",
@@ -2983,7 +2983,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 6
+          "amount": 2
         },
         {
           "op": "applyStatus",
@@ -3205,7 +3205,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 2
+        "amount": 0
       }
     ],
     "tags": [
@@ -3239,7 +3239,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 3
+        "amount": 1
       }
     ],
     "tags": [
@@ -3253,7 +3253,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 5
+          "amount": 2
         }
       ]
     },
@@ -3516,7 +3516,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 2
+        "amount": 0
       },
       {
         "op": "applyStatus",
@@ -3551,7 +3551,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 3
+          "amount": 1
         },
         {
           "op": "applyStatus",
@@ -3714,7 +3714,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 5
+        "amount": 2
       },
       {
         "op": "applyStatus",
@@ -3739,7 +3739,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 7
+          "amount": 3
         },
         {
           "op": "applyStatus",
@@ -4012,7 +4012,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 3
+        "amount": 1
       },
       {
         "op": "gainBarrier",
@@ -4041,7 +4041,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 4
+          "amount": 1
         },
         {
           "op": "gainBarrier",
@@ -4881,7 +4881,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 10
+        "amount": 4
       },
       {
         "op": "applyStatus",
@@ -4911,7 +4911,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 20
+          "amount": 9
         },
         {
           "op": "applyStatus",
@@ -5314,7 +5314,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 8
+        "amount": 3
       },
       {
         "op": "applyStatus",
@@ -5338,7 +5338,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 12
+          "amount": 5
         },
         {
           "op": "applyStatus",
@@ -5422,7 +5422,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 9
+        "amount": 4
       },
       {
         "op": "applyStatus",
@@ -5446,7 +5446,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 13
+          "amount": 6
         },
         {
           "op": "applyStatus",
@@ -5474,7 +5474,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 11
+        "amount": 5
       },
       {
         "op": "applyStatus",

@@ -15,7 +15,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 5
+        "amount": 2
       },
       {
         "op": "addCard",
@@ -31,7 +31,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 8
+          "amount": 3
         },
         {
           "op": "addCard",
@@ -92,7 +92,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 12
+        "amount": 5
       },
       {
         "op": "applyStatus",
@@ -107,7 +107,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 16
+          "amount": 7
         },
         {
           "op": "applyStatus",
@@ -134,7 +134,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 4
+        "amount": 1
       },
       {
         "op": "damage",
@@ -154,7 +154,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 6
+          "amount": 2
         },
         {
           "op": "damage",
@@ -280,7 +280,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 7
+        "amount": 3
       },
       {
         "op": "applyStatus",
@@ -296,7 +296,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 10
+          "amount": 4
         },
         {
           "op": "applyStatus",

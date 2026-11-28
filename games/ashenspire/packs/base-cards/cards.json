@@ -3803,7 +3803,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 10
+            "amount": 4
           }
         ],
         "upgradeMenu": ["fx:reaction", "fx:unethereal", "blk"],
@@ -4045,7 +4045,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 12
+            "amount": 5
           }
         ],
         "textTemplate": "Gain {block} Block. No ally loses {loseHp} HP.",
@@ -5456,7 +5456,7 @@
               {
                 "op": "block",
                 "target": "self",
-                "amount": 6
+                "amount": 2
               }
             ],
             "textTemplate": "Gain {block} Block."
@@ -5604,7 +5604,7 @@
               {
                 "op": "block",
                 "target": "self",
-                "amount": 8
+                "amount": 3
               }
             ],
             "textTemplate": "Gain {block} Block."
@@ -6662,7 +6662,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 8
+            "amount": 3
           }
         ],
         "textTemplate": "Gain {block} Block and guard allies for {base.guard-allies} turn. With no allies, only the Block applies.",
@@ -7842,7 +7842,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 6
+            "amount": 2
           }
         ],
         "costGrowth": {

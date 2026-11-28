@@ -43,7 +43,7 @@
           {
             "op": "block",
             "target": "self",
-            "amount": 6
+            "amount": 2
           }
         ]
       }
@@ -232,7 +232,7 @@
       },
       "harden": {
         "intent": "block",
-        "block": 14,
+        "block": 6,
         "weight": 25,
         "maxConsecutive": 1
       }
@@ -311,7 +311,7 @@
       },
       "goldenBulwark": {
         "intent": "block",
-        "block": 16,
+        "block": 7,
         "weight": 25,
         "maxConsecutive": 1,
         "effects": [
@@ -392,7 +392,7 @@
       },
       "rotWings": {
         "intent": "block",
-        "block": 10,
+        "block": 4,
         "weight": 20,
         "maxConsecutive": 1,
         "effects": [
@@ -494,14 +494,14 @@
         "delay": {
           "turns": 1,
           "whileCharging": {
-            "block": 2
+            "block": 0
           }
         }
       },
       "foldedBlades": {
         "intent": "block",
         "counterDamage": 6,
-        "block": 8,
+        "block": 3,
         "weight": 15,
         "maxConsecutive": 1
       }
@@ -623,7 +623,7 @@
         "delay": {
           "turns": 1,
           "whileCharging": {
-            "block": 10
+            "block": 4
           }
         }
       },
@@ -635,7 +635,7 @@
       },
       "coolingAsh": {
         "intent": "block",
-        "block": 14,
+        "block": 6,
         "weight": 25,
         "maxConsecutive": 1
       }
@@ -713,7 +713,7 @@
         "delay": {
           "turns": 1,
           "whileCharging": {
-            "block": 6
+            "block": 2
           }
         },
         "effects": [
@@ -786,7 +786,7 @@
       },
       "tailBastion": {
         "intent": "block",
-        "block": 12,
+        "block": 5,
         "weight": 25,
         "maxConsecutive": 1
       },
@@ -811,7 +811,7 @@
         "delay": {
           "turns": 1,
           "whileCharging": {
-            "block": 5
+            "block": 2
           }
         },
         "hits": 4,
@@ -889,14 +889,14 @@
       "shellTuck": {
         "sp": 1,
         "intent": "block",
-        "block": 7,
+        "block": 3,
         "weight": 20,
         "maxConsecutive": 1
       },
       "kilnPlate": {
         "sp": 2,
         "intent": "block",
-        "block": 14,
+        "block": 6,
         "weight": 20,
         "maxConsecutive": 1
       }
@@ -1156,14 +1156,14 @@
       "siegePlate": {
         "sp": 2,
         "intent": "block",
-        "block": 14,
+        "block": 6,
         "weight": 20,
         "maxConsecutive": 1
       },
       "bunkerGuard": {
         "sp": 1,
         "intent": "block",
-        "block": 8,
+        "block": 3,
         "weight": 20,
         "maxConsecutive": 1
       }
@@ -1228,7 +1228,7 @@
       "heronWard": {
         "sp": 1,
         "intent": "block",
-        "block": 7,
+        "block": 3,
         "weight": 15,
         "maxConsecutive": 1
       }
@@ -1370,7 +1370,7 @@
       "ironLitany": {
         "sp": 2,
         "intent": "block",
-        "block": 14,
+        "block": 6,
         "weight": 25,
         "maxConsecutive": 1
       },
@@ -1456,7 +1456,7 @@
       "moltenHide": {
         "sp": 1,
         "intent": "block",
-        "block": 8,
+        "block": 3,
         "weight": 25,
         "maxConsecutive": 1
       },

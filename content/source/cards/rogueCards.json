@@ -260,7 +260,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 3
+          "amount": 1
         }
       ],
       "textTemplate": "Become Prepared. Draw {draw} card. Gain {block} Block."
@@ -2509,7 +2509,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 9
+        "amount": 4
       },
       {
         "op": "applyStatus",
@@ -2533,7 +2533,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 13
+          "amount": 6
         },
         {
           "op": "applyStatus",
@@ -2567,7 +2567,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 7
+        "amount": 3
       },
       {
         "op": "damage",
@@ -2582,7 +2582,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 10
+          "amount": 4
         },
         {
           "op": "damage",

@@ -202,7 +202,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 5
+        "amount": 2
       },
       {
         "op": "heal",
@@ -216,7 +216,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 7
+          "amount": 3
         },
         {
           "op": "heal",
@@ -495,12 +495,12 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 6
+        "amount": 2
       },
       {
         "op": "block",
         "target": "self",
-        "amount": 4,
+        "amount": 1,
         "if": {
           "p": "hpBelowPct",
           "of": "self",
@@ -514,12 +514,12 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 8
+          "amount": 3
         },
         {
           "op": "block",
           "target": "self",
-          "amount": 4,
+          "amount": 1,
           "if": {
             "p": "hpBelowPct",
             "of": "self",
@@ -1891,12 +1891,12 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 4
+        "amount": 1
       },
       {
         "op": "block",
         "target": "self",
-        "amount": 4,
+        "amount": 1,
         "if": {
           "p": "inStance",
           "of": "self",
@@ -1910,12 +1910,12 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 5
+          "amount": 2
         },
         {
           "op": "block",
           "target": "self",
-          "amount": 6,
+          "amount": 2,
           "if": {
             "p": "inStance",
             "of": "self",

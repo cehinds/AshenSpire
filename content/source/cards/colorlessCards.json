@@ -125,7 +125,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 7
+        "amount": 3
       }
     ],
     "textTemplate": "Gain {block} Block.",
@@ -134,7 +134,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 10
+          "amount": 4
         }
       ]
     }
@@ -444,7 +444,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 5
+        "amount": 2
       },
       {
         "op": "draw",
@@ -460,7 +460,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 7
+          "amount": 3
         },
         {
           "op": "draw",
@@ -874,7 +874,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 6
+        "amount": 2
       },
       {
         "op": "applyStatus",
@@ -889,7 +889,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 9
+          "amount": 4
         },
         {
           "op": "applyStatus",

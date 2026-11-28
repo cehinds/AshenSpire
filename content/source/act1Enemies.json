@@ -44,7 +44,7 @@
       },
       "guard": {
         "intent": "block",
-        "block": 6,
+        "block": 2,
         "weight": 30,
         "maxConsecutive": 1
       },
@@ -171,7 +171,7 @@
       },
       "brace": {
         "intent": "block",
-        "block": 8,
+        "block": 3,
         "weight": 25,
         "maxConsecutive": 1
       }
@@ -313,7 +313,7 @@
       },
       "goldenGuard": {
         "intent": "block",
-        "block": 12,
+        "block": 5,
         "weight": 20,
         "maxConsecutive": 1,
         "effects": [
@@ -386,7 +386,7 @@
         "delay": {
           "turns": 1,
           "whileCharging": {
-            "block": 8
+            "block": 3
           }
         }
       },
@@ -520,7 +520,7 @@
     "moves": {
       "rootShelter": {
         "intent": "block",
-        "block": 7,
+        "block": 3,
         "weight": 30,
         "maxConsecutive": 1
       },
@@ -619,7 +619,7 @@
         "delay": {
           "turns": 1,
           "whileCharging": {
-            "block": 3
+            "block": 1
           }
         }
       }
@@ -668,7 +668,7 @@
         "delay": {
           "turns": 1,
           "whileCharging": {
-            "block": 6
+            "block": 2
           }
         }
       },
@@ -682,7 +682,7 @@
       "muffledPrayer": {
         "sp": 1,
         "intent": "block",
-        "block": 9,
+        "block": 4,
         "weight": 20,
         "maxConsecutive": 1
       },
@@ -742,7 +742,7 @@
       "rootCrown": {
         "sp": 1,
         "intent": "block",
-        "block": 8,
+        "block": 3,
         "weight": 25,
         "maxConsecutive": 1
       },
@@ -763,7 +763,7 @@
         "delay": {
           "turns": 1,
           "whileCharging": {
-            "block": 4
+            "block": 1
           }
         },
         "effects": [
@@ -837,7 +837,7 @@
       "bristle": {
         "sp": 1,
         "intent": "block",
-        "block": 7,
+        "block": 3,
         "weight": 25,
         "maxConsecutive": 1
       },
@@ -908,7 +908,7 @@
       "puffUp": {
         "sp": 1,
         "intent": "block",
-        "block": 6,
+        "block": 2,
         "weight": 25,
         "maxConsecutive": 1
       }
@@ -1029,7 +1029,7 @@
       "kindleWard": {
         "sp": 1,
         "intent": "block",
-        "block": 7,
+        "block": 3,
         "weight": 25,
         "maxConsecutive": 1
       }
@@ -1101,7 +1101,7 @@
       "siltShroud": {
         "sp": 1,
         "intent": "block",
-        "block": 7,
+        "block": 3,
         "weight": 20,
         "maxConsecutive": 1
       }
@@ -1235,7 +1235,7 @@
       "wadeGuard": {
         "sp": 1,
         "intent": "block",
-        "block": 7,
+        "block": 3,
         "weight": 20,
         "maxConsecutive": 1
       }
@@ -1292,14 +1292,14 @@
       "pearlGuard": {
         "sp": 2,
         "intent": "block",
-        "block": 14,
+        "block": 6,
         "weight": 25,
         "maxConsecutive": 1
       },
       "nacreWall": {
         "sp": 3,
         "intent": "block",
-        "block": 20,
+        "block": 9,
         "weight": 15,
         "maxConsecutive": 1
       }
@@ -1370,7 +1370,7 @@
       "alderVeil": {
         "sp": 1,
         "intent": "block",
-        "block": 7,
+        "block": 3,
         "weight": 15,
         "maxConsecutive": 1
       }
@@ -1435,7 +1435,7 @@
       "barkHide": {
         "sp": 1,
         "intent": "block",
-        "block": 8,
+        "block": 3,
         "weight": 25,
         "maxConsecutive": 1
       },
@@ -1574,7 +1574,7 @@
       "wakeVeil": {
         "sp": 1,
         "intent": "block",
-        "block": 8,
+        "block": 3,
         "weight": 20,
         "maxConsecutive": 1
       },

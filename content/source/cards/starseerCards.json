@@ -205,12 +205,12 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 5
+        "amount": 2
       },
       {
         "op": "block",
         "target": "self",
-        "amount": 4,
+        "amount": 1,
         "if": {
           "p": "hasStatus",
           "of": "self",
@@ -235,12 +235,12 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 7
+          "amount": 3
         },
         {
           "op": "block",
           "target": "self",
-          "amount": 5,
+          "amount": 2,
           "if": {
             "p": "hasStatus",
             "of": "self",
@@ -397,7 +397,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 4
+        "amount": 1
       },
       {
         "op": "applyStatus",
@@ -423,7 +423,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 6
+          "amount": 2
         },
         {
           "op": "applyStatus",
@@ -533,7 +533,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 4
+        "amount": 1
       },
       {
         "op": "applyStatus",
@@ -564,7 +564,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 6
+          "amount": 2
         },
         {
           "op": "applyStatus",
@@ -3500,7 +3500,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 5
+        "amount": 2
       },
       {
         "op": "applyStatus",

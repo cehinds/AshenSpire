@@ -497,7 +497,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 5,
+        "amount": 2,
         "if": {
           "p": "not",
           "pred": {
@@ -509,7 +509,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 9,
+        "amount": 4,
         "if": {
           "p": "inStance",
           "stance": "bulwark"
@@ -523,7 +523,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 7,
+          "amount": 3,
           "if": {
             "p": "not",
             "pred": {
@@ -535,7 +535,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 12,
+          "amount": 5,
           "if": {
             "p": "inStance",
             "stance": "bulwark"
@@ -645,7 +645,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 3
+          "amount": 1
         }
       ],
       "textTemplate": "Enter Bulwark Stance. Gain {block} extra Block."
@@ -1635,12 +1635,12 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 6
+        "amount": 2
       },
       {
         "op": "block",
         "target": "self",
-        "amount": 3,
+        "amount": 1,
         "if": {
           "p": "inStance",
           "stance": "bulwark"
@@ -1653,12 +1653,12 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 8
+          "amount": 3
         },
         {
           "op": "block",
           "target": "self",
-          "amount": 4,
+          "amount": 1,
           "if": {
             "p": "inStance",
             "stance": "bulwark"
@@ -1915,7 +1915,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 5
+        "amount": 2
       },
       {
         "op": "poiseDamage",
@@ -1929,7 +1929,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 7
+          "amount": 3
         },
         {
           "op": "poiseDamage",
@@ -2142,7 +2142,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 7
+        "amount": 3
       },
       {
         "op": "enterStance",
@@ -2155,7 +2155,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 10
+          "amount": 4
         },
         {
           "op": "enterStance",
@@ -2178,7 +2178,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 14
+        "amount": 6
       },
       {
         "op": "applyStatus",
@@ -2198,7 +2198,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 18
+          "amount": 8
         },
         {
           "op": "applyStatus",
@@ -2227,7 +2227,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 8
+        "amount": 3
       },
       {
         "op": "damage",
@@ -2244,7 +2244,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 12
+          "amount": 5
         },
         {
           "op": "damage",
@@ -2404,7 +2404,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 5,
+        "amount": 2,
         "if": {
           "p": "inStance",
           "of": "self",
@@ -2423,7 +2423,7 @@
         {
           "op": "block",
           "target": "self",
-          "amount": 7,
+          "amount": 3,
           "if": {
             "p": "inStance",
             "of": "self",

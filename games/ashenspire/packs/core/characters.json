@@ -819,7 +819,7 @@
           "delay": {
             "turns": 1,
             "whileCharging": {
-              "block": 8
+              "block": 3
             }
           },
           "costSource": "authored",
@@ -1078,7 +1078,7 @@
           "delay": {
             "turns": 1,
             "whileCharging": {
-              "block": 3
+              "block": 1
             }
           },
           "costSource": "stance",
@@ -1188,7 +1188,7 @@
           "delay": {
             "turns": 1,
             "whileCharging": {
-              "block": 6
+              "block": 2
             }
           },
           "costSource": "authored",
@@ -1324,7 +1324,7 @@
           "delay": {
             "turns": 1,
             "whileCharging": {
-              "block": 4
+              "block": 1
             }
           },
           "costSource": "authored",
@@ -2377,7 +2377,7 @@
           "delay": {
             "turns": 1,
             "whileCharging": {
-              "block": 5
+              "block": 2
             }
           },
           "costSource": "stance",
@@ -3028,7 +3028,7 @@
           "delay": {
             "turns": 1,
             "whileCharging": {
-              "block": 2
+              "block": 0
             }
           },
           "costSource": "stance",
@@ -3235,7 +3235,7 @@
           "delay": {
             "turns": 1,
             "whileCharging": {
-              "block": 10
+              "block": 4
             }
           },
           "costSource": "stance",
@@ -3360,7 +3360,7 @@
           "delay": {
             "turns": 1,
             "whileCharging": {
-              "block": 6
+              "block": 2
             }
           },
           "costSource": "stance",
@@ -3500,7 +3500,7 @@
           "delay": {
             "turns": 1,
             "whileCharging": {
-              "block": 5
+              "block": 2
             }
           },
           "costSource": "stance",

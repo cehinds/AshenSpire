@@ -31,7 +31,7 @@ export const combatExpansionCombos = [
     'Clear {removeStatus} Dazed. If Dazed when played, your next Evade has Advantage. Once per turn.', { usableWhile: locks }),
   row('lowGuardRiposte', 'Low Guard Riposte', 1, 'skill',
     ['camp:physical', 'maneuver:counter', 'counter:melee', 'range:melee', 'targeting:single'],
-    [{ op: 'block', target: 'self', amount: 5 }],
+    [{ op: 'block', target: 'self', amount: 2 }],
     'Gain {block} Block. Counter Melee attacks for 3 Poise; +2 Poise while Prone.',
     { counterCoverage: { camps: ['physical'], ranges: ['melee'], targeting: ['single'], effects: ['damage'], maneuvers: ['attack', 'smash'] },
       counterPayload: { hp: 0, poise: 3, ward: 0 }, pronePoiseBonus: 2 }),
