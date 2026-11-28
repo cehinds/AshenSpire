@@ -39,7 +39,8 @@ test('the HUD meter plan carries the Poise bar while Poise is on (an empty troug
   assert.match(js, /!stackHidden\.has\(bar\.id\)\s*&& \(!expanded \|\| bar\.id === 'hp' \|\| bar\.id === POISE_RESOURCE\)/, 'the expanded rules keep HP and Poise');
   assert.match(js, /if \(!PoiseEnabled\(combat\)\)/, 'stagger.poise off drops the Poise bar');
   assert.match(js, /if \(!plan\.some\(\(bar\) => bar\.id === POISE_RESOURCE\)\)/, 'meterInputs adds an empty Poise bar when the entity has no meter');
-  assert.match(js, /label: 'Poise', \.\.\.PoiseLeft\(v, entity\)/, 'combatantSubject resources keep Poise (Poise left)');
+  assert.match(js, /label: POISE_LABEL,\s*\.\.\.PoiseLeft\(view, entity\)/, 'combatantSubject resources keep Poise (Poise left)');
+  assert.equal((js.match(/\.\.\.inspectorPoiseRows\(/g) || []).length, 2, 'both inspector subjects gate the Poise row');
 });
 
 test('inspect is the existing figure-hold / mini-HUD-click door only; the target HUD adds no second gesture', () => {

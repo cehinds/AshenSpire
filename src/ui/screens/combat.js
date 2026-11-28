@@ -204,6 +204,26 @@ import { PoiseEnabled } from '../../model/simpleCombatFlags.js';
 // dropped; Core 2 never offered it). Turning it on is this one edit.
 const ASK_TO_UPCAST_AFTER_TARGET = false;
 const POISE_RESOURCE = 'poise';
+const POISE_LABEL = 'Poise';
+
+// The inspector's Poise row (Poise left); none while stagger.poise is off.
+function inspectorPoiseRows(
+  combat,
+  view,
+  entity,
+)
+{
+  if (!PoiseEnabled(combat))
+  {
+    return [];
+  }
+  return [
+    {
+      label: POISE_LABEL,
+      ...PoiseLeft(view, entity),
+    },
+  ];
+}
 // The event types that move the displayed hand between beats — the same four
 // applyBeatToDisp() reads. Kept beside that switch's contract, not typed twice.
 const HAND_BEAT_EVENTS = new Set(['cardDrawn', 'cardPlayed', 'cardDiscarded', 'cardExhausted']);
@@ -1171,7 +1191,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         resources: inspectorResources([
           { label: 'HP', value: v.hp, max: entity.maxHp },
           { label: 'MP', value: v.mana, max: entity.maxMana },
-          { label: 'Poise', ...PoiseLeft(v, entity) },
+          ...inspectorPoiseRows(
+            combat,
+            v,
+            entity,
+          ),
           ...(entity.wardMeter ? [{ label: 'Ward', value: v.wardMeter?.value || 0, max: v.wardMeter?.max || entity.wardMeter.max }] : []),
           // Poise / Ward guards (the Dodge Roll): absorb impact until your next turn.
           ...(entity.poiseGuard > 0 ? [{ label: t('combat.protection.poiseGuard'), tipId: 'poiseGuard', value: entity.poiseGuard }] : []),
@@ -1225,7 +1249,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       resources: inspectorResources([
         { label: 'HP', value: v.hp, max: entity.maxHp },
         ...(Number.isFinite(entity.maxStamina) ? [{ label: 'SP', value: v.fixCoreStaminaRemaining ?? v.stamina ?? entity.stamina ?? 0, max: entity.maxStamina }] : []),
-        { label: 'Poise', ...PoiseLeft(v, entity) },
+        ...inspectorPoiseRows(
+          combat,
+          v,
+          entity,
+        ),
         // Own points (the level budget, SPEC §17) first, then the signed gear and relic bonus when it is not zero.
         ...(entity.attributes && typeof entity.attributes === 'object' ? [{ id: 'attributes', label: t('combat.inspector.attributes'), always: true,
           value: ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'].map((id) => {
@@ -2078,7 +2106,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     };
   }
 
-  // The Poise bar sits under HP as Poise left, an empty trough at 0/0 (owner 2026-11-07, 2026-11-12).
+  // The Poise bar sits under HP as Poise left, an empty trough at 0/0.
   // With stagger.poise off there is no Poise, so no bar at all.
   function withPoiseBar(plan)
   {
@@ -2103,7 +2131,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const expanded = combat.combatExpansionVersion === 2;
     const shownBar = (bar) => !stackHidden.has(bar.id)
       && (!expanded || bar.id === 'hp' || bar.id === POISE_RESOURCE);
-    const plan = withPoiseBar(resourceBarPlan(registries, 'model', v, entity, resDomains).filter(shownBar));
+    const fullPlan = resourceBarPlan(
+      registries,
+      'model',
+      v,
+      entity,
+      resDomains,
+    );
+    const plan = withPoiseBar(fullPlan.filter(shownBar));
     const hp = {
       hud: { ...protectionPresentation(v), evasion: combat.combatExpansionVersion === 2 ? (v.statuses?.evade?.stacks || 0) : null, precision: combat.combatExpansionVersion === 2 ? (v.statuses?.precision?.stacks || 0) : null,
         ac: acFor(combat, entity),
