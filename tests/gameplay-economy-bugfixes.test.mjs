@@ -361,7 +361,17 @@ test('controlled upgrade budgets retain a common step at the rank edge and promo
   const base = { id: 'custom.rarity-budget.fixture', class: 'reaver', rarity: 'common', type: 'attack', cost: 1, staminaCost: 1, manaCost: 0,
     tags: ['camp:physical', 'source:weapon', 'maneuver:attack', 'trait:unavoidable'], effects: [{ op: 'damage', target: 'enemy', amount: 8 }] };
   const evaluate = n => EvaluateUpgradeStepCp({ baseDef: base, currentDef: base, instance: { rank: 1 }, step: { k: 'dmg', n }, playerLevel: 1, scoring });
-  const edge = evaluate(1), promoted = evaluate(4);
+  // The next authored step whose displayed damage clears the rank edge (the plateau ends where the
+  // reference character's attributes put it).
+  const STEP_SEARCH_LIMIT = 40;
+  const edge = evaluate(1);
+  let promoted = null;
+  for (let n = 2; n <= STEP_SEARCH_LIMIT && !promoted; n++)
+  {
+    const step = evaluate(n);
+    if (step.raw > scoring.rank.width) promoted = step;
+  }
+  assert.ok(promoted, 'a later damage step clears the rank edge');
   assert.equal(edge.allowed, true); assert.equal(edge.rarity, 'common'); assert.equal(edge.rank, 1);
   assert.equal(edge.cp, scoring.rank.width);
   assert.equal(promoted.allowed, true); assert.equal(promoted.rarity, 'uncommon'); assert.equal(promoted.rank, 1);
