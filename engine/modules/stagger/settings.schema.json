@@ -25,6 +25,10 @@
       "type": "number",
       "minimum": 0,
       "maximum": 10
+    },
+    "poise": {
+      "type": "boolean",
+      "description": "Poise pools and meters (SPEC 4.4). false: every Poise pool is empty, poiseDamage does nothing and no Poise break staggers. Absent or true is on."
     }
   },
   "required": [

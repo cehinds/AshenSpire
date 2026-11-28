@@ -5,6 +5,7 @@
 import * as CardUpgradeLimits from './cardUpgradeLimits.js';
 import { OwnCardRank } from './cardRank.js';
 import { upgradeStepsOf, MAX_CARD_UPGRADES } from './cardUpgrade.js';
+import { AuthoredUpgradesOnly } from './simpleCombatFlags.js';
 
 export const RANK_UP_BONUS_CHOICES = 3;
 export const RANK_UP_BONUS_SALT = 'rankup';
@@ -15,8 +16,10 @@ export function rankUpBonusScale(registries) {
   return Number.isFinite(scale) && scale >= 1 ? scale : 2;
 }
 
-/** Whether a run's cards upgrade by steps (Core, card ranks on); only those get a rank-up bonus. */
-export const rankUpBonusOn = (run) => run?.gameProfile?.modules?.progression?.cardRanks === true;
+/** Whether a run's cards upgrade by steps (Core, card ranks on, rolled upgrades).
+ * Only those get a rank-up bonus. */
+export const rankUpBonusOn = (run) => run?.gameProfile?.modules?.progression?.cardRanks === true
+  && !AuthoredUpgradesOnly(run);
 
 /**
  * rankUpBonusOptions(registries, run, instance) → up to 3 distinct upgrade steps the rank-up could add, each

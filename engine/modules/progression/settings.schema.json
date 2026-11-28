@@ -21,6 +21,13 @@
       "type": "boolean",
       "description": "With card ranks on, a card ranks up only once every upgrade slot it has is used (owner, 2026-11-23). Absent or true is on; false lets any card rank up."
     },
+    "upgradeMode": {
+      "enum": [
+        "rolled",
+        "authored"
+      ],
+      "description": "How a card upgrades. rolled: the authored block first, then rolled steps and rank-up bonus picks. authored: one upgrade, the card's own upgrade block; nothing is rolled. Absent is rolled."
+    },
     "attributePointsPerLevel": {
       "type": "integer",
       "minimum": 0,

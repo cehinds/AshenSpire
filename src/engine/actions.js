@@ -28,6 +28,7 @@ import { WEAKNESS_MANA, WEAKNESS_STAMINA } from '../model/enemyWeaknessRules.js'
 import { counterBlockBonus, CounterStackRule, counterReturnSpent, paidCounterContact } from './counterRule.js';
 import { rollD20Check } from './d20Chance.js';
 import { ChangeAttribute } from './liveStats.js';
+import { PoiseEnabled } from '../model/simpleCombatFlags.js';
 // src/engine/actions.js — effect-DSL opcode implementations (SPEC §3.4)
 //
 // A queued ACTION is { effect, source, owner?, target?, card?, meta? }:
@@ -1491,6 +1492,14 @@ export function staggerPlayer(ctx, player) {
   ctx.emit('playerStaggered', { targetId: player.id, actionLoss, statuses: applied, ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(player) } : {}) });
 }
 
+// The Poise a card's own pressure dealt: none while stagger.poise is off, so it never counts as a hit.
+function landedPoise(ctx, offered)
+{
+  return PoiseEnabled(ctx)
+    ? Math.max(0, offered)
+    : 0;
+}
+
 /**
  * dealPoiseDamage(ctx, entity, amount) — an enemy's meter or the PLAYER's
  * (plan phase 8: the player's vessel is real once its max is stamped; an
@@ -1501,6 +1510,10 @@ export function staggerPlayer(ctx, player) {
 export function dealPoiseDamage(ctx, entity, amount, { knowledgeMatchup = false, cause = null, source = null, cardId = null, carrier = null, blockAtHit = 0 } = {}) {
   // `source` and `cardId` only name who dealt it in the receipt (an explicit amount never reads the source); `carrier` is the hit it rides on,
   // `blockAtHit` the Block the target held when that hit arrived (the hit may have spent it since).
+  if (!PoiseEnabled(ctx))
+  {
+    return;
+  }
   if (configuredCombat(ctx)) { // Core Poise never fills a legacy break meter; extra Poise damage drains the pool.
     if (fixCoreEnabled(ctx)) drainFixCorePoise(ctx, source, entity, amount, carrier, blockAtHit);
     return;
@@ -1729,7 +1742,7 @@ function splitSmashPressure(ctx, action, target, row) {
   if (poise > 0) {
     const before = Math.max(0, target.poiseGuard || 0);
     dealPoiseDamage(ctx, target, poise, { carrier: action.card, source: action.source }); // a Smash: it may break a Defend target's last Poise
-    trackOwnPressure(ctx, action, target, 'poiseDealt', Math.max(0, poise - (before - Math.max(0, target.poiseGuard || 0))));
+    trackOwnPressure(ctx, action, target, 'poiseDealt', landedPoise(ctx, poise - (before - Math.max(0, target.poiseGuard || 0))));
   }
   if (ward > 0) { const spent = Control.spendPersistentWard(ctx, target, ward, { sourceId: action.source?.id }); trackOwnPressure(ctx, action, target, 'wardDealt', spent.spent); }
   return true;
@@ -2344,7 +2357,7 @@ export const OPCODE_HANDLERS = Object.freeze({
         const blockAtHit = row?.receipt?.blockBefore ?? (hit ? (hit.blocked || 0) + hit.blockRemaining : 0);
         dealPoiseDamage(ctx, t, amount, { knowledgeMatchup: multiplier > 1, carrier: action.card, source: action.source, blockAtHit });
         const guardAfter = Number.isFinite(t?.poiseGuard) ? Math.max(0, Math.floor(t.poiseGuard)) : 0;
-        trackOwnPressure(ctx, action, t, 'poiseDealt', Math.max(0, amount - (guardBefore - guardAfter)));
+        trackOwnPressure(ctx, action, t, 'poiseDealt', landedPoise(ctx, amount - (guardBefore - guardAfter)));
       }
       return;
     },

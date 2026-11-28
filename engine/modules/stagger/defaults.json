@@ -3,5 +3,6 @@
   "spLoss": 1,
   "status": "vulnerable",
   "stacks": 1,
-  "damageTakenMultiplier": 1.25
+  "damageTakenMultiplier": 1.25,
+  "poise": true
 }
