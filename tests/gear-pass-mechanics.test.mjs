@@ -85,7 +85,7 @@ test('a type base and a piece signature add together; Thorns is a piece signatur
 
 test('the Sword base adds +1 to a physical attack, on the face and in the hit (preview equals play)', () => {
   const sword = build({ right: 'straightSword' });
-  assert.equal(strikeAmount(sword), 7, 'core.strike prints 6; the Sword adds 1');
+  assert.equal(strikeAmount(sword), 2, 'core.strike stores 1; the Sword adds 1');
   const { quote, dealt } = quoteAndPlay(sword, 'core.strike');
   assert.ok(dealt > 0);
   assert.equal(quote, dealt);
@@ -231,9 +231,10 @@ test('Resist takes 25% less damage of its element; Fire Vulnerable adds 5% per s
   const hot = hotReceipt.hpLoss;
   const coldHit = coldReceipt.damageReceipt.hits[0], hotHit = hotReceipt.damageReceipt.hits[0];
   assert.equal(hotHit.sources.find(source => source.id === 'element-vulnerable-fire').multiplier, 1.2, 'four stacks add exactly 20% before mitigation');
-  assert.deepEqual([coldHit.incoming, hotHit.incoming], [20, 24]);
+  // Owner ruling 2026-11-28: 40 + PR 1 meets only the weakness and advantage x1.25 stages (no scales).
+  assert.deepEqual([coldHit.incoming, hotHit.incoming], [64, 76]);
   assert.deepEqual([coldHit.poiseReduced, hotHit.poiseReduced], [0, 0]);
-  assert.deepEqual([coldHit.hpLoss, hotHit.hpLoss], [20, 24], 'the Fire increase reaches HP when both pools are empty');
+  assert.deepEqual([coldHit.hpLoss, hotHit.hpLoss], [64, 76], 'the Fire increase reaches HP when both pools are empty');
   assert.ok(hot > cold, 'four stacks of Fire Vulnerable raise a Fire hit');
 });
 
@@ -335,6 +336,9 @@ test('a Smash with a push-on-break signature that leaves Poise standing sends no
 
 // The fixture grants one extra stack per positive gain, and an end grant
 // only while in the matching stance and holding at least one stack.
+// Owner ruling 2026-11-28: the revealed intent carries the real 1:1 Slash, so the forecast prices the hit that lands.
+const SLASH_DAMAGE = registries.enemies.get('wanderingSoldier').moves.slash.damage;
+const COUNTER_BASE = registries.cards.get('core.counter').effects.find(effect => effect.op === 'damage').amount;
 const counterGearMods = { vigil: ['self.gainCounter=+1', 'end@stance:counter@holding:counter.turnCounter=+1'] };
 const evadeGearMods = { huntersHide: ['self.gainEvade=+1', 'end@stance:defend@holding:evade.turnEvade=+1'] };
 const counterGains = (world, from) => world.combat.eventLog.slice(from).filter(e => e.type === 'counterStacksChanged' && e.targetId === world.combat.player.id).map(e => e.amount);
@@ -516,7 +520,7 @@ test('the Counter forecast with gain and turn-end gear matches the played card a
   combat.player.counterStacks = 4;
   combat.player.basePrecisionBonus = enemy.basePrecisionBonus = 1000;
   enemy.intentRevealed = true;
-  enemy.intent = { ...enemy.intent, kind: 'attack', moveId: 'slash', damage: 8, hits: 1, combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single', traits: [], stanceTrigger: false } };
+  enemy.intent = { ...enemy.intent, kind: 'attack', moveId: 'slash', damage: SLASH_DAMAGE, hits: 1, combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single', traits: [], stanceTrigger: false } };
   enemy.combatStance = { maneuver: 'attack', camp: 'physical', range: 'melee' };
   enemy.plannedMoves = []; enemy.stamina = enemy.maxStamina = 3;
   combat.player.stamina = 30;
@@ -545,12 +549,12 @@ test('a Counter reaction forecast with gear adds the card gain but no intervenin
   combat.player.stamina = 30;
   combat.player.basePrecisionBonus = enemy.basePrecisionBonus = 1000;
   enemy.intentRevealed = true;
-  enemy.intent = { ...enemy.intent, kind: 'attack', moveId: 'slash', damage: 8, hits: 1, combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single', traits: [], stanceTrigger: false } };
+  enemy.intent = { ...enemy.intent, kind: 'attack', moveId: 'slash', damage: SLASH_DAMAGE, hits: 1, combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single', traits: [], stanceTrigger: false } };
   enemy.combatStance = { maneuver: 'attack', camp: 'physical', range: 'melee' };
   combat.piles.hand.push({ instanceId: 'medium-reaction', cardId: 'core.counter' });
   const forecast = previewCard(combat, 'medium-reaction').counterReturn;
   assert.ok(forecast?.hp > 0);
-  assert.equal(forecast.hp, 2 + Math.floor(forecast.incoming * 0.1 * 5), '3 held plus card 1 and gear 1, no end grant');
+  assert.equal(forecast.hp, COUNTER_BASE + Math.floor(forecast.incoming * 0.1 * 5), '3 held plus card 1 and gear 1, no end grant');
   assert.equal(combat.player.counterStacks, 3);
 });
 
@@ -560,7 +564,7 @@ test('a spell Counter forecast with gear keeps Prepared and gives no Counter sta
   combat.player.counterStacks = 4;
   combat.player.basePrecisionBonus = enemy.basePrecisionBonus = 1000;
   enemy.intentRevealed = true;
-  enemy.intent = { ...enemy.intent, kind: 'attack', moveId: 'slash', damage: 8, hits: 1, combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single', traits: [], stanceTrigger: false } };
+  enemy.intent = { ...enemy.intent, kind: 'attack', moveId: 'slash', damage: SLASH_DAMAGE, hits: 1, combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single', traits: [], stanceTrigger: false } };
   enemy.combatStance = { maneuver: 'attack', camp: 'physical', range: 'melee' };
   enemy.plannedMoves = []; enemy.stamina = enemy.maxStamina = 3;
   combat.player.stamina = 30;
