@@ -2,6 +2,16 @@
 // from here, so model text never imports the engine adapter (and its stanceRules -> combatCardProfile -> smashClause cycle).
 import { cardPreparationCategory } from './cardClassification.js';
 import { configuredModule } from './profileModule.js';
+import { TriangleRules, TriangleStance } from './stanceTriangle.js';
+
+const NEUTRAL_STANCE = 'neutral';
+const LEGACY_ALIASES = Object.freeze({
+  casting: 'prepared',
+  cast: 'prepared',
+  spell: 'prepared',
+  ranged: 'attack',
+  evade: 'defend',
+});
 
 export const MIRRORED_TYPES = new Set(['attack', 'smash', 'sweep', 'defend', 'counter']);
 // A Spell that mirrors a basic card (owner 2026-10-18) takes that basic's maneuver; it stays a Spell. Only Core 2 content sets `mirrors`.
@@ -11,14 +21,27 @@ export function mirroredManeuver(carrier) {
 }
 // A Spell that mirrors a basic card (owner 2026-10-18) keeps that basic's stance; it is still a Spell.
 export const mirroredStance = mirroredManeuver;
-export function configuredStance(carrier) {
+// The maneuver a carrier authors, before any ruleset reads it; null when it names none.
+function legacyStance(carrier)
+{
   if (mirroredStance(carrier)) return mirroredStance(carrier);
   if (cardPreparationCategory(carrier)) return 'prepared';
   const trigger = carrier?.stanceTrigger?.stance;
   const raw = (trigger === 'evade' && carrier?.combatProfile?.maneuver === 'counter' ? 'counter' : trigger) || carrier?.combatProfile?.maneuver || carrier?.maneuver
     || (carrier?.cardTags || carrier?.tags || []).map(tag => typeof tag === 'string' ? tag : tag.id).find(tag => tag.startsWith('maneuver:'))?.slice(9);
   // Owner 2026-11-01: Evade is a tag, not a stance, so an authored 'evade' stance trigger (core.evade and kin) stands in Defend.
-  return ({ casting: 'prepared', cast: 'prepared', spell: 'prepared', ranged: 'attack', evade: 'defend' })[raw] || raw || 'neutral';
+  return LEGACY_ALIASES[raw] || raw || null;
+}
+/** The stance a carrier plays; under a `subject` on the triangle ruleset, its triangle stance. */
+export function configuredStance(carrier, subject = null)
+{
+  const legacy = legacyStance(carrier);
+  // No carrier is no stance under either ruleset.
+  if (carrier && TriangleRules(subject))
+  {
+    return TriangleStance(subject, carrier, legacy);
+  }
+  return legacy || NEUTRAL_STANCE;
 }
 // A Spell that carries Counter coverage (frostCounter and its school siblings) is a Counter in Core (owner 2026-10-19):
 // its effective maneuver is counter (profile or maneuver tag) and it authors counterCoverage. It keeps the prepared stance.

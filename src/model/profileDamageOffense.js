@@ -11,6 +11,7 @@ import { fixCoreEnabled, FixCoreBrokenRules } from './fixCoreMechanics.js';
 import { fixCoreRules } from './fixCoreRulesCache.js';
 import { configuredStance } from './profileStance.js';
 import { configuredModule } from './profileModule.js';
+import { TriangleRules, TriangleBeats } from './stanceTriangle.js';
 import { FightMagicShare } from './elementIdentityRules.js';
 
 function rating(entity, name) {
@@ -35,15 +36,25 @@ export const PacketMagicMultiplier = (flux) => (Number.isFinite(flux) ? flux : 1
 
 export function DamageIncoming(amount) { return Math.max(0, Math.floor(amount)); }
 
+/** Whether the attacking stance beats the defending one: the triangle, else the matchups. */
+function StanceAdvantage(stances, triangle, attacking, defending)
+{
+  if (triangle)
+  {
+    return TriangleBeats(triangle, attacking, defending);
+  }
+  return !!stances?.include?.includes(attacking)
+    && !!stances?.matchups?.[attacking]?.includes(defending);
+}
+
 export function ProfileDamageOffense(ctx, source, target, base, carrier = {}, readers) {
   const { getAdd, AttackDamageMultiplier, FluxMultiplier, StanceWeaknessMultiplier, ElementReceiptStages, defensiveCombatStance, hitWeaknessTriggers, matchingHitWeaknesses, weaknessLabel } = readers;
   const effects = configuredModule(ctx, 'effects');
   const stances = configuredModule(ctx, 'stances');
   const defenses = configuredModule(ctx, 'defenses');
-  const attacking = configuredStance(carrier);
-  const defending = configuredStance(defensiveCombatStance(ctx,target,carrier));
-  const advantage = !!stances?.include?.includes(attacking)
-    && !!stances?.matchups?.[attacking]?.includes(defending);
+  const attacking = configuredStance(carrier, ctx);
+  const defending = configuredStance(defensiveCombatStance(ctx,target,carrier), ctx);
+  const advantage = StanceAdvantage(stances, TriangleRules(ctx), attacking, defending);
   const modern = fixCoreEnabled(ctx);
   const flatReturn = modern && carrier.counterReturnAttack;
   // Owner, 2026-11-17: a profile's `effects.baseDamageMultiplier` scales every card's base damage (the Core bundle halves it), rounded up, before AR or

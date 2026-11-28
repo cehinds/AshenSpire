@@ -47,5 +47,85 @@
   "staggerLimitPerTargetPerRound": 1,
   "defenseMitigation": 0.25,
   "builtInBenefits": true,
-  "sameStanceDiscount": true
+  "sameStanceDiscount": true,
+  "ruleset": "maneuvers",
+  "triangle": {
+    "$note": {
+      "include": "The four triangle stances; a card resolved to one of these keeps it.",
+      "beats": "Directed edges: the key beats every stance in its list.",
+      "winnerMultiplier": "The winner's damage (attack, smash) or Block (defend) is multiplied by this; the loser is unchanged.",
+      "neutral": "Stances that never win and never lose. They are not Idle: no extra draw, no extra damage taken.",
+      "map": "Old maneuver id to triangle stance. byEffect reads the card's effects instead.",
+      "noManeuver": "What a card with no maneuver resolves to.",
+      "byEffect": "In order: a card that deals damage, else one that gives Block, else the fallback stance.",
+      "overrides": "cardId to stance, for hand fixes; wins over map and byEffect.",
+      "blockBonus": "Which cards' Block takes winnerMultiplier (stances) and when (mode). anyEnemyIntent: the player's Block when any living enemy telegraphs a stance it beats; an enemy's Block against the player's current stance."
+    },
+    "include": [
+      "attack",
+      "defend",
+      "smash",
+      "skill"
+    ],
+    "beats": {
+      "attack": [
+        "smash"
+      ],
+      "smash": [
+        "defend"
+      ],
+      "defend": [
+        "attack"
+      ]
+    },
+    "winnerMultiplier": 1.25,
+    "neutral": [
+      "skill"
+    ],
+    "map": {
+      "attack": "attack",
+      "ranged": "attack",
+      "sweep": "attack",
+      "smash": "smash",
+      "defend": "defend",
+      "counter": "defend",
+      "evade": "defend",
+      "prepared": "byEffect",
+      "casting": "byEffect"
+    },
+    "noManeuver": "byEffect",
+    "byEffect": {
+      "rules": [
+        {
+          "stance": "attack",
+          "ops": [
+            "damage",
+            "wardDamage"
+          ],
+          "keys": [
+            "damage"
+          ]
+        },
+        {
+          "stance": "defend",
+          "ops": [
+            "block",
+            "gainBarrier"
+          ],
+          "keys": [
+            "block",
+            "barrier"
+          ]
+        }
+      ],
+      "fallback": "skill"
+    },
+    "overrides": {},
+    "blockBonus": {
+      "mode": "anyEnemyIntent",
+      "stances": [
+        "defend"
+      ]
+    }
+  }
 }

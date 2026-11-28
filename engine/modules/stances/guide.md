@@ -39,6 +39,8 @@ Settings live in `engine/modules/stances/settings.schema.json`; shipped defaults
 - `/defenseMitigation` (type number; default `0.25`; range 0..1): Reduce incoming direct damage by this fraction when the defender's included stance beats the incoming maneuver in `matchups`. `0` disables mitigation. Applies once before Block/Poise in Core and the Current grouped defense adapter; existing offensive bonuses remain. Old saved resolved profiles missing this setting retain zero mitigation.
 - `/builtInBenefits` (type boolean; default `true`): `false` turns off each stance's own bonus (`stanceBenefits` in fixCoreMechanics.json); stance weaknesses stay.
 - `/sameStanceDiscount` (type boolean; default `true`): `false` turns off every same-stance cut and bonus: the SP and Mana cuts, the effectiveness bonus, the Martial and Magic Adept cuts, the spell-chain Mana cut and the Counter reaction discount; matchup advantage stays.
+- `/ruleset` (type enum; default `"maneuvers"`; allowed "maneuvers", "triangle"): `triangle` plays attack, defend, smash and skill under `/triangle`; absent is `maneuvers`.
+- `/triangle` (type object): attack beats smash, smash beats defend, defend beats attack; the winner's damage or Block takes `winnerMultiplier`, the loser is unchanged, and skill never wins or loses. `map` and `byEffect` give every card and enemy move one of the four; `overrides` fixes a card by id.
 - `/evadeFailureMultiplier` (type integer; default `2`; range 0..1000000): Damage multiplier when an evade fails.
 - `/accuracyPolicy` (type enum; default `"chance"`; allowed "chance"): Current host accuracy policy is chance.
 - `/staggerPolicy` (type string; default `"legacyAdapter"`; minLength 1): Host adapter stagger policy; treat as provisional.

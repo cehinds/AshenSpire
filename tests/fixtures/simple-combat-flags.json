@@ -36,6 +36,11 @@
       "enemies": {
         "turnActions": "single"
       }
+    },
+    "triangle": {
+      "stances": {
+        "ruleset": "triangle"
+      }
     }
   },
   "stanceProbe": {
@@ -106,6 +111,141 @@
     "price": {
       "stamina": 2,
       "mana": 0
+    }
+  },
+  "triangleProbe": {
+    "$note": "Stance triangle (step 2a): ruleset readings, matchups, Block bonus and card stances.",
+    "rulesetCases": [
+      {
+        "$note": "No profile at all",
+        "subject": null,
+        "expected": "maneuvers"
+      },
+      {
+        "$note": "An old saved profile without the key",
+        "subject": {
+          "gameProfile": {
+            "modules": {
+              "stances": {
+                "mode": "configured"
+              }
+            }
+          }
+        },
+        "expected": "maneuvers"
+      },
+      {
+        "$note": "An unknown value",
+        "subject": {
+          "gameProfile": {
+            "modules": {
+              "stances": {
+                "ruleset": "other"
+              }
+            }
+          }
+        },
+        "expected": "maneuvers"
+      },
+      {
+        "$note": "Explicit triangle",
+        "subject": {
+          "gameProfile": {
+            "modules": {
+              "stances": {
+                "ruleset": "triangle"
+              }
+            }
+          }
+        },
+        "expected": "triangle"
+      }
+    ],
+    "cardStances": {
+      "$note": "Real Core cards: map and byEffect.",
+      "starShower": "attack",
+      "crystalBarrier": "defend",
+      "warcry": "skill",
+      "core.sweep": "attack",
+      "core.counter": "defend",
+      "core.smash": "smash"
+    },
+    "enemyMoveStances": {
+      "$note": "fellWarden's moves read through the same map.",
+      "caneStrike": "attack",
+      "hammerToss": "attack",
+      "heldBlade": "smash"
+    },
+    "overrideCase": {
+      "cardId": "warcry",
+      "stance": "defend"
+    },
+    "matchup": {
+      "$note": "All 16 pairs: the winner hits for winnerMultiplier, every other pair for x1, nobody mitigates.",
+      "carriers": {
+        "attack": "strike",
+        "smash": "core.smash",
+        "defend": "defend",
+        "skill": "warcry"
+      },
+      "base": 40,
+      "winnerMultiplier": 1.25,
+      "winners": [
+        [
+          "attack",
+          "smash"
+        ],
+        [
+          "smash",
+          "defend"
+        ],
+        [
+          "defend",
+          "attack"
+        ]
+      ]
+    },
+    "skillProbe": {
+      "turn": 2,
+      "neutralStance": "neutral",
+      "skillStance": "skill"
+    },
+    "blockProbe": {
+      "$note": "A defend card's Block wins only against an attack it beats; a strike's Block never does.",
+      "defendCardId": "defend",
+      "otherCardId": "strike",
+      "defendStance": "defend",
+      "bonusStance": "attack",
+      "otherStances": [
+        "smash",
+        "defend",
+        "skill"
+      ],
+      "base": 20,
+      "winnerMultiplier": 1.25
+    },
+    "playProbe": {
+      "$note": "Bot-played fights on the triangle end without an error.",
+      "seeds": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "stepLimit": 400
+    },
+    "concurrentDefense": {
+      "$note": "A target holding defend and smash against a casting damage spell (attack) defends with defend.",
+      "cardId": "starShower",
+      "capacityStatus": "base.many-forms",
+      "liveManeuver": "casting",
+      "held": [
+        "defend",
+        "smash"
+      ],
+      "expected": "defend"
     }
   }
 }

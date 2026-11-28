@@ -2,6 +2,8 @@ import { stanceMitigation } from './stanceMitigation.js';
 import { proposalCardPlan, proposalContext } from './proposalStatusRuntime.js';
 import { fixCoreEnabled, FixCoreBrokenRules } from '../model/fixCoreMechanics.js';
 import * as StatusHelpers from '../framework/statusSemantics.js';
+import { configuredStance } from '../model/profileStance.js';
+import { TriangleRules, TriangleBeats } from '../model/stanceTriangle.js';
 export const MANEUVERS=Object.freeze(['attack','smash','defend','sweep','counter','casting']);
 function policy(ctx,entity) {
  const {rules}=proposalContext(ctx);
@@ -30,8 +32,25 @@ export function rememberCombatStance(ctx,entity,previous) {
 export function trimCombatStances(ctx,entity) {if(stanceCapacity(ctx,entity)<=1)delete entity.concurrentStances;else entity.concurrentStances=activeCombatStances(ctx,entity);}
 // One deterministic defense is selected for each hostile carrier, for preview
 // and live receipts alike. It cannot apply two defense multipliers to one hit.
+// Under the triangle a held stance the incoming stance beats takes its winnerMultiplier; the
+// lowest factor defends, ties keep the most recent stance.
+function triangleDefense(ctx, triangle, rows, carrier)
+{
+  const incoming = configuredStance(carrier, ctx);
+  const damageFactor = row =>
+  {
+    const defending = configuredStance(row, ctx);
+    return TriangleBeats(triangle, incoming, defending)
+      ? triangle.winnerMultiplier
+      : 1;
+  };
+  return [...rows].reverse().sort((first, second) => damageFactor(first) - damageFactor(second))[0];
+}
+
 export function defensiveCombatStance(ctx,entity,carrier={}) {
  const rows=activeCombatStances(ctx,entity);if(rows.length<2)return entity?.combatStance;
+ const triangle=TriangleRules(ctx);
+ if(triangle)return triangleDefense(ctx,triangle,rows,carrier);
  const rawIncoming=carrier.combatProfile?.maneuver || carrier.maneuver,incoming=rawIncoming==='casting' ? 'prepared' : rawIncoming;
  const profile=ctx.gameProfile?.modules?.stances;
  const priority=policy(ctx,entity).defensePriority || ['counter','defend','casting','attack','smash','sweep'];
