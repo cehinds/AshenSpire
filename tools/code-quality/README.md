@@ -49,3 +49,21 @@ the game and its regular test lane do not depend on this package.
 
 The isolated package declares the exports it uses from each development dependency in its
 package manifest. The repository link check verifies that interface without loading vendor code.
+
+## Changed-file style tools
+
+These run over the `.js` and `.mjs` files a branch changed against `origin/dev` (pass
+`--base <ref>` for another base, or name paths to check them instead). Generated sources,
+`policy.json` protected files, `tools/attic` and the `exclude` list in `smells.json` are skipped.
+
+- `npm run format:changed` rewrites the changed files with the pinned dprint settings;
+  `npm run format:changed:check` lists the ones that would change and exits 1. Both skip
+  `src/` (`formatExclude` in `smells.json`): dprint splits long `export { ... }` lists over
+  several lines, and `tools/bundle.mjs` reads exports one line at a time, so the build fails.
+- `npm run code:smells` prints `path:line kind detail` for magic numbers, magic strings,
+  duplicated statement runs, long functions and deep nesting, sorted and stable. It exits 0;
+  `npm run code:smells:strict` exits 1 on any finding. Thresholds and exemptions live in
+  `smells.json`, each number with its own note.
+
+Pull requests run the format check (failing) and the smell report (informational) in
+`tests.yml`. The fixtures under `fixtures/` back `selftest-style.mjs`.
