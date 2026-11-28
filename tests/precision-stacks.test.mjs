@@ -164,9 +164,11 @@ test('hit chances: Reaver vs wanderingSoldier both ways, fellWarden and glassReg
     // Re-captured for the level budget (owner, 2026-11-07): enemies carry 5 + level attribute points, none below 1, and no DEX offset.
     // Re-captured 2026-11-17: Core gear grants attribute points (the soldier's gear gives DEX 1 -> 2), and an act-1 boss fights at level 4
     // (the Fell Warden was 3): the player hits both 5% less often, the Warden's unstacked hit rises to 95%; the Glass Regent was already level 4.
-    wanderingSoldier: { 0: { playerHits: 70, enemyHits: 75 }, 1: { playerHits: 75, enemyHits: 80 } },
-    fellWarden: { 0: { playerHits: 65, enemyHits: 95 }, 1: { playerHits: 70, enemyHits: 95 } },
-    glassRegent: { 0: { playerHits: 70, enemyHits: 95 }, 1: { playerHits: 75, enemyHits: 95 } },
+    // Re-captured 2026-11-28: the Reaver starts with 1 point (STR), so its Precision mix and its DEX-based Evasion each
+    // drop a step: it hits 5% less often, and the soldier hits it 5% more often (the bosses were already at 95%).
+    wanderingSoldier: { 0: { playerHits: 65, enemyHits: 80 }, 1: { playerHits: 70, enemyHits: 85 } },
+    fellWarden: { 0: { playerHits: 60, enemyHits: 95 }, 1: { playerHits: 65, enemyHits: 95 } },
+    glassRegent: { 0: { playerHits: 65, enemyHits: 95 }, 1: { playerHits: 70, enemyHits: 95 } },
   });
   assert.ok(table.wanderingSoldier[1].enemyHits < 95, 'a level-1 enemy no longer hits 95%');
 });
@@ -181,13 +183,15 @@ test('legacy (default contentBundle, no Core 2 profile) is unchanged: linear Pre
     const h = attackHitPreview(combat, player, enemy, carrier);
     out.push([stacks, evade, h.accuracy, h.evasion, h.need, h.hitChance]);
   }
-  // Captured from origin/dev (6d85a95500) before the Core 2 accuracy change.
-  assert.deepEqual(out, [[0, 0, 5, 1, 4, 85], [0, 2, 5, 7, 10, 55], [2, 0, 7, 1, 2, 95], [2, 2, 7, 7, 8, 65]]);
+  // Captured from origin/dev (6d85a95500) before the Core 2 accuracy change, then re-captured 2026-11-28 for the
+  // one-point lean Reaver: the same linear rows, each accuracy 4 lower (5 -> 1) with the attributes it starts with.
+  assert.deepEqual(out, [[0, 0, 1, 1, 8, 65], [0, 2, 1, 7, 14, 35], [2, 0, 3, 1, 6, 75], [2, 2, 3, 7, 12, 45]]);
   player.statuses = { precision: { stacks: 3 } };
   decayAtTurnEnd(combat, player); combat.turn = (combat.turn || 0) + 1; decayAtTurnStart(combat, player);
   assert.equal(player.statuses.precision.stacks, 3, 'legacy Precision does not decay');
   const hit = resolveAttackHit(combat, player, enemy, carrier);
-  assert.deepEqual([hit.d20, hit.hit, hit.accuracy, hit.evasion, hit.need], [10, true, 8, 7, 7]);
+  // The same d20 of 10 now falls short: accuracy 1 + 3 stacks = 4 needs 11 against Evasion 7.
+  assert.deepEqual([hit.d20, hit.hit, hit.accuracy, hit.evasion, hit.need], [10, false, 4, 7, 11]);
 });
 
 test('the receipt itemises the stat mix one stat per line and the lines sum to the total', () => {
