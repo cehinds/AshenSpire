@@ -443,9 +443,8 @@ function setupSaveUi({ savedFiles, choice, storage, asked })
       repoArtLayers: emptyLayers,
       repoItemArtLayers: emptyLayers,
     },
-    editedCards: () => [],
+    packCardChanges: () => [],
     removedCoreIds: () => [],
-    mergeStudioCards: () => undefined,
     isLocalServer: true,
     clone: structuredClone,
     toast: () => undefined,
@@ -465,20 +464,32 @@ function setupSaveUi({ savedFiles, choice, storage, asked })
 test('studio save: once Keep my draft or Use the saved file is chosen, the next load asks nothing',
   async () =>
   {
-    const savedCardsData = {
-      cards: [qaCard],
-      removedCardIds: [],
+    const savedLayers = {
+      layers: [{ id: 'savedLayer' }],
     };
     const savedFiles = {
-      cards: savedDocument(cardsName, savedCardsData),
+      artLayers: savedDocument(artLayersName, {
+        cardArtLayers: savedLayers,
+        itemArtLayers: savedLayers,
+      }),
     };
     const draftCard = {
       ...qaCard,
       name: 'Draft edit',
     };
-    const expectedCards = {
-      [StudioSaveChoice.KeepDraft]: [draftCard],
-      [StudioSaveChoice.UseSaved]: [qaCard],
+    const draftLayers = {
+      layers: [{ id: 'draftLayer' }],
+    };
+    // Saved cards are the game's, so Use the saved file drops the draft's card edits.
+    const expected = {
+      [StudioSaveChoice.KeepDraft]: {
+        customCards: [draftCard],
+        artLayers: draftLayers,
+      },
+      [StudioSaveChoice.UseSaved]: {
+        customCards: [],
+        artLayers: savedLayers,
+      },
     };
     for (const choice of Object.values(StudioSaveChoice))
     {
@@ -499,12 +510,15 @@ test('studio save: once Keep my draft or Use the saved file is chosen, the next 
       await firstUi.reconcileDraft({
         customCards: [draftCard],
         removedCardIds: [],
+        artLayers: draftLayers,
+        itemArtLayers: draftLayers,
         studioSaveRevision: revisionTwo,
       });
       assert.equal(asked.count, 1, `${choice}: the first load asks once`);
       const storedDraft = JSON.parse(storage.draft);
       assert.equal(storedDraft.studioSaveRevision, revisionOne);
-      assert.deepEqual(storedDraft.customCards, expectedCards[choice]);
+      assert.deepEqual(storedDraft.customCards, expected[choice].customCards);
+      assert.deepEqual(storedDraft.artLayers, expected[choice].artLayers);
       const secondUi = setupSaveUi(options);
       await secondUi.loadSavedFiles();
       await secondUi.reconcileDraft(storedDraft);

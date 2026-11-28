@@ -1,5 +1,6 @@
 // The Studio side of File > Save: registers the card and art layer files, drives the
 // #draft-status pill, settles the draft against the saved files, and runs a Save.
+// Card changes go into the game's card file, so the game plays the cards the Studio shows.
 
 import {
   ChooseDraftOrSavedFile,
@@ -15,6 +16,7 @@ import {
   StudioSaveDownloadName,
   StudioSaveFiles,
   StudioSaveFileNames,
+  StudioPackCardsPath,
 } from './studioSaveFiles.js';
 
 export const StudioSaveMenuLabel = Object.freeze({
@@ -31,12 +33,11 @@ const pillTextClass = Object.freeze({
 });
 const spanTag = 'span';
 const failedPillMs = 2500;
-const draftCarriedFiles = Object.freeze([
-  StudioSaveFileNames.Cards,
-  StudioSaveFileNames.ArtLayers,
-]);
+// Saved cards are the game's cards, so only the art layers can differ from a draft.
+const draftCarriedFiles = Object.freeze([StudioSaveFileNames.ArtLayers]);
 const toastText = Object.freeze({
-  [StudioSaveResult.Saved]: `Saved Studio cards and art to ${StudioSaveDir}/`,
+  [StudioSaveResult.Saved]: `Saved cards to ${StudioPackCardsPath} and rebuilt the game;`
+    + ` art to ${StudioSaveDir}/. Reload to play them.`,
   [StudioSaveResult.Unchanged]: 'No Studio changes since the last Save',
   [StudioSaveResult.Downloaded]: `Downloaded ${StudioSaveDownloadName}`,
   loadFailed: 'Could not read the Studio save files',
@@ -62,13 +63,6 @@ function layersOr(layerSet, fallback)
   return hasLayers(layerSet)
     ? layerSet
     : fallback;
-}
-
-function arrayOrEmpty(value)
-{
-  return Array.isArray(value)
-    ? value
-    : [];
 }
 
 function renderPillText(className, text)
@@ -114,10 +108,9 @@ function registerCardsFile(deps)
     name: cardsName,
     path: StudioSaveFiles[cardsName].path,
     read: () => ({
-      cards: deps.editedCards(),
+      cards: deps.packCardChanges(),
       removedCardIds: deps.removedCoreIds(),
     }),
-    apply: (data) => deps.mergeStudioCards(deps.clone(data.cards), data.removedCardIds),
   });
 }
 
@@ -248,10 +241,6 @@ class StudioSaveUi
   {
     const { state } = this.#deps;
     return {
-      [StudioSaveFileNames.Cards]: {
-        cards: arrayOrEmpty(draft.customCards),
-        removedCardIds: arrayOrEmpty(draft.removedCardIds),
-      },
       [StudioSaveFileNames.ArtLayers]: {
         cardArtLayers: layersOr(draft.artLayers, state.artLayers),
         itemArtLayers: layersOr(draft.itemArtLayers, state.itemArtLayers),
@@ -285,17 +274,14 @@ class StudioSaveUi
   #putSavedFilesIntoDraft(draft)
   {
     const { state, clone } = this.#deps;
-    const savedCards = this.#controller.loadedFile(StudioSaveFileNames.Cards) ?? {
-      cards: [],
-      removedCardIds: [],
-    };
     const savedArt = this.#controller.loadedFile(StudioSaveFileNames.ArtLayers) ?? {
       cardArtLayers: state.repoArtLayers,
       itemArtLayers: state.repoItemArtLayers,
     };
+    // Saved cards already live in the game's card file, so the draft drops its card edits.
     Object.assign(draft, clone({
-      customCards: savedCards.cards,
-      removedCardIds: savedCards.removedCardIds,
+      customCards: [],
+      removedCardIds: [],
       artLayers: savedArt.cardArtLayers,
       itemArtLayers: savedArt.itemArtLayers,
     }));
@@ -317,7 +303,7 @@ class StudioSaveUi
   }
 }
 
-// deps: state, editedCards, removedCoreIds, mergeStudioCards, isLocalServer, isTextEntry,
+// deps: state, packCardChanges, removedCoreIds, isLocalServer, isTextEntry,
 // flushDraft, writeDraftNow, storeDraft, refreshDirtyStatus, toast, download and clone.
 export function InitStudioSaveUi(deps)
 {

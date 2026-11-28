@@ -53,6 +53,7 @@ import {
   SaveShownContentEditor,
 } from './contentEditor/contentEditor.js';
 import { InitStudioSaveUi, StudioSaveMenuLabel } from './studioSaveUi.js';
+import { StudioCardChanges } from './packCardChanges.js';
 import {
   GalleryKind,
   Galleries,
@@ -483,6 +484,22 @@ function pushHistory() {
 
 function editedCards() {
   return state.cards.filter((c) => c._edited || c._custom);
+}
+
+// A card as the game loaded it, normalised as the Studio list is, or null for a new card.
+function gameCardOf(id)
+{
+  if (!registries.cards.has(id))
+  {
+    return null;
+  }
+  return normalizeStudioCard(clone(registries.cards.get(id)));
+}
+
+// What File > Save writes into the game's card file: the keys each edit changed.
+function packCardChanges()
+{
+  return StudioCardChanges(editedCards(), gameCardOf);
 }
 
 function editedItems() {
@@ -5787,9 +5804,8 @@ async function boot() {
 
   studioSaveUi = InitStudioSaveUi({
     state,
-    editedCards,
+    packCardChanges,
     removedCoreIds,
-    mergeStudioCards,
     isLocalServer,
     isTextEntry,
     flushDraft,
