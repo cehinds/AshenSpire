@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-28
 
-- **Same-stance switch covers spells** ([#3049](https://github.com/cehinds/AshenSpire/pull/3049), `0.7.5.197`). Turning off the same-stance discount now also removes the Prepared spell SP cut. It is on, so nothing changes in play.
+- **Same-stance switch covers spells** ([#3049](https://github.com/cehinds/AshenSpire/pull/3049), `0.7.5.199`). Turning off the same-stance discount now also removes the Prepared spell SP cut. It is on, so nothing changes in play.
 
 ## 2026-11-27
 
