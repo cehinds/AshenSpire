@@ -17,6 +17,7 @@ import { startingWeaknesses } from './weaknesses.js';
 import { seedElementStatuses } from './elementLightning.js';
 import { scaleOwnElementActions } from './elementRules.js';
 import { damageReceipt, fixCoreEnabled, snapshotFixCoreRules, FixCoreCounterStacks, FixCoreWeaponPoiseRules } from '../model/fixCoreMechanics.js';
+import { PoiseEnabled } from '../model/simpleCombatFlags.js';
 import { WeaponPoiseDamage } from '../model/weaponPoise.js';
 import { initializeFormationOccupancy } from '../model/formationOccupancy.js';
 import { proposalCardPlan, applyProposalPlan, proposalTurn, proposalRetained } from './proposalStatusRuntime.js';
@@ -2509,7 +2510,12 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
         // An element packet hit (owner, 2026-11-19) prints its physical part in {damage} and its magic part in {packet}: the card's authored amount rides on the row.
         if (carrier.magicShare > 0 && carrier.magicShare < 1) entry.packetBase = Math.max(0, Math.floor(evalPreview(combat, action, eff.amount, null)));
         // Dynamic weapon poise damage when attacking (JSON-configured weapon poise, +20% bow/staff/sceptre, 1.25x Smash, 2x Smash vs Guarding).
-        const weaponPoiseRules = !isCounterReply && (!primary || primary.kind === 'enemy') ? FixCoreWeaponPoiseRules(combat) : null;
+        // stagger.poise off: no hit deals Poise, so the face shows none.
+        const aimedAtEnemy = !primary || primary.kind === 'enemy';
+        const weaponPoiseAimed = !isCounterReply && aimedAtEnemy && PoiseEnabled(combat);
+        const weaponPoiseRules = weaponPoiseAimed
+          ? FixCoreWeaponPoiseRules(combat)
+          : null;
         if (weaponPoiseRules) {
           const aimedEnemy = target?.kind === 'enemy' && target.alive ? target : (living.length === 1 ? living[0] : null);
           const hitCount = Math.max(1, Math.floor(entry.hits || 1));

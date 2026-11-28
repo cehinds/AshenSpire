@@ -7,6 +7,7 @@ import { FaceCostProfile } from './faceCosts.js';
 import { evadeStackGainPhrase } from './fixCoreMechanics.js';
 import { core2MultiHitRulesEnabled } from './core2ActionPolicy.js';
 import { SpellScalingValue, SpellTraditionsActive } from './spellTraditions.js';
+import { PoiseEnabled } from './simpleCombatFlags.js';
 // src/model/playingCard.js — what a playing card IS, with no opinion about
 // how it looks.
 //
@@ -179,6 +180,20 @@ export function CardPresentationContext(def, preview = null, rules = null) {
  * predicate phrase (`condition`), the combat profile, the token bindings and the
  * static tokens. Every card-face text model reads through this one context.
  */
+/**
+ * Whether a Poise damage row is left off a card face: stagger.poise off deals no Poise, so the
+ * "N Poise" clause (or a Ward row merged into it) says nothing true. No profile keeps it.
+ */
+export function PoiseFaceClauseHidden(
+  effect,
+  merged,
+  registries,
+)
+{
+  const poiseRow = effect.op === 'poiseDamage' || Boolean(merged);
+  return poiseRow && !PoiseEnabled(registries);
+}
+
 export function cardSummaryContext(def, preview = null, registries = null, rules = null) {
   const bindings = computeTokenBindings(def.effects || []), tokens = staticCardTokens(def, registries, CardPresentationContext(def, preview, rules));
   const value = (effect, index, field = 'amount') => {
@@ -313,6 +328,12 @@ export function combatCardSummary(def, preview = null, registries = null, rules 
       case 'applyReflect': text = `Gain ${n} Reflect`; break;
       case 'poiseDamage': case 'wardDamage': {
         const merged = poiseMerge?.get(index);
+        const poiseHidden = PoiseFaceClauseHidden(
+          effect,
+          merged,
+          registries,
+        );
+        if (poiseHidden) continue;
         if (merged && !merged.leader) continue; // its figure is in the leader's combined Poise
         const figure = merged ? merged.indices.map(i => value(def.effects[i], i)) : [n];
         if (figure.some(amount => typeof amount !== 'number')) return null;

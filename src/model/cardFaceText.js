@@ -22,7 +22,15 @@ import { EffectiveCostGrowth } from './combatMechanics.js';
 // Returns null for a card with an effect it cannot phrase (the same cases as
 // combatCardSummary). The caller then keeps the authored text.
 
-import { cardSummaryContext, combatCardDamageLabel, splitOf, AllEnemySpread, CardHpLossWording, PlayConditionPhrase } from './playingCard.js';
+import {
+  cardSummaryContext,
+  combatCardDamageLabel,
+  splitOf,
+  AllEnemySpread,
+  CardHpLossWording,
+  PlayConditionPhrase,
+  PoiseFaceClauseHidden,
+} from './playingCard.js';
 import { isSpellCard } from './combatCardProfile.js';
 import { BarrierPoiseFactor, BarrierPoisePerStack } from './combatRatings.js';
 import { spellDefenseSplit } from './spellDefense.js';
@@ -329,6 +337,12 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
         return [...breaks, ...damageFrags];
       }
       case 'poiseDamage': case 'wardDamage': {
+        const poiseHidden = PoiseFaceClauseHidden(
+          effect,
+          poiseMerge?.get(index),
+          registries,
+        );
+        if (poiseHidden) return [];
         // Core 2: the computed return stands for every authored Poise row; a row the return zeroes is not listed.
         if (counter && preview?.counterReturn && !(n > 0)) return [];
         const extraWp = effect.op === 'poiseDamage' && !counter && !weaponPoiseFolded && previewWeaponPoiseTotal > 0 ? previewWeaponPoiseTotal : 0;
