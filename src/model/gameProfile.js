@@ -11,6 +11,7 @@ import { applyRamp, playsEverOf } from './cardRamp.js';
 import { ProjectEnemyContent } from './enemyProjection.js';
 import { ApplyEnemyHpOverrides } from './enemyHpOverride.js';
 import { CardTraditionTags, SpellTraditionsActive } from './spellTraditions.js';
+import { effectScales } from '../content/generated/effectScales.js';
 export { GameConfigError };
 // Catalog profiles are deterministic, so each id is resolved and digested once per process; later
 // resolves return a fresh deep-frozen copy (callers rely on distinct snapshots) instead of re-hashing.
@@ -33,7 +34,29 @@ export function resolveGameProfile(idOrAuthor = 'default') {
 }
 export function validateGameProfileSnapshot(profile) { return validateVerifiedProfile(profile,coreEvasionCompatibleRuntime(profile,gameProfileCatalog.runtimeHash)); }
 function subjectProfile(subject) { return subject?.gameProfile || (subject?.formatVersion === 1 && subject?.modules ? subject : null); }
-export function gameModule(subject,id) { return subjectProfile(subject)?.modules?.[id] || null; }
+const EFFECTS_MODULE = 'effects';
+const DISABLED_EFFECT_SCALES = Object.freeze([...effectScales.disabled]);
+const neutralEffectsByRule = new WeakMap();
+// A disabled scale reads as 1 for every profile, saved snapshots included, without touching the hashed snapshot.
+function NeutralEffects(rule)
+{
+  if (!rule || typeof rule !== 'object') return rule;
+  const cached = neutralEffectsByRule.get(rule);
+  if (cached) return cached;
+  const scaled = DISABLED_EFFECT_SCALES.filter(key => Number.isFinite(rule[key]) && rule[key] !== 1);
+  const neutral = scaled.length
+    ? Object.freeze({ ...rule, ...Object.fromEntries(scaled.map(key => [key, 1])) })
+    : rule;
+  neutralEffectsByRule.set(rule, neutral);
+  return neutral;
+}
+export function gameModule(subject,id)
+{
+  const rule = subjectProfile(subject)?.modules?.[id] || null;
+  return id === EFFECTS_MODULE
+    ? NeutralEffects(rule)
+    : rule;
+}
 export function gameContent(subject,key) { return subjectProfile(subject)?.content?.[key]; }
 // The one "is this the Core game" predicate: a profile, or a run/registries carrying one, authored on the supported Core.
 export function isCoreProfile(subject) { return subjectProfile(subject)?.author?.core === SUPPORTED_CORE; }

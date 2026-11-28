@@ -1,0 +1,17 @@
+{
+  "disabled": [
+    "baseDamageMultiplier",
+    "playerDamageMultiplier",
+    "enemyDamageMultiplier",
+    "physicalDamageMultiplier",
+    "blockGainMultiplier",
+    "strengthDamageWeight",
+    "dexterityBlockWeight",
+    "magicStatWeight",
+    "statusBlockWeight"
+  ],
+  "$note": {
+    "poise": "Poise scales (spellPoiseDamageMultiplier and the Poise conversions) are left out on purpose: Poise is being retired separately.",
+    "disabled": "Effects-module scale factors every profile, saved ones included, reads as 1, so a stored card value is the value played (owner, 2026-11-28)."
+  }
+}
