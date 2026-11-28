@@ -1,6 +1,5 @@
-// Review of #2820 (2026-11-17): a card face read outside combat states the base the card deals under the active profile, so a halved
-// Core base (effects.baseDamageMultiplier 0.5) is printed halved for every maneuver, not only Counter, when read with the run's rules. Its damage token
-// equals the scaled base that combat's first hit of the same card starts from (its receipt's base-damage-scale row).
+// A card face read outside combat states the base the card deals under the active profile, for every maneuver, read with the run's
+// rules. Owner ruling 2026-11-28: the base-damage scale is 1, so the token is the stored base (+ STR), as combat's first hit starts.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -19,8 +18,10 @@ const profile = Profile.resolveGameProfile('default');
 const registries = Profile.bindGameProfileRegistries(createRegistries(Profile.applyGameProfileToContent(contentBundle, profile)), profile);
 const META = { gameProfileUnlocks: { [profile.id]: { completedRunIds: ['a', 'b', 'c'] } } };
 
-test('Strike, Smash, Sweep and Counter faces outside combat state the scaled base combat\'s first hit starts from', () => {
-  assert.equal(profile.modules.effects.baseDamageMultiplier, 0.5);
+const SHIPPED_BASE_SCALE = 1;
+
+test('Strike, Smash, Sweep and Counter faces outside combat state the base combat\'s first hit starts from', () => {
+  assert.equal(profile.modules.effects.baseDamageMultiplier, SHIPPED_BASE_SCALE);
   const run = createRunState({ registries, classId: 'reaver', seed: 7, profileMeta: META });
   const combat = createRunCombat({ registries, run, rng: createRng(7), enemyIds: ['wanderingSoldier'] });
   // Owner, 2026-11-18 (static faces): the run's always-on STR joins the scaled base before the cuts.
@@ -36,14 +37,17 @@ test('Strike, Smash, Sweep and Counter faces outside combat state the scaled bas
     const authored = effects[index].amount;
     for (const rules of [run]) {
       const face = staticCardTokens(def, registries, rules)[binding.token];
-      // Owner, 2026-11-18: the player's side scale (x0.7, floored, never 0) follows the halving; a Counter's armed base takes none (its return is final damage).
-      const side = id === 'core.counter' ? Math.ceil(authored / 2) : Math.max(1, Math.floor((Math.ceil(authored / 2) + STR) * 0.7 * 0.7)); // + the physical x0.7 cut (owner, 2026-11-18, second cut)
-      assert.equal(face, side, `${id} face (run rules): ${authored} halves to ${Math.ceil(authored / 2)}, scaled to ${side}`);
+      // A Counter's armed base takes no STR (its return is final damage); the rest add the run's STR.
+      const expected = id === 'core.counter'
+        ? authored
+        : Math.max(1, authored + STR);
+      assert.equal(face, expected, `${id} face (run rules): ${authored} stored, ${expected} shown`);
       // Combat's own first hit of the card: the receipt's scaled base is the face number (AR, stance and defence add from there).
       const receipt = profileDamageReceipt(combat, combat.player, combat.enemies[0], authored, { ...combatProfileFor(def), counterReturnAttack: false });
       const scaled = receipt.damageReceipt.hits[0].sources.find(row => row.id === 'base-damage-scale')?.effective ?? authored;
-      if (id === 'core.counter') assert.equal(face, scaled, `${id}: the face equals combat's scaled base`);
-      else assert.equal(face, Math.max(1, Math.floor((scaled + STR) * 0.7 * 0.7)), `${id}: the face equals combat's scaled base, then the physical cut and the player side scale`);
+      assert.equal(scaled, authored, `${id}: combat's first hit starts from the stored base`);
+      if (id === 'core.counter') assert.equal(face, scaled, `${id}: the face equals combat's base`);
+      else assert.equal(face, Math.max(1, scaled + STR), `${id}: the face equals combat's base plus STR`);
     }
   }
 });
