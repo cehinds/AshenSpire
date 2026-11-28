@@ -13,23 +13,22 @@ const CORE_AUTHOR = Object.freeze({
 export const REACTION_TAG = ReactionCarriers.tag;
 export const REACTION_CARRIER_IDS = Object.freeze([...ReactionCarriers.cards]);
 
-function withTag(card, cardIds)
+// Tags the named Core cards of a catalog copy in place, so a copy made in another realm
+// (the production bundle) keeps its own objects.
+export function TagReactionCarriers(catalog, cardIds = REACTION_CARRIER_IDS)
 {
-  const tags = card.tags || [];
-  if (!cardIds.includes(card.id) || tags.includes(REACTION_TAG)) return card;
-  return {
-    ...card,
-    tags: [...tags, REACTION_TAG],
-  };
+  for (const card of catalog.packs[ReactionCarriers.pack].content.cards)
+  {
+    if (!cardIds.includes(card.id) || card.tags.includes(REACTION_TAG)) continue;
+    card.tags.push(REACTION_TAG);
+  }
+  return catalog;
 }
 
 // A copy of the profile catalog whose named Core cards carry the Reaction tag.
 export function ReactionCarrierCatalog(cardIds = REACTION_CARRIER_IDS)
 {
-  const catalog = structuredClone(gameProfileCatalog);
-  const content = catalog.packs[ReactionCarriers.pack].content;
-  content.cards = content.cards.map(card => withTag(card, cardIds));
-  return catalog;
+  return TagReactionCarriers(structuredClone(gameProfileCatalog), cardIds);
 }
 
 // Resolves a profile author (the Core bundle by default) on the carrier catalog.

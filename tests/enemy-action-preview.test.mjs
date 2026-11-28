@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { productionBundle } from './helpers/production-bundle.mjs';
-import { REACTION_CARRIER_IDS, REACTION_TAG } from './helpers/reaction-carriers.mjs';
+import { TagReactionCarriers } from './helpers/reaction-carriers.mjs';
 const require = productionBundle();
 const { contentBundle } = require('src/content/index.js');
 const { createRegistries } = require('src/model/registries.js');
@@ -18,16 +18,11 @@ const profile = resolveGameProfile('core');
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const { resolveGameAuthor, dataClone } = require('engine/kernel/gameConfig.js');
 const { gameProfileCatalog, gameProfileAuthors } = require('src/content/generated/gameProfiles.js');
-const CORE_CONTENT_PACK = 'ashen.core-content@2.0.0';
 // The bundle checks its own realm's plain objects, so the Reaction tag is added to a bundle-made
 // copy of the catalog (tests/fixtures/reaction-carriers.json; owner ruling 2026-11-28).
 function bundledCarrierRegistries()
 {
-  const catalog = dataClone(gameProfileCatalog);
-  for (const card of catalog.packs[CORE_CONTENT_PACK].content.cards)
-  {
-    if (REACTION_CARRIER_IDS.includes(card.id)) card.tags.push(REACTION_TAG);
-  }
+  const catalog = TagReactionCarriers(dataClone(gameProfileCatalog));
   const carrierProfile = resolveGameAuthor(gameProfileAuthors.core, catalog);
   const content = applyGameProfileToContent(contentBundle, carrierProfile);
   return bindGameProfileRegistries(createRegistries(content), carrierProfile);

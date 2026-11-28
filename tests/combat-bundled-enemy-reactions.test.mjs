@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { productionBundle } from './helpers/production-bundle.mjs';
-import { REACTION_CARRIER_IDS, REACTION_TAG } from './helpers/reaction-carriers.mjs';
+import { TagReactionCarriers } from './helpers/reaction-carriers.mjs';
 
 // Use main's real compiled import order: native ESM bindings hide this cycle.
 const require = productionBundle();
@@ -18,17 +18,12 @@ const { previewCard, previewIntent } = require('src/engine/combat.js');
 const { CounterPreviewAgainst } = require('src/engine/combatCounterPreview.js');
 const { resolveGameAuthor, dataClone } = require('engine/kernel/gameConfig.js');
 const { gameProfileCatalog, gameProfileAuthors } = require('src/content/generated/gameProfiles.js');
-const CORE_CONTENT_PACK = 'ashen.core-content@2.0.0';
 
 // The bundle checks its own realm's plain objects, so the Reaction tag is added to a bundle-made
 // copy of the catalog (tests/fixtures/reaction-carriers.json; owner ruling 2026-11-28).
 function bundledCarrierProfile()
 {
-  const catalog = dataClone(gameProfileCatalog);
-  for (const card of catalog.packs[CORE_CONTENT_PACK].content.cards)
-  {
-    if (REACTION_CARRIER_IDS.includes(card.id)) card.tags.push(REACTION_TAG);
-  }
+  const catalog = TagReactionCarriers(dataClone(gameProfileCatalog));
   return resolveGameAuthor(gameProfileAuthors.core, catalog);
 }
 
