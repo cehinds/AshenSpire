@@ -424,36 +424,23 @@ function attachOptionalFields(targetObject, fieldEntries)
   return targetObject;
 }
 
-function buildDamageDealtEvent(source, target, receipt, carrier, hpBefore)
+// The key order is part of the event log a seeded fight is pinned by, so it follows the original emit.
+function damageCardFields(carrier)
 {
-  const hpRemoved = Math.max(0, Math.min(receipt.hpLoss, hpBefore));
   const hasCardInstance = Boolean(carrier.instanceId);
   const hasUsedArmament = hasCardInstance && Object.hasOwn(carrier, 'usedArmamentId');
 
-  const damageEvent = {
-    sourceId: source?.id || null,
-    targetId: target.id,
-    amount: receipt.amount,
-    blocked: receipt.blocked,
-    hpLoss: receipt.hpLoss,
-    hpRemoved,
-    poiseMitigated: receipt.poiseMitigated,
-    poiseAbsorbed: receipt.poiseMitigated,
-    wardMitigated: receipt.wardMitigated,
-    damageReceipt: receipt.damageReceipt,
-    evaded: receipt.evaded,
-    advantage: receipt.advantage,
-    blockRemaining: target.block,
-    wardRemaining: target.persistentWard?.value,
-    poiseRemaining: target.persistentPoise?.value,
-    isAttack: true,
-  };
-
-  return attachOptionalFields(damageEvent, [
+  return [
     [hasCardInstance, 'cardInstanceId', carrier.instanceId],
     [hasCardInstance, 'sourceHand', carrier.sourceHand],
     [hasCardInstance, 'grantedBy', carrier.grantedBy],
     [hasUsedArmament, 'usedArmamentId', carrier.usedArmamentId],
+  ];
+}
+
+function damageProtectionFields(target, receipt)
+{
+  return [
     [Boolean(target.broken), 'targetBroken', true],
     [Boolean(receipt.wardHpAbsorbed), 'wardAbsorbed', receipt.wardHpAbsorbed],
     [Boolean(receipt.wardHpAbsorbed), 'wardHpBuffer', true],
@@ -466,8 +453,42 @@ function buildDamageDealtEvent(source, target, receipt, carrier, hpBefore)
     [Boolean(receipt.poiseDrain), 'poiseDamage', receipt.poiseDrain],
     [Boolean(receipt.broken?.block), 'blockBroken', receipt.broken?.block],
     [Boolean(receipt.broken?.poise), 'poiseBroken', receipt.broken?.poise],
+  ];
+}
+
+function buildDamageDealtEvent(source, target, receipt, carrier, hpBefore)
+{
+  const damageEvent = {
+    sourceId: source?.id || null,
+    targetId: target.id,
+  };
+
+  attachOptionalFields(damageEvent, damageCardFields(carrier));
+  Object.assign(damageEvent, {
+    amount: receipt.amount,
+    blocked: receipt.blocked,
+    hpLoss: receipt.hpLoss,
+    hpRemoved: Math.max(0, Math.min(receipt.hpLoss, hpBefore)),
+    poiseMitigated: receipt.poiseMitigated,
+    poiseAbsorbed: receipt.poiseMitigated,
+  });
+  attachOptionalFields(damageEvent, damageProtectionFields(target, receipt));
+  Object.assign(damageEvent, {
+    wardMitigated: receipt.wardMitigated,
+    damageReceipt: receipt.damageReceipt,
+    evaded: receipt.evaded,
+    advantage: receipt.advantage,
+  });
+  attachOptionalFields(damageEvent, [
     [Boolean(receipt.weaknesses?.length), 'weaknesses', receipt.weaknesses],
   ]);
+
+  return Object.assign(damageEvent, {
+    blockRemaining: target.block,
+    wardRemaining: target.persistentWard?.value,
+    poiseRemaining: target.persistentPoise?.value,
+    isAttack: true,
+  });
 }
 
 function attachFlatBreakToCarrier(carrier, effect, hitIndex)

@@ -40,6 +40,8 @@ const preRetreatProfile = JSON.parse(gunzipSync(readFileSync(new URL('./fixtures
 // c18f0d0cdb6 replay inputs outside the resolved profile envelope. Current
 // scenarios still use the shipping table and weapon Poise rule.
 const historicalDerivedStats = JSON.parse(readFileSync(new URL('./fixtures/js01-pre-equipment-derived-stat-rules.json', import.meta.url)));
+// The Smash share of the target's Block that saved fights carried before the flat break.
+const SAVED_SMASH_BLOCK_FRACTION = 0.25;
 const legacyPoiseKeys = ['drain', 'breakRule', 'brokenDamageMultiplier', 'breakStatusStacks'];
 
 function fight([seed, classId], archivedProfile = null, equipment = null) {
@@ -77,6 +79,17 @@ function withoutGearPierce(combat) {
   {
     combat.fixCoreRules.spellCosts = LegacySpellCostBlock();
   }
+  return withSavedSmashBlockFraction(combat);
+}
+function withSavedSmashBlockFraction(combat)
+{
+  // A fight saved before the flat Smash break still carries `blockFraction`; the engine loads and ignores it (SPEC §17).
+  const { poiseFraction, ...leading } = combat.fixCoreRules.smashVsDefensive;
+  combat.fixCoreRules.smashVsDefensive = {
+    ...leading,
+    blockFraction: SAVED_SMASH_BLOCK_FRACTION,
+    poiseFraction,
+  };
   return combat;
 }
 function preGearFight(setup, profile = legacyGearProfile(preRetreatProfile)) {
