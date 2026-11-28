@@ -282,17 +282,29 @@ test('rule 5: a Prepared target takes x1.25 from a melee hit, and nothing extra 
   }
 });
 
+// Owner ruling 2026-11-28 ships Attack's damage factor as 1; this fight keeps 1.2, the arithmetic these pins were taken on.
+const ATTACK_STANCE_FACTOR = 1.2;
+function withAttackFactor(rules, adjust = null)
+{
+  rules.stanceBenefits.attack = { ...rules.stanceBenefits.attack, damageMultiplier: ATTACK_STANCE_FACTOR };
+  adjust?.(rules);
+}
+
 test('decision 1: an advantage over Prepared and its melee weakness never stack; the hit takes the larger', () => {
-  const dropWeakness = rules => { delete rules.stanceBenefits.prepared.meleeDamageTakenMultiplier; };
+  const dropWeakness = rules => withAttackFactor(rules, () => { delete rules.stanceBenefits.prepared.meleeDamageTakenMultiplier; });
+  const setWeakness = multiplier => rules => withAttackFactor(rules, () =>
+  {
+    rules.stanceBenefits.prepared.meleeDamageTakenMultiplier = multiplier;
+  });
   for (const carrier of [PHYSICAL, SMASH]) {
     const name = carrier.combatProfile.maneuver;
-    const both = weaknessReceipt(carrier, 'casting'), advantageOnly = weaknessReceipt(carrier, 'casting', { rules: dropWeakness });
+    const both = weaknessReceipt(carrier, 'casting', { rules: withAttackFactor }), advantageOnly = weaknessReceipt(carrier, 'casting', { rules: dropWeakness });
     assert.equal(both.hpLoss, advantageOnly.hpLoss, `${name}: x1.25 in all, not x1.5625`);
     const advantageStage = both.damageReceipt.hits[0].sources.find(row => row.id === 'stance-advantage' || row.id === 'smash-vs-defensive');
     assert.equal(advantageStage, undefined, `${name}: the advantage adds nothing over an equal weakness`);
-    const bigger = weaknessReceipt(carrier, 'casting', { rules: rules => { rules.stanceBenefits.prepared.meleeDamageTakenMultiplier = 1.5; } });
+    const bigger = weaknessReceipt(carrier, 'casting', { rules: setWeakness(1.5) });
     assert.ok(Math.abs(bigger.hpLoss - advantageOnly.hpLoss / 1.25 * 1.5) <= 1, `${name}: a larger weakness wins (x1.5): ${bigger.hpLoss}`);
-    const smaller = weaknessReceipt(carrier, 'casting', { rules: rules => { rules.stanceBenefits.prepared.meleeDamageTakenMultiplier = 1.1; } });
+    const smaller = weaknessReceipt(carrier, 'casting', { rules: setWeakness(1.1) });
     assert.equal(smaller.hpLoss, advantageOnly.hpLoss, `${name}: a smaller weakness leaves the x1.25 advantage`);
   }
 });
