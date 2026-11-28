@@ -313,6 +313,19 @@ test('decision 1: an advantage over Prepared and its melee weakness never stack;
   }
 });
 
+// 40 x 1.1, then the advantage stage's 1.25 / 1.1, must floor to 50 at the shipped Attack factor of 1.
+const SMALL_WEAKNESS = 1.1;
+const ADVANTAGE_OVER_SMALL_WEAKNESS_HIT = 50;
+test('an advantage over a smaller weakness floors to its exact product, without float drift', () =>
+{
+  const setSmallWeakness = rules =>
+  {
+    rules.stanceBenefits.prepared.meleeDamageTakenMultiplier = SMALL_WEAKNESS;
+  };
+  const smaller = weaknessReceipt(PHYSICAL, 'casting', { rules: setSmallWeakness });
+  assert.equal(smaller.hpLoss, ADVANTAGE_OVER_SMALL_WEAKNESS_HIT);
+});
+
 test('rule 5: an Idle target (no stance) takes x1.25 from every hit, melee, ranged and magic', () => {
   for (const carrier of [PHYSICAL, RANGED, MAGIC]) {
     const on = weaknessReceipt(carrier, null);

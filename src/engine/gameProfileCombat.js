@@ -210,6 +210,17 @@ export function PacketFaceSplit(ctx, source, carrier, authoredBase, total) {
 export const PacketMagicMultiplier = flux => Offense.PacketMagicMultiplier(flux);
 const BREAK_BLOCK_SOURCE_ID = 'break-block';
 const BREAK_POISE_SOURCE_ID = 'break-poise';
+// Stage products snap to this many decimal places, so a ratio that undoes a weakness floors exactly.
+const STAGE_PRODUCT_PRECISION = 1e9;
+
+function StageProduct(value, multiplier)
+{
+  if (multiplier === 1)
+  {
+    return value;
+  }
+  return Math.round(value * multiplier * STAGE_PRODUCT_PRECISION) / STAGE_PRODUCT_PRECISION;
+}
 
 /** Return a carrier copy without flat break fields, or the original if none were set. */
 export function StripFlatBreakCarrier(carrier)
@@ -799,8 +810,9 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
   // Owner, 2026-11-17 (stance decisions): a stance advantage and the target's stance weakness (Attack or Smash beating Prepared, and Prepared's melee
   // weakness) never stack: the hit takes the larger of the two. The weakness already sits in `raw`, so the advantage stage adds only what it exceeds.
   const advantageMultiplier = matchupMultiplier > 1 && weaknessMultiplier > 1 ? Math.max(matchupMultiplier, weaknessMultiplier) / weaknessMultiplier : matchupMultiplier;
-  let amount=smashRule ? transition('smash-vs-defensive','Smash vs defensive stance',raw,raw*advantageMultiplier,'stance',advantageMultiplier)
-    : transition('stance-advantage','Offensive stance advantage',raw,raw*advantageMultiplier,'stance',advantageMultiplier);
+  const advantaged = StageProduct(raw, advantageMultiplier);
+  let amount=smashRule ? transition('smash-vs-defensive','Smash vs defensive stance',raw,advantaged,'stance',advantageMultiplier)
+    : transition('stance-advantage','Offensive stance advantage',raw,advantaged,'stance',advantageMultiplier);
   // Owner, 2026-11-03: the number shown ahead of a hit is the raw hit, changed only by stances and statuses (attacker Strength/Weak, defender
   // Vulnerable, stance matchups) and damage-type weakness/resistance, never by what the defender does about it (defensive stance, Reflect, Block,
   // Poise, Ward, Barrier, Counter, Evade, AC, an ally's Guard interception, owner 2026-11-04). Display only: `amount`/`hpLoss` below still drive resolution unchanged.
