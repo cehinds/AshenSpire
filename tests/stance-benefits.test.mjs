@@ -1,4 +1,5 @@
 // Owner, 2026-11-14 (Wave 2.5): each stance has its own natural benefit, on top of the unchanged matchup table, for players AND enemies.
+// Owner ruling 2026-11-28: shipped damage and Block factors are 1; STANCE_FACTORS covers the hooks.
 //   Attack +20% damage | Smash +50% Poise damage | Sweep: no extra benefit (owner: sweeps are AoE for full damage; the splash hook stays inert, covered with an explicit fixture) | Counter +25% Block, returns 25% of HP lost
 //   Defend +50% Block, -25% Poise damage taken | Prepared spells +25% damage | neutral: the player draws 1 extra card next turn.
 // Numbers live in fixCoreMechanics.json `stanceBenefits`; a fight created before the ruling has no block and plays today's rules.
@@ -9,16 +10,57 @@ import { validateFixCoreRules } from '../src/model/fixCoreMechanics.js';
 import * as Benefits from '../src/engine/stanceBenefits.js';
 
 const modern = rules => ({ combatExpansionVersion: 2, fixCoreRules: rules, gameProfile: { modules: { effects: { fixCoreVersion: 1 } } } });
-const fight = modern(shipped);
+// Damage and Block factors a fight's own rules can carry (the shipped ones are 1).
+const STANCE_FACTORS = Object.freeze({
+  attackDamage: 1.2,
+  preparedDamage: 1.25,
+  counterBlock: 1.25,
+  defendBlock: 1.5,
+});
+const SHIPPED_FACTOR = 1;
+function withStanceFactors(rules)
+{
+  const benefits = rules.stanceBenefits;
+  return {
+    ...rules,
+    stanceBenefits: {
+      ...benefits,
+      attack: { ...benefits.attack, damageMultiplier: STANCE_FACTORS.attackDamage },
+      prepared: { ...benefits.prepared, damageMultiplier: STANCE_FACTORS.preparedDamage },
+      counter: { ...benefits.counter, blockMultiplier: STANCE_FACTORS.counterBlock },
+      defend: { ...benefits.defend, blockMultiplier: STANCE_FACTORS.defendBlock },
+    },
+  };
+}
+const fight = modern(withStanceFactors(shipped));
 const old = modern((({ stanceBenefits, ...rest }) => rest)(shipped));
 // Owner, 2026-11-14: a Sweep has no extra benefit in the shipped data; the splash hook is kept inert and is exercised through this explicit fixture.
 const withSplash = rules => ({ ...rules, stanceBenefits: { ...rules.stanceBenefits, sweep: { splashFraction: 0.5 } } });
 const card = maneuver => ({ combatProfile: { camp: maneuver === 'prepared' ? 'spell' : 'physical', maneuver, range: 'melee' } });
 
 test('shipped data holds the approved numbers and the validator guards them', () => {
-  assert.deepEqual(shipped.stanceBenefits, { version: 1, attack: { damageMultiplier: 1.2 }, smash: { poiseDamageBonus: 0.5 },
-    counter: { blockMultiplier: 1.25 }, defend: { blockMultiplier: 1.5, poiseDamageTakenMultiplier: 0.75, poiseFloorWhileBlock: 1, poiseFloorWardMagic: 1 },
-    prepared: { damageMultiplier: 1.25, meleeDamageTakenMultiplier: 1.25 }, neutral: { extraDrawNextTurn: 1, damageTakenMultiplier: 1.25 } });
+  assert.deepEqual(shipped.stanceBenefits, {
+    version: 1,
+    attack: { damageMultiplier: SHIPPED_FACTOR },
+    smash: { poiseDamageBonus: 0.5 },
+    counter: { blockMultiplier: SHIPPED_FACTOR },
+    defend: {
+      blockMultiplier: SHIPPED_FACTOR,
+      poiseDamageTakenMultiplier: 0.75,
+      poiseFloorWhileBlock: 1,
+      poiseFloorWardMagic: 1,
+    },
+    prepared: {
+      damageMultiplier: SHIPPED_FACTOR,
+      meleeDamageTakenMultiplier: 1.25,
+    },
+    neutral: {
+      extraDrawNextTurn: 1,
+      damageTakenMultiplier: 1.25,
+    },
+  });
+  const fixture = withStanceFactors(shipped);
+  assert.doesNotThrow(() => validateFixCoreRules(fixture), 'the fixture factors stay valid');
   assert.doesNotThrow(() => validateFixCoreRules(shipped));
   assert.doesNotThrow(() => validateFixCoreRules((({ stanceBenefits, ...rest }) => rest)(shipped)), 'a block saved before the ruling stays valid');
   const bad = patch => validateFixCoreRules({ ...shipped, stanceBenefits: { ...shipped.stanceBenefits, ...patch } });
@@ -59,7 +101,7 @@ test("every Spell takes Prepared's +25%, even a mirrored spell that enters Attac
   assert.equal(Benefits.AttackDamageMultiplier(fight, player, card('attack')), 1.2, "a physical Attack keeps Attack's +20%");
   assert.equal(Benefits.AttackDamageMultiplier(fight, player, { ...mirrored('attack'), counterReturnAttack: true }), 1, 'a return hit never gets one');
   assert.deepEqual(Benefits.PoiseLossAdjust(fight, enemy, mirrored('smash'), 'attack', { taken: 8, pool: 20 }), { extra: 4, spared: 0 });
-  const legacy = modern({ ...shipped, spellTraditionsVersion: 0 });
+  const legacy = modern(withStanceFactors({ ...shipped, spellTraditionsVersion: 0 }));
   assert.equal(Benefits.AttackDamageMultiplier(legacy, player, mirrored('attack')), 1.2, "a fight saved without spell traditions keeps Attack's row");
 });
 
@@ -120,6 +162,7 @@ function live({ benefits = true, enemies = ['wanderingSoldier'], poise = 0, bloc
   const run = createRunState({ registries: reg, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: enemies });
   if (!benefits) { const { stanceBenefits, ...rest } = combat.fixCoreRules; combat.fixCoreRules = rest; }
+  else combat.fixCoreRules = withStanceFactors(combat.fixCoreRules);
   if (!idleWeakness) delete combat.fixCoreRules.stanceBenefits?.neutral?.damageTakenMultiplier;
   for (const target of combat.enemies) {
     Object.assign(target, { hp: 500, maxHp: 500, block, barrier: 0, statuses: {}, persistentPoise: { value: poise, max: Math.max(20, poise) }, attributes: { dexterity: 0 }, ratings: { ar: 0, dr: 0, pr: 0, ward: 0, poise: 20 } });
@@ -132,12 +175,19 @@ function live({ benefits = true, enemies = ['wanderingSoldier'], poise = 0, bloc
 const strike = (combat, from, to, amount, carrier) => { primeAccuracyRolls(combat); applyAttackDamage(combat, from, to, amount, [], carrier); return combat.eventLog.filter(row => row.type === 'damageDealt').at(-1); };
 
 test('Attack +20% and Prepared +25%: shown (preview) equals dealt, for a player and for an enemy; the old rules deal the printed number', () => {
-  for (const [maneuver, camp, expected] of [['attack', 'physical', 6], ['prepared', 'spell', 6], ['smash', 'physical', 5], ['sweep', 'physical', 5]]) {
+  const cases = [
+    ['attack', 'physical', 12],
+    ['prepared', 'spell', 12],
+    ['smash', 'physical', 10],
+    ['sweep', 'physical', 10],
+  ];
+  for (const [maneuver, camp, expected] of cases) {
     const carrier = carrierOf(maneuver === 'prepared' ? 'casting' : maneuver, camp);
     const { combat, target } = live({ idleWeakness: false });
     const shown = previewDamageHits(combat, combat.player, target, 10, [], carrier, 1).hitDamages[0];
     const dealt = strike(combat, combat.player, target, 10, carrier);
-    // The Core base-damage scale halves the printed 10 to 5 (rounded up); 5 x 1.25 = 6.25 floors to 6; every row here lands on 6 or the scaled 5.
+    // Damage is 1:1 (owner ruling 2026-11-28): 10 x 1.2 = 12, 10 x 1.25 floors to 12,
+    // and the rest deal the printed 10.
     assert.equal(500 - target.hp, expected, `${maneuver} deals ${expected}`);
     assert.equal(shown, 500 - target.hp, `${maneuver}: the quote is the HP lost`);
     assert.ok(dealt);
@@ -145,12 +195,12 @@ test('Attack +20% and Prepared +25%: shown (preview) equals dealt, for a player 
   { // an enemy in Attack stance hits the player for +20%
     const { combat, target } = live({ idleWeakness: false });
     const hit = strike(combat, target, combat.player, 10, carrierOf('attack'));
-    assert.equal(500 - combat.player.hp, 6); assert.ok(hit); // 10 halved to 5, x1.25 floors to 6
+    assert.equal(500 - combat.player.hp, 12); assert.ok(hit); // 10 x 1.2
   }
   { // the old rules (a fight created before the ruling): the printed number
     const { combat, target } = live({ benefits: false });
     strike(combat, combat.player, target, 10, carrierOf('attack'));
-    assert.equal(500 - target.hp, 5); // the printed 10, halved by the Core base-damage scale
+    assert.equal(500 - target.hp, 10); // the printed 10
   }
 });
 
@@ -317,8 +367,8 @@ test('a fight saved before the ruling keeps today\'s stance rules after a save a
     Object.assign(target, { hp: 500, block: 0, persistentPoise: { value: 0, max: 20 } });
     delete target.weaknesses; // a loaded fight re-reads its enemies' weaknesses (SPEC 5.3); this test is about stance rules
     strike(loaded, loaded.player, target, 10, carrierOf('attack'));
-    // With the rules: Attack's x1.2 on a stance-less (Idle) target, which takes x1.25 too (theme B, 2026-11-17), on the printed 10 halved to 5
-    // by the Core base-damage scale (theme A): floor(5 x 1.2 x 1.25) = 7; without them the halved 5.
-    assert.equal(500 - target.hp, benefits ? 7 : 5);
+    // With the rules: Attack's x1.2 on a stance-less (Idle) target, which takes x1.25 too:
+    // floor(10 x 1.2 x 1.25) = 15; without them 10.
+    assert.equal(500 - target.hp, benefits ? 15 : 10);
   }
 });
