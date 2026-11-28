@@ -41,7 +41,9 @@ test('every class starts at 3 + effective INT cards and each INT adds one', () =
   }
   // Check every value across the old four-point thresholds.
   const cards = int => profileHandSize(fight('reaver', { attributes: { intelligence: int } }).combat);
-  const gear = fight('reaver').combat.player.attributes.intelligence - 1;
+  // The INT the Reaver's gear adds over its own base INT.
+  const reaver = fight('reaver');
+  const gear = reaver.combat.player.attributes.intelligence - reaver.run.attributes.intelligence;
   const at = int => 3 + int + gear;
   for (const int of [1, 2, 3, 4, 5, 6, 7, 8]) assert.equal(cards(int), at(int), `INT ${int}`);
 });
@@ -51,10 +53,14 @@ test('each DEX adds one max SP and each WIS adds one max MP', () => {
     const { combat } = fight(classId);
     const a = createRunState({ registries, classId, seed: 31, profileMeta: META }).attributes;
     const sp = combat.player.maxStamina, mp = combat.player.maxMana;
-    const raisedDex = fight(classId, { attributes: { dexterity: a.dexterity + 4 } }).combat.player.maxStamina;
-    const raisedWis = fight(classId, { attributes: { wisdom: a.wisdom + 4 } }).combat.player.maxMana;
-    assert.equal(raisedDex - sp, 4, `${classId}: four more DEX is four more SP`);
-    assert.equal(raisedWis - mp, 4, `${classId}: four more WIS is four more MP`);
+    // A gear penalty on a 0 base stat is floored at 0, so the SP and MP follow the effective stat.
+    const dexFight = fight(classId, { attributes: { dexterity: a.dexterity + 4 } }).combat;
+    const wisFight = fight(classId, { attributes: { wisdom: a.wisdom + 4 } }).combat;
+    const dexGain = dexFight.player.attributes.dexterity - combat.player.attributes.dexterity;
+    const wisGain = wisFight.player.attributes.wisdom - combat.player.attributes.wisdom;
+    assert.ok(dexGain > 0 && wisGain > 0, `${classId}: four more base points raise the effective stats`);
+    assert.equal(dexFight.player.maxStamina - sp, dexGain, `${classId}: each effective DEX is one more SP`);
+    assert.equal(wisFight.player.maxMana - mp, wisGain, `${classId}: each effective WIS is one more MP`);
     assert.equal(fight(classId, { attributes: { intelligence: a.intelligence + 4 } }).combat.player.maxMana, mp, `${classId}: INT buys no Mana`);
   }
 });
