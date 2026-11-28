@@ -41,7 +41,8 @@ test('configured Counter face describes Block and its deferred return', async ()
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const lines = cardFaceLines(projectGameCard(profile, 'core.counter'), null, registries).map(row => row.html).join(' ');
   assert.match(lines, /Block/);
-  assert.match(lines, /^Gain <span class="val">5<\/span> Block Counter <span class="val">4<\/span>/);
+  // Owner ruling 2026-11-28: a face with no run shows the stored 1:1 numbers (3 Block, return 1).
+  assert.match(lines, /^Gain <span class="val">3<\/span> Block Counter <span class="val">1<\/span>/);
   assert.doesNotMatch(lines, /Prepare|Melee|return|damage/);
   assert.doesNotMatch(lines, /Inflict/);
 });
@@ -71,6 +72,7 @@ test('configured long damage faces retain type, damage and Poise in compact word
   const def = applyCombatExpansionCard(registries.cards.get('sunderingChop'));
   const lines = cardFaceLines(def, null, registries, null, { stanceEntry: false });
   const text = lines.map(row => row.html.replace(/<[^>]+>/g, ''));
-  assert.equal(text[0], '9 Blunt damage, 7 Poise');
+  // Owner ruling 2026-11-28: the stored damage is the 1:1 number.
+  assert.equal(text[0], '3 Blunt damage, 7 Poise');
   assert.doesNotMatch(text[0], /Inflict|Poise damage/);
 });
