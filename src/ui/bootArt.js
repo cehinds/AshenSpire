@@ -26,10 +26,35 @@ import { uiConfig } from '../config/generated/ui.js';
 import { packsPinned } from './assetPacks.js';
 import { UiShortText, UiFullText } from './strings.js';
 
+function isObject(value)
+{
+  return value !== null && typeof value === 'object';
+}
+
+function isPositiveNumber(value)
+{
+  return Number.isFinite(value) && value > 0;
+}
+
+// A missing or malformed startupGate key fails at load, naming the key, not later as NaN.
+function requireConfig(path, value, isValid)
+{
+  if (!isValid(value))
+  {
+    throw new Error(`bootArt: ui config ${path} is missing or invalid (${JSON.stringify(value)})`);
+  }
+  return value;
+}
+
 const LOADING = uiConfig.presentation.startupGate;
-const ART_LOADING_BEHAVIOR = LOADING.behavior.artLoading;
+const BEHAVIOR_PATH = 'presentation.startupGate.behavior.artLoading';
+const ART_LOADING_BEHAVIOR = requireConfig(BEHAVIOR_PATH, LOADING?.behavior?.artLoading, isObject);
 // Each phase's line: the state it paints and its uiStrings row; null draws no line.
-const PHASE_LINES = ART_LOADING_BEHAVIOR.phaseLines;
+const PHASE_LINES = requireConfig(
+  `${BEHAVIOR_PATH}.phaseLines`,
+  ART_LOADING_BEHAVIOR.phaseLines,
+  isObject,
+);
 const PHASE = Object.freeze(
   {
     OFF: 'off',
@@ -42,6 +67,9 @@ const PHASE = Object.freeze(
 const LINE_LOADING = 'loading';
 const ART_LOADED = 'loaded';
 const ANY_ORIENTATION = 'any';
+const PORTRAIT = 'portrait';
+const LANDSCAPE = 'landscape';
+const PORTRAIT_QUERY = '(orientation: portrait)';
 const TEXT_BY_FORM = Object.freeze(
   {
     short: UiShortText,
@@ -55,26 +83,54 @@ const TEXT_BY_FORM = Object.freeze(
  * phone cut, kit.css `@media (orientation: portrait)`) is tagged, so a screen
  * warms only the one its CSS will ask for.
  */
-export const CRITICAL_SET = Object.freeze((LOADING.components.artLoading?.critical || []).map((entry) => Object.freeze(
-  typeof entry === 'string' ? { id: entry, orientation: ANY_ORIENTATION } : { id: String(entry.id), orientation: entry.orientation || ANY_ORIENTATION },
-)));
+function criticalEntry(entry)
+{
+  const parsed = typeof entry === 'string'
+    ? { id: entry, orientation: ANY_ORIENTATION }
+    : { id: String(entry.id), orientation: entry.orientation || ANY_ORIENTATION };
+  return Object.freeze(parsed);
+}
+
+export const CRITICAL_SET = Object.freeze(
+  (LOADING.components.artLoading?.critical || []).map(criticalEntry),
+);
 /** How long the line may count before it is cleared; the files keep loading. */
-export const CRITICAL_WAIT_MS = Number(ART_LOADING_BEHAVIOR.criticalWaitMs);
+export const CRITICAL_WAIT_MS = requireConfig(
+  `${BEHAVIOR_PATH}.criticalWaitMs`,
+  ART_LOADING_BEHAVIOR.criticalWaitMs,
+  isPositiveNumber,
+);
 /**
  * A Retry's deadline (src/ui/artTier.js retryBuiltInArt). Nothing waits on a
  * Retry, so it is not the boot's BOOT_WAIT_MS: a link too slow to bring the art
  * index in 8 s must still be able to bring it on a Retry (review of #1471).
  */
-export const RETRY_WAIT_MS = Number(ART_LOADING_BEHAVIOR.retryWaitMs);
+export const RETRY_WAIT_MS = requireConfig(
+  `${BEHAVIOR_PATH}.retryWaitMs`,
+  ART_LOADING_BEHAVIOR.retryWaitMs,
+  isPositiveNumber,
+);
 
 /** This screen's orientation, as the stylesheets' media queries read it. */
 export function screenOrientation(win = globalThis) {
-  try { return win.matchMedia?.('(orientation: portrait)')?.matches ? 'portrait' : 'landscape'; } catch { return 'landscape'; }
+  try
+  {
+    const portrait = win.matchMedia?.(PORTRAIT_QUERY)?.matches;
+    return portrait
+      ? PORTRAIT
+      : LANDSCAPE;
+  }
+  catch
+  {
+    return LANDSCAPE;
+  }
 }
 
 /** The critical ids for one orientation: the untagged ones and those tagged for it. */
 export function criticalIds(orientation = screenOrientation(), set = CRITICAL_SET) {
-  return set.filter((e) => e.orientation === ANY_ORIENTATION || e.orientation === orientation).map((e) => e.id);
+  const fitsScreen = (entry) => entry.orientation === ANY_ORIENTATION
+    || entry.orientation === orientation;
+  return set.filter(fitsScreen).map((entry) => entry.id);
 }
 
 /** The attribute every element that shows the line carries. */
@@ -194,18 +250,51 @@ export function warmCriticalSet({
  * `source()` the map it published. Phase: index → (warming → done) | failed.
  * Returns a promise that settles when the line has nothing more to say.
  */
-export function startBootArt({ settled, source, pinned = packsPinned(), doc = globalThis.document, warm = warmCriticalSet } = {}) {
+export function startBootArt(
+  {
+    settled,
+    source,
+    pinned = packsPinned(),
+    doc = globalThis.document,
+    warm = warmCriticalSet,
+  } = {},
+)
+{
   const mine = ++runId;
-  if (!pinned || !settled) { setPhase({ state: PHASE.OFF }, doc); return Promise.resolve(phase); }
-  setPhase({ state: PHASE.INDEX }, doc);
-  return Promise.resolve(settled).then(async (status) => {
-    if (mine !== runId) return phase;
-    if (!status || status.state !== ART_LOADED) { setPhase({ state: PHASE.FAILED }, doc); return phase; }
-    const map = typeof source === 'function' ? source() : null;
-    await warm({ map, onProgress: (done, total) => { if (mine === runId) setPhase({ state: PHASE.WARMING, done, total }, doc); } });
-    if (mine === runId) setPhase({ state: PHASE.DONE }, doc);
+  const isCurrentRun = () => mine === runId;
+  const setCurrentPhase = (state) =>
+  {
+    if (isCurrentRun())
+    {
+      setPhase(state, doc);
+    }
     return phase;
-  }, () => { if (mine === runId) setPhase({ state: PHASE.FAILED }, doc); return phase; });
+  };
+  if (!pinned || !settled)
+  {
+    setPhase({ state: PHASE.OFF }, doc);
+    return Promise.resolve(phase);
+  }
+  setPhase({ state: PHASE.INDEX }, doc);
+  const warmAfterIndex = async (status) =>
+  {
+    if (!isCurrentRun())
+    {
+      return phase;
+    }
+    if (!status || status.state !== ART_LOADED)
+    {
+      return setCurrentPhase({ state: PHASE.FAILED });
+    }
+    const map = typeof source === 'function'
+      ? source()
+      : null;
+    const onProgress = (done, total) => setCurrentPhase({ state: PHASE.WARMING, done, total });
+    await warm({ map, onProgress });
+    return setCurrentPhase({ state: PHASE.DONE });
+  };
+  const failIndex = () => setCurrentPhase({ state: PHASE.FAILED });
+  return Promise.resolve(settled).then(warmAfterIndex, failIndex);
 }
 
 /**
