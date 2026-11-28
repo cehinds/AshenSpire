@@ -22,6 +22,27 @@ const ATTACK_STANCE = 'attack';
 const DEFEND_STANCE = 'defend';
 const NEUTRAL_STANCE = 'neutral';
 const PROBE = SimpleCombatFixture.stanceProbe;
+// Owner ruling 2026-11-28 ships the Attack and Defend factors as 1; the fight's own rules carry these.
+const STANCE_FACTORS = Object.freeze({
+  attackDamage: 1.2,
+  defendBlock: 1.5,
+});
+
+function withStanceFactors(combat)
+{
+  const benefits = combat.fixCoreRules.stanceBenefits;
+  const attack = { ...benefits.attack, damageMultiplier: STANCE_FACTORS.attackDamage };
+  const defend = { ...benefits.defend, blockMultiplier: STANCE_FACTORS.defendBlock };
+  combat.fixCoreRules = {
+    ...combat.fixCoreRules,
+    stanceBenefits: {
+      ...benefits,
+      attack,
+      defend,
+    },
+  };
+  return combat;
+}
 
 function inStance(entity, maneuver)
 {
@@ -60,7 +81,7 @@ function discountReadings(combat)
 
 test('stances.builtInBenefits on: Attack, Defend and Idle keep their bonuses', () =>
 {
-  const readings = benefitReadings(SimpleCombatFight(SimpleCombatRegistries()));
+  const readings = benefitReadings(withStanceFactors(SimpleCombatFight(SimpleCombatRegistries())));
   assert.ok(readings.attack > 1, 'Attack adds damage');
   assert.ok(readings.defendBlock > 1, 'Defend adds Block');
   assert.ok(readings.idleDraw > 0, 'Idle draws an extra card');
@@ -69,7 +90,8 @@ test('stances.builtInBenefits on: Attack, Defend and Idle keep their bonuses', (
 
 test('stances.builtInBenefits off: no stance bonus, the Idle weakness stays', () =>
 {
-  const readings = benefitReadings(SimpleCombatFight(SimpleCombatRegistries(BENEFITS_OFF)));
+  const fight = withStanceFactors(SimpleCombatFight(SimpleCombatRegistries(BENEFITS_OFF)));
+  const readings = benefitReadings(fight);
   assert.equal(readings.attack, 1);
   assert.equal(readings.defendBlock, 1);
   assert.equal(readings.idleDraw, 0);
