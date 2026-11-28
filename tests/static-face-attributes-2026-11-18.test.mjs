@@ -1,6 +1,6 @@
 // Owner, 2026-11-18: a card face outside combat (deck editor, rewards, shop, upgrade picker) carries the run character's always-on attribute bonus,
 // so it reads the number a neutral-stance hit makes: physical damage adds STR, Block adds DEX, magic damage adds max(INT, WIS), then the same
-// multipliers as combat (base x0.5, physical x0.7, side x0.7, Block x0.49, min 1). No stance, status or enemy defence is in it (those show in combat).
+// multipliers as combat (all 1, owner ruling 2026-11-28), min 1. No stance, status or enemy defence is in it (those show in combat).
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -24,9 +24,11 @@ const number = text => Number(/\d+/.exec(text)[0]);
 // Defend's authored Block comes from the pack (#3039 restored it to grant Block again).
 const defendBlockEffect = registries.cards.get('core.defend').effects.find(effect => effect.op === 'block');
 const DEFEND_AUTHORED_BLOCK = defendBlockEffect.amount;
+const strikeDamageEffect = registries.cards.get('core.strike').effects.find(effect => effect.op === 'damage');
+const STRIKE_AUTHORED_DAMAGE = strikeDamageEffect.amount;
 
 test('a face with no run keeps the authored number', () => {
-  assert.equal(number(cardPlainText(registries, { cardId: 'core.strike' }, {})), 6);
+  assert.equal(number(cardPlainText(registries, { cardId: 'core.strike' }, {})), STRIKE_AUTHORED_DAMAGE);
   assert.equal(number(cardPlainText(registries, { cardId: 'core.defend' }, {})), DEFEND_AUTHORED_BLOCK);
 });
 
@@ -35,7 +37,8 @@ test('Strike and Defend use the wielded attack stat and DEX through the shipped 
     const run = newRun(classId);
     const attributes = gameProfileEffectiveAttributes(registries, run);
     const attribute = classId === 'rogue' ? 'dexterity' : 'strength'; // The starter dagger is finesse.
-    const strike = Math.floor((Math.ceil(6 * effects.baseDamageMultiplier) + attributes[attribute] * effects.strengthDamageWeight)
+    const strikeBase = Math.ceil(STRIKE_AUTHORED_DAMAGE * effects.baseDamageMultiplier);
+    const strike = Math.floor((strikeBase + attributes[attribute] * effects.strengthDamageWeight)
       * effects.physicalDamageMultiplier * effects.playerDamageMultiplier);
     const defendRaw = DEFEND_AUTHORED_BLOCK + attributes.dexterity * effects.dexterityBlockWeight;
     const defend = Math.floor(defendRaw * effects.blockGainMultiplier);
