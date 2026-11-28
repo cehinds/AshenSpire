@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-27
 
+- **Startup checks are now plain data** ([#3044](https://github.com/cehinds/AshenSpire/pull/3044), `0.7.5.189`). The phone and controller checks for loading a save are now set in data files, not code. Nothing changes in play.
 - **Export JSON saves every setting** ([#3041](https://github.com/cehinds/AshenSpire/pull/3041), `0.7.5.189`). Both Export buttons now save your changed settings from every tab, music included. Each setting appears once in the file.
 - **Hold-to-load no longer starts a fight on phones** ([#3040](https://github.com/cehinds/AshenSpire/pull/3040), `0.7.5.189`). Holding a save slot to load it on a phone now opens the map and stays there. The tap the phone sends after you lift your finger no longer presses the first map node.
 - **Class-tailored rewards, shops, Defend Block, and branching maps** ([#3039](https://github.com/cehinds/AshenSpire/pull/3039), `0.7.5.187`). Rewards and shops now filter cards and weapons to class-compatible pools controlled in JSON and Score Studio, and Defend now grants Block again. Act maps also branch more often using new route tuning knobs.
