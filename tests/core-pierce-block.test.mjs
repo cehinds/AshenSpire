@@ -48,8 +48,8 @@ const pierceRegistries = (damage, hits) => Object.freeze({ ...baseRegistries, en
       tags: [...(row.moves.slash.tags || []).filter(tag => !tag.startsWith('damage:')), 'damage:piercing'] } } } : row;
   } } });
 
-// `damage` is the hit after Core halves card base damage (ceil, effects.baseDamageMultiplier 0.5), so the move is authored at twice it.
-function enemyPierce({ damage, hits, block, poise, legacyPoise = false }) { return enemyHit(pierceRegistries(damage * 2, hits), { hits, block, poise, legacyPoise }); }
+// Owner ruling 2026-11-28: damage is 1:1, so the move is authored at the hit's own `damage`.
+function enemyPierce({ damage, hits, block, poise, legacyPoise = false }) { return enemyHit(pierceRegistries(damage, hits), { hits, block, poise, legacyPoise }); }
 function enemyHit(regs, { hits, block, poise, legacyPoise = false }) {
   const run = createRunState({ registries: regs, classId: 'reaver', seed: 511, profileMeta: unlocks });
   const combat = createRunCombat({ registries: regs, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
@@ -118,7 +118,7 @@ test('only what Block would have soaked is pierced: with Block 0 a pierce hit is
   assert.equal(guardHitFloatParts(pierceHit.hits[0]).pierced, null);
   // The same 14 slashing hit: identical HP loss and Poise.
   const plainRegistries = Object.freeze({ ...baseRegistries, enemies: { ...baseRegistries.enemies, has: id => baseRegistries.enemies.has(id),
-    get: id => { const row = baseRegistries.enemies.get(id); return id === 'wanderingSoldier' ? { ...row, firstMove: 'slash', moves: { ...row.moves, slash: { ...row.moves.slash, damage: 28, hits: 1 } } } : row; } } }); // 28 halves to 14
+    get: id => { const row = baseRegistries.enemies.get(id); return id === 'wanderingSoldier' ? { ...row, firstMove: 'slash', moves: { ...row.moves, slash: { ...row.moves.slash, damage: 14, hits: 1 } } } : row; } } });
   assert.equal(pierceHit.hits[0].hpLoss, enemyHit(plainRegistries, { hits: 1, block: 0, poise: 8 }).hits[0].hpLoss, 'a pierce hit never deals less HP than the same hit without pierce');
 });
 
