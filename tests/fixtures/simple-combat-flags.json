@@ -49,7 +49,8 @@
     "secondTurn": 2
   },
   "upgradeProbe": {
-    "choices": 3
+    "choices": 3,
+    "rank": 2
   },
   "enemyTurnProbe": {
     "seeds": [

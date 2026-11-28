@@ -36,11 +36,17 @@ const receiptContextsByScope = new WeakMap();
 const AUTHORED_STEP = Object.freeze({ k: 'authored' });
 
 // progression.upgradeMode "authored": one upgrade, the card's own block, and nothing rolled.
+const AUTHORED_MODE_SLOTS = 1;
+
+function hasAuthoredUpgrade(base)
+{
+  return !!base?.upgrade && !Array.isArray(base.gradeProfiles);
+}
+
 function authoredOnlyOptions(instance, base, noAuthored)
 {
   const firstUpgrade = upgradeStepsOf(instance).length === 0;
-  const hasAuthored = !!base.upgrade && !Array.isArray(base.gradeProfiles);
-  return firstUpgrade && hasAuthored && !noAuthored
+  return firstUpgrade && hasAuthoredUpgrade(base) && !noAuthored
     ? [{ ...AUTHORED_STEP }]
     : [];
 }
@@ -275,6 +281,14 @@ export function WeaponSmithLevel(run, instance) {
 /** Upgrades the card may carry: its visible rank plus the configured extra, at most MAX_CARD_UPGRADES. */
 export function UpgradeSlots(run, instance, registries = null)
 {
+  // Authored mode: the one slot is the card's own block, none when it has no block to apply.
+  if (AuthoredUpgradesOnly(run))
+  {
+    const definition = registries?.cards?.get(instance?.cardId);
+    return !definition || hasAuthoredUpgrade(definition)
+      ? AUTHORED_MODE_SLOTS
+      : 0;
+  }
   const extraSlots = CardUpgradeRules(registries).slots.aboveVisibleRank;
   return Math.min(MAX_CARD_UPGRADES, VisibleCardRank(instance) + extraSlots);
 }

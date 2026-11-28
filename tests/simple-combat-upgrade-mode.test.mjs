@@ -4,6 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { nextUpgradeOptions } from '../src/model/cardUpgradeLimits.js';
 import { rankUpBonusOn, rankUpBonusOptions } from '../src/model/rankUpBonus.js';
+import { RankUpBlock } from '../src/model/rankUpService.js';
 import {
   SimpleCombatFixture,
   SimpleCombatRegistries,
@@ -13,6 +14,7 @@ import {
 const AUTHORED_UPGRADES = 'authoredUpgrades';
 const AUTHORED_KIND = 'authored';
 const CHOICES = SimpleCombatFixture.upgradeProbe.choices;
+const RANKED = SimpleCombatFixture.upgradeProbe.rank;
 
 function upgradeProbe(overrideName)
 {
@@ -29,7 +31,12 @@ function upgradeProbe(overrideName)
       },
     ],
   };
+  const rankedUpgraded = {
+    ...upgraded,
+    rank: RANKED,
+  };
   return {
+    rankUpBlock: RankUpBlock(run, rankedUpgraded, registries),
     first: nextUpgradeOptions(run, instance, definition, registries, CHOICES),
     second: nextUpgradeOptions(run, upgraded, definition, registries, CHOICES),
     rankUpOn: rankUpBonusOn(run),
@@ -45,6 +52,7 @@ test('progression.upgradeMode rolled: the authored block plus rolled options and
   assert.ok(probe.second.length > 0, 'a second upgrade rolls');
   assert.equal(probe.rankUpOn, true);
   assert.ok(probe.rankUp.length > 0, 'a rank-up offers bonus picks');
+  assert.notEqual(probe.rankUpBlock, '', 'a ranked card with one upgrade still has slots to fill');
 });
 
 test('progression.upgradeMode authored: one upgrade, the authored block only', () =>
@@ -54,4 +62,5 @@ test('progression.upgradeMode authored: one upgrade, the authored block only', (
   assert.deepEqual(probe.second, [], 'nothing after the authored upgrade');
   assert.equal(probe.rankUpOn, false);
   assert.deepEqual(probe.rankUp, []);
+  assert.equal(probe.rankUpBlock, '', 'the authored upgrade fills the card, so it may rank up');
 });
