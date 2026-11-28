@@ -26,6 +26,7 @@ function sample(weights, offers = 600) {
     content.cards = cards;
     content.rewards = { ...content.rewards, categories:['combatCards'], offerCount: 1, combatOfferCount: { min: 1, max: 1 },
       rewardGroups: [{ id: 'fixture.cards', weight: 1, categories: ['combatCards'] }],
+      classPools: { ...content.rewards.classPools, enabled: false },
       eligibility: { ...content.rewards.eligibility, excludeCardIds: [], playableOnly: false,
         weaponArts: { ...content.rewards.eligibility.weaponArts, cardIds: [] },
         combatCards: { ...weights, minRank: 0, lowerRankChance: 1, skipOwned: false, skipOwnedBasics: false,
