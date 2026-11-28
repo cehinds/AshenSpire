@@ -5,7 +5,8 @@ import assert from 'node:assert/strict';
 import { StanceRuleset } from '../src/model/simpleCombatFlags.js';
 import { configuredStance } from '../src/model/profileStance.js';
 import { stanceOf } from '../src/model/stanceRules.js';
-import { setProfileStance } from '../src/engine/gameProfileCombat.js';
+import { setProfileStance, profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
+import { NeutralExtraDraw, StanceWeaknessMultiplier } from '../src/engine/stanceBenefits.js';
 import { enemyMoveCarrier } from '../src/engine/combatCardTactics.js';
 import {
   SimpleCombatFixture,
@@ -115,4 +116,61 @@ test('maneuvers: a fight on the default ruleset resolves every card as before', 
     assert.equal(configuredStance(card, fight), configuredStance(card), card.id);
     assert.deepEqual(stanceOf(card, null, fight), stanceOf(card), card.id);
   }
+});
+
+const MATCHUP = PROBE.matchup;
+const STANCE_IDS = Object.keys(MATCHUP.carriers);
+
+function isWinner(attacking, defending)
+{
+  return MATCHUP.winners.some(([winner, loser]) => winner === attacking && loser === defending);
+}
+
+function matchupReceipt(fight, attacking, defending)
+{
+  const carrier = { ...cardCarrier(fight.registries, MATCHUP.carriers[attacking]) };
+  const target = {
+    ...fight.enemies[0],
+    block: 0,
+    combatStance:
+    {
+      maneuver: defending,
+      camp: 'physical',
+      range: 'melee',
+    },
+  };
+  return profileDamageReceipt(fight, fight.player, target, MATCHUP.base, carrier);
+}
+
+test('triangle: all 16 pairs, the winner x winnerMultiplier and the loser unchanged', () =>
+{
+  const fight = SimpleCombatFight(SimpleCombatRegistries(TRIANGLE));
+  for (const attacking of STANCE_IDS)
+  {
+    for (const defending of STANCE_IDS)
+    {
+      const label = `${attacking} vs ${defending}`;
+      const receipt = matchupReceipt(fight, attacking, defending);
+      const multiplier = isWinner(attacking, defending)
+        ? MATCHUP.winnerMultiplier
+        : 1;
+      assert.equal(receipt.attackStance, attacking, label);
+      assert.equal(receipt.advantage, isWinner(attacking, defending), label);
+      assert.equal(receipt.stanceMitigation, 0, label);
+      assert.equal(receipt.rawHit, Math.floor(receipt.raw * multiplier), label);
+    }
+  }
+});
+
+test('triangle: skill is not Idle, no extra draw and no extra damage taken', () =>
+{
+  const { turn, neutralStance, skillStance } = PROBE.skillProbe;
+  const fight = SimpleCombatFight(SimpleCombatRegistries(TRIANGLE));
+  const inSkill = {
+    ...fight.player,
+    combatStance: { maneuver: skillStance },
+  };
+  assert.equal(NeutralExtraDraw(fight, inSkill, turn), 0);
+  assert.equal(StanceWeaknessMultiplier(fight, null, skillStance, {}), 1);
+  assert.ok(StanceWeaknessMultiplier(fight, null, neutralStance, {}) > 1, 'Idle stays weak');
 });

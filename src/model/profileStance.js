@@ -28,7 +28,8 @@ function legacyStance(carrier) {
 export function configuredStance(carrier, subject = null)
 {
   const legacy = legacyStance(carrier);
-  if (TriangleRules(subject))
+  // No carrier is no stance under either ruleset.
+  if (carrier && TriangleRules(subject))
   {
     return TriangleStance(subject, carrier, legacy);
   }

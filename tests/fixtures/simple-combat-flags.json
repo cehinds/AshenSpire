@@ -148,6 +148,36 @@
     "overrideCase": {
       "cardId": "warcry",
       "stance": "defend"
+    },
+    "matchup": {
+      "$note": "All 16 pairs: the winner hits for winnerMultiplier, every other pair for x1, nobody mitigates.",
+      "carriers": {
+        "attack": "strike",
+        "smash": "core.smash",
+        "defend": "defend",
+        "skill": "warcry"
+      },
+      "base": 40,
+      "winnerMultiplier": 1.25,
+      "winners": [
+        [
+          "attack",
+          "smash"
+        ],
+        [
+          "smash",
+          "defend"
+        ],
+        [
+          "defend",
+          "attack"
+        ]
+      ]
+    },
+    "skillProbe": {
+      "turn": 2,
+      "neutralStance": "neutral",
+      "skillStance": "skill"
     }
   }
 }

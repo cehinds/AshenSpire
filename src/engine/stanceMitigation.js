@@ -1,7 +1,19 @@
 // The profile's directed matchup table also describes a defender winning the
 // exchange. This is one multiplicative stage, shared by live damage/previews.
+import { TriangleRules } from '../model/stanceTriangle.js';
+
 const canonical = maneuver => ({ casting: 'prepared', cast: 'prepared', ranged: 'attack' })[maneuver] || maneuver;
+const NO_MITIGATION = Object.freeze({
+  defenseAdvantage: false,
+  mitigation: 0,
+  multiplier: 1,
+});
 export function stanceMitigation(ctx, incoming, defending) {
+  // The triangle's loser is unchanged: no defender mitigation.
+  if (TriangleRules(ctx))
+  {
+    return { ...NO_MITIGATION };
+  }
   const rules = ctx?.gameProfile?.modules?.stances;
   const attack = canonical(incoming), defense = canonical(defending);
   const defenseAdvantage = !!rules?.include?.includes(attack)
