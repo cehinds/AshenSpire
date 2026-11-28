@@ -356,12 +356,17 @@ test('18. Dynamic poise damage appears on the card when attacking and updates vs
 });
 
 
+// Owner ruling 2026-11-28: damage scores 1:1, so a 2-damage common sits one step below the rank edge.
+const RANK_EDGE_FIXTURE_DAMAGE = 2;
+const RANK_EDGE_STEP = 1;
+const NEXT_DAMAGE_STEP = 2;
 test('controlled upgrade budgets retain a common step at the rank edge and promote rarity for the next damage step', () => {
   const scoring=scoringContract();scoring.effects.damage={weight:1,per:1};scoring.tags['trait:unavoidable']={weight:5};
   const base = { id: 'custom.rarity-budget.fixture', class: 'reaver', rarity: 'common', type: 'attack', cost: 1, staminaCost: 1, manaCost: 0,
-    tags: ['camp:physical', 'source:weapon', 'maneuver:attack', 'trait:unavoidable'], effects: [{ op: 'damage', target: 'enemy', amount: 8 }] };
+    tags: ['camp:physical', 'source:weapon', 'maneuver:attack', 'trait:unavoidable'], effects: [{ op: 'damage', target: 'enemy', amount: RANK_EDGE_FIXTURE_DAMAGE }] };
   const evaluate = n => EvaluateUpgradeStepCp({ baseDef: base, currentDef: base, instance: { rank: 1 }, step: { k: 'dmg', n }, playerLevel: 1, scoring });
-  const edge = evaluate(1), promoted = evaluate(4);
+  const edge = evaluate(RANK_EDGE_STEP);
+  const promoted = evaluate(NEXT_DAMAGE_STEP);
   assert.equal(edge.allowed, true); assert.equal(edge.rarity, 'common'); assert.equal(edge.rank, 1);
   assert.equal(edge.cp, scoring.rank.width);
   assert.equal(promoted.allowed, true); assert.equal(promoted.rarity, 'uncommon'); assert.equal(promoted.rank, 1);
