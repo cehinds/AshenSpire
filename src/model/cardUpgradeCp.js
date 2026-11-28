@@ -3,10 +3,22 @@ import { CountCardParts } from './cardLimits.js';
 import { GetActiveScoring } from './activeScoring.js';
 import { VisibleCardRank } from './cardRank.js';
 import { applyUpgradeSteps, upgradeStepsOf } from './cardUpgrade.js';
-import { ProjectCardMechanicalValues } from './cardMechanicalProjection.js';
+import { CardScoreReferenceContext, ProjectCardMechanicalValues } from './cardMechanicalProjection.js';
 
 const RARITY_LADDER = Object.freeze(['common', 'uncommon', 'rare']);
 const num = (v, fallback = 0) => (typeof v === 'number' && Number.isFinite(v) ? v : fallback);
+const NO_FACE_ATTRIBUTES = Object.freeze({});
+const ownValueRulesByRules = new WeakMap();
+
+// Rank and combat power price the card's own numbers: no hero attributes, no always-on gear (owner, 2026-11-28).
+function OwnValueRules(rules)
+{
+  const cached = ownValueRulesByRules.get(rules);
+  if (cached) return cached;
+  const own = { ...rules, faceAttributes: NO_FACE_ATTRIBUTES, gearRules: [], gearState: {} };
+  ownValueRulesByRules.set(rules, own);
+  return own;
+}
 
 /**
  * Convert a resolved card definition into a `ScoreCard` face for CP/rank evaluation.
@@ -14,7 +26,14 @@ const num = (v, fallback = 0) => (typeof v === 'number' && Number.isFinite(v) ? 
 export function CardDefinitionToScoreFace(def, { scoring = GetActiveScoring(), registries, rules, projectionScope } = {}) {
   const face = BaseFace();
   if (!def) return face;
-  def = ProjectCardMechanicalValues(def, { registries, rules, projectionScope }).card;
+  const reference = registries && rules
+    ? { registries, rules }
+    : CardScoreReferenceContext(def, { registries });
+  def = ProjectCardMechanicalValues(def, {
+    registries: reference.registries,
+    rules: OwnValueRules(reference.rules),
+    projectionScope,
+  }).card;
   const tags = [...(def.cardTags || def.tags || [])];
   const camp = def.camp || (tags.includes('camp:spell') || tags.includes('source:spell') ? 'spell' : 'physical');
   face.name = def.name || '';
