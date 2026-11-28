@@ -1,5 +1,5 @@
 {
-  "$note": "Module overrides that switch one Simple Combat mechanic off (docs/design/SIMPLE-COMBAT-PLAN.md).",
+  "$note": "Module overrides that each switch one Simple Combat mechanic off.",
   "core": "ashen.core@2.0.0",
   "seed": 511,
   "classId": "reaver",

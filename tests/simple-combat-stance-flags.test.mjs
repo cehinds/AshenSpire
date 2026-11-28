@@ -1,5 +1,6 @@
-// stances.builtInBenefits and stances.sameStanceDiscount (docs/design/SIMPLE-COMBAT-PLAN.md step 1):
-// off removes each stance's own bonus, or the same-stance cuts; on (Core today) keeps them.
+// stances.builtInBenefits and stances.sameStanceDiscount
+// (docs/design/SIMPLE-COMBAT-PLAN.md step 1): off removes each stance's own bonus,
+// or the same-stance cuts; on (Core today) keeps them.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {

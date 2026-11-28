@@ -16,7 +16,8 @@ export function rankUpBonusScale(registries) {
   return Number.isFinite(scale) && scale >= 1 ? scale : 2;
 }
 
-/** Whether a run's cards upgrade by steps (Core, card ranks on, rolled upgrades); only those get a rank-up bonus. */
+/** Whether a run's cards upgrade by steps (Core, card ranks on, rolled upgrades).
+ * Only those get a rank-up bonus. */
 export const rankUpBonusOn = (run) => run?.gameProfile?.modules?.progression?.cardRanks === true
   && !AuthoredUpgradesOnly(run);
 

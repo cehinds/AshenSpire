@@ -44,7 +44,7 @@ function upgradeProbe(overrideName)
   };
 }
 
-test('progression.upgradeMode rolled: the authored block plus rolled options and rank-up picks', () =>
+test('progression.upgradeMode rolled: authored block, rolled options, rank-up picks', () =>
 {
   const probe = upgradeProbe(null);
   assert.equal(probe.first[0].k, AUTHORED_KIND, 'the authored block is offered first');

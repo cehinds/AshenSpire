@@ -17,7 +17,8 @@ export function StanceBenefitRules(ctx) {
   return rows?.version === 1 ? rows : null;
 }
 
-/** The rows each stance's own bonus reads: null when stances.builtInBenefits is off. Weaknesses keep StanceBenefitRules. */
+/** The rows each stance's own bonus reads: null when stances.builtInBenefits is off.
+ * Weaknesses keep StanceBenefitRules. */
 export function StanceBonusRules(ctx)
 {
   if (!StanceBenefitsEnabled(ctx))

@@ -88,7 +88,8 @@ function isCounterReaction(ctx, entity, carrier) {
 // New fights use class-entitled resource lanes; existing active fights retain their accepted pricing.
 export function stanceStaminaCost(base, entity, carrier, ctx = null, mpBase = 0) {
   if (ctx?.combatExpansionVersion !== 2) return base;
-  // Every cut below rests on the stance already held; stances.sameStanceDiscount false removes them all.
+  // Every cut below rests on the stance already held;
+  // stances.sameStanceDiscount false removes them all.
   if (!SameStanceDiscountEnabled(ctx))
   {
     return base;

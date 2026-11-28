@@ -48,7 +48,8 @@ test('stagger.poise off: every pool is empty and Poise damage breaks nothing', (
   assert.equal(enemy.combatStance, stanceBefore, 'the enemy is not Staggered');
 });
 
-// A Poise-only card counts as a hit through the Poise it dealt (combatExpansionActions traitLanded).
+// A Poise-only card counts as a hit through the Poise it dealt
+// (combatExpansionActions traitLanded).
 function poiseOnlyPressure(overrideName)
 {
   const combat = SimpleCombatFight(SimpleCombatRegistries(overrideName));
