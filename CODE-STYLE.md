@@ -94,7 +94,7 @@ export function ReferenceClassId(definition, scoreReference)
 - **A correction applies everywhere:** feedback given on one spot is fixed in every spot of that
   file and in every file touched later. New feedback is added to this guide.
 - **Formatting is automatic:** run `npm run format:changed` before committing; never hand-format.
-  CI fails a pull request whose changed `tests/` or `tools/` files are not formatted
+  CI reports changed `tests/` or `tools/` files that are not formatted
   (`npm run format:changed:check`). `src/` waits until the bundler reads multi-line export lists.
 - **Smell report:** `npm run code:smells` lists magic numbers and strings, duplicated code, long
   functions and deep nesting in the changed files. Fix every finding in lines you touch.

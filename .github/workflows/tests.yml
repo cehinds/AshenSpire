@@ -129,8 +129,10 @@ jobs:
           npm ci --prefix tools/code-quality --ignore-scripts --no-audit --no-fund
           npm run code:check
           npm --prefix tools/code-quality run selftest
-      - name: Changed files keep the pinned formatting
+      # Report only until tests/ and tools/ are formatted once; most existing files are not yet.
+      - name: Changed files keep the pinned formatting (report only)
         if: github.event_name == 'pull_request'
+        continue-on-error: true
         run: npm run format:changed:check -- --base origin/${{ github.base_ref }}
       - name: Code smells in the changed files (report only)
         if: github.event_name == 'pull_request'

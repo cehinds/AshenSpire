@@ -42,9 +42,18 @@ function globToRegExp(pattern)
     return new RegExp(`^${parts.join('.*')}$`);
 }
 
+// Unquoted paths, so a file with a non-ASCII name is listed as itself and not skipped.
+const GIT_UNQUOTED_PATHS = [
+    '-c',
+    'core.quotepath=off',
+];
+
 function gitLines(root, flags)
 {
-    const output = execFileSync('git', flags, { cwd: root, encoding: TEXT_ENCODING });
+    const output = execFileSync('git', [...GIT_UNQUOTED_PATHS, ...flags], {
+        cwd: root,
+        encoding: TEXT_ENCODING,
+    });
     return output.split('\n').map(line => line.trim()).filter(Boolean);
 }
 
