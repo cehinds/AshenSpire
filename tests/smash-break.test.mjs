@@ -107,7 +107,14 @@ test('Smash cards read "Break N Block. Deal N damage." on the face and in their 
   const core = resolveGameProfile('core');
   const shipped = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, core)), core);
   const def = shipped.cards.get('core.smash');
-  assert.deepEqual(def.effects.find(e => e.op === 'damage'), { op: 'damage', target: 'enemy', amount: 8, breakBlock: 8 });
+  // Owner ruling 2026-11-28: the stored damage is the 1:1 number the card plays.
+  const stored = {
+    op: 'damage',
+    target: 'enemy',
+    amount: 1,
+    breakBlock: 8,
+  };
+  assert.deepEqual(def.effects.find(e => e.op === 'damage'), stored);
   const face = cardFaceLines(def, null, shipped, null).map(line => line.html.replace(/<[^>]+>/g, ''));
   assert.match(face.slice(0, 2).join('. '), /^Break 8 Block\. Deal \d+ damage$/);
   assert.match(cardPlainText(shipped, { cardId: 'core.smash' }), /^Break 8 Block\. Deal \d+ damage\./);
