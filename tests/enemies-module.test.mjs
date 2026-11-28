@@ -292,7 +292,11 @@ test('card rewards are mostly rank 1+: starter (rank 0) cards only through a sma
 test('a basic card the character already owns is not offered as a reward', () => {
   assert.equal(profile.content.rewards.eligibility.combatCards.skipOwnedBasics, true);
   const src = readFileSync(new URL('../src/model/gameProfileRewards.js', import.meta.url), 'utf8');
-  assert.match(src, /skipOwnedBasics && cardRank\(card, rules\) < \(cardRule\.minRank \?\? 0\) && ownedIds\.has\(card\.id\)/);
+  // Whitespace-tolerant: the filter is laid out one condition per line.
+  assert.match(
+    src,
+    /skipOwnedBasics\s*&&\s*cardRank\(card, rules\) < \(cardRule\.minRank \?\? 0\)\s*&&\s*ownedIds\.has\(card\.id\)/,
+  );
 });
 
 test('variance outcomes stay unique and bounded even at the schema maximum', async () => {
