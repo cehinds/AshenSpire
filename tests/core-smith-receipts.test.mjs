@@ -332,6 +332,7 @@ test('serializing a Core Smith plan again (or a fresh plan of the same run) runs
   assert.equal(coreCardSimulationCount(), fights, 'the memo holds every candidate of one snapshot');
 });
 
+const HONED_PLAYS = 8;
 test('Smith card receipts read a Honed card at its lifetime plays (Whetstone Nick, playsEver 8)', async () => {
   const { coreSmithingCards } = await import('../src/model/smithingCore.js');
   const nick = (playsEver) => {
@@ -349,7 +350,9 @@ test('Smith card receipts read a Honed card at its lifetime plays (Whetstone Nic
     }
     return row;
   };
-  const fresh0 = nick(0), honed = nick(8);
-  assert.equal(honed.before - fresh0.before, 5, 'before: base 2 + 8 plays, not the fresh base');
-  assert.equal(honed.after - fresh0.after, 4, 'after: the same 8 plays through the next tier’s rounding');
+  const fresh0 = nick(0);
+  const honed = nick(HONED_PLAYS);
+  // Owner ruling 2026-11-28: damage is 1:1, so each lifetime play adds exactly 1 at either tier.
+  assert.equal(honed.before - fresh0.before, HONED_PLAYS, 'before: the 8 plays, not the fresh base');
+  assert.equal(honed.after - fresh0.after, HONED_PLAYS, 'after: the same 8 plays at the next tier');
 });
