@@ -8036,6 +8036,21 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(!titleLoadHoldValidation.ok
       && titleLoadHoldValidation.errors.some((error) => error.path === 'balance.ui.titleLoadHold.ms'),
     'a non-positive title quick-load duration is refused by its authored path');
+    const unguardedTitleLoadHold = {
+      ...contentBundle,
+      balance: {
+        ...contentBundle.balance,
+        ui: {
+          ...contentBundle.balance.ui,
+          titleLoadHold: { ms: 600, trailingClickMs: 0 },
+        },
+      },
+    };
+    const trailingClickValidation = validateContent(unguardedTitleLoadHold);
+    assert(!trailingClickValidation.ok
+      && trailingClickValidation.errors.some((error) =>
+        error.path === 'balance.ui.titleLoadHold.trailingClickMs'),
+    'a non-positive trailing-click guard is refused by its authored path');
     const expandedTray = trayPresentationState({
       collapsed: false,
       savedHeightRatio: 0.7,

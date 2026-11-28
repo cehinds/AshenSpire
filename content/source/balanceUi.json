@@ -117,7 +117,7 @@
     "dragSettleMs": 1000,
     "settleSlopPx": 8
   },
-  "titleLoadHold": { "ms": 600 },
+  "titleLoadHold": { "ms": 600, "trailingClickMs": 500 },
   "holdBeat": { "at": [0, 0.42, 0.78] },
   "inspectHold": { "ms": 400 },
   "rewardCollect": { "def": "manual", "modes": ["auto", "manual"] },

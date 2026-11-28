@@ -2346,7 +2346,9 @@ _No comments were written beside these numbers in the old balance.js._
   not the irreversible-action safety dial above: a short activation still
   selects/reviews the save, while a stationary hold loads it directly.
   Keeping the duration here lets the interaction be tuned without changing
-  the title screen's event wiring.
+  the title screen's event wiring. `trailingClickMs` is how long after the
+  finger lifts the browser's trailing click is swallowed, so it cannot press
+  the map that the load just opened; the next touch or key ends it early.
 - **`ui.holdBeat`** — THE HOLD'S BEAT — WHERE IN THE FILL A SOUND LANDS. One home for the
   fractions; the sounds themselves are recipes in content/sfx.js and the
   durations are holdConfirm above. Three facts, three homes, none restated.

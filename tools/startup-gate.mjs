@@ -149,8 +149,16 @@ if (args.includes('--selftest')) {
       {
         name: 'completed save-slot hold selects instead of loading',
         file: 'src/ui/components/saveSlotSelector.js',
-        find: "            requestLoad(slot, 'hold');",
+        find: "          requestLoad(slot, 'hold');",
         replace: '            activateSlot(slot); // startup-gate selftest plant',
+        expectRed: /RED A8\.LOAD-SLOT-HOLD/,
+      },
+      {
+        // The release's trailing click is hit-tested on the freshly mounted map.
+        name: 'hold-to-load lets the trailing touch click press the map',
+        file: 'src/ui/components/holdRelease.js',
+        find: '    swallowTrailingClick(trailingClickMs);',
+        replace: '    // startup-gate selftest plant',
         expectRed: /RED A8\.LOAD-SLOT-HOLD/,
       },
       {
