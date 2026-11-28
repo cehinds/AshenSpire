@@ -8,7 +8,7 @@ const cards = JSON.parse(readFileSync(new URL('../games/ashenspire/packs/core/ca
 const list = Array.isArray(cards) ? cards : cards.cards;
 const blockOf = id => list.find(card => card.id === id).effects.find(effect => effect.op === 'block').amount;
 
-test('core.defend authors 0 Block (Defend template: final Block 4, owner 2026-11-21; was 8, before that 10)', () => assert.equal(blockOf('core.defend'), 0));
+test('core.defend authors 10 Block (#3039 restored it; was 0, before that 8)', () => assert.equal(blockOf('core.defend'), 10));
 // Block-per-card retune (owner, 2026-11-20): Defend fell to 8 and Counter kept 5, so Counter is no longer half of Defend.
 test('core.counter gives 5 Block', () => assert.equal(blockOf('core.counter'), 5));
 test('core.counter return damage is unchanged (4)', () => assert.equal(list.find(card => card.id === 'core.counter').effects.find(effect => effect.op === 'damage').amount, 4));
