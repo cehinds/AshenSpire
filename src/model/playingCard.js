@@ -180,8 +180,16 @@ export function CardPresentationContext(def, preview = null, rules = null) {
  * predicate phrase (`condition`), the combat profile, the token bindings and the
  * static tokens. Every card-face text model reads through this one context.
  */
+const POISE_FACE_OPS = new Set([
+  'poiseDamage',
+  'gainBarrier',
+  'gainPoise',
+  'restorePoise',
+]);
+const POISE_FACE_STATUS = 'barrier';
+
 /**
- * Whether a Poise damage row is left off a card face: stagger.poise off deals no Poise, so the
+ * Whether a Poise row is left off a card face: stagger.poise off gives and deals no Poise, so the
  * "N Poise" clause (or a Ward row merged into it) says nothing true. No profile keeps it.
  */
 export function PoiseFaceClauseHidden(
@@ -190,7 +198,8 @@ export function PoiseFaceClauseHidden(
   registries,
 )
 {
-  const poiseRow = effect.op === 'poiseDamage' || Boolean(merged);
+  const barrierRow = effect.op === 'applyStatus' && effect.status === POISE_FACE_STATUS;
+  const poiseRow = POISE_FACE_OPS.has(effect.op) || barrierRow || Boolean(merged);
   return poiseRow && !PoiseEnabled(registries);
 }
 
@@ -269,6 +278,15 @@ export function combatCardSummary(def, preview = null, registries = null, rules 
     const n = value(effect, index), area = effect.target === 'allEnemies' ? ' to all enemies'
       : effect.target === 'randomEnemy' ? ' to a random enemy' : effect.target === 'otherEnemy' ? ' to another enemy' : '';
     let text;
+    const poiseHidden = PoiseFaceClauseHidden(
+      effect,
+      poiseMerge?.get(index),
+      registries,
+    );
+    if (poiseHidden)
+    {
+      continue;
+    }
     switch (effect.op) {
       case 'damage': {
         const live = preview?.values?.[index], hits = live?.hits ?? effect.hits ?? 1;
@@ -328,12 +346,6 @@ export function combatCardSummary(def, preview = null, registries = null, rules 
       case 'applyReflect': text = `Gain ${n} Reflect`; break;
       case 'poiseDamage': case 'wardDamage': {
         const merged = poiseMerge?.get(index);
-        const poiseHidden = PoiseFaceClauseHidden(
-          effect,
-          merged,
-          registries,
-        );
-        if (poiseHidden) continue;
         if (merged && !merged.leader) continue; // its figure is in the leader's combined Poise
         const figure = merged ? merged.indices.map(i => value(def.effects[i], i)) : [n];
         if (figure.some(amount => typeof amount !== 'number')) return null;

@@ -285,6 +285,15 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
     const n = value(effect, index), base = baseOf(effect, index, 'amount');
     const area = areaOf(effect.target);
     const frag = (cat, text) => [{ cat, text }];
+    const poiseHidden = PoiseFaceClauseHidden(
+      effect,
+      poiseMerge?.get(index),
+      registries,
+    );
+    if (poiseHidden)
+    {
+      return [];
+    }
     switch (effect.op) {
       case 'damage': {
         const live = preview?.values?.[index], hits = live?.hits ?? effect.hits ?? 1;
@@ -337,12 +346,6 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
         return [...breaks, ...damageFrags];
       }
       case 'poiseDamage': case 'wardDamage': {
-        const poiseHidden = PoiseFaceClauseHidden(
-          effect,
-          poiseMerge?.get(index),
-          registries,
-        );
-        if (poiseHidden) return [];
         // Core 2: the computed return stands for every authored Poise row; a row the return zeroes is not listed.
         if (counter && preview?.counterReturn && !(n > 0)) return [];
         const extraWp = effect.op === 'poiseDamage' && !counter && !weaponPoiseFolded && previewWeaponPoiseTotal > 0 ? previewWeaponPoiseTotal : 0;
