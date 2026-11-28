@@ -28,7 +28,10 @@
     },
     "stances": {
       "version": "1.0.0",
-      "settings": {}
+      "settings": {
+        "builtInBenefits": true,
+        "sameStanceDiscount": true
+      }
     },
     "effects": {
       "version": "1.0.0",

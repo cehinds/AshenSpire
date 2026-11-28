@@ -8,6 +8,7 @@ import { gameContent } from './gameProfile.js';
 import { characterTags } from '../../engine/kernel/gameConfig.js';
 import { ChannelRowValue } from './channelRowValue.js';
 import { mirroredManeuver, MIRRORED_TYPES } from './profileStance.js';
+import { SameStanceDiscountEnabled } from './simpleCombatFlags.js';
 export { mirroredManeuver };
 
 export function stanceRulesFor(ctx) { return { ...stanceRules, ...(ctx?.stanceRules || ctx?.registries?.balance?.stanceRules || {}) }; }
@@ -87,6 +88,11 @@ function isCounterReaction(ctx, entity, carrier) {
 // New fights use class-entitled resource lanes; existing active fights retain their accepted pricing.
 export function stanceStaminaCost(base, entity, carrier, ctx = null, mpBase = 0) {
   if (ctx?.combatExpansionVersion !== 2) return base;
+  // Every cut below rests on the stance already held; stances.sameStanceDiscount false removes them all.
+  if (!SameStanceDiscountEnabled(ctx))
+  {
+    return base;
+  }
   const same = sameStance(entity, carrier);
   // The defensive family reaches only the Core 2 Adept cut below; every other path still needs an exact match.
   if (!same && !(fixCoreEnabled(ctx) && core2ActionPolicyEnabled(ctx) && entity?.kind !== 'enemy' && defensiveFamily(entity, carrier))) return base;
@@ -174,6 +180,10 @@ export function spellChain(entity, carrier) {
 }
 export function stanceManaCost(base, entity, carrier, ctx) {
   if (!fixCoreEnabled(ctx) || !(base > 0)) return base;
+  if (!SameStanceDiscountEnabled(ctx))
+  {
+    return base;
+  }
   if (core2ActionPolicyEnabled(ctx) && entity?.kind !== 'enemy') {
     const graduate = isSpellCard(carrier) && hasAdept(ctx, entity, 'training.graduate');
     const adept = graduate && (sameStance(entity, carrier) || defensiveFamily(entity, carrier));
@@ -188,5 +198,9 @@ export function stanceManaCost(base, entity, carrier, ctx) {
   return Math.max(cfg.minimumCost, base - cfg.discount);
 }
 export function stanceEffectiveness(ctx, source, carrier) {
+  if (!SameStanceDiscountEnabled(ctx))
+  {
+    return 1;
+  }
   return fixCoreEnabled(ctx) && (carrier?.fixCoreSameStance ?? sameStance(source, carrier)) ? fixCoreRules(ctx, source, carrier).stance.effectivenessMultiplier : 1;
 }

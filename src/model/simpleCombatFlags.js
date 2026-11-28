@@ -4,8 +4,11 @@
 import { gameModule } from './gameProfile.js';
 
 const STAGGER_MODULE = 'stagger';
+const STANCES_MODULE = 'stances';
 
 const POISE_SETTING = 'poise';
+const BUILT_IN_BENEFITS_SETTING = 'builtInBenefits';
+const SAME_STANCE_DISCOUNT_SETTING = 'sameStanceDiscount';
 
 function settingOf(subject, moduleId, settingId)
 {
@@ -25,4 +28,16 @@ function switchOn(subject, moduleId, settingId)
 export function PoiseEnabled(subject)
 {
   return switchOn(subject, STAGGER_MODULE, POISE_SETTING);
+}
+
+/** Whether each stance's built-in bonus applies (stances.builtInBenefits). */
+export function StanceBenefitsEnabled(subject)
+{
+  return switchOn(subject, STANCES_MODULE, BUILT_IN_BENEFITS_SETTING);
+}
+
+/** Whether playing into the stance already held cuts the cost and raises the effect. */
+export function SameStanceDiscountEnabled(subject)
+{
+  return switchOn(subject, STANCES_MODULE, SAME_STANCE_DISCOUNT_SETTING);
 }

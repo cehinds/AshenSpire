@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:59cb24cc77baf737c6f4d8f333a3e7a6063717cbad9371dfa2d03d4c721a9b6a",
+      "hash": "sha256:ca6d41de3482ee390079426960f45911490c670dd48a37f0ffa04494baa5188d",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -526,7 +526,7 @@
           "path": "engine/modules/stances/defaults.json",
           "id": "stances",
           "version": "1.0.0",
-          "hash": "sha256:8244ee41d897647434322ca47a2a0109372e303375ea1660b25f34fe7e549c44"
+          "hash": "sha256:261e9bc991b696c7ae81317a6d85cde06f4b7b8cb9ab0510e3c5ccc64913ece2"
         },
         {
           "path": "engine/modules/stances/module.json",
@@ -538,7 +538,7 @@
           "path": "engine/modules/stances/settings.schema.json",
           "id": "stances",
           "version": "1.0.0",
-          "hash": "sha256:eae01b4126f2d28063637164fc88ce88da6d7c0071a5ae542ae228006080f8c3"
+          "hash": "sha256:f6e880c4470bdc533a8da2882e76789c4f12abaf81acdac906959ed41f72a0b7"
         },
         {
           "path": "engine/modules/stats/defaults.json",
@@ -586,7 +586,7 @@
           "path": "games/ashenspire/bundles/core/bundle.json",
           "id": "ashen.core",
           "version": "2.0.0",
-          "hash": "sha256:4b02f10afb0ac1d6111f0263f455404e25cfdef233c9b72ecb556a6c8295921f"
+          "hash": "sha256:90e9a0bdc571700b36bfaae90cdd37bd90909ffd201f0da1cbf972187d67b8a0"
         },
         {
           "path": "games/ashenspire/packs/base-cards/cards.json",
@@ -732,7 +732,7 @@
       "runtimeHash": "sha256:86b335d2ec3ae5b290afd68343bf41686eb9e8f67e15a5eee6ec1f4b2420a21c"
     },
     "core": {
-      "hash": "sha256:59cb24cc77baf737c6f4d8f333a3e7a6063717cbad9371dfa2d03d4c721a9b6a",
+      "hash": "sha256:ca6d41de3482ee390079426960f45911490c670dd48a37f0ffa04494baa5188d",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -1256,7 +1256,7 @@
           "path": "engine/modules/stances/defaults.json",
           "id": "stances",
           "version": "1.0.0",
-          "hash": "sha256:8244ee41d897647434322ca47a2a0109372e303375ea1660b25f34fe7e549c44"
+          "hash": "sha256:261e9bc991b696c7ae81317a6d85cde06f4b7b8cb9ab0510e3c5ccc64913ece2"
         },
         {
           "path": "engine/modules/stances/module.json",
@@ -1268,7 +1268,7 @@
           "path": "engine/modules/stances/settings.schema.json",
           "id": "stances",
           "version": "1.0.0",
-          "hash": "sha256:eae01b4126f2d28063637164fc88ce88da6d7c0071a5ae542ae228006080f8c3"
+          "hash": "sha256:f6e880c4470bdc533a8da2882e76789c4f12abaf81acdac906959ed41f72a0b7"
         },
         {
           "path": "engine/modules/stats/defaults.json",
@@ -1316,7 +1316,7 @@
           "path": "games/ashenspire/bundles/core/bundle.json",
           "id": "ashen.core",
           "version": "2.0.0",
-          "hash": "sha256:4b02f10afb0ac1d6111f0263f455404e25cfdef233c9b72ecb556a6c8295921f"
+          "hash": "sha256:90e9a0bdc571700b36bfaae90cdd37bd90909ffd201f0da1cbf972187d67b8a0"
         },
         {
           "path": "games/ashenspire/packs/base-cards/cards.json",

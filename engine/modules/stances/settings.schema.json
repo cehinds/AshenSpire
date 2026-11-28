@@ -101,6 +101,14 @@
       "type": "number",
       "minimum": 0,
       "maximum": 1
+    },
+    "builtInBenefits": {
+      "type": "boolean",
+      "description": "Each stance's own bonus (fixCoreMechanics.json stanceBenefits: Attack damage, Smash Poise, Defend and Counter Block, Prepared spell damage, Idle draw). false turns them off; stance weaknesses stay. Absent or true is on."
+    },
+    "sameStanceDiscount": {
+      "type": "boolean",
+      "description": "Playing into the stance already held (fixCoreMechanics.json stance): the SP and Mana cuts and the effectiveness bonus. false turns them off; matchup advantage stays. Absent or true is on."
     }
   },
   "required": [

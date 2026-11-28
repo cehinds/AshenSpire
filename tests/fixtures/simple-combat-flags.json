@@ -11,6 +11,31 @@
       "stagger": {
         "poise": false
       }
+    },
+    "stanceBenefitsOff": {
+      "stances": {
+        "builtInBenefits": false
+      }
+    },
+    "sameStanceDiscountOff": {
+      "stances": {
+        "sameStanceDiscount": false
+      }
     }
+  },
+  "stanceProbe": {
+    "stance": {
+      "maneuver": "smash",
+      "camp": "physical",
+      "range": "melee"
+    },
+    "carrier": {
+      "combatProfile": {
+        "maneuver": "smash",
+        "camp": "physical"
+      }
+    },
+    "baseSp": 2,
+    "secondTurn": 2
   }
 }
