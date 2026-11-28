@@ -1079,3 +1079,13 @@ test('float noise never costs a value its promotion ownership', async () => {
   const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
   assert.match(panel, /if \(Object\.hasOwn\(next, key\) && !sameSetting\(next\[key\], to\)\) delete next\[key\];/, 'a profile load prunes the same way');
 });
+
+test('an unset phone armaments placement follows the balanceUi.json default', async () =>
+{
+  const { resolveArmamentsPhonePlacement } = await import('../src/ui/screens/settings.js');
+  const { UI_DEFAULTS } = await import('../src/ui/models/SettingsRowsModel.js');
+  const shippedPlacement = UI_DEFAULTS.armaments.phonePlacement;
+  const unknownPlacement = { armamentsPhonePlacement: 'nowhere' };
+  assert.equal(resolveArmamentsPhonePlacement({}), shippedPlacement);
+  assert.equal(resolveArmamentsPhonePlacement(unknownPlacement), shippedPlacement);
+});

@@ -1,0 +1,58 @@
+{
+  "request": "Make the owner's exported Score Studio config the game's default settings: the opening plays once, clicking the artwork continues, music starts off, combat speed 1.1, title hold 1s, flick distance 32 and phone armaments on the right.",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "scenes": [
+    {
+      "name": "prologue-fresh-profile",
+      "url": "?shot=prologue",
+      "ready": ".prologue-stage",
+      "settleMs": 1500,
+      "actions": [],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "The opening is on screen",
+          "selector": ".prologue-screen"
+        },
+        {
+          "kind": "style",
+          "label": "The artwork is a Continue target by default",
+          "selector": ".prologue-stage",
+          "prop": "cursor",
+          "equals": "pointer"
+        },
+        {
+          "kind": "within",
+          "label": "The caption fits the screen",
+          "selector": ".prologue-caption",
+          "container": ".prologue-screen"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0
+        }
+      ],
+      "failure": [
+        {
+          "kind": "style",
+          "label": "Clicking the artwork does nothing (old default)",
+          "selector": ".prologue-stage",
+          "prop": "cursor",
+          "equals": "auto"
+        }
+      ]
+    }
+  ]
+}
