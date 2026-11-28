@@ -12,7 +12,10 @@ import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
 const FORCE = { combatProfile: { camp: 'spell', school: 'force', damageType: 'arcane' }, tags: ['school:force'] };
 const FIRE = { combatProfile: { camp: 'spell', school: 'fire', damageType: 'arcane', magicShare: 1 } };
 const BLUNT = { combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'blunt', reach: 'contact' }, tags: ['camp:physical', 'damage:blunt'] };
-const hit = (combat, target, carrier, base = 20) => profileDamageReceipt(combat, combat.player, target, base, { ...carrier, skipRatingBonus: true }, { roll: 0 });
+// Owner ruling 2026-11-28: damage is 1:1 (no base-damage scale), so a hit meets the layers as dealt.
+const HIT_DAMAGE = 10;
+const OVERFLOW_HIT_DAMAGE = 15;
+const hit = (combat, target, carrier, base = HIT_DAMAGE) => profileDamageReceipt(combat, combat.player, target, base, { ...carrier, skipRatingBonus: true }, { roll: 0 });
 const ward = (combat, entity, stacks) => Statuses.applyStatus(combat, entity, 'ward', stacks, entity);
 const nextTurnStart = (combat, entity) => { entity.fixCoreDecayRound = -1; Statuses.decayAtTurnStart(combat, entity); };
 
@@ -76,7 +79,7 @@ test('Ward completely absorbing post-Block damage leaves Poise and HP untouched'
   assert.ok(quoted.wardHpAbsorbed > 0 && quoted.wardHpAbsorbed < 15);
   assert.equal(quoted.poiseMitigated, 0);
   assert.equal(quoted.poiseDrain, 0);
-  applyAttackDamage(combat, combat.player, enemy, 20, [], { ...BLUNT, skipRatingBonus: true });
+  applyAttackDamage(combat, combat.player, enemy, HIT_DAMAGE, [], { ...BLUNT, skipRatingBonus: true });
   assert.equal(enemy.block, 0);
   assert.equal(enemy.wardHp, 15 - quoted.wardHpAbsorbed);
   assert.equal(enemy.statuses.ward.stacks, Math.ceil(enemy.wardHp / 5));
@@ -88,19 +91,19 @@ test('full Ward absorbs Fire before its attached Poise drain, including with ful
   for (const [block, stacks, fullyProtected] of [[4, 3, true], [30, 3, true], [4, 1, false]]) {
     const { combat, enemy } = fight({ enemies: 1, poise: 20, attributes: { intelligence: 4 } });
     delete combat.fixCoreRules.stanceBenefits?.neutral?.damageTakenMultiplier;
-    const unprotected = hit(combat, enemy, FIRE, 30);
+    const unprotected = hit(combat, enemy, FIRE, OVERFLOW_HIT_DAMAGE);
     assert.ok(unprotected.element.poiseAdded > 0, 'control: Fire drains additional Poise without a buffer');
     enemy.block = block;
     ward(combat, enemy, stacks);
     const startingPoise = enemy.persistentPoise.value;
     const startingWard = enemy.wardHp;
     const startingHp = enemy.hp;
-    const quote = hit(combat, enemy, FIRE, 30);
+    const quote = hit(combat, enemy, FIRE, OVERFLOW_HIT_DAMAGE);
     const packet = quote.damageReceipt.hits[0];
     assert.equal((quote.wardHpAbsorbed ?? 0) === packet.incoming - quote.blocked, fullyProtected);
     if (fullyProtected) assert.equal(quote.element.poiseAdded, 0, 'Ward shields Poise completely');
     else assert.ok(quote.element.poiseAdded > 0, 'the overflowing Fire drains additional Poise');
-    applyAttackDamage(combat, combat.player, enemy, 30, [], { ...FIRE, skipRatingBonus: true });
+    applyAttackDamage(combat, combat.player, enemy, OVERFLOW_HIT_DAMAGE, [], { ...FIRE, skipRatingBonus: true });
     assert.equal(enemy.wardHp ?? 0, startingWard - (quote.wardHpAbsorbed ?? 0));
     assert.equal(enemy.persistentPoise.value, startingPoise - quote.poiseDrain);
     assert.equal(enemy.hp, startingHp - quote.hpLoss);
@@ -115,7 +118,7 @@ test('saved Force routing still splits Ward overflow 50/50', () => {
   enemy.block = 2;
   ward(combat, enemy, 1); // 5 Ward HP
   enemy.persistentPoise = { value: 40, max: 40 };
-  const receipt = hit(combat, enemy, FORCE, 30); // 15 incoming -> 2 Block -> 5 Ward -> 8 overflow (50/50)
+  const receipt = hit(combat, enemy, FORCE, OVERFLOW_HIT_DAMAGE); // 15 incoming -> 2 Block -> 5 Ward -> 8 overflow (50/50)
   assert.equal(receipt.wardHpBuffer, true);
   assert.equal(receipt.blocked, 2);
   assert.equal(receipt.wardHpAbsorbed, 5);
@@ -130,14 +133,14 @@ test('emptying Poise does NOT strip Ward (Ward is independent of Poise break)', 
   enemy.persistentPoise.max = 10;
   ward(combat, enemy, 2); // 10 Ward HP
   enemy.hp = enemy.maxHp = 100;
-  // Deal 20 (10 incoming): 10 Ward absorbs all 10; Poise stays 1.
-  applyAttackDamage(combat, combat.player, enemy, 20, [], { ...BLUNT, skipRatingBonus: true });
+  // Deal 10: 10 Ward absorbs all 10; Poise stays 1.
+  applyAttackDamage(combat, combat.player, enemy, HIT_DAMAGE, [], { ...BLUNT, skipRatingBonus: true });
   assert.equal(enemy.wardHp, undefined);
   assert.equal(enemy.statuses.ward, undefined);
   // Now re-apply Ward, then break Poise with a second hit that overflows Ward
   ward(combat, enemy, 1); // 5 Ward HP
   enemy.persistentPoise.value = 1;
-  applyAttackDamage(combat, combat.player, enemy, 30, [], { ...BLUNT, skipRatingBonus: true }); // 15 incoming -> 5 Ward -> 10 overflow -> breaks Poise
+  applyAttackDamage(combat, combat.player, enemy, OVERFLOW_HIT_DAMAGE, [], { ...BLUNT, skipRatingBonus: true }); // 15 incoming -> 5 Ward -> 10 overflow -> breaks Poise
   assert.ok(enemy.broken);
   // Re-apply Ward while Broken: Ward stays intact
   ward(combat, enemy, 1);
@@ -153,15 +156,13 @@ test('the Ward tooltip reads its numbers from config and describes the health bu
   assert.match(text, /Lose 1 stack \(5 Ward HP\) at the start of your turn/);
 });
 
-test('Ward cards retain their authored Reaction policy, including Mote Shield and the non-Reaction starter Ward', () => {
+test('no Ward card is a Reaction, Mote Shield included', () => {
   const { combat } = fight({ enemies: 1 });
   const grants = effect => effect.op === 'gainWard' || (effect.op === 'applyStatus' && effect.status === 'ward');
   const cards = combat.registries.cards.all().filter(card => [...(card.effects || []), ...(card.upgrade?.effects || [])].some(grants));
   assert.ok(cards.some(card => card.id === 'core.moteShield'), 'Mote Shield grants Ward');
-  // Owner ruling 2026-11-21 (Unranked starters): the two starter Ward cantrips are not Reactions (Reaction weighs 3, which would rank them).
-  const notReactions = new Set(['core.arcaneWard', 'core.glimmerVeil', 'custom.card_mwx2mb6p']);
-  assert.ok(cards.find(card => card.id === 'core.moteShield').tags.includes('trait:reaction'), 'Mote Shield remains a Reaction');
+  // Owner ruling 2026-11-28: Mote Shield is no longer a Reaction; the starter Ward cantrips never were (2026-11-21).
   const authoredWard = cards.find(card => card.id === 'custom.card_mwx2mb6p');
-  assert.ok(authoredWard && !authoredWard.tags.includes('trait:reaction'), 'the owner-authored Ward has no Reaction tag');
-  for (const card of cards) assert.ok(notReactions.has(card.id) ? !card.tags.includes('trait:reaction') : card.tags.includes('trait:reaction'), card.id);
+  assert.ok(authoredWard, 'the owner-authored Ward grants Ward');
+  for (const card of cards) assert.ok(!card.tags.includes('trait:reaction'), card.id);
 });
