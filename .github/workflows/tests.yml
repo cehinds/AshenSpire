@@ -115,7 +115,13 @@ jobs:
             !/docs/**/*.png
 
       - name: The base branch, for the tools that measure against it
-        run: git fetch --no-tags --depth=50 origin +refs/heads/dev:refs/remotes/origin/dev
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git fetch --no-tags --depth=50 origin +refs/heads/dev:refs/remotes/origin/dev
+          if [ -n "$BASE_REF" ] && [ "$BASE_REF" != dev ]; then
+            git fetch --no-tags --depth=50 origin "+refs/heads/$BASE_REF:refs/remotes/origin/$BASE_REF"
+          fi
 
       - uses: ./.github/actions/setup-node
       - name: Check staged JavaScript API, formatting, and types
@@ -123,6 +129,13 @@ jobs:
           npm ci --prefix tools/code-quality --ignore-scripts --no-audit --no-fund
           npm run code:check
           npm --prefix tools/code-quality run selftest
+      - name: Changed files keep the pinned formatting
+        if: github.event_name == 'pull_request'
+        run: npm run format:changed:check -- --base origin/${{ github.base_ref }}
+      - name: Code smells in the changed files (report only)
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        run: npm run code:smells -- --base origin/${{ github.base_ref }}
       # The runner's own python3 moved to 3.14 (2026-10-25), for which Pillow 11.1.0
       # ships no wheel and the source build lacks jpeg headers. Pin the encoder's Python.
       - uses: actions/setup-python@v5
