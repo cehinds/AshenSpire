@@ -25,7 +25,7 @@ function playCopy(cardId, upgraded) {
   return { combat, instance, hit, resolved: resolveCombatCard(combat, instance) };
 }
 
-for (const [cardId, base, up] of [['core.pommelStrike', [5, 4, undefined], [7, 6, undefined]], ['core.hammerBlow', null, null]]) {
+for (const [cardId, base, up] of [['core.pommelStrike', [1, 4, undefined], [2, 6, undefined]], ['core.hammerBlow', null, null]]) {
   test(`${cardId}: upgraded copy resolves, renders and plays at the upgraded grade`, () => {
     const b = playCopy(cardId, false), u = playCopy(cardId, true);
     const baseDef = projectGameCard(b.combat, cardId), upDef = baseDef.upgrade;
@@ -38,19 +38,18 @@ for (const [cardId, base, up] of [['core.pommelStrike', [5, 4, undefined], [7, 6
     assert.equal(u.hit.amount - b.hit.amount > 0, true, 'applied damage rises with the upgrade');
     const upFace = playingCardModel(registries, u.instance, { rules: u.combat });
     const baseFace = playingCardModel(registries, b.instance, { rules: b.combat });
-    const multiplier = b.combat.gameProfile.modules.effects.baseDamageMultiplier ?? 1;
     assert.equal(upFace.name, `${baseDef.name}+`);
-    // Owner 2026-11-18 (ruling §15): a face carries the wearer's STR on physical damage, after the profile scale.
+    // Owner ruling 2026-11-28: a face carries the stored damage plus the wearer's STR, 1:1.
     const str = b.combat.player.attributes.strength;
-    assert.equal(baseFace.tokens.damage, Math.ceil(wantBase[0] * multiplier) + str, 'base face shows the profile-scaled damage plus STR');
-    assert.equal(upFace.tokens.damage, Math.ceil(wantUp[0] * multiplier) + str, 'upgraded face shows the profile-scaled damage plus STR');
+    assert.equal(baseFace.tokens.damage, wantBase[0] + str, 'base face shows the stored damage plus STR');
+    assert.equal(upFace.tokens.damage, wantUp[0] + str, 'upgraded face shows the stored damage plus STR');
   });
 }
 
 test('core.pommelStrike upgraded hit lands for the upgraded damage in the log', () => {
   const u = playCopy('core.pommelStrike', true), b = playCopy('core.pommelStrike', false);
   assert.equal(500 - u.combat.enemies[0].hp, u.hit.amount);
-  assert.equal(u.hit.amount - b.hit.amount, 1, 'Core halves the base damage, rounded up: 7 -> 4 and 5 -> 3');
+  assert.equal(u.hit.amount - b.hit.amount, 1, 'the stored 2 and 1 play 1:1');
 });
 
 test('Legacy profile resolution of an upgraded card is unchanged', () => {
