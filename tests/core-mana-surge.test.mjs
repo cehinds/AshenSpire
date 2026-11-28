@@ -150,7 +150,9 @@ test('an older Core save without the card gets it on the next reconcile', () => 
 });
 
 // As a cantrip, Mana Surge stays at 1 SP. The sceptre's Focus cancels the spell's MP surcharge.
-for (const [wisdomPoints, maxMana, spent] of [[0, 3, 1], [1, 4, 4]]) {
+// Under legacy gear the Herald's Mana is 1 + its 1 WIS (owner, 2026-11-28): 2 at the start, 3 with a
+// levelled point. One case starts one short of the cap, the other empty.
+for (const [wisdomPoints, maxMana, spent] of [[0, 2, 1], [1, 3, 3]]) {
   test(`Mana Surge costs 1 SP and restores Mana up to the Herald's ${maxMana} MP cap`, () => {
     // Use legacy gear effects here to isolate the Mana restoration cap from robe-type capacity.
     const historical = legacyGearRegistries(reg);
