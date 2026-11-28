@@ -5,7 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
+import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries, gameContent } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
@@ -18,8 +18,16 @@ import { CounterHitAnswers, counterReturnForReceipt } from '../src/engine/counte
 import { primeEnemyCounter } from '../src/engine/combatCardTactics.js';
 import { legacyGearRegistries } from './helpers/legacy-gear.mjs';
 
-// Pins this file's SPEC worked examples (a Counter, Poise or Smash rule, not damage scale): the Core 0.5 base-damage scale is off here.
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { baseDamageMultiplier: 1, physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
+// Pins this file's SPEC worked examples (a Counter, Poise or Smash rule): every damage scale and
+// stance factor is 1 (owner ruling 2026-11-28), so an 8-damage Slash arrives as 8.
+const profile = resolveGameProfile({
+  formatVersion: 1,
+  core: 'ashen.core@2.0.0',
+  modules: {},
+});
+// The card's stored return damage, the base of every answered hit.
+const counterCard = gameContent(profile, 'cards').find(card => card.id === 'core.counter');
+const COUNTER_BASE = counterCard.effects.find(effect => effect.op === 'damage').amount;
 const bundle = (hits, damage = 8) => ({ ...contentBundle, enemies: contentBundle.enemies.map(e => e.id === 'wanderingSoldier' ? { ...e, moves: { ...e.moves, slash: { intent: 'attack', damage, hits, weight: 45 } } } : e) });
 const regFor = (hits, damage = 8) => bindGameProfileRegistries(createRegistries(applyGameProfileToContent(bundle(hits, damage), profile)), profile);
 const reg = regFor(1), reg3 = regFor(3);
@@ -55,14 +63,15 @@ test('a Counter card grants its own stacks (core.counter 1, upgraded 2), never t
   assert.equal(up.player.counterStacks, 2, 'the authored upgrade grants 2');
 });
 
-test('the reported 100+ case: four Counter plays then one 10-damage hit return 4 + floor(10 x 0.1 x 4) = 8, not 134', () => {
+test('the reported 100+ case: four Counter plays then one 8-damage hit return 1 + floor(8 x 0.1 x 4) = 4', () => {
   const { combat } = live();
   for (let i = 0; i < 4; i++) { give(combat, `c${i}`); play(combat, `c${i}`); }
   const events = endTurn(combat);
   const hit = events.find(e => e.type === 'combatCounterTriggered');
-  assert.equal(hit.counterStacks, 4); assert.equal(hit.counterIncoming, 10);
+  assert.equal(hit.counterStacks, 4);
+  assert.equal(hit.counterIncoming, 8);
   assert.equal(hit.amount, hit.counterBase + Math.floor(hit.counterIncoming * 0.1 * 4));
-  assert.equal(hit.amount, 8, 'was 4 + 128 + 2 = 134');
+  assert.equal(hit.amount, 4, 'four stacks from four plays, not the Block held');
   assert.equal(combat.player.counterStacks, 3 - 1 + 0, 'one spent by the hit, one faded at the next turn start');
 });
 
@@ -73,7 +82,11 @@ test('a multi-hit attack against 3 stacks returns 3 times with falling stack cou
   const events = endTurn(combat);
   const trig = events.find(e => e.type === 'combatCounterTriggered');
   assert.deepEqual(trig.counterHits.map(row => row.stacksBefore), [3, 2, 1]);
-  trig.counterHits.forEach(row => assert.equal(row.amount, 4 + Math.floor(row.incoming * 0.1 * row.stacksBefore), 'each hit: base + 10% of that hit per stack held before it'));
+  trig.counterHits.forEach(row =>
+  {
+    const expected = COUNTER_BASE + Math.floor(row.incoming * 0.1 * row.stacksBefore);
+    assert.equal(row.amount, expected, 'each hit: base + 10% of that hit per stack held before it');
+  });
   assert.equal(trig.amount, trig.counterHits.reduce((s, row) => s + row.amount, 0));
   assert.equal(events.filter(e => e.type === 'counterStacksChanged' && e.consumed).reduce((s, e) => s - e.amount, 0), 3);
   assert.equal(combat.player.counterStacks ?? 0, 0);
