@@ -217,3 +217,42 @@ test('pack cards: the build runs every step in order and a failed step restores 
     assert.equal(existsSync(pathOf(strayGeneratedFile)), false);
   });
 });
+
+test('pack cards: set values are type-checked against the card schema', () =>
+{
+  const changeOf = (set, unset = []) => ({
+    cards: [{
+      id: strikeId,
+      set,
+      unset,
+    }],
+    removedCardIds: [],
+  });
+  const refused = [
+    changeOf({ manaCost: '1' }),
+    changeOf({ staminaCost: Number.NaN }),
+    changeOf({ name: 7 }),
+    changeOf({ effects: {} }),
+    changeOf({ tags: 'camp:physical' }),
+    changeOf({ rarity: 'mythic' }),
+    changeOf({ notACardField: true }),
+    changeOf({}, ['name']),
+  ];
+  for (const data of refused)
+  {
+    assert.ok(PackCardDataProblem(data), JSON.stringify(data.cards[0]));
+  }
+  for (const card of packCards)
+  {
+    const { id, ...set } = card;
+    const data = {
+      cards: [{
+        id,
+        set,
+        unset: [],
+      }],
+      removedCardIds: [],
+    };
+    assert.equal(PackCardDataProblem(data), null, `${id} as authored passes`);
+  }
+});

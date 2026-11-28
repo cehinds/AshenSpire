@@ -15,7 +15,9 @@ import {
   StudioCardChangeKeys,
   StudioPackCardIdPrefixes,
   IsStudioPackCardId,
+  StudioCardExtraFieldTypes,
 } from './score-studio/studioSaveFiles.js';
+import { SCHEMAS } from '../src/model/schemas.js';
 
 const jsonIndent = 2;
 const lineEnd = '\n';
@@ -40,6 +42,21 @@ const buildOutputFiles = Object.freeze([
   'games/ashenspire/packs/core/enemyLevelCards.json',
 ]);
 const buildOutputTrees = Object.freeze(['src/content/generated']);
+// The JSON type each card schema kind holds; kinds not listed here are not type-checked.
+const schemaKindTypes = Object.freeze({
+  str: 'string',
+  enum: 'string',
+  ref: 'string',
+  num: 'number',
+  bool: 'boolean',
+  arr: 'array',
+  effects: 'array',
+  obj: 'object',
+  map: 'object',
+});
+const enumKind = 'enum';
+const uncheckedType = 'any';
+const cardFields = SCHEMAS.card.fields;
 
 function isPlainObject(value)
 {
@@ -95,6 +112,71 @@ function changeKeysProblem(change)
     : null;
 }
 
+function jsonTypeOf(value)
+{
+  if (Array.isArray(value))
+  {
+    return 'array';
+  }
+  return value === null
+    ? 'null'
+    : typeof value;
+}
+
+function expectedTypeOf(key)
+{
+  const field = cardFields[key];
+  if (!field)
+  {
+    return StudioCardExtraFieldTypes[key] ?? null;
+  }
+  return schemaKindTypes[field.k] ?? uncheckedType;
+}
+
+function fieldValueProblem(key, value)
+{
+  const isKnown = key in cardFields || key in StudioCardExtraFieldTypes;
+  if (!isKnown)
+  {
+    return `"${key}" is not a card field.`;
+  }
+  const expected = expectedTypeOf(key);
+  const isUnchecked = expected === uncheckedType;
+  const typeMatches = isUnchecked || jsonTypeOf(value) === expected;
+  if (!typeMatches || (expected === 'number' && !Number.isFinite(value)))
+  {
+    return `"${key}" must be a ${expected}.`;
+  }
+  const field = cardFields[key];
+  const isEnumMiss = field?.k === enumKind && !field.values.includes(value);
+  return isEnumMiss
+    ? `"${key}" must be one of ${field.values.join(', ')}.`
+    : null;
+}
+
+function requiredUnsetProblem(key)
+{
+  const field = cardFields[key];
+  return field && !field.opt
+    ? `"${key}" is required and cannot be removed.`
+    : null;
+}
+
+// Each set value has its field's JSON type (and enum value); required fields stay.
+function changeValuesProblem(change)
+{
+  const setProblems = Object.entries(change.set)
+    .map(([key, value]) => fieldValueProblem(key, value));
+  const unsetProblems = change.unset.map(requiredUnsetProblem);
+  const problem = [
+    ...setProblems,
+    ...unsetProblems,
+  ].find(Boolean);
+  return problem
+    ? `card change "${change.id}": ${problem}`
+    : null;
+}
+
 function cardChangeProblem(change)
 {
   const shapeProblem = changeShapeProblem(change);
@@ -104,9 +186,10 @@ function cardChangeProblem(change)
   }
   if (!IsStudioPackCardId(change.id))
   {
-    return `card id "${change.id}" is not in the game card file's namespaces (${namespaceRule()}).`;
+    const where = `the game card file's namespaces (${namespaceRule()})`;
+    return `card id "${change.id}" is not in ${where}.`;
   }
-  return changeKeysProblem(change);
+  return changeKeysProblem(change) ?? changeValuesProblem(change);
 }
 
 function removedIdsProblem(removedCardIds, changedIds)

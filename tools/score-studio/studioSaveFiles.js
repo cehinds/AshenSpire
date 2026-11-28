@@ -33,6 +33,12 @@ export function IsStudioPackCardId(id)
   return isId && StudioPackCardIdPrefixes.some((prefix) => id.startsWith(prefix));
 }
 
+// Card fields the game reads that the card schema (SCHEMAS.card) does not list, by JSON type.
+export const StudioCardExtraFieldTypes = Object.freeze({
+  tags: 'array',
+  magicShare: 'number',
+});
+
 export const StudioCardChangeKeys = Object.freeze([
   'id',
   'set',
