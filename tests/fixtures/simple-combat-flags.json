@@ -68,5 +68,13 @@
       12
     ],
     "playerHp": 400
+  },
+  "preparedSpellProbe": {
+    "$note": "A spell priced 2 SP; Prepared cuts it to 1 while the discount is on.",
+    "cardId": "starShower",
+    "price": {
+      "stamina": 2,
+      "mana": 0
+    }
   }
 }
