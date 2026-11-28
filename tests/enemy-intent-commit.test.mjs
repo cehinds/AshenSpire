@@ -19,12 +19,26 @@ import { EnemyDefinitionOf } from '../src/model/enemyMoveSet.js';
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 // `legacy` is the Staggered rule a fight saved before Wave 3 keeps (no `poise.breakRule`); the default is the shipped Broken rule.
-function fight(id, seed = 511, { legacy = false } = {}) {
+function fight(id, seed = 511, { legacy = false, strength = undefined } = {}) {
   const run = createRunState({ registries, classId: 'reaver', seed });
+  if (strength !== undefined) run.attributes = { ...run.attributes, strength };
   const combat = createRunCombat({ registries, run, rng: createRng(seed), enemyIds: [id] });
   if (legacy) combat.fixCoreRules = { ...combat.fixCoreRules, poise: { drain: 'prevented' } };
   combat.player.hp = combat.player.maxHp = 100000;
   return combat;
+}
+// The Gilded Guard answers a hit of at least its minIncoming (8). A Reaver Strike reaches it at
+// STR 2, one point above the base 1, so the reaction scenarios below fight at that strength.
+const GUARD_TRIGGER_STRENGTH = 2;
+function guardFight()
+{
+  return fight(
+    'gildedKnight',
+    2,
+    {
+      strength: GUARD_TRIGGER_STRENGTH,
+    },
+  );
 }
 const settle = combat => { for (let i = 0; combat.pendingReaction && i < 50; i++) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null }); };
 const play = (combat, card) => { dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, ...(card.cardId === 'core.defend' ? {} : { targetId: combat.enemies[0].id }) }); settle(combat); };
@@ -167,7 +181,7 @@ test('a fight saved without a committed plan loads, keeps its intent and plays i
 });
 
 test('SP an enemy spends reacting in the player turn comes out of its next turn, and the plan is trimmed visibly', () => {
-  const combat = fight('gildedKnight', 2);
+  const combat = guardFight();
   const enemy = combat.enemies[0];
   assert.deepEqual(shown(enemy), ['thrust', 'thrust']);
   assert.equal(enemy.maxStamina, 2);
@@ -182,7 +196,7 @@ test('SP an enemy spends reacting in the player turn comes out of its next turn,
 });
 
 test('reaction SP is not counted twice: the next turn starts at pool minus the one reaction payment', () => {
-  const combat = fight('gildedKnight', 2);
+  const combat = guardFight();
   const enemy = combat.enemies[0];
   play(combat, combat.piles.hand.find(row => row.cardId === 'core.strike'));
   assert.equal(enemy.pendingStaminaLoss, 1);
@@ -195,7 +209,7 @@ test('reaction SP is not counted twice: the next turn starts at pool minus the o
 
 // Version-1 action rules keep a player's Advance temporary to its action, so the knight's reaction still has a band to close.
 function farFight(band) {
-  const combat = fight('gildedKnight', 2);
+  const combat = guardFight();
   combat.core2ActionRulesVersion = 1;
   const enemy = combat.enemies[0];
   delete combat.rangeState.policy.maxRange; combat.rangeState.engagements[rangePairKey('player:player', `enemy:${enemy.id}`)] = band;
