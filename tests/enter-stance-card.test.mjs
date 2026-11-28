@@ -85,7 +85,8 @@ test('the figure\'s pose and glyph read the stance the engine ended on, live and
   assert.equal(CardAsEnteredStance(card, [played], played), card);
 });
 
-// Non-Core (createRegistries(contentBundle), no profile): the numbers match what dev paid before the stance change.
+// Non-Core (createRegistries(contentBundle), no profile): the numbers match the stored content. Owner ruling 2026-11-28 rescaled
+// the Oath Block (balanceTagMechanics.json) to 0, so the Reaver's Oath grant adds nothing here.
 const plainReg = createRegistries(contentBundle);
 async function plainPlay(cardId, choice) {
   const { createCombat } = await import('../src/engine/combat.js');
@@ -98,7 +99,7 @@ async function plainPlay(cardId, choice) {
 }
 
 test('non-Core: Defend-stance cards do not restore Block and Barrier a second time (dev numbers)', async () => {
-  for (const [cardId, block] of [['enterBulwark', 13], ['brace', 12]]) {
+  for (const [cardId, block] of [['enterBulwark', 11], ['brace', 12]]) {
     const player = await plainPlay(cardId);
     assert.deepEqual([player.block, player.barrier ?? 0], [block, 0], cardId);
     assert.equal(player.combatStance.maneuver, 'defend');
@@ -120,7 +121,7 @@ test('non-Core: Enter Gorefire pays no unquoted Precision entry grant', async ()
   const gorefire = await plainPlay('enterGorefire');
   assert.equal(gorefire.stanceId, 'gorefire');
   assert.equal(gorefire.statuses?.precision?.stacks ?? 0, 0);
-  assert.equal(gorefire.block ?? 0, 2, 'dev number');
+  assert.equal(gorefire.block ?? 0, 0, 'the stored Oath Block is 0');
 });
 
 test('entered-stance helper reads the play that caused the change, live and from the whole restored log', async () => {
