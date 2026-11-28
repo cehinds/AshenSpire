@@ -100,7 +100,8 @@ test('a ramped card upgraded after plays shows the faces the live resolver gives
   assert.deepEqual(JSON.parse(JSON.stringify(row.faces.before)), JSON.parse(JSON.stringify(projectGameCard(run, beforeInstance))));
   assert.deepEqual(JSON.parse(JSON.stringify(row.faces.after)), JSON.parse(JSON.stringify(projectGameCard(run, afterInstance))));
   const amount = (face) => JSON.stringify(face.effects[0].amount);
-  assert.match(amount(row.faces.before), /7/, 'the base 2 plus five plays is in the face');
+  // Owner ruling 2026-11-28: Whetstone Nick stores base 1, so five plays face 6.
+  assert.match(amount(row.faces.before), /6/, 'the base 1 plus five plays is in the face');
 });
 
 test('an acquired upgraded card carries the face of the owned instance, not the base definition', async () => {
