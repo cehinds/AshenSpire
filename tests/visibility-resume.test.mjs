@@ -461,6 +461,7 @@ const KNOWN = {
   'src/ui/components/deckCardAnimationPreview.js': [["'visibilitychange'", 'suspends/resumes only the decorative preview frame clock, preserving its frame and explicit Pause state; no run/combat mutation or action dispatch, and disposal removes the listener (tests/deck-card-animation-preview.test.mjs)']],
   'src/ui/components/hints.js': ["'pointerdown'", "'pointerup'", "'pointercancel'", "'pointerout'", "'gamepadconnected'", "'gamepaddisconnected'"],
   'src/ui/components/holdconfirm.js': ["'keydown'", "'keydown'"],
+  'src/ui/components/holdRelease.js': [['eventName', "one of CLICK_EVENT = 'click' or NEXT_GESTURE_EVENTS = ['pointerdown', 'keydown'] (the literals beside it), added on window for a short window after a completed touch hold: swallows only the browser's trailing pointer click so it cannot press the next screen, and the next gesture or the timer removes all three; reads no run/combat state and dispatches no gameplay action"]],
   'src/ui/components/hudQuickSettings.js': ["'fullscreenchange'", "'webkitfullscreenchange'"],
   'src/ui/components/iconTray.js': ["'pointerdown'"],
   'src/ui/components/intro.js': ["'keydown'"],
