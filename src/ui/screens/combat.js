@@ -198,10 +198,12 @@ import { controlGate, recoveryControls } from '../../engine/combatStatusControl.
 import { proposalCardPlan } from '../../engine/proposalStatusRuntime.js';
 import { ashenBlightBarHtml, openAshenBlightMilestone } from '../components/ashenBlight.js';
 import { NonlethalHpRefusal } from '../../model/cardHpCost.js';
+import { PoiseEnabled } from '../../model/simpleCombatFlags.js';
 
 // The upcast prompt after choosing a target is off (owner, 2026-11-20: the Ask to upcast setting was
 // dropped; Core 2 never offered it). Turning it on is this one edit.
 const ASK_TO_UPCAST_AFTER_TARGET = false;
+const POISE_RESOURCE = 'poise';
 // The event types that move the displayed hand between beats — the same four
 // applyBeatToDisp() reads. Kept beside that switch's contract, not typed twice.
 const HAND_BEAT_EVENTS = new Set(['cardDrawn', 'cardPlayed', 'cardDiscarded', 'cardExhausted']);
@@ -2057,21 +2059,51 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     battlefieldStage.placeHitBadges();
   }
 
+  function emptyPoiseTrough()
+  {
+    const row = registries.resources.get(POISE_RESOURCE);
+    return {
+      id: POISE_RESOURCE,
+      name: row.name,
+      glyph: row.glyph || '',
+      tint: row.tint,
+      weight: row.weight,
+      band: row.band || null,
+      cur: 0,
+      max: 0,
+      pct: 0,
+      lengthPct: 100,
+      domain: 0,
+      labelMax: 0,
+    };
+  }
+
+  // The Poise bar sits under HP as Poise left, an empty trough at 0/0 (owner 2026-11-07, 2026-11-12).
+  // With stagger.poise off there is no Poise, so no bar at all.
+  function withPoiseBar(plan)
+  {
+    if (!PoiseEnabled(combat))
+    {
+      return plan.filter((bar) => bar.id !== POISE_RESOURCE);
+    }
+    if (!plan.some((bar) => bar.id === POISE_RESOURCE))
+    {
+      plan.push(emptyPoiseTrough());
+    }
+    return plan.map((bar) => bar.id === POISE_RESOURCE
+      ? PoiseBarRemaining(bar)
+      : bar);
+  }
+
   // Everything the meter strip is drawn from, as plain data (the stage keys the strip by `key`).
   function meterInputs(entity) {
     const v = dv(entity);
     const procPlan = entity.kind === 'enemy' ? procDisplayPlan(entity) : null;
     const stackHidden = new Set(procPlan ? procPlan.hidden : []);
     const expanded = combat.combatExpansionVersion === 2;
-    const plan = resourceBarPlan(registries, 'model', v, entity, resDomains).filter((bar) => !stackHidden.has(bar.id) && (!expanded || bar.id === 'hp' || bar.id === 'poise'));
-    // Owner 2026-11-07 (backlog #11): the Poise bar is always drawn under HP, an empty trough at 0/0 (AC stays undrawn).
-    if (!plan.some((bar) => bar.id === 'poise')) {
-      const row = registries.resources.get('poise');
-      plan.push({ id: 'poise', name: row.name, glyph: row.glyph || '', tint: row.tint, weight: row.weight, band: row.band || null, cur: 0, max: 0, pct: 0, lengthPct: 100, domain: 0, labelMax: 0 });
-    }
-    // Owner 2026-11-12: the bar under HP shows Poise left (full when untouched, draining as the meter fills); cur/max stay the meter's own.
-    const poiseAt = plan.findIndex((bar) => bar.id === 'poise');
-    plan[poiseAt] = PoiseBarRemaining(plan[poiseAt]);
+    const shownBar = (bar) => !stackHidden.has(bar.id)
+      && (!expanded || bar.id === 'hp' || bar.id === POISE_RESOURCE);
+    const plan = withPoiseBar(resourceBarPlan(registries, 'model', v, entity, resDomains).filter(shownBar));
     const hp = {
       hud: { ...protectionPresentation(v), evasion: combat.combatExpansionVersion === 2 ? (v.statuses?.evade?.stacks || 0) : null, precision: combat.combatExpansionVersion === 2 ? (v.statuses?.precision?.stacks || 0) : null,
         ac: acFor(combat, entity),
@@ -2108,7 +2140,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (bar.id === 'hp') {
         markUiComponent(el, UI.healthStatusBar, entity.kind);
         const poiseEl = bars.querySelector('.as-meter[data-res="poise"]');
-        const next = el.nextSibling === poiseEl ? poiseEl.nextSibling : el.nextSibling;
+        const next = poiseEl && el.nextSibling === poiseEl
+          ? poiseEl.nextSibling
+          : el.nextSibling;
         const { hud, evadeHelp, precisionHelp, poiseHelp, wardHelp } = hp;
         // The Poise bar joins the HP row: bars stacked, then one badge row. The status tray is seated in that badge row by combatantFrame.js.
         const row = combatHealthRow(el, hud, { tooltips, blockHelp: helpText('block'), evadeHelp, precisionHelp, poiseHelp, wardHelp, persistent: true,
