@@ -73,8 +73,13 @@ test('every new card resolves at base and upgraded with its authored SP cost, a 
 test('character-level reward bands reach unowned higher-rank cards of each class over 1200 seeds', () => {
   const classOf = { reaver: ['core.skullsplitter', 'core.whirlwind'], rogue: ['core.feint', 'core.hitAndRun'], starseer: [], herald: [] };
   const colorless = ['core.stunningBlow', 'core.rakingSweep'];
+  // rewards.json classPools (classDeckList) names the shared cards each class may be offered.
+  const classPools = profile.content.rewards.classPools;
+  const classList = classId => classPools.cardLists[classId];
   for (const classId of Object.keys(classOf)) {
-    const expected = [...colorless, ...classOf[classId]];
+    const listed = colorless.filter(id => classList(classId).includes(id));
+    const unlisted = colorless.filter(id => !listed.includes(id));
+    const expected = [...listed, ...classOf[classId]];
     const starterRun = live(classId, []);
     // Owner 2026-11-20 (reward-ranks.skipOwned): an owned card is never offered, so eligibility is asked with the expected cards out of the deck.
     starterRun.deck = starterRun.deck.filter(card => !expected.includes(card.cardId));
@@ -89,6 +94,7 @@ test('character-level reward bands reach unowned higher-rank cards of each class
       for (const option of gameProfileRewardOffers(registries, run, createRng(seed + 40000), { offerId: 'b2' }).options) if (option.kind === 'combatCards') seen.add(option.id);
     }
     for (const id of expected) assert.ok(seen.has(id), `${classId} never offered ${id}`);
+    for (const id of unlisted) assert.ok(!seen.has(id), `${classId} was offered ${id} outside its class list`);
     for (const other of Object.keys(classOf).filter(c => c !== classId)) for (const id of classOf[other]) assert.ok(!seen.has(id), `${classId} was offered ${other}'s ${id}`);
   }
 });
