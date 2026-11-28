@@ -1,0 +1,64 @@
+{
+  "$note": "Combat tools row per profile: which optional controls mount and whether the overlay gate reads off. savedGridPreference is the stored showFormationGrid value. toolsOnProfile is Core with both controls back, for browser checks that need the Grid overlay or the Reaction switch.",
+  "settingKey": "gameConfig.presentation.showFormationGrid",
+  "toolsOnProfile": {
+    "formatVersion": 1,
+    "core": "ashen.core@2.0.0",
+    "modules": {
+      "formation": {
+        "gridOption": true
+      },
+      "reactions": {
+        "playerToggle": true
+      }
+    }
+  },
+  "cases": [
+    {
+      "name": "Core hides Grid and Reaction, keeps Auto, overlay off over a saved true",
+      "profile": "core",
+      "moduleOverrides": {},
+      "savedGridPreference": true,
+      "expect": {
+        "grid": false,
+        "reaction": false,
+        "auto": true,
+        "log": true,
+        "gridOption": "off"
+      }
+    },
+    {
+      "name": "Core with both switches on brings Grid and Reaction back",
+      "profile": "core",
+      "moduleOverrides": {
+        "formation": {
+          "gridOption": true
+        },
+        "reactions": {
+          "playerToggle": true
+        }
+      },
+      "savedGridPreference": true,
+      "expect": {
+        "grid": true,
+        "reaction": true,
+        "auto": true,
+        "log": true,
+        "gridOption": "on"
+      }
+    },
+    {
+      "name": "No profile keeps every control",
+      "profile": null,
+      "moduleOverrides": {},
+      "savedGridPreference": false,
+      "expect": {
+        "grid": true,
+        "reaction": true,
+        "auto": true,
+        "log": true,
+        "gridOption": "on"
+      }
+    }
+  ]
+}
