@@ -67,7 +67,8 @@ test('controlled HP rows add constitution, level growth and a flat relic modifie
   }
 });
 
-test('a controlled half-base-damage rule rounds upward before attribute and side scales', async () => {
+// Owner ruling 2026-11-28: every effects scale reads 1, so this fixture's authored 0.5 base and 0.7 side cuts play 1:1.
+test('a profile authoring a half-base-damage rule plays the stored amount (no base-damage stage)', async () => {
   const { createRng } = await import('../src/engine/rng.js');
   const { createRunCombat } = await import('../src/engine/runCombat.js');
   assert.equal(profile.modules.effects.baseDamageMultiplier, 0.5);
@@ -80,7 +81,7 @@ test('a controlled half-base-damage rule rounds upward before attribute and side
       { combatProfile: { camp: 'physical', maneuver: 'attack', range: 'melee' }, skipRatingBonus: true });
     const hit = receipt.damageReceipt.hits[0];
     const scale = hit.sources.find(row => row.id === 'base-damage-scale');
-    assert.equal(scale ? scale.effective : amount, Math.ceil(amount / 2));
+    assert.equal(scale, undefined, `amount ${amount}`);
     checked++;
   }
   assert.equal(checked, 5);
@@ -104,12 +105,11 @@ test('item 1: static rank-up faces show base damage for the supplied run profile
   const damageLine = (def, rules, preview) => cardFaceLines(def, preview, registries, rules)
     .find(line => line.kind === 'damage').html.replace(/<[^>]+>/g, '');
 
-  // In this STR 3 fixture, the fixed base 6 and ranked
-  // 7 are halved and rounded up before STR is added; physical and player
-  // scaling each multiply by 0.7 before flooring the displayed value.
+  // Owner ruling 2026-11-28: in this STR 3 fixture the stored base 6 and ranked 7 each add
+  // exactly 3 for STR; the profile's authored cuts read 1.
   assert.equal(gameProfileEffectiveAttributes(registries, run).strength, 3);
-  assert.equal(damageLine(strike, run), '2 damage');
-  assert.equal(damageLine(ranked, run), '3 damage', 'rank 2 composes authored 7 before base rounding, STR and the cuts');
+  assert.equal(damageLine(strike, run), '9 damage');
+  assert.equal(damageLine(ranked, run), '10 damage', 'rank 2 composes authored 7, then STR');
   assert.equal(damageLine(ranked, null), '7 damage', 'a face without a run keeps the authored amount');
   assert.equal(damageLine(ranked, beforeBalance), '7 damage', 'an older pinned profile keeps the authored amount');
   assert.equal(damageLine(ranked, run, { tokens: { damage: 9 } }), '9 damage', 'a final preview value stays authoritative');
@@ -160,20 +160,20 @@ test('item 1: player and enemy Counters scale their authored base once before th
     dispatch(combat, { type: 'endTurn' });
     assert.equal(returnedDamage(combat, 'player', base), card.counterReturn.hp);
   };
-  playCounter(begin('wanderingSoldier'), 2);
+  // Owner ruling 2026-11-28: the authored 4 and the explicit payload 5 return unscaled.
+  playCounter(begin('wanderingSoldier'), 4);
   const explicit = structuredClone(profile);
   explicit.content.cards.find(card => card.id === 'core.counter').counterPayload = { hp: 5, hpRating: false };
   delete explicit.hash;
   explicit.hash = gameDigest(explicit);
   const explicitRegistries = withFixedEnemies(Profile.bindGameProfileRegistries(createRegistries(Profile.applyGameProfileToContent(bundle, explicit)), explicit));
-  playCounter(begin('wanderingSoldier', explicitRegistries), 3);
+  playCounter(begin('wanderingSoldier', explicitRegistries), 5);
 
   const knight = begin('gildedKnight');
   knight.combat.piles.hand.push({ instanceId: 'into-parry', cardId: 'core.strike' });
-  assert.equal(previewIntent(knight.combat, knight.enemy.id).counterDamage, 3, 'the enemy intent shows half of the 6 authored damage');
+  assert.equal(previewIntent(knight.combat, knight.enemy.id).counterDamage, 6, 'the enemy intent shows the 6 authored damage');
   dispatch(knight.combat, { type: 'playCard', cardInstanceId: 'into-parry', targetId: knight.enemy.id });
-  // Owner, 2026-11-18 (second cut): the Strike's hit is small enough now that the stack share rounds to 0; the return still carries the whole counter base.
-  assert.ok(returnedDamage(knight.combat, knight.enemy.id, 3) >= 3, 'the return keeps its counter base');
+  assert.ok(returnedDamage(knight.combat, knight.enemy.id, 6) >= 6, 'the return keeps its counter base');
 });
 
 test('item 5 (owner, 2026-11-24): SP = 3 + DEX and MP = 1 + WIS in Core', () => {
@@ -335,22 +335,6 @@ test('review of #2820: a Blacksmith card upgrade is priced by upgradeCount (an a
   card.upgraded = true; delete card.upgradeSteps; // a save from before step lists: upgraded, no steps
   assert.equal(upgradeArtPlan(registries, run, card.instanceId).cost, CardUpgradePrice(run, { upgrades: 1, rank: 1 }));
   assert.equal(CardUpgradePrice(run, { upgrades: 1, rank: 1 }) - CardUpgradePrice(run), readJson('games/ashenspire/packs/core/shops.json').blacksmith.prices.cardUpgradePerUpgrade);
-});
-
-test('review of #2820: a return computed from damage already dealt is not halved again', async () => {
-  const { createRng } = await import('../src/engine/rng.js');
-  const { createRunCombat } = await import('../src/engine/runCombat.js');
-  const { profileDamageReceipt } = await import('../src/engine/gameProfileCombat.js');
-  const run = newRun('reaver');
-  const combat = createRunCombat({ registries, run, rng: createRng(5), enemyIds: ['wanderingSoldier'] });
-  const enemy = combat.enemies[0];
-  const base = carrier => profileDamageReceipt(combat, enemy, combat.player, 10, { combatProfile: { camp: 'physical', maneuver: 'attack', range: 'melee' }, skipRatingBonus: true, ...carrier })
-    .damageReceipt.hits[0].sources;
-  const scaled = rows => rows.find(row => row.id === 'base-damage-scale');
-  assert.equal(scaled(base({}))?.effective, 5, 'an ordinary card hit is halved');
-  // base.reflect's return (proposalAfterHitRules: 50% of the HP damage dealt) travels as proposalReactive; a Reflect or Counter return as
-  // reflectedHit / counterReturnAttack. Each is already final damage: 20 dealt, 10 returned, 10 in the receipt.
-  for (const flag of ['proposalReactive', 'reflectedHit', 'counterReturnAttack']) assert.equal(scaled(base({ [flag]: true })), undefined, `${flag} keeps its amount`);
 });
 
 test('numerical fixtures and operations leave the shipped profile immutable', () => {
