@@ -31,6 +31,10 @@
         "armoury": { "glance": { "add": ["type"] } },
         "combat": { "focus": { "drop": ["footer"] } }
       }
+    },
+    "devFixtureFlavor": {
+      "allowedChannels": ["dev"],
+      "prefixes": ["Core adapter fixture"]
     }
   }
 }

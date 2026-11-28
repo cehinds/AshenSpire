@@ -1,6 +1,6 @@
 import { engravedIcon, engravedIconHtml } from './engravedIcon.js';
 import { ModalModelFor } from '../models/ModalModel.js';
-import { esc as escapeHtml } from './tooltip.js';
+import { esc as escapeHtml, hideTooltip } from './tooltip.js';
 import { t as translate } from '../strings.js';
 import { planButtonGroup } from '../models/ButtonSizeModel.js';
 import { resolveModalRung, resolveFooterSize } from '../models/WireframeChoiceModel.js';
@@ -961,6 +961,7 @@ export function OpenModal({
     kind = DEFAULT_MODAL_KIND,
 } = {})
 {
+    hideTooltip();
     const titleId = givenTitleId || createTitleId();
     const veil = createElementWithClass('div', 'modal-veil');
     const panel = buildModalPanel({

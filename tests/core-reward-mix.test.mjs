@@ -2,6 +2,7 @@
 // own, avoid the last reward screens, and favour basic/cantrip cards early and mana-cost cards after map depth 3.
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -9,6 +10,7 @@ import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { gameProfileRewardOffers } from '../src/model/gameProfileRewards.js';
+import { ClassCardPoolAllowed } from '../src/model/classPoolPolicy.js';
 import { basicOrCantripMatcher } from '../src/model/stanceCoverage.js';
 
 const build = (modules = {}, core = 'ashen.core@2.0.0') => {
@@ -34,8 +36,24 @@ test('combat reward kinds roll 70% cards, 20% potions, 10% weapons over 1000 see
   assert.deepEqual(Object.keys(counts).sort(), ['cards', 'potions', 'weapons'], 'armor and every relic but the flask relic are retired from combat rewards (the gourd counts inside the 20% potions share)');
 });
 
+const REWARD_MIX_CONFIG = JSON.parse(
+  readFileSync(
+    fileURLToPath(new URL('./fixtures/core-reward-mix.config.json', import.meta.url)),
+    'utf8',
+  ),
+);
+
 test('owned cards are offered far less often than unowned ones, per card', () => {
-  const run0 = fresh(1), ids = cardsOf(run0).filter(c => c.rarity === 'common' && c.class === 'colorless').map(c => c.id);
+  const run0 = fresh(1);
+  const { rarity, cardClass } = REWARD_MIX_CONFIG.ownedComparison;
+  const ids = cardsOf(run0)
+    .filter((card) =>
+    {
+      return card.rarity === rarity
+        && card.class === cardClass
+        && ClassCardPoolAllowed(run0, card);
+    })
+    .map((card) => card.id);
   const ownedIds = new Set(ids.slice(0, Math.floor(ids.length / 2)));
   const hits = new Map(); let n = 0;
   for (let i = 0; i < 400; i++) {
@@ -100,26 +118,25 @@ test('depth 1-3 offers lean basic/cantrip, depth 4+ offers lean mana-cost cards 
 });
 
 
-test('treasure chests keep relics, armor and weapons; combat offers never roll armor (owner 2026-10-27)', () => {
+test('treasure chests grant relics; combat offers never roll armor', () => {
   const kinds = source => {
     const seen = new Set();
     for (let i = 0; i < 400; i++) for (const o of gameProfileRewardOffers(reg, fresh(i + 1), createRng(300 + i), { offerId: `t${i}`, source }).options) seen.add(o.kind);
     return seen;
   };
   const treasure = kinds('treasure'), combat = kinds('combat');
-  for (const kind of ['relics', 'armor', 'weapons']) assert.ok(treasure.has(kind), `treasure offers include ${kind}`);
+  assert.deepEqual([...treasure], ['relics'], 'treasure offers grant relics matching the map blurb');
   assert.ok(!combat.has('armor'), 'combat offers never include armor');
   // Relics: only the flask relic may drop from a fight (own test below).
 });
 
-test('treasure rolls its own 60/10/30 table (cards 60, equipment 10, potions 30) and main.js asks for source treasure', () => {
+test('treasure grants relics and main.js asks for source treasure', () => {
   const registries = build({ 'reward-ranks': NO_RESERVE['reward-ranks'], rewards: { offerCount: 1 } }), counts = {};
-  for (let i = 0; i < 1000; i++) {
+  for (let i = 0; i < 200; i++) {
     const [option] = gameProfileRewardOffers(registries, fresh(i + 1, registries), createRng(9000 + i), { offerId: 't', source: 'treasure' }).options;
-    const kind = ['combatCards', 'weaponArts'].includes(option.kind) ? 'cards' : ['weapons', 'armor', 'relics'].includes(option.kind) ? 'equipment' : option.kind;
-    counts[kind] = (counts[kind] || 0) + 1;
+    counts[option.kind] = (counts[option.kind] || 0) + 1;
   }
-  for (const [kind, share] of Object.entries({ cards: .6, equipment: .1, potions: .3 })) assert.ok(Math.abs((counts[kind] || 0) / 1000 - share) <= .03, JSON.stringify(counts));
+  assert.deepEqual(counts, { relics: 200 }, JSON.stringify(counts));
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
   assert.match(main, /case 'treasure': \{\s*return (?:afterEntryPaint\(\(\) => )?beginGameProfileReward\(\{ source: 'treasure'/, 'the treasure node must open a treasure-source reward');
 });

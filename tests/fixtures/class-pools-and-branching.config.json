@@ -1,0 +1,54 @@
+{
+  "profileId": "core",
+  "classes": [
+    "reaver",
+    "rogue",
+    "starseer",
+    "herald"
+  ],
+  "defaultSeed": 1,
+  "toggleTestClass": "starseer",
+  "unlockedProfileMeta": {
+    "gameProfileUnlocks": {
+      "core": {
+        "completedRunIds": [
+          "r1",
+          "r2",
+          "r3"
+        ]
+      }
+    }
+  },
+  "defendCheck": {
+    "cardId": "core.defend",
+    "minBlock": 4
+  },
+  "sources": {
+    "combat": "combat",
+    "shop": "shop"
+  },
+  "shopCheck": {
+    "seedString": "OBSERVE1",
+    "shopId": "1:shop1",
+    "weaponKind": "weapons"
+  },
+  "mapBranchingCheck": {
+    "classId": "starseer",
+    "seat": "weald",
+    "tier": 1,
+    "seedCount": 10,
+    "firstSeedString": "OBSERVE1",
+    "fallbackSeedBase": 1000,
+    "bossNodeType": "boss",
+    "minBranchExits": 2,
+    "minMultiExitRatio": 0.45
+  },
+  "scoreStudioCheck": {
+    "editorConfigPath": "../tools/score-studio/contentEditor/contentEditor.json",
+    "requiredSections": [
+      "rewardRules",
+      "shopRules",
+      "mapRules"
+    ]
+  }
+}

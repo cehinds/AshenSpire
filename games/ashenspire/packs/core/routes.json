@@ -18,7 +18,7 @@
     6,
     11
   ],
-  "branchColumns": 3,
+  "branchColumns": 4,
   "minimumThreatFloor": 3,
   "mapMode": "fog",
   "fogRevealRests": false,
@@ -37,8 +37,10 @@
   },
   "variedNeighbours": true,
   "shopsPerBranch": 1,
-  "forkPercent": 70,
+  "forkPercent": 85,
   "crossLinkPercent": 100,
+  "narrowPercent": 0,
+  "openingBranchWidthPercent": 85,
   "startRestFromAct": 2,
   "restGap": {
     "min": 2,

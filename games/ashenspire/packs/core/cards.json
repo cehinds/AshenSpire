@@ -44,7 +44,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 0
+        "amount": 10
       }
     ],
     "tags": [
@@ -53,7 +53,7 @@
       "classification.skill",
       "trait:reaction"
     ],
-    "textTemplate": " Gain {block} Block.",
+    "textTemplate": "Gain {block} Block.",
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
   },
   {

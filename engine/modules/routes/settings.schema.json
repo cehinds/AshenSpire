@@ -276,6 +276,36 @@
       ],
       "description": "Present: for every gap between two in-branch depths and every pair of neighbouring lanes present on both, one draw at this percentage adds one diagonal edge (direction 50/50, never crossing another edge). Replaces the single remerge draw per branch and gap. null means absent."
     },
+    "narrowPercent": {
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        {
+          "enum": [
+            null
+          ]
+        }
+      ],
+      "description": "Chance per late depth that a branch narrows by one lane before the boss. Absent keeps 25. null means absent."
+    },
+    "openingBranchWidthPercent": {
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        {
+          "enum": [
+            null
+          ]
+        }
+      ],
+      "description": "Chance that a branch with 2+ lanes opens on 2 lanes instead of 1 at the first branch depth. Absent keeps 50. null means absent."
+    },
     "startRestFromAct": {
       "anyOf": [
         {
