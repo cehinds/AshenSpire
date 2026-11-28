@@ -34,8 +34,48 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-27
 
+- **Startup checks are now plain data** ([#3044](https://github.com/cehinds/AshenSpire/pull/3044), `0.7.5.191`). The phone and controller checks for loading a save are now set in data files, not code. Nothing changes in play.
+# Changelog
+
+What changed, newest first, in the player's words. **Every entry is a receipt, not a memory:** it names the pull request that landed it and the build it shipped in.
+
+These are **development builds**, not releases. Release status is governed separately and remains **RED**.
+
+**How to read a stamp.** `<major>.<minor>.<candidate>.<build>` — the candidate is the third component, and the fourth counts builds *within that candidate*, restarting at `0` each time the candidate advances. `0.5.3.1` is the second build of the third 0.5 candidate. See `docs/versioning.md`.
+
+**Where the ordinal comes from.** `buildordinal.json` as committed at that merge on `dev` — never typed from memory. Two merges can share an ordinal when one shipped docs or evidence only and rebuilt nothing.
+
+**Writing a receipt in the PR that makes the change**: stamp it with `buildordinal.json` as it stands on your branch, and do not commit `buildordinal.json`. No rebuild loop is needed. After the merge lands on `dev`, the build-stamp workflow rebuilds `dev`, re-points the receipt to the build it actually shipped in, and pushes that to `dev` (DEVELOPER.md, *Receipts*).
+
+<details>
+<summary><strong>History and known gaps</strong> — renumbering, start date, and three landings no receipt can name</summary>
+
+**Renumbered 2026-09-01 on the owner's directive.** Until then a build carried one global, never-resetting ordinal — `0.4.0.<ordinal>` through build 1903, then `0.5.0-rc.<n>.<ordinal>`. Receipts for the closed candidates `rc.1` to `rc.3` are restated below in the current notation, in build order within each candidate, so the column compares like with like: `0.5.0-rc.3.1948` is written `0.5.3.1`.
+
+Two things are deliberately **not** rewritten. The `0.4.0.<ordinal>` line keeps its ordinals, which are that line's own receipts and were never candidate-scoped. And `0.5.0-rc.4.1956` — the build the scheme changed under — keeps the stamp its artifact actually wears; it is `rc.4`'s first build, and `0.5.4.0` is its second. Where an entry's prose quotes the stamp a build wore at the time, that is what it read then, and the receipt beside it is the same build's name now.
+
+**This file starts at `0.4.0.0777` (2026-08-17).** Below that point the merge log's pull-request references turn intermittent — whole runs of direct landings on 2026-08-14 to -16 name no pull request at all — so entries there would be reconstruction from memory, not receipts. That history lives in `git log`. The in-game changelog is #189's projection of this file, which remains the one authoritative structured owner.
+
+**Receipts for 2026-08-26 through 2026-08-31 were backfilled in #570**, from the merge log. Their prose stays inside what the merge subject states (and, where a subject proved thinner than its diff, inside the diff), so they read shorter than receipts written at delivery. Their stamps name the first build that *contains* the change: several of those merges shipped source without rebuilding, and a receipt a player cannot open and see is not a receipt. The bundle read is `build/AshenSpire.html`, which the root and `dist/` copies are generated from.
+
+**Receipts for #1262, #1263, #1268 and #1269 were backfilled on 2026-09-24**, the same way, when `tools/receipts.mjs` learned the squash (`… (#N)`) and `Merge PR #N:` subject shapes it had been blind to. Each stamp is the ordinal `buildordinal.json` held as committed at that merge.
+
+**Three landings the backfill cannot cover**, stated so the gap is a decision rather than an omission. All three moved the shipped bundle without naming a pull request, and all three are player-visible:
+
+* `bd0b8624` at build 1407 — weapon-deck composition, letting equipped and dual-wielded weapons decide the fixed attack-card slots.
+* `8959738b` at 1426 and `52c7bc30` at 1446 — halved, then tightened, the combat HUD's resource gaps.
+
+A receipt here names the pull request that landed a change; inventing one to fit these would be the reconstruction this file refuses at its own start date. They live in `git log`.
+
+</details>
+
+## 2026-11-27
+
+<<<<<<< HEAD
 - **Startup checks are now plain data** ([#3044](https://github.com/cehinds/AshenSpire/pull/3044), `0.7.5.189`). The phone and controller checks for loading a save are now set in data files, not code. Nothing changes in play.
 - **Export JSON saves every setting** ([#3041](https://github.com/cehinds/AshenSpire/pull/3041), `0.7.5.189`). Both Export buttons now save your changed settings from every tab, music included. Each setting appears once in the file.
+=======
+- **Export JSON saves every setting** ([#3041](https://github.com/cehinds/AshenSpire/pull/3041), `0.7.5.191`). Both Export buttons now save your changed settings from every tab, music included. Each setting appears once in the file.
 - **Hold-to-load no longer starts a fight on phones** ([#3040](https://github.com/cehinds/AshenSpire/pull/3040), `0.7.5.189`). Holding a save slot to load it on a phone now opens the map and stays there. The tap the phone sends after you lift your finger no longer presses the first map node.
 - **Class-tailored rewards, shops, Defend Block, and branching maps** ([#3039](https://github.com/cehinds/AshenSpire/pull/3039), `0.7.5.187`). Rewards and shops now filter cards and weapons to class-compatible pools controlled in JSON and Score Studio, and Defend now grants Block again. Act maps also branch more often using new route tuning knobs.
 - **Hold-to-load waits for finger release on phones** ([#3038](https://github.com/cehinds/AshenSpire/pull/3038), `0.7.5.185`). Holding a save slot to load on mobile now waits until the finger lifts before opening the map. Lifting your finger no longer taps a map node underneath.
