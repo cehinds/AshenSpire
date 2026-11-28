@@ -14,6 +14,7 @@ it lands, combat still plays the legacy `moves` from `src/content/enemies/act1-3
 | Setting | Meaning |
 |---|---|
 | `include` | Tiers this profile fields (`minion`, `elite`, `boss`). |
+| `turnActions` | `spPool` (default): an enemy plans and plays as many moves as its SP pool buys. `single`: it plans and plays one move a turn, its shown intent. |
 | `statRules` | Per-stat rows in the player's derived-stat shape (`src/content/derivedStats.js`): attribute weights and `perLevel`, each term floored on its own. HP = 10 + per point CON 10 / STR 5 / DEX 3 / WIS 2 / INT 1 + 5 per level above 1 (owner 2026-10-17); SP/MP use the player's rows; AR = STR, DR = DEX, hand + INT. |
 | `levelFrom` | Which level the build checks against (`levelProfile.min` by default). |
 | `effectiveLevelByAct` | Optional, by tier: the level that tier fights at in Act 1, 2, 3, … (the last entry holds past the table). Core (owner 2026-11-17): `elite` [2, 4, 6], `boss` [4, 6, 8]; a tier without a row (minions) keeps its own level. The budget, SP, MP, AR and DR follow that level. Applies only to fights `createRunCombat` levels. Superseded (owner 2026-11-20): when the profile carries `characters.enemyLevelScaling`, that act, tier and floor-step table sets every tier's level instead (SPEC §17), and this setting only names the tiers whose HP is the level row (`effectiveLevelHp`). |

@@ -5,6 +5,7 @@ import { stanceOf } from './stanceRules.js';
 import { configuredStance } from './profileStance.js';
 import { isSpellCard } from './combatCardProfile.js';
 import { SpellTraditionsActive } from './spellTraditions.js';
+import { StanceBenefitsEnabled } from './simpleCombatFlags.js';
 
 export const STANCE_ALIASES = Object.freeze({ casting: 'prepared', cast: 'prepared', spell: 'prepared', ranged: 'attack', evade: 'defend' });
 const count = value => Number.isFinite(value) ? value : 0;
@@ -14,6 +15,17 @@ export function StanceBenefitRules(ctx) {
   if (!fixCoreEnabled(ctx)) return null;
   const rows = fixCoreRules(ctx)?.stanceBenefits;
   return rows?.version === 1 ? rows : null;
+}
+
+/** The rows each stance's own bonus reads: null when stances.builtInBenefits is off.
+ * Weaknesses keep StanceBenefitRules. */
+export function StanceBonusRules(ctx)
+{
+  if (!StanceBenefitsEnabled(ctx))
+  {
+    return null;
+  }
+  return StanceBenefitRules(ctx);
 }
 
 /** The stance a unit acts from: the card or move it plays when that carries a stance (playing it enters it), else the stance it holds, else neutral. */
@@ -34,7 +46,7 @@ const damageStance = (ctx, source, carrier) => SpellTraditionsActive(ctx) && isS
 
 /** Attack +20%, Prepared +25%: the multiplier on a hit's damage before the defender's stance, Block and Poise. 1 for a return hit. */
 export function AttackDamageMultiplier(ctx, source, carrier) {
-  const rules = StanceBenefitRules(ctx);
+  const rules = StanceBonusRules(ctx);
   if (!rules || isReturn(carrier)) return 1;
   return count(rules[damageStance(ctx, source, carrier)]?.damageMultiplier) || 1;
 }

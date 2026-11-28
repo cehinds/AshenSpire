@@ -35,6 +35,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 ## 2026-11-27
 
 - **New default settings** ([#3042](https://github.com/cehinds/AshenSpire/pull/3042), `0.7.5.193`). The opening plays once and a tap on the art moves it on. Music starts off, and combat, the title hold and swipes are quicker.
+- **Simple combat switches** ([#3048](https://github.com/cehinds/AshenSpire/pull/3048), `0.7.5.197`). Poise, stance bonuses, the same-stance discount, rolled upgrades and multi-move enemy turns can now each be turned off in config. All are on, so nothing changes in play yet.
 - **Card text is dark again** ([#3046](https://github.com/cehinds/AshenSpire/pull/3046), `0.7.5.195`). Card rules text is dark ink on the parchment again, not cream. The colour is set in the card layout file.
 - **Startup checks are now plain data** ([#3044](https://github.com/cehinds/AshenSpire/pull/3044), `0.7.5.193`). The phone and controller checks for loading a save are now set in data files, not code. Nothing changes in play.
 - **Export JSON saves every setting** ([#3041](https://github.com/cehinds/AshenSpire/pull/3041), `0.7.5.191`). Both Export buttons now save your changed settings from every tab, music included. Each setting appears once in the file.

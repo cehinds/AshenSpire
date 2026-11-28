@@ -24,6 +24,7 @@ import * as Stances from './stanceRules.js';
 import * as CardProfile from './combatCardProfile.js';
 import * as CarrierDamage from './carrierDamageType.js';
 import * as FixCore from './fixCoreRulesCache.js';
+import { AuthoredUpgradesOnly } from './simpleCombatFlags.js';
 
 // canUpgrade's refusal text lives in content/source/uiStrings.csv.
 const RefusalSentence = 'upgrade.refuse.';
@@ -32,6 +33,23 @@ const ManySlotsSentence = 'slots.many';
 
 // One damage receipt source per plan scope; it reads only the run and registries.
 const receiptContextsByScope = new WeakMap();
+const AUTHORED_STEP = Object.freeze({ k: 'authored' });
+
+// progression.upgradeMode "authored": one upgrade, the card's own block, and nothing rolled.
+const AUTHORED_MODE_SLOTS = 1;
+
+function hasAuthoredUpgrade(base)
+{
+  return !!base?.upgrade && !Array.isArray(base.gradeProfiles);
+}
+
+function authoredOnlyOptions(instance, base, noAuthored)
+{
+  const firstUpgrade = upgradeStepsOf(instance).length === 0;
+  return firstUpgrade && hasAuthoredUpgrade(base) && !noAuthored
+    ? [{ ...AUTHORED_STEP }]
+    : [];
+}
 
 function RankedCard(def, atRank)
 {
@@ -263,6 +281,14 @@ export function WeaponSmithLevel(run, instance) {
 /** Upgrades the card may carry: its visible rank plus the configured extra, at most MAX_CARD_UPGRADES. */
 export function UpgradeSlots(run, instance, registries = null)
 {
+  // Authored mode: the one slot is the card's own block, none when it has no block to apply.
+  if (AuthoredUpgradesOnly(run))
+  {
+    const definition = registries?.cards?.get(instance?.cardId);
+    return !definition || hasAuthoredUpgrade(definition)
+      ? AUTHORED_MODE_SLOTS
+      : 0;
+  }
   const extraSlots = CardUpgradeRules(registries).slots.aboveVisibleRank;
   return Math.min(MAX_CARD_UPGRADES, VisibleCardRank(instance) + extraSlots);
 }
@@ -314,6 +340,10 @@ export function upgradeChoiceCount(def, instance, { blacksmith = false, run = nu
  * the kinds by category and reads the vendor's own rarity odds (proposal section 11); none is a rest site, a free upgrade or any other source.
  */
 export function nextUpgradeOptions(run, instance, base, registries, count = 1, { scale = 1, salt = '', noAuthored = false, combos = false, everyFamily = false, vendor = '', preparation = {} } = {}) {
+  if (AuthoredUpgradesOnly(run))
+  {
+    return authoredOnlyOptions(instance, base, noAuthored);
+  }
   const applied = upgradeStepsOf(instance);
   const mana = (registries && registries.balance && registries.balance.mana) || {};
   // Core ranks scale the face after the steps, so the roll sees the rank the card will be shown at.

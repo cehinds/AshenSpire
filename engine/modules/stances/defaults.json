@@ -45,5 +45,7 @@
     "smash"
   ],
   "staggerLimitPerTargetPerRound": 1,
-  "defenseMitigation": 0.25
+  "defenseMitigation": 0.25,
+  "builtInBenefits": true,
+  "sameStanceDiscount": true
 }
