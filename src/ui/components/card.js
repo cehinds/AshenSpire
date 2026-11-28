@@ -59,6 +59,16 @@ import { spellDefenseSplit } from '../../model/spellDefense.js';
 const WITHER_KEYWORD_STRING_ID = 'card.keyword.wither';
 // A chip whose tooltip is also printed inline under the chips.
 const EFFECT_CHIP = true;
+const OWNED_META_KIND = 'owned';
+const POISE_STRING_ID = 'combat.protection.poise';
+const RANGE_STRING_PREFIX = 'deckEditor.range.';
+const DEFENSE_RANGES = Object.freeze(
+  [
+    'melee',
+    'reach',
+    'ranged',
+  ],
+);
 
 function isDevFixtureFlavor(text, prefixes)
 {
@@ -89,8 +99,12 @@ export function CardInspectorFlavor(flavor, channel = buildChannel())
 // when the surface can state it. No domain action ever belongs in this band.
 function metadataBand(rarity, owned) {
   const band = metadataFooter({ rarity, owned });
+  const slotText = (entry) => (entry.kind === OWNED_META_KIND
+    ? UiShortText('card.meta.owned', { count: entry.value })
+    : entry.value);
   const slot = (name, entry) => (entry
-    ? `<span data-meta-slot="${name}" data-meta-kind="${entry.kind}">${esc(entry.kind === 'owned' ? UiShortText('card.meta.owned', { count: entry.value }) : entry.value)}</span>`
+    ? `<span data-meta-slot="${name}" data-meta-kind="${entry.kind}">`
+      + `${esc(slotText(entry))}</span>`
     : '');
   return `<div class="card-metadata" data-identity-part="metadata">${slot('start', band.start)}${slot('end', band.end)}</div>`;
 }
@@ -456,8 +470,14 @@ export function renderCard(registries, ref, opts = {}) {
       ? fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences,wardPoise,registries,opts.rules ?? opts.preview?.faceRules ?? null).replace(/ Light:.*$/,'')+' Cost reflects your current weight.'
       : fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences,wardPoise,registries,opts.rules ?? opts.preview?.faceRules ?? null);
     // Dynamic weapon poise fallback for authored-template cards when attacking.
-    const weaponPoiseNote = !faceLines && opts.preview?.weaponPoise > 0 && !/Poise/i.test(authoredRules)
-      ? ` <span class="val">${esc(opts.preview.weaponPoise)}</span> <span class="st-bleed">${esc(UiShortText('combat.protection.poise'))}</span>.` : '';
+    const showsWeaponPoise = !faceLines
+      && opts.preview?.weaponPoise > 0
+      && !/Poise/i.test(authoredRules);
+    const poiseWord = esc(UiShortText(POISE_STRING_ID));
+    const weaponPoiseNote = showsWeaponPoise
+      ? ` <span class="val">${esc(opts.preview.weaponPoise)}</span>`
+        + ` <span class="st-bleed">${poiseWord}</span>.`
+      : '';
     // Authored faces append field-driven riders (Wither, rising cost); generated faces already include them.
     const riderRules = allFaceLines
       ? ''
@@ -1001,7 +1021,18 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
       const bonuses = ['ar', 'pr', 'dr', 'ward'].map(id => [id, stanceRatingBonus(ctx, rated, id)]);
       const offense = bonuses.some(([id, amount]) => ['ar', 'pr'].includes(id) && amount > 0);
       const active = bonuses.filter(([, amount]) => amount > 0).map(([id, amount]) => '+' + amount + ' ' + (id === 'ward' ? 'Ward' : ChannelLabel(id)));
-      const grants = Object.entries(entry).filter(([, amount]) => amount > 0).map(([id, amount]) => '+' + (id === 'barrier' ? amount * BarrierPoisePerStack(ctx) : amount) + ' ' + ({ precision: UiShortText('card.tags.precision'), evade: 'Evade', block: 'Block', barrier: UiShortText('combat.protection.poise') })[id]);
+      const grantWords = {
+        precision: UiShortText('card.tags.precision'),
+        evade: 'Evade',
+        block: 'Block',
+        barrier: UiShortText(POISE_STRING_ID),
+      };
+      const grantAmount = (id, amount) => (id === 'barrier'
+        ? amount * BarrierPoisePerStack(ctx)
+        : amount);
+      const grants = Object.entries(entry)
+        .filter(([, amount]) => amount > 0)
+        .map(([id, amount]) => '+' + grantAmount(id, amount) + ' ' + grantWords[id]);
       html += '<div class="combat-rule-hint"><strong>Stance:</strong> ' + esc(active.join(', ')) + ' while active; does not stack.'
         + (grants.length ? ' On changing stance: ' + esc(grants.join(', ')) + '.' : '')
         + ' Repeating the same stance grants no entry bonuses and costs ' + esc(rules.sameStanceDiscount) + ' less Stamina.'
@@ -1016,17 +1047,48 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
     const coreCounter = inCore && armsAsCoreCounter(registries, def);
     const stackRules = inCore ? FixCoreCounterStacks({ combatExpansionVersion: 2, gameProfile: registries.gameProfile }) : null;
     const counterHelp = () => stackRules
-      ? UiShortText('card.counter.help.stacks', { stackPercent: Number((stackRules.returnPerStack * 100).toPrecision(15)), stacks: CounterStacksForCard(stackRules, def.id, !!def.upgraded) })
+      ? UiShortText(
+        'card.counter.help.stacks',
+        {
+          stackPercent: Number((stackRules.returnPerStack * 100).toPrecision(15)),
+          stacks: CounterStacksForCard(stackRules, def.id, !!def.upgraded),
+        },
+      )
       : UiShortText('card.counter.help.core', { stackPercent: CounterStackPercent() });
     const coreIneligible = inCore && !coreCounter;
     if (def.counterCoverage) {
       const c = def.counterCoverage;
-      const names = { physical: 'Martial', spell: 'Spell', melee: UiShortText('deckEditor.range.melee'), reach: UiShortText('deckEditor.range.reach'), ranged: UiShortText('deckEditor.range.ranged'), single: 'Single', area: 'Area', damage: 'damage', status: 'status pressure' };
+      const names = {
+        physical: 'Martial',
+        spell: 'Spell',
+        melee: UiShortText('deckEditor.range.melee'),
+        reach: UiShortText('deckEditor.range.reach'),
+        ranged: UiShortText('deckEditor.range.ranged'),
+        single: 'Single',
+        area: 'Area',
+        damage: 'damage',
+        status: 'status pressure',
+      };
       const coverage = [c.camps, c.ranges, c.targeting, c.effects].map(ids => (ids || []).map(id => names[id] || id).join(' + ')).filter(Boolean).join(' · ');
       html += `<div class="combat-rule-hint"><strong>Counter coverage:</strong> ${esc(coverage)}${c.schools ? ` · ${esc(c.schools.join(' + '))}` : ''}. ${coreCounter ? esc(counterHelp()) : coreIneligible ? 'The prepared stance remains until another maneuver replaces it.' : 'Return once after all covered damage and status pressure is resisted. Evade and Invulnerability give no return. The prepared stance remains until another maneuver replaces it.'}</div>`;
-    } else html += `<div class="combat-rule-hint">${esc(coreCounter ? counterHelp() : UiShortText('card.counter.help.legacy'))}</div>`;
+    } else
+    {
+      const legacyHelp = coreCounter
+        ? counterHelp()
+        : UiShortText('card.counter.help.legacy');
+      html += `<div class="combat-rule-hint">${esc(legacyHelp)}</div>`;
+    }
   }
-  if (def.defenseRange) html += `<div class="combat-rule-hint"><strong>Defense range:</strong> ${esc(def.defenseRange[0].toUpperCase() + def.defenseRange.slice(1))} · Covers ${esc(['melee', 'reach', 'ranged'].slice(0, ['melee', 'reach', 'ranged'].indexOf(def.defenseRange) + 1).map(range => UiShortText('deckEditor.range.' + range)).join(' + '))}.</div>`;
+  if (def.defenseRange)
+  {
+    const rangeName = def.defenseRange[0].toUpperCase() + def.defenseRange.slice(1);
+    const coveredRanges = DEFENSE_RANGES
+      .slice(0, DEFENSE_RANGES.indexOf(def.defenseRange) + 1)
+      .map(range => UiShortText(RANGE_STRING_PREFIX + range))
+      .join(' + ');
+    html += `<div class="combat-rule-hint"><strong>Defense range:</strong> ${esc(rangeName)}`
+      + ` · Covers ${esc(coveredRanges)}.</div>`;
+  }
   if (identity.cardCategory === 'stance') {
     html += `<div class="combat-rule-hint"><strong>Stance group:</strong> ${esc(identity.stanceGroups.map(group => group === 'offense' ? 'Offense' : 'Defensive').join(' + '))}.</div>`;
     if (combatProfile.maneuver === 'counter' && def.defenseRulesVersion === 2)
