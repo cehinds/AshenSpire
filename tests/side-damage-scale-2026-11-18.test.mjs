@@ -1,5 +1,5 @@
-// Owner, 2026-11-18: Core damage, Block and enemy HP are cut 30%, and a player's spells take twice the Poise.
-// Each setting is checked against the shipped default profile and against the same profile with that one setting at 1.
+// Owner, 2026-11-18: enemy HP is cut 30% and a player's spells take twice the Poise. Owner ruling 2026-11-28:
+// damage and Block scales are 1 in every profile, so a profile saved with the old cuts plays at 1.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { gameDigest } from '../engine/kernel/gameConfig.js';
@@ -31,6 +31,17 @@ function variant(overrides = {}) {
 const META = { gameProfileUnlocks: { [shipped.id]: { completedRunIds: ['a', 'b', 'c'] } } };
 const NEUTRAL = Object.fromEntries(KEYS.map(key => [key, 1]));
 const shippedWorld = variant();
+// The cuts a profile saved before the 1:1 ruling may carry.
+const SAVED_SIDE_SCALE = 0.7;
+const SAVED_BLOCK_SCALE = 0.49;
+const SHIPPED_SCALE = 1;
+const SHIPPED_SPELL_POISE = 2;
+const savedWorld = variant({
+  playerDamageMultiplier: SAVED_SIDE_SCALE,
+  enemyDamageMultiplier: SAVED_SIDE_SCALE,
+  physicalDamageMultiplier: SAVED_SIDE_SCALE,
+  blockGainMultiplier: SAVED_BLOCK_SCALE,
+});
 
 function begin(world, { classId = 'reaver', enemyId = 'wanderingSoldier', seed = 31, legacySpellPoise = false } = {}) {
   const run = createRunState({ registries: world.registries, classId, seed, profileMeta: META });
@@ -48,13 +59,13 @@ function begin(world, { classId = 'reaver', enemyId = 'wanderingSoldier', seed =
 const hits = (combat, from = 0) => combat.eventLog.slice(from).filter(event => event.type === 'damageDealt').flatMap(event => (event.damageReceipt?.hits || []).map(hit => ({ event, hit })));
 const scaleRow = hit => hit.sources.find(row => row.id === 'side-damage-scale');
 
-test('the shipped Core sets the four new effects settings and the module default is 1', async () => {
+test('the shipped Core sets the damage and Block scales to 1, spell Poise to 2, and the module default is 1', async () => {
   const effects = shipped.modules.effects;
-  assert.equal(effects.playerDamageMultiplier, 0.7);
-  assert.equal(effects.enemyDamageMultiplier, 0.7);
-  assert.equal(effects.blockGainMultiplier, 0.49, 'owner, 2026-11-18: 0.7, then another 0.7 for the playtest');
-  assert.equal(effects.physicalDamageMultiplier, 0.7);
-  assert.equal(effects.spellPoiseDamageMultiplier, 2);
+  assert.equal(effects.playerDamageMultiplier, SHIPPED_SCALE);
+  assert.equal(effects.enemyDamageMultiplier, SHIPPED_SCALE);
+  assert.equal(effects.blockGainMultiplier, SHIPPED_SCALE);
+  assert.equal(effects.physicalDamageMultiplier, SHIPPED_SCALE);
+  assert.equal(effects.spellPoiseDamageMultiplier, SHIPPED_SPELL_POISE);
   const defaults = JSON.parse((await import('node:fs')).readFileSync(new URL('../engine/modules/effects/defaults.json', import.meta.url), 'utf8'));
   for (const key of KEYS) assert.equal(defaults[key], 1, `${key} defaults to 1`);
 });
@@ -69,7 +80,7 @@ test('enemy HP per tier is 70% of the earlier scale', () => {
   assert.ok(enemy.maxHp <= Math.round(def.hp[1] * 0.385), `HP ${enemy.maxHp} is within the 0.385 minion scale`);
 });
 
-test('a player hit takes the player side scale as one receipt stage', () => {
+test('a player hit under a profile saved with the side cuts takes no side stage and deals 1:1', () => {
   const play = world => {
     const combat = begin(world);
     combat.piles.hand.push({ instanceId: 'probe', cardId: 'core.strike' });
@@ -77,27 +88,28 @@ test('a player hit takes the player side scale as one receipt stage', () => {
     dispatch(combat, { type: 'playCard', cardInstanceId: 'probe', targetId: combat.enemies[0].id });
     return hits(combat, mark).find(({ event }) => event.sourceId === 'player')?.hit;
   };
-  const scaled = play(shippedWorld), plain = play(variant(NEUTRAL));
-  assert.ok(plain && scaled);
-  assert.equal(scaleRow(plain), undefined, 'a neutral profile has no side stage');
-  assert.equal(scaleRow(scaled)?.multiplier, 0.7);
-  assert.ok(plain.incoming > 1 && scaled.incoming < plain.incoming);
-  // A neutral profile pins the physical cut to 1 too, so the shipped hit carries the side scale and the physical x0.7 (owner, 2026-11-18): x0.49.
-  assert.ok(scaled.incoming >= Math.floor(plain.incoming * 0.49) && scaled.incoming <= Math.floor((plain.incoming + 1) * 0.49), `${plain.incoming} -> ${scaled.incoming}`);
+  const saved = play(savedWorld);
+  const plain = play(variant(NEUTRAL));
+  const current = play(shippedWorld);
+  assert.ok(plain && saved && current);
+  for (const hit of [plain, saved, current]) assert.equal(scaleRow(hit), undefined, 'no side stage');
+  assert.equal(saved.incoming, plain.incoming, 'the saved cuts read as 1');
+  assert.equal(current.incoming, plain.incoming);
 });
 
-test('an enemy hit takes the enemy side scale and a Counter return is not scaled again', () => {
+test('an enemy hit under a profile saved with the side cut takes no side stage, nor does a Counter return', () => {
   const enemyHit = world => {
     const combat = begin(world);
     const mark = combat.eventLog.length;
     dispatch(combat, { type: 'endTurn' });
     return hits(combat, mark).find(({ event }) => event.sourceId === combat.enemies[0].id)?.hit;
   };
-  const scaled = enemyHit(shippedWorld), plain = enemyHit(variant(NEUTRAL));
-  assert.ok(plain && scaled, 'the enemy attacks');
-  assert.equal(scaleRow(scaled)?.multiplier, 0.7);
+  const saved = enemyHit(savedWorld);
+  const plain = enemyHit(variant(NEUTRAL));
+  assert.ok(plain && saved, 'the enemy attacks');
+  assert.equal(scaleRow(saved), undefined);
   assert.equal(scaleRow(plain), undefined);
-  assert.ok(scaled.incoming <= plain.incoming);
+  assert.equal(saved.incoming, plain.incoming, 'the saved cut reads as 1');
   // A Counter return is final damage: it carries no side stage, so the receipt's incoming equals the return the Counter announced.
   const combat = begin(shippedWorld);
   combat.piles.hand.push({ instanceId: 'c', cardId: 'core.counter' });
@@ -113,12 +125,19 @@ test('an enemy hit takes the enemy side scale and a Counter return is not scaled
   }
 });
 
-test('Block gain takes blockGainMultiplier, floored, in computeBlockGain', () => {
-  const gain = world => { const combat = begin(world); return computeBlockGain(combat, combat.player, 5); };
-  const scaled = gain(shippedWorld), plain = gain(variant(NEUTRAL));
-  assert.ok(plain >= 5);
-  assert.ok(scaled < plain && scaled >= Math.floor(plain * 0.49) && scaled <= Math.floor((plain + 1) * 0.49), `${plain} -> ${scaled}`);
-  assert.equal(gain(variant({ blockGainMultiplier: 0 })), 0);
+test('Block gain is 1:1 in computeBlockGain, whatever blockGainMultiplier a profile was saved with', () =>
+{
+  const printed = 5;
+  const gain = world =>
+  {
+    const combat = begin(world);
+    return computeBlockGain(combat, combat.player, printed);
+  };
+  const plain = gain(variant(NEUTRAL));
+  assert.ok(plain >= printed);
+  assert.equal(gain(shippedWorld), plain);
+  assert.equal(gain(savedWorld), plain, 'a saved 0.49 reads as 1');
+  assert.equal(gain(variant({ blockGainMultiplier: 0 })), plain, 'a saved 0 reads as 1 too');
 });
 
 test('a player spell takes spellPoiseDamageMultiplier times the Poise, HP unchanged', () => {
@@ -147,32 +166,35 @@ test('a player spell takes spellPoiseDamageMultiplier times the Poise, HP unchan
   assert.equal(strike(shippedWorld), strike(variant({ spellPoiseDamageMultiplier: 1 })), 'a non-spell hit is not multiplied');
 });
 
-test('a static card face shows the player side scale', () => {
+test('a static card face shows the stored damage plus effective STR, 1:1', () => {
   const run = createRunState({ registries: shippedWorld.registries, classId: 'reaver', seed: 7, profileMeta: META });
   const strike = shippedWorld.registries.cards.get('core.strike');
   const line = def => cardFaceLines(def, undefined, shippedWorld.registries, run).find(row => row.kind === 'damage').html.replace(/<[^>]+>/g, '');
   const strength = gameProfileEffectiveAttributes(shippedWorld.registries, run).strength;
-  const scaled = halfBase => Math.floor((halfBase + strength) * 0.7 * 0.7) + ' damage';
-  assert.equal(line(strike), scaled(3), 'the halved base plus effective STR takes both cuts');
+  const stored = def => def.effects.find(effect => effect.op === 'damage').amount;
+  const face = def => `${stored(def) + strength} damage`;
+  assert.equal(line(strike), face(strike), 'the stored base plus effective STR');
   const ranked = playingCardDefinition(shippedWorld.registries, { cardId: 'core.strike', rank: 2 }, { rules: run });
-  assert.equal(line(ranked), scaled(4), 'the ranked base increases before the cuts');
+  assert.ok(stored(ranked) > stored(strike), 'the rank raises the stored base');
+  assert.equal(line(ranked), face(ranked));
 });
 
-test('a spell\'s Block and Ward split takes blockGainMultiplier too, and the preview quotes the played total', () => {
+test('a spell\'s Block and Ward split is 1:1 under a saved Block scale, and the preview quotes the played total', () => {
   const quote = world => {
     const combat = begin(world, { classId: 'starseer' });
     combat.piles.hand.push({ instanceId: 'ward', cardId: 'core.wardingGlance' });
     const row = previewCard(combat, 'ward').values.find(value => value.op === 'block');
     return { value: row.value, combat };
   };
-  const scaled = quote(shippedWorld), plain = quote(variant(NEUTRAL));
+  const saved = quote(savedWorld);
+  const plain = quote(variant(NEUTRAL));
   assert.ok(plain.value >= 2);
-  assert.ok(scaled.value < plain.value && scaled.value >= Math.floor(plain.value * 0.49) && scaled.value <= Math.floor((plain.value + 1) * 0.49), `${plain.value} -> ${scaled.value}`);
-  const { combat } = scaled;
+  assert.equal(saved.value, plain.value, 'a saved 0.49 reads as 1');
+  const { combat } = saved;
   const had = (combat.player.block || 0) + (combat.player.persistentWard?.value || 0);
   dispatch(combat, { type: 'playCard', cardInstanceId: 'ward' });
   const now = (combat.player.block || 0) + (combat.player.persistentWard?.value || 0);
-  assert.equal(now - had, scaled.value, 'the quote equals the Block and Ward the card gave');
+  assert.equal(now - had, saved.value, 'the quote equals the Block and Ward the card gave');
 });
 
 test('an explicit spell poiseDamage effect: the preview quote equals the Poise the play removes, at the x2 factor', () => {
