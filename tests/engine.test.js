@@ -136,6 +136,9 @@ import { withWeaponRack } from './withWeaponRack.mjs';
 // Test-only content (registered alongside the real bundle; never shipped)
 // ---------------------------------------------------------------------------
 
+// A status burst names its HP loss "proc:<status>".
+const PROC_LOSS_CAUSE = 'proc:';
+
 const TEST_STATUSES = [
   {
     // Test 17: throwaway status exercising meter + modifier + hook with ZERO
@@ -743,10 +746,10 @@ export async function runTests({
     assert(tagIdsFor('blightTouch').includes('blight'), 'CSV index names Blight Touch as blight');
     S.applyStatus(c, e1, 'insanityExposed', 1);
     const pv = previewCard(c, c.piles.hand[0].instanceId, 'e1');
-    // blightTouch costs 1 SP + 1 MP under the cost formula (SPEC §4.3a), so its 5 is not scaled.
-    eq(pv.values.find((v) => v.op === 'damage').value, 7, 'preview derives blight: 5 + ceil(5 × 0.3)');
+    // Owner ruling 2026-11-28: blightTouch stores the 1 damage it plays, so Unraveled adds ceil(1 x 0.3).
+    eq(pv.values.find((v) => v.op === 'damage').value, 2, 'preview derives blight: 1 + ceil(1 × 0.3)');
     playFromHand(c, 'blightTouch');
-    eq(logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop().amount, 7, 'execution derives the same blight hit');
+    eq(logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop().amount, 2, 'execution derives the same blight hit');
   });
 
   // ---- 7f. Known-bads through the REAL bundle (#61): each red names its row --
@@ -8812,7 +8815,14 @@ export async function runTests({
     const rows = REG.balance.skill.xp;
     if (cb.result === 'victory') {
       const killGroup = cb.skillXp.player.killGroup;
-      assert(killGroup === 'item:blade' || killGroup === 'item:shield', `the killing hit names its group — got ${killGroup}`);
+      // A status burst (Bleed) that kills is no hit, so it names no group.
+      const deathAt = cb.eventLog.findIndex((e) => e.type === 'enemyDied');
+      const killingLoss = cb.eventLog.slice(0, deathAt).findLast((e) => e.type === 'hpLost' && e.targetId !== 'player');
+      const statusKill = String(killingLoss?.cause || '').startsWith(PROC_LOSS_CAUSE);
+      const hitGroup = killGroup === 'item:blade' || killGroup === 'item:shield';
+      assert(statusKill
+        ? killGroup === null
+        : hitGroup, `the killing hit names its group — got ${killGroup}`);
       // × the class card's leaning (plan phase 5a): the Reaver favours the blade.
       const favoured = REG.balance.skill.favoredXpMult;
       eq(receipt['item:blade'], Math.floor((paid('item:blade') * rows.perHit + rows.perWinEquipped * (killGroup === 'item:blade' ? rows.killMult : 1)) * favoured), 'blade is paid per hit and block plus the win, more for the kill, favoured by the class card');
@@ -9633,7 +9643,8 @@ export async function runTests({
     const pour = (effects) => validateContent({ ...testBundle(), cards: [...contentBundle.cards, { id: 'zzPour', name: 'zz', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: [], effects, textTemplate: 'Pour.' }] });
     assert(said(pour([{ op: 'arcaneBuildup', target: 'allEnemies' }])).some((e) => /exactly one of 'amount' or 'pct'/.test(e)), 'arcaneBuildup with neither selector is refused');
     assert(said(pour([{ op: 'arcaneBuildup', target: 'allEnemies', amount: 2, pct: 50 }])).some((e) => /exactly one of 'amount' or 'pct'/.test(e)), 'arcaneBuildup with both is refused');
-    eq(REG.cards.get('gorefireSlash').cost, 1, 'the signature art costs stamina beside its Mana');
+    // Owner ruling 2026-11-28: the art stores the cost it played at (costRule fixed, 3).
+    eq(REG.cards.get('gorefireSlash').cost, 3, 'the signature art costs stamina beside its Mana');
 
     // THE PLAYER'S METER: a fill applies the row's statuses and takes one
     // action off the next turn, once; the meter grows as an enemy's does.
