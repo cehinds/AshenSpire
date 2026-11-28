@@ -33,7 +33,8 @@ const CONTROL_SELECTORS = {
   auto: '[data-combat-tool="auto"]',
   log: '[data-combat-tool="log"]',
 };
-const OVERLAY_GATE = /\.combat\[data-formation-grid-option='off'\] \.formation-grid \{ display: none; \}/;
+const OVERLAY_GATE =
+  /\.combat\[data-formation-grid-option='off'\] \.formation-grid \{ display: none; \}/;
 
 function subjectFor(entry)
 {

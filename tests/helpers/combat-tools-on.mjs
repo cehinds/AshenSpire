@@ -1,5 +1,5 @@
-// Core with the Grid checkbox and Reaction switch back (formation.gridOption, reactions.playerToggle),
-// for browser checks that need the overlay or the switch. The profile lives in the fixture.
+// Core with the Grid checkbox and Reaction switch back (formation.gridOption,
+// reactions.playerToggle), for browser checks that need them. The profile lives in the fixture.
 import { readFileSync } from 'node:fs';
 
 const FIXTURE = JSON.parse(readFileSync(

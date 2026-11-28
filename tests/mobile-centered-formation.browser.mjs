@@ -8,7 +8,10 @@ const GRID_ON = encodeURIComponent(JSON.stringify({ 'gameConfig.presentation.sho
 const browser = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/chromium', args: ['--no-sandbox'] });
 try {
   const page = await browser.newPage({ viewport: { width: 844, height: 390 }, reducedMotion: 'reduce' });
-  await page.goto(`${process.env.BASE_URL || 'http://localhost:4470/index.html'}?shot=combat&gameProfile=${TOOLS_ON_PROFILE}&shotSeed=3&shotEnemyCount=3&shotSettings=${GRID_ON}`);
+  const entry = process.env.BASE_URL || 'http://localhost:4470/index.html';
+  const query = `?shot=combat&gameProfile=${TOOLS_ON_PROFILE}`
+    + `&shotSeed=3&shotEnemyCount=3&shotSettings=${GRID_ON}`;
+  await page.goto(`${entry}${query}`);
   await page.locator('.end-turn').waitFor();
   await page.locator('#combat-menu').click();
   if (!await page.locator('[data-settings-host]').count()) await page.locator('.qn-row[data-tab="settings"]').click();

@@ -22,7 +22,9 @@ const b = await chromium.launch({ executablePath: process.env.CHROME || undefine
 try {
   for (const scene of SCENES) for (const [w, h] of [[390, 844], [360, 800], [1280, 800]]) {
     const p = await b.newPage({ viewport: { width: w, height: h }, reducedMotion: 'reduce' });
-    await p.goto(`${server.url}index.html?shot=combat&shotSeed=PERF1${scene.query}&shotSettings=${GRID_ON}&gameProfile=${TOOLS_ON_PROFILE}`, { waitUntil: 'load' });
+    const query = `?shot=combat&shotSeed=PERF1${scene.query}`
+      + `&shotSettings=${GRID_ON}&gameProfile=${TOOLS_ON_PROFILE}`;
+    await p.goto(`${server.url}index.html${query}`, { waitUntil: 'load' });
     await p.waitForSelector('.combatant .sprite');
     await p.waitForTimeout(2500);
     const m = await p.evaluate(() => ({

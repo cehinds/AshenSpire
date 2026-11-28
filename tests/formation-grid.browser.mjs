@@ -6,7 +6,8 @@ import { resolve } from "node:path";
 import { serve } from "../tools/serve.mjs";
 import { TOOLS_ON_PROFILE } from "./helpers/combat-tools-on.mjs";
 
-// Core hides the Grid checkbox (formation.gridOption); this test drives it, so Core runs with it on.
+// Core hides the Grid checkbox (formation.gridOption).
+// This test drives it, so Core runs with it on.
 const CORE_PROFILE = "core";
 const profileQuery = (profile) =>
   profile === CORE_PROFILE

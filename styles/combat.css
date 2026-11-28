@@ -1516,7 +1516,8 @@
 :root[data-formation-grid='true'] .formation-grid { display: grid; }
 :root[data-formation-movement='true'] .formation-grid { display: grid; }
 /* formation.gridOption off (Core): the overlay stays off whatever the saved preference says. */
-:root:not([data-formation-movement='true']) .combat[data-formation-grid-option='off'] .formation-grid { display: none; }
+:root:not([data-formation-movement='true'])
+  .combat[data-formation-grid-option='off'] .formation-grid { display: none; }
 :root[data-formation-movement='true'] .formation-grid-cell:not(:disabled) { pointer-events: auto; cursor: pointer; }
 .formation-grid-cell.formation-selected { --grid-stroke: var(--selection-color, #59bd75); }
 .formation-grid-cell.formation-selected .formation-grid-outline > * { fill-opacity: .4; stroke-width: 3; }

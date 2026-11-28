@@ -63,7 +63,8 @@ try {
     try {
       const url = new URL(process.env.COMBAT_QA_URL || 'http://localhost:8338/?preview=rear-player');
       url.searchParams.set('shot', 'combat');
-      // Core hides the Reaction switch (reactions.playerToggle); this run taps it, so it turns it back on.
+      // Core hides the Reaction switch (reactions.playerToggle).
+      // This run taps it, so it turns it back on.
       url.searchParams.set('gameProfile', decodeURIComponent(TOOLS_ON_PROFILE));
       await page.goto(url.href, { waitUntil: 'domcontentloaded', timeout: 120000 });
       result.url = page.url(); result.title = await page.title();

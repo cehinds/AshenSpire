@@ -144,7 +144,8 @@ export function mountCombatTools(combatEl, {
   combatEl.dataset.formationGridOption = gridOption
     ? GRID_OPTION_ON
     : GRID_OPTION_OFF;
-  // Core hides the Reaction switch and the Grid checkbox (reactions.playerToggle, formation.gridOption).
+  // Core hides the Reaction switch and the Grid checkbox
+  // (reactions.playerToggle, formation.gridOption).
   const optionalControls = shownControls([
     { node: reaction, shown: reactionToggle },
     { node: auto, shown: !!onAutoToggle },

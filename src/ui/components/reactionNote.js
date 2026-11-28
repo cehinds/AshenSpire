@@ -10,7 +10,8 @@ export const REACTION_NOTE_MS = 2500;
 // The hero's HP readout (owner, 2026-10-11): on a phone the switch sits right
 // under the hero's mini HUD, so the note would cover the HP bar and value.
 const AVOID_SELECTOR = '.combatant.player .combatant-mini-hud';
-// The Reaction switch itself, not its Auto twin: with no switch (reactions.playerToggle off) the note hides.
+// The Reaction switch itself, not its Auto twin.
+// With no switch (reactions.playerToggle off) the note hides.
 const TOGGLE_SELECTOR = '[data-combat-tool="reaction"]';
 
 /**

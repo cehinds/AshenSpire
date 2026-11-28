@@ -26,7 +26,10 @@ import { createFollowMemo, CreateFollowUpReduction, PromoteFollowUpRow } from '.
 import { SnapshotIntentShift, AnimateIntentShift } from '../components/intentShift.js';
 import { stackedEnemyReactionIntent } from '../models/ReactionIncomingModel.js';
 import { formationOccupancy } from '../../model/formationOccupancy.js';
-import { FormationGridOptionEnabled, ReactionToggleEnabled } from '../../model/combatToolOptions.js';
+import {
+  FormationGridOptionEnabled,
+  ReactionToggleEnabled,
+} from '../../model/combatToolOptions.js';
 import { combatRangeRanks, applyRangeRankEvent, rangeRanksFromSnapshot, rangeRankSnapshot, StageRangeRanks } from '../models/CombatRangeRankModel.js';
 import { projectEnemyBurdenHand } from '../models/EnemyBurdenModel.js';
 import { hasCardChoice, zoneCandidates } from '../../engine/cardZones.js';
