@@ -38,11 +38,27 @@ import {
 } from '../src/model/settingsSync.js';
 import { contentBundle } from '../src/content/index.js';
 
+const MUSIC_KEY = 'musicEnabled';
+const SCREEN_SHAKE_KEY = 'screenShake';
+const UNKNOWN_PHONE_PLACEMENT = 'nowhere';
+
 const at = (href) =>
 {
     const u = new URL(href);
     return { pathname: u.pathname, hostname: u.hostname, protocol: u.protocol };
 };
+
+// One row, many saved values: each case says whether rowModified sees a change.
+function assertModifiedCases(row, cases)
+{
+    for (const { settings, promoted, expected, label } of cases)
+    {
+        const modified = promoted === undefined
+            ? rowModified(settings, row)
+            : rowModified(settings, row, promoted);
+        assert.equal(modified, expected, label);
+    }
+}
 
 test('the channel is read from where the page was served or saved', () =>
 {
@@ -457,10 +473,12 @@ test('every number is − slider field + with a Reset that shows only when chang
 
 test('rowModified compares with the declared default, not with presence', () =>
 {
-    const row = settingsRow('screenShake');
-    assert.equal(rowModified({}, row), false);
-    assert.equal(rowModified({ screenShake: row.def }, row), false);
-    assert.equal(rowModified({ screenShake: !row.def }, row), true);
+    const row = settingsRow(SCREEN_SHAKE_KEY);
+    assertModifiedCases(row, [
+        { settings: {}, expected: false },
+        { settings: { [SCREEN_SHAKE_KEY]: row.def }, expected: false },
+        { settings: { [SCREEN_SHAKE_KEY]: !row.def }, expected: true },
+    ]);
 });
 
 test('sliders use a useful span and the buttons a useful step', () =>
@@ -769,12 +787,14 @@ test('auto-load applies only while the game is still waiting for it', async () =
 
 test('a resolved row shows its dot and Reset when clearing its key would change it', () =>
 {
-    const row = settingsRow('musicEnabled');
+    const row = settingsRow(MUSIC_KEY);
     // The opposite of the shipped default, so the check holds whichever way music ships.
-    const changedMusic = { musicEnabled: !row.def };
+    const changedMusic = { [MUSIC_KEY]: !row.def };
     assert.equal(typeof row.resolve, 'function');
-    assert.equal(rowModified({}, row), false);
-    assert.equal(rowModified(changedMusic, row), true);
+    assertModifiedCases(row, [
+        { settings: {}, expected: false },
+        { settings: changedMusic, expected: true },
+    ]);
     const html = settingsRowHtml(changedMusic, row);
     assert.ok(
         html.includes('data-reset-key="musicEnabled"') && html.includes('data-modified="true"'),
@@ -1094,25 +1114,28 @@ test('a profile save that finishes after the location changed is not recorded', 
 
 test('a resolved row set to its promoted default is not changed', async () =>
 {
-    const { rowModified } = await import('../src/ui/screens/settings.js');
-    const row = settingsRow('musicEnabled');
-    const promotedValue = !row.def;
-    const promoted = { musicEnabled: promotedValue };
-    assert.equal(
-        rowModified({ musicEnabled: promotedValue }, row, promoted),
-        false,
-        'the promoted value is the default',
-    );
-    assert.equal(
-        rowModified({ musicEnabled: row.def }, row, promoted),
-        true,
-        'moving off the promoted value is a change',
-    );
-    assert.equal(
-        rowModified({ musicEnabled: promotedValue }, row, {}),
-        true,
-        'with no promoted default, leaving the code default is a change',
-    );
+    const row = settingsRow(MUSIC_KEY);
+    const promotedSettings = { [MUSIC_KEY]: !row.def };
+    assertModifiedCases(row, [
+        {
+            settings: promotedSettings,
+            promoted: promotedSettings,
+            expected: false,
+            label: 'the promoted value is the default',
+        },
+        {
+            settings: { [MUSIC_KEY]: row.def },
+            promoted: promotedSettings,
+            expected: true,
+            label: 'moving off the promoted value is a change',
+        },
+        {
+            settings: promotedSettings,
+            promoted: {},
+            expected: true,
+            label: 'with no promoted default, leaving the code default is a change',
+        },
+    ]);
 });
 
 test('a key a profile leaves out goes back to its promoted default, not the code default', async () =>
@@ -2394,8 +2417,13 @@ test('an unset phone armaments placement follows the balanceUi.json default', as
 {
     const { resolveArmamentsPhonePlacement } = await import('../src/ui/screens/settings.js');
     const { UI_DEFAULTS } = await import('../src/ui/models/SettingsRowsModel.js');
-    const shippedPlacement = UI_DEFAULTS.armaments.phonePlacement;
-    const unknownPlacement = { armamentsPhonePlacement: 'nowhere' };
-    assert.equal(resolveArmamentsPhonePlacement({}), shippedPlacement);
-    assert.equal(resolveArmamentsPhonePlacement(unknownPlacement), shippedPlacement);
+    const shippedPlacement = UI_DEFAULTS.armaments.armamentsPhonePlacement.def;
+    const unsetOrUnknown = [
+        {},
+        { armamentsPhonePlacement: UNKNOWN_PHONE_PLACEMENT },
+    ];
+    for (const settings of unsetOrUnknown)
+    {
+        assert.equal(resolveArmamentsPhonePlacement(settings), shippedPlacement);
+    }
 });
