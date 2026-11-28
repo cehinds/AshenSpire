@@ -411,7 +411,17 @@ function startWatch(root, emit) {
  * Bumps to the next port if the requested one is in use.
  */
 // studioSaveSeams goes to SaveStudioSave; tests use it to stub the game rebuild.
-export function serve({ root = ROOT_DIR, port = 8080, open = true, editorWrite = false, quiet = false, host, watch = false, assetRoot, studioSaveSeams = {} } = {}) {
+export function serve({
+  root = ROOT_DIR,
+  port = 8080,
+  open = true,
+  editorWrite = false,
+  quiet = false,
+  host,
+  watch = false,
+  assetRoot,
+  studioSaveSeams = {},
+} = {}) {
   const rootResolved = resolve(root);
   const checkout = existsSync(join(rootResolved, 'art-release.json'));
   const artCheckout = authoringRoot({ root: rootResolved, assetRoot, required: false });
