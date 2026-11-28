@@ -4,7 +4,8 @@ import { CARD_COMPONENTS } from './cardComponents.generated.js';
 import { uiStrings } from './generated/uiStrings.js';
 
 const SOLID_MARK = true;
-const SHIELD_SHAPE = '<path d="M16 2 28 7v10c0 7-12 13-12 13S4 24 4 17V7Zm0 4v20c5-3 8-6 8-9V10Z"/>';
+const SHIELD_SHAPE =
+  '<path d="M16 2 28 7v10c0 7-12 13-12 13S4 24 4 17V7Zm0 4v20c5-3 8-6 8-9V10Z"/>';
 const TAG_SYMBOLS = CARD_COMPONENTS.template.symbols.tags;
 const TECHNIQUE_ID = 'technique';
 const SKILL_ID = 'skill';
