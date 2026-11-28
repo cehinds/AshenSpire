@@ -10,12 +10,12 @@ import { alternativeBackdropHtml } from '../src/ui/alternativeArt.js';
 
 const registries = createRegistries(contentBundle);
 
-test('card body rules text uses readable theme token instead of dark #291f16', () =>
+test('card body rules text uses the dark ink from card-layout.json', () =>
 {
     const model = playingCardModel(registries, { cardId: 'strike' });
     const html = illustratedCardHtml(model, { rules: 'Deal 6 damage.' });
-    assert.match(html, /data-card-binding="rules"[^>]*color:var\(--parchment\)/);
-    assert.doesNotMatch(html, /data-card-binding="rules"[^>]*color:#291f16/i);
+    assert.match(html, /data-card-binding="rules"[^>]*color:#291f16/i);
+    assert.doesNotMatch(html, /data-card-binding="rules"[^>]*color:var\(--parchment\)/);
 });
 
 test('combat stage omits the 64px Card placeholder and hides failed backdrop images', () =>
