@@ -8,7 +8,9 @@ import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
 
 const FORCE = { combatProfile: { camp: 'spell', school: 'force', damageType: 'arcane' }, tags: ['school:force'] };
 const BLUNT = { combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'blunt', reach: 'contact' }, tags: ['camp:physical', 'damage:blunt'] };
-const hit = (combat, target, carrier, base = 20) => profileDamageReceipt(combat, combat.player, target, base, { ...carrier, skipRatingBonus: true }, { roll: 0 });
+// Owner ruling 2026-11-28: damage is 1:1 (no base-damage scale), so each hit meets the layers as 10.
+const HIT_DAMAGE = 10;
+const hit = (combat, target, carrier, base = HIT_DAMAGE) => profileDamageReceipt(combat, combat.player, target, base, { ...carrier, skipRatingBonus: true }, { roll: 0 });
 
 function historicalFight(options) {
   const world = fight(options);
