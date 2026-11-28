@@ -17,6 +17,7 @@ import {
   StudioSaveFiles,
   StudioSaveFileNames,
   StudioPackCardsPath,
+  StableJson,
 } from './studioSaveFiles.js';
 
 export const StudioSaveMenuLabel = Object.freeze({
@@ -219,7 +220,7 @@ class StudioSaveUi
     const outcome = await this.#controller.save();
     if (savedResults.includes(outcome.result))
     {
-      this.#deps.markPackCardsSaved(sentCards);
+      this.#markCardsSaved(sentCards);
     }
     this.#deps.toast(this.#outcomeText(outcome));
     if (outcome.result === StudioSaveResult.Failed)
@@ -295,6 +296,18 @@ class StudioSaveUi
       artLayers: savedArt.cardArtLayers,
       itemArtLayers: savedArt.itemArtLayers,
     }));
+  }
+
+  // The card changes are measured against the saved cards, so they read empty once saved.
+  // An edit made while the Save was in flight keeps the cards Draft.
+  #markCardsSaved(sentCards)
+  {
+    const unchangedSinceSend = StableJson(this.#deps.snapshotPackCards()) === StableJson(sentCards);
+    this.#deps.markPackCardsSaved(sentCards);
+    if (unchangedSinceSend)
+    {
+      this.#controller.acceptCurrent(StudioSaveFileNames.Cards);
+    }
   }
 
   #outcomeText(outcome)

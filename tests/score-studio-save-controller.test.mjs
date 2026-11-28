@@ -664,3 +664,18 @@ test('studio save: Revert to in-game is stored as a draft, so a reload keeps it'
   assert.ok(start > 0 && end > start);
   assert.match(source.slice(start, end), /writeDraftNow\(\);/);
 });
+
+test('studio save: acceptCurrent takes a file read against what was saved as Saved again',
+  async () =>
+  {
+    const { studio, controller } = setup();
+    await loadWithBaseline(controller);
+    studio.cards = [qaCard];
+    await controller.save();
+    assert.equal(controller.status(), StudioSaveStatus.Saved);
+    // The card changes read empty once the saved cards become their baseline.
+    studio.cards = [];
+    assert.equal(controller.status(), StudioSaveStatus.Draft);
+    controller.acceptCurrent(cardsName);
+    assert.equal(controller.status(), StudioSaveStatus.Saved);
+  });
