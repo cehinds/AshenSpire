@@ -45,24 +45,24 @@ export function SimpleCombatRegistries(overrideName = null)
 }
 
 /** A fresh run on those registries. */
-export function SimpleCombatRun(registries)
+export function SimpleCombatRun(registries, seed = SimpleCombatFixture.seed)
 {
   return createRunState({
     registries,
     classId: SimpleCombatFixture.classId,
-    seed: SimpleCombatFixture.seed,
+    seed,
     profileMeta: UNLOCKED_META,
   });
 }
 
 /** A fresh fight on those registries against the fixture's enemies. */
-export function SimpleCombatFight(registries)
+export function SimpleCombatFight(registries, seed = SimpleCombatFixture.seed)
 {
-  const run = SimpleCombatRun(registries);
+  const run = SimpleCombatRun(registries, seed);
   return createRunCombat({
     registries,
     run,
-    rng: createRng(SimpleCombatFixture.seed),
+    rng: createRng(seed),
     enemyIds: SimpleCombatFixture.enemyIds,
   });
 }

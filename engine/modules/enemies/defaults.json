@@ -6,6 +6,7 @@
     "boss"
   ],
   "fallback": "legacyMoves",
+  "turnActions": "spPool",
   "deck": {
     "min": 3,
     "max": 15,

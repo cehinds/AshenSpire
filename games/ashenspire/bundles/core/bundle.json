@@ -148,6 +148,7 @@
     "enemies": {
       "version": "1.0.0",
       "settings": {
+        "turnActions": "spPool",
         "effectiveLevelByAct": {
           "elite": [
             2,
