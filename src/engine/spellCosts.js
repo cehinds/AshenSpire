@@ -8,6 +8,7 @@ import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { cardManaCategory } from '../model/cardManaPolicy.js';
 import { GearTypeEffectsEnabled, GearManaCost } from '../model/gearEffects.js';
 import { FocusHeld, inPreparedStance } from '../model/focusMana.js';
+import { SameStanceDiscountEnabled } from '../model/simpleCombatFlags.js';
 import {
     ActiveSpellCostRules,
     ApplySpellCostRules,
@@ -21,7 +22,9 @@ const spellCategory = 'spell';
 const variableCost = 'X';
 
 const conditionChecks = Object.freeze({
-    [SpellCostCondition.Prepared]: context => inPreparedStance(context.player),
+    [SpellCostCondition.Prepared]: context =>
+        SameStanceDiscountEnabled(context)
+        && inPreparedStance(context.player),
     [SpellCostCondition.LegacyFocusHeld]: context =>
         !GearTypeEffectsEnabled(context)
         && FocusHeld(context.registries, context.loadout, context.player?.classId),

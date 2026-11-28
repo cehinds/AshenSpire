@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-11-28
+
+- **Same-stance switch covers spells** ([#3049](https://github.com/cehinds/AshenSpire/pull/3049), `0.7.5.197`). Turning off the same-stance discount now also removes the Prepared spell SP cut. It is on, so nothing changes in play.
+
 ## 2026-11-27
 
 - **Simple combat switches** ([#3048](https://github.com/cehinds/AshenSpire/pull/3048), `0.7.5.197`). Poise, stance bonuses, the same-stance discount, rolled upgrades and multi-move enemy turns can now each be turned off in config. All are on, so nothing changes in play yet.
