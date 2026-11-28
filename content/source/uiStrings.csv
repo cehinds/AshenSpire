@@ -386,6 +386,13 @@ art.failed.gate,,The art could not be loaded,"The art could not be loaded, so th
 art.failed.notice,,The art could not be loaded,"The art could not be loaded, so the game is showing placeholders.",
 art.failed.settings,,The art could not be loaded,"The art could not be loaded, so the game is showing placeholders. Choose Retry to load it again.",
 art.failed.again,,The art still could not be loaded,"The art still could not be loaded. Check your connection, then try again.",
+art.tier.inlineOnly,,,"This file carries its art inside it, so it has no other tier to load: Light and High apply to the web edition (the hosted game or the full game folder).",
+art.tier.sourceTree,,,"This copy loads its art straight from the game’s folders, so there are no tiers to choose: Light and High apply to the built web edition.",
+art.tier.loading,,,Loading {tier} art…,
+art.tier.showing,,,Showing {tier} art.,
+art.tier.notLoaded,,,Showing {tier} art: the {requested} art could not be loaded.,
+art.tier.notCarried,,,Showing {tier} art: this build carries no {requested} art.,
+art.tier.autoLight,,,"Showing {tier} art, because {reason}. Choose High to load it anyway.",
 art.retry,,Retry,Load the art again.,Retry
 # ---- the act map (W4b) ---------------------------------------------------
 map.enter,,Enter,Travel to the selected node.,Enter

@@ -31,7 +31,7 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const csvIds = (text) => new Set(text.split('\n').filter((line) => line && !line.startsWith('#')).map((line) => line.split(',')[0]).filter((id) => id && id !== 'id'));
 
 const frozenMigrationIds = (number) => JSON.parse(readFileSync(join(ROOT, `tests/fixtures/uistrings-migrated-${number}.json`), 'utf8')).ids;
-const permanentMigratedIds = () => new Set([1489, 1535, 1578, 1651, 1671, 1767, 1850, 1915, 2190, 2284, 'common-controls', 'core-profile', 'effects-toggle', 'blur-shadows', 'card-art-builder-lifecycle', 'modal-return', 'wording', 'smash-stance-rule', 'settings-regroup'].flatMap(frozenMigrationIds));
+const permanentMigratedIds = () => new Set([1489, 1535, 1578, 1651, 1671, 1767, 1850, 1915, 2190, 2284, 'common-controls', 'core-profile', 'effects-toggle', 'blur-shadows', 'card-art-builder-lifecycle', 'modal-return', 'wording', 'smash-stance-rule', 'settings-regroup', 'owner-defaults-review'].flatMap(frozenMigrationIds));
 
 function migratedIds() {
   // Merged rows must remain protected when origin/dev advances or is absent.
@@ -74,6 +74,7 @@ const ALLOWED = [
   ['src/ui/components/smithUpgradeModal.js', 'None', 'the Smith requirement row when an item has no stat requirement; not the builder optional art-cue choice'],
   ['src/ui/components/combatantInspector.js', 'None', 'absence of a combatant current action; not the builder optional art-cue choice'],
   ['src/ui/screens/customize.js', 'None', 'absence of a starting relic or slot selection; not the builder optional art-cue choice'],
+  ['src/ui/screens/settings.js', 'Showing', 'the display-scale readout ("Showing 1.20×"), not the art tier status line'],
   ['src/ui/screens/rest.js', 'Heal', 'rest-site HP restoration sentence with its live amount; not the builder healing art cue'],
   // The status decay row starts with The {value}; these bounded matches share
   // only its article, not its lifecycle sentence or meaning.
