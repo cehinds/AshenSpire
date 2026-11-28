@@ -100,9 +100,12 @@ test('authored attribute gear reaches HP MP SP pools with one contribution on re
   const registries=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,selected)),selected);
   const run=createRunState({registries,classId:'reaver',seed:10});
   run.loadout.sets.armor[0]=null;
-  run.level.level=5; run.level.unspentPoints=4;
+  // Earned points bring DEX and WIS to 3 from the class base, so the armour's +1 makes each 4.
+  const UNWORN_TARGET=3;
+  const earned=['dexterity','wisdom'].flatMap(attribute=>Array(UNWORN_TARGET-run.attributes[attribute]).fill(attribute));
+  run.level.level=5; run.level.unspentPoints=earned.length;
   withGameProfileService(run,'levelUp',()=>{
-    for (const attribute of ['dexterity','dexterity','wisdom','wisdom']) applyLevelUp(registries,run,attribute);
+    for (const attribute of earned) applyLevelUp(registries,run,attribute);
   });
   const unworn=[run.maxHp,run.maxMana,run.maxStamina];
   assert.deepEqual(unworn.slice(1),[4,6]);
