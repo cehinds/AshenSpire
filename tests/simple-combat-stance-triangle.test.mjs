@@ -10,6 +10,12 @@ import { NeutralExtraDraw, StanceWeaknessMultiplier } from '../src/engine/stance
 import { enemyMoveCarrier } from '../src/engine/combatCardTactics.js';
 import { TriangleBlockMultiplier } from '../src/engine/triangleBlock.js';
 import { computeBlockGain } from '../src/engine/actions.js';
+import { dispatch } from '../src/engine/combat.js';
+import {
+  affordableCards,
+  botCardTargetId,
+  botControlAction,
+} from '../tools/simbot.mjs';
 import {
   SimpleCombatFixture,
   SimpleCombatRegistries,
@@ -250,4 +256,60 @@ test('maneuvers: no triangle Block bonus', () =>
   const defendCard = { ...cardCarrier(fight.registries, BLOCK.defendCardId) };
   const facingAttack = withEnemyIntent(fight, BLOCK.bonusStance);
   assert.equal(TriangleBlockMultiplier(facingAttack, facingAttack.player, defendCard), 1);
+});
+
+const PLAY = PROBE.playProbe;
+const END_TURN = { type: 'endTurn' };
+const PLAY_CARD = 'playCard';
+
+// The leftmost card that plays, or null when none does.
+function playFirstCard(registries, fight)
+{
+  const targetId = fight.enemies.find(enemy => enemy.alive)?.id;
+  for (const card of affordableCards(registries, fight))
+  {
+    const intent = {
+      type: PLAY_CARD,
+      cardInstanceId: card.instanceId,
+      targetId: botCardTargetId(registries, fight, card, targetId),
+    };
+    try
+    {
+      dispatch(fight, intent);
+      return card;
+    }
+    catch
+    {
+      // A refused play leaves the fight unchanged; the bot tries the next card.
+    }
+  }
+  return null;
+}
+
+function botStep(registries, fight)
+{
+  const control = botControlAction(fight);
+  if (control)
+  {
+    dispatch(fight, control);
+    return;
+  }
+  if (!playFirstCard(registries, fight))
+  {
+    dispatch(fight, END_TURN);
+  }
+}
+
+test('triangle: bot-played fights reach a result', () =>
+{
+  const registries = SimpleCombatRegistries(TRIANGLE);
+  for (const seed of PLAY.seeds)
+  {
+    const fight = SimpleCombatFight(registries, seed);
+    for (let step = 0; step < PLAY.stepLimit && !fight.result; step += 1)
+    {
+      botStep(registries, fight);
+    }
+    assert.ok(fight.result, `seed ${seed}`);
+  }
 });
