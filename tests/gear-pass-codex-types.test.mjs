@@ -140,9 +140,12 @@ test('Codex tomes and talismans each grant one Ward at turn start', () => {
 });
 
 test('Codex armour grants only authored Block and keeps its distinct group and signature effects', () => {
-  for (const [id, block] of [['cinderforgedPlate', 0], ['wyrmscaleMail', 0], ['ringmailHauberk', 1], ['huntersHide', 0], ['sagesRobe', 0]]) {
+  // Each row is the armour's flat Block on top of Defend's authored Block (#3039 restored it to 10).
+  const authoredDefend = registries.cards.get('core.defend').effects.find(e => e.op === 'block').amount;
+  for (const [id, flatBlock] of [['cinderforgedPlate', 0], ['wyrmscaleMail', 0], ['ringmailHauberk', 1], ['huntersHide', 0], ['sagesRobe', 0]]) {
     const piece = pieceById(id), equipped = world({ armor: id, classId: piece.classId });
-    assert.equal(equipped.card('core.defend').effects.find(e => e.op === 'block').amount, block, id);
+    const defendBlock = equipped.card('core.defend').effects.find(e => e.op === 'block').amount;
+    assert.equal(defendBlock, authoredDefend + flatBlock, id);
     if (id === 'sagesRobe') {
       assert.equal(equipped.mods.maxMana, 0, 'the robe group has no flat Mana');
       assert.equal(equipped.combat.player.statuses.ward?.stacks, 1, 'the robe signature grants Ward');
