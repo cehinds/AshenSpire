@@ -8,6 +8,16 @@ import { tacticalCarrier } from '../src/engine/combatCardTactics.js';
 import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
 
 const subject = { gameProfile: profile };
+const MAGIC_POISE_STAGE = 'poise-magic';
+const COMMON_PACKET = 2;
+// A half-magic hit of 20 under a x0.7 physical scale: 10 magic, floor(10 x 0.7) = 7 physical.
+const SCALE_CASE = Object.freeze({
+  base: 20,
+  share: 0.5,
+  physicalMultiplier: 0.7,
+  scaledTotal: 17,
+  scaledPhysical: 7,
+});
 const FIRE = { k: 'tag', tag: 'school:fire', damage: 'fire', damageSchool: 'fire', packet: 4 };
 const carrierFor = (combat, steps) => {
   const f = projectGameCard(subject, { instanceId: 'i', cardId: 'core.strike', ...(steps ? { upgraded: true, upgradeSteps: steps } : {}) });
@@ -59,8 +69,12 @@ test('the magic part meets Barrier then Ward and the physical part meets Block t
   assert.equal(blocked.blocked, bare.physical, 'Block soaks the physical part');
   assert.ok(blocked.hpLoss >= bare.magical || blocked.blocked + blocked.hpLoss === bare.incoming, 'the magic part is not soaked by that Block');
   const poised = hit(combat, carrier, base, { persistentPoise: { value: 50, max: 50 } });
+  // The magic part's own Poise stage is reported apart, so each channel is bounded by its own part.
+  const magicPoise = -(poised.sources.find((row) => row.id === MAGIC_POISE_STAGE)?.amount ?? 0);
   assert.ok(poised.poiseReduced > 0, 'Poise absorbs the physical part');
-  assert.ok(poised.poiseReduced <= bare.physical, 'and only the physical part');
+  const physicalPoise = poised.poiseReduced - magicPoise;
+  assert.ok(physicalPoise <= bare.physical, 'the physical Poise share stays within the physical part');
+  assert.ok(magicPoise <= bare.magical, 'the magic Poise stage takes only the magic part');
   void registries;
 });
 
@@ -137,29 +151,28 @@ test('a non-packet fire hit still takes flux on the whole hit', () => {
   assert.ok(fluxed.magical > plain.magical && fluxed.physical === 0 && plain.physical === 0, 'a whole-magic hit has no physical part and its whole hit takes flux');
 });
 
-test('with the Core physical-damage scale (x0.7) the cut lands on the physical part alone, and face = receipt', async () => {
-  const { PacketFaceSplit } = await import('../src/engine/gameProfileCombat.js');
-  const { resolveGameProfile } = await import('../src/model/gameProfile.js');
-  const core = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
-  const multiplier = core.modules.effects.physicalDamageMultiplier;
-  assert.equal(multiplier, 0.7, 'the Core bundle ships x0.7');
-  const run = (patch, flux, scale) => {
-    const combat = live();
-    if (scale) combat.gameProfile = core;
-    const { card, carrier } = carrierFor(combat, [{ ...FIRE, packet: 6 }, { k: 'dmg', n: 4 }]);
-    const authored = card.effects.find((e) => e.op === 'damage').amount;
-    Object.assign(combat.player.ratings, { ar: 10, pr: 10 });
-    if (flux) combat.player.elementFlux = 'fire';
-    const row = hit(combat, carrier, authored, patch);
-    const face = PacketFaceSplit(combat, combat.player, carrier, authored, row.incoming);
-    return { row, face };
+test('Core reads the physical-damage scale as 1; a scale below 1 cuts the physical part alone', async () =>
+{
+  const { PacketSplit } = await import('../src/model/combatRatings.js');
+  const { resolveGameProfile, gameModule } = await import('../src/model/gameProfile.js');
+  const core = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+  // Owner ruling 2026-11-28: no profile plays a damage scale, so the stage is checked on the split.
+  assert.equal(gameModule(core, 'effects').physicalDamageMultiplier, 1, 'Core plays damage 1:1');
+  const packet = {
+    base: SCALE_CASE.base,
+    share: SCALE_CASE.share,
   };
-  for (const [name, patch, flux] of [['plain', {}, null], ['Vulnerable 3', { statuses: { vulnerable: { stacks: 3 } } }, null], ['flux', {}, 'fire']]) {
-    const scaled = run(patch, flux, true), unscaled = run(patch, flux, false);
-    assert.deepEqual([scaled.face.physical, scaled.face.magic], [scaled.row.physical, scaled.row.magical], `${name}: face = receipt under x0.7`);
-    assert.ok(scaled.row.physical < unscaled.row.physical, `${name}: the cut lowers the physical part`);
-    assert.ok(Math.abs(scaled.row.magical - unscaled.row.magical) <= 1, `${name}: the magic part is untouched by the physical scale`);
-  }
+  const unscaled = PacketSplit({
+    ...packet,
+    total: SCALE_CASE.base,
+  });
+  const scaled = PacketSplit({
+    ...packet,
+    physicalMultiplier: SCALE_CASE.physicalMultiplier,
+    total: SCALE_CASE.scaledTotal,
+  });
+  assert.equal(scaled.magic, unscaled.magic, 'the magic part is untouched by the physical scale');
+  assert.equal(scaled.physical, SCALE_CASE.scaledPhysical, 'the cut lowers the physical part alone');
 });
 
 test('under the real Core profile the static face tokens equal the receipt for a small packet (no double flooring)', async () => {
@@ -185,7 +198,7 @@ test('under the real Core profile the static face tokens equal the receipt for a
   }
 });
 
-test('the magic part is at least 1: Strike + common packet 2 shows and deals 1 Fire under Core, total unchanged', async () => {
+test('the magic part is at least 1; under Core a Strike + common packet 2 shows and deals its 2 Fire', async () => {
   const { staticCardTokens } = await import('../src/model/playingCard.js');
   const { PacketSplit } = await import('../src/model/combatRatings.js');
   const { resolveGameProfile, bindGameProfileRegistries, applyGameProfileToContent } = await import('../src/model/gameProfile.js');
@@ -195,13 +208,14 @@ test('the magic part is at least 1: Strike + common packet 2 shows and deals 1 F
   const regs = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, core)), core);
   const combat = live(); combat.gameProfile = core;
   Object.assign(combat.player.ratings, { ar: 0, pr: 0 });
-  const f = projectGameCard({ gameProfile: core }, { instanceId: 'i', cardId: 'core.strike', upgraded: true, upgradeSteps: [{ ...FIRE, packet: 2 }] });
+  const f = projectGameCard({ gameProfile: core }, { instanceId: 'i', cardId: 'core.strike', upgraded: true, upgradeSteps: [{ ...FIRE, packet: COMMON_PACKET }] });
   const authored = f.effects.find((e) => e.op === 'damage').amount;
   const carrier = tacticalCarrier(f, { cardId: 'core.strike', damageSchool: f.damageSchool, magicShare: f.magicShare, sourceHand: 'right' }, combat, combat.player);
   const row = hit(combat, carrier, authored);
   const tokens = staticCardTokens(f, regs, { gameProfile: core, faceAttributes: { strength: 0, dexterity: 0, constitution: 0, wisdom: 0, intelligence: 0 } });
-  assert.equal(row.magical, 1, 'the hit deals 1 Fire');
-  assert.deepEqual([tokens.damage, tokens.packet], [row.physical, 1], 'the face shows it too');
+  // Owner ruling 2026-11-28: at 1:1 the packet is dealt whole, so the at-least-1 floor shows on the split alone.
+  assert.equal(row.magical, COMMON_PACKET, 'the hit deals the packet as Fire');
+  assert.deepEqual([tokens.damage, tokens.packet], [row.physical, COMMON_PACKET], 'the face shows it too');
   assert.equal(PacketSplit({ base: 3, share: 0.1, total: 0 }).magic, 0, 'a hit of 0 deals 0');
   assert.deepEqual(PacketSplit({ base: 3, share: 0.1, total: 1 }), { physical: 0, magic: 1 }, 'physical never below 0');
   const a = PacketSplit({ base: 20, share: 0.05, total: 7 });
