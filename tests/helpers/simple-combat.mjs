@@ -11,7 +11,6 @@ import {
   bindGameProfileRegistries,
 } from '../../src/model/gameProfile.js';
 
-const FIXTURE_URL = new URL('../fixtures/simple-combat-flags.json', import.meta.url);
 const UNLOCKED_META = {
   gameProfileUnlocks:
   {
@@ -26,7 +25,9 @@ const UNLOCKED_META = {
   },
 };
 
-export const SimpleCombatFixture = JSON.parse(readFileSync(FIXTURE_URL, 'utf8'));
+export const SimpleCombatFixture = JSON.parse(
+  readFileSync(new URL('../fixtures/simple-combat-flags.json', import.meta.url), 'utf8'),
+);
 
 /** Registries for Core with the named override applied; no name is today's Core. */
 export function SimpleCombatRegistries(overrideName = null)
