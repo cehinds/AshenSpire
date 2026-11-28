@@ -137,10 +137,12 @@ test('prepared readers preserve duplicate play/hook bindings and the first packe
   assert.equal(projected.card.effects[2].amount, 4);
 });
 
-test('Counter side scaling reads authored maneuver separately from the merged face profile', () => {
+// Owner ruling 2026-11-28: a saved 0.5 player side scale reads 1, so both maneuvers keep the stored 5.
+test('a saved player side scale leaves Counter and attack faces at the stored damage', () => {
   const reference = context();
   reference.rules.gameProfile.modules.effects.playerDamageMultiplier = .5;
-  for (const [maneuver, override, expected] of [['counter', 'attack', 5], ['attack', 'counter', 2]]) {
+  for (const [maneuver, override] of [['counter', 'attack'], ['attack', 'counter']]) {
+    const expected = owned().effects.find(effect => effect.op === 'damage').amount;
     const def = { ...owned(), tags: ['camp:physical', 'maneuver:' + maneuver], combatProfile: { maneuver: override } };
     assert.equal(staticCardTokens(def, reference.registries, reference.rules).damage, expected);
     assert.equal(PrepareStaticCardTokenReader(reference.registries, reference.rules)(def).damage, expected);
