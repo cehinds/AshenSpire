@@ -418,7 +418,12 @@
         "core.rallyingRoar",
         "core.brace",
         "core.quickGuard",
-        "core.temperedEdge"
+        "core.temperedEdge",
+        "steelResolve",
+        "ironHide",
+        "openingCut",
+        "holdTheLine",
+        "lungingThrust"
       ],
       "rogue": [
         "core.rogueSpecial",
@@ -448,7 +453,11 @@
         "core.brace",
         "core.quickGuard",
         "core.whetstoneNick",
-        "core.temperedEdge"
+        "core.temperedEdge",
+        "keenEdge",
+        "breakFocus",
+        "dirtyStrike",
+        "closeQuarters"
       ],
       "starseer": [
         "core.starseerSpecial",
@@ -499,7 +508,13 @@
         "core.rimeVeil",
         "custom.card_mwx2mb6p",
         "custom.copy_mwx6hh79",
-        "custom.copy_mwx6xoww"
+        "custom.copy_mwx6xoww",
+        "innerOrbit",
+        "starlitSkin",
+        "unguardedBolt",
+        "focusedStar",
+        "rimeLance",
+        "distantStar"
       ],
       "herald": [
         "core.heraldSpecial",
@@ -537,7 +552,11 @@
         "core.cleansingEmbers",
         "core.rootedShelter",
         "core.stormBlessing",
-        "core.rimeVeil"
+        "core.rimeVeil",
+        "hearthVigil",
+        "zealousFervor",
+        "sanctifiedGuard",
+        "pyreBrand"
       ]
     }
   }
