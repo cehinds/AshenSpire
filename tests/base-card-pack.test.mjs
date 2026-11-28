@@ -74,6 +74,10 @@ test('every admitted core combat card resolves through the unified engine with n
     }
   }
 });
+const HOLD_BLOCK_STORED = rows.find(row => row.definition.id === 'base.retain-block').definition.effects
+  .find(effect => effect.op === 'block').amount;
+const HOLD_BLOCK_FACE = new RegExp(
+  `Gain ${HOLD_BLOCK_STORED} Block; keep it 1 turn\\. \\+1 SP each play this fight \\(max \\+2\\)`);
 test('Hold Block keeps all remaining protection for exactly its displayed number of turns',()=>{
   for(const p of [profile()]) {
     const reg=registries(p);
@@ -88,11 +92,11 @@ test('Hold Block keeps all remaining protection for exactly its displayed number
       }
       // Current's consecutive casting stance can amplify the second guard.
       // Retention must keep that actual protection too, rather than regranting
-      // or capping it at the nominal six printed on the unmodified card.
+      // or capping it at the nominal amount printed on the unmodified card.
       const expectedBlock=combat.player.block;
-      // Owner, 2026-11-18: the Core blockGainMultiplier (0.49 after the second cut) takes each printed 6 to 2 or more in play (the face keeps the authored number).
-      assert.ok(expectedBlock>=initialBlock+Math.floor(6*0.49)*plays);
-      assert.match(cardPlainText(reg,{cardId:'base.retain-block'}),/Gain 6 Block; keep it 1 turn\. \+1 SP each play this fight \(max \+2\)/);
+      // Owner ruling 2026-11-28: Block is 1:1, so each play gives at least the stored amount.
+      assert.ok(expectedBlock>=initialBlock+HOLD_BLOCK_STORED*plays);
+      assert.match(cardPlainText(reg,{cardId:'base.retain-block'}),HOLD_BLOCK_FACE);
       for(let turn=0;turn<plays;turn++){
         for(const enemy of combat.enemies){enemy.intent=null;enemy.plannedMoves=[];}
         dispatch(combat,{type:'endTurn'});
@@ -149,8 +153,8 @@ test('current rewards can draw the expanded authored pool and preserve old balan
   // Owner 2026-11-17: cards that need allies (base.needs-allies) join no pool until ally mechanics exist.
   for(const id of pack.groups['base.current-rewards'].members)assert.equal(legacy.classes.get('reaver').cardPool.includes(id),!pack.groups['base.needs-allies'].members.includes(id),id);
   const old=contentBundle.cards.find(row=>row.id==='greatswordSunderingHew');
-  // Owner ruling 2026-11-21: Sundering Hew is a rare Rank 1 weapon art (36 damage, 2 Poise damage; was 48 damage, 2 Vulnerable).
-  assert.deepEqual([old.cost,old.manaCost,old.effects[0].amount],[2,1,36]);
+  // Owner ruling 2026-11-28: Sundering Hew stores its 1:1 damage, 8.
+  assert.deepEqual([old.cost,old.manaCost,old.effects[0].amount],[2,1,8]);
 });
 test('closed opcode/formula/reference validation and duplicate author IDs fail by name',()=>{
   for(const mutation of [card=>card.effects=[{op:'fakeCardEffect'}],card=>card.effects=[{op:'damage',target:'enemy',amount:{f:'fakeFormula'}}],card=>card.effects=[{op:'applyStatus',target:'self',status:'missing-status',stacks:1}]]) {
